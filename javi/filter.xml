@@ -1,0 +1,40 @@
+<FindBugsFilter>
+
+   <Match>
+       <Class name="javi.TextEdit"/>
+       <Method name="processCommand"/>
+       <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.View"/>
+       <Method name="rpaint"/>
+       <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.Vt100Parser"/>
+       <Method name="execute"/>
+       <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.FileList$FileParser"/>
+       <Method name="getnext"/>
+       <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+FileList.java(439)-442 SF: Switch statement found in javi.() where one case falls through to the next case (M) 
+   <Match>
+       <Class name="javi.Tools"/>
+       <Method name="doGC"/>
+       <Bug pattern="DM_GC"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.FvContext"/>
+       <Method name="setCurrView"/>
+       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+   </Match>
+
+</FindBugsFilter>

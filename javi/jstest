@@ -1,0 +1,34 @@
+function print(s) {
+    jsobj.myprint(s)
+}
+
+importPackage(Packages.javi);
+//x =10;
+//y= 5
+//print(file);
+
+//print("!!!!! start");
+//print(JS)
+
+function dofunc(rnum,arg,count,rcount,fvc,dotmode) {
+   print ("fvc " + fvc.toString());
+   print("rnum " + rnum);
+}
+   jgroup = new JS.JSgroup(dofunc);
+jgroup.unregister();
+jgroup.register("func1",1);
+jgroup.register("func2",2);
+MapEvent.mKeybind('j',"func1","a1",java.awt.event.InputEvent.ALT_MASK);
+MapEvent.mKeybind('k',"func2","a2",java.awt.event.InputEvent.ALT_MASK);
+print("!!! finished");
+
+
+function createWindow() {
+   var theOwner = new Packages.java.awt.Frame();
+   var theWindow = new Packages.java.awt.Dialog(theOwner);
+   theWindow.setSize(350, 200);
+   theWindow.setTitle("Hello, World");
+   theWindow.setVisible(true);
+}
+//createWindow();
+//java.lang.System.out.println(300000)

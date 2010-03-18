@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<BugCollection version="1.1.1" sequence="0" timestamp="-1" analysisTimestamp="1162842323177" release="">
+  <Project filename="&lt;&lt;unnamed project&gt;&gt;">
+    <Jar>c:\docume~1\jensen\Desktop\home\javt\.</Jar>
+    <SrcDir>C:\Documents and Settings\jensen\Desktop\home\javt\javi</SrcDir>
+    <SrcDir>C:\Documents and Settings\jensen\Desktop\home\javt\history</SrcDir>
+  </Project>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.AtViewTest$TestCanvas">
+      <SourceLine classname="javi.AtViewTest$TestCanvas" sourcefile="AtviewTest.java" sourcepath="javi/AtviewTest.java"/>
+    </Class>
+    <Method classname="javi.AtViewTest$TestCanvas" name="paint" signature="(Ljava/awt/Graphics;)V" isStatic="false">
+      <SourceLine classname="javi.AtViewTest$TestCanvas" start="143" end="148" startBytecode="0" endBytecode="31" sourcefile="AtviewTest.java" sourcepath="javi/AtviewTest.java"/>
+    </Method>
+    <SourceLine classname="javi.AtViewTest$TestCanvas" start="144" end="144" startBytecode="18" endBytecode="18" sourcefile="AtviewTest.java" sourcepath="javi/AtviewTest.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <UserAnnotation/>
+    <Class classname="javi.Buffers$CircBuffer">
+      <SourceLine classname="javi.Buffers$CircBuffer" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+    </Class>
+    <Method classname="javi.Buffers$CircBuffer" name="getclip" signature="()V" isStatic="false">
+      <SourceLine classname="javi.Buffers$CircBuffer" start="239" end="251" startBytecode="0" endBytecode="125" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+    </Method>
+    <SourceLine classname="javi.Buffers$CircBuffer" start="247" end="247" startBytecode="98" endBytecode="98" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.Buffers$CircBuffer">
+      <SourceLine classname="javi.Buffers$CircBuffer" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+    </Class>
+    <Method classname="javi.Buffers$CircBuffer" name="enableClip" signature="(Ljava/lang/Object;)V" isStatic="false">
+      <SourceLine classname="javi.Buffers$CircBuffer" start="137" end="153" startBytecode="0" endBytecode="64" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+    </Method>
+    <SourceLine classname="javi.Buffers$CircBuffer" start="145" end="145" startBytecode="29" endBytecode="29" sourcefile="Buffers.java" sourcepath="javi/Buffers.java"/>
+  </BugInstance>
+  <BugInstance type="SF_SWITCH_FALLTHROUGH" priority="2" abbrev="SF" category="STYLE">
+    <Class classname="javi.EditContainer">
+      <SourceLine classname="javi.EditContainer" sourcefile="EditContainer.java" sourcepath="javi/EditContainer.java"/>
+    </Class>
+    <Method classname="javi.EditContainer" name="regsearch" signature="(Ljavi/Position;Ljavi/Position;ZLjava/util/regex/Matcher;II)Ljavi/Position;" isStatic="false">
+      <SourceLine classname="javi.EditContainer" start="274" end="307" startBytecode="0" endBytecode="261" sourcefile="EditContainer.java" sourcepath="javi/EditContainer.java"/>
+    </Method>
+    <SourceLine classname="javi.EditContainer" start="300" end="303" startBytecode="190" endBytecode="193" sourcefile="EditContainer.java" sourcepath="javi/EditContainer.java"/>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="4" abbrev="DLS" category="STYLE">
+    <UserAnnotation/>
+    <Class classname="javi.EditGroup">
+      <SourceLine classname="javi.EditGroup" sourcefile="EditGroup.java" sourcepath="javi/EditGroup.java"/>
+    </Class>
+    <Method classname="javi.EditGroup" name="doroutine" signature="(ILjava/lang/Object;IILjavi/FvContext;Ljavi/EventQueue;Z)Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.EditGroup" start="63" end="161" startBytecode="0" endBytecode="327" sourcefile="EditGroup.java" sourcepath="javi/EditGroup.java"/>
+    </Method>
+    <LocalVariable name="?" register="4" pc="652" role="LOCAL_VARIABLE_UNKNOWN"/>
+    <SourceLine classname="javi.EditGroup" start="139" end="139" startBytecode="650" endBytecode="650" sourcefile="EditGroup.java" sourcepath="javi/EditGroup.java"/>
+  </BugInstance>
+  <BugInstance type="DM_GC" priority="1" abbrev="Dm" category="PERFORMANCE">
+    <Class classname="javi.EditTester1">
+      <SourceLine classname="javi.EditTester1" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Class>
+    <Method classname="javi.EditTester1" name="perftest" signature="()V" isStatic="true">
+      <SourceLine classname="javi.EditTester1" start="1025" end="1080" startBytecode="0" endBytecode="492" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Method>
+    <SourceLine classname="javi.EditTester1" start="1043" end="1043" startBytecode="111" endBytecode="111" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+  </BugInstance>
+  <BugInstance type="DM_GC" priority="1" abbrev="Dm" category="PERFORMANCE">
+    <Class classname="javi.EventQueue">
+      <SourceLine classname="javi.EventQueue" sourcefile="EventQueue.java" sourcepath="javi/EventQueue.java"/>
+    </Class>
+    <Method classname="javi.EventQueue" name="inextEvent" signature="(Ljavi/View;)Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.EventQueue" start="44" end="77" startBytecode="0" endBytecode="162" sourcefile="EventQueue.java" sourcepath="javi/EventQueue.java"/>
+    </Method>
+    <SourceLine classname="javi.EventQueue" start="67" end="67" startBytecode="127" endBytecode="127" sourcefile="EventQueue.java" sourcepath="javi/EventQueue.java"/>
+  </BugInstance>
+  <BugInstance type="OS_OPEN_STREAM_EXCEPTION_PATH" priority="3" abbrev="OS" category="BAD_PRACTICE">
+    <UserAnnotation/>
+    <Class classname="javi.Executer">
+      <SourceLine classname="javi.Executer" sourcefile="Executer.java" sourcepath="javi/Executer.java"/>
+    </Class>
+    <Method classname="javi.Executer" name="process" signature="()V" isStatic="false">
+      <SourceLine classname="javi.Executer" start="26" end="54" startBytecode="0" endBytecode="95" sourcefile="Executer.java" sourcepath="javi/Executer.java"/>
+    </Method>
+    <SourceLine classname="javi.Executer" start="29" end="29" startBytecode="24" endBytecode="24" sourcefile="Executer.java" sourcepath="javi/Executer.java"/>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="javi.FileList">
+      <SourceLine classname="javi.FileList" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Class>
+    <Method classname="javi.FileList" name="openFilei" signature="(Ljava/lang/Object;Ljavi/View;)Ljavi/TextEdit;" isStatic="false">
+      <SourceLine classname="javi.FileList" start="226" end="251" startBytecode="0" endBytecode="68" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Method>
+    <Type descriptor="Ljavi/EditContainer;"/>
+    <Type descriptor="Ljavi/TextEdit;"/>
+    <SourceLine classname="javi.FileList" start="234" end="234" startBytecode="27" endBytecode="27" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    <SourceLine classname="javi.FileList" start="238" end="238" startBytecode="41" endBytecode="41" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <Class classname="javi.FileList">
+      <SourceLine classname="javi.FileList" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Class>
+    <Method classname="javi.FileList" name="main" signature="([Ljava/lang/String;)V" isStatic="true">
+      <SourceLine classname="javi.FileList" start="537" end="557" startBytecode="0" endBytecode="231" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Method>
+    <SourceLine classname="javi.FileList" start="551" end="551" startBytecode="200" endBytecode="200" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.FileList$ExitEvent">
+      <SourceLine classname="javi.FileList$ExitEvent" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Class>
+    <Method classname="javi.FileList$ExitEvent" name="execute" signature="()V" isStatic="false">
+      <SourceLine classname="javi.FileList$ExitEvent" start="470" end="478" startBytecode="0" endBytecode="43" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Method>
+    <SourceLine classname="javi.FileList$ExitEvent" start="472" end="472" startBytecode="6" endBytecode="6" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+  </BugInstance>
+  <BugInstance type="SF_SWITCH_FALLTHROUGH" priority="2" abbrev="SF" category="STYLE">
+    <Class classname="javi.FileList$FileParser">
+      <SourceLine classname="javi.FileList$FileParser" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Class>
+    <Method classname="javi.FileList$FileParser" name="getnext" signature="()Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.FileList$FileParser" start="356" end="454" startBytecode="0" endBytecode="585" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+    </Method>
+    <SourceLine classname="javi.FileList$FileParser" start="390" end="393" startBytecode="225" endBytecode="228" sourcefile="FileList.java" sourcepath="javi/FileList.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <Class classname="javi.FindBugs">
+      <SourceLine classname="javi.FindBugs" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+    </Class>
+    <Method classname="javi.FindBugs" name="main" signature="([Ljava/lang/String;)V" isStatic="true">
+      <SourceLine classname="javi.FindBugs" start="38" end="50" startBytecode="0" endBytecode="101" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+    </Method>
+    <SourceLine classname="javi.FindBugs" start="45" end="45" startBytecode="69" endBytecode="69" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.FindBugs$FindBugRunner">
+      <SourceLine classname="javi.FindBugs$FindBugRunner" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+    </Class>
+    <Method classname="javi.FindBugs$FindBugRunner" name="parseline" signature="(Ljava/lang/String;)Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.FindBugs$FindBugRunner" start="95" end="122" startBytecode="0" endBytecode="169" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+    </Method>
+    <SourceLine classname="javi.FindBugs$FindBugRunner" start="113" end="113" startBytecode="105" endBytecode="105" sourcefile="FindBugs.java" sourcepath="javi/FindBugs.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.GccInst">
+      <SourceLine classname="javi.GccInst" sourcefile="MakeCmd.java" sourcepath="javi/MakeCmd.java"/>
+    </Class>
+    <Method classname="javi.GccInst" name="parseline" signature="(Ljava/lang/String;)Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.GccInst" start="124" end="167" startBytecode="0" endBytecode="303" sourcefile="MakeCmd.java" sourcepath="javi/MakeCmd.java"/>
+    </Method>
+    <SourceLine classname="javi.GccInst" start="149" end="149" startBytecode="165" endBytecode="165" sourcefile="MakeCmd.java" sourcepath="javi/MakeCmd.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <Class classname="javi.JavaCompilerInst">
+      <SourceLine classname="javi.JavaCompilerInst" sourcefile="JavaCompiler.java" sourcepath="javi/JavaCompiler.java"/>
+    </Class>
+    <Method classname="javi.JavaCompilerInst" name="parsefile" signature="(Ljava/lang/String;)Ljavi/Position;" isStatic="false">
+      <SourceLine classname="javi.JavaCompilerInst" start="80" end="122" startBytecode="0" endBytecode="202" sourcefile="JavaCompiler.java" sourcepath="javi/JavaCompiler.java"/>
+    </Method>
+    <SourceLine classname="javi.JavaCompilerInst" start="101" end="101" startBytecode="82" endBytecode="82" sourcefile="JavaCompiler.java" sourcepath="javi/JavaCompiler.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.Javi">
+      <SourceLine classname="javi.Javi" sourcefile="Javi.java" sourcepath="javi/Javi.java"/>
+    </Class>
+    <Method classname="javi.Javi" name="main" signature="([Ljava/lang/String;)V" isStatic="true">
+      <SourceLine classname="javi.Javi" start="8" end="59" startBytecode="0" endBytecode="282" sourcefile="Javi.java" sourcepath="javi/Javi.java"/>
+    </Method>
+    <SourceLine classname="javi.Javi" start="23" end="23" startBytecode="67" endBytecode="67" sourcefile="Javi.java" sourcepath="javi/Javi.java"/>
+    <SourceLine classname="javi.Javi" start="39" end="39" startBytecode="183" endBytecode="183" sourcefile="Javi.java" sourcepath="javi/Javi.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.MapEvent">
+      <SourceLine classname="javi.MapEvent" sourcefile="MapEvent.java" sourcepath="javi/MapEvent.java"/>
+    </Class>
+    <Method classname="javi.MapEvent" name="mouserelease" signature="(Ljava/awt/event/MouseEvent;Ljavi/FvContext;)V" isStatic="false">
+      <SourceLine classname="javi.MapEvent" start="291" end="318" startBytecode="0" endBytecode="209" sourcefile="MapEvent.java" sourcepath="javi/MapEvent.java"/>
+    </Method>
+    <SourceLine classname="javi.MapEvent" start="304" end="304" startBytecode="98" endBytecode="98" sourcefile="MapEvent.java" sourcepath="javi/MapEvent.java"/>
+  </BugInstance>
+  <BugInstance type="DM_GC" priority="1" abbrev="Dm" category="PERFORMANCE">
+    <Class classname="javi.MiscCommands$RedrawEvent">
+      <SourceLine classname="javi.MiscCommands$RedrawEvent" sourcefile="MiscCommands.java" sourcepath="javi/MiscCommands.java"/>
+    </Class>
+    <Method classname="javi.MiscCommands$RedrawEvent" name="execute" signature="()V" isStatic="false">
+      <SourceLine classname="javi.MiscCommands$RedrawEvent" start="64" end="95" startBytecode="0" endBytecode="197" sourcefile="MiscCommands.java" sourcepath="javi/MiscCommands.java"/>
+    </Method>
+    <SourceLine classname="javi.MiscCommands$RedrawEvent" start="80" end="80" startBytecode="103" endBytecode="103" sourcefile="MiscCommands.java" sourcepath="javi/MiscCommands.java"/>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="4" abbrev="DLS" category="STYLE">
+    <UserAnnotation/>
+    <Class classname="javi.MoveGroup">
+      <SourceLine classname="javi.MoveGroup" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+    </Class>
+    <Method classname="javi.MoveGroup" name="doroutine" signature="(ILjava/lang/Object;IILjavi/FvContext;Ljavi/EventQueue;Z)Ljava/lang/Object;" isStatic="false">
+      <SourceLine classname="javi.MoveGroup" start="71" end="139" startBytecode="0" endBytecode="283" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+    </Method>
+    <LocalVariable name="?" register="4" pc="549" role="LOCAL_VARIABLE_UNKNOWN"/>
+    <SourceLine classname="javi.MoveGroup" start="128" end="128" startBytecode="547" endBytecode="547" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.MoveGroup">
+      <SourceLine classname="javi.MoveGroup" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+    </Class>
+    <Method classname="javi.MoveGroup" name="balancechar" signature="(Ljavi/FvContext;)V" isStatic="false">
+      <SourceLine classname="javi.MoveGroup" start="797" end="895" startBytecode="0" endBytecode="470" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+    </Method>
+    <SourceLine classname="javi.MoveGroup" start="801" end="801" startBytecode="14" endBytecode="14" sourcefile="MoveGroup.java" sourcepath="javi/MoveGroup.java"/>
+  </BugInstance>
+  <BugInstance type="SE_TRANSIENT_FIELD_NOT_RESTORED" priority="5" abbrev="Se" category="BAD_PRACTICE">
+    <Class classname="javi.OldView">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Class>
+    <Field classname="javi.OldView" name="dbuf" signature="Ljava/awt/Image;" isStatic="false">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="SE_TRANSIENT_FIELD_NOT_RESTORED" priority="5" abbrev="Se" category="BAD_PRACTICE">
+    <Class classname="javi.OldView">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Class>
+    <Field classname="javi.OldView" name="imageg" signature="Ljava/awt/Graphics2D;" isStatic="false">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="SE_TRANSIENT_FIELD_NOT_RESTORED" priority="5" abbrev="Se" category="BAD_PRACTICE">
+    <Class classname="javi.OldView">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Class>
+    <Field classname="javi.OldView" name="oldgr" signature="Ljava/awt/Graphics;" isStatic="false">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="SE_TRANSIENT_FIELD_NOT_RESTORED" priority="5" abbrev="Se" category="BAD_PRACTICE">
+    <Class classname="javi.OldView">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Class>
+    <Field classname="javi.OldView" name="text" signature="Ljavi/EditContainer;" isStatic="false">
+      <SourceLine classname="javi.OldView" sourcefile="OldView.java" sourcepath="javi/OldView.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.PositionIoc">
+      <SourceLine classname="javi.PositionIoc" sourcefile="PositionIoc.java" sourcepath="javi/PositionIoc.java"/>
+    </Class>
+    <Method classname="javi.PositionIoc" name="parsefile" signature="(Ljava/lang/String;)Ljavi/Position;" isStatic="false">
+      <SourceLine classname="javi.PositionIoc" start="16" end="26" startBytecode="0" endBytecode="103" sourcefile="PositionIoc.java" sourcepath="javi/PositionIoc.java"/>
+    </Method>
+    <SourceLine classname="javi.PositionIoc" start="22" end="22" startBytecode="57" endBytecode="57" sourcefile="PositionIoc.java" sourcepath="javi/PositionIoc.java"/>
+  </BugInstance>
+  <BugInstance type="SE_TRANSIENT_FIELD_NOT_RESTORED" priority="5" abbrev="Se" category="BAD_PRACTICE">
+    <Class classname="javi.ReadOnlyException">
+      <SourceLine classname="javi.ReadOnlyException" sourcefile="ReadOnlyException.java" sourcepath="javi/ReadOnlyException.java"/>
+    </Class>
+    <Field classname="javi.ReadOnlyException" name="ev" signature="Ljavi/EditContainer;" isStatic="false">
+      <SourceLine classname="javi.ReadOnlyException" sourcefile="ReadOnlyException.java" sourcepath="javi/ReadOnlyException.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="4" abbrev="DLS" category="STYLE">
+    <Class classname="javi.TextEdit">
+      <SourceLine classname="javi.TextEdit" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Class>
+    <Method classname="javi.TextEdit" name="commandproc1" signature="(Ljava/lang/String;I)I" isStatic="false">
+      <SourceLine classname="javi.TextEdit" start="111" end="204" startBytecode="0" endBytecode="203" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Method>
+    <LocalVariable name="?" register="4" pc="13" role="LOCAL_VARIABLE_UNKNOWN"/>
+    <SourceLine classname="javi.TextEdit" start="112" end="112" startBytecode="11" endBytecode="11" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    <SourceLine classname="javi.TextEdit" start="113" end="113" startBytecode="14" endBytecode="14" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    <SourceLine classname="javi.TextEdit" start="146" end="146" startBytecode="154" endBytecode="154" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    <SourceLine classname="javi.TextEdit" start="154" end="154" startBytecode="200" endBytecode="200" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+  </BugInstance>
+  <BugInstance type="SF_SWITCH_FALLTHROUGH" priority="2" abbrev="SF" category="STYLE">
+    <Class classname="javi.TextEdit">
+      <SourceLine classname="javi.TextEdit" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Class>
+    <Method classname="javi.TextEdit" name="commandproc1" signature="(Ljava/lang/String;I)I" isStatic="false">
+      <SourceLine classname="javi.TextEdit" start="111" end="204" startBytecode="0" endBytecode="449" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+    </Method>
+    <SourceLine classname="javi.TextEdit" start="176" end="180" startBytecode="346" endBytecode="348" sourcefile="TextEdit.java" sourcepath="javi/TextEdit.java"/>
+  </BugInstance>
+  <BugInstance type="NM_METHOD_NAMING_CONVENTION" priority="3" abbrev="Nm" category="BAD_PRACTICE">
+    <Class classname="javi.Tools">
+      <SourceLine classname="javi.Tools" sourcefile="Tools.java" sourcepath="javi/Tools.java"/>
+    </Class>
+    <Method classname="javi.Tools" name="Assert" signature="(ZLjava/lang/Object;)Z" isStatic="true">
+      <SourceLine classname="javi.Tools" start="25" end="27" startBytecode="0" endBytecode="35" sourcefile="Tools.java" sourcepath="javi/Tools.java"/>
+    </Method>
+  </BugInstance>
+  <BugInstance type="DM_GC" priority="1" abbrev="Dm" category="PERFORMANCE">
+    <Class classname="javi.View">
+      <SourceLine classname="javi.View" sourcefile="view.java" sourcepath="javi/view.java"/>
+    </Class>
+    <Method classname="javi.View" name="getGraphics2D" signature="()Ljava/awt/Graphics2D;" isStatic="false">
+      <SourceLine classname="javi.View" start="541" end="550" startBytecode="0" endBytecode="33" sourcefile="view.java" sourcepath="javi/view.java"/>
+    </Method>
+    <SourceLine classname="javi.View" start="542" end="542" startBytecode="12" endBytecode="12" sourcefile="view.java" sourcepath="javi/view.java"/>
+  </BugInstance>
+  <BugInstance type="SF_SWITCH_FALLTHROUGH" priority="2" abbrev="SF" category="STYLE">
+    <Class classname="javi.View">
+      <SourceLine classname="javi.View" sourcefile="view.java" sourcepath="javi/view.java"/>
+    </Class>
+    <Method classname="javi.View" name="rpaint" signature="()V" isStatic="false">
+      <SourceLine classname="javi.View" start="271" end="299" startBytecode="0" endBytecode="121" sourcefile="view.java" sourcepath="javi/view.java"/>
+    </Method>
+    <SourceLine classname="javi.View" start="276" end="279" startBytecode="53" endBytecode="56" sourcefile="view.java" sourcepath="javi/view.java"/>
+  </BugInstance>
+  <BugInstance type="SE_NO_SERIALVERSIONID" priority="3" abbrev="SnVI" category="BAD_PRACTICE">
+    <UserAnnotation/>
+    <Class classname="javi.ViewTest">
+      <SourceLine classname="javi.ViewTest" sourcefile="ViewTest.java" sourcepath="javi/ViewTest.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="javi.Vt100">
+      <SourceLine classname="javi.Vt100" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Class>
+    <Method classname="javi.Vt100" name="eraseChars" signature="(ILjava/lang/StringBuffer;)V" isStatic="false">
+      <SourceLine classname="javi.Vt100" start="228" end="236" startBytecode="0" endBytecode="52" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Method>
+    <Type descriptor="Ljavi/EditContainer;"/>
+    <Type descriptor="Ljavi/TextEdit;"/>
+    <SourceLine classname="javi.Vt100" start="235" end="235" startBytecode="82" endBytecode="82" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="javi.Vt100">
+      <SourceLine classname="javi.Vt100" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Class>
+    <Method classname="javi.Vt100" name="eraseToEnd" signature="(Ljava/lang/StringBuffer;)V" isStatic="false">
+      <SourceLine classname="javi.Vt100" start="215" end="220" startBytecode="0" endBytecode="35" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Method>
+    <Type descriptor="Ljavi/EditContainer;"/>
+    <Type descriptor="Ljavi/TextEdit;"/>
+    <SourceLine classname="javi.Vt100" start="218" end="218" startBytecode="47" endBytecode="47" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="javi.Vt100">
+      <SourceLine classname="javi.Vt100" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Class>
+    <Method classname="javi.Vt100" name="insertString" signature="(Ljava/lang/StringBuffer;)V" isStatic="false">
+      <SourceLine classname="javi.Vt100" start="289" end="372" startBytecode="0" endBytecode="345" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    </Method>
+    <Type descriptor="Ljavi/EditContainer;"/>
+    <Type descriptor="Ljavi/TextEdit;"/>
+    <SourceLine classname="javi.Vt100" start="367" end="367" startBytecode="708" endBytecode="708" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    <SourceLine classname="javi.Vt100" start="331" end="331" startBytecode="389" endBytecode="389" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    <SourceLine classname="javi.Vt100" start="328" end="328" startBytecode="350" endBytecode="350" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    <SourceLine classname="javi.Vt100" start="351" end="351" startBytecode="543" endBytecode="543" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+    <SourceLine classname="javi.Vt100" start="353" end="353" startBytecode="592" endBytecode="592" sourcefile="Vt100.java" sourcepath="javi/Vt100.java"/>
+  </BugInstance>
+  <BugInstance type="SF_SWITCH_FALLTHROUGH" priority="2" abbrev="SF" category="STYLE">
+    <Class classname="javi.Vt100Parser">
+      <SourceLine classname="javi.Vt100Parser" sourcefile="Vt100Parser.java" sourcepath="javi/Vt100Parser.java"/>
+    </Class>
+    <Method classname="javi.Vt100Parser" name="execute" signature="()V" isStatic="false">
+      <SourceLine classname="javi.Vt100Parser" start="38" end="391" startBytecode="0" endBytecode="2487" sourcefile="Vt100Parser.java" sourcepath="javi/Vt100Parser.java"/>
+    </Method>
+    <SourceLine classname="javi.Vt100Parser" start="49" end="52" startBytecode="121" endBytecode="124" sourcefile="Vt100Parser.java" sourcepath="javi/Vt100Parser.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <Class classname="javi.XrefReader">
+      <SourceLine classname="javi.XrefReader" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+    </Class>
+    <Method classname="javi.XrefReader" name="main" signature="([Ljava/lang/String;)V" isStatic="true">
+      <SourceLine classname="javi.XrefReader" start="16" end="23" startBytecode="0" endBytecode="74" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+    </Method>
+    <SourceLine classname="javi.XrefReader" start="20" end="20" startBytecode="51" endBytecode="51" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="4" abbrev="REC" category="STYLE">
+    <Class classname="javi.XrefReader">
+      <SourceLine classname="javi.XrefReader" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+    </Class>
+    <Method classname="javi.XrefReader" name="parsefile" signature="(Ljava/lang/String;)Ljavi/Position;" isStatic="false">
+      <SourceLine classname="javi.XrefReader" start="27" end="37" startBytecode="0" endBytecode="45" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+    </Method>
+    <SourceLine classname="javi.XrefReader" start="32" end="32" startBytecode="30" endBytecode="30" sourcefile="XrefReader.java" sourcepath="javi/XrefReader.java"/>
+  </BugInstance>
+  <BugInstance type="NM_CLASS_NAMING_CONVENTION" priority="3" abbrev="Nm" category="BAD_PRACTICE">
+    <Class classname="javi.vic">
+      <SourceLine classname="javi.vic" sourcefile="vic.java" sourcepath="javi/vic.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="5" abbrev="REC" category="STYLE">
+    <Class classname="javi.vic$QuitClass">
+      <SourceLine classname="javi.vic$QuitClass" sourcefile="vic.java" sourcepath="javi/vic.java"/>
+    </Class>
+    <Method classname="javi.vic$QuitClass" name="run" signature="()V" isStatic="false">
+      <SourceLine classname="javi.vic$QuitClass" start="144" end="149" startBytecode="0" endBytecode="33" sourcefile="vic.java" sourcepath="javi/vic.java"/>
+    </Method>
+    <SourceLine classname="javi.vic$QuitClass" start="145" end="145" startBytecode="6" endBytecode="6" sourcefile="vic.java" sourcepath="javi/vic.java"/>
+  </BugInstance>
+  <Errors></Errors>
+  <FindBugsSummary timestamp="Mon, 6 Nov 2006 14:45:23 -0500" total_classes="0" total_bugs="0" total_size="0" num_packages="0" cpu_seconds="0.02" clock_seconds="0.02" peak_mbytes="98.38" gc_seconds="0.00"></FindBugsSummary>
+  <ClassFeatures></ClassFeatures>
+  <History></History>
+</BugCollection>

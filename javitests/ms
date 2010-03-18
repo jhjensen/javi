@@ -1,0 +1,12 @@
+JDK=/cygdrive/c/Progra~1/Java/jdk1.6.0_02
+JDK2="c:\Progra~1\Java\jdk1.6.0_02"
+myprog="C:\cygwin\home\Dad\javt"
+
+CLASSPATH="$myprog;$myprog\rhino1_6R5\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
+DEBUGFLAGS="-Xdebug -Xrunjdwp:transport=dt_shmem,address=currjdbconn,server=y,suspend=n"
+export PATH=$JDK/bin:$PATH:/usr/local/bin
+
+
+BTCLASS=-Xbootclasspath/a:$JDK/lib/tools.jar
+#cpover = -classpath "$myprog\javi3\javi.jar;$CLASSPATH" 
+$JDK/bin/java $BTCLASS -mx64m $cpover javi.Javi perftest.java ../javi ../javi/UI.java

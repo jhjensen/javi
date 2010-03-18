@@ -1,0 +1,55 @@
+full screen mode, going to command line is slow, and appears to repaint alot.
+OldView used to zero out imageg, fixed one probem, but is still not thread safe.
+
+modal dialog
+lock access to .dmp2
+list of shells
+improve remote ctag.
+improve local/remote mkid
+improve vt100
+
+redo PersitantStack->RanFileArray
+
+jython
+diredit
+fix cmd line.
+multiple ssh
+{[(0O;:.,Ll1| 1234 '`"um
+ni
+er
+
+
+fix warnings.
+
+use Iterable<OType> in EditContainer instead of Object Array
+EditContainer Container/Iterator
+EditVec could be Container?
+
+IOcontroller could be Iterator<OType>?
+
+chinese
+edit file list
+Junit testcases
+new view
+findbugs
+static import.
+varargs?, boxing
+
+done :
+   :asdf\r up arrow right arrow down arrow(down arrow isnt fixing posx)
+   fix ^g problem
+   fix tag waiting for file read problem
+   fix using the file version requires a repaint(maxline removeal)
+   Remake vi.exe(python?)
+   edit already open file fails.
+   unix filetype
+   only catch in main?
+   load modules
+   HashTable -> HashMap
+   R
+   enum
+   static import
+   fix \r\n so It stays the same for files
+   make all positions have a FileDescriptor
+   O sometimes pukes
+   ex move, copy  are wrong

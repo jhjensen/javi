@@ -1,0 +1,11 @@
+id-utils-4.2
+findbugs-1.3.9
+*.exe
+*.o
+*.dmp2
+*.class
+*/tags
+*/ID
+rhino1_7R2
+juniversalchardet-1.0.3.jar
+javitests/junit3.8.2

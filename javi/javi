@@ -1,0 +1,15 @@
+#!/bin/bash
+mycp=$myprog\\juniversalchardet-1.0.3.jar\;$myprog\\rhino1_7R2\\js.jar\;$myprog\\junit3.8.2\\junit.jar\;$JDK2\\lib\\tools.jar
+#export CLASSPATH="$myprog;$mycp" 
+#export PATH=$JDK1/bin:/usr/local/bin:$PATH
+
+#jarf=$myprog\\javi\\javi.jar
+
+JDK=/usr/lib/jvm/java-6-sun-1.6.0.15
+myprog=/usr/share/java
+mycp=$myprog/javi.jar:$myprog/juniversalchardet-1.0.3.jar:$myprog/js.jar:$myprog/RXTXcomm.jar
+export CLASSPATH="$mycp" 
+echo  $mycp
+active=/home/dad/javt
+java -cp $active:$mycp -Xmx64m javi.Javi -p ~/.javipersist $1
+
