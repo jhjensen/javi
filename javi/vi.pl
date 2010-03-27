@@ -20,22 +20,22 @@ use Encode qw(encode decode);
 
    $proto   = getprotobyname('tcp');
    socket(SOCK, PF_INET, SOCK_STREAM, $proto)  || die "socket: $!";
-print("paddr $paddr\n");
    if (connect(SOCK, $paddr) ) {
 
-print("1.1\n");
-      print SOCK "\000\000\001";
-      print SOCK pack ("n",1+ $#ARGV);
+      print SOCK "\001";
      { 
           my $ofh = select SOCK;
 	  $| = 1;
 	  select $ofh;
      }
-
-print "xxxxx\n";
+     
       while (my $filename = shift(@ARGV)) {
          my $tf= $filename;
-         my $rp ;
+         if ($tf eq "-p")  {
+            shift(@ARGV);
+            next;
+         }
+         my $rp;
          if ( $^O eq "Windows" ) {
             if  ($tf =~ /.*\\.*/) {
             $rp = encode("utf8",$filename);
@@ -43,24 +43,18 @@ print "xxxxx\n";
             } else {
                $rp =  `cygpath -w -a -C UTF8 $filename`;
                chop $rp;
-            print "fileb $rp\n";
             }
          } else {
-            print "fileb :$filename:\n";
             $rp = encode("utf8",$filename);
          }
          print "filex :$rp:\n";
-         print SOCK pack("n",length($rp));
-         print SOCK $rp;
+         print SOCK "$rp\n";
       }
-#       shutdown(SOCK,1);
-print "about to read line\n";
+      shutdown(SOCK,1);
       $line = <SOCK>;
-print "read line\n";
       close (SOCK)  || die "exiting 5 $!";
       printf("exiting %d %d\n",5,0); 
    } else {
-print("^O $^O\n");
       if ( $^O eq "Windows" ) {
 
 print("3\n");
@@ -104,6 +98,6 @@ print("4 :@ARGV:\n");
          #my jarf="$myprog/javi/javi.jar";
          my $jarf="";
          my $BTCLASS="-Xbootclasspath/a:$JDK/lib/tools.jar";
-         system("java -cp $jarf:$mycp $BTCLASS  -Xmx64m javi.Javi @ARGV");
+         system("java  >~/.javiout 2>&1 -cp $jarf:$mycp $BTCLASS  -Xmx64m javi.Javi \"@ARGV\"");
       }
    }

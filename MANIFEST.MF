@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Created-By: 1.6.0_15 (Sun Microsystems Inc.)
+MAIN-Class: javi.Javi
+Class-Path: juniversalchardet-1.0.3.jar  RXTXcomm.jar js.jar
+

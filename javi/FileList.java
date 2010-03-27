@@ -165,17 +165,17 @@ static class FileListEvent extends MapEvent.JaviEvent {
 }
 
 static void make(String fnames) { // takes \n seperated now
-  trace("FileList.make entered fnames" + fnames);
+  //trace("FileList.make entered fnames" + fnames);
   if (instance==null) {
      FileProperties prop = new FileProperties(FileDescriptor.InternalFd.make("filelist")
         ,FileConverter.fileConverter);
-     FileParser fp =  new FileParser(prop,fnames.replace(' ','\n'));
+     FileParser fp =  new FileParser(prop,fnames);
      instance = new FileList(fp,prop);
    } else {
       trace("");
       //instance.openFile(fnames,null); 
       try {
-         Object nobj = instance.openFileList(fnames,null);
+         Object nobj = instance.openFileListp(fnames,null);
          if (nobj==null) { // should only happen when the given files are already open
             int nindex = fnames.indexOf('\n');
             if (nindex != -1)
@@ -329,17 +329,39 @@ private TextEdit<String> findOpenWithDirlist(String fname) {
     return null;
 }
 
-private TextEdit<String> openFileList(String flist,View vi)  throws IOException,InputException{
-    return openFileList(new BufferedReader(new StringReader(flist)),vi);
+private TextEdit<String> openFileListp(String flist,View vi)  throws IOException,InputException{
+    return openFileListp(new BufferedReader(new StringReader(flist)),vi);
 }
 
-private TextEdit<String> openFileList(BufferedReader flist,View vi) throws IOException,InputException {
+static TextEdit<String> openFileList(BufferedReader flist,View vi)  throws IOException,InputException{
+   return instance.openFileListp(flist,vi);
+}
+
+private TextEdit<String> openFileListp(BufferedReader flist,View vi) throws IOException,InputException {
    int index = vi==null
       ? 1
       : FvContext.getcontext(vi,this).getCurrentIndex()+1;
    TextEdit<String> text = insertStream(flist,index);
    instance.checkpoint();
+   showEdit(text,vi);
    return text;
+}
+
+private FvContext showEdit(TextEdit<String> ed,View vi) {
+   //trace("ed " + ed);
+   if (null !=ed ) {
+      int index = indexOf(ed);
+      if (vi==null) 
+         vi = FvContext.getCurrFvc().vi;
+      if (vi!=null) {
+         FvContext.getcontext(vi,this).cursoryabs(index);
+         try {
+            return UI.connectfv(ed,vi);
+         } catch (InputException e) {
+         }
+      }
+  }
+   return null;
 }
 
 private FvContext open1File(String fname,View vi)  {
@@ -363,21 +385,7 @@ private FvContext open1File(String fname,View vi)  {
       int index = FvContext.getcontext(FvContext.getCurrFvc().vi,instance).inserty();
       instance.insertOne(text,index);
    }
-   
-   //trace("openFile text " + text);
-   if (null !=text ) {
-      int index = indexOf(text);
-      if (vi==null) 
-         vi = FvContext.getCurrFvc().vi;
-      if (vi!=null) {
-         FvContext.getcontext(vi,this).cursoryabs(index);
-         try {
-            return UI.connectfv(text,vi);
-         } catch (InputException e) {
-         }
-      }
-  }
-   return null;
+   return showEdit(text,vi);
 }
 
 

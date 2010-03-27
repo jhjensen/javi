@@ -13,6 +13,10 @@ LINK=ld
 all : vi
 all1: ID javi.jar remote vi
 
+install : javi.jar
+	cp javi.jar vi.pl /usr/share/java
+	chmod +x javi.jar vi.pl /usr/share/java/vi.pl /usr/share/java/javi.jar
+
 ID: *.java
 	ctags -n -R . ../history plugin
 	mkid . ../history plugin
@@ -41,5 +45,5 @@ vi: vi.cpp
 clean:
 	rm -f vi.exe vi.obj
 
-javi.jar: *.class 
-	cd ..;$(JDKPATH)/bin/jar -0cf javi/javi.jar javi/*.class history/*.class
+javi.jar: *.class ../MANIFEST.MF 
+	cd ..;$(JDKPATH)/bin/jar -0cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class

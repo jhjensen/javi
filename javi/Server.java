@@ -1,8 +1,9 @@
 package javi;
 
 import java.io.IOException;
-import java.io.DataOutputStream;
-import java.io.DataInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.HashMap;
 class Server implements Runnable,FileStatusListener {
 
    //vic serv;
-   HashMap<EditContainer,DataOutputStream> shash=new HashMap<EditContainer,DataOutputStream>();
+   HashMap<EditContainer,BufferedOutputStream> shash=new HashMap<EditContainer,BufferedOutputStream>();
    ServerSocket lsock;
 
    Server(int port) throws IOException {
@@ -23,25 +24,28 @@ class Server implements Runnable,FileStatusListener {
       Socket sock=null;
       while(true) try {
          sock=lsock.accept();
-         DataOutputStream outstream=new DataOutputStream(sock.getOutputStream());
+         BufferedOutputStream outstream=new BufferedOutputStream(sock.getOutputStream());
 
-         DataInputStream instream=new DataInputStream(sock.getInputStream());
-         short len;
-         instream.readShort(); // read in dummy length
-         if (1!= instream.readByte()) {
+         BufferedReader instream=new BufferedReader(new InputStreamReader(sock.getInputStream(),"UTF-8"));
+         
+         if (1!= instream.read())  {
             throw new InputException("invalid byte from remote");
          }
-         len = instream.readShort(); // read number of arguments
-
+/*
          StringBuilder sb = new StringBuilder();
-         for(int i = 0;i<len;i++)  {
+         while(true) {
+           String fname = DataInputStream.readUTF(instream);
+           Tools.trace("Server read in name " + fname);
+           if (fname.length()==0)
+              break;
            sb.append(DataInputStream.readUTF(instream));
            sb.append("\n");
          }
          Tools.trace("editing line:" + sb + ":");
-         FvContext fv = (FvContext)Rgroup.doroutine("vi",sb.toString(),1,1,FvContext.getCurrFvc(), false);
-         if (fv!=null) {
-            shash.put(fv.edvec,outstream);
+*/
+         EditContainer ed = FileList.openFileList(instream,null);
+         if (ed!=null) {
+            shash.put(ed,outstream);
             UI.toFront();
          }
       } catch (Throwable e) {
@@ -59,7 +63,7 @@ class Server implements Runnable,FileStatusListener {
 
    void donefile(EditContainer ev) {
       //ui.trace("server.donefile entered " + ev);
-      DataOutputStream outstream = shash.get(ev);
+      BufferedOutputStream outstream = shash.get(ev);
       if (outstream==null)
          return;
       try {
