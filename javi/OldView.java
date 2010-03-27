@@ -614,10 +614,11 @@ void screeny(int amount)  {
 }
 
 public Dimension getPreferredSize() {
+   //trace("getPreferredSize screensize " + screenSize + " charheight +" + charheight  + " pixelWidth " + pixelWidth );
    return new Dimension(pixelWidth,screenSize*charheight);
 //Thread.dumpStack();
-   //trace("getPreferredSize screensize " + screenSize + " charheight +" + charheight + toString() + d);
 }
+
 void setSizebyChar(int x, int y) {
    //trace("setSizebyChar x = " + x + " y = " + y);
    if (x<0)
@@ -634,7 +635,6 @@ void setSizebyChar(int x, int y) {
 
 public  void setSize(int x,int y) {
   //trace("setSize entered (" + x + "," + y + ")" + this);
-  //Thread.dumpStack();
   //if (y==0){
   // Thread.dumpStack();
   // return;
@@ -653,5 +653,6 @@ public  void setSize(int x,int y) {
        moveScreen(screenposy-screenSize+1);
    //imageg=null;
    //trace("oldview = " + this + " cliprect = " + cliprect);
+   //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
 }
 }

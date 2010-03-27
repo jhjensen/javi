@@ -101,6 +101,7 @@ public boolean isFocusable() {
 }
 
 private void common() {
+/*
    HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
        KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
    for (Iterator it = keyset.iterator();it.hasNext();) {
@@ -111,6 +112,7 @@ private void common() {
    setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
 
    enableInputMethods(false);
+*/
    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 }
 

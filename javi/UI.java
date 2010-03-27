@@ -1,7 +1,6 @@
 package javi;
 
 import java.awt.AWTKeyStroke;
-import java.awt.KeyboardFocusManager;
 import java.awt.Button;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
@@ -17,6 +16,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
 import java.awt.Label;
 import java.awt.LayoutManager;
 import java.awt.Menu;
@@ -25,6 +25,7 @@ import java.awt.Point;
 import java.awt.PopupMenu;
 import java.awt.TextArea;
 import java.awt.TextField;
+import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.datatransfer.Transferable;
@@ -610,17 +611,18 @@ static class TestFrame extends  Frame {
    TestFrame(String str,String namei) {
       super(str);
       name = namei;
-   HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
-       KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
-   for (Iterator it = keyset.iterator();it.hasNext();) {
-       AWTKeyStroke key = (AWTKeyStroke)(it.next());
-       if (key.getKeyCode()==KeyEvent.VK_TAB && key.getModifiers() == 0)
-         it.remove();
-   }
-   setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
+      HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
+          KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+      for (Iterator it = keyset.iterator();it.hasNext();) {
+          AWTKeyStroke key = (AWTKeyStroke)(it.next());
+          if (key.getKeyCode()==KeyEvent.VK_TAB && key.getModifiers() == 0)
+            it.remove();
+      }
 
-   enableInputMethods(false);
-   enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK| AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
+
+      enableInputMethods(false);
+      enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK| AWTEvent.MOUSE_WHEEL_EVENT_MASK);
    }
 
    public String toString() {
@@ -633,6 +635,60 @@ static class TestFrame extends  Frame {
       super.validate();
   }
 
+//   public void setSize(int width,int height) {
+//      trace("!!!!!!!!! frame set size ("+ width + "," + height +")");
+//      trace("!!!!!!!!! frame max size "+getMaximizedBounds());
+//      super.setSize(width,height);
+//   }
+
+   public Dimension preferredSize() {
+       
+      //trace ("preferredSize");
+      //trace (" frm.getExtendedState()  "+ frm.getExtendedState());
+      //trace (" Frame.MAXIMIZED_BOTH "+ Frame.MAXIMIZED_BOTH);
+      if (/*this == fullFrame || ???? */
+             ((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH))
+         return getSize();
+
+       int ccount = getComponentCount();
+       int x,y;
+       x=y=0;
+       boolean viewFlag = false;
+       for (int i =0;i<ccount;i++) {
+          Component cp =getComponent(i);
+          //trace("component "+ cp + " height " + cp.getSize() + " visible " + cp.isVisible());
+          if (cp.isVisible()) {
+             if (cp instanceof View)
+                if (viewFlag)
+                  return getSize();
+               else
+                  viewFlag=true;
+             //trace("preferred size " + cp.getPreferredSize());
+             Dimension cs =cp.getPreferredSize();
+             if (x<cs.width)
+               x =cs.width;
+             y+=cs.height;
+          }
+       }
+       Insets inset = getInsets();
+       Toolkit awtKit = Toolkit.getDefaultToolkit();
+       //trace("x "  + x + " y " + y  + " insets " + inset);
+       if (inset!=null) {
+          //trace("inset " + inset);
+          x += inset.left + inset.right;
+          y += inset.top + inset.bottom;
+       }
+       Dimension screen = awtKit.getScreenSize();
+       //trace("screen size " + screen);
+       if (screen.width < x)
+          x = screen.width;
+       if (screen.height < y)
+          y = screen.height;
+
+       Dimension d = new Dimension(x,y);
+       //trace("returning " +d);
+       return d;
+   }
 
 @SuppressWarnings("fallthrough")
 public void processEvent(AWTEvent ev) {
@@ -660,7 +716,7 @@ public void processEvent(AWTEvent ev) {
          break;
 
       default:
-         trace("unhandled event ev " + ev + "  has focus " + hasFocus());
+         //trace("unhandled event ev " + ev + "  has focus " + hasFocus());
          super.processEvent(ev);
    }
 }
@@ -854,6 +910,7 @@ void init2() {
      ichangewindow(vi,-1,-1);
      needpack=false;
      needval=false;
+     frm.requestFocus();
      ishow();
      FontList.updateFont(); // prevents an extra redraw later
      frm.requestFocus();
@@ -932,6 +989,7 @@ void irepaint() {
 
 void ishow() {
   trace("!!!frm made visible ");
+  frm.setSize(frm.preferredSize());
   frm.setVisible(true);
 }
 
@@ -1471,22 +1529,11 @@ public void windowDeiconified(WindowEvent e) {/*trace("" + e ); /* dont care */}
 public void windowIconified(WindowEvent e) {/*trace("" + e ); /* dont care */} //
 
 public void setSize(int x,int y) {
-   //trace("to  " + new Dimension(x,y));
+   trace("to  " + new Dimension(x,y));
    frm.setSize(x,y);
-/*
-   if (getComponentCount() >2)
-     for (int i=0;i<2;i++)  {
-          Insets insets = getInsets();
-          Component cp =getComponent(i);
-          Dimension cs = cp.getSize();
-          cp.setSize(x-insets.left-insets.right,cs.height);
-     }
-*/
-     
 }
 
 private class Layout implements LayoutManager,java.io.Serializable {
-   Insets inset;
 
    public void addLayoutComponent(String s, Component cont) {
       //trace("" + cont);
@@ -1495,34 +1542,14 @@ private class Layout implements LayoutManager,java.io.Serializable {
    public Dimension minimumLayoutSize(Container cont)  {
        return cont.getSize();
    }
+
    public Dimension preferredLayoutSize(Container cont) {
-       //trace("preferredLayoutSize cont " + cont);
-       int ccount = cont.getComponentCount();
-       int x,y;
-       x=y=0;
-       for (int i =0;i<ccount;i++) {
-          Component cp =cont.getComponent(i);
-          //trace("component "+ cp + " height " + cp.getSize() + " visible " + cp.isVisible());
-          if (cp.isVisible()) {
-             Dimension cs =cp.getPreferredSize();
-             if (x<cs.width)
-               x =cs.width;
-             y+=cs.height;
-          }
-       }
-       if (inset!=null) {
-          //trace("inset " + inset);
-          x += inset.left + inset.right;
-          y += inset.top + inset.bottom;
-       }
-       Dimension d = new Dimension(x,y);
-       //trace("returning " +d);
-       return d;
+       return cont.preferredSize();
    }
 
    public void removeLayoutComponent(Component cont) {/*don't care */}
 
-   private final int fullwidth(Component cp,int yleft,int xsize) {
+   private final int fullwidth(Component cp,int yleft,int xsize,Insets inset) {
       Dimension cpsize = cp.getPreferredSize();
       cpsize.width=xsize;
       int height = cpsize.height;
@@ -1549,25 +1576,13 @@ private class Layout implements LayoutManager,java.io.Serializable {
       if (cont!=frm) {
          trace("laying out wrong contaner ! cont = " + cont + " frame " + frm);
          return;
-         //throw new RuntimeException("layout wrong container?");
       }
 
       int ccount = frm.getComponentCount();
-      if (inset==null) {
-          inset = frm.getInsets();
-          if (frm == normalFrame) {
-             if (inset.top==0) {
-               inset=null;
-               return;
-             } else {
-                trace("!!!changing size because of new insets");
-                frm.setSize(preferredLayoutSize(frm));
-             //             frm.getComponent(ccount-1).setLocation(new Point(inset.left,inset.top));
-             }
-          }
-      }
-
       Dimension s = frm.getSize();
+      Insets inset = frm.getInsets();
+      //trace("frame size at start of layout " + s + " insets " + inset);
+
       int xsize =s.width;
       int ysize =s.height;
       //trace("size =  " + frm.getSize());
@@ -1575,12 +1590,12 @@ private class Layout implements LayoutManager,java.io.Serializable {
       //trace("yleft = " + yleft + " inset.top = " + inset.top);
       int viewcount = ccount ;
       if (status != null) {
-         yleft = fullwidth(status,yleft,xsize); // status
+         yleft = fullwidth(status,yleft,xsize,inset); // status
          viewcount --;
       }
       if (tfc !=null) {
          //trace("layout tfc");
-         fullwidth(tfc.vi,yleft,xsize); // status
+         fullwidth(tfc.vi,yleft,xsize,inset); // status
          //yleft = fullwidth(tfc.vi,yleft,xsize); // status
          viewcount --;
       }
@@ -1609,7 +1624,7 @@ private class Layout implements LayoutManager,java.io.Serializable {
            Point oldloc = cp.getLocation();
            Point newloc = new Point(left,inset.top);
            if (!oldloc.equals(newloc)) {
-             // trace("!!! setting new location " + newloc);
+              //trace("!!! setting new location " + newloc);
               cp.setLocation(new Point(left,inset.top));
            }
            left+= cpsize.width;
@@ -1619,24 +1634,25 @@ private class Layout implements LayoutManager,java.io.Serializable {
      if (vshrink==Integer.MAX_VALUE)
         vshrink=0;
      //trace("calc " + (left +inset.right)  + " xsize " + xsize + " vshrink = " + vshrink) ;
-     //trace (" frm.getExtendedState()  "+ frm.getExtendedState());
+/*
      if (normalFrame == frm && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) &&
            (  (((left +inset.right) != xsize) && (viewcount == 1))
                 || (vshrink != 0)
              )
         ) {
-         //trace("!!!frm set size " + (ysize - vshrink));
+         trace("!!!!!!!!!frm setsize from layout");
          frm.setSize(left + inset.right ,ysize- vshrink);
-      }
+      } 
+*/
    }
 }
 
 public void focusLost(FocusEvent e) {
-    trace("focusLost " + e.toString());
+    //trace("focusLost " + e.toString());
 }
 
 public void focusGained(FocusEvent e) {
-    trace("focusGained " +e);
+    //trace("focusGained " +e);
 }
 
 /*
@@ -1699,16 +1715,15 @@ String igetFile() {
 private static class FrameListener implements WindowListener {
 //   FrameListener() { }
    public void windowActivated(WindowEvent e) {
-      trace("reached windowActivated" +e);
+      //trace("reached windowActivated" +e);
       //FvContext.currenable();
    }
    public void windowClosed(WindowEvent e) {
-     trace("reached windowClosed" +e);
+     //trace("reached windowClosed" +e);
    }
    public void windowClosing(WindowEvent e) {
 
-
-     trace("reached windowClosing" +e);
+     //trace("reached windowClosing" +e);
      FileList.quit(true,null); // usually won't return from here
    
      // browsers may reach here, so wakeup run so it tests flag, and thread returns
@@ -1717,16 +1732,16 @@ private static class FrameListener implements WindowListener {
    }
    public void windowDeactivated(WindowEvent e) {
       //???currfvc.vi.setEnabled(false);
-     trace("reached windowDeactivated" +e);
+     //trace("reached windowDeactivated" +e);
    }
    public void windowDeiconified(WindowEvent e) {
-     trace("reached windowDeiconified " +e);
+     //trace("reached windowDeiconified " +e);
    }
    public void windowIconified(WindowEvent e) {
-     trace("reached windowIconified " +e);
+     //trace("reached windowIconified " +e);
    }
    public void windowOpened(WindowEvent e) {
-     trace("reached windowOpened" +e);
+     //trace("reached windowOpened" +e);
    }
 }
 }
