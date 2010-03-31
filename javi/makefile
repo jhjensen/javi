@@ -1,7 +1,8 @@
-#JDKPATH=c:\JDK1.3.1
 #JDK=jdk1.6.0_18
-JDKPATH=/cygdrive/c/progra~1/Java/jdk1.6.0_07
 JDKPATH=/usr/lib/jvm/java-6-sun-1.6.0.15
+JDKPATH=
+JDKBIN=$(JDKPATH)/bin/
+JDKBIN=
 JAVALIB= $(JDKPATH)/lib/jvm.lib
 #CFLAGS = -c
 CC=g++
@@ -46,4 +47,4 @@ clean:
 	rm -f vi.exe vi.obj
 
 javi.jar: *.class ../MANIFEST.MF 
-	cd ..;$(JDKPATH)/bin/jar -0cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class
+	cd ..;$(JDKBIN)jar -0cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class

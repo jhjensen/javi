@@ -138,7 +138,6 @@ protected void preRun() {
         detector.dataEnd();
         String encoding = detector.getDetectedCharset();
         if (encoding == null) {
-            UI.reportError("unable to detect encoding, useing default ");
             filestring  = new String(filebyte);
         } else {
             //trace("Detected encoding = " + encoding);

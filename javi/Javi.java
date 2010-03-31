@@ -5,6 +5,19 @@ import java.io.ObjectInputStream;
 import java.util.Iterator;
 
 public class Javi {
+
+static class Preloader implements Runnable {
+
+   public void run() {
+      try {
+         Class.forName("java.awt.Frame");
+         Class.forName("javi.RealJs");
+      } catch (Throwable e) {
+          UI.popError("preloader ",e);
+      }
+   }
+}
+
 /* Copyright 1996 James Jensen all rights reserved */
 static final String copyright = "Copyright 1996 James Jensen";
 
@@ -68,7 +81,9 @@ public static MapEvent initPostUi() throws Exception {
       new MakeCmd();
       //Plugin.Loader.load("plugin/plugin.jar");//new FindBugs();
       new JavaCompiler();
+      Tools.trace("");
       Buffers.initCmd();
+      Tools.trace("unexpectedly slow");
       new JS();
       //new vcs.cmvc();
  
@@ -80,6 +95,7 @@ public static void main (String args[]) {
   //Tools.trace(System.getProperties().toString());
    //Tools.trace("prop : \n" + System.getProperties());
    Tools.trace("enter Javi Main");;
+   new Thread(new Preloader(),"preloader").start();
    Thread curr = Thread.currentThread();
    curr.setPriority(curr.getPriority() + 1);
    StringBuilder sb = new StringBuilder();

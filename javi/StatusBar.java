@@ -68,7 +68,7 @@ public Dimension getPreferredSize() {
       synchronized(this) {
             for (String str :messeges) 
                over += str.length()/col;
-            d = new Dimension(getSize().width,  (over + messeges.size()) *charheight);
+            d = new Dimension(getSize().width,  (1+ over + messeges.size()) *charheight);
       }
    }
 //trace("" + d);
@@ -125,8 +125,8 @@ public void paint(Graphics g) {
                substr = newsubstr;
             }
          }
-      } else
-         g.drawString(FvContext.getCurrState(),4,charheight*voffset+charascent);
+      } 
+      g.drawString(FvContext.getCurrState(),4,charheight*voffset+charascent);
    } catch (Throwable e) {                                   
       UI.popError("StatusBar.paint caught exception", e);
    }

@@ -24,9 +24,7 @@ private static LinkedList<Object> lowqueue = new LinkedList<Object>();
 private static final int timeout=500;
 
 static abstract class IEvent {
-
   abstract void execute() throws MapEvent.ExitException;
-
 }
 
 interface idler {

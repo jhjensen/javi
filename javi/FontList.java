@@ -47,7 +47,7 @@ private class Commands extends Rgroup {
         "fonttype",    
         "fontname",
         "fontweight",
-        "lines",
+        "lines", // 5
         "setwidth" , 
       };
       register (rnames);

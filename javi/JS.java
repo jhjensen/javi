@@ -11,6 +11,37 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+class RealJs {
+   static Class oclass= JS.class;
+   static Context ctx;
+   static ScriptableObject scope;
+
+   static void jsClear() {
+      if (ctx !=null)
+         ctx.exit();
+      ctx = Context.enter();
+      ImporterTopLevel iscope = new ImporterTopLevel();
+   //   scope = new ImporterTopLevel();
+      iscope.initStandardObjects(ctx,false);
+      //ScriptableObject scope = ctx.initStandardObjects(new ImporterTopLevel());
+      scope = iscope;
+      ctx.enter();
+      scope.put("jsobj",scope,new JSObj());
+}
+
+   static {
+     jsClear();
+  }
+
+}
+
+class JSObj {
+public void myprint(String s)  {
+   //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
+   JS.jsoutput.insertOne(s,JS.jsoutput.finish());
+}
+}
+
 /* Copyright 1996 James Jensen all rights reserved */
 public class JS extends Rgroup {
 JS() {
@@ -24,31 +55,14 @@ JS() {
    register(rnames);
 }
 
-
-//static Class oclass= new Object().getClass();
-static Class oclass= JS.class;
-static Context ctx;
-static ScriptableObject scope;
-
-static {
-   jsClear();
-}
-
 static StringIoc sio = new StringIoc("jsoutput","start");
 static TextEdit<String> jsoutput = new TextEdit(sio,sio.prop);
-
-static public class JSObj {
-public void myprint(String s)  {
-   //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
-   jsoutput.insertOne(s,jsoutput.finish());
-}
-}
 
 static public class JSgroup extends Rgroup {
     private final Function func;
 
     public JSgroup(String funcname) throws Exception {
-       Object fobj =  scope.get(funcname, scope);
+       Object fobj =  RealJs.scope.get(funcname, RealJs.scope);
        if (fobj == null || !(fobj instanceof Function)) 
           throw new Exception("illegal function name " + funcname);
        else 
@@ -62,7 +76,7 @@ static public class JSgroup extends Rgroup {
    public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc ,
       boolean dotmode) throws ReadOnlyException,IOException {
      Object[] fargs = {rnum,arg,count,rcount,fvc,dotmode};
-     return func.call(ctx, scope, scope, fargs );
+     return func.call(RealJs.ctx, RealJs.scope, RealJs.scope, fargs );
 }
 
 }
@@ -89,7 +103,7 @@ public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc ,
         }
          return null;
       case 3:
-         jsClear();
+         RealJs.jsClear();
          return null;
       default:
          throw new RuntimeException();
@@ -100,8 +114,8 @@ static private Object execRoutine(int rnum,Object arg,int count,int rcount,FvCon
      boolean dotmode) {
    try {
       if (arg != null) {
-         Object jresult = ctx.evaluateString(scope,arg.toString(), "cmd",1,null);
-         Object result = Context.jsToJava(jresult ,oclass);
+         Object jresult = RealJs.ctx.evaluateString(RealJs.scope,arg.toString(), "cmd",1,null);
+         Object result = Context.jsToJava(jresult ,RealJs.oclass);
          return result;
       }
    } catch (org.mozilla.javascript.EcmaError e) {
@@ -112,26 +126,13 @@ static private Object execRoutine(int rnum,Object arg,int count,int rcount,FvCon
    return null;
 }
 
-static void jsClear() {
-   if (ctx !=null)
-      ctx.exit();
-   ctx = Context.enter();
-   ImporterTopLevel iscope = new ImporterTopLevel();
-//   scope = new ImporterTopLevel();
-   iscope.initStandardObjects(ctx,false);
-   //ScriptableObject scope = ctx.initStandardObjects(new ImporterTopLevel());
-   scope = iscope;
-   ctx.enter();
-   scope.put("jsobj",scope,new JSObj());
-}
-
 static String jsEvalIter(Iterator src,String lable) throws IOException{
-   Object eres = ctx.evaluateReader(scope, new IteratorReader(src),lable,1,null);
+   Object eres = RealJs.ctx.evaluateReader(RealJs.scope, new IteratorReader(src),lable,1,null);
    return eres.toString();
 }
 
 static String jsEvalString(String src) throws IOException{
-       Object eres = ctx.evaluateString(scope, src,"cmd",1,null);
+       Object eres = RealJs.ctx.evaluateString(RealJs.scope, src,"cmd",1,null);
 //       trace("" + eres);
       return eres.toString();
 
