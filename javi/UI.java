@@ -487,8 +487,6 @@ static class AwtInterface extends UI implements java.io.Serializable,
 private void common() {
    new Commands();
    EventQueue.registerIdle(this);
-   //winl = new FrameListener();
-   //frm.addWindowListener(winl);
 }
 
 private void readObject(java.io.ObjectInputStream is) 
@@ -560,49 +558,11 @@ transient private PopupMenu popmenu; // the menubar
 transient private PopString psinst;
 transient private ChoseWrt chinst ;
 transient private Diff rdinst;
-transient private StatusBar status;
+transient private StatusBar statusBar;
 transient private FvContext tfc;  // command context //??? may want to save this?
 transient int irepaintFlag;  //TODO this is a tremendous hack.  For some reason upgrading java to 
 // JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn a few times.
 // This may have something to do with inadequate locking in View/OldView
-
-/*
-class TestFrame extends  Frame {
-
-   private final String name;
-   TestFrame(String str,String namei) {
-      super(str);
-      enableEvents(AWTEvent.KEY_EVENT_MASK);
-      name = namei;
-   }
-
-   public String toString() {
-      return name + super.toString();
-   }
-   public void invalidate() {
-      if (isVisible()) {
-         trace("called invalidate !!!!");
-         Thread.dumpStack();
-      }
-      needval=true;
-      //super.invalidate();
-  }
-
-   public void realValidate() {
-      trace("called realinvalidate !!!!");
-      Thread.dumpStack();
-      super.invalidate();
-      super.validate();
-  }
-
-   public void pack() {
-      trace("!!!!!calling pack");
-      Thread.dumpStack();
-      super.pack();
-   }
-   
-}
-*/
 
 static class TestFrame extends  Frame {
 
@@ -765,9 +725,9 @@ void iflush(boolean total) {
                popError("error in flush",ex);
             }
          }
-         if (status != null) {
-            frm.remove(status);
-            status =  null;
+         if (statusBar != null) {
+            frm.remove(statusBar);
+            statusBar =  null;
          }
       }
       if (fdialog != null) {
@@ -1036,10 +996,10 @@ void itransferFocus() {
   frm.transferFocus();
 }
 private void statusinit() {
-    if (status==null) {
-       status = new StatusBar();
-       status.setVisible(false);
-       frm.add(status,0);
+    if (statusBar==null) {
+       statusBar = new StatusBar();
+       statusBar.setVisible(false);
+       frm.add(statusBar,0);
     }
 }
 
@@ -1108,32 +1068,32 @@ public void idle() {
       ivalidate();
       needval=false;
     }
-    if (status !=null && status.isVisible()) 
-       status.repaint();
+    if (statusBar !=null && statusBar.isVisible()) 
+       statusBar.repaint();
     if (tfc !=null && tfc.vi.isVisible()) //??? is this done by fvc idle?
        tfc.vi.npaint();
 }
 
 void itoggleStatus() {
    statusinit();
-   status.setVisible(!status.isVisible());
+   statusBar.setVisible(!statusBar.isVisible());
    needpack=true;
 }
 
 void iclearStatus()  {
-    if (status!=null)
-       status.clearlines();
+    if (statusBar!=null)
+       statusBar.clearlines();
 }
 
 void istatusaddline(String str){
    statusinit();
-   status.addline( str);
+   statusBar.addline( str);
    MiscCommands.wakeUp();
 }
 
 void istatusSetline(String str) {
    statusinit();
-   status.setline( str);
+   statusBar.setline( str);
 }
 
 //void itoFront(boolean front) {
@@ -1604,8 +1564,8 @@ private class Layout implements LayoutManager,java.io.Serializable {
       int yleft = ysize - inset.bottom;
       //trace("yleft = " + yleft + " inset.top = " + inset.top);
       int viewcount = ccount ;
-      if (status != null) {
-         yleft = fullwidth(status,yleft,xsize,inset); // status
+      if (statusBar != null) {
+         yleft = fullwidth(statusBar,yleft,xsize,inset); // status
          viewcount --;
       }
       if (tfc !=null) {
