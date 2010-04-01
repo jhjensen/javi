@@ -487,8 +487,8 @@ static class AwtInterface extends UI implements java.io.Serializable,
 private void common() {
    new Commands();
    EventQueue.registerIdle(this);
-   winl = new FrameListener();
-   frm.addWindowListener(winl);
+   //winl = new FrameListener();
+   //frm.addWindowListener(winl);
 }
 
 private void readObject(java.io.ObjectInputStream is) 
@@ -562,7 +562,6 @@ transient private ChoseWrt chinst ;
 transient private Diff rdinst;
 transient private StatusBar status;
 transient private FvContext tfc;  // command context //??? may want to save this?
-transient private FrameListener winl;
 transient int irepaintFlag;  //TODO this is a tremendous hack.  For some reason upgrading java to 
 // JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn a few times.
 // This may have something to do with inadequate locking in View/OldView
@@ -622,7 +621,12 @@ static class TestFrame extends  Frame {
       setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
 
       enableInputMethods(false);
-      enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK| AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+      enableEvents(AWTEvent.KEY_EVENT_MASK |  
+                              AWTEvent.MOUSE_EVENT_MASK| 
+                              AWTEvent.MOUSE_WHEEL_EVENT_MASK |
+                              AWTEvent.WINDOW_EVENT_MASK
+      );
+      //enableEvents(0xffffffffffffffffl);
    }
 
    public String toString() {
@@ -692,7 +696,7 @@ static class TestFrame extends  Frame {
 
 @SuppressWarnings("fallthrough")
 public void processEvent(AWTEvent ev) {
-   //trace("ev " + ev.getID() + "  has focus " + hasFocus());
+   //trace("ev " + ev + "  has focus " + hasFocus());
    switch (ev.getID()) {
       case KeyEvent.KEY_PRESSED:
          if (ev instanceof KeyEvent) {
@@ -713,10 +717,22 @@ public void processEvent(AWTEvent ev) {
          break;
       case KeyEvent.KEY_RELEASED:
       case KeyEvent.KEY_TYPED:
+      case WindowEvent.WINDOW_ACTIVATED:
+      case WindowEvent.WINDOW_DEACTIVATED:
+      case WindowEvent.WINDOW_OPENED:
+      case WindowEvent.WINDOW_CLOSED:
+      case FocusEvent.FOCUS_LOST:
+      case FocusEvent.FOCUS_GAINED:
          break;
 
+      case WindowEvent.WINDOW_CLOSING:
+         FileList.quit(true,null); // usually won't return from here
+         MiscCommands.wakeUp();
+         break;
+   
+     // browsers may reach here, so wakeup run so it tests flag, and thread returns
       default:
-         //trace("unhandled event ev " + ev + "  has focus " + hasFocus());
+         trace("unhandled event ev " + ev + "  has focus " + hasFocus() + " insets " + getInsets());
          super.processEvent(ev);
    }
 }
@@ -846,7 +862,6 @@ private TestFrame initfrm(String name) {
      //frm.setForeground(AtView.foreground);
 
      lFrm.setFont(FontList.getCurr(null));
-     lFrm.addWindowListener(winl);
      lFrm.addFocusListener(this);
      lFrm.setDropTarget(new Dropper(lFrm));
      return lFrm;
@@ -1528,10 +1543,10 @@ public void windowDeactivated(WindowEvent e) {/*trace("" + e ); /* dont care */}
 public void windowDeiconified(WindowEvent e) {/*trace("" + e ); /* dont care */} //
 public void windowIconified(WindowEvent e) {/*trace("" + e ); /* dont care */} //
 
-public void setSize(int x,int y) {
-   trace("to  " + new Dimension(x,y));
-   frm.setSize(x,y);
-}
+//public void setSize(int x,int y) {
+//   trace("to  " + new Dimension(x,y));
+//   frm.setSize(x,y);
+//}
 
 private class Layout implements LayoutManager,java.io.Serializable {
 
@@ -1712,38 +1727,6 @@ String igetFile() {
   return   fdialog.getFile();
 }
 
-private static class FrameListener implements WindowListener {
-//   FrameListener() { }
-   public void windowActivated(WindowEvent e) {
-      //trace("reached windowActivated" +e);
-      //FvContext.currenable();
-   }
-   public void windowClosed(WindowEvent e) {
-     //trace("reached windowClosed" +e);
-   }
-   public void windowClosing(WindowEvent e) {
-
-     //trace("reached windowClosing" +e);
-     FileList.quit(true,null); // usually won't return from here
-   
-     // browsers may reach here, so wakeup run so it tests flag, and thread returns
-     MiscCommands.wakeUp();
-   
-   }
-   public void windowDeactivated(WindowEvent e) {
-      //???currfvc.vi.setEnabled(false);
-     //trace("reached windowDeactivated" +e);
-   }
-   public void windowDeiconified(WindowEvent e) {
-     //trace("reached windowDeiconified " +e);
-   }
-   public void windowIconified(WindowEvent e) {
-     //trace("reached windowIconified " +e);
-   }
-   public void windowOpened(WindowEvent e) {
-     //trace("reached windowOpened" +e);
-   }
-}
 }
 public static void trace(String str) {
    Tools.trace(str,1);
