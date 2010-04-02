@@ -568,9 +568,24 @@ transient int irepaintFlag;  //TODO this is a tremendous hack.  For some reason 
 // JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn a few times.
 // This may have something to do with inadequate locking in View/OldView
 
-static class TestFrame extends  Frame {
+private static class ForceIdle extends EventQueue.IEvent {
+   void execute() throws MapEvent.ExitException{
+   }
+}
+
+class TestFrame extends  Frame {
 
    private final String name;
+
+   void paintViews () {
+       int ccount = getComponentCount();
+       for (int i =0;i<ccount;i++) {
+          Component cp =getComponent(i);
+          trace("component " + cp);
+          if (cp instanceof View) 
+             ((View)cp).npaint();
+      }
+   }
    TestFrame(String str,String namei) {
       super(str);
       name = namei;
@@ -604,11 +619,21 @@ static class TestFrame extends  Frame {
   }
 
 
-   public Dimension preferredSize() {
+   private final int fullwidth(Component cp,int yleft,int xsize,Insets inset) {
+      Dimension prefSize = cp.getPreferredSize(); // really to get height
+      prefSize.width=xsize-inset.left-inset.right;
+      if (!cp.getSize().equals(prefSize)) {
+         cp.setSize(prefSize);
+         //trace("full width set size " + cp.getSize() + " " +  cp );
+      }
+      return cp.isVisible()
+         ? yleft - prefSize.height
+         : yleft;
+   }
+
+   public Dimension getPreferredSize() {
        
-      //trace ("preferredSize");
-      //trace (" frm.getExtendedState()  "+ frm.getExtendedState());
-      //trace (" Frame.MAXIMIZED_BOTH "+ Frame.MAXIMIZED_BOTH);
+      //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
       if (/*this == fullFrame || ???? */
              ((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH))
          return getSize();
@@ -651,6 +676,39 @@ static class TestFrame extends  Frame {
        Dimension d = new Dimension(x,y);
        //trace("returning " +d);
        return d;
+   }
+
+   public void setSize(int width,int height) {
+      //trace("!!!!!!!!! frame setSize ("+ width + "," + height +")");
+      super.setSize(width,height);
+   }
+
+   public void setCompSize(int width,int height) {
+      //trace("frame setCompsize ("+ width + "," + height +")");
+      //trace("tfc " + tfc);
+      //trace("statusBar " + statusBar);
+      Insets inset = getInsets();
+      int viewHeight = height - inset.top - inset.bottom;
+
+   
+      if (tfc.vi.isVisible())
+         viewHeight -=  tfc.vi.getPreferredSize().height;
+
+      if (statusBar.isVisible())
+         viewHeight -=  statusBar.getPreferredSize().height;
+
+      Dimension viewSize = new Dimension( (width - inset.left - inset.right) / viewCount,
+         viewHeight);
+
+      int ccount = getComponentCount();
+      for (int i =0;i<ccount;i++) {
+         Component cp =getComponent(i);
+         //trace("component " + cp);
+         if ((cp instanceof View) && (cp != tfc.vi)) {
+            if (!cp.getSize().equals(viewSize))
+               cp.setSize(viewSize);
+         }
+      }
    }
 
 @SuppressWarnings("fallthrough")
@@ -972,12 +1030,11 @@ void irepaint() {
 void ishow() {
   trace("!!! setting frm visible ");
   frm.setSize(frm.getPreferredSize());
-  frm.setSize(frm.preferredSize());
   frm.setVisible(true);
 }
 
 void ipack() {
-  //trace("ipack layout " + frm.getLayout());
+  trace("!!!!!!!!ipack layout " + frm.getLayout());
   frm.invalidate();
   frm.pack();
 }
