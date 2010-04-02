@@ -1567,79 +1567,59 @@ private class Layout implements LayoutManager,java.io.Serializable {
    }
               
    public void layoutContainer(Container cont)  {
-      //trace("entered layoutContainer insets = " + frm.getInsets()); Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
+      Insets inset = frm.getInsets();
+      //trace("entered layoutContainer insets = " + inset); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
       if (cont!=frm) {
          trace("laying out wrong contaner ! cont = " + cont + " frame " + frm);
          return;
       }
 
-      int ccount = frm.getComponentCount();
-      Dimension s = frm.getSize();
-      Insets inset = frm.getInsets();
-      //trace("frame size at start of layout " + s + " insets " + inset);
+      if (frm  == normalFrame && inset.top==0)
+         return; // what is the point of layout out before we get our insets?
 
-      int xsize =s.width;
-      int ysize =s.height;
+      Dimension startSize = frm.getSize();
+
+      //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
+
+      frm.setCompSize(startSize.width,startSize.height);
+      
+      if (normalFrame == frm && 
+            !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH)) {
+         Dimension pref = frm.getPreferredSize();
+         if (!pref.equals(startSize)) {
+            //trace("!!!!! setting frame size pref  " + pref + " startSize" + startSize);
+            frm.setSize(pref);
+            startSize = pref;
+         }
+      }
+
+      int ccount = frm.getComponentCount();
+      //trace("frame size at start of layout " + startSize + " insets " + inset);
+
+      int xsize =startSize.width;
+      int ysize =startSize.height;
       //trace("size =  " + frm.getSize());
       int yleft = ysize - inset.bottom;
       //trace("yleft = " + yleft + " inset.top = " + inset.top);
-      int viewcount = ccount ;
-      if (statusBar != null) {
-         yleft = fullwidth(statusBar,yleft,xsize,inset); // status
-         viewcount --;
-      }
-      if (tfc !=null) {
-         //trace("layout tfc");
-         fullwidth(tfc.vi,yleft,xsize,inset); // status
-         //yleft = fullwidth(tfc.vi,yleft,xsize); // status
-         viewcount --;
-      }
+      yleft = fullwidth(statusBar,yleft,xsize,inset); // status
+     fullwidth(tfc.vi,yleft,xsize,inset); // status
      int left=inset.left;
-     int vx = (xsize - inset.left - inset.right)/viewcount;
-     int vshrink = Integer.MAX_VALUE;
-     Dimension vsize = new Dimension(vx,yleft-inset.top);
-     for (int i=ccount - viewcount;i<ccount;i++) { // views
+     int vx = (xsize - inset.left - inset.right)/viewCount;
+     for (int i=ccount - viewCount;i<ccount;i++) { // views
          Component cp = frm.getComponent(i);
          //trace("processing component " + cp);
          if (cp.isVisible()) {
-           if ((i == 3) && (viewcount ==1)) // only one view, and this is it.
-              vsize.width=xsize-left-inset.right;
-
-           Dimension cpsize = cp.getSize(); 
-           if (!cp.getSize().equals(vsize)) {
-              //trace("size mismatch cp.size " + cp.getSize() + " vsize " + vsize);
-              cp.setSize(vsize.width,vsize.height); // check if used all
-              cpsize = cp.getSize(); // check if used all
-              int vs = vsize.height - cpsize.height;
-              if (vs < vshrink) {
-                  //trace("shrink " + vs);
-                  vshrink=vs;
-              }
-           }
            Point oldloc = cp.getLocation();
            Point newloc = new Point(left,inset.top);
            if (!oldloc.equals(newloc)) {
               //trace("!!! setting new location " + newloc);
-              cp.setLocation(new Point(left,inset.top));
+              cp.setLocation(newloc);
            }
-           left+= cpsize.width;
+           left+= cp.getSize().width;
          } 
-     }
-        
-     if (vshrink==Integer.MAX_VALUE)
-        vshrink=0;
-     //trace("calc " + (left +inset.right)  + " xsize " + xsize + " vshrink = " + vshrink) ;
-/*
-     if (normalFrame == frm && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH) &&
-           (  (((left +inset.right) != xsize) && (viewcount == 1))
-                || (vshrink != 0)
-             )
-        ) {
-         trace("!!!!!!!!!frm setsize from layout");
-         frm.setSize(left + inset.right ,ysize- vshrink);
-      } 
-*/
+      }
+      needval=false;
    }
 }
 
