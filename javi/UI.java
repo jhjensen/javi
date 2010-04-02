@@ -888,13 +888,12 @@ static void mvcomp(Container from,Container to) {
 
 Object fullScreen() {
 
+   frm.setVisible(false);
+   iflush(false);
    synchronized (frm.getTreeLock()) {
       if (fullFrame == frm)
          currdev.setFullScreenWindow(null);
 
-      frm.setVisible(false);
-
-      iflush(false);
 
       if (frm != normalFrame) {
          //trace("exit fullscreen fullFrame " + fullFrame + " normalFrame " + normalFrame);
