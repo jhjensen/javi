@@ -58,7 +58,7 @@ use Encode qw(encode decode);
       if ( $^O eq "Windows" ) {
 
 print("3\n");
-         my $JDK="jdk1.6.0_18";
+         my $JDK="jdk1.6.0_19";
          my $JDK1="/cygdrive/c/Progra~1/Java/$JDK";
          my $JDK2="c:\\Progra~1\\Java\\$JDK";
          my $myprog="C:\\Users\\dad\\Desktop\\cyghome\\javt";

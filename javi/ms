@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ $OS == Windows_NT ] ; then
 
-   JDK=jdk1.6.0_18
+   JDK=jdk1.6.0_19
    JDK1=/cygdrive/c/Progra~1/Java/$JDK
    JDK2=c:\\Progra~1\\Java\\$JDK
    myprog="C:\Users\dad\Desktop\cyghome\javt"
