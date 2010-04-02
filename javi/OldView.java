@@ -628,7 +628,7 @@ void setSizebyChar(int x, int y) {
    minColumns=x;
    screenSize = y;
    pixelWidth = minColumns*charwidth +2*inset;
-   UI.resize();
+   //UI.resize();
    //invalidate() ;//???
    //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
 }

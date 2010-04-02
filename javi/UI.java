@@ -121,9 +121,7 @@ public static void init(boolean isAwt) {
       ? (UI)new AwtInterface()
       :(UI) new StreamInterface();
    instance.init2();
-    
 }
-
 
 static void setStream(Reader inreader) {
    instance.isetStream(inreader);
@@ -511,6 +509,17 @@ AwtInterface() {
      normalFrame=frm;
      common();
      irepaintFlag = 3;
+     StringIoc sio = new StringIoc("command buffer",null);
+     TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
+
+     View tfview = new OldView(false);
+     tfview.setFont(FontList.getCurr(tfview));
+     tfview.setSizebyChar(80,1);
+     tfview.setVisible(false);
+     tfc = FvContext.getcontext(tfview,cmbuff);
+     frm.add(tfview,0);
+     frm.setComponentZOrder(tfview,0);
+     tfc.vi.newfile(tfc);
      //trace("this = " + this + " fr = " + fr);
 }
 
@@ -710,6 +719,7 @@ public void itemStateChanged(ItemEvent event) {
 
 void iflush(boolean total) {
   synchronized (EventQueue.biglock) {
+/*
       if (total) {
          if (tfc != null) {
             frm.remove(tfc.vi);
@@ -730,6 +740,7 @@ void iflush(boolean total) {
             statusBar =  null;
          }
       }
+*/
       if (fdialog != null) {
          fdialog.dispose();
          frm.remove(fdialog);
@@ -811,6 +822,7 @@ private static class Dropper extends DropTarget {
    public  void dropActionChanged(DropTargetDragEvent dtde)  {/* don't care */
    }
 }
+
 private TestFrame initfrm(String name) {
      //trace("initfrm");
      TestFrame lFrm = new TestFrame("vi:",name);
@@ -889,6 +901,9 @@ void init2() {
      ishow();
      FontList.updateFont(); // prevents an extra redraw later
      frm.requestFocus();
+     statusBar = new StatusBar();
+     statusBar.setVisible(false);
+     frm.add(statusBar,0);
     } catch (InputException e) {
       throw new RuntimeException("can't recover iaddview",e);
    }
@@ -896,7 +911,7 @@ void init2() {
 
 FvContext iconnectfv(TextEdit file,View vi) throws InputException {
    //trace("vic.connectfv " + file + " vi " + vi);
-   if (tfc != null && vi == tfc.vi)
+   if (/*tfc != null &&*/ vi == tfc.vi)
       throw new InputException("can't change command window to display other data");
    isetTitle(file.toString());
 
@@ -995,29 +1010,9 @@ void idispose() {
 void itransferFocus() {
   frm.transferFocus();
 }
-private void statusinit() {
-    if (statusBar==null) {
-       statusBar = new StatusBar();
-       statusBar.setVisible(false);
-       frm.add(statusBar,0);
-    }
-}
+
 
 FvContext istartComLine() {
-   if (tfc==null) {
-      StringIoc sio = new StringIoc("command buffer",null);
-      TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
-
-      View tfview = new OldView(false);
-      tfview.setFont(FontList.getCurr(tfview));
-      tfview.setSizebyChar(80,1);
-      tfview.setVisible(false);
-      tfc = FvContext.getcontext(tfview,cmbuff);
-      frm.add(tfview,0);
-      frm.setComponentZOrder(tfview,0);
-      tfc.vi.newfile(tfc);
-      iresize();
-   }
   tfc.vi.setVisible(true);
   needpack = true;
   needval = true;
@@ -1070,29 +1065,23 @@ public void idle() {
     }
     if (statusBar !=null && statusBar.isVisible()) 
        statusBar.repaint();
-    if (tfc !=null && tfc.vi.isVisible()) //??? is this done by fvc idle?
-       tfc.vi.npaint();
 }
 
 void itoggleStatus() {
-   statusinit();
    statusBar.setVisible(!statusBar.isVisible());
    needpack=true;
 }
 
 void iclearStatus()  {
-    if (statusBar!=null)
-       statusBar.clearlines();
+    statusBar.clearlines();
 }
 
 void istatusaddline(String str){
-   statusinit();
    statusBar.addline( str);
    MiscCommands.wakeUp();
 }
 
 void istatusSetline(String str) {
-   statusinit();
    statusBar.setline( str);
 }
 
