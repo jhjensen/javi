@@ -93,7 +93,6 @@ public abstract class UI {
    abstract void iclearStatus() ;
    abstract boolean iisGotoOk(FvContext fvc);
    abstract void iresize();
-   abstract void ichangewindow(View vi,int width,int height);
    abstract FvContext iconnectfv(TextEdit file,View vi) throws InputException;
    abstract void init2();
    abstract void isetView(FvContext fvc);
@@ -315,11 +314,6 @@ static void popError(String errs,Throwable ex) {
      instance.ipopstring(sw.toString());
 }
 
-static void changewindow(View vi ,int width,int height) {
-   if (instance !=null)
-     instance.ichangewindow(vi,width,height);
-}
-
 static FvContext connectfv(TextEdit file,View vi) throws InputException {
        return instance.iconnectfv(file,vi);
 }
@@ -448,7 +442,6 @@ void ivalidate() {/* unimplemented */}
 void iflush(boolean total) {/* unimplemented */}
 void itoggleStatus() {/* unimplemented */}
 //void idle() {throw new RuntimeException("unimplemented");}
-void ichangewindow(View vi,int width,int height) {/* unimplemented */}
 FvContext iconnectfv(TextEdit file,View vi ) {return null;}
 void iresize() {/* unimplemented */}
 View iaddview(boolean newview,FvContext fvc) {return null;}
@@ -605,16 +598,11 @@ static class TestFrame extends  Frame {
    }
 
    public void realValidate() {
-      //trace("called realinvalidate !!!!"); Thread.dumpStack();
+      //trace("called realinvalidate !!!!"); 
       //super.invalidate();
       super.validate();
   }
 
-//   public void setSize(int width,int height) {
-//      trace("!!!!!!!!! frame set size ("+ width + "," + height +")");
-//      trace("!!!!!!!!! frame max size "+getMaximizedBounds());
-//      super.setSize(width,height);
-//   }
 
    public Dimension preferredSize() {
        
@@ -895,8 +883,8 @@ Object fullScreen() {
 void init2() {
    try {
      View vi = mkview(false);
+     FontList.setDefaultFontSize(vi,-1,-1);
      iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
-     ichangewindow(vi,-1,-1);
      needpack=false;
      needval=false;
      frm.requestFocus();
@@ -982,7 +970,8 @@ void irepaint() {
 }
 
 void ishow() {
-  trace("!!!frm made visible ");
+  trace("!!! setting frm visible ");
+  frm.setSize(frm.getPreferredSize());
   frm.setSize(frm.preferredSize());
   frm.setVisible(true);
 }
@@ -1036,12 +1025,6 @@ boolean iisGotoOk(FvContext fvc) {
 
 void iresize() {
   needval=true;
-}
-
-void ichangewindow(View vi,int width,int height) {
-  //trace("ichangewindow width = " + width + " height  " + height);
-  FontList.setDefaultFontSize(vi,width,height);
-  needpack = true;
 }
 
 public void idle() {
