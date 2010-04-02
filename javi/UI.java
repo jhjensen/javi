@@ -501,7 +501,7 @@ AwtInterface() {
      frm = initfrm("normal");
      normalFrame=frm;
      common();
-     irepaintFlag = 3;
+     irepaintFlag = 1;
      StringIoc sio = new StringIoc("command buffer",null);
      TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
 
@@ -621,7 +621,6 @@ class TestFrame extends  Frame {
       //super.invalidate();
       super.validate();
   }
-
 
    private final int fullwidth(Component cp,int yleft,int xsize,Insets inset) {
       Dimension prefSize = cp.getPreferredSize(); // really to get height
@@ -935,8 +934,6 @@ void init2() {
      View vi = mkview(false);
      FontList.setDefaultFontSize(vi,-1,-1);
      iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
-     needpack=false;
-     needval=false;
      frm.requestFocus();
      FontList.updateFont(); // prevents an extra redraw later
      frm.requestFocus();
@@ -1020,9 +1017,10 @@ void irepaint() {
 }
 
 void ishow() {
-  trace("!!! setting frm visible ");
+  //trace("!!! setting frm visible ");
   frm.setSize(frm.getPreferredSize());
   frm.setVisible(true);
+  //trace("!!! done set frm visible insets " + frm.getInsets() );
 }
 
 void ipack() {
@@ -1218,7 +1216,7 @@ void ipopstring(String s) {
    psinst.pop(s);
 }
 
-static class NDialog extends Dialog implements ActionListener ,WindowListener{
+static class NDialog extends Dialog implements ActionListener {
    private static final long serialVersionUID=1;
    NButton resb = null;
 
@@ -1236,7 +1234,6 @@ static class NDialog extends Dialog implements ActionListener ,WindowListener{
        //trace("set resb to " + resb + " lable = " + resb.getLabel());
        
        setVisible(false);
-       addWindowListener(this);
    }
 
    static class NText extends TextField {
@@ -1269,15 +1266,6 @@ static class NDialog extends Dialog implements ActionListener ,WindowListener{
         resb = null;
      super.setVisible(vis);
    }
-
-   public void windowClosed(java.awt.event.WindowEvent e) {/*{trace("" + e ); /* dont care */}
-   public void windowOpened(WindowEvent e) {trace("" + e );/* dont care */} //
-   public void windowActivated(WindowEvent e)  { trace("" + e );/* dont care */}   //
-   public void windowDeactivated(WindowEvent e) {trace("" + e ); /* dont care */} //
-   public void windowDeiconified(WindowEvent e) {trace("" + e ); /* dont care */} //
-   public void windowIconified(WindowEvent e) {trace("" + e ); /* dont care */} //
-   
-
 }
 
 private static class PopString extends NDialog {
