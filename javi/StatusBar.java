@@ -81,11 +81,13 @@ void setline(String line) {
     addline(line);
 }
 
-void clearlines() {
+boolean clearlines() {
  if (messeges.size()!=0) {
     messeges.clear();
     UI.resize();
+    return true;
  }
+  return false;
 }
 
 public boolean isFocusable() {

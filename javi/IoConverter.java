@@ -16,22 +16,6 @@ import java.util.Collection;
 /** this is an abstract class which defines the necessary methods
     for an editvec to to IO
 */
-abstract class ClassConverter<OType>  implements Serializable {
-
-   public abstract OType fromString(String S);
-
-   OType newExternal(history.ByteInput dis) {
-      return fromString(dis.readUTF());
-   }
-
-   void saveExternal(Object ob,DataOutputStream dos) throws IOException {
-      dos.writeUTF(ob.toString());
-   }
-   static void trace(String str) {
-      Tools.trace(str,1);
-   }
-}
-
 class FileProperties<OType> implements Serializable {
     private static String staticLine = System.getProperty("line.separator");
     final FileDescriptor fdes;

@@ -564,7 +564,11 @@ transient private Diff rdinst;
 transient private StatusBar statusBar;
 transient private FvContext tfc;  // command context //??? may want to save this?
 //transient private FrameListener winl;
-transient int irepaintFlag;  //TODO this is a tremendous hack.  For some reason upgrading java to 
+transient int irepaintFlag;  //TODO this is a tremendous hack.  
+//For some reason upgrading java to 6.18 made the cursor stop appearing, 
+//but if we keep redrawing long enough it magically appears.
+
+transient boolean willneedval = false;
 // JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn a few times.
 // This may have something to do with inadequate locking in View/OldView
 
@@ -1049,9 +1053,9 @@ void itransferFocus() {
   frm.transferFocus();
 }
 
-
 FvContext istartComLine() {
-  statusBar.clearlines();
+  if (statusBar.clearlines())
+     willneedval=true;
   tfc.vi.setVisible(true);
   //tfc.vi.redraw();
   tfc.vi.npaint();
@@ -1060,6 +1064,11 @@ FvContext istartComLine() {
 
 String iendComLine() {
   tfc.vi.setVisible(false);
+  if (willneedval) { 
+     needval = true;
+     willneedval = false;
+  }
+
   //trace(" comline:"+ tf.getcurrobject());
   return tfc.at().toString();
 }
