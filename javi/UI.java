@@ -561,6 +561,7 @@ transient private boolean needval;
 private TestFrame frm;
 private TestFrame fullFrame;
 private TestFrame normalFrame;
+private int viewCount=0;
 transient GraphicsDevice currdev;
 transient private FileDialog fdialog;
 transient private PopupMenu popmenu; // the menubar
@@ -569,6 +570,7 @@ transient private ChoseWrt chinst ;
 transient private Diff rdinst;
 transient private StatusBar statusBar;
 transient private FvContext tfc;  // command context //??? may want to save this?
+//transient private FrameListener winl;
 transient int irepaintFlag;  //TODO this is a tremendous hack.  For some reason upgrading java to 
 // JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn a few times.
 // This may have something to do with inadequate locking in View/OldView
@@ -930,6 +932,7 @@ private View mkview(boolean newview) throws InputException {
      //view ta = newview ? (view) new TabbedTextLayout() : new oldview();
      //trace("mkview");
      View ta = new OldView(true);
+     viewCount++;
      ta.setFont(FontList.getCurr(ta));
      frm.add(ta,-1);     
      //frm.setComponentZOrder(ta,1);
@@ -964,6 +967,7 @@ void inextView(FvContext fvc) {
 void isetStream(Reader inreader) { /* unimplemented */}
 
 void iremove(View vi) {
+  viewCount--;
   frm.remove(vi);
 }
 
@@ -1013,10 +1017,10 @@ void itransferFocus() {
 
 
 FvContext istartComLine() {
+  statusBar.clearlines();
   tfc.vi.setVisible(true);
-  needpack = true;
-  needval = true;
-  UI.clearStatus();
+  //tfc.vi.redraw();
+  tfc.vi.npaint();
   return tfc;
 }
 
@@ -1058,7 +1062,6 @@ public void idle() {
     if (needpack) {
       ipack();
       needpack=false;
-//      needval=false;
     } else if (needval) {
       ivalidate();
       needval=false;
@@ -1069,7 +1072,7 @@ public void idle() {
 
 void itoggleStatus() {
    statusBar.setVisible(!statusBar.isVisible());
-   needpack=true;
+   //needpack=true;
 }
 
 void iclearStatus()  {
@@ -1508,7 +1511,7 @@ private class Layout implements LayoutManager,java.io.Serializable {
    }
 
    public Dimension preferredLayoutSize(Container cont) {
-       return cont.preferredSize();
+       return cont.getPreferredSize();
    }
 
    public void removeLayoutComponent(Component cont) {/*don't care */}
