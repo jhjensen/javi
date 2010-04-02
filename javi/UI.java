@@ -634,48 +634,37 @@ class TestFrame extends  Frame {
    public Dimension getPreferredSize() {
        
       //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
-      if (/*this == fullFrame || ???? */
-             ((getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH))
-         return getSize();
+      Toolkit kit = Toolkit.getDefaultToolkit();
+      Insets inset = getInsets();
+      if (inset.top==0)  
+         inset =   kit.getScreenInsets(getGraphicsConfiguration());
 
+       Dimension fsize = new Dimension(inset.right+ inset.left,inset.top+inset.bottom);
+       if (tfc.vi.isVisible())
+          fsize.height +=  tfc.vi.getPreferredSize().height;
+       if (statusBar.isVisible())
+          fsize.height +=  statusBar.getPreferredSize().height;
+
+
+
+       int viewheight = 0;
        int ccount = getComponentCount();
-       int x,y;
-       x=y=0;
-       boolean viewFlag = false;
        for (int i =0;i<ccount;i++) {
           Component cp =getComponent(i);
-          //trace("component "+ cp + " height " + cp.getSize() + " visible " + cp.isVisible());
-          if (cp.isVisible()) {
-             if (cp instanceof View)
-                if (viewFlag)
-                  return getSize();
-               else
-                  viewFlag=true;
-             //trace("preferred size " + cp.getPreferredSize());
-             Dimension cs =cp.getPreferredSize();
-             if (x<cs.width)
-               x =cs.width;
-             y+=cs.height;
+          //trace("component " + cp);
+          if ((cp instanceof View) && (cp != tfc.vi)) {
+             Dimension cpsize = cp.getPreferredSize(); // check if used all
+             //trace("component prefsize " + cpsize);
+             fsize.width += cpsize.width;
+             if (cpsize.height > viewheight )
+                viewheight = cpsize.height;
           }
        }
-       Insets inset = getInsets();
-       Toolkit awtKit = Toolkit.getDefaultToolkit();
-       //trace("x "  + x + " y " + y  + " insets " + inset);
-       if (inset!=null) {
-          //trace("inset " + inset);
-          x += inset.left + inset.right;
-          y += inset.top + inset.bottom;
-       }
-       Dimension screen = awtKit.getScreenSize();
-       //trace("screen size " + screen);
-       if (screen.width < x)
-          x = screen.width;
-       if (screen.height < y)
-          y = screen.height;
 
-       Dimension d = new Dimension(x,y);
-       //trace("returning " +d);
-       return d;
+       fsize.height += viewheight;
+
+       //trace("returning " +fsize);
+       return fsize;
    }
 
    public void setSize(int width,int height) {
@@ -946,12 +935,12 @@ void init2() {
      needpack=false;
      needval=false;
      frm.requestFocus();
-     ishow();
      FontList.updateFont(); // prevents an extra redraw later
      frm.requestFocus();
      statusBar = new StatusBar();
      statusBar.setVisible(false);
      frm.add(statusBar,0);
+     ishow();
     } catch (InputException e) {
       throw new RuntimeException("can't recover iaddview",e);
    }
