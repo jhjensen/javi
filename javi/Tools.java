@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Tools {
 static Date lastDate =  new Date();
@@ -58,18 +59,26 @@ static ArrayList<String> execute(String ... command) throws IOException {
   return output;
 }
 
+static BufferedReader runcmd(List<String>  str) throws IOException{
+   return new BufferedReader (new InputStreamReader(iocmd(str).getInputStream()));
+}
+
 static BufferedReader runcmd(String ... str) throws IOException{
    return new BufferedReader (new InputStreamReader(iocmd(str).getInputStream()));
 }
 
-static synchronized Process iocmd(String ... str) throws IOException{
-
+static synchronized Process iocmd(List<String>  str) throws IOException{
    pb.redirectErrorStream(true);
    pb.command(str);
    return pb.start();
-
-
 }
+
+static synchronized Process iocmd(String ...  str) throws IOException{
+   pb.redirectErrorStream(true);
+   pb.command(str);
+   return pb.start();
+}
+
 static void doGC() {
    System.gc();
    System.runFinalization();

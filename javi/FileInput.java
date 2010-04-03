@@ -147,7 +147,6 @@ protected void preRun() {
         // (5)
         detector.reset();
     } catch (java.io.UnsupportedEncodingException e) {
-        UI.reportError("unable to detect encoding, useing default " + e);
         filestring = new String(filebyte);
     }
  }

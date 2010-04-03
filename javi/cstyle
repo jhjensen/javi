@@ -1,0 +1,2 @@
+#!/bin/sh 
+java -cp "../checkstyle-5.1/checkstyle-5.1.jar;../checkstyle-5.1/antlr.jar;../checkstyle-5.1/commons-logging.jar;../checkstyle-5.1/commons-cli-1.1.jar;../checkstyle-5.1/google-collect-1.0.jar;../checkstyle-5.1/commons-beanutils-core.jar" com.puppycrawl.tools.checkstyle.Main -c ../checkstyle.xml $*

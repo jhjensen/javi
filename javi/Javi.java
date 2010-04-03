@@ -81,6 +81,7 @@ public static MapEvent initPostUi() throws Exception {
       new MakeCmd();
       //Plugin.Loader.load("plugin/plugin.jar");//new FindBugs();
       new JavaCompiler();
+      new CheckStyle();
       Tools.trace("");
       Buffers.initCmd();
       Tools.trace("unexpectedly slow");
