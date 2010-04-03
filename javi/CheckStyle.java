@@ -60,7 +60,7 @@ class CheckStyle extends Rgroup {
          List<String> cmd =
             new LinkedList<String>(listModFiles(".*\\.java",fvc));
 
-         cmd.add(0,"cstyle");
+         cmd.add(0,"../cstyle");
          cmd.add(0,"bash");
          PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
       } catch (InputException e) {
@@ -80,7 +80,7 @@ class CheckStyle extends Rgroup {
          List<String> cmd =
             new LinkedList<String>(java.util.Arrays.asList(dlist));
 
-         cmd.add(0,"./cstyle");
+         cmd.add(0,"../cstyle");
          cmd.add(0,"bash");
          PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
       }
@@ -90,21 +90,21 @@ class CheckStyle extends Rgroup {
 class CheckStyleInst extends PositionIoc {
 
    CheckStyleInst(List<String> filename) throws IOException {
-      super("findbug",Tools.runcmd (filename));
+      super("checkstyle",Tools.runcmd (filename));
    }
 
    public Position parsefile(String line) {
       if (line.length()==0)
          return Position.badpos;
 
-      //trace("parsing len =  " + line.length() + " line: "  +line);
+      trace("parsing len =  " + line.length() + " line: "  +line);
 
       int pos = line.indexOf(':',3); // three skips over any drive desc
 
       if (pos==-1) {
-         if (line.equals("Audit done.")
-            ||  line.equals("Starting audit..."))
-            return null;
+         //if (line.equals("Audit done.")
+         //   ||  line.equals("Starting audit..."))
+         //   return null;
          trace("unexpected line:" +line);
          return Position.badpos;
       }

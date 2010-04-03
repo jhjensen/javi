@@ -85,7 +85,7 @@ public final class PosListList extends TextList<Position> implements FileStatusL
       }
 
       if (newIo != null ) {
-         trace("add new ioc " + newIo);
+         //trace("add new ioc " + newIo);
          TextEdit<Position> newList = new TextEdit<Position>(newIo,this,newIo.prop);
          newList.readIn();  // make sure that process is started
          changeElementAt(newList,1);
@@ -94,7 +94,7 @@ public final class PosListList extends TextList<Position> implements FileStatusL
             lastlist2=null;
          if (oldList==lastlist)
             lastlist=null;
-         trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
+         //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          try {
             FvContext.dispose(oldList);
          } catch (IOException e) {    
