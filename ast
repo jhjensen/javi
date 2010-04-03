@@ -1,0 +1,2 @@
+#!/bin/sh
+astyle --style=java -s3  --mode=java  $*

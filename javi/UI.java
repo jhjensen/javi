@@ -61,43 +61,44 @@ import java.awt.im.InputMethodRequests;
 import java.awt.AWTEvent;
 
 public abstract class UI {
-   private enum Buttons {CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP , USEFILE ,
-      USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN };
-   
+   private enum Buttons { CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP ,
+      USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN };
+
    private static Buttons diaflag;
    private static UI instance = null;
-   abstract void itoggleStatus() ;
-   abstract void isetStream(Reader inreader) ;
-   abstract void ireportDiff(String filename,int linenum,Object filevers,
-     Object backupvers,UndoHistory.BackupStatus status ) ;
-   abstract FvContext istartComLine() ;
-   abstract String iendComLine() ;
-   abstract void irepaint() ;
-   abstract void idispose() ;
-   abstract String igetFile() ;
-//   abstract void iadd(Component vi, int index) ;
-   abstract boolean iisVisible() ;
-   abstract void iremove(View vi) ;
-   abstract void ishow() ;
-   abstract void ipack() ;
-   abstract void ishowmenu(int x, int y) ;
-   abstract void itoFront() ;
-   abstract void itransferFocus() ;
-   abstract void ichooseWriteable(String filename) ;
-   abstract void ipopstring(String str) ;
-   abstract void isetFont(Font font) ;
-   abstract void ivalidate() ;
-   abstract void iflush(boolean totalFlush) ;
-   abstract void istatusaddline(String str) ;
-   abstract void istatusSetline(String str) ;
-   abstract void iclearStatus() ;
+   abstract void itoggleStatus();
+   abstract void isetStream(Reader inreader);
+   abstract void ireportDiff(String filename, int linenum, Object filevers,
+     Object backupvers, UndoHistory.BackupStatus status);
+   abstract FvContext istartComLine();
+   abstract String iendComLine();
+   abstract void irepaint();
+   abstract void idispose();
+   abstract String igetFile();
+//   abstract void iadd(Component vi, int index);
+   abstract boolean iisVisible();
+   abstract void iremove(View vi);
+   abstract void ishow();
+   abstract void ipack();
+   abstract void ishowmenu(int x, int y);
+   abstract void itoFront();
+   abstract void itransferFocus();
+   abstract void ichooseWriteable(String filename);
+   abstract void ipopstring(String str);
+   abstract void isetFont(Font font);
+   abstract void ivalidate();
+   abstract void iflush(boolean totalFlush);
+   abstract void istatusaddline(String str);
+   abstract void istatusSetline(String str);
+   abstract void iclearStatus();
    abstract boolean iisGotoOk(FvContext fvc);
    abstract void iresize();
-   abstract FvContext iconnectfv(TextEdit file,View vi) throws InputException;
+   abstract FvContext iconnectfv(TextEdit file, View vi) throws InputException;
    abstract void init2();
    abstract void isetView(FvContext fvc);
 
-   abstract Result ireportModVal(String caption,String units,String []buttonVals,long limit);
+   abstract Result ireportModVal(String caption, String units,
+      String []buttonVals, long limit);
 
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -105,8 +106,9 @@ public abstract class UI {
       os.writeObject(instance);
    }
 
-   static void restoreState(java.io.ObjectInputStream is) throws IOException,ClassNotFoundException {
-//      instance = (Boolean) is.readObject() 
+   static void restoreState(java.io.ObjectInputStream is)
+        throws IOException,ClassNotFoundException {
+//      instance = (Boolean) is.readObject()
 //         ? (UI)new AwtInterface()
 //         :(UI) new StreamInterface();
      instance = (AwtInterface)is.readObject();
@@ -127,33 +129,34 @@ static void setStream(Reader inreader) {
 }
 
 @SuppressWarnings("fallthrough")
-static boolean reportDiff(String filename,int linenum, Object filevers,
-    Object backupvers,UndoHistory.BackupStatus status,String backupname
-     ) throws IOException {
+static boolean reportDiff(String filename, int linenum, Object filevers,
+    Object backupvers, UndoHistory.BackupStatus status, String backupname) 
+    throws IOException {
     //trace(
     //   " filename = " + filename
     //   + " linenum = " + linenum
     //   + " filevers = " + filevers
     //   + " backupvers = " + backupvers
     //   + " status = " + status
-    // );
+    //);
    while (true)  {
       //Thread.dumpStack();
       //trace("instance " + instance + " flag " + diaflag);
-      instance.ireportDiff(filename,linenum,filevers,backupvers,status);
+      instance.ireportDiff(filename, linenum, filevers, backupvers, status);
       //trace("instance " + instance + " flag " + diaflag);
       //trace("" + diaflag);
       switch (diaflag) {
          case USEDIFF:
             try {
-               String cmd =System.getProperties().getProperty("java.javi.diffcmd",
+               String cmd =System.getProperties().getProperty(
+                   "java.javi.diffcmd",
                    "C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
                    //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
                    //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname};
                    //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
                    //"kdiff3 "
                    //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
-               String [] lstr =  {cmd,filename,backupname};
+               String [] lstr =  {cmd, filename, backupname};
                Tools.execute(lstr);
             } catch (IllegalArgumentException e) {
                trace("ui.reportDiff caught exception " + e);
@@ -210,7 +213,7 @@ static String getFile() {
    return instance.igetFile();
 }
 //static void add(Component vi, int index) {
-//   instance.iadd(vi,index);
+//   instance.iadd(vi, index);
 //}
 static boolean isVisible() {
    return instance.iisVisible();
@@ -226,7 +229,7 @@ static void pack() {
    instance.ipack();
 }
 static void showmenu(int x, int y) {
-   instance.ishowmenu(x,y);
+   instance.ishowmenu(x, y);
 }
 static void toFront(){
    instance.itoFront();
@@ -242,13 +245,13 @@ static void resize() {
 
 static Matcher findfile =  Pattern.compile("(.*[\\\\/])([^\\/]*)$").matcher("");
 
-static void makeWriteable(EditContainer edv,String filename) 
+static void makeWriteable(EditContainer edv, String filename)
    throws IOException {
    instance.ichooseWriteable(filename);
    switch (diaflag) {
 
       case CHECKOUT:
-         Command.command("vcscheckout",null,filename);
+         Command.command("vcscheckout", null, filename);
          break;
       case MAKEWRITEABLE:
          edv.setReadOnly(false);
@@ -270,7 +273,7 @@ static void makeWriteable(EditContainer edv,String filename)
               int lineno = 0;
               int linemax = edv.finish();
               String line;
-              while ((line = fr.readLine()) !=null && ++lineno < linemax) { 
+              while ((line = fr.readLine()) !=null && ++lineno < linemax) {
                  if (!line.equals(edv.at(lineno))) {
                     reportMessage("svn base file not equal to current file at " + (lineno -1) + ":" +edv.at(lineno-1) + ":" + line + ":");
                     return;
@@ -289,7 +292,7 @@ static void makeWriteable(EditContainer edv,String filename)
        throw new RuntimeException("ui.makeWriteable: bad diaflag = " + diaflag);
   }
 }
-static void popError(String errs,Throwable ex) {
+static void popError(String errs, Throwable ex) {
   trace("poperror exception trace" + (errs == null ? "" : errs) + ex);
 
   StackTraceElement[] st = ex == null
@@ -314,8 +317,8 @@ static void popError(String errs,Throwable ex) {
      instance.ipopstring(sw.toString());
 }
 
-static FvContext connectfv(TextEdit file,View vi) throws InputException {
-       return instance.iconnectfv(file,vi);
+static FvContext connectfv(TextEdit file, View vi) throws InputException {
+       return instance.iconnectfv(file, vi);
 }
 static void setView(FvContext fvc) {
        instance.isetView(fvc);
@@ -348,14 +351,14 @@ static public class Result {
    public final int newValue;
    public final String choice;
 
-   Result(int newValuei,String choicei) {
+   Result(int newValuei, String choicei) {
       newValue=newValuei;
       choice = choicei;
    }
 }
 
-static Result reportModVal(String caption,String units,String []buttonVals,long limit) {
-   return instance.ireportModVal(caption,units,buttonVals,limit);
+static Result reportModVal(String caption, String units, String []buttonVals, long limit) {
+   return instance.ireportModVal(caption, units, buttonVals, limit);
 }
 
 private static class StreamInterface extends UI{
@@ -364,21 +367,21 @@ private static class StreamInterface extends UI{
    }
    Reader inStr = new InputStreamReader(System.in);
 
- 
 
-void ireportDiff(String filename,int linenum,Object filevers,
-  Object backupvers,UndoHistory.BackupStatus status ) { 
+
+void ireportDiff(String filename, int linenum, Object filevers,
+  Object backupvers, UndoHistory.BackupStatus status) {
      StringBuilder sb = new StringBuilder("problem found in file " + filename + '\n');
      if (filevers==null && backupvers==null) {
         sb.append("the written versions of the file are consistent\n");
-     } else   if (filevers==null ) {
+     } else   if (filevers==null) {
         sb.append( "backup version has extra lines at end\n");
         sb.append(backupvers.toString());
      } else if (backupvers==null) {
         sb.append( "file version has extra lines at end\n");
         sb.append(filevers.toString());
      } else  {
-        sb.append("versions differ at line " + linenum + " :\n") ;
+        sb.append("versions differ at line " + linenum + " :\n");
         sb.append(filevers.toString());
         sb.append('\n');
         sb.append(backupvers.toString());
@@ -399,13 +402,13 @@ void ireportDiff(String filename,int linenum,Object filevers,
         //trace("read in " + (char)ch);
         switch (ch) {
            case 'f':
-              diaflag = Buttons.USEFILE ;
+              diaflag = Buttons.USEFILE;
               return;
            case 'b':
-              diaflag = Buttons.USEBACKUP ;
+              diaflag = Buttons.USEBACKUP;
               return;
            case 'd':
-              diaflag = Buttons.USEDIFF ;
+              diaflag = Buttons.USEDIFF;
               return;
            case 'o':
               diaflag = Buttons.OK;
@@ -421,7 +424,7 @@ void ireportDiff(String filename,int linenum,Object filevers,
         diaflag = Buttons.IOERROR;
         return;
      }
-        
+
 }
 
 void irepaint(){/* unimplemented */}
@@ -442,9 +445,9 @@ void ivalidate() {/* unimplemented */}
 void iflush(boolean total) {/* unimplemented */}
 void itoggleStatus() {/* unimplemented */}
 //void idle() {throw new RuntimeException("unimplemented");}
-FvContext iconnectfv(TextEdit file,View vi ) {return null;}
+FvContext iconnectfv(TextEdit file, View vi) {return null;}
 void iresize() {/* unimplemented */}
-View iaddview(boolean newview,FvContext fvc) {return null;}
+View iaddview(boolean newview, FvContext fvc) {return null;}
 void init2() {/* unimplemented */}
 
 
@@ -456,7 +459,7 @@ void iclearStatus() {/* unimplemented */}
 FvContext istartComLine() { throw new RuntimeException("unimplemented");}
 String iendComLine() {return ""; }
 boolean iisGotoOk(FvContext fvc) {return true;}
-public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
+public Object doroutine(int rnum, Object arg, int count, int rcount, FvContext fvc,
      boolean dotmode) {
          throw new RuntimeException("doroutine called with " + rnum);
 }
@@ -466,25 +469,25 @@ void isetView(FvContext fvc) {
 void inextView(FvContext fvc) {
 }
 
-Result ireportModVal(String caption,String units,String []buttonVals,long limit) {
+Result ireportModVal(String caption, String units, String []buttonVals, long limit) {
    return null;
 }
 }
 
 static class AwtInterface extends UI implements java.io.Serializable,
-   WindowListener,FocusListener,ActionListener,ItemListener,EventQueue.idler {
-  
+   WindowListener, FocusListener, ActionListener, ItemListener, EventQueue.idler {
+
 
 private void common() {
    new Commands();
    EventQueue.registerIdle(this);
 }
 
-private void readObject(java.io.ObjectInputStream is) 
+private void readObject(java.io.ObjectInputStream is)
        throws ClassNotFoundException,java.io.IOException {
    is.defaultReadObject();
    if (fullFrame != null) {
-      GraphicsDevice[] devs = 
+      GraphicsDevice[] devs =
          java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
       currdev = devs[0];
    }
@@ -501,7 +504,7 @@ AwtInterface() {
      frm = initfrm("normal");
      normalFrame=frm;
      common();
-     irepaintFlag = 1;
+     irepaintFlag = 2;
      StringIoc sio = new StringIoc("command buffer",null);
      TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
 
@@ -524,7 +527,7 @@ AwtInterface() {
        "van",
        "vd",
        "vn", //5
-        "fullscreen" 
+        "fullscreen"
      };
      Commands() {
         register(rnames);
@@ -559,13 +562,13 @@ transient GraphicsDevice currdev;
 transient private FileDialog fdialog;
 transient private PopupMenu popmenu; // the menubar
 transient private PopString psinst;
-transient private ChoseWrt chinst ;
+transient private ChoseWrt chinst;
 transient private Diff rdinst;
 transient private StatusBar statusBar;
 transient private FvContext tfc;  // command context //??? may want to save this?
 //transient private FrameListener winl;
-transient int irepaintFlag;  //TODO this is a tremendous hack.  
-//For some reason upgrading java to 6.18 made the cursor stop appearing, 
+transient int irepaintFlag;  //TODO this is a tremendous hack.
+//For some reason upgrading java to 6.18 made the cursor stop appearing,
 //but if we keep redrawing long enough it magically appears.
 
 transient boolean willneedval = false;
@@ -586,7 +589,7 @@ class TestFrame extends  Frame {
        for (int i =0;i<ccount;i++) {
           Component cp =getComponent(i);
           trace("component " + cp);
-          if (cp instanceof View) 
+          if (cp instanceof View)
              ((View)cp).npaint();
       }
    }
@@ -604,8 +607,8 @@ class TestFrame extends  Frame {
       setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
 
       enableInputMethods(false);
-      enableEvents(AWTEvent.KEY_EVENT_MASK |  
-                              AWTEvent.MOUSE_EVENT_MASK| 
+      enableEvents(AWTEvent.KEY_EVENT_MASK |
+                              AWTEvent.MOUSE_EVENT_MASK|
                               AWTEvent.MOUSE_WHEEL_EVENT_MASK |
                               AWTEvent.WINDOW_EVENT_MASK
       );
@@ -617,7 +620,7 @@ class TestFrame extends  Frame {
    }
 
    public void realValidate() {
-      //trace("called realinvalidate !!!!"); 
+      //trace("called realinvalidate !!!!");
       //super.invalidate();
       super.validate();
   }
@@ -627,7 +630,7 @@ class TestFrame extends  Frame {
       prefSize.width=xsize-inset.left-inset.right;
       if (!cp.getSize().equals(prefSize)) {
          cp.setSize(prefSize);
-         //trace("full width set size " + cp.getSize() + " " +  cp );
+         //trace("full width set size " + cp.getSize() + " " +  cp);
       }
       return cp.isVisible()
          ? yleft - prefSize.height
@@ -635,11 +638,11 @@ class TestFrame extends  Frame {
    }
 
    public Dimension getPreferredSize() {
-       
+
       //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
       Toolkit kit = Toolkit.getDefaultToolkit();
       Insets inset = getInsets();
-      if (inset.top==0)  
+      if (inset.top==0)
          inset =   kit.getScreenInsets(getGraphicsConfiguration());
 
        Dimension fsize = new Dimension(inset.right+ inset.left,inset.top+inset.bottom);
@@ -659,7 +662,7 @@ class TestFrame extends  Frame {
              Dimension cpsize = cp.getPreferredSize(); // check if used all
              //trace("component prefsize " + cpsize);
              fsize.width += cpsize.width;
-             if (cpsize.height > viewheight )
+             if (cpsize.height > viewheight)
                 viewheight = cpsize.height;
           }
        }
@@ -682,7 +685,7 @@ class TestFrame extends  Frame {
       Insets inset = getInsets();
       int viewHeight = height - inset.top - inset.bottom;
 
-   
+
       if (tfc.vi.isVisible())
          viewHeight -=  tfc.vi.getPreferredSize().height;
 
@@ -738,7 +741,7 @@ public void processEvent(AWTEvent ev) {
          FileList.quit(true,null); // usually won't return from here
          MiscCommands.wakeUp();
          break;
-   
+
      // browsers may reach here, so wakeup run so it tests flag, and thread returns
       default:
          trace("unhandled event ev " + ev + "  has focus " + hasFocus() + " insets " + getInsets());
@@ -821,7 +824,7 @@ private static class Dropper extends DropTarget {
    }
    public void dragOver(DropTargetDragEvent dtde)  {/* don't care */
    }
-   
+
    public void drop(DropTargetDropEvent dtde)  {
       //ui.trace("" + dtde);
       //ui.trace("" + dtde.getCurrentDataFlavorsAsList());
@@ -848,7 +851,7 @@ private static class Dropper extends DropTarget {
              } else
                 trace("unhandled drop flavor " + flavor);
           }
-                
+
           UI.reportError("drop of unexpected data" + Arrays.toString(tran.getTransferDataFlavors()));
       } catch (UnsupportedFlavorException e) {
          UI.reportError("drop of unexpected data");
@@ -882,7 +885,7 @@ private TestFrame initfrm(String name) {
 
 
 static void mvcomp(Container from,Container to) {
-      for (Component comp:from.getComponents()) { 
+      for (Component comp:from.getComponents()) {
          //trace("moving comp " + comp);
          to.add(comp);
       }
@@ -910,9 +913,9 @@ Object fullScreen() {
             fullFrame=initfrm("fullFrame");
             fullFrame.setFont(frm.getFont());
             fullFrame.setUndecorated(true);
-            GraphicsDevice[] devs = 
+            GraphicsDevice[] devs =
                 java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-   
+
              currdev = devs[0];
              fullFrame.setResizable(false);
          }
@@ -922,7 +925,7 @@ Object fullScreen() {
 
       //iresize();
       if (fullFrame==frm) {
-            currdev.setFullScreenWindow(fullFrame); 
+            currdev.setFullScreenWindow(fullFrame);
             fullFrame.validate();
       }
       return null;
@@ -969,7 +972,7 @@ private View mkview(boolean newview) throws InputException {
      View ta = new OldView(true);
      viewCount++;
      ta.setFont(FontList.getCurr(ta));
-     frm.add(ta,-1);     
+     frm.add(ta,-1);
      //frm.setComponentZOrder(ta,1);
      //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
      iresize();
@@ -1010,7 +1013,7 @@ void irepaint() {
    int ccount = frm.getComponentCount();
    for (int i =0;i<ccount;i++) {
       Component cp =frm.getComponent(i);
-      if (cp.isVisible()) 
+      if (cp.isVisible())
          cp.repaint();
    }
    frm.repaint();
@@ -1020,7 +1023,7 @@ void ishow() {
   //trace("!!! setting frm visible ");
   frm.setSize(frm.getPreferredSize());
   frm.setVisible(true);
-  //trace("!!! done set frm visible insets " + frm.getInsets() );
+  //trace("!!! done set frm visible insets " + frm.getInsets());
 }
 
 void ipack() {
@@ -1062,7 +1065,7 @@ FvContext istartComLine() {
 
 String iendComLine() {
   tfc.vi.setVisible(false);
-  if (willneedval) { 
+  if (willneedval) {
      needval = true;
      willneedval = false;
   }
@@ -1088,7 +1091,7 @@ public void idle() {
       irepaintFlag--;
     }
     View vichanged =  FontList.updateFont();
-    if (vichanged != null ) {
+    if (vichanged != null) {
        isetFont(FontList.getCurr(vichanged));
        vichanged.setFont(FontList.getCurr(vichanged));
        needpack=true;
@@ -1101,7 +1104,7 @@ public void idle() {
       ivalidate();
       needval=false;
     }
-    if (statusBar !=null && statusBar.isVisible()) 
+    if (statusBar !=null && statusBar.isVisible())
        statusBar.repaint();
 }
 
@@ -1125,7 +1128,7 @@ void istatusSetline(String str) {
 
 //void itoFront(boolean front) {
 void itoFront() {
-  
+
 //   frm.setAlwaysOnTop(true);
 //   frm.setAlwaysOnTop(false);
    frm.setVisible(false);
@@ -1151,7 +1154,7 @@ void isetFont(Font font) {
       Component cp;
       int cpi = frm.getComponentCount();
       for (cpi = cpi >2 ? 1 : cpi - 1;
-          cpi >=0 && null != (cp = frm.getComponent(cpi)) ;
+          cpi >=0 && null != (cp = frm.getComponent(cpi));
            --cpi)
          cp.setFont(font);
    }
@@ -1178,27 +1181,27 @@ private static class MyCheckboxMenuItem extends CheckboxMenuItem {
 }
 
 void ishowmenu(int x,int y) {
-   if (popmenu==null) { 
+   if (popmenu==null) {
 
-      popmenu = new PopupMenu(); 
+      popmenu = new PopupMenu();
 
       Menu filem = new Menu("File");
       new MyMenuItem("Open","e",filem,this);
       new MyMenuItem("Quit","q",filem,this);
       new MyMenuItem("Save file","w",filem,this);
       popmenu.add(filem);
- 
+
       Menu sizem = new Menu("Size");
-      for (int i=4;i<20;i++)  
+      for (int i=4;i<20;i++)
           new MyMenuItem(Integer.toString(i),"fontsize " + i,sizem,this);
       popmenu.add(sizem);
- 
+
       Menu typem  = new Menu("Type");
       for (String mname:FontList.typest)
-          new MyMenuItem(mname,"fonttype " + 
+          new MyMenuItem(mname,"fonttype " +
                 mname,typem,this);
       popmenu.add(typem);
- 
+
       new MyCheckboxMenuItem("enableclip",null,popmenu,this);
       new MyMenuItem("paste",null,popmenu,this);
       new MyMenuItem("fullscreen",null,popmenu,this);
@@ -1232,7 +1235,7 @@ static class NDialog extends Dialog implements ActionListener {
    public void actionPerformed(ActionEvent e) {
        resb = (NButton)e.getSource();
        //trace("set resb to " + resb + " lable = " + resb.getLabel());
-       
+
        setVisible(false);
    }
 
@@ -1257,10 +1260,10 @@ static class NDialog extends Dialog implements ActionListener {
    }
 
    public void windowClosing(WindowEvent e) {
-     //trace("" + e );
+     //trace("" + e);
      setVisible(false);
    }
-   
+
    public void setVisible(boolean vis) {
      if (vis)
         resb = null;
@@ -1282,7 +1285,7 @@ private static class PopString extends NDialog {
      ta.setText(s);
      this.pack();
      setVisible(true);
-   }  
+   }
 }
 
 static class ModVal extends NDialog {
@@ -1336,7 +1339,7 @@ private static class ChoseWrt extends NDialog {
      this.setTitle(tstring);
 
      writelabel.setText(tstring);
-  
+
      this.pack();
      Dimension d = writelabel.getPreferredSize();
      this.setSize(d.width,d.height*7);
@@ -1359,7 +1362,7 @@ private static class ChoseWrt extends NDialog {
 //shouldn't need to be synchronized, but it if not two threads can reportDiff
 // at the same time
 void ireportDiff(String filename,int linenum,Object filevers,
-      Object backupvers,UndoHistory.BackupStatus statusi ) {
+      Object backupvers,UndoHistory.BackupStatus statusi) {
 //   synchronized (EventQueue.eventq) {
       if (rdinst==null)
          rdinst=new Diff(this);
@@ -1390,7 +1393,7 @@ private static class Diff extends NDialog {
         //trace("okbut" + okbut);
         //trace("filebut" + filebut);
         //trace("diffbut" + diffbut);
-   
+
         //trace("res" + res);
         return resb==null
            ? UI.Buttons.IOERROR
@@ -1404,15 +1407,15 @@ private static class Diff extends NDialog {
            ? UI.Buttons.USEDIFF
         : UI.Buttons.IOERROR;
       }
-     
-        
+
+
      private enum Buttons {CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP , USEFILE ,
       USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN };
    Diff(AwtInterface jwin)  {
 
      super(jwin.frm,"file difference problem",new GridBagLayout());
 
-     GridBagLayout gb = (GridBagLayout)getLayout() ;
+     GridBagLayout gb = (GridBagLayout)getLayout();
      GridBagConstraints gbc =new GridBagConstraints();
      gbc.anchor=GridBagConstraints.WEST;
      gbc.weightx=1.0;
@@ -1440,7 +1443,7 @@ private static class Diff extends NDialog {
   }
 
   void pop (String filename,int linenum,Object filevers,
-      Object backupvers,UndoHistory.BackupStatus status ) {
+      Object backupvers,UndoHistory.BackupStatus status) {
 //     try {Thread.sleep(150);} catch (Exception e) {} // work around focus problem ???
      this.setTitle("discrepency in backup file:" +filename);
      setinvis();
@@ -1449,10 +1452,10 @@ private static class Diff extends NDialog {
         replab1.setForeground(Color.cyan);
         replab1.setVisible(true);
      } else if (!status.cleanQuit || !status.isQuitAtEnd) {
-                         
-        replab1.setText((!status.cleanQuit  
+
+        replab1.setText((!status.cleanQuit
             ? "javi did not exit cleanly. " : "") +
-            (!status.isQuitAtEnd 
+            (!status.isQuitAtEnd
                ? "There is undo history that is not in effect (use ^r to display)" :""));
         replab1.setVisible(true);
         replab1.setForeground(Color.black);
@@ -1463,14 +1466,14 @@ private static class Diff extends NDialog {
         okbut.setVisible(true);
      } else {
         l1=l2=s1=s2="";
-        if (filevers==null ) {
+        if (filevers==null) {
            l1 = "backup version has extra lines at end";
            s2 = backupvers.toString();
         } else if (backupvers==null) {
            l1 = "file version has extra lines at end";
            s1 = filevers.toString();
         } else  {
-           l1 = "versions differ at line " + linenum + " :" ;
+           l1 = "versions differ at line " + linenum + " :";
            s1 = filevers.toString();
            s2 = backupvers.toString();
         }
@@ -1508,17 +1511,17 @@ private static class Diff extends NDialog {
 }
 
 public void windowClosing(WindowEvent e) {
-  //trace("" + this );
+  //trace("" + this);
   e.getComponent().setVisible(false);
   diaflag=Buttons.WINDOWCLOSE;
 }
 
-public void windowClosed(java.awt.event.WindowEvent e) {/*trace("" + e ); /* dont care */}
-public void windowOpened(WindowEvent e) {/*trace("" + e );/* dont care */} //
-public void windowActivated(WindowEvent e)  { /*trace("" + e );/* dont care */}   //
-public void windowDeactivated(WindowEvent e) {/*trace("" + e ); /* dont care */} //
-public void windowDeiconified(WindowEvent e) {/*trace("" + e ); /* dont care */} //
-public void windowIconified(WindowEvent e) {/*trace("" + e ); /* dont care */} //
+public void windowClosed(java.awt.event.WindowEvent e) {/*trace("" + e); /* dont care */}
+public void windowOpened(WindowEvent e) {/*trace("" + e);/* dont care */} //
+public void windowActivated(WindowEvent e)  { /*trace("" + e);/* dont care */}   //
+public void windowDeactivated(WindowEvent e) {/*trace("" + e); /* dont care */} //
+public void windowDeiconified(WindowEvent e) {/*trace("" + e); /* dont care */} //
+public void windowIconified(WindowEvent e) {/*trace("" + e); /* dont care */} //
 
 //public void setSize(int x,int y) {
 //   trace("to  " + new Dimension(x,y));
@@ -1548,20 +1551,20 @@ private class Layout implements LayoutManager,java.io.Serializable {
       //trace("yleft decreased by height " + height + " cp " + cp);
       if (!cp.getSize().equals(cpsize)) {
          cp.setSize(xsize-inset.left-inset.right,height);
-         //trace("full width set size " + cp.getSize() + " " +  cp );
+         //trace("full width set size " + cp.getSize() + " " +  cp);
       }
-      Point newloc = new Point(inset.left,yleft -height );
+      Point newloc = new Point(inset.left,yleft -height);
       Point oldloc = cp.getLocation();
       if (!newloc.equals(oldloc)) {
-         //trace("full width set y location " + yleft + " " +  cp );
-         cp.setLocation(new Point(inset.left,yleft -height ));
+         //trace("full width set y location " + yleft + " " +  cp);
+         cp.setLocation(new Point(inset.left,yleft -height));
       }
       //trace("returns " + yleft + cp);
       return cp.isVisible()
          ? yleft - height
          : yleft;
    }
-              
+
    public void layoutContainer(Container cont)  {
       Insets inset = frm.getInsets();
       //trace("entered layoutContainer insets = " + inset); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
@@ -1579,8 +1582,8 @@ private class Layout implements LayoutManager,java.io.Serializable {
       //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
       frm.setCompSize(startSize.width,startSize.height);
-      
-      if (normalFrame == frm && 
+
+      if (normalFrame == frm &&
             !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH)) {
          Dimension pref = frm.getPreferredSize();
          if (!pref.equals(startSize)) {
@@ -1613,7 +1616,7 @@ private class Layout implements LayoutManager,java.io.Serializable {
               cp.setLocation(newloc);
            }
            left+= cp.getSize().width;
-         } 
+         }
       }
       needval=false;
    }
@@ -1658,10 +1661,10 @@ public Component getComponentAfter(Container aContainer, Component aComponent) {
    return super.getComponentAfter(aContainer,aComponent);
 }
  public Component getComponentBefore(Container aContainer, Component aComponent) {
- return super.getComponentBefore(aContainer, aComponent) ;
+ return super.getComponentBefore(aContainer, aComponent);
 }
  public Component getFirstComponent(Container aContainer) {
- return super.getFirstComponent(aContainer) ;
+ return super.getFirstComponent(aContainer);
 }
  public Component getLastComponent(Container aContainer) {
  return super.getLastComponent(aContainer);
