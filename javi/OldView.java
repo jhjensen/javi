@@ -442,8 +442,9 @@ private void paintLines(int start,int end) {
 
       if ((index == screenposy))  {
          atIt.emphasize(true);
-         if (insertbuf != null)
-            atIt.addOlineText(insertbuf.buffer.toString(),fcontext.insertx(),insertbuf.overwrite);
+         String iString = getInsertString();
+         if (iString != null)
+            atIt.addOlineText(iString,fcontext.insertx(),getOverwrite());
       }
 
       if (atIt.length() !=0) {
@@ -513,13 +514,13 @@ Shape updateCursorShape(Shape sh) {
       sh = new Rectangle();
    Rectangle rs = (Rectangle)sh;
    int   width = screenposx ;
-   if (insertbuf!=null) {
-      String line = insertbuf.buffer.toString();
+   String iString = getInsertString();
+   if (iString!=null) {
       int tabOffset;
-      if  (-1 != (tabOffset = line.indexOf('\t'))) 
-         line = DeTabber.deTab(line,tabOffset,tabStop,new int[1]);
-      //trace("stringWidth " + fontm.stringWidth(line) + " line:" + line);
-      width += fontm.stringWidth(line);
+      if  (-1 != (tabOffset = iString.indexOf('\t'))) 
+         iString = DeTabber.deTab(iString,tabOffset,tabStop,new int[1]);
+      //trace("stringWidth " + fontm.stringWidth(iString) + " iString:" + iString);
+      width += fontm.stringWidth(iString);
    }
    rs.setBounds(width-1, (screenposy)*(charheight)-1,
       boldflag ? 2 :1, charheight+1);

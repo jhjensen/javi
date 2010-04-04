@@ -1,4 +1,5 @@
 package javi;
+
 import java.awt.event.KeyEvent;
 import java.awt.AWTEvent;
 import java.awt.im.InputMethodRequests;
@@ -18,8 +19,20 @@ class InsertBuffer extends Rgroup
    implements InputMethodRequests,InputMethodListener {
 static final String copyright = "Copyright 1996 James Jensen";
 
-StringBuilder buffer = new StringBuilder();
-boolean overwrite;
+private StringBuilder buffer = new StringBuilder();
+private boolean overwrite;
+
+private class MyInserter  extends View.Inserter {
+      String getString() {
+         return buffer.toString();
+      }
+
+      boolean getOverwrite() {
+         return overwrite;
+      }
+}
+
+private MyInserter insert = new MyInserter();
 
 private EditGroup eg;
 private String dotbuffer;
@@ -230,7 +243,7 @@ void insertmode(boolean dotmode,int count,FvContext fvc,
    } else {
       try {
          View viewer = fvc.vi;
-         viewer.addInsertBuf(this);
+         viewer.setInsert(insert);
          viewer.addInputMethodListener(this);
          viewer.enableInputMethods(true);
          verbatim=false;
@@ -298,7 +311,7 @@ void insertmode(boolean dotmode,int count,FvContext fvc,
 
 void cleanup(FvContext fvc) {
   //trace("insertcontext.cleanup");
-  fvc.vi.clearInsertBuf();
+  fvc.vi.clearInsert();
   fvc.vi.enableInputMethods(false);
   myfvc  = null;
   committed=0;
