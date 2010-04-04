@@ -9,7 +9,6 @@ import java.awt.event.KeyEvent;
 import java.awt.AWTEvent;
 import java.awt.Graphics2D;
 import java.awt.Graphics;
-import java.awt.FontMetrics;
 import java.awt.Font;
 import static javi.View.Opcode.*;
 
@@ -30,6 +29,9 @@ abstract class View  extends Canvas {
    abstract void screeny(int amount);
    abstract Shape updateCursorShape(Shape sh);
 //abstract void changey(int count, fvcontext fvc);
+   abstract void setTabStop(int ts);
+   abstract int getTabStop();
+   abstract void ssetFont(Font font);
 
    /* Copyright 1996 James Jensen all rights reserved */
    private static final String copyright = "Copyright 1996 James Jensen";
@@ -65,22 +67,16 @@ abstract class View  extends Canvas {
 
    protected enum Opcode { NOOP, INSERT, CHANGE, DELETE, REDRAW , MSCREEN };
 
-   protected transient Opcode saveop;
-   protected transient int saveamount;
-   protected int screenposx;
+   protected  transient Opcode saveop;
+   protected  transient int saveamount;
 
    protected static final transient int inset = 2;
    protected transient Graphics2D cursorg;
 
-   protected transient boolean delayerflag;
+   private transient boolean delayerflag;
 
    protected FvContext fcontext;
    protected transient MarkInfo pmark = new MarkInfo();
-   protected int charheight;
-   protected int charwidth;   // not an acurate number
-   protected boolean boldflag;
-   protected AtView atIt;
-   protected int tabStop;
 
    private transient int savestart;
    private transient boolean cursoron = false;
@@ -96,14 +92,6 @@ abstract class View  extends Canvas {
       common();
    }
 
-   void setTabStop(int ts) {
-      tabStop = ts;
-      redraw();
-   }
-
-   int getTabStop() {
-      return tabStop;
-   }
 
    public boolean isFocusable() {
       return false;
@@ -141,8 +129,6 @@ abstract class View  extends Canvas {
       if (fcontext != null)
          fcontext.setVisible(false);
 
-      if  (screenposx == 0)
-         screenposx = inset;
 
       fcontext = newfvc;
       fcontext.setVisible(true);
@@ -165,20 +151,7 @@ abstract class View  extends Canvas {
       synchronized  (EventQueue.biglock) {
          ssetFont(font);
       }
-   }
-
-   private void ssetFont(Font font) {
-      //trace("entered " + this  +font);
-      FontMetrics fontm = getFontMetrics(font);
-      trace("the First usage of a font sure is slow!!!");
-      String teststr = "                                         abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~1!2@3#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
-      charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
-         / teststr.length();
-      //trace("charwidth = " + charwidth + this);
-      charheight = fontm.getHeight();
       super.setFont(font);
-      boldflag = font.isBold();
-      atIt = new AtView(font);
    }
 
    void redraw() {
@@ -212,6 +185,7 @@ abstract class View  extends Canvas {
          index1 = index2;
          index2 = temp;
       }
+
       switch (saveop) {
          case NOOP:
             saveop = CHANGE;
@@ -317,9 +291,11 @@ abstract class View  extends Canvas {
 
    class Delayer implements Runnable {
       private int readin;
-      Delayer(int readini) {
-         readin = readini;
+
+      Delayer() {
+         readin = fcontext.edvec.readIn();
       }
+
       public void run() {
          delayerflag = true;
          try {
@@ -337,6 +313,11 @@ abstract class View  extends Canvas {
          }
          delayerflag = false;
       }
+   }
+
+   void needMoreText() {
+      if (!delayerflag)
+         new Thread(new Delayer(),"oldview delayer").start();
    }
 
    void setMark(Position markposi) {

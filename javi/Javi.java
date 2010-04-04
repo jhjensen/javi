@@ -6,11 +6,10 @@ import java.util.Iterator;
 
 public class Javi {
 
-static class Preloader implements Runnable {
+   static class Preloader implements Runnable {
 
    public void run() {
       try {
-         Class.forName("java.awt.Frame");
          Class.forName("javi.RealJs");
       } catch (Throwable e) {
           UI.popError("preloader ",e);
@@ -82,7 +81,6 @@ public static MapEvent initPostUi() throws Exception {
       //Plugin.Loader.load("plugin/plugin.jar");//new FindBugs();
       new JavaCompiler();
       new CheckStyle();
-      Tools.trace("");
       Buffers.initCmd();
       Tools.trace("unexpectedly slow");
       new JS();
