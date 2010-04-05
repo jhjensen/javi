@@ -339,8 +339,7 @@ private static void disposeAll() throws IOException { //??? use set
 }
 
 static void dispose(TextEdit  ed) throws IOException { // should be called with first in chain
-  //trace("disposing " + ed);
-  //Thread.dumpStack();
+  //trace("disposing " + ed + " currfvc " + currfvc);
      
    fvmap.remove(ed);
    ed.disposeFvc();

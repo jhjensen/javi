@@ -533,6 +533,15 @@ public abstract class UI {
          normalFrame=frm;
          common();
          irepaintFlag = 2;
+
+         try {
+            View vi = mkview(false);
+            FontList.setDefaultFontSize(vi,-1,-1);
+            iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
+         } catch (InputException e) {
+            throw new RuntimeException("can't recover iaddview",e);
+         }
+
          StringIoc sio = new StringIoc("command buffer",null);
          TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
 
@@ -984,11 +993,7 @@ public abstract class UI {
          }
       }
 
-      void init2() {
-         try {
-            View vi = mkview(false);
-            FontList.setDefaultFontSize(vi,-1,-1);
-            iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
+      void init2() { // depends on instance being set
             frm.requestFocus();
             FontList.updateFont(); // prevents an extra redraw later
             frm.requestFocus();
@@ -996,14 +1001,11 @@ public abstract class UI {
             statusBar.setVisible(false);
             frm.add(statusBar,0);
             ishow();
-         } catch (InputException e) {
-            throw new RuntimeException("can't recover iaddview",e);
-         }
       }
 
       FvContext iconnectfv(TextEdit file,View vi) throws InputException {
          //trace("vic.connectfv " + file + " vi " + vi);
-         if (/*tfc != null &&*/ vi == tfc.vi)
+         if (tfc != null && vi == tfc.vi)
             throw new InputException(
                   "can't change command window to display other data");
          isetTitle(file.toString());
@@ -1700,17 +1702,19 @@ public abstract class UI {
             fullwidth(tfc.vi,yleft,xsize,inset); // status
             int left=inset.left;
             int vx = (xsize - inset.left - inset.right)/viewCount;
-            for (int i=ccount - viewCount; i<ccount; i++) { // views
+            for (int i=0; i<ccount; i++) { // views
                Component cp = frm.getComponent(i);
                //trace("processing component " + cp);
                if (cp.isVisible()) {
-                  Point oldloc = cp.getLocation();
-                  Point newloc = new Point(left,inset.top);
-                  if (!oldloc.equals(newloc)) {
-                     //trace("!!! setting new location " + newloc);
-                     cp.setLocation(newloc);
+                  if ((cp instanceof View) && (cp != tfc.vi)) {
+                     Point oldloc = cp.getLocation();
+                     Point newloc = new Point(left,inset.top);
+                     if (!oldloc.equals(newloc)) {
+                        //trace("!!! setting new location " + newloc);
+                        cp.setLocation(newloc);
+                     }
+                     left+= cp.getSize().width;
                   }
-                  left+= cp.getSize().width;
                }
             }
             needval=false;
