@@ -1,6 +1,7 @@
 package javi;
 
 import java.awt.AWTKeyStroke;
+import java.awt.AWTEvent;
 import java.awt.Button;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
@@ -58,7 +59,6 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.awt.event.KeyEvent;
 import java.awt.im.InputMethodRequests;
-import java.awt.AWTEvent;
 
 public abstract class UI {
    private enum Buttons {
@@ -218,9 +218,7 @@ public abstract class UI {
    static String getFile() {
       return instance.igetFile();
    }
-//static void add(Component vi, int index) {
-//   instance.iadd(vi, index);
-//}
+
    static boolean isVisible() {
       return instance.iisVisible();
    }
@@ -349,6 +347,7 @@ public abstract class UI {
          trace("unhandled Messege:" + s);
       }
    }
+
    static void setline(String s) {
       instance.istatusSetline(s);
    }
@@ -532,7 +531,7 @@ public abstract class UI {
          frm = initfrm("normal");
          normalFrame=frm;
          common();
-         irepaintFlag = 2;
+         irepaintFlag = 3;
 
          try {
             View vi = mkview(false);
@@ -589,7 +588,7 @@ public abstract class UI {
                inextView(fvc);
                return null;
             case 6:
-               return fullScreen();
+               fullScreen(); return null;
 
             default:
                throw new RuntimeException("doroutine called with " + rnum);
@@ -602,7 +601,7 @@ public abstract class UI {
       transient private boolean needval;
       private TestFrame frm;
       private TestFrame fullFrame;
-      private TestFrame normalFrame;
+      private final TestFrame normalFrame;
       private int viewCount=0;
       transient GraphicsDevice currdev;
       transient private FileDialog fdialog;
@@ -624,6 +623,17 @@ public abstract class UI {
 
       private static class ForceIdle extends EventQueue.IEvent {
          void execute() throws MapEvent.ExitException {
+         }
+      }
+
+      static abstract class ExecuteEvent extends AWTEvent implements Runnable {
+         public static final int EVENT_ID = AWTEvent.RESERVED_ID_MAX + 1;
+
+         static java.awt.EventQueue eventQueue =
+            Toolkit.getDefaultToolkit().getSystemEventQueue();
+         ExecuteEvent(Object target ) {
+            super( target, EVENT_ID);
+            eventQueue.postEvent(this);
          }
       }
 
@@ -670,10 +680,15 @@ public abstract class UI {
          }
 
          public void realValidate() {
-            //trace("called realinvalidate !!!!");
+            trace("called realinvalidate !!!!");
             //super.invalidate();
             super.validate();
          }
+
+         //public void setVisible(boolean vis) {
+         //   trace("setting visible " + vis + " frm " + this);
+         //   super.setVisible(vis);
+         //}
 
          private final int fullwidth(Component cp,int yleft,
                int xsize,Insets inset) {
@@ -797,6 +812,10 @@ public abstract class UI {
                break;
 
                // browsers may reach here, so wakeup run so it tests flag, and thread returns
+             case ExecuteEvent.EVENT_ID:
+                ((ExecuteEvent)ev).run();
+                break;
+
             default:
                trace("unhandled event ev " + ev + "  has focus " +
                     hasFocus() + " insets " + getInsets());
@@ -952,23 +971,23 @@ public abstract class UI {
          from.removeAll();
       }
 
-      Object fullScreen() {
-
-         frm.setVisible(false);
-         iflush(false);
-         synchronized (frm.getTreeLock()) {
-            if (fullFrame == frm)
-               currdev.setFullScreenWindow(null);
-
+      class FScreen extends ExecuteEvent {
+         FScreen() {
+            super(frm);
+         }
+         public void run() {
+            trace("full Screen " + frm);
+            iflush(false);
 
             if (frm != normalFrame) {
-               //trace("exit fullscreen fullFrame " + fullFrame + " normalFrame " + normalFrame);
+               //trace("changing fullscreen to normal fullFrame " + fullFrame + " normalFrame " + normalFrame);
+               currdev.setFullScreenWindow(null);
                mvcomp(fullFrame,normalFrame);
                frm = normalFrame;
                frm.setVisible(true);
             } else {
-               //trace("!!!!!!enter fullscreen");
-               normalFrame=frm;
+               frm.setVisible(false);
+               trace("!!!!!!enter fullscreen");
                if (fullFrame ==null) {
                   fullFrame=initfrm("fullFrame");
                   fullFrame.setFont(frm.getFont());
@@ -982,15 +1001,13 @@ public abstract class UI {
                }
                mvcomp(normalFrame,fullFrame);
                frm = fullFrame;
-            }
-
-            //iresize();
-            if (fullFrame==frm) {
                currdev.setFullScreenWindow(fullFrame);
                fullFrame.validate();
             }
-            return null;
          }
+      }
+      void fullScreen() {
+         new FScreen();
       }
 
       void init2() { // depends on instance being set
@@ -1139,32 +1156,43 @@ public abstract class UI {
          needval=true;
       }
 
-      public void idle() {
-         //trace("reached idle needval " + needval + " needpack " + needval);
-         if (irepaintFlag>0) {
-            //try {Thread.sleep(200);} catch (InterruptedException e) {/*Ignore*/}
-            Tools.doGC();
-            irepaint();
-            irepaintFlag--;
+
+      class IdleEvent extends ExecuteEvent {
+         IdleEvent() {
+            super(frm);
          }
-         View vichanged =  FontList.updateFont();
-         if (vichanged != null) {
-            isetFont(FontList.getCurr(vichanged));
-            vichanged.setFont(FontList.getCurr(vichanged));
-            needpack=true;
-            //trace("need pack for font ");
+
+         public void run() {
+            //trace("reached idle needval " + needval + " needpack " + needval);
+            if (irepaintFlag>0) {
+               //try {Thread.sleep(200);} catch (InterruptedException e) {/*Ignore*/}
+               Tools.doGC();
+               irepaint();
+               irepaintFlag--;
+            }
+            View vichanged =  FontList.updateFont();
+            if (vichanged != null) {
+               isetFont(FontList.getCurr(vichanged));
+               vichanged.setFont(FontList.getCurr(vichanged));
+               needpack=true;
+               //trace("need pack for font ");
+            }
+            if (needpack) {
+               ipack();
+               needpack=false;
+            } else if (needval) {
+               ivalidate();
+               needval=false;
+            }
+            if (statusBar !=null && statusBar.isVisible())
+               statusBar.repaint();
          }
-         if (needpack) {
-            ipack();
-            needpack=false;
-         } else if (needval) {
-            ivalidate();
-            needval=false;
-         }
-         if (statusBar !=null && statusBar.isVisible())
-            statusBar.repaint();
+
       }
 
+      public void idle() {
+         new IdleEvent();
+      }
       void itoggleStatus() {
          statusBar.setVisible(!statusBar.isVisible());
          //needpack=true;
@@ -1615,11 +1643,6 @@ public abstract class UI {
       public void windowIconified(WindowEvent e) {
          /*trace("" + e); /* dont care */} //
 
-//public void setSize(int x,int y) {
-//   trace("to  " + new Dimension(x,y));
-//   frm.setSize(x,y);
-//}
-
       private class Layout implements LayoutManager,java.io.Serializable {
 
          public void addLayoutComponent(String s, Component cont) {
@@ -1666,7 +1689,7 @@ public abstract class UI {
             if (cont!=frm) {
                trace("laying out wrong contaner ! cont = "
                   + cont + " frame " + frm);
-               return;
+//               return;
             }
 
             // what is the point of layout out before we get our insets?
@@ -1796,3 +1819,4 @@ public abstract class UI {
       Tools.trace(str,1);
    }
 }
+
