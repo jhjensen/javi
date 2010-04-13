@@ -14,29 +14,28 @@ import static javi.View.Opcode.*;
 
 abstract class View  extends Canvas {
 
-   abstract void insertedElementsdraw(int start, int amount);
-   abstract void deletedElementsdraw(int start, int amount);
-   abstract void changeddraw(int start, int amount);
-   abstract void movescreendraw(int amount);
-   abstract void refresh();
+   abstract void insertedElementsdraw(Graphics gr, int start, int amount);
+   abstract void deletedElementsdraw(Graphics gr, int start, int amount);
+   abstract void changeddraw(Graphics gr, int start, int amount);
+   abstract void movescreendraw(Graphics gr, int amount);
+   abstract void refresh(Graphics gr);
    abstract int yCursorChanged(int ychange);
    abstract void cursorChanged(int ychange);
-//abstract int cursorchanged(int xchange, int ychange);
    abstract Position mousepos(MouseEvent event);
    abstract int getRows(float scramount);
    abstract void setSizebyChar(int x, int y);
    abstract int screenFirstLine();
    abstract void screeny(int amount);
    abstract Shape updateCursorShape(Shape sh);
-//abstract void changey(int count, fvcontext fvc);
    abstract void setTabStop(int ts);
    abstract int getTabStop();
    abstract void ssetFont(Font font);
+   abstract void newGraphics();
 
    /* Copyright 1996 James Jensen all rights reserved */
    private static final String copyright = "Copyright 1996 James Jensen";
 
-   static abstract class Inserter {
+   abstract static class Inserter {
       abstract String getString();
       abstract boolean getOverwrite();
    }
@@ -65,13 +64,14 @@ abstract class View  extends Canvas {
 
    final boolean nextFlag;
 
-   protected enum Opcode { NOOP, INSERT, CHANGE, DELETE, REDRAW , MSCREEN };
+   protected enum Opcode { NOOP, INSERT, CHANGE,
+      DELETE, REDRAW , MSCREEN, BLINKCURSOR 
+   };
 
    protected  transient Opcode saveop;
    protected  transient int saveamount;
 
    protected static final transient int inset = 2;
-   protected transient Graphics2D cursorg;
 
    private transient boolean delayerflag;
 
@@ -83,6 +83,8 @@ abstract class View  extends Canvas {
    private transient boolean cursoractive = true;
    private transient Color cursorcolor;
    private transient Shape cursorshape;
+   private transient Graphics oldgr;
+   private boolean checkCursor;
 
    private void readObject(java.io.ObjectInputStream is)
          throws ClassNotFoundException, java.io.IOException {
@@ -156,6 +158,7 @@ abstract class View  extends Canvas {
 
    void redraw() {
       saveop = REDRAW;
+      repaint();
    }
 
    boolean insertedElements(int start, int amount) {
@@ -218,75 +221,99 @@ abstract class View  extends Canvas {
    }
 
    public void update(Graphics g) { //  paint will do it's own clearing
-      paint(g);
+      if (g != oldgr) {
+         oldgr = g;
+         newGraphics();
+      }
+      npaint((Graphics2D) g);
    }
 
-
-   public void repaint() {
-      if (!isVisible())
-         return;
-      //trace("redrawing screen " + this);
-      super.repaint();
+   public void paint(Graphics g) {
+      //trace("paint called ");
+      if (g != oldgr) {
+         oldgr = g;
+         newGraphics();
+      }
+      saveop = REDRAW;
+      npaint((Graphics2D) g);
    }
 
-   void npaint() {
+   void npaint(Graphics2D gr) {
       try {
-         fcontext.getChanges();
-         //trace("npaint saveop = " +saveop);
-         //trace("saveop = " + saveop );
-         //+ " cursorg = " + cursorg);
-         //trace("view " + this);
-         if (cursorg != null && ((saveop != NOOP) || !isValid()))
-            rpaint();
+         synchronized (EventQueue.biglock) {
+            fcontext.getChanges();
+            //trace("npaint saveop = " +saveop);
+            //trace("saveop = " + saveop );
+            //+ " gr = " + gr);
+            //trace("view " + this);
+            if (((saveop != NOOP) || !isValid()))
+               rpaint(gr);
+         }
       } catch (Throwable e) {
          UI.popError("npaint caught", e);
       }
    }
 
-   private class Redraw extends EventQueue.IEvent {
-
-      void execute() {
-         saveop = NOOP; // force entire screen to be updated
-         rpaint();
-      }
-   }
-
-   public void paint(Graphics g) {
-      //trace("inserting redraw");
-      EventQueue.insert(new Redraw());
-   }
-
    @SuppressWarnings("fallthrough")
-   private void rpaint() {
+   private void rpaint(Graphics2D gr) {
       //trace("saveop = " + saveop);
-      switch (saveop) {
-         case REDRAW:
-            //trace("REDRAW");
+      if (saveop ==   BLINKCURSOR) {
+         bcursor(gr);
+      } else if (saveop ==   NOOP) {
 
-            if (!isValid())
-               saveop = NOOP;    // forces background update
-            //intential fall through
-         case NOOP:
-            refresh();
-            break;
+      } else {
 
-         case INSERT:
-            insertedElementsdraw(savestart, saveamount);
-            break;
+         if (cursoron) {
+            bcursor(gr);
+         }
 
-         case DELETE:
-            deletedElementsdraw(savestart, saveamount);
-            break;
+         switch (saveop) {
+            case REDRAW:
+               //trace("REDRAW");
 
-         case CHANGE:
-            changeddraw(savestart, saveamount);
-            break;
+               if (!isValid())
+                  saveop = NOOP;    // forces background update
+               //intential fall through
+               refresh(gr);
+               break;
 
-         case MSCREEN:
-            movescreendraw(saveamount);
-            break;
+            case INSERT:
+               insertedElementsdraw(gr, savestart, saveamount);
+               break;
+
+            case DELETE:
+               deletedElementsdraw(gr, savestart, saveamount);
+               break;
+
+            case CHANGE:
+               changeddraw(gr, savestart, saveamount);
+               break;
+
+            case MSCREEN:
+               movescreendraw(gr, saveamount);
+               break;
+
+         }
       }
       saveop = NOOP;
+   }
+
+   private void bcursor(Graphics2D gr) {
+      if (checkCursor && !cursoron) { // never move the cursor except when off
+         //trace("changing cursor old cursor " + cursorshape);
+         cursorshape = updateCursorShape(cursorshape);
+         //trace("new cursor " + cursorshape);
+         cursorcolor =  inserter == null
+            ? AtView.cursorColor
+            : AtView.insertCursor;
+         }
+       if (cursoractive || cursoron) { // if cursor is not active turn it off
+         cursoron = !cursoron;
+         gr.setXORMode(cursorcolor);
+         gr.setColor(AtView.background);
+         gr.fill(cursorshape);
+         gr.setPaintMode();
+      }
    }
 
    class Delayer implements Runnable {
@@ -317,7 +344,7 @@ abstract class View  extends Canvas {
 
    void needMoreText() {
       if (!delayerflag)
-         new Thread(new Delayer(),"oldview delayer").start();
+         new Thread(new Delayer(), "oldview delayer").start();
    }
 
    void setMark(Position markposi) {
@@ -354,6 +381,7 @@ abstract class View  extends Canvas {
       public String toString() {
          return "(" + sx1 + "," + sy1 + "),(" + sx2 + "," + sy2 + ")";
       }
+
       void cursorChanged(int x, int y) {
          if (markpos == null) {
             sy1 = 0;
@@ -468,56 +496,21 @@ abstract class View  extends Canvas {
 
    void cursoron() {
       //trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
-      cursorshape = updateCursorShape(cursorshape);
-      cursorcolor =  inserter == null
-                     ? AtView.cursorColor
-                     : AtView.insertCursor;
-
+      checkCursor = true;
       cursoractive = true;
       blinkcursor();
    }
 
    boolean blinkcursor() {
-      //trace("blink cursor " + this);
-      //trace("blink cursorshape.bounds = " + cursorshape.getBounds() + " cursorg = " + cursorg + " cursor on = " + cursoron  );
-      //trace("blink cursor color " + cursorcolor);
-//   if (!hasFocus()) {
-//      KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-//      trace("current view doesn't have focus  activeWindow " + kfm.getActiveWindow());
-//      trace("focusOwner " + kfm.getFocusOwner());
-//   }
-
-      if (!cursoractive)
-         throw new RuntimeException();
-
-      if (cursorg == null) {  // this really shouldn't happen ???
-         trace("!!!!!! cursorg  null");
-         return cursoron; // can happen on add view
+      if (saveop == NOOP) {
+         saveop = BLINKCURSOR;
+         repaint();
       }
-
-      cursorg.setXORMode(cursorcolor);
-      cursorg.setColor(AtView.background);
-      cursorg.fill(cursorshape);
-      cursorg.setPaintMode();
-      cursoron = !cursoron;
       return cursoron;
-   }
-
-   Graphics2D getGraphics2D() {
-      Graphics2D g =  (Graphics2D) super.getGraphics();
-      if  (g == null) {
-         Tools.doGC();
-         g = (Graphics2D) super.getGraphics();
-      }
-      //trace("getGraphics2d" );
-      return g;
    }
 
    void placeline(int lineno, float amount) {
       int row = getRows(amount);
-//   if (row >getRows() - 1)
-//      row = getRows() - 1;
-//trace("row " + row + " inserty" + fcontext.inserty() + "firstline " +
       screenFirstLine();
       row =  lineno - screenFirstLine() - row;
       screeny(row);

@@ -42,8 +42,6 @@
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
 
-    <!-- not working module name="NewlineAtEndOfFile">
-    </module> -->
     <module name="NewlineAtEndOfFile">
        <property name="lineSeparator" value="crlf"/>
     </module>

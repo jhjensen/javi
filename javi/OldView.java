@@ -33,7 +33,6 @@ class OldView  extends View {
 
    private transient Image dbuf;
    private transient Graphics2D imageg;
-   private transient Graphics oldgr;
    private int saveScreenX;
    private int charheight;
    private int charwidth;   // not an acurate number
@@ -47,6 +46,7 @@ class OldView  extends View {
       screenposx = inset;
       tabStop = 8;
       setBackground(AtView.background);
+//      setBackground(new java.awt.Color(0,255,0));
 
    }
 
@@ -85,7 +85,7 @@ class OldView  extends View {
       super.newfile(newfvc);
    }
 
-   void insertedElementsdraw(int start, int amount) {
+   void insertedElementsdraw(Graphics gr,int start, int amount) {
 
       int screenstart = start - fcontext.inserty() + screenposy;
       int screenend = screenstart + amount; // end of bad screen
@@ -97,13 +97,13 @@ class OldView  extends View {
       if (screenend >= 0 && screenstart <= screenSize
             && screenend > screenstart) {
          if (screenend < screenSize)
-            copyLines(screenstart, screenSize - (screenend - screenstart),
+            copyLines(gr,screenstart, screenSize - (screenend - screenstart),
                       screenend - screenstart);
-         paintLines(screenstart, screenend);
+         paintLines(gr,screenstart, screenend);
       }
    }
 
-   void changeddraw(int index, int index2) {
+   void changeddraw(Graphics gr,int index, int index2) {
       index = index - screenFirstLine();
       index2 = index2 - screenFirstLine() + 1;
       if (index < 0)
@@ -111,11 +111,11 @@ class OldView  extends View {
       if (index2 > screenSize)
          index2 = screenSize;
       if (index2 >= 0  && index < screenSize) {
-         paintLines(index, index2);
+         paintLines(gr,index, index2);
       }
    }
 
-   void deletedElementsdraw(int start, int amount) {
+   void deletedElementsdraw(Graphics gr,int start, int amount) {
 
       while (!text.contains(1))
          throw new RuntimeException();
@@ -129,8 +129,8 @@ class OldView  extends View {
       //      + " start = " + start + " amount = " + amount);
       if (gonee >= 0 && gones < screenSize && gonee > gones) {
          if (gonee < screenSize)
-            copyLines(gonee, screenSize, gones - gonee);
-         paintLines(screenSize - (gonee - gones), screenSize);
+            copyLines(gr,gonee, screenSize, gones - gonee);
+         paintLines(gr,screenSize - (gonee - gones), screenSize);
       }
 
    }
@@ -365,36 +365,29 @@ class OldView  extends View {
       fixcursor(0, yChange, newx);
    }
 
-   public void paint(Graphics g) {
-      if (g != oldgr) {
-         oldgr = g;
-         cursorg = getGraphics2D();
-         allocImage();
-      }
-      super.paint(cursorg);
-   }
-
-   void refresh() {
-//        trace("REDRAW " + this);
+   void refresh(Graphics gr) {
+      //trace(" one second to REDRAW " + this);
       //trace("cliprect = " + g.getClipBounds()  +
       //     " my cliprect = " + cliprect);
       //trace("blacking out screen");
-      cursorg.setClip(null);
-      cursorg.setColor(AtView.interFrame);
-      cursorg.fillRect(0, 0, inset, screenSize * charheight);
-      cursorg.fillRect(pixelWidth - inset, 0, inset , screenSize * charheight);
-      cursorg.setClip(cliprect);
-      paintLines(0, screenSize);
+      gr.setClip(null);
+      gr.setColor(AtView.interFrame);
+      gr.fillRect(0, 0, inset, screenSize * charheight);
+      gr.fillRect(pixelWidth - inset, 0, inset , screenSize * charheight);
+      gr.setClip(cliprect);
+      paintLines(gr,0, screenSize);
+      //trace(" done REDRAW " + this);
    }
 
-   private void copyLines(int start, int end, int delta) {
+   private void copyLines(Graphics gr,int start, int end, int delta) {
+      trace("copyLines");
       if (start < 0 || end > screenSize || start >= end
             || start + delta < 0 || end + delta > screenSize)
          throw new RuntimeException("start = " + start + " end = "
             + end + " delta = " + delta);
 
 //     try {
-      cursorg.copyArea(0, start * charheight, pixelWidth,
+      gr.copyArea(0, start * charheight, pixelWidth,
             (end - start) * charheight, 0, delta * charheight);
 //      } catch  (sun.java2d.InvalidPipeException e) {
 //         trace("caught exception + " + e);
@@ -402,7 +395,7 @@ class OldView  extends View {
 //      }
    }
 
-   private void allocImage() {
+   void newGraphics() {
       //trace("allocImage");
       dbuf = createImage(pixelWidth * 2, charheight);
       imageg = (Graphics2D) dbuf.getGraphics();
@@ -418,16 +411,18 @@ class OldView  extends View {
 
    }
 
-   private int fillheader(int start) {
+   private int fillheader(Graphics gr,int start) {
+      //trace("fillheader");
       if (start + screenFirstLine() < 1) {
          start = 1 - screenFirstLine();
-         cursorg.setColor(AtView.noFile);
-         cursorg.fillRect(0, 0, pixelWidth , start * charheight);
+         gr.setColor(AtView.noFile);
+         gr.fillRect(0, 0, pixelWidth , start * charheight);
       }
       return start;
    }
 
-   private int filltrailer(int end) {
+   private int filltrailer(Graphics gr,int end) {
+      //trace("filltrailer");
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " fin = " + text.finish());
       int numlines = text.readIn(); // number of lines read in
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " numlines " + numlines);
@@ -435,30 +430,30 @@ class OldView  extends View {
          end = numlines - screenFirstLine();
          if (end != screenSize) {
             if (!text.donereading())  {
-               cursorg.setColor(AtView.unFinished);
+               gr.setColor(AtView.unFinished);
                needMoreText();
             } else
-               cursorg.setColor(AtView.noFile);
-            cursorg.fillRect(0, end * charheight,
+               gr.setColor(AtView.noFile);
+            gr.fillRect(0, end * charheight,
                              pixelWidth , (screenSize - end) * charheight);
          }
       }
       return end;
    }
 
-   private void paintLines(int start, int end) {
+   private void paintLines(Graphics gr,int start, int end) {
       //trace("paintLines start = " + start + " end " + end);
       //Thread.dumpStack();
       if (imageg == null)
-         allocImage();
+         newGraphics();
       //trace("imageg " + imageg);
       //assert start >= 0 && end <= screenSize && start < end;
       if (start < 0 || end > screenSize || start >= end)
          throw new RuntimeException("start = " + start + " end = " + end
             + " screenSize = " + screenSize);  // should never happen
 
-      start = fillheader(start);
-      end = filltrailer(end);
+      start = fillheader(gr,start);
+      end = filltrailer(gr,end);
 
       //trace("paint2 end = "  + end + " firstline = " + screenFirstLine());
       for (int index = start, tindex = index + screenFirstLine();
@@ -486,13 +481,13 @@ class OldView  extends View {
                atIt.deTab(tabStop);
             imageg.drawString(atIt, xoffset, charascent);
          }
-//      cursorg.setColor(Color.cyan);
-//      cursorg.fillRect(xoffset, index * charheight, pixelWidth , charheight);
-//      cursorg.setColor(atIt.lightYellow);
+//      gr.setColor(Color.cyan);
+//      gr.fillRect(xoffset, index * charheight, pixelWidth , charheight);
+//      gr.setColor(atIt.lightYellow);
 //      if (atIt.length() != 0) {
-//         cursorg.drawString(atIt, xoffset, charascent + index * charheight);
+//         gr.drawString(atIt, xoffset, charascent + index * charheight);
 //      }
-         cursorg.drawImage(dbuf, 0, index * charheight, null);
+         gr.drawImage(dbuf, 0, index * charheight, null);
          //try {Thread.sleep(100);} catch (InterruptedException e) {/*Ignore*/}
       }
    }
@@ -520,7 +515,7 @@ class OldView  extends View {
       }
    }
 
-   void movescreendraw(int amount) {
+   void movescreendraw(Graphics gr,int amount) {
       int cstart, cend, pstart, pend;
       if (amount > 0) {
          cstart = amount;
@@ -533,8 +528,8 @@ class OldView  extends View {
          pstart = 0;
          pend = -amount;
       }
-      copyLines(cstart, cend, -amount);
-      paintLines(pstart , pend);
+      copyLines(gr,cstart, cend, -amount);
+      paintLines(gr,pstart , pend);
    }
 
 

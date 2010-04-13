@@ -192,7 +192,7 @@ static {
 private static class Idler implements EventQueue.idler {
    public void idle() {
       for (View vi : fvmap.viewCollection())
-         vi.npaint();
+         vi.repaint();
    }
 }
 

@@ -82,14 +82,14 @@ public abstract class UI {
    abstract boolean iisVisible();
    abstract void iremove(View vi);
    abstract void ishow();
-   abstract void ipack();
+//   abstract void ipack();
    abstract void ishowmenu(int x, int y);
    abstract void itoFront();
    abstract void itransferFocus();
    abstract void ichooseWriteable(String filename);
    abstract void ipopstring(String str);
    abstract void isetFont(Font font);
-   abstract void ivalidate();
+//   abstract void ivalidate();
    abstract void iflush(boolean totalFlush);
    abstract void istatusaddline(String str);
    abstract void istatusSetline(String str);
@@ -229,9 +229,9 @@ public abstract class UI {
    static void show() {
       instance.ishow();
    }
-   static void pack() {
-      instance.ipack();
-   }
+//   static void pack() {
+//      instance.ipack();
+//   }
    static void showmenu(int x, int y) {
       instance.ishowmenu(x, y);
    }
@@ -452,14 +452,14 @@ public abstract class UI {
       boolean iisVisible() {return true;}
       void iremove(View vi) {/* unimplemented */}
       void ishow() {/* unimplemented */}
-      void ipack() {/* unimplemented */}
+//      void ipack() {/* unimplemented */}
       void ishowmenu(int x, int y) {/* unimplemented */}
       void itoFront() {/* unimplemented */}
       void itransferFocus() {/* unimplemented */}
       void ichooseWriteable(java.lang.String str) {/* unimplemented */}
       void ipopstring(java.lang.String str) {/* unimplemented */}
       void isetFont(java.awt.Font font) {/* unimplemented */}
-      void ivalidate() {/* unimplemented */}
+//      void ivalidate() {/* unimplemented */}
       void iflush(boolean total) {/* unimplemented */}
       void itoggleStatus() {/* unimplemented */}
 //void idle() {throw new RuntimeException("unimplemented");}
@@ -531,7 +531,6 @@ public abstract class UI {
          frm = initfrm("normal");
          normalFrame=frm;
          common();
-         irepaintFlag = 3;
 
          try {
             View vi = mkview(false);
@@ -612,7 +611,6 @@ public abstract class UI {
       transient private StatusBar statusBar;
       transient private FvContext tfc;  // command context //??? may want to save this?
 //transient private FrameListener winl;
-      transient int irepaintFlag;  //TODO this is a tremendous hack.
 //For some reason upgrading java to 6.18 made the cursor stop appearing,
 //but if we keep redrawing long enough it magically appears.
 
@@ -626,16 +624,6 @@ public abstract class UI {
          }
       }
 
-      static abstract class ExecuteEvent extends AWTEvent implements Runnable {
-         public static final int EVENT_ID = AWTEvent.RESERVED_ID_MAX + 1;
-
-         static java.awt.EventQueue eventQueue =
-            Toolkit.getDefaultToolkit().getSystemEventQueue();
-         ExecuteEvent(Object target ) {
-            super( target, EVENT_ID);
-            eventQueue.postEvent(this);
-         }
-      }
 
       class TestFrame extends  Frame {
 
@@ -647,9 +635,10 @@ public abstract class UI {
                Component cp =getComponent(i);
                trace("component " + cp);
                if (cp instanceof View)
-                  ((View)cp).npaint();
+                  ((View)cp).repaint();
             }
          }
+
          TestFrame(String str,String namei) {
             super(str);
             name = namei;
@@ -679,11 +668,11 @@ public abstract class UI {
             return name + super.toString();
          }
 
-         public void realValidate() {
-            trace("called realinvalidate !!!!");
-            //super.invalidate();
-            super.validate();
-         }
+//         public void realValidate() {
+//            trace("called realinvalidate !!!!");
+//            //super.invalidate();
+//            super.validate();
+//         }
 
          //public void setVisible(boolean vis) {
          //   trace("setting visible " + vis + " frm " + this);
@@ -812,7 +801,7 @@ public abstract class UI {
                break;
 
                // browsers may reach here, so wakeup run so it tests flag, and thread returns
-             case ExecuteEvent.EVENT_ID:
+             case ExecuteEvent.eventId:
                 ((ExecuteEvent)ev).run();
                 break;
 
@@ -1051,7 +1040,6 @@ public abstract class UI {
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
          iresize();
          ta.setVisible(true);
-         //irepaintFlag = 5;
          return ta;
       }
       private void delview(FvContext fvc) {
@@ -1100,20 +1088,20 @@ public abstract class UI {
          //trace("!!! done set frm visible insets " + frm.getInsets());
       }
 
-      void ipack() {
-         trace("!!!!!!!!ipack layout " + frm.getLayout());
-         frm.invalidate();
-         frm.pack();
-      }
+//      void ipack() {
+//         trace("!!!!!!!!ipack layout " + frm.getLayout());
+//         frm.invalidate();
+//         frm.pack();
+//      }
 
       boolean iisVisible() {
          return frm.isVisible();
       }
 
-      void ivalidate() {
-         //trace("validate " + frm.getLayout());
-         frm.realValidate();
-      }
+//      void ivalidate() {
+//         trace("validate " + frm.getLayout());
+//         frm.realValidate();
+//      }
 
       void isetTitle(java.lang.String title) {
 //trace("fr = " + fr + " this " + this);
@@ -1133,7 +1121,7 @@ public abstract class UI {
             willneedval=true;
          tfc.vi.setVisible(true);
          //tfc.vi.redraw();
-         tfc.vi.npaint();
+         tfc.vi.repaint();
          return tfc;
       }
 
@@ -1164,12 +1152,6 @@ public abstract class UI {
 
          public void run() {
             //trace("reached idle needval " + needval + " needpack " + needval);
-            if (irepaintFlag>0) {
-               //try {Thread.sleep(200);} catch (InterruptedException e) {/*Ignore*/}
-               Tools.doGC();
-               irepaint();
-               irepaintFlag--;
-            }
             View vichanged =  FontList.updateFont();
             if (vichanged != null) {
                isetFont(FontList.getCurr(vichanged));
@@ -1177,13 +1159,13 @@ public abstract class UI {
                needpack=true;
                //trace("need pack for font ");
             }
-            if (needpack) {
-               ipack();
-               needpack=false;
-            } else if (needval) {
-               ivalidate();
-               needval=false;
-            }
+            //if (needpack) {
+               //ipack();
+               //needpack=false;
+            //} else if (needval) {
+               //ivalidate();
+               //needval=false;
+            //}
             if (statusBar !=null && statusBar.isVisible())
                statusBar.repaint();
          }
@@ -1193,6 +1175,7 @@ public abstract class UI {
       public void idle() {
          new IdleEvent();
       }
+
       void itoggleStatus() {
          statusBar.setVisible(!statusBar.isVisible());
          //needpack=true;
@@ -1819,4 +1802,3 @@ public abstract class UI {
       Tools.trace(str,1);
    }
 }
-
