@@ -22,7 +22,6 @@ private ArrayList<String> messeges = new ArrayList<String>();
 StatusBar() {
    super();
    setBackground(AtView.foreground);
-//   setForeground(AtView.background);
 }
 
 void setUp() {
@@ -30,18 +29,16 @@ void setUp() {
 }
 
 void addline(String line) {
-//trace("adding " + line);
+      //trace("adding " + line);
       synchronized(this) {
          messeges.add(line);
       }
       if (isVisible()) {
          if (!getPreferredSize().equals(getSize())) {
             setSize(getPreferredSize());
-            UI.resize();
          }
       } else
          setVisible(true);
-//Thread.dumpStack();
 }
 
 private void setmet() {
@@ -49,7 +46,7 @@ private void setmet() {
       charheight = fontm.getHeight();
       charascent = fontm.getMaxAscent();
       charwidth = fontm.charWidth('a');
-//trace("fontm = " + fontm);
+     //trace("fontm = " + fontm);
 }
 
 public Dimension getPreferredSize() {
@@ -71,12 +68,11 @@ public Dimension getPreferredSize() {
             d = new Dimension(getSize().width,  (1+ over + messeges.size()) *charheight);
       }
    }
-//trace("" + d);
    return d;
 }
 
 void setline(String line) {
-//trace("line = " + line);
+    //trace("line = " + line);
     messeges.clear();
     addline(line);
 }
@@ -84,7 +80,6 @@ void setline(String line) {
 boolean clearlines() {
  if (messeges.size()!=0) {
     messeges.clear();
-    UI.resize();
     return true;
  }
   return false;
@@ -96,9 +91,7 @@ public boolean isFocusable() {
 
 public void setFont(Font f) {
   super.setFont(f);
-//trace("font = " + f);
   charheight=0;
-  UI.resize();
 }
 
 public void setVisible(boolean b) {
@@ -108,8 +101,6 @@ public void setVisible(boolean b) {
      clearlines();
   super.setVisible(b);
   
-  UI.resize();
-//  trace("reached " + this);
 }
 
 public void paint(Graphics g) {

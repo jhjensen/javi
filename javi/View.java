@@ -65,7 +65,7 @@ abstract class View  extends Canvas {
    final boolean nextFlag;
 
    protected enum Opcode { NOOP, INSERT, CHANGE,
-      DELETE, REDRAW , MSCREEN, BLINKCURSOR 
+      DELETE, REDRAW , MSCREEN, BLINKCURSOR
    };
 
    protected  transient Opcode saveop;
@@ -80,7 +80,7 @@ abstract class View  extends Canvas {
 
    private transient int savestart;
    private transient boolean cursoron = false;
-   private transient boolean cursoractive = true;
+   private transient boolean cursoractive = false;
    private transient Color cursorcolor;
    private transient Shape cursorshape;
    private transient Graphics oldgr;
@@ -238,7 +238,7 @@ abstract class View  extends Canvas {
       npaint((Graphics2D) g);
    }
 
-   void npaint(Graphics2D gr) {
+   private void npaint(Graphics2D gr) {
       try {
          synchronized (EventQueue.biglock) {
             fcontext.getChanges();
@@ -263,9 +263,8 @@ abstract class View  extends Canvas {
 
       } else {
 
-         if (cursoron) {
+         if (cursoron) 
             bcursor(gr);
-         }
 
          switch (saveop) {
             case REDRAW:
@@ -299,6 +298,7 @@ abstract class View  extends Canvas {
    }
 
    private void bcursor(Graphics2D gr) {
+      //trace("bcursor cursoron " + cursoron + " cursoractive " + cursoractive + " checkCursor " + checkCursor);
       if (checkCursor && !cursoron) { // never move the cursor except when off
          //trace("changing cursor old cursor " + cursorshape);
          cursorshape = updateCursorShape(cursorshape);
@@ -306,8 +306,9 @@ abstract class View  extends Canvas {
          cursorcolor =  inserter == null
             ? AtView.cursorColor
             : AtView.insertCursor;
-         }
-       if (cursoractive || cursoron) { // if cursor is not active turn it off
+         checkCursor = false;
+      }
+      if (cursoractive || cursoron) { // if cursor is not active turn it off
          cursoron = !cursoron;
          gr.setXORMode(cursorcolor);
          gr.setColor(AtView.background);
@@ -489,9 +490,9 @@ abstract class View  extends Canvas {
    void cursoroff() {
       //trace("cursoroff cursoractive " + cursoractive + " cursoron " + cursoron +"");
       Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+      cursoractive = false;
       if (cursoron)
          blinkcursor();
-      cursoractive = false;
    }
 
    void cursoron() {

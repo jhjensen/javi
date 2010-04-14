@@ -95,7 +95,6 @@ public abstract class UI {
    abstract void istatusSetline(String str);
    abstract void iclearStatus();
    abstract boolean iisGotoOk(FvContext fvc);
-   abstract void iresize();
    abstract FvContext iconnectfv(TextEdit file, View vi) throws InputException;
    abstract void init2();
    abstract void isetView(FvContext fvc);
@@ -241,10 +240,6 @@ public abstract class UI {
 
    static void hide() {
       instance.itransferFocus();
-   }
-
-   static void resize() {
-      instance.iresize();
    }
 
    static Matcher findfile =
@@ -464,7 +459,6 @@ public abstract class UI {
       void itoggleStatus() {/* unimplemented */}
 //void idle() {throw new RuntimeException("unimplemented");}
       FvContext iconnectfv(TextEdit file, View vi) {return null;}
-      void iresize() {/* unimplemented */}
       View iaddview(boolean newview, FvContext fvc) {return null;}
       void init2() {/* unimplemented */}
 
@@ -596,8 +590,6 @@ public abstract class UI {
 
 
       }
-      transient private boolean needpack;
-      transient private boolean needval;
       private TestFrame frm;
       private TestFrame fullFrame;
       private final TestFrame normalFrame;
@@ -610,20 +602,11 @@ public abstract class UI {
       transient private Diff rdinst;
       transient private StatusBar statusBar;
       transient private FvContext tfc;  // command context //??? may want to save this?
-//transient private FrameListener winl;
-//For some reason upgrading java to 6.18 made the cursor stop appearing,
-//but if we keep redrawing long enough it magically appears.
-
-      transient boolean willneedval = false;
-// JDK=jdk1.6.0_18 makes the cursor not draw until the sceen is redrawn
-// a few times.  This may have something to do with inadequate locking
-// in View/OldView
 
       private static class ForceIdle extends EventQueue.IEvent {
          void execute() throws MapEvent.ExitException {
          }
       }
-
 
       class TestFrame extends  Frame {
 
@@ -633,7 +616,6 @@ public abstract class UI {
             int ccount = getComponentCount();
             for (int i =0; i<ccount; i++) {
                Component cp =getComponent(i);
-               trace("component " + cp);
                if (cp instanceof View)
                   ((View)cp).repaint();
             }
@@ -667,17 +649,6 @@ public abstract class UI {
          public String toString() {
             return name + super.toString();
          }
-
-//         public void realValidate() {
-//            trace("called realinvalidate !!!!");
-//            //super.invalidate();
-//            super.validate();
-//         }
-
-         //public void setVisible(boolean vis) {
-         //   trace("setting visible " + vis + " frm " + this);
-         //   super.setVisible(vis);
-         //}
 
          private final int fullwidth(Component cp,int yleft,
                int xsize,Insets inset) {
@@ -739,7 +710,8 @@ public abstract class UI {
          public void setCompSize(int width,int height) {
             //trace("frame setCompsize ("+ width + "," + height +")");
             //trace("tfc " + tfc);
-            //trace("statusBar " + statusBar);
+            //trace("statusBar " + statusBar + " pref size " + getPreferredSize());
+            //trace("statusBar isVisible" + statusBar.isVisible());
             Insets inset = getInsets();
             int viewHeight = height - inset.top - inset.bottom;
 
@@ -758,8 +730,10 @@ public abstract class UI {
                Component cp =getComponent(i);
                //trace("component " + cp);
                if ((cp instanceof View) && (cp != tfc.vi)) {
-                  if (!cp.getSize().equals(viewSize))
+                  if (!cp.getSize().equals(viewSize)) {
+                     //trace("setting view size " + viewSize);
                      cp.setSize(viewSize);
+                  }
                }
             }
          }
@@ -965,7 +939,7 @@ public abstract class UI {
             super(frm);
          }
          public void run() {
-            trace("full Screen " + frm);
+            //trace("full Screen " + frm);
             iflush(false);
 
             if (frm != normalFrame) {
@@ -976,7 +950,7 @@ public abstract class UI {
                frm.setVisible(true);
             } else {
                frm.setVisible(false);
-               trace("!!!!!!enter fullscreen");
+               //trace("!!!!!!enter fullscreen");
                if (fullFrame ==null) {
                   fullFrame=initfrm("fullFrame");
                   fullFrame.setFont(frm.getFont());
@@ -1038,10 +1012,11 @@ public abstract class UI {
          frm.add(ta,-1);
          //frm.setComponentZOrder(ta,1);
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
-         iresize();
+         frm.validate();
          ta.setVisible(true);
          return ta;
       }
+
       private void delview(FvContext fvc) {
 
          if (FvContext.viewCount() >1) {
@@ -1049,7 +1024,7 @@ public abstract class UI {
             FvContext newfvc = FvContext.dispose(fvc.vi);
             if (newfvc != null)
                isetTitle(newfvc.edvec.toString());
-            iresize();
+            frm.validate();
          }
       }
 
@@ -1088,23 +1063,12 @@ public abstract class UI {
          //trace("!!! done set frm visible insets " + frm.getInsets());
       }
 
-//      void ipack() {
-//         trace("!!!!!!!!ipack layout " + frm.getLayout());
-//         frm.invalidate();
-//         frm.pack();
-//      }
-
       boolean iisVisible() {
          return frm.isVisible();
       }
 
-//      void ivalidate() {
-//         trace("validate " + frm.getLayout());
-//         frm.realValidate();
-//      }
 
       void isetTitle(java.lang.String title) {
-//trace("fr = " + fr + " this " + this);
          frm.setTitle(title);
       }
 
@@ -1117,21 +1081,14 @@ public abstract class UI {
       }
 
       FvContext istartComLine() {
-         if (statusBar.clearlines())
-            willneedval=true;
          tfc.vi.setVisible(true);
-         //tfc.vi.redraw();
          tfc.vi.repaint();
          return tfc;
       }
 
       String iendComLine() {
          tfc.vi.setVisible(false);
-         if (willneedval) {
-            needval = true;
-            willneedval = false;
-         }
-
+         statusBar.clearlines();
          //trace(" comline:"+ tf.getcurrobject());
          return tfc.at().toString();
       }
@@ -1140,32 +1097,17 @@ public abstract class UI {
          return fvc != tfc;
       }
 
-      void iresize() {
-         needval=true;
-      }
-
-
       class IdleEvent extends ExecuteEvent {
          IdleEvent() {
             super(frm);
          }
 
          public void run() {
-            //trace("reached idle needval " + needval + " needpack " + needval);
             View vichanged =  FontList.updateFont();
             if (vichanged != null) {
                isetFont(FontList.getCurr(vichanged));
                vichanged.setFont(FontList.getCurr(vichanged));
-               needpack=true;
-               //trace("need pack for font ");
             }
-            //if (needpack) {
-               //ipack();
-               //needpack=false;
-            //} else if (needval) {
-               //ivalidate();
-               //needval=false;
-            //}
             if (statusBar !=null && statusBar.isVisible())
                statusBar.repaint();
          }
@@ -1176,22 +1118,35 @@ public abstract class UI {
          new IdleEvent();
       }
 
+      class Validate extends ExecuteEvent {
+         Validate() {
+            super(frm);
+         }
+         public void run() {
+            frm.validate();
+         }
+      }
+
       void itoggleStatus() {
-         statusBar.setVisible(!statusBar.isVisible());
-         //needpack=true;
+         //trace("toggle status " + statusBar);
+         statusBar.setVisible(!statusBar.isVisible());
+         new Validate();
       }
 
       void iclearStatus()  {
          statusBar.clearlines();
+         new Validate();
       }
 
       void istatusaddline(String str) {
          statusBar.addline( str);
          MiscCommands.wakeUp();
+         new Validate();
       }
 
       void istatusSetline(String str) {
          statusBar.setline( str);
+         new Validate();
       }
 
 //void itoFront(boolean front) {
@@ -1656,8 +1611,8 @@ public abstract class UI {
             Point newloc = new Point(inset.left,yleft -height);
             Point oldloc = cp.getLocation();
             if (!newloc.equals(oldloc)) {
-               //trace("full width set y location " + yleft + " " +  cp);
-               cp.setLocation(new Point(inset.left,yleft -height));
+               trace("full width set location " + newloc + " " +  cp);
+               cp.setLocation(newloc);
             }
             //trace("returns " + yleft + cp);
             return cp.isVisible()
@@ -1672,7 +1627,7 @@ public abstract class UI {
             if (cont!=frm) {
                trace("laying out wrong contaner ! cont = "
                   + cont + " frame " + frm);
-//               return;
+               return;
             }
 
             // what is the point of layout out before we get our insets?
@@ -1723,7 +1678,6 @@ public abstract class UI {
                   }
                }
             }
-            needval=false;
          }
       }
 
