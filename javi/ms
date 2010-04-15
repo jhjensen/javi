@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ $OS == Windows_NT ] ; then
-
+   listsep=\;
    JDK=jdk1.6.0_19
    JDK1=/cygdrive/c/Progra~1/Java/$JDK
    JDK2=c:\\Progra~1\\Java\\$JDK
@@ -16,14 +16,13 @@ if [ $OS == Windows_NT ] ; then
    #jarf=$myprog\\javi\\javi.jar
 
    BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar"
-   echo $mycp
-   java -cp "$jarf;$mycp" $BTCLASS  -Xmx64m javi.Javi todo.txt ../history plugin
 else
+   $listsep=\:
    JDK=/usr/lib/jvm/java-6-sun-1.6.0.15
    insprog=/usr/share/java
    myprog=/home/dad/javt
    mycp=$myprog:$insprog/juniversalchardet-1.0.3.jar:$insprog/js.jar:/$insprog/junit3.8.2/junit.jar:$JDK/lib/tools.jar:$insprog/RXTXcomm.jar
    export CLASSPATH="$mycp" 
    #jarf=$myprog/javi/javi.jar
-   java -cp "$jarf:$mycp" $BTCLASS -Xmx64m javi.Javi todo.txt ../history plugin
 fi
+   java -cp "$jarf$listsep$mycp" $BTCLASS  -Xmx64m javi.Javi todo.txt ../history plugin

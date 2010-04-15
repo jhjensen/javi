@@ -55,7 +55,8 @@ use Encode qw(encode decode);
       close (SOCK)  || die "exiting 5 $!";
       printf("exiting %d %d\n",5,0); 
    } else {
-      if ( $^O eq "Windows" ) {
+      print ("^O: $^O");
+      if ( $^O eq "cygwin" ) {
 
 print("3\n");
          my $JDK="jdk1.6.0_19";
@@ -73,8 +74,7 @@ print("3\n");
          my $jarf="";
 
          my $BTCLASS="-Xbootclasspath/a:$JDK2\\lib\\tools.jar";
-         print "argv @ARGV";
-#         my $paths = join(@ARGV);
+         print "argv0 $ARGV[0]\n";
          my $paths = $ARGV[0];
          if  ($paths =~ /.*\\.*/) {
             $paths = $ARGV[0];
@@ -85,8 +85,10 @@ print("3\n");
             chop $paths;
          }
          my @ex = ("$JDK1/bin/java","-cp","$jarf;$mycp",
-              $BTCLASS ,"-Xmx64m","javi.Javi",$paths);
-         print @ex;
+              #$BTCLASS ,"-Xmx64m","javi.Javi",$paths);
+              $BTCLASS ,"-Xmx64m","javi.Javi",$ARGV[0]);
+	 #system("printenv");
+         print "ex:@ex\n";
          exec(@ex);
       } else  {
 print("4 :@ARGV:\n");
@@ -98,6 +100,8 @@ print("4 :@ARGV:\n");
          #my jarf="$myprog/javi/javi.jar";
          my $jarf="";
          my $BTCLASS="-Xbootclasspath/a:$JDK/lib/tools.jar";
-         system("java  >~/.javiout 2>&1 -cp $jarf:$mycp $BTCLASS  -Xmx64m javi.Javi \"@ARGV\"");
+         my $cmd ="java  >~/.javiout 2>&1 -cp $jarf:$mycp $BTCLASS  -Xmx64m javi.Javi \"@ARGV\"";
+	print "starting command:$cmd";
+         system($cmd);
       }
    }

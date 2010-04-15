@@ -336,7 +336,8 @@ class FileList extends TextEdit<TextEdit<String>> {
       return ec != null;
    }
 
-   static FvContext openFileName(String fname, View vi)  {
+   static FvContext openFileName(String fname, View vi) 
+         throws IOException,InputException  {
       return instance.open1File(fname, vi);
    }
 
@@ -392,7 +393,8 @@ class FileList extends TextEdit<TextEdit<String>> {
       return null;
    }
 
-   private FvContext open1File(String fname, View vi)  {
+   private FvContext open1File(String fname, View vi)  
+         throws IOException,InputException {
       //trace("openFile fname " + fname);
       if (fname == null) {
          fname =  UI.getFile();
@@ -409,10 +411,11 @@ class FileList extends TextEdit<TextEdit<String>> {
 
       //trace("openFile text " + text);
       if (text == null) {
-         text = FileConverter.findfileopen(fname, true);
-         int index = FvContext.getcontext(
-            FvContext.getCurrFvc().vi, instance).inserty();
-         instance.insertOne(text, index);
+         text = openFileListp(fname,vi);
+//         text = FileConverter.findfileopen(fname, true);
+//         int index = FvContext.getcontext(
+//            FvContext.getCurrFvc().vi, instance).inserty();
+//         instance.insertOne(text, index);
       }
       return showEdit(text, vi);
    }
@@ -427,8 +430,9 @@ class FileList extends TextEdit<TextEdit<String>> {
 
       FileParser(FileProperties fp, String fnames)  {
          super(fp, true);
-         input = new BufferedReader( new StringReader(
-                                        fnames.replace(' ','\n')));
+         //input = new BufferedReader( new StringReader(
+         //                               fnames.replace(' ','\n')));
+         input = new BufferedReader( new StringReader( fnames));
       }
 
       @SuppressWarnings("fallthrough")

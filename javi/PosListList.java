@@ -273,7 +273,7 @@ public static class Cmd extends Rgroup {
          return str.substring(startid,endid);
    }
    
-   private void gototag(String str,FvContext fvc) throws InputException {
+   private void gototag(String str,FvContext fvc) throws InputException,IOException {
       Position porig = fvc.getPosition(null);
       
       String fstr = str == null 
