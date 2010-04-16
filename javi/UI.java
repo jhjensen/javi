@@ -1129,7 +1129,8 @@ public abstract class UI {
 
       void itoggleStatus() {
          //trace("toggle status " + statusBar);
-         statusBar.setVisible(!statusBar.isVisible());
+         statusBar.setVisible(!statusBar.isVisible());
+
          new Validate();
       }
 
@@ -1662,7 +1663,6 @@ public abstract class UI {
             yleft = fullwidth(statusBar,yleft,xsize,inset); // status
             fullwidth(tfc.vi,yleft,xsize,inset); // status
             int left=inset.left;
-            int vx = (xsize - inset.left - inset.right)/viewCount;
             for (int i=0; i<ccount; i++) { // views
                Component cp = frm.getComponent(i);
                //trace("processing component " + cp);

@@ -208,6 +208,7 @@ private static void startDebug(String cname,FvContext fvc){
 }
 
 static class ProcIo extends BufInIoc<String> {
+   private static final long serialVersionUID=1;
    transient Process proc ;
    ProcIo(String namei,String ...cmd) throws IOException {
       super(new FileProperties(FileDescriptor.InternalFd.make(namei),

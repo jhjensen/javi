@@ -15,6 +15,7 @@ import com.sun.jdi.connect.VMStartException;
 
 class JDebugger extends IoConverter<String> {
 
+   private static final long serialVersionUID=1;
    public String getnext() { 
       return null;
      //throw new RuntimeException(" JDebugger does not implement getnext");

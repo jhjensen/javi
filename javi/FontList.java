@@ -124,6 +124,7 @@ static FontConverter converter = new FontConverter();
 
 private static class FontParser extends IoConverter<FontEntry> {
 
+   private static final long serialVersionUID=1;
    public void dispose() { 
 	   fontArr=null;
    }
@@ -235,12 +236,13 @@ static TextEdit getList() {
 }
 
 final class FontEntry implements java.io.Serializable{
+   private static final long serialVersionUID=1;
    private static Matcher nameReg;
    private static Matcher styleReg;
    private static Matcher sizeReg;
    private static Matcher weightReg;
    private static Matcher postureReg;
-   transient private Font font;
+   transient private Font font = null;
    private Map<TextAttribute,Object> atmap;
 
    FontEntry()  {

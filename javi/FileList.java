@@ -423,9 +423,10 @@ class FileList extends TextEdit<TextEdit<String>> {
 
    private static class FileParser extends BufInIoc<TextEdit<String>> {
       private int stage = 1;
+      private static final long serialVersionUID=1;
       transient private String searchName;
-      transient private boolean dupflag;
-      transient private boolean foundf;
+      transient private boolean dupflag = false;
+      transient private boolean foundf = false;
 
 
       FileParser(FileProperties fp, String fnames)  {

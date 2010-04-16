@@ -405,6 +405,7 @@ static class Telnet extends Vt100 {
 
 static class CommReader extends Vt100 {
 
+   private static final long serialVersionUID=1;
    transient private SerialPort port;
 
    static Vt100 make(String comport,int baud) throws InputException,IOException {

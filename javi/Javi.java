@@ -78,7 +78,8 @@ public static MapEvent initPostUi() throws Exception {
       //new v8();
       //new msvc();
       new MakeCmd();
-      //Plugin.Loader.load("plugin/plugin.jar");//new FindBugs();
+      Plugin.Loader.load("plugin/plugin.jar");//new FindBugs();
+      //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
       Buffers.initCmd();

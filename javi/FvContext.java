@@ -19,6 +19,7 @@ import java.util.Iterator;
 public final class FvContext<OType> implements Serializable {
 /* Copyright 1996 James Jensen all rights reserved */
 static final String copyright = "Copyright 1996 James Jensen";
+private static final long serialVersionUID=1;
 
 private static class FvMap implements Serializable{
    private LinkedHashMap<View,HashMap<TextEdit,FvContext>> viewhash = 

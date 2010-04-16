@@ -10,6 +10,7 @@ import org.mozilla.universalchardet.UniversalDetector;
 class FileInput extends BufInIoc<String> {
 /* Copyright 1996 James Jensen all rights reserved */
 final static String copyright = "Copyright 1996 James Jensen";
+private static final long serialVersionUID=1;
 
 //private FileDescriptor file;
 

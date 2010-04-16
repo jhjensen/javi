@@ -16,8 +16,9 @@ class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
 
 public final class PosListList extends TextList<Position> implements FileStatusListener {
 
-   transient private TextEdit lastlist;
-   transient private TextEdit lastlist2;
+   private static final long serialVersionUID=1;
+   transient private TextEdit lastlist = null;
+   transient private TextEdit lastlist2 = null;
 
    PosListList(IoConverter ioc) {
 

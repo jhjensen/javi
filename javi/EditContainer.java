@@ -56,6 +56,7 @@ public class EditContainer<OType> implements Serializable,ReAnimator,Iterable<OT
 
 /* Copyright 1996 James Jensen all rights reserved */
 static final String copyright = "Copyright 1996 James Jensen";
+private static final long serialVersionUID=1;
 
 String getName() {
    return prop.fdes.shortName;
@@ -105,7 +106,7 @@ transient private boolean readonly=false;    // readonly flag
 transient private Vector<MovePos> fixedpos;           // positions to track. ??? arraylist
 transient UndoHistory.ChangeRecord prototypes[];
 
-public void writeObject(java.io.ObjectOutputStream os) throws IOException {
+private void writeObject(java.io.ObjectOutputStream os) throws IOException {
    os.defaultWriteObject();
    trace("saving state for " + this);
    Thread.dumpStack();

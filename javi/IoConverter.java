@@ -40,6 +40,7 @@ class FileProperties<OType> implements Serializable {
 
 
 public class IoConverter<OType> implements Runnable,Serializable{
+private static final long serialVersionUID=1;
 
 final FileProperties<OType> prop;
 transient private EditCache<OType> ioarray;
@@ -66,12 +67,6 @@ private void readObject(java.io.ObjectInputStream is)
    tstate = ThreadState.INIT;
 }
 
-protected void restart(boolean quickThread) {
-   tstate = quickThread
-      ? ThreadState.INITSTART
-      : ThreadState.INIT;
-   // this is intended for serialization to restart the read
-}
 OType getnext() {
    return null;
 }
