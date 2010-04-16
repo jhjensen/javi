@@ -211,6 +211,7 @@ class OldView  extends View {
          }
          //trace("doing redraw oldsaveop = " + saveop);
          saveop = REDRAW;
+         repaint();
       }
 
       // if cursor off screen
@@ -513,6 +514,7 @@ class OldView  extends View {
       else {
          saveop = REDRAW;
       }
+      repaint();
    }
 
    void movescreendraw(Graphics gr,int amount) {

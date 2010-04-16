@@ -206,7 +206,6 @@ void setCurrView() {
    //trace("setting curr fvc to " + this);
    currfvc=this;
    vi.newfile(this);
-   vi.clearMark();
 }
 
 static FvContext getCurrFvc() {

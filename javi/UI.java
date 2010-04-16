@@ -1612,7 +1612,7 @@ public abstract class UI {
             Point newloc = new Point(inset.left,yleft -height);
             Point oldloc = cp.getLocation();
             if (!newloc.equals(oldloc)) {
-               trace("full width set location " + newloc + " " +  cp);
+               //trace("full width set location " + newloc + " " +  cp);
                cp.setLocation(newloc);
             }
             //trace("returns " + yleft + cp);

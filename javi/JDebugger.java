@@ -120,7 +120,7 @@ transient private Vector<String> inarray = new Vector<String>();
 
 public void dispose() throws IOException {
    super.dispose();
-   trace("Jdebugger disposed");
+   //trace("Jdebugger disposed");
    Thread.dumpStack();
    inarray=null;
    vm = null;

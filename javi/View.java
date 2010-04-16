@@ -140,8 +140,9 @@ abstract class View  extends Canvas {
             + " must contain at least line one ");
 
       fcontext.fixCursor();
+      clearMark();
       saveop = REDRAW;
-
+      repaint();
    }
 
    TextEdit getCurrFile() {
@@ -171,6 +172,7 @@ abstract class View  extends Canvas {
          //trace("doing redraw oldsaveop = " + saveop);
          saveop = REDRAW;
       }
+      repaint();
       return saveop == REDRAW;
    }
 
@@ -192,6 +194,7 @@ abstract class View  extends Canvas {
       switch (saveop) {
          case NOOP:
             saveop = CHANGE;
+            repaint();
             savestart = index1;
             saveamount = index2;
             break;
@@ -204,6 +207,7 @@ abstract class View  extends Canvas {
          default:
             //trace("doing redraw oldsaveop = " + saveop);
             saveop = REDRAW;
+            repaint();
       }
    }
 
@@ -217,6 +221,7 @@ abstract class View  extends Canvas {
          //trace("doing redraw oldsaveop = " + saveop);
          saveop = REDRAW;
       }
+      repaint();
       return saveop == REDRAW;
    }
 
@@ -235,6 +240,7 @@ abstract class View  extends Canvas {
          newGraphics();
       }
       saveop = REDRAW;
+      repaint();
       npaint((Graphics2D) g);
    }
 
@@ -505,7 +511,10 @@ abstract class View  extends Canvas {
    boolean blinkcursor() {
       if (saveop == NOOP) {
          saveop = BLINKCURSOR;
+         //trace("blink cursor repaint");
          repaint();
+      }else {
+         trace("blink cursor saveop not null " + saveop);
       }
       return cursoron;
    }
