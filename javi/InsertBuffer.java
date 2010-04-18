@@ -129,7 +129,7 @@ public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
                        
            while (--spcount>=0) 
                 buffer.append(' ');
-           fvc.vi.changed(fvc.inserty());
+           fvc.vi.lineChanged(fvc.inserty());
            break;                
        case 3:
            if (0==buffer.length()) {
@@ -137,7 +137,7 @@ public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
               EditGroup.deleteChars('0',fvc,false,true,1);
            } else {
               buffer.setLength(buffer.length()-1);
-              fvc.vi.changed(fvc.inserty());
+              fvc.vi.lineChanged(fvc.inserty());
            }
            break;
        case  4: // delete
@@ -276,7 +276,7 @@ void insertmode(boolean dotmode,int count,FvContext fvc,
                             verbatimAcc = verbatimAcc*10 + (key -'0');
                             if (verbatimCount==3) {
                                buffer.append((char)verbatimAcc);
-                               viewer.changed(fvc.inserty());
+                               viewer.lineChanged(fvc.inserty());
                                verbatim=false;
                                verbatimAcc=0;
                                verbatimCount=0;
@@ -289,7 +289,7 @@ void insertmode(boolean dotmode,int count,FvContext fvc,
                             verbatimAcc=0;
                             verbatimCount=0;
                             buffer.append((char)key);
-                            viewer.changed(fvc.inserty());
+                            viewer.lineChanged(fvc.inserty());
                         }
                      } else {
                          itext(count,fvc);

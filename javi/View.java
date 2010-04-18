@@ -64,21 +64,184 @@ abstract class View  extends Canvas {
 
    final boolean nextFlag;
 
-   protected enum Opcode { NOOP, INSERT, CHANGE,
+   enum Opcode { NOOP, INSERT, CHANGE,
       DELETE, REDRAW , MSCREEN, BLINKCURSOR
+   }
+
+   final class ChangeOpt {
+
+      private  Opcode currop;
+      private  int saveamount;
+      private int savestart;
+
+      void redraw() {
+         currop = Opcode.REDRAW;
+         repaint();
+      }
+
+      void blink() {
+         if (currop == NOOP) {
+            currop = BLINKCURSOR;
+            //trace("blink cursor repaint");
+            repaint();
+         } else {
+            //trace("blink cursor saveop not null " + currop);
+         }
+      }
+
+      boolean insert(int start, int amount) {
+         //trace("insert currop " + currop +" start " + start  + " amount " + amount);
+         pmark.resetMark(fcontext);  //???
+         if (currop == Opcode.NOOP || currop == Opcode.BLINKCURSOR) {
+            currop = Opcode.INSERT;
+            savestart = start;
+            saveamount = amount;
+         } else {
+            //trace("doing redraw oldsaveop = " + saveop);
+            currop = Opcode.REDRAW;
+         }
+         repaint();
+         return currop == Opcode.REDRAW;
+      }
+
+      boolean lineChanged(int index) {
+         //trace("linechange currop " + currop + " index " + index);
+         pmark.resetMark(fcontext);
+         return changedpro(index, index);
+      }   
+
+      void cursorChange(int xChange,int yChange) {
+         //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
+         pmark.markChange(fcontext.insertx() + xChange, fcontext.inserty());
+
+         if (pmark.getMark() != null)
+            changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
+      } 
+
+      private boolean changedpro(int index1, int index2) {
+         //trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
+
+         if (index2 < index1) {
+            int temp = index1;
+            index1 = index2;
+            index2 = temp;
+         }
+
+         switch (currop) {
+            case NOOP:
+            case BLINKCURSOR:
+               currop = Opcode.CHANGE;
+               repaint();
+               savestart = index1;
+               saveamount = index2;
+               break;
+            case CHANGE:
+               if (savestart > index1)
+                  savestart = index1;
+               if (saveamount < index2)
+                  saveamount = index2;
+               break;
+            default:
+               //trace("doing redraw oldsaveop = " + currop);
+               currop = Opcode.REDRAW;
+               repaint();
+         }
+         return currop == Opcode.REDRAW;
+      }
+
+      boolean delete(int start, int amount) {
+         //trace("delete currop " + currop + " start " + start + " amount " + amount);
+         pmark.resetMark(fcontext);
+         if (currop == Opcode.NOOP || currop == Opcode.BLINKCURSOR) {
+            currop = Opcode.DELETE;
+            savestart = start;
+            saveamount = amount;
+         } else {
+            //trace("doing redraw oldcurrop = " + currop);
+            currop = Opcode.REDRAW;
+         }
+         repaint();
+         return currop == Opcode.REDRAW;
+      }
+       
+      void mscreen(int amount, int limit) {
+         //trace("mscreen currop " + currop +"  amount " + amount  + " limit " + limit);
+         if (currop == NOOP || currop == Opcode.BLINKCURSOR) {
+            saveamount = 0;
+            currop = MSCREEN;
+         }
+
+         if (currop == MSCREEN && Math.abs(amount) < limit)
+            saveamount += amount;
+         else {
+            currop = REDRAW;
+         }
+         repaint();
+      }
+
+      private void rpaint(Graphics2D gr) {
+         if (currop != NOOP) {
+            //if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
+
+            // cursor must be off before other drawing is done, or it messes up XOR
+            if (currop ==   BLINKCURSOR || cursoron) 
+               bcursor(gr);
+
+            switch (currop) {
+
+               case REDRAW:
+                  refresh(gr);
+                  break;
+
+               case INSERT:
+                  insertedElementsdraw(gr, savestart, saveamount);
+                  break;
+
+               case DELETE:
+                  deletedElementsdraw(gr, savestart, saveamount);
+                  break;
+
+               case CHANGE:
+                  changeddraw(gr, savestart, saveamount);
+                  break;
+
+               case MSCREEN:
+                  movescreendraw(gr, saveamount);
+                  break;
+
+               case NOOP:
+               case BLINKCURSOR:
+                  break;
+            }
+         }
+         currop = NOOP;
+      }
+
    };
 
-   protected  transient Opcode saveop;
-   protected  transient int saveamount;
+   final void redraw() {
+      op.redraw();
+   }
+
+   boolean blinkcursor() {
+      op.blink();
+      return cursoron;
+   }
+
+   protected final ChangeOpt op = new ChangeOpt();
+
+   void lineChanged(int index) {
+      op.lineChanged(index);
+   }
 
    protected static final transient int inset = 2;
 
    private transient boolean delayerflag;
 
    protected FvContext fcontext;
+
    protected transient MarkInfo pmark = new MarkInfo();
 
-   private transient int savestart;
    private transient boolean cursoron = false;
    private transient boolean cursoractive = false;
    private transient Color cursorcolor;
@@ -93,7 +256,6 @@ abstract class View  extends Canvas {
       pmark = new MarkInfo();
       common();
    }
-
 
    public boolean isFocusable() {
       return false;
@@ -141,8 +303,7 @@ abstract class View  extends Canvas {
 
       fcontext.fixCursor();
       clearMark();
-      saveop = REDRAW;
-      repaint();
+      op.redraw();
    }
 
    TextEdit getCurrFile() {
@@ -157,150 +318,36 @@ abstract class View  extends Canvas {
       super.setFont(font);
    }
 
-   void redraw() {
-      saveop = REDRAW;
-      repaint();
-   }
-
-   boolean insertedElements(int start, int amount) {
-      pmark.resetMark(fcontext);  //???
-      if (saveop == NOOP) {
-         saveop = INSERT;
-         savestart = start;
-         saveamount = amount;
-      } else {
-         //trace("doing redraw oldsaveop = " + saveop);
-         saveop = REDRAW;
-      }
-      repaint();
-      return saveop == REDRAW;
-   }
-
-
-   boolean changed(int index) {
-      pmark.resetMark(fcontext);
-      changedpro(index, index);
-      return saveop == REDRAW;
-   }
-
-   void changedpro(int index1, int index2) {
-//trace("(" + index1 + "," + index2 + ")" );
-      if (index2 < index1) {
-         int temp = index1;
-         index1 = index2;
-         index2 = temp;
-      }
-
-      switch (saveop) {
-         case NOOP:
-            saveop = CHANGE;
-            repaint();
-            savestart = index1;
-            saveamount = index2;
-            break;
-         case CHANGE:
-            if (savestart > index1)
-               savestart = index1;
-            if (saveamount < index2)
-               saveamount = index2;
-            break;
-         default:
-            //trace("doing redraw oldsaveop = " + saveop);
-            saveop = REDRAW;
-            repaint();
-      }
-   }
-
-   boolean deletedElements(int start, int amount) {
-      pmark.resetMark(fcontext);
-      if (saveop == NOOP) {
-         saveop = DELETE;
-         savestart = start;
-         saveamount = amount;
-      } else {
-         //trace("doing redraw oldsaveop = " + saveop);
-         saveop = REDRAW;
-      }
-      repaint();
-      return saveop == REDRAW;
-   }
-
-   public void update(Graphics g) { //  paint will do it's own clearing
-      if (g != oldgr) {
-         oldgr = g;
-         newGraphics();
-      }
-      npaint((Graphics2D) g);
-   }
-
    public void paint(Graphics g) {
       //trace("paint called ");
       if (g != oldgr) {
          oldgr = g;
          newGraphics();
       }
-      saveop = REDRAW;
-      repaint();
+      op.redraw();
+      npaint((Graphics2D) g);
+   }
+
+   public void update(Graphics g) { //  paint will do it's own clearing
+      //trace("update called ");
+      if (op.currop == REDRAW) trace(" got update REDRAW!!");
+      if (g != oldgr) {
+         oldgr = g;
+         newGraphics();
+      }
       npaint((Graphics2D) g);
    }
 
    private void npaint(Graphics2D gr) {
       try {
          synchronized (EventQueue.biglock) {
-            fcontext.getChanges();
-            //trace("npaint saveop = " +saveop);
-            //trace("saveop = " + saveop );
-            //+ " gr = " + gr);
-            //trace("view " + this);
-            if (((saveop != NOOP) || !isValid()))
-               rpaint(gr);
+            fcontext.getChanges(op);
+            op.rpaint(gr);
          }
       } catch (Throwable e) {
-         UI.popError("npaint caught", e);
+         if (UI.popError("npaint caught", e))
+            throw new RuntimeException("unignored error ",e);
       }
-   }
-
-   @SuppressWarnings("fallthrough")
-   private void rpaint(Graphics2D gr) {
-      //trace("saveop = " + saveop);
-      if (saveop ==   BLINKCURSOR) {
-         bcursor(gr);
-      } else if (saveop ==   NOOP) {
-
-      } else {
-
-         if (cursoron) 
-            bcursor(gr);
-
-         switch (saveop) {
-            case REDRAW:
-               //trace("REDRAW");
-
-               if (!isValid())
-                  saveop = NOOP;    // forces background update
-               //intential fall through
-               refresh(gr);
-               break;
-
-            case INSERT:
-               insertedElementsdraw(gr, savestart, saveamount);
-               break;
-
-            case DELETE:
-               deletedElementsdraw(gr, savestart, saveamount);
-               break;
-
-            case CHANGE:
-               changeddraw(gr, savestart, saveamount);
-               break;
-
-            case MSCREEN:
-               movescreendraw(gr, saveamount);
-               break;
-
-         }
-      }
-      saveop = NOOP;
    }
 
    private void bcursor(Graphics2D gr) {
@@ -361,7 +408,7 @@ abstract class View  extends Canvas {
       if (pos != null)
          pmark.clearMark(fcontext);
       pmark.setMark(markposi, fcontext);
-      changedpro(markposi.y, fcontext.inserty());
+      op.changedpro(markposi.y, fcontext.inserty());
       fcontext.cursorabs(markposi);
    }
 
@@ -369,14 +416,14 @@ abstract class View  extends Canvas {
       Position pos = pmark.getMark();
       pmark.clearMark(fcontext);
       if (pos != null)
-         changedpro(pos.y, fcontext.inserty());
+         op.changedpro(pos.y, fcontext.inserty());
    }
 
    Position getMark() {
       return pmark.getMark();
    }
 
-   static class MarkInfo {
+   static final class MarkInfo {
 
       private int sx1 = 0;
       private int sx2 = 0;
@@ -389,7 +436,7 @@ abstract class View  extends Canvas {
          return "(" + sx1 + "," + sy1 + "),(" + sx2 + "," + sy2 + ")";
       }
 
-      void cursorChanged(int x, int y) {
+      void markChange(int x, int y) {
          if (markpos == null) {
             sy1 = 0;
             sx1 = 0;
@@ -451,13 +498,13 @@ abstract class View  extends Canvas {
                markpos.y = ev.finish() - 1;
             if (markpos.x > ev.at(markpos.y).toString().length())
                markpos.x = ev.at(markpos.y).toString().length();
-            cursorChanged(fvc.insertx(), fvc.inserty());
+            markChange(fvc.insertx(), fvc.inserty());
          }
       }
 
       void clearMark(FvContext fvc) {
          markpos = null;
-         cursorChanged(fvc.insertx(), fvc.inserty());
+         markChange(fvc.insertx(), fvc.inserty());
       }
 
       void setMark(Position markposi, FvContext fvc) {
@@ -467,7 +514,7 @@ abstract class View  extends Canvas {
             markpos = new MovePos(markposi);
          else
             markpos.set(markposi);
-         cursorChanged(fvc.insertx(), fvc.inserty());
+         markChange(fvc.insertx(), fvc.inserty());
       }
    }
 
@@ -495,7 +542,6 @@ abstract class View  extends Canvas {
 
    void cursoroff() {
       //trace("cursoroff cursoractive " + cursoractive + " cursoron " + cursoron +"");
-      Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
       cursoractive = false;
       if (cursoron)
          blinkcursor();
@@ -506,17 +552,6 @@ abstract class View  extends Canvas {
       checkCursor = true;
       cursoractive = true;
       blinkcursor();
-   }
-
-   boolean blinkcursor() {
-      if (saveop == NOOP) {
-         saveop = BLINKCURSOR;
-         //trace("blink cursor repaint");
-         repaint();
-      }else {
-         trace("blink cursor saveop not null " + saveop);
-      }
-      return cursoron;
    }
 
    void placeline(int lineno, float amount) {

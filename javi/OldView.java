@@ -188,10 +188,9 @@ class OldView  extends View {
    */
 
    private void fixcursor(int xChange, int yChange, int newXpixel) {
-      pmark.cursorChanged(fcontext.insertx() + xChange, fcontext.inserty());
 
-      if (pmark.getMark() != null || yChange != 0)
-         changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
+      op.cursorChange(xChange,yChange);
+
       int oldx = screenposx - xoffset;
       int diffx = newXpixel - oldx;
       int newscreen = newXpixel  + xoffset;
@@ -210,8 +209,7 @@ class OldView  extends View {
             screenposx -= diffx;
          }
          //trace("doing redraw oldsaveop = " + saveop);
-         saveop = REDRAW;
-         repaint();
+         redraw();
       }
 
       // if cursor off screen
@@ -367,10 +365,8 @@ class OldView  extends View {
    }
 
    void refresh(Graphics gr) {
-      //trace(" one second to REDRAW " + this);
-      //trace("cliprect = " + g.getClipBounds()  +
-      //     " my cliprect = " + cliprect);
-      //trace("blacking out screen");
+      //trace("refresh " + this);
+      //trace("cliprect = " + gr.getClipBounds()  + " my cliprect = " + cliprect);
       gr.setClip(null);
       gr.setColor(AtView.interFrame);
       gr.fillRect(0, 0, inset, screenSize * charheight);
@@ -381,7 +377,7 @@ class OldView  extends View {
    }
 
    private void copyLines(Graphics gr,int start, int end, int delta) {
-      trace("copyLines");
+      //trace("copyLines");
       if (start < 0 || end > screenSize || start >= end
             || start + delta < 0 || end + delta > screenSize)
          throw new RuntimeException("start = " + start + " end = "
@@ -500,21 +496,7 @@ class OldView  extends View {
 
    private void moveScreen(int amount) {
       screenposy -= amount;
-      if (saveop == MSCREEN) {
-         saveamount += amount;
-         saveop = NOOP;
-      }
-      if (saveop == NOOP)
-         if (Math.abs(amount) >= screenSize) {
-            saveop = REDRAW;
-         } else  {
-            saveop = MSCREEN;
-            saveamount = amount;
-         }
-      else {
-         saveop = REDRAW;
-      }
-      repaint();
+      op.mscreen(amount,screenSize);
    }
 
    void movescreendraw(Graphics gr,int amount) {
