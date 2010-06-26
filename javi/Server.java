@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import static javi.Tools.trace;
 
 class Server implements Runnable,FileStatusListener {
 
@@ -35,13 +36,13 @@ class Server implements Runnable,FileStatusListener {
          StringBuilder sb = new StringBuilder();
          while(true) {
            String fname = DataInputStream.readUTF(instream);
-           Tools.trace("Server read in name " + fname);
+           trace("Server read in name " + fname);
            if (fname.length()==0)
               break;
            sb.append(DataInputStream.readUTF(instream));
            sb.append("\n");
          }
-         Tools.trace("editing line:" + sb + ":");
+         trace("editing line:" + sb + ":");
 */
          EditContainer ed = FileList.openFileList(instream,null);
          if (ed!=null) {
@@ -53,16 +54,16 @@ class Server implements Runnable,FileStatusListener {
            if (sock !=null)
               sock.close();
          } catch (IOException e1) {
-            Tools.trace("unexpected exception " + e1);
+            trace("unexpected exception " + e1);
          }
-         Tools.trace("server.run caught exception " + e);
+         trace("server.run caught exception " + e);
          e.printStackTrace();
       }
    }
 
 
    void donefile(EditContainer ev) {
-      //ui.trace("server.donefile entered " + ev);
+      //trace("server.donefile entered " + ev);
       BufferedOutputStream outstream = shash.get(ev);
       if (outstream==null)
          return;
@@ -72,7 +73,7 @@ class Server implements Runnable,FileStatusListener {
          shash.remove(ev);
          UI.hide();
       } catch (IOException e) {
-       Tools.trace("server.donefile caught exception " + e);
+         trace("server.donefile caught exception " + e);
       }
 
    }

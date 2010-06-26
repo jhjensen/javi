@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.util.Iterator;
+import static javi.Tools.trace;
 
 public class Javi {
 
@@ -49,15 +50,14 @@ public static void initToUi() {
       try {
         Command.readini();
       } catch (Exception e) {
-      Tools.trace("");
-         Tools.trace("error reading ini file" + e);
+         trace("error reading ini file" + e);
          e.printStackTrace();
          UI.reportMessage("error reading ini file" + e);
          e.printStackTrace();
       }
-      //Tools.trace("");
+      //trace("");
       UI.init(true);
-      //Tools.trace("");
+      //trace("");
 }
 
 public static MapEvent initPostUi() throws Exception {
@@ -70,9 +70,10 @@ public static MapEvent initPostUi() throws Exception {
 
       eview.bindCommands();
       try { 
+         trace("preserver");
          new Server(6001);
       } catch (Exception e) {
-         Tools.trace("error starting Server" + e );
+         trace("error starting Server" + e );
       }
  
       //new v8();
@@ -83,7 +84,7 @@ public static MapEvent initPostUi() throws Exception {
       new JavaCompiler();
       new CheckStyle();
       Buffers.initCmd();
-      Tools.trace("unexpectedly slow");
+      trace("unexpectedly slow");
       new JS();
       //new vcs.cmvc();
  
@@ -92,9 +93,9 @@ public static MapEvent initPostUi() throws Exception {
 }
 
 public static void main (String args[]) {
-  //Tools.trace(System.getProperties().toString());
-   //Tools.trace("prop : \n" + System.getProperties());
-   Tools.trace("enter Javi Main");;
+  //trace(System.getProperties().toString());
+   //trace("prop : \n" + System.getProperties());
+   trace("enter Javi Main");;
    new Thread(new Preloader(),"preloader").start();
    Thread curr = Thread.currentThread();
    curr.setPriority(curr.getPriority() + 1);
@@ -104,7 +105,7 @@ public static void main (String args[]) {
    boolean cflag = false;
    boolean pflag = false;
    for (String str:args) {
-      //Tools.trace("commandline: " + str);
+      //trace("commandline: " + str);
       if (cflag) {
          command = str;
          cflag = false;
@@ -130,7 +131,7 @@ public static void main (String args[]) {
       try { 
          pis = new ObjectInputStream(pfile.getInputStream());
       } catch (IOException e) {
-         Tools.trace("Exception while restoring state " + e );
+         trace("Exception while restoring state " + e );
          e.printStackTrace();
          pis = null;
       }
@@ -148,11 +149,11 @@ public static void main (String args[]) {
             
             normalInit = false;
          } catch (ClassNotFoundException e) {
-            Tools.trace("Exception while restoring state " + e );
+            trace("Exception while restoring state " + e );
             e.printStackTrace();
             System.exit(0);
          } catch (Throwable e) {
-            Tools.trace("Exception while restoring state " + e );
+            trace("Exception while restoring state " + e );
             e.printStackTrace();
             System.exit(0);
             UI.trace("");
@@ -172,9 +173,9 @@ public static void main (String args[]) {
       }
       ev.run();
   } catch (Throwable e) {
-     Tools.trace("main caught vic exception "  +e );
+     trace("main caught vic exception "  +e );
      e.printStackTrace();
-     Tools.trace("exiting" );
+     trace("exiting" );
      System.exit(0); //???
   }
    if (pfile !=null)  {
@@ -182,13 +183,13 @@ public static void main (String args[]) {
       ObjectOutputStream pout;
       try {
          pout = new ObjectOutputStream(pfile.getOutputStream());
-         //Tools.trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
+         //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
          TextEdit.saveState(pout);
          FileList.saveState(pout);
          FvContext.saveState(pout);
          FontList.saveState(pout);
          UI.saveState(pout);
-         //Tools.trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
+         //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
 
       } catch (Throwable  e) {
          UI.popError("Serialization error " , e);
@@ -197,7 +198,7 @@ public static void main (String args[]) {
   }
 
   UI.dispose();
-  Tools.trace("calling System.exit");
+  trace("calling System.exit");
   System.exit(0);
 }
 }

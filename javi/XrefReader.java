@@ -72,13 +72,13 @@ XrefReader(String s) {
   String[] commandline = 
      //{"ssh", "speedy","cd sidewinder/src ;lid -R grep " + s + "| tr -d \r"};
      //"ssh nowind3 cd sidewinder/src ;lid -R grep " + s + "| tr -d \\\\r";
-     {"lid -R grep " +s};
+     {"lid","-R","grep",s};
   //iodelay=30;
   try {
      //trace("starting " + commandline);
      input = Tools.runcmd(commandline);
   } catch (IOException e) {
-     trace("unable to start " + Arrays.toString(commandline) + e);
+     UI.popError("unable to start " + Arrays.toString(commandline) , e);
   }
 }
 

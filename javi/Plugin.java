@@ -270,7 +270,7 @@ public interface Plugin {
                      trace("unable to run class " + c);
                   }
                } catch (Throwable e) {
-                  UI.popError("unable to load plugin " , e);
+                  // not really an error UI.popError("unable to load plugin " , e);
                }
                return null;
             }

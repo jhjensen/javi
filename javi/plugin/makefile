@@ -1,4 +1,4 @@
-JDKPATH=/cygdrive/c/Progra~1/Java/jdk1.6.0_18
+JDKPATH=/cygdrive/c/Progra~1/Java/jdk1.6.0_20
 JAVALIB= $(JDKPATH)/lib/jvm.lib
 
 all : plugin.jar 

@@ -152,8 +152,9 @@ public abstract class UI {
             try {
                String cmd =System.getProperties().getProperty(
                   "java.javi.diffcmd",
-                  "C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
+                  //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
                   //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
+                  "C:\\Progra~1\\Beyond~1\\Bcomp.exe " );
                   //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname};
                   //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
                   //"kdiff3 "
@@ -1384,17 +1385,20 @@ public abstract class UI {
             Dimension d = writelabel.getPreferredSize();
             this.setSize(d.width,d.height*7);
             setVisible(true);
-            diaflag = resb==null
-                      ? UI.Buttons.IOERROR
-                      : resb == svnb
-                      ? UI.Buttons.USESVN
-                      : resb == checkoutb
-                      ? UI.Buttons.CHECKOUT
-                      : resb == forceWriteable
-                      ? UI.Buttons.MAKEWRITEABLE
-                      : resb == nothing
-                      ? UI.Buttons.DONOTHING
-                      : UI.Buttons.IOERROR;
+            diaflag = 
+               resb==null
+                  ? UI.Buttons.IOERROR
+               : resb == svnb
+                  ? UI.Buttons.USESVN
+               : resb == backb
+                  ? UI.Buttons.MAKEBACKUP
+               : resb == checkoutb
+                  ? UI.Buttons.CHECKOUT
+               : resb == forceWriteable
+                  ? UI.Buttons.MAKEWRITEABLE
+               : resb == nothing
+                  ? UI.Buttons.DONOTHING
+               : UI.Buttons.IOERROR;
          }
 
       }
