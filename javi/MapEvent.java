@@ -228,7 +228,6 @@ private static final long serialVersionUID=1;
 
 public void run() {
 //     try {Thread.sleep(20000);} catch (InterruptedException e) {/*Ignore*/}
-  Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 //trace("" + e  + " exitflag " + exitflag);
   try {
      while (true) try {

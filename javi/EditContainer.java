@@ -1117,12 +1117,12 @@ final void backup(String extension) throws IOException {
             deleteObjects(cindex,obj);
             return cindex;
          }
-         boolean redocr(View vi) {
-            return vi.insertedElements(cindex,obj.length);
+         boolean redocr(View.ChangeOpt vi) {
+            return vi.insert(cindex,obj.length);
          }
     
-         boolean undocr(View vi) {
-            return vi.deletedElements(cindex,obj.length);
+         boolean undocr(View.ChangeOpt vi) {
+            return vi.delete(cindex,obj.length);
          }
       }
 
@@ -1219,12 +1219,12 @@ final void backup(String extension) throws IOException {
             deleteObjects(cindex,obj);
             return cindex;
          }
-         boolean redocr(View vi) {
-            return vi.insertedElements(cindex,obj.length);
+         boolean redocr(View.ChangeOpt vi) {
+            return vi.insert(cindex,obj.length);
          }
     
-         boolean undocr(View vi) {
-            return vi.deletedElements(cindex,obj.length);
+         boolean undocr(View.ChangeOpt vi) {
+            return vi.delete(cindex,obj.length);
          }
       }
 
@@ -1284,12 +1284,12 @@ final void backup(String extension) throws IOException {
             deleteObjects(cindex,obj);
             return cindex;
          }
-         boolean redocr(View vi) {
-            return vi.deletedElements(cindex,obj.length);
+         boolean redocr(View.ChangeOpt vi) {
+            return vi.delete(cindex,obj.length);
          }
     
-         boolean undocr(View vi) {
-            return vi.insertedElements(cindex,obj.length);
+         boolean undocr(View.ChangeOpt vi) {
+            return vi.insert(cindex,obj.length);
          }
       }
 
@@ -1351,12 +1351,12 @@ final void backup(String extension) throws IOException {
               ecache.set(cindex,oldobj);
               return cindex;
          }
-         boolean redocr(View vi) {
-            return vi.changed(cindex);
+         boolean redocr(View.ChangeOpt vi) {
+            return vi.lineChanged(cindex);
          }
     
-         boolean undocr(View vi) {
-            return vi.changed(cindex);
+         boolean undocr(View.ChangeOpt vi) {
+            return vi.lineChanged(cindex);
          }
       }
 }

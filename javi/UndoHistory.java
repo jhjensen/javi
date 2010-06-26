@@ -352,7 +352,7 @@ class UndoHistory<OType> extends PersistantStack {
          super.push(obj);
       }
 
-      void getChanges(View vi) {
+      void getChanges(View.ChangeOpt vi) {
          //trace("changemark " + this + " currmark = " + currmark);
          //trace("current " + current );
          if (!isValid()) {
@@ -404,8 +404,8 @@ class UndoHistory<OType> extends PersistantStack {
       abstract ChangeRecord newOne();
       abstract int redocr();
       abstract int undocr();
-      abstract boolean redocr(View vi);
-      abstract boolean undocr(View vi);
+      abstract boolean redocr(View.ChangeOpt vi);
+      abstract boolean undocr(View.ChangeOpt vi);
 
    
       void readExternal(ByteInput dis,ClassConverter<OType> conv) {
@@ -486,11 +486,11 @@ class UndoHistory<OType> extends PersistantStack {
             return cindex;
          }
 
-         boolean redocr(View vi) {
+         boolean redocr(View.ChangeOpt vi) {
             return false;
          }
     
-         boolean undocr(View vi) {
+         boolean undocr(View.ChangeOpt vi) {
             return false;
          }
 

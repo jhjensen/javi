@@ -275,7 +275,7 @@ public boolean equals(Position p) {
    return  edvec.fdes().equals(p.filename) && p.x == fileposx && p.y == fileposy;
 }
 
-void getChanges() {
+void getChanges(View.ChangeOpt vi) {
    chmark.getChanges(vi);
 }
 

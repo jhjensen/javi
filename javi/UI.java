@@ -87,7 +87,7 @@ public abstract class UI {
    abstract void itoFront();
    abstract void itransferFocus();
    abstract void ichooseWriteable(String filename);
-   abstract void ipopstring(String str);
+   abstract boolean ipopstring(String str);
    abstract void isetFont(Font font);
 //   abstract void ivalidate();
    abstract void iflush(boolean totalFlush);
@@ -296,7 +296,7 @@ public abstract class UI {
          throw new RuntimeException("bad diaflag = " + diaflag);
       }
    }
-   static void popError(String errs, Throwable ex) {
+   static boolean popError(String errs, Throwable ex) {
       trace("poperror exception trace" + (errs == null ? "" : errs) + ex);
 
       StackTraceElement[] st = ex == null
@@ -318,7 +318,8 @@ public abstract class UI {
          wr.println(ste);
       }
       if (instance!=null)
-         instance.ipopstring(sw.toString());
+         return instance.ipopstring(sw.toString());
+      return true;
    }
 
    static FvContext connectfv(TextEdit file, View vi) throws InputException {
@@ -453,7 +454,7 @@ public abstract class UI {
       void itoFront() {/* unimplemented */}
       void itransferFocus() {/* unimplemented */}
       void ichooseWriteable(java.lang.String str) {/* unimplemented */}
-      void ipopstring(java.lang.String str) {/* unimplemented */}
+      boolean ipopstring(java.lang.String str) {return false;/* unimplemented */}
       void isetFont(java.awt.Font font) {/* unimplemented */}
 //      void ivalidate() {/* unimplemented */}
       void iflush(boolean total) {/* unimplemented */}
@@ -526,14 +527,6 @@ public abstract class UI {
          frm = initfrm("normal");
          normalFrame=frm;
          common();
-
-         try {
-            View vi = mkview(false);
-            FontList.setDefaultFontSize(vi,-1,-1);
-            iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
-         } catch (InputException e) {
-            throw new RuntimeException("can't recover iaddview",e);
-         }
 
          StringIoc sio = new StringIoc("command buffer",null);
          TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
@@ -975,6 +968,14 @@ public abstract class UI {
       }
 
       void init2() { // depends on instance being set
+            try {
+               View vi = mkview(false);
+               FontList.setDefaultFontSize(vi,-1,-1);
+               iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
+            } catch (InputException e) {
+               throw new RuntimeException("can't recover iaddview",e);
+            }
+
             frm.requestFocus();
             FontList.updateFont(); // prevents an extra redraw later
             frm.requestFocus();
@@ -1246,10 +1247,10 @@ public abstract class UI {
          popmenu.show(frm,x,y);
       }
 
-      void ipopstring(String s) {
+      boolean ipopstring(String s) {
          if (null == psinst)
             psinst = new PopString(frm);
-         psinst.pop(s);
+         return psinst.pop(s);
       }
 
       static class NDialog extends Dialog implements ActionListener {
@@ -1307,17 +1308,19 @@ public abstract class UI {
       private static class PopString extends NDialog {
          private static final long serialVersionUID=1;
          TextArea ta = new TextArea("",30,80);
+         NButton Ign = new NButton("Ignore",this);
+         NButton rThrow = new NButton("reThrow",this);
 
          PopString(Frame frm) {
             super(frm,"exception trace",new FlowLayout());
-            new NButton("done",this);
             add(ta);
          }
 
-         void pop(String s) {
+         boolean pop(String s) {
             ta.setText(s);
             this.pack();
             setVisible(true);
+            return resb == rThrow;
          }
       }
 

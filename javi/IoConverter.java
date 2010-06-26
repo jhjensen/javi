@@ -276,7 +276,6 @@ protected void truncIo() {
 }
 
 public final void run() {
-   //trace("start run vcount =" +vcount + " " + evec);
    try {
       Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
       synchronized(this) {
