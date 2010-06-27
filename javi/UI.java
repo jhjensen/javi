@@ -306,17 +306,19 @@ public abstract class UI {
       StringWriter sw = new StringWriter();
       PrintWriter wr = new PrintWriter(sw);
 
+      wr.println(errs);
       if (ex!=null) {
          ex.printStackTrace();
-         wr.println(errs + ex);
+         wr.println(ex);
+      } else {
+         Thread.dumpStack();
       }
-
       wr.println();
-
       for (StackTraceElement ste:st) {
          //trace("   " + ste.toString());
          wr.println(ste);
       }
+
       if (instance!=null)
          return instance.ipopstring(sw.toString());
       return true;
@@ -598,7 +600,7 @@ public abstract class UI {
       transient private FvContext tfc;  // command context //??? may want to save this?
 
       private static class ForceIdle extends EventQueue.IEvent {
-         void execute() throws MapEvent.ExitException {
+         void execute() throws ExitException {
          }
       }
 
@@ -1083,6 +1085,7 @@ public abstract class UI {
       }
 
       FvContext istartComLine() {
+         tfc.setCurrView();
          tfc.vi.setVisible(true);
          tfc.vi.repaint();
          return tfc;
@@ -1091,7 +1094,7 @@ public abstract class UI {
       String iendComLine() {
          tfc.vi.setVisible(false);
          statusBar.clearlines();
-         //trace(" comline:"+ tf.getcurrobject());
+         trace("comline:"+ tfc.at().toString());
          return tfc.at().toString();
       }
 
@@ -1268,7 +1271,7 @@ public abstract class UI {
 
          public void actionPerformed(ActionEvent e) {
             resb = (NButton)e.getSource();
-            //trace("set resb to " + resb + " lable = " + resb.getLabel());
+            trace("set resb to " + resb + " lable = " + resb.getLabel());
 
             setVisible(false);
          }
@@ -1319,7 +1322,9 @@ public abstract class UI {
          boolean pop(String s) {
             ta.setText(s);
             this.pack();
+            trace("popstring visible ");
             setVisible(true);
+            trace("popstring invisible ");
             return resb == rThrow;
          }
       }

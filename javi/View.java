@@ -41,8 +41,10 @@ abstract class View  extends Canvas {
    }
 
    protected final String getInsertString() {
+      trace("getInsertString " + inserter);
       if (inserter == null)
          return null;
+      trace("getInsertString " + inserter.getString());
       return inserter.getString();
    }
 
@@ -70,11 +72,13 @@ abstract class View  extends Canvas {
 
    final class ChangeOpt {
 
-      private  Opcode currop;
+      private  Opcode currop = NOOP;
       private  int saveamount;
       private int savestart;
+      private int oldLine;
 
       void redraw() {
+         //trace("redraw");
          currop = Opcode.REDRAW;
          repaint();
       }
@@ -105,7 +109,7 @@ abstract class View  extends Canvas {
       }
 
       boolean lineChanged(int index) {
-         //trace("linechange currop " + currop + " index " + index);
+         trace("linechange currop " + currop + " index " + index);
          pmark.resetMark(fcontext);
          return changedpro(index, index);
       }   
@@ -114,12 +118,12 @@ abstract class View  extends Canvas {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
          pmark.markChange(fcontext.insertx() + xChange, fcontext.inserty());
 
-         if (pmark.getMark() != null)
+//         if (pmark.getMark() != null)
             changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
       } 
 
       private boolean changedpro(int index1, int index2) {
-         //trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
+         trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
 
          if (index2 < index1) {
             int temp = index1;
@@ -181,7 +185,8 @@ abstract class View  extends Canvas {
 
       private void rpaint(Graphics2D gr) {
          if (currop != NOOP) {
-            //if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
+            if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
+            //trace("rpaint currop = " + currop + " this " + this);
 
             // cursor must be off before other drawing is done, or it messes up XOR
             if (currop ==   BLINKCURSOR || cursoron) 
@@ -191,6 +196,10 @@ abstract class View  extends Canvas {
 
                case REDRAW:
                   refresh(gr);
+              //    cursoractive=true;
+                  cursoron=false; // should be redundant
+                  //doCursor(gr); // by default have cursor on
+                  bcursor(gr);
                   break;
 
                case INSERT:
@@ -223,9 +232,8 @@ abstract class View  extends Canvas {
       op.redraw();
    }
 
-   boolean blinkcursor() {
+   void blinkcursor() {
       op.blink();
-      return cursoron;
    }
 
    protected final ChangeOpt op = new ChangeOpt();
@@ -244,10 +252,10 @@ abstract class View  extends Canvas {
 
    private transient boolean cursoron = false;
    private transient boolean cursoractive = false;
-   private transient Color cursorcolor;
+   private transient Color cursorcolor =  AtView.cursorColor;
    private transient Shape cursorshape;
    private transient Graphics oldgr;
-   private boolean checkCursor;
+   private boolean checkCursor= true;
 
    private void readObject(java.io.ObjectInputStream is)
          throws ClassNotFoundException, java.io.IOException {
@@ -339,6 +347,7 @@ abstract class View  extends Canvas {
    }
 
    private void npaint(Graphics2D gr) {
+      trace("npaint");
       try {
          synchronized (EventQueue.biglock) {
             fcontext.getChanges(op);
@@ -351,25 +360,41 @@ abstract class View  extends Canvas {
    }
 
    private void bcursor(Graphics2D gr) {
-      //trace("bcursor cursoron " + cursoron + " cursoractive " + cursoractive + " checkCursor " + checkCursor);
-      if (checkCursor && !cursoron) { // never move the cursor except when off
-         //trace("changing cursor old cursor " + cursorshape);
-         cursorshape = updateCursorShape(cursorshape);
-         //trace("new cursor " + cursorshape);
-         cursorcolor =  inserter == null
-            ? AtView.cursorColor
-            : AtView.insertCursor;
+      cursorcolor =  inserter == null
+         ? AtView.cursorColor
+         : AtView.insertCursor;
+
+      if (checkCursor) { 
+         // never move the cursor except when off
+         
+         Shape newShape = updateCursorShape(cursorshape);
          checkCursor = false;
+       
+         trace("cursorshape " + cursorshape + " new shape " + newShape);
+         if (!newShape.equals(cursorshape)) {
+            if (cursoron)
+               doCursor(gr);  // never move the cursor except when off\
+
+            //trace("changing cursor old cursor " + cursorshape);
+            cursorshape = newShape;
+            //trace("new cursor " + cursorshape);
+         }
       }
+
       if (cursoractive || cursoron) { // if cursor is not active turn it off
-         cursoron = !cursoron;
-         gr.setXORMode(cursorcolor);
-         gr.setColor(AtView.background);
-         gr.fill(cursorshape);
-         gr.setPaintMode();
+         doCursor(gr);
       }
    }
 
+   private void doCursor(Graphics2D gr) {
+      //trace("doCursor cursoron " + cursoron + " cursorColor " + cursorcolor);
+      cursoron = !cursoron;
+      gr.setXORMode(cursorcolor);
+      gr.setColor(AtView.background);
+      gr.fill(cursorshape);
+      gr.setPaintMode();
+      //trace("doCursor cursoron " + cursoron);
+   }
    class Delayer implements Runnable {
       private int readin;
 
@@ -548,7 +573,7 @@ abstract class View  extends Canvas {
    }
 
    void cursoron() {
-      //trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
+      trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
       checkCursor = true;
       cursoractive = true;
       blinkcursor();
