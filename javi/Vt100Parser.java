@@ -39,8 +39,11 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
          while (true) {
             synchronized (this) {
                recbyte = input.read();
-               EventQueue.insert(this);
-               wait(10000);
+               if (recbyte != -1) {
+                  EventQueue.insert(this);
+                  wait(10000);
+               } else 
+                  trace("recbyte = " + recbyte);
             }
          } 
       } catch (Throwable e) {
@@ -355,6 +358,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
    }
 
    private final void doChar(int inc) throws InputException {
+      //trace("state " + state + " received byte " + (char)inc + " decimal "  + inc+ " 0x" + Integer.toHexString(inc));
       if (inc ==-1)
          throw new InputException("end of input for Vt100");
       switch(state)  {
@@ -389,13 +393,12 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    synchronized void execute() {
        
-      trace("ParseInput executing on ");
+      //trace("ParseInput executing on recbyte " + recbyte);
       int inc;
       try { 
          doChar(recbyte);
          while (input.available() != -0)   {
             doChar(input.read());
-            //trace("state " + state + " received byte " + (char)inc + " decimal "  + inc+ " 0x" + Integer.toHexString(inc));
          }
          if (state==CR) {
            sb.setLength(sb.length()-1);    
