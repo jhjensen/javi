@@ -795,53 +795,52 @@ public abstract class UI {
       }
 
       void iflush(boolean total) {
-         synchronized (EventQueue.biglock) {
-            /*
-                  if (total) {
-                     if (tfc != null) {
-                        frm.remove(tfc.vi);
-                        tfc.dispose(tfc.vi);
-                        try {
-                           tfc.dispose(tfc.edvec);
-                        } catch (IOException e) {
-                           // should be harmless
-                        }
-                        try {
-                           tfc.dispose(tfc.edvec);
-                        } catch (IOException ex) {
-                           popError("error in flush",ex);
-                        }
+         EventQueue.biglock2.assertOwned();
+         /*
+               if (total) {
+                  if (tfc != null) {
+                     frm.remove(tfc.vi);
+                     tfc.dispose(tfc.vi);
+                     try {
+                        tfc.dispose(tfc.edvec);
+                     } catch (IOException e) {
+                        // should be harmless
                      }
-                     if (statusBar != null) {
-                        frm.remove(statusBar);
-                        statusBar =  null;
+                     try {
+                        tfc.dispose(tfc.edvec);
+                     } catch (IOException ex) {
+                        popError("error in flush",ex);
                      }
                   }
-            */
-            if (fdialog != null) {
-               fdialog.dispose();
-               frm.remove(fdialog);
-               fdialog=null;
-            }
-            if (popmenu != null) {
-               frm.remove(popmenu);
-               popmenu=null;
-            }
-            if (psinst != null) {
-               frm.remove(psinst);
-               psinst.dispose();
-               psinst=null;
-            }
-            if (chinst != null) {
-               frm.remove(chinst);
-               chinst.dispose();
-               chinst=null;
-            }
-            if (rdinst != null) {
-               frm.remove(rdinst);
-               rdinst.dispose();
-               rdinst=null;
-            }
+                  if (statusBar != null) {
+                     frm.remove(statusBar);
+                     statusBar =  null;
+                  }
+               }
+         */
+         if (fdialog != null) {
+            fdialog.dispose();
+            frm.remove(fdialog);
+            fdialog=null;
+         }
+         if (popmenu != null) {
+            frm.remove(popmenu);
+            popmenu=null;
+         }
+         if (psinst != null) {
+            frm.remove(psinst);
+            psinst.dispose();
+            psinst=null;
+         }
+         if (chinst != null) {
+            frm.remove(chinst);
+            chinst.dispose();
+            chinst=null;
+         }
+         if (rdinst != null) {
+            frm.remove(rdinst);
+            rdinst.dispose();
+            rdinst=null;
          }
       }
 
@@ -1085,7 +1084,7 @@ public abstract class UI {
       }
 
       FvContext istartComLine() {
-         tfc.setCurrView();
+         //tfc.setCurrView();
          tfc.vi.setVisible(true);
          tfc.vi.repaint();
          return tfc;
@@ -1094,7 +1093,7 @@ public abstract class UI {
       String iendComLine() {
          tfc.vi.setVisible(false);
          statusBar.clearlines();
-         trace("comline:"+ tfc.at().toString());
+         //trace("comline:"+ tfc.at().toString());
          return tfc.at().toString();
       }
 
@@ -1174,19 +1173,18 @@ public abstract class UI {
       }
 
       void isetFont(Font font) {
-         synchronized (EventQueue.biglock) {
-            popmenu=null;
-            psinst=null;
-            chinst=null;
-            rdinst=null;
-            frm.setFont(font);
-            Component cp;
-            int cpi = frm.getComponentCount();
-            for (cpi = cpi >2 ? 1 : cpi - 1;
-                  cpi >=0 && null != (cp = frm.getComponent(cpi));
-                  --cpi)
-               cp.setFont(font);
-         }
+         EventQueue.biglock2.assertOwned();
+         popmenu=null;
+         psinst=null;
+         chinst=null;
+         rdinst=null;
+         frm.setFont(font);
+         Component cp;
+         int cpi = frm.getComponentCount();
+         for (cpi = cpi >2 ? 1 : cpi - 1;
+               cpi >=0 && null != (cp = frm.getComponent(cpi));
+               --cpi)
+            cp.setFont(font);
       }
 
       private static class MyMenuItem extends MenuItem {

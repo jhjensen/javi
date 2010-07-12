@@ -627,7 +627,7 @@ private void changemode(char bufid,boolean dotmode,int count,int rcount, FvConte
    icontext.insertmode(dotmode,1,fvc,false,false);
 }
 
-private void subChar(boolean dotmode,int count,FvContext fvc) throws ReadOnlyException,MapEvent.ExitException {
+private void subChar(boolean dotmode,int count,FvContext fvc) throws ReadOnlyException,ExitException {
 
     if (!dotmode)
         while ((dotchar = EventQueue.nextKey(fvc.vi)) == KeyEvent.CHAR_UNDEFINED)

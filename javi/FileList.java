@@ -92,7 +92,7 @@ class FileList extends TextEdit<TextEdit<String>> {
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws InputException,
-            IOException, MapEvent.ExitException {
+            IOException, ExitException {
 
          //trace("rnum = " + rnum);
          switch (rnum) {
@@ -438,6 +438,8 @@ class FileList extends TextEdit<TextEdit<String>> {
 
       @SuppressWarnings("fallthrough")
       public TextEdit<String> getnext()  {
+         EventQueue.biglock2.lock();
+         try {
          TextEdit<String> edv = null;
          //trace("file list getnext stage " + stage);
          oloop: while (true) switch (stage) {
@@ -566,6 +568,9 @@ class FileList extends TextEdit<TextEdit<String>> {
          }
          //trace("get next returning edv " + edv);
          return edv;
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
       }
    }
 
@@ -576,9 +581,9 @@ class FileList extends TextEdit<TextEdit<String>> {
    }
 
    private static class ExitEvent extends EventQueue.IEvent {
-      void execute() throws MapEvent.ExitException {
+      void execute() throws ExitException {
          //trace("ExitEvent");
-         throw new MapEvent.ExitException();
+         throw new ExitException();
       }
    }
 
@@ -599,7 +604,7 @@ class FileList extends TextEdit<TextEdit<String>> {
    }
 
    private static void processZ(FvContext fvc)
-         throws MapEvent.ExitException, InputException {
+         throws ExitException, InputException {
       //trace("processZ");
       View currview = fvc.vi;
       if (EventQueue.nextKey(currview) == 'Z') {

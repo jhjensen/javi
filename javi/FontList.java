@@ -53,7 +53,7 @@ private class Commands extends Rgroup {
       register (rnames);
    }
    public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
-        boolean dotmode) throws InputException,MapEvent.ExitException {
+        boolean dotmode) throws InputException,ExitException {
        //trace("rnum = " + rnum);
        switch (rnum) {
          case 0: return null; // noop

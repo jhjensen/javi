@@ -164,8 +164,8 @@ void startPicCon(FvContext fvc) throws IOException,InputException {
 
 */
 static private  TextEdit commCon;
-static private  String portname = "COM1";
-static private  int baudrate = 115200;
+static private  String portname = "COM3";
+static private  int baudrate = 38400;
 
 private static void startcom(String arg,FvContext fvc) throws IOException,InputException {
    //trace("reached startcommCon");

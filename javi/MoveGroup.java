@@ -320,7 +320,7 @@ private void searchcommandI(boolean direction,int count,FvContext fvc,boolean do
    return;
 }
 
-private void findchar(boolean [] arg,FvContext fvc,boolean dotmode) throws MapEvent.ExitException {
+private void findchar(boolean [] arg,FvContext fvc,boolean dotmode) throws ExitException {
    if (!dotmode) {
       char tmp = EventQueue.nextKey(fvc.vi);
       if (tmp==27) // esc

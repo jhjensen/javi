@@ -70,7 +70,7 @@ public static MapEvent initPostUi() throws Exception {
 
       eview.bindCommands();
       try { 
-         trace("preserver");
+         //trace("preserver");
          new Server(6001);
       } catch (Exception e) {
          trace("error starting Server" + e );
@@ -95,6 +95,7 @@ public static MapEvent initPostUi() throws Exception {
 public static void main (String args[]) {
   //trace(System.getProperties().toString());
    //trace("prop : \n" + System.getProperties());
+   EventQueue.biglock2.lock();
    trace("enter Javi Main");;
    new Thread(new Preloader(),"preloader").start();
    Thread curr = Thread.currentThread();
@@ -160,6 +161,7 @@ public static void main (String args[]) {
          }
       }
    }
+   DirList.getDefault(); // force initialization of dirlist
    FileList.make(sb.toString());
    if (normalInit) {
       initToUi();
@@ -176,8 +178,8 @@ public static void main (String args[]) {
      trace("main caught vic exception "  +e );
      e.printStackTrace();
      trace("exiting" );
-     System.exit(0); //???
   }
+
    if (pfile !=null)  {
       //DebuggingObjectOutputStream pout = null;
       ObjectOutputStream pout;
@@ -197,6 +199,8 @@ public static void main (String args[]) {
 
   }
 
+  EventQueue.biglock2.unlock();
+  trace("calling UI.dispose");
   UI.dispose();
   trace("calling System.exit");
   System.exit(0);

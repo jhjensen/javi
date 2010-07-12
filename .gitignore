@@ -10,3 +10,7 @@ rhino1_7R2
 juniversalchardet-1.0.3.jar
 javitests/junit3.8.2
 checkstyle-5.1
+build.txt
+dummy0
+*.log
+penv

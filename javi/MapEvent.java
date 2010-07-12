@@ -216,16 +216,6 @@ private boolean screenmovement(AWTEvent e1,FvContext fvc) throws InterruptedExce
       
 }
 
-static class ExitException extends InputException {
-private static final long serialVersionUID=1;
-   ExitException() {
-      super("exiting java");
-   }
-   ExitException(Throwable e) {
-      super("exiting java",e);
-   }
-}
-
 public void run() {
 //     try {Thread.sleep(20000);} catch (InterruptedException e) {/*Ignore*/}
 //trace("" + e  + " exitflag " + exitflag);
@@ -246,7 +236,7 @@ public void run() {
             UI.reportError("making file writeable throw exception " + e2);
          }
      } catch (ExitException ex) {
-        //trace("MapEvent.run caught ExitException");
+        trace("MapEvent.run caught ExitException");
         throw ex;
      } catch (InputException e) {
          trace("caught InputException " +e );
@@ -315,7 +305,7 @@ void mousepress(MouseEvent event,FvContext fvc) throws InputException {
    }
 }
 
-void mouserelease(MouseEvent event,FvContext fvc) throws MapEvent.ExitException,InputException {
+void mouserelease(MouseEvent event,FvContext fvc) throws ExitException,InputException {
    //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
 
    View vi = (View)event.getComponent();
@@ -333,7 +323,7 @@ void mouserelease(MouseEvent event,FvContext fvc) throws MapEvent.ExitException,
            vi.clearMark();
         else try {
            Rgroup.doroutine("markmode",Integer.valueOf(0),1,1, fvc,false);
-        } catch (MapEvent.ExitException e) {
+        } catch (ExitException e) {
           throw e;
         } catch (Exception e) {
           e.printStackTrace();

@@ -35,7 +35,7 @@ static class PositionConverter extends ClassConverter<Position> {
 static PositionConverter converter= new PositionConverter();
 
 public Position parsefile(String line) throws IOException {
-   trace("parsefile this " + this.getClass());
+   //trace("parsefile this " + this.getClass());
    do {
       //trace("line = " + line);
       if ("done".equals(line) ) {
@@ -44,8 +44,8 @@ public Position parsefile(String line) throws IOException {
          try {
             return converter.fromString(line);
          } catch (Exception e) {
-            trace("line len " + line.length());
-            trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);
+            //trace("line len " + line.length());
+            //trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);
          }
    } while (null != (line = input.readLine()));
    return null;
@@ -85,9 +85,11 @@ public Position getnext() {
            input=null;
         } else {
            if (pos.filename != null) {
+             EventQueue.biglock2.lock();
              EditContainer ev =  EditContainer.findfile(pos.filename);
              if (ev !=null)
                 ev.fixposition(pos);
+             EventQueue.biglock2.unlock();
            }
            errcount++;
         }

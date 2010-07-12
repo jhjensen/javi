@@ -41,10 +41,10 @@ abstract class View  extends Canvas {
    }
 
    protected final String getInsertString() {
-      trace("getInsertString " + inserter);
+      //trace("getInsertString " + inserter);
       if (inserter == null)
          return null;
-      trace("getInsertString " + inserter.getString());
+      //trace("getInsertString " + inserter.getString());
       return inserter.getString();
    }
 
@@ -109,7 +109,7 @@ abstract class View  extends Canvas {
       }
 
       boolean lineChanged(int index) {
-         trace("linechange currop " + currop + " index " + index);
+         //trace("linechange currop " + currop + " index " + index);
          pmark.resetMark(fcontext);
          return changedpro(index, index);
       }   
@@ -123,7 +123,7 @@ abstract class View  extends Canvas {
       } 
 
       private boolean changedpro(int index1, int index2) {
-         trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
+         //trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
 
          if (index2 < index1) {
             int temp = index1;
@@ -185,7 +185,7 @@ abstract class View  extends Canvas {
 
       private void rpaint(Graphics2D gr) {
          if (currop != NOOP) {
-            if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
+            //if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
             //trace("rpaint currop = " + currop + " this " + this);
 
             // cursor must be off before other drawing is done, or it messes up XOR
@@ -233,6 +233,7 @@ abstract class View  extends Canvas {
    }
 
    void blinkcursor() {
+      //trace("this blink cursor " + this);
       op.blink();
    }
 
@@ -320,9 +321,8 @@ abstract class View  extends Canvas {
 
    public void setFont(Font font) {
 
-      synchronized  (EventQueue.biglock) {
-         ssetFont(font);
-      }
+      EventQueue.biglock2.assertOwned();
+      ssetFont(font);
       super.setFont(font);
    }
 
@@ -338,7 +338,7 @@ abstract class View  extends Canvas {
 
    public void update(Graphics g) { //  paint will do it's own clearing
       //trace("update called ");
-      if (op.currop == REDRAW) trace(" got update REDRAW!!");
+      //if (op.currop == REDRAW) trace(" got update REDRAW!!");
       if (g != oldgr) {
          oldgr = g;
          newGraphics();
@@ -347,15 +347,16 @@ abstract class View  extends Canvas {
    }
 
    private void npaint(Graphics2D gr) {
-      trace("npaint");
+      //trace("npaint");
+      EventQueue.biglock2.lock();
       try {
-         synchronized (EventQueue.biglock) {
-            fcontext.getChanges(op);
-            op.rpaint(gr);
-         }
+         fcontext.getChanges(op);
+         op.rpaint(gr);
       } catch (Throwable e) {
          if (UI.popError("npaint caught", e))
             throw new RuntimeException("unignored error ",e);
+      } finally {
+         EventQueue.biglock2.unlock();
       }
    }
 
@@ -370,7 +371,7 @@ abstract class View  extends Canvas {
          Shape newShape = updateCursorShape(cursorshape);
          checkCursor = false;
        
-         trace("cursorshape " + cursorshape + " new shape " + newShape);
+         //trace("cursorshape " + cursorshape + " new shape " + newShape);
          if (!newShape.equals(cursorshape)) {
             if (cursoron)
                doCursor(gr);  // never move the cursor except when off\
@@ -573,7 +574,7 @@ abstract class View  extends Canvas {
    }
 
    void cursoron() {
-      trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
+      //trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
       checkCursor = true;
       cursoractive = true;
       blinkcursor();

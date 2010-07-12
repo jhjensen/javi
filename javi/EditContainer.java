@@ -164,10 +164,9 @@ static void dumpStatic() {
 }
 
 private void cleanup() {
-   synchronized  (EventQueue.biglock) {
+   EventQueue.biglock2.assertOwned();
       //trace("start clean up " + this);
-      filehash.remove(fdes());
-   }
+   filehash.remove(fdes());
    synchronized  (listeners) {
       for (Iterator<FileStatusListener>it = listeners.iterator();it.hasNext();)
          if (it.next().fileDisposed(this))
@@ -311,11 +310,10 @@ static void unRegisterListener(FileStatusListener evl) {
 
 /** find an editvec given the registered cannonical name */
 static EditContainer findfile(FileDescriptor fh)  {
-   synchronized  (EventQueue.biglock) {
-      //trace("looking for " + fh);
-      //trace("returning " + filehash.get(fh));
-      return filehash.get(fh);
-   }
+   EventQueue.biglock2.assertOwned();
+   //trace("looking for " + fh);
+   //trace("returning " + filehash.get(fh));
+   return filehash.get(fh);
 }
 
 //static Matcher normalize1 =  Pattern.compile("(\\\\|/)").matcher("");
@@ -333,20 +331,19 @@ static EditContainer grepfile(String spec) {
    try {
       Matcher regex =  Pattern.compile(spec,Pattern.CASE_INSENSITIVE).matcher("");
       //trace("grepfile pattern " + regex.pattern().pattern());
-      synchronized  (EventQueue.biglock) {
-         for (Map.Entry<FileDescriptor,EditContainer> me: filehash.entrySet() )  {
-            String cname = me.getKey().shortName;
-            //trace("matching against " + cname);
-            regex.reset(cname);
-            if (regex.find()) {
-               EditContainer retval = me.getValue();
+      EventQueue.biglock2.assertOwned();
+      for (Map.Entry<FileDescriptor,EditContainer> me: filehash.entrySet() )  {
+         String cname = me.getKey().shortName;
+         //trace("matching against " + cname);
+         regex.reset(cname);
+         if (regex.find()) {
+            EditContainer retval = me.getValue();
 
-               //trace("matched against " + cname);
+            //trace("matched against " + cname);
 //               if (retval.ioc instanceof FileInput)
-                  return retval;
+               return retval;
 //               else
 //                 trace("not a filereader");
-            }
          }
       }
    } catch (java.util.regex.PatternSyntaxException e) {
@@ -412,11 +409,10 @@ final boolean parentEq(EditContainer ev) {
 /** tell editvec class that this editvecs name is unique and an attempt to open
  another editvec with the same name is an error */
 private void registeruniq() {
-   synchronized  (EventQueue.biglock) {
-      //trace("register uniq:" + prop.fdes.canonName);
-      if (filehash.put(fdes(),this) !=null)
-         throw new RuntimeException("non unique file added " + fdes() + this);
-   }
+   EventQueue.biglock2.assertOwned();
+   //trace("register uniq:" + prop.fdes.canonName);
+   if (filehash.put(fdes(),this) !=null)
+      throw new RuntimeException("non unique file added " + fdes() + this);
 
    synchronized  (listeners) {
       for (FileStatusListener evl :listeners)
@@ -425,17 +421,17 @@ private void registeruniq() {
 }
 
 private static class IdleHandler implements EventQueue.idler {
-   public void idle() throws IOException {
-     synchronized  (EventQueue.biglock) {
-        for (EditContainer ev : filehash.values())
-              if (ev.backup!=null)
-                 try {
-                     ev.backup.idleSave();
-                 } catch (Throwable e) {
-                    UI.popError("Problem with backup File starting over" , e);
-                    ev.reload(false);
-                 }
-      }
+      public void idle() throws IOException {
+
+   EventQueue.biglock2.assertOwned();
+   for (EditContainer ev : filehash.values())
+      if (ev.backup!=null)
+         try {
+             ev.backup.idleSave();
+         } catch (Throwable e) {
+            UI.popError("Problem with backup File starting over" , e);
+            ev.reload(false);
+         }
    }
 }
 

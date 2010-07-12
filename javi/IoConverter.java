@@ -223,7 +223,9 @@ final synchronized boolean expand(int desired) throws IOException {
                 return false;
              try {
                 //trace("about to wait 2000");
+                EventQueue.biglock2.unlock();
                 wait(2000); //??????? jhj fix
+                EventQueue.biglock2.lock();
                 //trace("done to wait 2000");
              } catch (InterruptedException ex) {UI.popError("ignored Interrupted Exception",null);/* Ignore Interrupts */}
              continue;

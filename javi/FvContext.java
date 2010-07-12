@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 public final class FvContext<OType> implements Serializable {
 /* Copyright 1996 James Jensen all rights reserved */
@@ -307,35 +308,40 @@ void fixCursor() { // should be called with first in chain
 
 private static class QuitClass implements Runnable {
    public void run() {
+    
       try {
+         EventQueue.biglock2.tryLock(2,TimeUnit.SECONDS);
         //trace("QuitClass reached");
-        disposeAll();
+        disposeAll(true);
       } catch (Exception e) { 
          trace("exit threw " + e);
          e.printStackTrace();
+      } finally {
+         EventQueue.biglock2.unlock();
       }
    }
 }
 
-private static void disposeAll() throws IOException { //??? use set
-   synchronized  (EventQueue.biglock) {
+private static void disposeAll(boolean ignoreLock) throws IOException { //??? use set
+   if (!ignoreLock)
+      EventQueue.biglock2.assertOwned();
 
-      Set<TextEdit> allEdits = new HashSet<TextEdit>();
+   Set<TextEdit> allEdits = new HashSet<TextEdit>();
 
-     for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();) 
-        allEdits.add(fit.next().edvec);
+   for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();) 
+      allEdits.add(fit.next().edvec);
 
-      for(TextEdit ev: allEdits)
-         try {
-            //trace("disposing in fvc quit" + ev);
-            ev.disposeFvc();
-         } catch (Throwable t) {
-            trace("disposeall caught " + t);
-         }
-      EditContainer.disposeAll();
-      fvmap.clear();
-      currfvc=null;
-   }
+   for(TextEdit ev: allEdits)
+      try {
+         //trace("disposing in fvc quit" + ev);
+         ev.disposeFvc();
+      } catch (Throwable t) {
+         trace("disposeall caught " + t);
+         t.printStackTrace();
+      }
+   EditContainer.disposeAll();
+   fvmap.clear();
+   currfvc=null;
 }
 
 static void dispose(TextEdit  ed) throws IOException { // should be called with first in chain
