@@ -148,7 +148,7 @@ transient private Matcher matcher;
 private ArrayList<DirEntry> dirlist;
 transient private boolean invert = false;
 
-private final static String filespec = "(.*\\.o$)|(.*\\.lib$)|(.*\\.obj$)|(.*\\.pdb$)|(.*\\.ilk$)|(^tags$)|(.*\\.exe$)|(^ID$)|(.*\\.class$)|(.*\\.hex$)|(.*\\.dmp$)|(.*\\.dmp2$)|(.*\\.jar)|(^tags$)";
+private final static String filespec = "(.*\\.bin$)|(.*\\.rom$)|(.*\\.loc$)|(.*\\.axe$)|(.*\\.o$)|(.*\\.lib$)|(.*\\.obj$)|(.*\\.pdb$)|(.*\\.ilk$)|(^tags$)|(.*\\.exe$)|(^ID$)|(.*\\.class$)|(.*\\.hex$)|(.*\\.dmp$)|(.*\\.dmp2$)|(.*\\.jar)|(^tags$)";
 private final static Matcher fileMatcher=  Pattern.compile(filespec).matcher("");
 private static final long serialVersionUID=1;
 
