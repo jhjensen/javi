@@ -766,8 +766,7 @@ public abstract class UI {
                break;
 
             case WindowEvent.WINDOW_CLOSING:
-               FileList.quit(true,null); // usually won't return from here
-               MiscCommands.wakeUp();
+               EventQueue.insert(new ExitEvent());
                break;
 
                // browsers may reach here, so wakeup run so it tests flag, and thread returns

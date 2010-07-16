@@ -580,13 +580,6 @@ class FileList extends TextEdit<TextEdit<String>> {
          UI.connectfv((TextEdit)fileListFvc.at(), fvc.vi);
    }
 
-   private static class ExitEvent extends EventQueue.IEvent {
-      void execute() throws ExitException {
-         //trace("ExitEvent");
-         throw new ExitException();
-      }
-   }
-
    static void quit(boolean save, FvContext fvc) {
       //trace("vic.quit reached");
       if (save && fvc!= null) {
