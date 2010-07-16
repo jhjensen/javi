@@ -515,7 +515,7 @@ private void cursor2abs(int newx,int newy) {
 
 void placeline(int lineno, float amount) { 
    if (vis)
-      vi.placelinexxx(lineno,amount);
+      vi.placeline(lineno,amount);
 }
 
 void setVisible(boolean visi) {
