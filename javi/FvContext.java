@@ -509,7 +509,13 @@ private void cursor2abs(int newx,int newy) {
    int yold = fileposy;
    fileposy= inrange(newy,1,edvec.readIn()-1);
    fileposx= inrange(newx,0,edvec.at(fileposy).toString().length());
-   vi.cursorChanged(fileposy-yold);
+   if (vis)
+      vi.cursorChanged(fileposy-yold);
+}
+
+void placeline(int lineno, float amount) { 
+   if (vis)
+      vi.placelinexxx(lineno,amount);
 }
 
 void setVisible(boolean visi) {

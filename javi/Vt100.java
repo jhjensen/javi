@@ -230,7 +230,7 @@ abstract class Vt100 extends TextEdit<String> { //implements KeyEventDispatcher 
          //rows = currfvc.vi.getRows((float).99999);
       if (currfvc!=null) {
          currfvc.cursorabs(vtcursor.x,vtcursor.y);
-         currfvc.vi.placeline(readIn()-1,(float).99999);
+         currfvc.placeline(readIn()-1,(float).99999);
      }
      //trace("leaving update screen vtcursor = " + vtcursor + " readIn  " + ev.readIn()); 
          
@@ -352,6 +352,10 @@ public String getnext() {
         return null;
 }
 
+public void disposeFvc() throws IOException {
+   parser.stop();
+   super.disposeFvc();
+}
 static class Telnet extends Vt100 {
 
   private Process proc;

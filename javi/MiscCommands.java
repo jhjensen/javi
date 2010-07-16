@@ -164,7 +164,7 @@ void startPicCon(FvContext fvc) throws IOException,InputException {
 
 */
 static private  TextEdit commCon;
-static private  String portname = "COM3";
+static private  String portname = "COM1";
 static private  int baudrate = 38400;
 
 private static void startcom(String arg,FvContext fvc) throws IOException,InputException {
@@ -297,7 +297,7 @@ private void zprocess(int rcount,FvContext fvc) throws InputException{
        }
     }
 
-  fvc.vi.placeline(fvc.inserty(),scrpos);
+  fvc.placeline(fvc.inserty(),scrpos);
 }
 static void queueRedraw(boolean flush) {
        EventQueue.insert(new RedrawEvent(flush));

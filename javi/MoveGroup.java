@@ -400,7 +400,7 @@ private void screenmoveabs(Object arg,int rcount,FvContext fvc){
     float amount = ((Float)arg).floatValue();
     fvc.cursoryabs(fvc.vi.screenFirstLine()+
         (int)Math.floor(fvc.vi.getRows(amount))+ rcount);
-    fvc.vi.placeline(fvc.inserty(),amount);
+    fvc.placeline(fvc.inserty(),amount);
 }
 
 private void screenmoverel(Object arg,int count,FvContext fvc) {

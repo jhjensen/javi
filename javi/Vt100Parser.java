@@ -34,20 +34,27 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
       rthread.start();
    }
 
+   void stop() {
+      rthread.interrupt();
+   }
    public void run() {
       try {
          while (true) {
             synchronized (this) {
                recbyte = input.read();
-               if (recbyte != -1) {
+               if (recbyte == -1)  {
+                  Thread.sleep(200);
+                  trace("recbyte = " + recbyte);
+                } else {
                   EventQueue.insert(this);
                   wait(10000);
-               } else 
-                  trace("recbyte = " + recbyte);
+               }
             }
          } 
+      } catch (InterruptedException e) {
+         // ignore
       } catch (Throwable e) {
-         UI.popError("Vt100 caught IOError",e);
+         UI.popError("Vt100 caught ",e);
       }
    }
 
@@ -360,8 +367,9 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
    private final void doChar(int inc) throws InputException {
       //trace("state " + state + " received byte " + (char)inc + " decimal "  + inc+ " 0x" + Integer.toHexString(inc));
       if (inc ==-1)
-         throw new InputException("end of input for Vt100");
-      switch(state)  {
+         trace("received -1 on Vt100");
+         //throw new InputException("end of input for Vt100");
+      else switch(state)  {
          case CR:
             caseCR(inc);
             break;
