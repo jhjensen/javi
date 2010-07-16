@@ -348,8 +348,9 @@ abstract class View  extends Canvas {
 
    private void npaint(Graphics2D gr) {
       //trace("npaint");
-      EventQueue.biglock2.lock();
-      try {
+      if (!EventQueue.biglock2.tryLock())
+         repaint(200);
+     else try {
          fcontext.getChanges(op);
          op.rpaint(gr);
       } catch (Throwable e) {

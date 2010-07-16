@@ -177,17 +177,26 @@ void handleDiff( OType fileObj,OType backObj) throws IOException {
       backupstatus = null;
 }
 
-final synchronized boolean expand(int desired) throws IOException {
+final boolean expand(int desired) throws IOException {
+  // this layer prevents a deadlock
+   int eret;
+   while (2== (eret = expandLock(desired)))
+      EventQueue.biglock2.lock();
+   return eret == 0
+      ? false
+      : true;
+}
+   
+
+final synchronized int expandLock(int desired) throws IOException {
 
    //trace("enter expand "  + this + " desired = " + desired);
 
    while (true)  {
 
-      //trace(" ioarray.size " + ioarray.size() );
-      //trace(" mainArrya " + mainArray.size());
+      //trace(" ioarray.size " + ioarray.size() + " mainArrya " + mainArray.size());
       //trace(" backupstatus " + backupstatus);
       //trace(" tstate " + tstate);
-      //trace(" ioarray " + ioarray + " mainArray" + mainArray);
       if (null != backupstatus)  {
          assert (ioarray!= mainArray);
          int maxcomp = ioarray.size()<mainArray.size()
@@ -206,26 +215,22 @@ final synchronized boolean expand(int desired) throws IOException {
             handleDiff(ioarray.get(mainArray.size()),null);
       }
 
-      //ecache.addSome(ioarray,compIndex);
-      //compIndex = ioarray.size();
-
       switch (tstate)  {
 
           case INITSTART:
           case INIT:
-             if ((desired == 0 ||desired >mainArray.size())) 
-                startThread();
-             else 
-               return false;
+             if ((desired != 0  && desired <= mainArray.size())) 
+               return 0;
+             startThread();
              continue;
           case STARTED:
              if (mainArray.size()>=desired) 
-                return false;
+                return 0;
              try {
                 //trace("about to wait 2000");
                 EventQueue.biglock2.unlock();
                 wait(2000); //??????? jhj fix
-                EventQueue.biglock2.lock();
+                return 2;
                 //trace("done to wait 2000");
              } catch (InterruptedException ex) {UI.popError("ignored Interrupted Exception",null);/* Ignore Interrupts */}
              continue;
@@ -235,16 +240,14 @@ final synchronized boolean expand(int desired) throws IOException {
                    handleDiff(mainArray.get(ioarray.size()),null);
                 else if (!backupstatus.clean())
                    handleDiff(null,null);
-//                else
-//???                   aNotify.forceWritten();
-         }
-         if (ioarray!=mainArray)
-            ioarray.clear();
-         return true;
+                //                else
+                //???                   aNotify.forceWritten();
+            }
+            if (ioarray!=mainArray)
+               ioarray.clear();
+            return 1;
       }
    }
-   //UI.popError("shouldn't get here",null);
-   //return ecache.size();
 }
 
 void dumpCollection(String name,Collection cont) {
