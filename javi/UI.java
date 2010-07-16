@@ -770,9 +770,11 @@ public abstract class UI {
                break;
 
                // browsers may reach here, so wakeup run so it tests flag, and thread returns
-             case ExecuteEvent.eventId:
-                ((ExecuteEvent)ev).run();
-                break;
+            case ExecuteEvent.eventId:
+               EventQueue.biglock2.lock();
+               ((ExecuteEvent)ev).run();
+               EventQueue.biglock2.unlock();
+               break;
 
             default:
                trace("unhandled event ev " + ev + "  has focus " +
