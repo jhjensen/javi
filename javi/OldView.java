@@ -518,21 +518,26 @@ class OldView  extends View {
 
 
    Shape updateCursorShape(Shape sh) {
-      if (sh == null)
-         sh = new Rectangle();
-      Rectangle rs = (Rectangle) sh;
-      int   width = screenposx;
+      int   cx = screenposx;
       String iString = getInsertString();
       if (iString != null) {
          int tabOffset = iString.indexOf('\t');
          if  (-1 != tabOffset)
             iString = DeTabber.deTab(iString, tabOffset, tabStop, new int[1]);
          //trace("stringWidth " + fontm.stringWidth(iString) + " iString:" + iString);
-         width += fontm.stringWidth(iString);
+         cx += fontm.stringWidth(iString);
       }
-      rs.setBounds(width - 1, (screenposy) * (charheight) - 1,
-                   boldflag ? 2 : 1, charheight + 1);
-      return rs;
+      int rx = cx -1;
+      int ry = (screenposy) * (charheight) - 1;
+      int rwidth= boldflag ? 2 : 1;
+      int rheight = charheight + 1;
+
+      if (sh instanceof Rectangle) {
+         Rectangle rec = (Rectangle) sh;
+         if (rec.x  == rx && rec.y == ry && rec.height == rheight && rec.width == rec.width)
+            return sh;
+     }
+      return new Rectangle(rx,ry,rwidth,rheight);
    }
 
    int charOffset(String line, int xpos) {

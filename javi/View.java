@@ -170,6 +170,7 @@ abstract class View  extends Canvas {
        
       void mscreen(int amount, int limit) {
          //trace("mscreen currop " + currop +"  amount " + amount  + " limit " + limit);
+         //Thread.dumpStack();
          if (currop == NOOP || currop == Opcode.BLINKCURSOR) {
             saveamount = 0;
             currop = MSCREEN;
@@ -196,10 +197,6 @@ abstract class View  extends Canvas {
 
                case REDRAW:
                   refresh(gr);
-              //    cursoractive=true;
-                  cursoron=false; // should be redundant
-                  //doCursor(gr); // by default have cursor on
-                  bcursor(gr);
                   break;
 
                case INSERT:
@@ -222,6 +219,8 @@ abstract class View  extends Canvas {
                case BLINKCURSOR:
                   break;
             }
+            if (currop != BLINKCURSOR)
+               bcursor(gr); // always leave cursor on after doing something
          }
          currop = NOOP;
       }
@@ -362,25 +361,14 @@ abstract class View  extends Canvas {
    }
 
    private void bcursor(Graphics2D gr) {
-      cursorcolor =  inserter == null
-         ? AtView.cursorColor
-         : AtView.insertCursor;
 
-      if (checkCursor) { 
-         // never move the cursor except when off
-         
-         Shape newShape = updateCursorShape(cursorshape);
+      // never move cursor or change cursor color except when off
+      if (!cursoron && checkCursor) { 
+         cursorcolor =  inserter == null
+            ? AtView.cursorColor
+            : AtView.insertCursor;
+         cursorshape = updateCursorShape(cursorshape);
          checkCursor = false;
-       
-         //trace("cursorshape " + cursorshape + " new shape " + newShape);
-         if (!newShape.equals(cursorshape)) {
-            if (cursoron)
-               doCursor(gr);  // never move the cursor except when off\
-
-            //trace("changing cursor old cursor " + cursorshape);
-            cursorshape = newShape;
-            //trace("new cursor " + cursorshape);
-         }
       }
 
       if (cursoractive || cursoron) { // if cursor is not active turn it off
