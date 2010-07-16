@@ -150,7 +150,7 @@ transient private boolean invert = false;
 
 private final static String filespec = 
    "(.*\\.bin)|(.*\\.ml3)|(.*\\.rom)|(.*\\.loc)|(.*\\.axe)|" +
-   "(.*\\.o)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|" +
+   "(.*\\.o)|(.*\\.class)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|" +
    "(.*\\.ilk)|(^tags)|(.*\\.exe)|(^ID)|(.*\\.cla +ss)|" +
    "(.*\\.hex)|(.*\\.dmp)|(.*\\.dmp2)|(.*\\.jar)|(^tags)$";
 private final static Matcher fileMatcher=  Pattern.compile(
