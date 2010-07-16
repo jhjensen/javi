@@ -337,6 +337,7 @@ private static void disposeAll(boolean ignoreLock) throws IOException { //??? us
          ev.disposeFvc();
       } catch (Throwable t) {
          trace("disposeall caught " + t);
+         trace("for file " + ev);
          t.printStackTrace();
       }
    EditContainer.disposeAll();
