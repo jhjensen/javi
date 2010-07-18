@@ -142,11 +142,9 @@ public abstract class UI {
       //   + " status = " + status
       //);
       while (true)  {
-         //Thread.dumpStack();
          //trace("instance " + instance + " flag " + diaflag);
          instance.ireportDiff(filename, linenum, filevers, backupvers, status);
          //trace("instance " + instance + " flag " + diaflag);
-         //trace("" + diaflag);
          switch (diaflag) {
          case USEDIFF:
             try {
@@ -544,6 +542,17 @@ public abstract class UI {
          //trace("this = " + this + " fr = " + fr);
       }
 
+
+          private static java.awt.EventQueue eventQueue =
+             java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
+       abstract class RunAwt extends AWTEvent implements Runnable {
+          public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
+       
+          RunAwt() {
+             super(frm, eventId);
+             eventQueue.postEvent(this);
+          }
+      }
       class Commands extends Rgroup   {
          final String[] rnames = {
             "",
@@ -770,10 +779,8 @@ public abstract class UI {
                break;
 
                // browsers may reach here, so wakeup run so it tests flag, and thread returns
-            case ExecuteEvent.eventId:
-               EventQueue.biglock2.lock();
-               ((ExecuteEvent)ev).run();
-               EventQueue.biglock2.unlock();
+            case RunAwt.eventId:
+               ((RunAwt)ev).run();
                break;
 
             default:
@@ -930,12 +937,13 @@ public abstract class UI {
          from.removeAll();
       }
 
-      class FScreen extends ExecuteEvent {
+      class FScreen extends RunAwt {
          FScreen() {
-            super(frm);
+            super();
          }
          public void run() {
             //trace("full Screen " + frm);
+            EventQueue.biglock2.lock();
             iflush(false);
 
             if (frm != normalFrame) {
@@ -963,6 +971,7 @@ public abstract class UI {
                currdev.setFullScreenWindow(fullFrame);
                fullFrame.validate();
             }
+            EventQueue.biglock2.unlock();
          }
       }
       void fullScreen() {
@@ -1102,12 +1111,13 @@ public abstract class UI {
          return fvc != tfc;
       }
 
-      class IdleEvent extends ExecuteEvent {
+      class IdleEvent extends RunAwt {
          IdleEvent() {
-            super(frm);
+            super();
          }
 
          public void run() {
+            EventQueue.biglock2.lock();
             View vichanged =  FontList.updateFont();
             if (vichanged != null) {
                isetFont(FontList.getCurr(vichanged));
@@ -1115,6 +1125,7 @@ public abstract class UI {
             }
             if (statusBar !=null && statusBar.isVisible())
                statusBar.repaint();
+            EventQueue.biglock2.unlock();
          }
 
       }
@@ -1123,9 +1134,9 @@ public abstract class UI {
          new IdleEvent();
       }
 
-      class Validate extends ExecuteEvent {
+      class Validate extends RunAwt {
          Validate() {
-            super(frm);
+            super();
          }
          public void run() {
             frm.validate();
@@ -1410,15 +1421,42 @@ public abstract class UI {
 
       }
 
-//shouldn't need to be synchronized, but it if not two threads can reportDiff
-// at the same time
+      class HandleDiff extends RunAwt {
+   
+         final String filename;
+         final int linenum;
+         final Object filevers;
+         final Object backupvers;
+         final UndoHistory.BackupStatus status;
+
+         HandleDiff (String filenamei, int linenumi, Object fileversi,
+               Object backupversi, UndoHistory.BackupStatus statusi) {
+            super();
+            synchronized(this) {
+               filename =filenamei;
+               linenum= linenumi;
+               filevers= fileversi;
+               backupvers= backupversi;
+               status=statusi;
+               try {wait();} catch (InterruptedException e) {}
+            }
+         }
+   
+         public void run() {
+            //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+      
+            if (rdinst==null)
+               rdinst=new Diff(frm);
+            rdinst.pop(filename,linenum,filevers, backupvers,status);
+            synchronized(this) {
+               notify();
+            }
+         }
+      }
+
       void ireportDiff(String filename,int linenum,Object filevers,
-                       Object backupvers,UndoHistory.BackupStatus statusi) {
-//   synchronized (EventQueue.eventq) {
-         if (rdinst==null)
-            rdinst=new Diff(this);
-         rdinst.pop(filename,linenum,filevers, backupvers,statusi);
-//   }
+             Object backupvers,UndoHistory.BackupStatus status) {
+          new HandleDiff(filename,linenum,filevers, backupvers,status);
       }
 
       private static class Diff extends NDialog {
@@ -1465,9 +1503,9 @@ public abstract class UI {
             USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN
          };
 
-         Diff(AwtInterface jwin)  {
+         Diff(Frame frm)  {
 
-            super(jwin.frm,"file difference problem",new GridBagLayout());
+            super(frm,"file difference problem",new GridBagLayout());
 
             GridBagLayout gb = (GridBagLayout)getLayout();
             GridBagConstraints gbc =new GridBagConstraints();

@@ -106,20 +106,21 @@ private static Object inextEvent(View vi) {
 
    while (ev==null) {
       synchronized(EventQueue.class) {
-         if (queue.size()!= 0)
+         if (queue.size()!= 0) {
             ev = queue.removeFirst();
-
-         else  if (gccount-- == 0 )  { // after idle awhile gc once
-            gccount = 5*60*60*1000/timeout;   // after 5 hours do another gc
-            Tools.doGC();
-         } else {
-            try {EventQueue.class.wait(timeout);}  catch (InterruptedException e) {/*ignoring interrupts */}
-            //trace("about to blink cursor on " +vi);
-            biglock2.lock();
-            vi.blinkcursor(); // flip cursor
-            biglock2.unlock();
-         }
-      }
+            break;
+        } else if (gccount-- == 0 )  { // after idle awhile gc once
+           gccount = 5*60*60*1000/timeout;   // after 5 hours do another gc
+           Tools.doGC();
+           continue;
+        } else {
+           try {EventQueue.class.wait(timeout);}  catch (InterruptedException e) {/*ignoring interrupts */}
+        }
+     }
+     //trace("about to blink cursor on " +vi);
+     biglock2.lock();
+     vi.blinkcursor(); // flip cursor
+     biglock2.unlock();
    }
  
    vi.cursoroff();
