@@ -19,22 +19,23 @@ class CheckStyle extends Rgroup {
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
-         FvContext fvc, boolean dotmode) throws IOException, InputException {
+          FvContext fvc, boolean dotmode) throws
+          IOException, InputException {
       //trace("vigroup doroutine rnum = " + rnum );
-      switch (rnum) {
-      case 1:
-         cstyle(fvc);
-         return null;
-      case 2:
-         cstylea();
-         return null;
-      default:
-         throw new RuntimeException("vigroup:default");
+      switch(rnum) {
+         case 1:
+            cstyle(fvc);
+            return null;
+         case 2:
+            cstylea();
+            return null;
+         default:
+            throw new RuntimeException("vigroup:default");
       }
    }
 
-   static List<String>  listModFiles(String spec, FvContext fvc)
-         throws InputException, IOException {
+   static List<String>  listModFiles(String spec, FvContext fvc) throws
+         InputException, IOException {
 
       ArrayList<EditContainer> efs = FileList.writeModifiedFiles(spec);
 
@@ -66,7 +67,7 @@ class CheckStyle extends Rgroup {
    }
 
    private void cstylea() throws IOException, InputException {
-      FileList.writeModifiedFiles(".*\\.java"); // write out java files
+      FileList.writeModifiedFiles(".*\\.java");  // write out java files
       String[] dlist =
          FileDescriptor.LocalFile.cwdlist(new GrepFilter(".*\\.java$", false));
 
@@ -96,7 +97,7 @@ class CheckStyleInst extends PositionIoc {
 
       trace("parsing len =  " + line.length() + " line: "  + line);
 
-      int pos = line.indexOf(':', 3); // three skips over any drive desc
+      int pos = line.indexOf(':', 3);  // three skips over any drive desc
 
       if (pos == -1) {
          //if (line.equals("Audit done.")
@@ -107,9 +108,6 @@ class CheckStyleInst extends PositionIoc {
       }
 
       String file = line.substring(0, pos);
-
-      if (file.startsWith("javi/"))
-         file = file.substring(5, pos);
 
       line = line.substring(pos + 1, line.length());
       pos = line.indexOf(':');
