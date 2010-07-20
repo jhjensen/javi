@@ -92,7 +92,7 @@ public final class Command extends Rgroup {
       String fname = arg.toString().trim();
       if (fname.charAt(0) == '<') {
          // Executer ex = new Executer("bash -c " + fname.substring(1,fname.length()));
-         String [] cmd = {"bash", "-c" , fname.substring(1, fname.length())};
+         String [] cmd = {"bash", "-c", fname.substring(1, fname.length())};
          fvc.edvec.insertStream(Tools.runcmd(cmd), fvc.inserty());
       } else
          fvc.edvec.insertStream(FileDescriptor.getBufferedReader(
@@ -155,7 +155,7 @@ public final class Command extends Rgroup {
 
       String line = UI.endComLine();
       if (line.startsWith(prompt, 0))
-         return  line;
+         return line;
       else {
          UI.reportMessage("deleted prompt");
          return prompt;

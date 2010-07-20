@@ -534,7 +534,7 @@ class OldView  extends View {
 
       if (sh instanceof Rectangle) {
          Rectangle rec = (Rectangle) sh;
-         if (rec.x  == rx && rec.y == ry && rec.height == rheight && rec.width == rec.width)
+         if (rec.x  == rx && rec.y == ry && rec.height == rheight && rec.width == rwidth)
             return sh;
      }
       return new Rectangle(rx,ry,rwidth,rheight);

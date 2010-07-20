@@ -75,7 +75,6 @@ abstract class View  extends Canvas {
       private  Opcode currop = NOOP;
       private  int saveamount;
       private int savestart;
-      private int oldLine;
 
       void redraw() {
          //trace("redraw");

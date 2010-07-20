@@ -83,12 +83,12 @@ class AtView implements
       olineEnd = offset + slen;
       //trace(" addOlineText str = " + str + " offset = " + offset );
       text =  text.substring(0, offset) + str  + text.substring(
-            (overwrite
-                  ? text.length() < offset + slen
-                  ? text.length() // gives empty string
-                  : offset + slen
-                  : offset)
-            , text.length());
+         (overwrite
+            ? text.length() < offset + slen
+               ? text.length() // gives empty string
+               : offset + slen
+            : offset)
+         , text.length());
    }
 
    void deTab(int tabstop) {
@@ -99,7 +99,7 @@ class AtView implements
          if (line2start != Integer.MAX_VALUE)
             throw new RuntimeException(
                "detabing and multiline display not supported");
-         int [] tvals = {highStart , highFinish, olineStart, olineEnd};
+         int [] tvals = {highStart, highFinish, olineStart, olineEnd};
 
          text = DeTabber.deTab(text, tabOffset, tabstop, tvals);
          highStart = tvals[0];
@@ -138,7 +138,7 @@ class AtView implements
       return text.length();
    }
 
-   static final Color  background = new Color(0, 0, 0);
+   static final Color background = new Color(0, 0, 0);
 //new Color(0,0,50);// 32 turns black (0,0,96); (0,0,64); (0,0,77);
    static final Color paraBackground = new Color(0, 50, 0);
    static final Color foreground = new Color(0, 255, 0);
@@ -276,7 +276,7 @@ class AtView implements
       retval = leastgtpos(retval, highFinish, pos);
       retval = leastgtpos(retval, olineEnd, pos);
       retval = leastgtpos(retval, olineStart, pos);
-      return  leastgtpos(retval, line2start, pos);
+      return leastgtpos(retval, line2start, pos);
 //trace("grun retval = " + retval + " line2start = " + line2start);
    }
 

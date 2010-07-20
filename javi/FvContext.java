@@ -310,8 +310,8 @@ private static class QuitClass implements Runnable {
    public void run() {
     
       try {
-         EventQueue.biglock2.tryLock(2,TimeUnit.SECONDS);
-        //trace("QuitClass reached");
+         if (!EventQueue.biglock2.tryLock(2,TimeUnit.SECONDS))
+            trace("failed to acquire big lock, try and exit anyway");
         disposeAll(true);
       } catch (Exception e) { 
          trace("exit threw " + e);

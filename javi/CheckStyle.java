@@ -115,28 +115,24 @@ class CheckStyleInst extends PositionIoc {
       if (pos == -1)
          return new Position(0, 0, file, line);
 
-      try {
-         int lineno = Integer.parseInt(line.substring(0, pos).trim());
+      int lineno = Integer.parseInt(line.substring(0, pos).trim());
 
-         if (lineno <= 0)
-            lineno = 1;
+      if (lineno <= 0)
+         lineno = 1;
 
-         line = line.substring(pos + 1, line.length());
-         pos = line.indexOf(':');
+      line = line.substring(pos + 1, line.length());
+      pos = line.indexOf(':');
 
-         if (pos == -1)
-            return new Position(0, lineno, file, line);
+      if (pos == -1)
+         return new Position(0, lineno, file, line);
 
-         int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
+      int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
 
-         line = line.substring(pos + 1, line.length());
-         if (charno <= 0)
-            charno = 0;
+      line = line.substring(pos + 1, line.length());
+      if (charno <= 0)
+         charno = 0;
 
-         //trace(" returning " + new Position(0, lineno, file, line));
-         return new Position(charno, lineno, file, line);
-      } catch (Exception e) {
-         return new Position(0, 0, file, line);
-      }
+      //trace(" returning " + new Position(0, lineno, file, line));
+      return new Position(charno, lineno, file, line);
    }
 }

@@ -105,63 +105,6 @@ final class Buffers {
       }
    }
 
-   /*
-   static void deleted(char bufid,Object buffer) {
-      //trace("Buffers.deleted: bufid = " + bufid + " class " + buffer.getClass().toString());
-      //if (buffer instanceof Object[]) {
-      //   for (Object ob:(Object [])buffer)
-      //       trace("Buffers.deleted: " + ob);
-      //} else
-      //   trace(" buffer = " + buffer);
-
-     if (buffer==null)
-        return;
-
-     if (buffer instanceof Object[]) {
-         throw new RuntimeException(
-            "buffers deleted only does collections and strings");
-     }
-     if (bufid == '0') {
-   //     if (buffer instanceof Object[]) {
-   //        Object[] bufarr = (Object[] )buffer;
-   //        ArrayList<String> strs = new ArrayList<String>(bufarr.length);
-   //        for (Object obj :bufarr )
-   //           strs.add(obj.toString());
-   //        delbuffer.add(strs);
-   //     } else
-         if (buffer instanceof ArrayList) {
-           ArrayList bufarr = (ArrayList)buffer;
-           ArrayList<String> strs = new ArrayList<String>(bufarr.size());
-           for (Object obj :bufarr)
-              strs.add(obj.toString());
-           //trace("adding array size " + strs.length);
-           delbuffer.add(strs);
-        } else
-           delbuffer.add(buffer.toString());
-     } else {
-         if (bufid >= 'A' && bufid <= 'Z') {
-            bufid = (char)(bufid + ('a' -'A'));
-            Object bufo =  buflist.get(Integer.valueOf(bufid));
-            if (bufo != null) {
-               if (bufo instanceof ArrayList ) {
-                  if (buffer instanceof ArrayList)
-                     ((ArrayList)bufo).addAll((ArrayList)buffer);
-                  else
-                     ((ArrayList)bufo).add(buffer);
-                  buffer = bufo;
-
-               } else { // bufo is string
-                  if (buffer instanceof ArrayList)
-                     ((ArrayList)buffer).add(0,bufo);
-                  else
-                     buffer = (String)bufo + (String)buffer;
-               }
-            }
-        }
-        buflist.put(Integer.valueOf(bufid),buffer);
-     }
-   }
-   */
    static Object getbuf(char id) {
       //trace("vic.getbuf: bufid = " + id);
       if (id >= 'A' && id <= 'Z')
@@ -203,9 +146,9 @@ final class Buffers {
       */
       public boolean isDataFlavorSupported(DataFlavor flavor) {
          Tools.trace("got isdataflavorsupported " + flavor);
-         return  (flavor == DataFlavor.stringFlavor)
-                 ? true
-                 : false;
+         return (flavor == DataFlavor.stringFlavor)
+            ? true
+            : false;
       }
 
       void enableClip(Object arg) {
@@ -275,7 +218,7 @@ final class Buffers {
          if (obj instanceof String) {
             s = (String) obj;
 
-         } else  if (obj instanceof ArrayList) {
+         } else if (obj instanceof ArrayList) {
             ArrayList<String> o2 = (ArrayList<String>) obj;
             int len = 0;
             for (String str : o2)
