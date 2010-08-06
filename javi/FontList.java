@@ -156,7 +156,7 @@ static String setFontName(String fontname,View vi ) {
    String retval =  fe.setName(fontname);
    changedVi = vi;
    //trace("changedVi set");
-   MiscCommands.wakeUp();
+   //MiscCommands.wakeUp();
    return retval;
 }
 
@@ -168,7 +168,7 @@ static void setFontType(String type,View vi) {
   fe.setFontType(type);
   // trace("changedVi set");
   changedVi = vi;
-  MiscCommands.wakeUp();
+  //MiscCommands.wakeUp();
 }
 
 static Float setFontSize(Float size,View vi){
@@ -178,7 +178,7 @@ static Float setFontSize(Float size,View vi){
      : (FvContext.getcontext(vi,inst).at()));
    Float retval = fe.setSize(size);
    changedVi = vi;
-   MiscCommands.wakeUp();
+   //MiscCommands.wakeUp();
    return retval;
 }
 
@@ -189,12 +189,12 @@ static void setFontWeight(Float weight,View vi){
      : (FvContext.getcontext(vi,inst).at()));
    fe.setWeight(weight);
    changedVi = vi;
-   MiscCommands.wakeUp();
+   //MiscCommands.wakeUp();
 }
 
 static void setFontCurr(View vi) {
    changedVi = vi;
-   MiscCommands.wakeUp();
+   //MiscCommands.wakeUp();
 }
 
 static Font getCurr(View vi) {

@@ -44,12 +44,12 @@ private static final long serialVersionUID=1;
 
 final FileProperties<OType> prop;
 transient private EditCache<OType> ioarray;
-transient private int compIndex =0;
 transient private EditCache<OType> mainArray=null;
 transient private Thread  rthread;
 transient private UndoHistory.BackupStatus backupstatus;
 transient private BuildCB aNotify;
 transient private ThreadState tstate;
+transient private boolean swapArray;
 
 private enum ThreadState {INIT,INITSTART,STARTED,FINISHED};
 
@@ -156,27 +156,6 @@ abstract static class BuildCB {
    abstract UndoHistory.BackupStatus getBackupStatus();
 }
 
-void handleDiff( OType fileObj,OType backObj) throws IOException {
-      //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
-      FileDescriptor.LocalFile tfile = FileDescriptor.LocalFile.createTempFile("javi",".tmp");
-      tfile.deleteOnExit();
-      tfile.writeAll(new StringIter(mainArray.iterator()),prop.lsep);
-
-      String bname = tfile.shortName;
-      boolean useorig = UI.reportDiff(prop.fdes.shortName,compIndex,fileObj, 
-         backObj,backupstatus,bname);
-      if (useorig) {
-         mainArray= ioarray;
-         aNotify.notify(mainArray);
-      } else {
-         ioarray=mainArray;
-         truncIo();
-      }
-      //trace("setting backupstatus to null mainArray == ioarray");
-      //trace("ioarray " + ioarray + " mainArray " + mainArray);
-      backupstatus = null;
-}
-
 final boolean expand(int desired) throws IOException {
   // this layer prevents a deadlock
    int eret;
@@ -197,52 +176,32 @@ final synchronized int expandLock(int desired) throws IOException {
       //trace(" ioarray.size " + ioarray.size() + " mainArrya " + mainArray.size());
       //trace(" backupstatus " + backupstatus);
       //trace(" tstate " + tstate);
-      if (null != backupstatus)  {
-         assert (ioarray!= mainArray);
-         int maxcomp = ioarray.size()<mainArray.size()
-            ? ioarray.size()
-            :  mainArray.size();
-         for (;compIndex<maxcomp;compIndex++) {
-            OType backObj = mainArray.get(compIndex);
-            OType fileObj = ioarray.get(compIndex);
-            if (!fileObj.equals(backObj)) {
-                handleDiff(fileObj,backObj);
-                break;
-             }
-         }
-
-         if (ioarray.size() > mainArray.size())
-            handleDiff(ioarray.get(mainArray.size()),null);
-      }
-
       switch (tstate)  {
 
-          case INITSTART:
-          case INIT:
-             if ((desired != 0  && desired <= mainArray.size())) 
+         case INITSTART:
+         case INIT:
+            if ((desired != 0  && desired <= mainArray.size())) 
+              return 0;
+            startThread();
+            continue;
+         case STARTED:
+            if (mainArray.size()>=desired) 
                return 0;
-             startThread();
-             continue;
-          case STARTED:
-             if (mainArray.size()>=desired) 
-                return 0;
-             try {
-                //trace("about to wait 2000");
-                EventQueue.biglock2.unlock();
-                wait(2000); //??????? jhj fix
-                return 2;
-                //trace("done to wait 2000");
-             } catch (InterruptedException ex) {UI.popError("ignored Interrupted Exception",null);/* Ignore Interrupts */}
-             continue;
-          case FINISHED:
-             if (backupstatus != null ) {
-                if (ioarray.size() < mainArray.size()) 
-                   handleDiff(mainArray.get(ioarray.size()),null);
-                else if (!backupstatus.clean())
-                   handleDiff(null,null);
-                //                else
-                //???                   aNotify.forceWritten();
-            }
+            try {
+               //trace("about to wait 2000");
+               EventQueue.biglock2.unlock();
+               wait(2000); //??????? jhj fix
+               return 2;
+               //trace("done to wait 2000");
+            } catch (InterruptedException ex) {UI.popError("ignored Interrupted Exception",null);/* Ignore Interrupts */}
+            continue;
+         case FINISHED:
+            if (swapArray) {
+               mainArray= ioarray;
+               aNotify.notify(mainArray);
+            } else {
+               ioarray=mainArray;
+           }
             if (ioarray!=mainArray)
                ioarray.clear();
             return 1;
@@ -280,6 +239,24 @@ protected void truncIo() {
       rthread.interrupt();
 }
 
+boolean handleDiff( OType fileObj,OType backObj,int Index) {
+      //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+      try {
+         FileDescriptor.LocalFile tfile = FileDescriptor.LocalFile.createTempFile("javi",".tmp");
+         tfile.deleteOnExit();
+         tfile.writeAll(new StringIter(mainArray.iterator()),prop.lsep);
+
+         return (UI.reportDiff(prop.fdes.shortName,Index,fileObj, 
+               backObj,backupstatus,tfile.shortName));
+
+         //trace("setting backupstatus to null mainArray == ioarray");
+         //trace("ioarray " + ioarray + " mainArray " + mainArray);
+      } catch (IOException e) {
+         UI.popError("difference in files detected , error trying to display",e);
+      }
+      return false;
+}
+
 public final void run() {
    try {
       Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
@@ -301,7 +278,36 @@ public final void run() {
    } catch (Throwable e) {
       UI.popError("IoConverter caught ",e);
    }
+   OType backObj = null;
+   OType fileObj = null;
+   int compIndex =0;
    synchronized(this) {
+      if (null != backupstatus)  {
+         assert (ioarray!= mainArray);
+         int maxcomp = ioarray.size()<mainArray.size()
+            ? ioarray.size()
+            :  mainArray.size();
+         for (;compIndex<maxcomp;compIndex++) {
+            backObj = mainArray.get(compIndex);
+            fileObj = ioarray.get(compIndex);
+            if (!fileObj.equals(backObj)) {
+                break;
+             }
+         }
+         if (fileObj.equals(backObj))
+            fileObj = backObj = null;
+
+         if (ioarray.size() > mainArray.size())
+            fileObj = ioarray.get(mainArray.size());
+      }
+   }
+   boolean tmpswp = (fileObj != null || backObj!= null)
+      ? handleDiff(fileObj,backObj,compIndex)
+      : false;
+
+   synchronized(this) {
+      swapArray = tmpswp;
+      backupstatus = null;
       rthread=null;
       //trace("thread finished , notify all" + this);
       tstate = ThreadState.FINISHED;

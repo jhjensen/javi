@@ -36,7 +36,7 @@ public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
    switch (rnum) {
       case 1: startDebug((String)arg,fvc); return null;
       case 2: zprocess(rcount,fvc); return null;
-      case 3: queueRedraw(true); return null;
+      case 3: redraw(true); return null;
       case 4: undo(fvc); return null;
       case 5: redo(fvc); return null;
       case 6: return null; //fvc.edvec.undoElement(fvc.inserty()); return null;
@@ -49,51 +49,6 @@ public Object doroutine(int rnum,Object arg,int count,int rcount,FvContext fvc,
    }
 
 //trace("end ");
-}
-
-private static class RedrawEvent extends MapEvent.JaviEvent {
-   boolean flushFlag;
-   RedrawEvent(boolean flush) {
-      flushFlag = flush;
-   }
-
-   static Date lastredraw = new Date();
-   void execute() {
-       //trace("redraw flushFlag " + flushFlag + " currFvc " + FvContext.getCurrFvc());
-       UI.repaint();
-       if (flushFlag) {
-          Date nDate=new Date();
-          long elapsed =  nDate.getTime() - lastredraw.getTime();
-          trace("elapsed " + elapsed);
-          if (elapsed <500) { // two redraws in <.5 seconds
-             trace("start flush elapsed" + elapsed);
-             DirList.getDefault().flushCache();
-             PosListList.Cmd.flush();
-             UI.flush();
-             Buffers.clearmem();
-             FvContext.dump();
-             EditContainer.dumpStatic();
-             FileList.iclearUndo();
-
-          }
-             
-          Tools.doGC();
-
-          trace(
-             " used memory " +  (Runtime.getRuntime().totalMemory() - 
-                 Runtime.getRuntime().freeMemory())
-             // + "total memory " + Runtime.getRuntime().totalMemory()
-           );
-           lastredraw = new Date();
-           trace("GC time in milliseconds " + (lastredraw.getTime()-nDate.getTime()));
-          //vic.memfree();
-      }
-   }
-}
-
-static void wakeUp() {
-   //trace("wakeUp");
-   queueRedraw(false);
 }
 
 private static class MyFl implements FileStatusListener {
@@ -299,7 +254,38 @@ private void zprocess(int rcount,FvContext fvc) throws InputException{
 
   fvc.placeline(fvc.inserty(),scrpos);
 }
-static void queueRedraw(boolean flush) {
-       EventQueue.insert(new RedrawEvent(flush));
+
+static Date lastredraw = new Date();
+static void redraw(boolean flushFlag) {
+    //trace("redraw flushFlag " + flushFlag + " currFvc " + FvContext.getCurrFvc());
+    UI.repaint();
+    if (flushFlag) {
+       Date nDate=new Date();
+       long elapsed =  nDate.getTime() - lastredraw.getTime();
+       trace("elapsed " + elapsed);
+       if (elapsed <500) { // two redraws in <.5 seconds
+          trace("start flush elapsed" + elapsed);
+          DirList.getDefault().flushCache();
+          PosListList.Cmd.flush();
+          UI.flush();
+          Buffers.clearmem();
+          FvContext.dump();
+          EditContainer.dumpStatic();
+          FileList.iclearUndo();
+
+       }
+          
+       Tools.doGC();
+
+       trace(
+          " used memory " +  (Runtime.getRuntime().totalMemory() - 
+              Runtime.getRuntime().freeMemory())
+          // + "total memory " + Runtime.getRuntime().totalMemory()
+        );
+        lastredraw = new Date();
+        trace("GC time in milliseconds " + (lastredraw.getTime()-nDate.getTime()));
+       //vic.memfree();
    }
+}
+
 }

@@ -312,7 +312,7 @@ out: do {
               MoveGroup.dosearch(key=='S',1,fvc,line);
               break out;
            case 12:
-              MiscCommands.queueRedraw(true);
+              MiscCommands.redraw(true);
               continue;
            case 29:
               line=fvc.edvec.gettext(startx,starty,donex,doney);

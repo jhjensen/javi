@@ -71,7 +71,7 @@ public abstract class UI {
    abstract void itoggleStatus();
    abstract void isetStream(Reader inreader);
    abstract void ireportDiff(String filename, int linenum, Object filevers,
-                  Object backupvers, UndoHistory.BackupStatus status);
+                  Object backupvers, UndoHistory.BackupStatus status,String backupName);
 
    abstract FvContext istartComLine();
    abstract String iendComLine();
@@ -142,32 +142,8 @@ public abstract class UI {
       //   + " status = " + status
       //);
       while (true)  {
-         //trace("instance " + instance + " flag " + diaflag);
-         instance.ireportDiff(filename, linenum, filevers, backupvers, status);
-         //trace("instance " + instance + " flag " + diaflag);
+         instance.ireportDiff(filename, linenum, filevers, backupvers, status,backupname);
          switch (diaflag) {
-         case USEDIFF:
-            try {
-               String cmd =System.getProperties().getProperty(
-                  "java.javi.diffcmd",
-                  //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
-                  //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
-                  "C:\\Progra~1\\Beyond~1\\Bcomp.exe " );
-                  //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname};
-                  //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
-                  //"kdiff3 "
-                  //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
-               String [] lstr =  {cmd, filename, backupname};
-               Tools.execute(lstr);
-            } catch (IllegalArgumentException e) {
-               trace("ui.reportDiff caught exception " + e);
-               e.printStackTrace();
-            } catch (IOException e) {
-               trace("ui.reportDiff caught exception " + e);
-               e.printStackTrace();
-            }
-
-            break;
          case WINDOWCLOSE:
             break;
          case OK:
@@ -379,7 +355,7 @@ public abstract class UI {
 
       void ireportDiff(String filename, int linenum,
             Object filevers, Object backupvers,
-            UndoHistory.BackupStatus status) {
+            UndoHistory.BackupStatus status,String backupname) {
 
          StringBuilder sb = new StringBuilder("problem found in file ");
          sb.append(filename);
@@ -543,13 +519,15 @@ public abstract class UI {
       }
 
 
-          private static java.awt.EventQueue eventQueue =
-             java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
+       private static java.awt.EventQueue eventQueue =
+          java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
        abstract class RunAwt extends AWTEvent implements Runnable {
           public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
        
           RunAwt() {
              super(frm, eventId);
+          }
+          void post() {
              eventQueue.postEvent(this);
           }
       }
@@ -940,6 +918,7 @@ public abstract class UI {
       class FScreen extends RunAwt {
          FScreen() {
             super();
+            post();
          }
          public void run() {
             //trace("full Screen " + frm);
@@ -1114,6 +1093,7 @@ public abstract class UI {
       class IdleEvent extends RunAwt {
          IdleEvent() {
             super();
+            post();
          }
 
          public void run() {
@@ -1137,6 +1117,7 @@ public abstract class UI {
       class Validate extends RunAwt {
          Validate() {
             super();
+            post();
          }
          public void run() {
             frm.validate();
@@ -1157,7 +1138,7 @@ public abstract class UI {
 
       void istatusaddline(String str) {
          statusBar.addline( str);
-         MiscCommands.wakeUp();
+         //MiscCommands.wakeUp();
          new Validate();
       }
 
@@ -1281,7 +1262,7 @@ public abstract class UI {
 
          public void actionPerformed(ActionEvent e) {
             resb = (NButton)e.getSource();
-            trace("set resb to " + resb + " lable = " + resb.getLabel());
+            //trace("set resb to " + resb + " lable = " + resb.getLabel());
 
             setVisible(false);
          }
@@ -1424,20 +1405,23 @@ public abstract class UI {
       class HandleDiff extends RunAwt {
    
          final String filename;
+         final String backupname;
          final int linenum;
          final Object filevers;
          final Object backupvers;
          final UndoHistory.BackupStatus status;
 
          HandleDiff (String filenamei, int linenumi, Object fileversi,
-               Object backupversi, UndoHistory.BackupStatus statusi) {
+               Object backupversi, UndoHistory.BackupStatus statusi,String backupnamei) {
             super();
             synchronized(this) {
                filename =filenamei;
+               backupname =backupnamei;
                linenum= linenumi;
                filevers= fileversi;
                backupvers= backupversi;
                status=statusi;
+               post();
                try {wait();} catch (InterruptedException e) {}
             }
          }
@@ -1447,16 +1431,43 @@ public abstract class UI {
       
             if (rdinst==null)
                rdinst=new Diff(frm);
-            rdinst.pop(filename,linenum,filevers, backupvers,status);
+            while (true) {
+               rdinst.pop(filename,linenum,filevers, backupvers,status);
+               if (diaflag == UI.Buttons.USEDIFF) {
+                  try {
+                     String cmd =System.getProperties().getProperty(
+                        "java.javi.diffcmd",
+                        //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
+                        //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
+                        "C:\\Progra~1\\Beyond~1\\Bcomp.exe " );
+                        //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname
+                        //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
+                        //"kdiff3 "
+                        //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
+                     String [] lstr =  {cmd, filename, backupname};
+                     Tools.execute(lstr);
+                  } catch (IllegalArgumentException e) {
+                     trace("ui.reportDiff caught exception " + e);
+                     e.printStackTrace();
+                  } catch (IOException e) {
+                     trace("ui.reportDiff caught exception " + e);
+                     e.printStackTrace();
+                  }
+               } else
+                  break;
+            } 
+      
             synchronized(this) {
+               //trace("instance " + instance + " flag " + diaflag);
                notify();
+               //trace("instance " + instance + " flag " + diaflag);
             }
          }
       }
 
       void ireportDiff(String filename,int linenum,Object filevers,
-             Object backupvers,UndoHistory.BackupStatus status) {
-          new HandleDiff(filename,linenum,filevers, backupvers,status);
+             Object backupvers,UndoHistory.BackupStatus status,String backupName) {
+          new HandleDiff(filename,linenum,filevers, backupvers,status,backupName);
       }
 
       private static class Diff extends NDialog {
