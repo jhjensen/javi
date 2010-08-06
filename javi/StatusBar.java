@@ -128,8 +128,15 @@ class StatusBar extends Canvas {
                }
             }
          }
-         g.drawString(FvContext.getCurrState(),
-            hoffset, charheight * voffset + charascent);
+
+         String st = "status failure!!!";
+         EventQueue.biglock2.lock();
+         try { 
+            st = FvContext.getCurrState();
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
+         g.drawString(st, hoffset, charheight * voffset + charascent);
       } catch (Throwable e) {
          UI.popError("StatusBar.paint caught exception", e);
       }

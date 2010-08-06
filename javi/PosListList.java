@@ -74,7 +74,7 @@ public final class PosListList extends TextList<Position> implements FileStatusL
       setLastList(poslist);
    }
 
-   void setFirst(IoConverter<Position> newIo) {
+   private void setFirst(IoConverter<Position> newIo) {
       //trace("newIo " + newIo);      
       TextEdit<Position> oldList=at(1);
       //trace("olderrlist " + oldList);      
@@ -116,7 +116,7 @@ public final class PosListList extends TextList<Position> implements FileStatusL
      ((EditContainer)at(1)).reload();
      //trace("finish = " + plist.finish());
      try {
-        for (int i = 2;i<finish();i++)
+        for (int i = 1;i<finish();i++)
            FvContext.dispose(at(i));
      } catch (IOException e) {    
           UI.popError("attempting to dispose of list" , e);

@@ -156,11 +156,12 @@ static private HashMap<FileDescriptor,EditContainer> filehash = new HashMap<File
 
 static void dumpStatic() {
    Thread.dumpStack();
-   trace("dump");
+   trace("dump listeners");
    for (Object obj :listeners)
-     trace("listener : " + obj);
+    System.err.println("      listener : " + obj);
+   trace("dump filelist");
    for (Object obj :filehash.entrySet())
-     trace("file : " + obj);
+     System.err.println("      file : " + obj);
 }
 
 private void cleanup() {
