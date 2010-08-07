@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.IOException;
 
 final class FontList extends TextEdit<FontEntry> {
 
@@ -125,8 +126,9 @@ static FontConverter converter = new FontConverter();
 private static class FontParser extends IoConverter<FontEntry> {
 
    private static final long serialVersionUID=1;
-   public void dispose() { 
-	   fontArr=null;
+   public void dispose() throws IOException { 
+      super.dispose();
+      fontArr=null;
    }
 
    FontParser() {

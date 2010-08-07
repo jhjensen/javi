@@ -1,323 +1,321 @@
 package javi;
- 
-import java.io.DataOutputStream;
+
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.BufferedOutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Vector;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
 import java.util.Collection;
 
 /** this is an abstract class which defines the necessary methods
     for an editvec to to IO
 */
 class FileProperties<OType> implements Serializable {
-    private static String staticLine = System.getProperty("line.separator");
-    final FileDescriptor fdes;
-    final ClassConverter<OType> conv;
-    String lsep = staticLine;
+   private static String staticLine = System.getProperty("line.separator");
+   final FileDescriptor fdes;
+   final ClassConverter<OType> conv;
+   String lsep = staticLine;
 
-    FileProperties(FileDescriptor fd,ClassConverter<OType> convi) {
-       fdes = fd;
-       conv = convi;
-    }
+   FileProperties(FileDescriptor fd, ClassConverter<OType> convi) {
+      fdes = fd;
+      conv = convi;
+   }
 
-    public String toString() {
-       return fdes.toString();
-    }
-  
-    void setSeperator(String sep) {
-       if (lsep !=null)
-          throw new RuntimeException("attempt to reset line seperator");
-       lsep = sep;
+   public String toString() {
+      return fdes.toString();
+   }
+
+   void setSeperator(String sep) {
+      if (lsep != null)
+         throw new RuntimeException("attempt to reset line seperator");
+      lsep = sep;
    }
 }
 
 
-public class IoConverter<OType> implements Runnable,Serializable{
-private static final long serialVersionUID=1;
+public class IoConverter<OType> implements Runnable, Serializable {
+   private static final long serialVersionUID = 1;
 
-final FileProperties<OType> prop;
-transient private EditCache<OType> ioarray;
-transient private EditCache<OType> mainArray=null;
-transient private Thread  rthread;
-transient private UndoHistory.BackupStatus backupstatus;
-transient private BuildCB aNotify;
-transient private ThreadState tstate;
-transient private boolean swapArray;
+   final FileProperties<OType> prop;
+   private transient EditCache<OType> ioarray;
+   private transient EditCache<OType> mainArray = null;
+   private transient Thread  rthread;
+   private transient UndoHistory.BackupStatus backupstatus;
+   private transient BuildCB aNotify;
+   private transient ThreadState tstate;
+   private transient boolean swapArray;
 
-private enum ThreadState {INIT,INITSTART,STARTED,FINISHED};
+   private enum ThreadState { INIT, INITSTART, STARTED, FINISHED };
 
 
-IoConverter(FileProperties<OType> fpi,boolean quickThread) {
-   tstate = quickThread
-      ? ThreadState.INITSTART
-      : ThreadState.INIT;
-   prop = fpi;
-}
-
-private void readObject(java.io.ObjectInputStream is) 
-       throws ClassNotFoundException,java.io.IOException {
-   is.defaultReadObject();
-   tstate = ThreadState.INIT;
-}
-
-OType getnext() {
-   return null;
-}
-
-public synchronized void dispose() throws IOException {
-   //trace("rthread = " + rthread);
-   try {
-      if (rthread !=null) {
-         rthread.interrupt();
-         //trace ("waiting for thread to die " +this);
-         wait(1000);
-         if (rthread != null)
-            UI.popError("thread didn't die " +this ,null);
+   IoConverter(FileProperties<OType> fpi, boolean quickThread) {
+      tstate = quickThread
+               ? ThreadState.INITSTART
+               : ThreadState.INIT;
+      prop = fpi;
    }
-   } catch (InterruptedException e) {/*Ignore*/};
-   truncIo();
-   aNotify=null;
-   ioarray=null;
-   mainArray=null;
-   
-     
-}
 
-KeyHandler getKeyHandler() {
-   //trace("ioc getKeyHandler");
-   return null;
-}
+   private void readObject(java.io.ObjectInputStream is) throws
+         ClassNotFoundException, java.io.IOException {
+      is.defaultReadObject();
+      tstate = ThreadState.INIT;
+   }
 
-public final String toString() {
-    return prop.fdes.shortName;
-}
+   OType getnext() {
+      return null;
+   }
 
-synchronized void init1(EditCache<OType> evi,BuildCB arr) {
-  if (tstate == ThreadState.INITSTART)
-     startThread();
-   ioarray=evi;
-   mainArray=ioarray;
-   aNotify = arr;
-  //trace("IoConverter.java init1 "  + fdes.canonName);
-}
+   public synchronized void dispose() throws IOException {
+      //trace("rthread = " + rthread);
+      try {
+         if (rthread != null) {
+            rthread.interrupt();
+            //trace ("waiting for thread to die " +this);
+            wait(1000);
+            if (rthread != null)
+               UI.popError("thread didn't die " + this , null);
+         }
+      } catch (InterruptedException e) {
+         UI.popError("IoConverter caught ", e);
+      }
+      truncIo();
+      aNotify = null;
+      ioarray = null;
+      mainArray = null;
 
-/** inserts a stream in the indicated position in the vector.  the stream
-    is interpreted by the iocontroller for this editvector.
-@param input the stream to be inserted
-@param index the position to insert the stream
-this uses getnext, So getnext must be implemented for this to work
-This should only be called from editvec.
-*/
 
-EditCache<OType> convertStream()
-      throws ReadOnlyException,IOException {
-  //trace("index = " + index + " " + fdes + "class " + this.getClass());
+   }
 
-  EditCache<OType> ret = new EditCache<OType>();
-  //trace("retval " + retval);
-   for (OType ob;(ob= getnext())!=null;)
-      ret.add(ob);
- 
-   return ret;
-}
+   final KeyHandler getKeyHandler() {
+      //trace("ioc getKeyHandler");
+      return null;
+   }
 
-void reload() {
-  //trace("reload state = "  + tstate);
-  preRun();
-  try {
-     dorun();
-  } catch (InterruptedException ad) {
-      UI.popError("IoConverter caught ",ad);
-  }
-  truncIo() ;
-  
-}
+   public final String toString() {
+      return prop.fdes.shortName;
+   }
+
+   final synchronized void init1(EditCache<OType> evi, BuildCB arr) {
+      if (tstate == ThreadState.INITSTART)
+         startThread();
+      ioarray = evi;
+      mainArray = ioarray;
+      aNotify = arr;
+      //trace("IoConverter.java init1 "  + fdes.canonName);
+   }
+
+   /** inserts a stream in the indicated position in the vector.  the stream
+       is interpreted by the iocontroller for this editvector.
+   @param input the stream to be inserted
+   @param index the position to insert the stream
+   this uses getnext, So getnext must be implemented for this to work
+   This should only be called from editvec.
+   */
+
+   final EditCache<OType> convertStream() throws
+         IOException {
+      //trace("index = " + index + " " + fdes + "class " + this.getClass());
+
+      EditCache<OType> ret = new EditCache<OType>();
+      //trace("retval " + retval);
+      for (OType ob; (ob = getnext()) != null;)
+         ret.add(ob);
+
+      return ret;
+   }
+
+   final void reload() {
+      //trace("reload state = "  + tstate);
+      preRun();
+      try {
+         dorun();
+      } catch (InterruptedException ad) {
+         UI.popError("IoConverter caught ", ad);
+      }
+      truncIo();
+
+   }
 // should not be called after returning 0.
 //This should only be called from editvec.
 
-final synchronized protected void startThread() {
-   //Thread.dumpStack();
-   //trace("starting thread " + this);
-   tstate = ThreadState.STARTED;
-   rthread = new Thread(this,"Thread " + prop.fdes.shortName);
-   //trace("creating rthread " + rthread);
-   rthread.start();
-}
+   protected final synchronized void startThread() {
+      //Thread.dumpStack();
+      //trace("starting thread " + this);
+      tstate = ThreadState.STARTED;
+      rthread = new Thread(this, "Thread " + prop.fdes.shortName);
+      //trace("creating rthread " + rthread);
+      rthread.start();
+   }
 
-abstract static class BuildCB {
-   abstract void notify(EditCache ed);
-   abstract UndoHistory.BackupStatus getBackupStatus();
-}
+   abstract static class BuildCB {
+      abstract void notify(EditCache ed);
+      abstract UndoHistory.BackupStatus getBackupStatus();
+   }
 
-final boolean expand(int desired) throws IOException {
-  // this layer prevents a deadlock
-   int eret;
-   while (2== (eret = expandLock(desired)))
-      EventQueue.biglock2.lock();
-   return eret == 0
-      ? false
-      : true;
-}
-   
+   final boolean expand(int desired) throws IOException {
+      // this layer prevents a deadlock
+      int eret;
+      while (2 == (eret = expandLock(desired)))
+         EventQueue.biglock2.lock();
+      return eret == 0
+             ? false
+             : true;
+   }
 
-final synchronized int expandLock(int desired) throws IOException {
 
-   //trace("enter expand "  + this + " desired = " + desired);
+   final synchronized int expandLock(int desired) throws IOException {
 
-   while (true)  {
+      //trace("enter expand "  + this + " desired = " + desired);
 
-      //trace(" ioarray.size " + ioarray.size() + " mainArrya " + mainArray.size());
-      //trace(" backupstatus " + backupstatus);
-      //trace(" tstate " + tstate);
-      switch (tstate)  {
+      while (true)  {
 
-         case INITSTART:
-         case INIT:
-            if ((desired != 0  && desired <= mainArray.size())) 
-              return 0;
-            startThread();
-            continue;
-         case STARTED:
-            if (mainArray.size()>=desired) 
-               return 0;
-            try {
-               //trace("about to wait 2000");
-               EventQueue.biglock2.unlock();
-               wait(2000); //??????? jhj fix
-               return 2;
-               //trace("done to wait 2000");
-            } catch (InterruptedException ex) {UI.popError("ignored Interrupted Exception",null);/* Ignore Interrupts */}
-            continue;
-         case FINISHED:
-            if (swapArray) {
-               mainArray= ioarray;
-               aNotify.notify(mainArray);
-            } else {
-               ioarray=mainArray;
-           }
-            if (ioarray!=mainArray)
-               ioarray.clear();
-            return 1;
+         //trace(" ioarray.size " + ioarray.size() + " mainArrya " + mainArray.size());
+         //trace(" backupstatus " + backupstatus);
+         //trace(" tstate " + tstate);
+         switch (tstate)  {
+
+            case INITSTART:
+            case INIT:
+               if ((desired != 0  && desired <= mainArray.size()))
+                  return 0;
+               startThread();
+               continue;
+            case STARTED:
+               if (mainArray.size() >= desired)
+                  return 0;
+               try {
+                  //trace("about to wait 2000");
+                  EventQueue.biglock2.unlock();
+                  wait(2000); //??????? jhj fix
+                  return 2;
+                  //trace("done to wait 2000");
+               } catch (InterruptedException ex) {
+                  /* Ignore Interrupts */
+                  UI.popError("ignored Interrupted Exception", null);
+               }
+               continue;
+            case FINISHED:
+               if (swapArray) {
+                  mainArray = ioarray;
+                  aNotify.notify(mainArray);
+               } else {
+                  ioarray = mainArray;
+               }
+               if (ioarray != mainArray)
+                  ioarray.clear();
+               return 1;
+         }
       }
    }
-}
 
-void dumpCollection(String name,Collection cont) {
-         trace(name);
-         for(Object obj:cont)
-            trace("   "  + obj);
-}
+   final void dumpCollection(String name, Collection cont) {
+      trace(name);
+      for (Object obj : cont)
+         trace("   "  + obj);
+   }
 
 // this is a runtime exception so that report in javacompiler can throw it.
-static class DoneAdding extends RuntimeException {   
-   private static final long serialVersionUID=1;
-}
+   static class DoneAdding extends RuntimeException {
+      private static final long serialVersionUID = 1;
+   }
 
-final synchronized protected void addElement(OType ob) {
-   //trace("add element ob " +ob );
-   ioarray.add(ob);
-}
+   protected final synchronized void addElement(OType ob) {
+      //trace("add element ob " +ob );
+      ioarray.add(ob);
+   }
 
-void dorun() throws InterruptedException{
-   OType ob;
-   while ((ob = getnext())!=null) //??? get rid of getnext
-      addElement(ob);
-}
+   void dorun() throws InterruptedException {
+      OType ob;
+      while ((ob = getnext()) != null) //??? get rid of getnext
+         addElement(ob);
+   }
 
-protected void preRun() {
-}
+   protected void preRun() {
+   }
 
-protected void truncIo() {
-   if (rthread!=null)
-      rthread.interrupt();
-}
+   protected void truncIo() {
+      if (rthread != null)
+         rthread.interrupt();
+   }
 
-boolean handleDiff( OType fileObj,OType backObj,int Index) {
+   final boolean handleDiff(OType fileObj, OType backObj, int index) {
       //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
       try {
-         FileDescriptor.LocalFile tfile = FileDescriptor.LocalFile.createTempFile("javi",".tmp");
+         FileDescriptor.LocalFile tfile =
+            FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
          tfile.deleteOnExit();
-         tfile.writeAll(new StringIter(mainArray.iterator()),prop.lsep);
+         tfile.writeAll(new StringIter(mainArray.iterator()), prop.lsep);
 
-         return (UI.reportDiff(prop.fdes.shortName,Index,fileObj, 
-               backObj,backupstatus,tfile.shortName));
+         return (UI.reportDiff(prop.fdes.shortName, index, fileObj,
+                               backObj, backupstatus, tfile.shortName));
 
          //trace("setting backupstatus to null mainArray == ioarray");
          //trace("ioarray " + ioarray + " mainArray " + mainArray);
       } catch (IOException e) {
-         UI.popError("difference in files detected , error trying to display",e);
+         UI.popError(
+            "difference in files detected , error trying to display", e);
       }
       return false;
-}
+   }
 
-public final void run() {
-   try {
-      Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
-      synchronized(this) {
-         backupstatus = aNotify.getBackupStatus();
-         //trace("backupstatus " + backupstatus);
-         if (backupstatus != null) {
-            //trace("changeing ioarray to ecache");
-            ioarray=new EditCache<OType>();
-            ioarray.add(prop.conv.fromString(""));
+   public final void run() {
+      try {
+         Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+         synchronized (this) {
+            backupstatus = aNotify.getBackupStatus();
+            //trace("backupstatus " + backupstatus);
+            if (backupstatus != null) {
+               //trace("changeing ioarray to ecache");
+               ioarray = new EditCache<OType>();
+               ioarray.add(prop.conv.fromString(""));
+            }
+
          }
-         
-      }
 
-      preRun();
-      //trace("before dorun ioarray size =" +ioarray.size() + " " + this);
-      dorun();
-      //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
-   } catch (Throwable e) {
-      UI.popError("IoConverter caught ",e);
-   }
-   OType backObj = null;
-   OType fileObj = null;
-   int compIndex =0;
-   synchronized(this) {
-      if (null != backupstatus)  {
-         assert (ioarray!= mainArray);
-         int maxcomp = ioarray.size()<mainArray.size()
-            ? ioarray.size()
-            :  mainArray.size();
-         for (;compIndex<maxcomp;compIndex++) {
-            backObj = mainArray.get(compIndex);
-            fileObj = ioarray.get(compIndex);
-            if (!fileObj.equals(backObj)) {
-                break;
-             }
+         preRun();
+         //trace("before dorun ioarray size =" +ioarray.size() + " " + this);
+         dorun();
+         //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
+      } catch (Throwable e) {
+         UI.popError("IoConverter caught ", e);
+      }
+      OType backObj = null;
+      OType fileObj = null;
+      int compIndex = 0;
+      synchronized (this) {
+         if (null != backupstatus)  {
+            assert (ioarray != mainArray);
+            int maxcomp = ioarray.size() < mainArray.size()
+                          ? ioarray.size()
+                          :  mainArray.size();
+            for (; compIndex < maxcomp; compIndex++) {
+               backObj = mainArray.get(compIndex);
+               fileObj = ioarray.get(compIndex);
+               if (!fileObj.equals(backObj)) {
+                  break;
+               }
+            }
+            if (fileObj.equals(backObj))
+               fileObj = backObj = null;
+
+            if (ioarray.size() > mainArray.size())
+               fileObj = ioarray.get(mainArray.size());
          }
-         if (fileObj.equals(backObj))
-            fileObj = backObj = null;
-
-         if (ioarray.size() > mainArray.size())
-            fileObj = ioarray.get(mainArray.size());
       }
-   }
-   boolean tmpswp = (fileObj != null || backObj!= null)
-      ? handleDiff(fileObj,backObj,compIndex)
-      : false;
+      boolean tmpswp = (fileObj != null || backObj != null)
+                       ? handleDiff(fileObj, backObj, compIndex)
+                       : false;
 
-   synchronized(this) {
-      swapArray = tmpswp;
-      backupstatus = null;
-      rthread=null;
-      //trace("thread finished , notify all" + this);
-      tstate = ThreadState.FINISHED;
-      truncIo();
-      notifyAll();
+      synchronized (this) {
+         swapArray = tmpswp;
+         backupstatus = null;
+         rthread = null;
+         //trace("thread finished , notify all" + this);
+         tstate = ThreadState.FINISHED;
+         truncIo();
+         notifyAll();
+      }
+      //trace("run exit reached " + this);
    }
-   //trace("run exit reached " + this);
-}
 
-final static void trace(String str) {
-   Tools.trace(str,1);
-}
+   static final void trace(String str) {
+      Tools.trace(str, 1);
+   }
 }

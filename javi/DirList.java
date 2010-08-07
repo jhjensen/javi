@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
-class DirList extends TextEdit<DirEntry> {
+final class DirList extends TextEdit<DirEntry> {
 static final String copyright = "Copyright 1996 James Jensen";
 private static final long serialVersionUID=1;
 

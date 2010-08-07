@@ -50,7 +50,8 @@ class Ctag {
          //trace("getnextpos");
          String line;
          do {
-            if (null == (line = ctfile.readLine()))
+            line = ctfile.readLine();
+            if (null == line)
                return null;
             //trace("tagline:" + line);
          } while (line.charAt(0) == '!');
