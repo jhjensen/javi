@@ -212,9 +212,9 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
 // this is a runtime exception so that report in javacompiler can throw it.
-   static class DoneAdding extends RuntimeException {
-      private static final long serialVersionUID = 1;
-   }
+//   static class DoneAdding extends RuntimeException {
+//      private static final long serialVersionUID = 1;
+//   }
 
    protected final synchronized void addElement(OType ob) {
       //trace("add element ob " +ob );

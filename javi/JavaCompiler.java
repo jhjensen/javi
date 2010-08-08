@@ -83,7 +83,7 @@ class JavaCompilerInst extends PositionIoc implements DiagnosticListener<JavaFil
       flist = flisti;
    }
 
-   public void report(Diagnostic diagnostic) throws DoneAdding {
+   public void report(Diagnostic diagnostic) {
       //trace("diagnostic.getSource() " + diagnostic.getSource());
       //trace("diagnostic.getClass() " + diagnostic.getClass());
       Object source = diagnostic.getSource();

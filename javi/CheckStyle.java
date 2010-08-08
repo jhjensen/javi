@@ -126,13 +126,17 @@ class CheckStyleInst extends PositionIoc {
       if (pos == -1)
          return new Position(0, lineno, file, line);
 
-      int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
+      try {
+         int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
+         line = line.substring(pos + 1, line.length());
+         if (charno <= 0)
+            charno = 0;
 
-      line = line.substring(pos + 1, line.length());
-      if (charno <= 0)
-         charno = 0;
+         //trace(" returning " + new Position(0, lineno, file, line));
+         return new Position(charno, lineno, file, line);
+      } catch (NumberFormatException e) {
+         return new Position(0, lineno, file , "failed to parse line:" + line);
+      }
 
-      //trace(" returning " + new Position(0, lineno, file, line));
-      return new Position(charno, lineno, file, line);
    }
 }

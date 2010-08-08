@@ -4,25 +4,25 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-final class EditCache<OType> implements Iterable{
+final class EditCache<OType> implements Iterable {
 
    private ArrayList<OType> varray = new ArrayList<OType>(1024);
 
-   public void clear(int start,int end) {
-        varray.subList(start,end).clear();
+   public void clear(int start, int end) {
+      varray.subList(start, end).clear();
    }
 
-   void addSome(EditCache<OType> nlist,int offset) {
+   void addSome(EditCache<OType> nlist, int offset) {
       Tools.trace("nlist.size " + nlist.size() + " offset " + offset);
-      addAll(1,nlist.varray.subList(offset,nlist.size()));
+      addAll(1, nlist.varray.subList(offset, nlist.size()));
    }
 
    public void clear(int start) {
-        varray.subList(start,varray.size()).clear();
+      varray.subList(start, varray.size()).clear();
    }
 
    public void clear() {
-        clear(0);
+      clear(0);
    }
 
    public void add(OType ob) {
@@ -30,63 +30,63 @@ final class EditCache<OType> implements Iterable{
    }
 
    public void add(OType [] objs) {
-       for (OType obj :objs)
-            varray.add(obj);
+      for (OType obj : objs)
+         varray.add(obj);
    }
 
    // should only be called by changerecords.
-   public void addAll(int index,OType [] objs ) {
-      varray.addAll(index,java.util.Arrays.asList(objs));
+   public void addAll(int index, OType [] objs) {
+      varray.addAll(index, java.util.Arrays.asList(objs));
       //Tools.trace("after addAll:"); dump();
    }
 
-   public void addAll(int index,EditCache<OType> ec ) {
-      varray.addAll(index,ec.varray);
+   public void addAll(int index, EditCache<OType> ec) {
+      varray.addAll(index, ec.varray);
    }
 
-   public void addAll(int index,Collection<OType> objs ) {
+   public void addAll(int index, Collection<OType> objs) {
       //trace("cindex = " + cindex + " currsize = " + varray.size() +  " objtype = " + objs[0].getClass() );
-      varray.addAll(index,objs);
+      varray.addAll(index, objs);
    }
 
-   public void addAll(Collection<OType> objs ) {
+   public void addAll(Collection<OType> objs) {
       //trace("cindex = " + cindex + " currsize = " + varray.size() + " objtype = " + objs[0].getClass() );
       varray.addAll(objs);
    }
 
    // should only be called by changerecords.
-   public ArrayList<String>rangeAsStrings(int cindex,int eindex ) {
+   public ArrayList<String> rangeAsStrings(int cindex, int eindex) {
       //trace("cindex = " + cindex + " currsize = " + varray.size()
       //  + " objtype = " + objs[0].getClass() );
       ArrayList<String> outarray = new ArrayList<String>(eindex - cindex);
 
-      for (int i=cindex;i<eindex;i++)
-         outarray.add(varray.get(i).toString());     //varray.removeRange(cindex,cindex+objs.length); //??? change to arraylist and use removeRange
+      for (int i = cindex; i < eindex; i++)
+         outarray.add(varray.get(i).toString());
       return outarray;
 
    }
 
-    void set(int index,OType obj) {
-       varray.set(index,obj);
-    }
+   void set(int index, OType obj) {
+      varray.set(index, obj);
+   }
    /** get multiple objects at a given index */
    /** this function removes the specified elements from the editvec*/
 
-   public synchronized ArrayList<String> getElementsAt(int start,int end) {
+   public synchronized ArrayList<String> getElementsAt(int start, int end) {
 
-        ArrayList<String>  outarray= new ArrayList<String>();
+      ArrayList<String>  outarray = new ArrayList<String>();
 
-        for (int i=start;i<end;i++)
-           outarray.add(varray.get(i).toString());
-        return outarray;
+      for (int i = start; i < end; i++)
+         outarray.add(varray.get(i).toString());
+      return outarray;
    }
 
-   public OType[] getArr(int index,int count) {
-        OType[]  outarray= (OType []) new Object[count];
+   public OType[] getArr(int index, int count) {
+      OType[]  outarray = (OType []) new Object[count];
 
-        for (int i=0;i<count;i++)
-           outarray[i] = varray.get(index+i);
-       return outarray;
+      for (int i = 0; i < count; i++)
+         outarray[i] = varray.get(index + i);
+      return outarray;
    }
 
    /** return the object at the given index calls to this function must
@@ -98,8 +98,8 @@ final class EditCache<OType> implements Iterable{
    }
 
    public boolean contains(OType o) {
-      for (OType obj :varray)
-         if (o==obj)
+      for (OType obj : varray)
+         if (o == obj)
             return true;
       return false;
    }
@@ -108,19 +108,18 @@ final class EditCache<OType> implements Iterable{
    }
 
    public int size() {
-       return varray.size();
+      return varray.size();
    }
 
-    public Iterator<OType> iterator() {
-       return varray.iterator();
-    }
+   public Iterator<OType> iterator() {
+      return varray.iterator();
+   }
 
-    void dump() {
-       Tools.trace("dumping ecache");
-       for (int i = 0;i<size();i++)
-          Tools.trace("  [" + i + " ] :" +varray.get(i));
+   void dump() {
+      Tools.trace("dumping ecache");
+      for (int i = 0; i < size(); i++)
+         Tools.trace("  [" + i + " ] :" + varray.get(i));
 
-    }
+   }
 
 }
-

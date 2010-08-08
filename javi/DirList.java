@@ -7,25 +7,25 @@ import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
 final class DirList extends TextEdit<DirEntry> {
-static final String copyright = "Copyright 1996 James Jensen";
-private static final long serialVersionUID=1;
+   static final String copyright = "Copyright 1996 James Jensen";
+   private static final long serialVersionUID = 1;
 
    private static final DirList deflist;
 
-   transient private int dindex;
-   transient private int findex = 0;
-   transient private int maxIndex;
-   transient private Matcher regex;
-   transient private String searchName;
+   private transient int dindex;
+   private transient int findex = 0;
+   private transient int maxIndex;
+   private transient Matcher regex;
+   private transient String searchName;
 
    static {
-      FileProperties fp = new FileProperties(FileDescriptor.InternalFd.make("dirlist"),
-         DirConverter.dirConverter);
-      deflist= new DirList(fp);
+      FileProperties fp = new FileProperties(
+         FileDescriptor.InternalFd.make("dirlist"), DirConverter.dirConverter);
+      deflist = new DirList(fp);
    }
 
    private DirList(FileProperties<DirEntry> fp) {
-      super(new IoConverter(fp,true),fp);
+      super(new IoConverter(fp, true), fp);
       //Thread.dumpStack();
       finish();
    }
@@ -33,31 +33,31 @@ private static final long serialVersionUID=1;
    TextEdit<Position> globalgrep(String searchstr) {
       int size = readIn();
       ArrayList<DirEntry> dlist = new ArrayList<DirEntry>(size);
-      for (int i=1;i<size;i++) {
+      for (int i = 1; i < size; i++) {
          //trace("adding directory " + at(i));
          dlist.add(at(i));
       }
-      GrepReader conv = new GrepReader(searchstr,dlist,true);
-      return new TextEdit<Position>(conv,conv.prop);
+      GrepReader conv = new GrepReader(searchstr, dlist, true);
+      return new TextEdit<Position>(conv, conv.prop);
    }
 
    void flushCache() {
       //trace("dirList flushing "+ readIn() + " entries");
-      for (DirEntry dir:this) 
+      for (DirEntry dir : this)
          dir.flushCache();
    }
 
-   boolean addSearchDir (FileDescriptor.LocalDir fh) {
+   boolean addSearchDir(FileDescriptor.LocalDir fh) {
       DirEntry de = new DirEntry(fh);
-      int numEntrys = readIn(); 
+      int numEntrys = readIn();
       //trace("numEntrys " + numEntrys + " de " + de);
 
-      for (int i = 1;i<numEntrys;i++) {
+      for (int i = 1; i < numEntrys; i++) {
          if (de.equals(at(i)))
             return false;
       }
 
-      insertOne(de,readIn());
+      insertOne(de, readIn());
       checkpoint();
       return true;
    }
@@ -67,18 +67,19 @@ private static final long serialVersionUID=1;
    }
 
    void initSearch(String searchNamei) {
-      dindex=0;
-      findex=-1;
+      dindex = 0;
+      findex = -1;
       maxIndex = readIn();
-      searchName=FileDescriptor.LocalFile.make(searchNamei).shortName;
+      searchName = FileDescriptor.LocalFile.make(searchNamei).shortName;
    }
 
    boolean initSearchR() {
-      dindex=0;
-      findex=-1;
+      dindex = 0;
+      findex = -1;
       maxIndex = readIn();
       try {
-         regex =  Pattern.compile(searchName,Pattern.CASE_INSENSITIVE).matcher(""); // case insensitive
+         regex =  Pattern.compile(searchName
+                                  , Pattern.CASE_INSENSITIVE).matcher("");
          //trace("match regex = " + regex);
       } catch (PatternSyntaxException e) {
          return false;
@@ -88,10 +89,10 @@ private static final long serialVersionUID=1;
 
    FileDescriptor.LocalFile findNextFile() {
       //trace("findNextFile dindex " + dindex + " maxIndex " + maxIndex);
-      while (++dindex<maxIndex) {
+      while (++dindex < maxIndex) {
          DirEntry de = at(dindex);
          //trace("dindex = " + dindex + " de " + de);
-         FileDescriptor.LocalFile fh =  dindex ==1
+         FileDescriptor.LocalFile fh =  dindex == 1
             ? FileDescriptor.LocalFile.make(searchName)
             : de.fh.createFile(searchName);
          //trace("new fh " + fh + " isFile " + fh.isFile());
@@ -102,148 +103,154 @@ private static final long serialVersionUID=1;
    }
 
    FileDescriptor findNextFileR() {
-      while (dindex<maxIndex) {
+      while (dindex < maxIndex) {
          DirEntry de = at(dindex);
          //trace("dindex = " + dindex + " de " + de);
-         String [] flist =de.getCache();
+         String [] flist = de.getCache();
 
-         if (flist != null) while (++findex< flist.length)  {
-            
-            //trace(flist[findex]);
-            if (regex == null)
-               throw new RuntimeException("regex not initialized");
-            regex.reset(flist[findex]);
-            if (regex.matches()) {
-               FileDescriptor.LocalFile fh =  dindex ==1
-                  ? FileDescriptor.LocalFile.make(flist[findex])
-                  : de.fh.createFile(flist[findex]);
-               if (fh.isFile() || fh.isDirectory()) 
-                  return fh;
+         if (flist != null)
+            while (++findex < flist.length)  {
+
+               //trace(flist[findex]);
+               if (regex == null)
+                  throw new RuntimeException("regex not initialized");
+               regex.reset(flist[findex]);
+               if (regex.matches()) {
+                  FileDescriptor.LocalFile fh =  dindex == 1
+                     ? FileDescriptor.LocalFile.make(flist[findex])
+                     : de.fh.createFile(flist[findex]);
+                  if (fh.isFile() || fh.isDirectory())
+                     return fh;
+               }
             }
-         }
-      
+
          dindex++;
          findex = -1;
       }
       return null;
    }
-             
-static void trace(String str) {
-   Tools.trace(str,1);
-}
 
-private static class DirConverter extends ClassConverter<DirEntry> {
-
-   public DirEntry fromString(String S) {
-          return new DirEntry(S);
+   static void trace(String str) {
+      Tools.trace(str, 1);
    }
 
-   static DirConverter dirConverter = new DirConverter();
-}
+   private static class DirConverter extends ClassConverter<DirEntry> {
 
-private static class GrepReader extends PositionIoc {
+      public DirEntry fromString(String st) {
+         return new DirEntry(st);
+      }
 
-private String searchterm;
-transient private Matcher matcher;
-private ArrayList<DirEntry> dirlist;
-transient private boolean invert = false;
+      private static DirConverter dirConverter = new DirConverter();
+   }
 
-private final static String filespec = 
-   "(.*\\.bin)|(.*\\.ml3)|(.*\\.rom)|(.*\\.loc)|(.*\\.axe)|" +
-   "(.*\\.o)|(.*\\.class)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|" +
-   "(.*\\.ilk)|(^tags)|(.*\\.exe)|(^ID)|(.*\\.cla +ss)|" +
-   "(.*\\.hex)|(.*\\.dmp)|(.*\\.dmp2)|(.*\\.jar)|(^tags)$";
-private final static Matcher fileMatcher=  Pattern.compile(
-        filespec,Pattern.CASE_INSENSITIVE).matcher("");
-private static final long serialVersionUID=1;
+   private static class GrepReader extends PositionIoc {
 
-static private long sizeLimit = 1;
+      private String searchterm;
+      private transient Matcher matcher;
+      private ArrayList<DirEntry> dirlist;
+      private transient boolean invert = false;
 
-GrepReader(String spec,ArrayList<DirEntry> dirlisti,boolean inverti) {
-     super("grep " + spec);
-     dirlist=dirlisti;
-     searchterm=spec;
-     matcher = Pattern.compile("(^.*(" + spec + ").*$)|(^(.*)$)",Pattern.MULTILINE).matcher("");
-        //,RE.REG_MULTILINE);
-     invert = inverti;
-}
+      private static final String filespec =
+         "(.*\\.bin)|(.*\\.ml3)|(.*\\.rom)|(.*\\.loc)|(.*\\.axe)|"
+         + "(.*\\.o)|(.*\\.class)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|"
+         + "(.*\\.ilk)|(^tags)|(.*\\.exe)|(^ID)|(.*\\.cla +ss)|"
+         + "(.*\\.hex)|(.*\\.dmp)|(.*\\.dmp2)|(.*\\.jar)|(^tags)$";
 
-String getCanonicalName() {
-  return searchterm + " grep" + hashCode(); //??? hash code can be deleted if we make searches unique
-}
+      private static final Matcher fileMatcher =  Pattern.compile(
+               filespec, Pattern.CASE_INSENSITIVE).matcher("");
+      private static final long serialVersionUID = 1;
 
-String getName() {
-  return searchterm + " grep";
-}
+      private static long sizeLimit = 1;
 
-protected void dorun() {
-      for (DirEntry dir :dirlist) {
-         //trace("GrepReader dir = " + dir);
-         for (String filename :dir.getCache()) {
-            //trace("Grepreader checking file " + filename);
-            //trace("Grepreader Matcher " + fileMatcher.pattern());
-            fileMatcher.reset(filename);
-            if (invert ^ fileMatcher.find()) {
-               FileDescriptor.LocalFile fd = dir.fh.createFile(filename);
-               if (!fd.isDirectory()) {
-                  if (fd.length() > sizeLimit*1000000) {
-                     String[] choices = {"skip","grep","quit grep","remove file"};
+      GrepReader(String spec, ArrayList<DirEntry> dirlisti, boolean inverti) {
+         super("grep " + spec);
+         dirlist = dirlisti;
+         searchterm = spec;
+         matcher = Pattern.compile("(^.*(" + spec
+            + ").*$)|(^(.*)$)", Pattern.MULTILINE).matcher("");
+         //,RE.REG_MULTILINE);
+         invert = inverti;
+      }
 
-                     UI.Result res = UI.reportModVal(
-                        fd.shortName + " length " + (fd.length()/1000000) + 
-                        " Mb is over grep size limit","MB",
-                        choices ,sizeLimit);
-                     sizeLimit = res.newValue;
-                     if ("skip".equals(res.choice))
-                        continue;
-                     else if ("quit grep".equals(res.choice))
-                        return;
-                     else if ("remove file".equals(res.choice)) {
-                        try {
-                           fd.delete();
-                        }  catch (IOException e) {
-                           UI.popError("removing file failed" + fd ,e);
+      String getCanonicalName() {
+         return searchterm + " grep" + hashCode();
+      }
+
+      String getName() {
+         return searchterm + " grep";
+      }
+
+      protected void dorun() {
+         for (DirEntry dir : dirlist) {
+            //trace("GrepReader dir = " + dir);
+            for (String filename : dir.getCache()) {
+               //trace("Grepreader checking file " + filename);
+               //trace("Grepreader Matcher " + fileMatcher.pattern());
+               fileMatcher.reset(filename);
+               if (invert ^ fileMatcher.find()) {
+                  FileDescriptor.LocalFile fd = dir.fh.createFile(filename);
+                  if (!fd.isDirectory()) {
+                     if (fd.length() > sizeLimit * 1000000) {
+                        String[] choices = {
+                           "skip", "grep", "quit grep", "remove file"};
+
+                        UI.Result res = UI.reportModVal(
+                           fd.shortName + " length " + (fd.length() / 1000000)
+                           + " Mb is over grep size limit", "MB",
+                           choices , sizeLimit);
+
+                        sizeLimit = res.newValue;
+                        if ("skip".equals(res.choice))
+                           continue;
+                        else if ("quit grep".equals(res.choice))
+                           return;
+                        else if ("remove file".equals(res.choice)) {
+                           try {
+                              fd.delete();
+                           }  catch (IOException e) {
+                              UI.popError("removing file failed" + fd , e);
+                           }
+                           continue;
                         }
-                        continue;
+                     }
+                     int linecount = 1;
+                     matcher.reset(new String(fd.readFile()));
+                     while (matcher.find()) {
+                        if (matcher.start(2) != -1)  {
+                           //trace("matcher found " + matcher.group(0));
+                           Position pos = new Position(matcher.start(2)
+                              - matcher.start(), linecount,
+                              fd, matcher.group(0));
+
+                           addElement(pos);
+                        }
+                        linecount++;
                      }
                   }
-                  int linecount=1;
-                  matcher.reset(new String(fd.readFile()));
-                  while (matcher.find()) {
-                     if (matcher.start(2) != -1)  {
-                         //trace("matcher found " + matcher.group(0));
-                         Position pos = new Position(matcher.start(2)-matcher.start(),linecount,fd,
-                            matcher.group(0));
-                         
-                          addElement(pos);
-                     }
-                     linecount++;
-                  } 
-               } 
-            } 
-         } // a valid line
+               }
+            } // a valid line
+         }
       }
-} 
-}
+   }
 }
 
 class DirEntry {
    final FileDescriptor.LocalDir fh;
-   String []fcache;
+   private String []fcache;
 
-   DirEntry(FileDescriptor.LocalDir fh) {
-      this.fh = fh;
+   DirEntry(FileDescriptor.LocalDir fhi) {
+      this.fh = fhi;
    }
 
    DirEntry(String filename) {
       int sindex = filename.indexOf(' ');
-      if (sindex != -1 )
-         filename=filename.substring(0,sindex);
-   
-       if (filename.length() ==0)
-             filename = ".";
+      if (sindex != -1)
+         filename = filename.substring(0, sindex);
 
-       fh = FileDescriptor.LocalDir.make(filename);
+      if (filename.length() == 0)
+         filename = ".";
+
+      fh = FileDescriptor.LocalDir.make(filename);
    }
 
    public String toString()  {
@@ -252,23 +259,23 @@ class DirEntry {
 
    public boolean equals(Object de) {
       return de instanceof DirEntry
-         ?  fh.equals(((DirEntry)de).fh)
-         : false;
+             ?  fh.equals(((DirEntry) de).fh)
+             : false;
    }
-      
+
    public int hashCode() {
       return fh.hashCode();
    }
    void flushCache() {
-      fcache= null;
+      fcache = null;
    }
-    
+
    String [] getCache() {
-         if (fcache == null) {
-            fcache = fh.list();
-            //for (int i = 0;i<flist.length;i++)
-               //trace("flist added " + flist[i]);
-         }
-         return fcache;
+      if (fcache == null) {
+         fcache = fh.list();
+         //for (int i = 0;i<flist.length;i++)
+         //trace("flist added " + flist[i]);
+      }
+      return fcache;
    }
 }
