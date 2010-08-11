@@ -37,6 +37,8 @@ class StatusBar extends Canvas {
       if (isVisible()) {
          if (!getPreferredSize().equals(getSize())) {
             setSize(getPreferredSize());
+         } else {
+            repaint();
          }
       } else
          setVisible(true);

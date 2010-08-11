@@ -1138,7 +1138,6 @@ public abstract class UI {
 
       void istatusaddline(String str) {
          statusBar.addline( str);
-         //MiscCommands.wakeUp();
          new Validate();
       }
 
