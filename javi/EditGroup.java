@@ -240,7 +240,7 @@ class EditGroup extends Rgroup {
          KeyEvent event;
          if (!dotmode) {
             try {
-               while (evhandler.domovement( event = 
+               while (evhandler.domovement(event =
                   EventQueue.nextKeye(fvc.vi), count, rcount, dotmode, fvc))
                      ;
             } catch (InterruptedException e) {
