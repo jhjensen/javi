@@ -472,7 +472,7 @@ public abstract class UI {
 
    static class AwtInterface extends UI implements java.io.Serializable,
          WindowListener, FocusListener, ActionListener, ItemListener,
-         EventQueue.idler {
+         EventQueue.Idler {
 
 
       private void common() {

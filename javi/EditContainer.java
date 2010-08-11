@@ -431,7 +431,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   private static class IdleHandler implements EventQueue.idler {
+   private static class IdleHandler implements EventQueue.Idler {
       public void idle() throws IOException {
 
          EventQueue.biglock2.assertOwned();

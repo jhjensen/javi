@@ -65,14 +65,14 @@ static abstract class IEvent {
   abstract void execute() throws ExitException;
 }
 
-interface idler {
+interface Idler {
     void idle() throws IOException;
 }
 
-static ArrayList<idler> iList = new ArrayList<idler>(3);
+static ArrayList<Idler> iList = new ArrayList<Idler>(3);
 
-static void registerIdle(idler inst) {
-   //trace("adding idler " + inst);
+static void registerIdle(Idler inst) {
+   //trace("adding Idler " + inst);
    iList.add(inst);
 }
 
@@ -89,8 +89,8 @@ private static Object inextEvent(View vi) {
       return ev;
    }
    while (true) try {
-      for (idler id : iList) {
-         //trace("executing idler " + id);
+      for (Idler id : iList) {
+         //trace("executing Idler " + id);
          biglock2.lock();
          id.idle();
          biglock2.unlock();

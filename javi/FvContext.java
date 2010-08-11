@@ -191,7 +191,7 @@ static {
 
 }
 
-private static class Idler implements EventQueue.idler {
+private static class Idler implements EventQueue.Idler {
    public void idle() {
       for (View vi : fvmap.viewCollection())
          vi.repaint();
