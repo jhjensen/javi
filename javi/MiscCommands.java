@@ -267,7 +267,9 @@ static void redraw(boolean flushFlag) {
           trace("start flush elapsed" + elapsed);
           DirList.getDefault().flushCache();
           PosListList.Cmd.flush();
+          EventQueue.biglock2.unlock();
           UI.flush();
+          EventQueue.biglock2.lock();
           Buffers.clearmem();
           FvContext.dump();
           EditContainer.dumpStatic();

@@ -40,6 +40,11 @@ public final class EventQueue {
             throw new RuntimeException(
                "lock not held " + Thread.currentThread());
       }
+      void assertUnOwned() {
+         if (isHeldByCurrentThread())
+            throw new RuntimeException(
+               "lock not held " + Thread.currentThread());
+      }
       public boolean tryLock(long time, TimeUnit tu) throws
             InterruptedException {
          //Tools.trace("locking " + this,1);

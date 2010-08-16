@@ -780,9 +780,22 @@ public abstract class UI {
          EventQueue.insert(event);
       }
 
-      void iflush(boolean total) {
-         EventQueue.biglock2.assertOwned();
-         /*
+      class Flusher extends RunAwt {
+         boolean total;
+         Flusher (boolean totali) {
+            super();
+            total = totali;
+            synchronized(this) {
+               post();
+               EventQueue.biglock2.assertUnOwned();
+               try {wait();} catch (InterruptedException e) {}
+            }
+         }
+   
+         public void run() {
+            //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+      
+            /*
                if (total) {
                   if (tfc != null) {
                      frm.remove(tfc.vi);
@@ -803,31 +816,43 @@ public abstract class UI {
                      statusBar =  null;
                   }
                }
-         */
-         if (fdialog != null) {
-            fdialog.dispose();
-            frm.remove(fdialog);
-            fdialog=null;
+            */
+            if (fdialog != null) {
+               fdialog.dispose();
+               frm.remove(fdialog);
+               fdialog=null;
+            }
+            if (popmenu != null) {
+               frm.remove(popmenu);
+               popmenu=null;
+            }
+            if (psinst != null) {
+               frm.remove(psinst);
+               psinst.dispose();
+               psinst=null;
+            }
+            if (chinst != null) {
+               frm.remove(chinst);
+               chinst.dispose();
+               chinst=null;
+            }
+
+            if (rdinst != null) {
+               frm.remove(rdinst);
+               rdinst.dispose();
+               rdinst=null;
+            }
+      
+            synchronized(this) {
+               //trace("instance " + instance + " flag " + diaflag);
+               notify();
+               //trace("instance " + instance + " flag " + diaflag);
+            }
          }
-         if (popmenu != null) {
-            frm.remove(popmenu);
-            popmenu=null;
-         }
-         if (psinst != null) {
-            frm.remove(psinst);
-            psinst.dispose();
-            psinst=null;
-         }
-         if (chinst != null) {
-            frm.remove(chinst);
-            chinst.dispose();
-            chinst=null;
-         }
-         if (rdinst != null) {
-            frm.remove(rdinst);
-            rdinst.dispose();
-            rdinst=null;
-         }
+      }
+
+      void iflush(boolean total) {
+         new Flusher(total);
       }
 
 
@@ -1421,6 +1446,7 @@ public abstract class UI {
                backupvers= backupversi;
                status=statusi;
                post();
+               EventQueue.biglock2.assertUnOwned();
                try {wait();} catch (InterruptedException e) {}
             }
          }
