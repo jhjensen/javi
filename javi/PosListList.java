@@ -477,6 +477,6 @@ public final class PosListList extends TextList<Position> implements
          return new TextEdit<Position>(ioc, ioc.prop); // an unusable editvec
       }
    }
-   final private static PllConverter converter = new PllConverter();
+   private final static PllConverter converter = new PllConverter();
 }
 

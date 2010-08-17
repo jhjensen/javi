@@ -133,7 +133,7 @@ class StatusBar extends Canvas {
 
          String st = "status failure!!!";
          EventQueue.biglock2.lock();
-         try { 
+         try {
             st = FvContext.getCurrState();
          } finally {
             EventQueue.biglock2.unlock();

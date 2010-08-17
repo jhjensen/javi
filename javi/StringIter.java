@@ -6,7 +6,7 @@ final class StringIter implements Iterator<String> {
    final Iterator baseIter;
    StringIter(Iterator it) {
       baseIter = it;
-    }
+   }
 
    public boolean hasNext() {
       return baseIter.hasNext();
@@ -17,6 +17,6 @@ final class StringIter implements Iterator<String> {
    }
 
    public void remove() {
-         throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException();
    }
 }
