@@ -2,7 +2,6 @@ package javi;
 
 import java.awt.AWTKeyStroke;
 import java.awt.AWTEvent;
-import java.awt.Button;
 import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Component;
@@ -58,7 +57,6 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.awt.event.KeyEvent;
-import java.awt.im.InputMethodRequests;
 
 public abstract class UI {
    private enum Buttons {
@@ -71,7 +69,7 @@ public abstract class UI {
    abstract void itoggleStatus();
    abstract void isetStream(Reader inreader);
    abstract void ireportDiff(String filename, int linenum, Object filevers,
-                  Object backupvers, UndoHistory.BackupStatus status,String backupName);
+      Object backupvers, UndoHistory.BackupStatus status, String backupName);
 
    abstract FvContext istartComLine();
    abstract String iendComLine();
@@ -108,12 +106,12 @@ public abstract class UI {
       os.writeObject(instance);
    }
 
-   static void restoreState(java.io.ObjectInputStream is)
-   throws IOException,ClassNotFoundException {
+   static void restoreState(java.io.ObjectInputStream is) throws
+         IOException, ClassNotFoundException {
 //      instance = (Boolean) is.readObject()
 //         ? (UI)new AwtInterface()
 //         :(UI) new StreamInterface();
-      instance = (AwtInterface)is.readObject();
+      instance = (AwtInterface) is.readObject();
       instance.ishow();
       FontList.updateFont(); // prevents an extra redraw later
       instance.toFront();
@@ -121,8 +119,8 @@ public abstract class UI {
 
    public static void init(boolean isAwt) {
       instance = isAwt
-                 ? (UI)new AwtInterface()
-                 :(UI) new StreamInterface();
+                 ? (UI) new AwtInterface()
+                 : (UI) new StreamInterface();
       instance.init2();
    }
 
@@ -132,8 +130,8 @@ public abstract class UI {
 
    @SuppressWarnings("fallthrough")
    static boolean reportDiff(String filename, int linenum, Object filevers,
-         Object backupvers, UndoHistory.BackupStatus status, String backupname)
-   throws IOException {
+         Object backupvers, UndoHistory.BackupStatus status,
+         String backupname) throws IOException {
       //trace(
       //   " filename = " + filename
       //   + " linenum = " + linenum
@@ -142,32 +140,38 @@ public abstract class UI {
       //   + " status = " + status
       //);
       while (true)  {
-         instance.ireportDiff(filename, linenum, filevers, backupvers, status,backupname);
+         instance.ireportDiff(filename, linenum, filevers, backupvers,
+             status, backupname);
          switch (diaflag) {
-         case WINDOWCLOSE:
-            break;
-         case OK:
-//trace("got ok backupvers = " + backupvers + " filevers " + filevers);
-            if (backupvers==null && filevers == null)
+            case WINDOWCLOSE:
+               break;
+
+            case OK:
+               //trace("got ok backupvers = " + backupvers + " filevers " + filevers);
+               if (backupvers == null && filevers == null)
+                  return false;
+               break;
+
+            case USEBACKUP:
                return false;
-            break;
-         case USEBACKUP:
-            return false;
-         case USEFILE:
-            return true;
-         case IOERROR:
-            trace("got error in reportDiff");
-            throw new IOException();
-            //intentional fall through
-         default:
-            trace("Thread " + Thread.currentThread() + " filename " + filename
-               + " bad diaflag = " + diaflag);
-            try {Thread.sleep(5000);}
-            catch (InterruptedException e) {/*Ignore*/}
-            trace("Thread " + Thread.currentThread() + " filename " + filename
-                + " bad diaflag = " + diaflag);
+
+            case USEFILE:
+               return true;
+
+            case IOERROR:
+               trace("got error in reportDiff");
+               throw new IOException();
+
+            default:
+               trace("Thread " + Thread.currentThread() + " filename "
+                   + filename + " bad diaflag = " + diaflag);
+               try {
+                  Thread.sleep(5000);
+               } catch (InterruptedException e) { /*Ignore*/ }
+               trace("Thread " + Thread.currentThread() + " filename "
+                  + filename + " bad diaflag = " + diaflag);
          }
-//trace("reportDiff returning diaflag = " + diaflag);
+         //trace("reportDiff returning diaflag = " + diaflag);
       }
    }
 
@@ -185,7 +189,7 @@ public abstract class UI {
    }
 
    static void dispose() {
-      if (instance!=null)
+      if (instance != null)
          instance.idispose();
       instance = null;
    }
@@ -217,57 +221,59 @@ public abstract class UI {
       instance.itransferFocus();
    }
 
-   static Matcher findfile =
+   private static Matcher findfile =
       Pattern.compile("(.*[\\\\/])([^\\/]*)$").matcher("");
 
-   static void makeWriteable(EditContainer edv, String filename)
-   throws IOException {
+   static void makeWriteable(EditContainer edv, String filename) throws
+         IOException {
       instance.ichooseWriteable(filename);
       switch (diaflag) {
 
-      case CHECKOUT:
-         Command.command("vcscheckout", null, filename);
-         break;
-      case MAKEWRITEABLE:
-         edv.setReadOnly(false);
-         break;
-      case DONOTHING:
-      case WINDOWCLOSE:
-         break;
-      case MAKEBACKUP:
-         edv.backup(".orig");
-         break;
-      case USESVN:
-         findfile.reset(filename);
-         String svnstr =  (findfile.find()
-            ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
-            : "./.svn/text-base/" + filename
-          )  + ".svn-base";
+         case CHECKOUT:
+            Command.command("vcscheckout", null, filename);
+            break;
+         case MAKEWRITEABLE:
+            edv.setReadOnly(false);
+            break;
+         case DONOTHING:
+         case WINDOWCLOSE:
+            break;
+         case MAKEBACKUP:
+            edv.backup(".orig");
+            break;
+         case USESVN:
+            findfile.reset(filename);
+            String svnstr =  (findfile.find()
+               ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
+               : "./.svn/text-base/" + filename
+               )  + ".svn-base";
 
-         //trace("svnstr "  + svnstr);
-         BufferedReader fr = new BufferedReader(new FileReader(svnstr));
-         try {
-            int lineno = 0;
-            int linemax = edv.finish();
-            String line;
-            while ((line = fr.readLine()) !=null && ++lineno < linemax) {
-               if (!line.equals(edv.at(lineno))) {
-                  reportMessage("svn base file not equal to current file at "
-                     + (lineno -1) + ":" +edv.at(lineno-1) + ":" + line + ":");
-                  return;
+            //trace("svnstr "  + svnstr);
+            BufferedReader fr = new BufferedReader(new FileReader(svnstr));
+            try {
+               int lineno = 0;
+               int linemax = edv.finish();
+               String line;
+               while ((line = fr.readLine()) != null && ++lineno < linemax) {
+                  if (!line.equals(edv.at(lineno))) {
+                     reportMessage(
+                        "svn base file not equal to current file at "
+                        + (lineno - 1) + ":" + edv.at(lineno - 1) + ":"
+                        + line + ":");
+                     return;
+                  }
                }
+               if (line == null && lineno + 1 == linemax)
+                  edv.setReadOnly(false);
+               else
+                  reportMessage("svn base file not equal to current file");
+            } finally {
+               fr.close();
             }
-            if (line== null && lineno +1==linemax)
-               edv.setReadOnly(false);
-            else
-               reportMessage("svn base file not equal to current file");
-         } finally {
-            fr.close();
-         }
-         break;
-      default:
+            break;
+         default:
 
-         throw new RuntimeException("bad diaflag = " + diaflag);
+            throw new RuntimeException("bad diaflag = " + diaflag);
       }
    }
    static boolean popError(String errs, Throwable ex) {
@@ -281,19 +287,19 @@ public abstract class UI {
       PrintWriter wr = new PrintWriter(sw);
 
       wr.println(errs);
-      if (ex!=null) {
+      if (ex != null) {
          ex.printStackTrace();
          wr.println(ex);
       } else {
          Thread.dumpStack();
       }
       wr.println();
-      for (StackTraceElement ste:st) {
+      for (StackTraceElement ste : st) {
          //trace("   " + ste.toString());
          wr.println(ste);
       }
 
-      if (instance!=null)
+      if (instance != null)
          return instance.ipopstring(sw.toString());
       return true;
    }
@@ -313,7 +319,7 @@ public abstract class UI {
    }
 
    static void reportMessage(String s) {
-      if (instance!=null)
+      if (instance != null)
          instance.istatusaddline(s);
       else {
          Thread.dumpStack();
@@ -329,18 +335,18 @@ public abstract class UI {
       instance.iclearStatus();
    }
 
-   static public class Result {
+   public static class Result {
       public final int newValue;
       public final String choice;
 
       Result(int newValuei, String choicei) {
-         newValue=newValuei;
+         newValue = newValuei;
          choice = choicei;
       }
    }
 
    static Result reportModVal(String caption, String units,
-         String []buttonVals, long limit) {
+                              String []buttonVals, long limit) {
 
       return instance.ireportModVal(caption, units, buttonVals, limit);
    }
@@ -349,24 +355,24 @@ public abstract class UI {
       void isetStream(Reader inreader) {
          inStr = inreader;
       }
-      Reader inStr = new InputStreamReader(System.in);
+      private Reader inStr = new InputStreamReader(System.in);
 
 
 
       void ireportDiff(String filename, int linenum,
-            Object filevers, Object backupvers,
-            UndoHistory.BackupStatus status,String backupname) {
+                       Object filevers, Object backupvers,
+                       UndoHistory.BackupStatus status, String backupname) {
 
          StringBuilder sb = new StringBuilder("problem found in file ");
          sb.append(filename);
          sb.append('\n');
-         if (filevers==null && backupvers==null) {
+         if (filevers == null && backupvers == null) {
             sb.append("the written versions of the file are consistent\n");
-         } else   if (filevers==null) {
-            sb.append( "backup version has extra lines at end\n");
+         } else   if (filevers == null) {
+            sb.append("backup version has extra lines at end\n");
             sb.append(backupvers.toString());
-         } else if (backupvers==null) {
-            sb.append( "file version has extra lines at end\n");
+         } else if (backupvers == null) {
+            sb.append("file version has extra lines at end\n");
             sb.append(filevers.toString());
          } else  {
             sb.append("versions differ at line " + linenum + " :\n");
@@ -374,8 +380,8 @@ public abstract class UI {
             sb.append('\n');
             sb.append(backupvers.toString());
          }
-         if (status.error!=null) {
-            sb.append( "\ncorrupt backup file read in as far as possible. ");
+         if (status.error != null) {
+            sb.append("\ncorrupt backup file read in as far as possible. ");
             sb.append(status.error);
          } else {
             if (!status.cleanQuit)
@@ -391,23 +397,23 @@ public abstract class UI {
                int ch = inStr.read();
                //trace("read in " + (char)ch);
                switch (ch) {
-               case 'f':
-                  diaflag = Buttons.USEFILE;
-                  return;
-               case 'b':
-                  diaflag = Buttons.USEBACKUP;
-                  return;
-               case 'd':
-                  diaflag = Buttons.USEDIFF;
-                  return;
-               case 'o':
-                  diaflag = Buttons.OK;
-                  return;
-               case -1:
-                  diaflag = Buttons.IOERROR;
-                  return;
-               default:
-                  trace("stream got unexpected char = " + ch);
+                  case 'f':
+                     diaflag = Buttons.USEFILE;
+                     return;
+                  case 'b':
+                     diaflag = Buttons.USEBACKUP;
+                     return;
+                  case 'd':
+                     diaflag = Buttons.USEDIFF;
+                     return;
+                  case 'o':
+                     diaflag = Buttons.OK;
+                     return;
+                  case -1:
+                     diaflag = Buttons.IOERROR;
+                     return;
+                  default:
+                     trace("stream got unexpected char = " + ch);
                }
             }
          } catch (IOException e) {
@@ -418,42 +424,42 @@ public abstract class UI {
 
       }
 
-      void irepaint() {/* unimplemented */}
-      void idispose() {/* unimplemented */}
-      String igetFile() {return "filename";}
-      void iadd(Component vi, int index) {/* unimplemented */}
-      boolean iisVisible() {return true;}
-      void iremove(View vi) {/* unimplemented */}
-      void ishow() {/* unimplemented */}
+      void irepaint() { /* unimplemented */ }
+      void idispose() { /* unimplemented */ }
+      String igetFile() { return "filename"; }
+      void iadd(Component vi, int index) { /* unimplemented */ }
+      boolean iisVisible() { return true; }
+      void iremove(View vi) { /* unimplemented */ }
+      void ishow() { /* unimplemented */ }
 //      void ipack() {/* unimplemented */}
-      void ishowmenu(int x, int y) {/* unimplemented */}
-      void itoFront() {/* unimplemented */}
-      void itransferFocus() {/* unimplemented */}
-      void ichooseWriteable(java.lang.String str) {/* unimplemented */}
-      boolean ipopstring(java.lang.String str) {return false;/* unimplemented */}
-      void isetFont(java.awt.Font font) {/* unimplemented */}
+      void ishowmenu(int x, int y) { /* unimplemented */ }
+      void itoFront() { /* unimplemented */ }
+      void itransferFocus() { /* unimplemented */ }
+      void ichooseWriteable(java.lang.String str) { /* unimplemented */ }
+      boolean ipopstring(java.lang.String str) { return false; }
+      void isetFont(java.awt.Font font) { /* unimplemented */ }
 //      void ivalidate() {/* unimplemented */}
-      void iflush(boolean total) {/* unimplemented */}
-      void itoggleStatus() {/* unimplemented */}
+      void iflush(boolean total) { /* unimplemented */ }
+      void itoggleStatus() { /* unimplemented */ }
 //void idle() {throw new RuntimeException("unimplemented");}
-      FvContext iconnectfv(TextEdit file, View vi) {return null;}
-      View iaddview(boolean newview, FvContext fvc) {return null;}
-      void init2() {/* unimplemented */}
+      FvContext iconnectfv(TextEdit file, View vi) { return null; }
+      View iaddview(boolean newview, FvContext fvc) { return null; }
+      void init2() { /* unimplemented */ }
 
 
       void istatusaddline(String s) {
          trace(s);
       }
-      void istatusSetline(String s) {/*unimplemented*/}
-      void iclearStatus() {/* unimplemented */}
+      void istatusSetline(String s) { /*unimplemented*/ }
+      void iclearStatus() { /* unimplemented */ }
       FvContext istartComLine() {
          throw new RuntimeException("unimplemented");
       }
 
-      String iendComLine() {return ""; }
-      boolean iisGotoOk(FvContext fvc) {return true;}
+      String iendComLine() { return ""; }
+      boolean iisGotoOk(FvContext fvc) { return true; }
       public Object doroutine(int rnum, Object arg, int count, int rcount,
-            FvContext fvc, boolean dotmode) {
+                              FvContext fvc, boolean dotmode) {
 
          throw new RuntimeException("doroutine called with " + rnum);
       }
@@ -464,15 +470,15 @@ public abstract class UI {
       }
 
       Result ireportModVal(String caption, String units,
-            String []buttonVals, long limit) {
+                           String []buttonVals, long limit) {
 
          return null;
       }
    }
 
    static class AwtInterface extends UI implements java.io.Serializable,
-         WindowListener, FocusListener, ActionListener, ItemListener,
-         EventQueue.Idler {
+      WindowListener, FocusListener, ActionListener, ItemListener,
+      EventQueue.Idler {
 
 
       private void common() {
@@ -480,13 +486,12 @@ public abstract class UI {
          EventQueue.registerIdle(this);
       }
 
-      private void readObject(java.io.ObjectInputStream is)
-      throws ClassNotFoundException,java.io.IOException {
+      private void readObject(java.io.ObjectInputStream is) throws
+            ClassNotFoundException, IOException {
          is.defaultReadObject();
          if (fullFrame != null) {
-            GraphicsDevice[] devs =
-               java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().
-                  getScreenDevices();
+            GraphicsDevice[] devs = java.awt.GraphicsEnvironment
+               .getLocalGraphicsEnvironment().getScreenDevices();
 
             currdev = devs[0];
          }
@@ -501,38 +506,38 @@ public abstract class UI {
          //fr.setUndecorated(true);
          //FontList.updateFont(); //??? avoid calling this?
          frm = initfrm("normal");
-         normalFrame=frm;
+         normalFrame = frm;
          common();
 
-         StringIoc sio = new StringIoc("command buffer",null);
-         TextEdit<String> cmbuff = new TextEdit<String>(sio,sio.prop);
+         StringIoc sio = new StringIoc("command buffer", null);
+         TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
 
          View tfview = new OldView(false);
          tfview.setFont(FontList.getCurr(tfview));
-         tfview.setSizebyChar(80,1);
+         tfview.setSizebyChar(80, 1);
          tfview.setVisible(false);
-         tfc = FvContext.getcontext(tfview,cmbuff);
-         frm.add(tfview,0);
-         frm.setComponentZOrder(tfview,0);
+         tfc = FvContext.getcontext(tfview, cmbuff);
+         frm.add(tfview, 0);
+         frm.setComponentZOrder(tfview, 0);
          tfc.vi.newfile(tfc);
          //trace("this = " + this + " fr = " + fr);
       }
 
 
-       private static java.awt.EventQueue eventQueue =
-          java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
-       abstract class RunAwt extends AWTEvent implements Runnable {
-          public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
-       
-          RunAwt() {
-             super(frm, eventId);
-          }
-          void post() {
-             eventQueue.postEvent(this);
-          }
+      private static java.awt.EventQueue eventQueue =
+         java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
+      abstract class RunAwt extends AWTEvent implements Runnable {
+         public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
+
+         RunAwt() {
+            super(frm, eventId);
+         }
+         void post() {
+            eventQueue.postEvent(this);
+         }
       }
       class Commands extends Rgroup   {
-         final String[] rnames = {
+         private final String[] rnames = {
             "",
             "togglestatus" ,
             "va",
@@ -545,29 +550,30 @@ public abstract class UI {
             register(rnames);
          }
 
-         public Object doroutine(int rnum,Object arg,int count,int rcount,
+         public Object doroutine(int rnum, Object arg, int count, int rcount,
                FvContext fvc, boolean dotmode) throws InputException {
             switch (rnum) {
-            case 1:
-               itoggleStatus();
-               return null;
-            case 2:
-               iaddview(false,fvc);
-               return null;
-            case 3:
-               iaddview(true,fvc);
-               return null;
-            case 4:
-               delview(fvc);
-               return null;
-            case 5:
-               inextView(fvc);
-               return null;
-            case 6:
-               fullScreen(); return null;
+               case 1:
+                  itoggleStatus();
+                  return null;
+               case 2:
+                  iaddview(false, fvc);
+                  return null;
+               case 3:
+                  iaddview(true, fvc);
+                  return null;
+               case 4:
+                  delview(fvc);
+                  return null;
+               case 5:
+                  inextView(fvc);
+                  return null;
+               case 6:
+                  fullScreen();
+                  return null;
 
-            default:
-               throw new RuntimeException("doroutine called with " + rnum);
+               default:
+                  throw new RuntimeException("doroutine called with " + rnum);
             }
          }
 
@@ -576,15 +582,15 @@ public abstract class UI {
       private TestFrame frm;
       private TestFrame fullFrame;
       private final TestFrame normalFrame;
-      private int viewCount=0;
-      transient GraphicsDevice currdev;
-      transient private FileDialog fdialog;
-      transient private PopupMenu popmenu; // the menubar
-      transient private PopString psinst;
-      transient private ChoseWrt chinst;
-      transient private Diff rdinst;
-      transient private StatusBar statusBar;
-      transient private FvContext tfc;  // command context //??? may want to save this?
+      private int viewCount = 0;
+      private transient GraphicsDevice currdev;
+      private transient FileDialog fdialog;
+      private transient PopupMenu popmenu; // the menubar
+      private transient PopString psinst;
+      private transient ChoseWrt chinst;
+      private transient Diff rdinst;
+      private transient StatusBar statusBar;
+      private transient FvContext tfc;  // command context
 
       private static class ForceIdle extends EventQueue.IEvent {
          void execute() throws ExitException {
@@ -595,16 +601,16 @@ public abstract class UI {
 
          private final String name;
 
-         void paintViews () {
+         void paintViews() {
             int ccount = getComponentCount();
-            for (int i =0; i<ccount; i++) {
-               Component cp =getComponent(i);
+            for (int i = 0; i < ccount; i++) {
+               Component cp = getComponent(i);
                if (cp instanceof View)
-                  ((View)cp).repaint();
+                  ((View) cp).repaint();
             }
          }
 
-         TestFrame(String str,String namei) {
+         TestFrame(String str, String namei) {
             super(str);
             name = namei;
             HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(
@@ -612,20 +618,20 @@ public abstract class UI {
                   KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
 
             for (Iterator it = keyset.iterator(); it.hasNext();) {
-               AWTKeyStroke key = (AWTKeyStroke)(it.next());
-               if (key.getKeyCode()==KeyEvent.VK_TAB && key.getModifiers() == 0)
+               AWTKeyStroke key = (AWTKeyStroke) (it.next());
+               if (key.getKeyCode() == KeyEvent.VK_TAB
+                     && key.getModifiers() == 0)
                   it.remove();
             }
 
             setFocusTraversalKeys(
-               KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,keyset);
+               KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, keyset);
 
             enableInputMethods(false);
-            enableEvents(AWTEvent.KEY_EVENT_MASK |
-                         AWTEvent.MOUSE_EVENT_MASK|
-                         AWTEvent.MOUSE_WHEEL_EVENT_MASK |
-                         AWTEvent.WINDOW_EVENT_MASK
-                        );
+            enableEvents(AWTEvent.KEY_EVENT_MASK
+               | AWTEvent.MOUSE_EVENT_MASK
+               | AWTEvent.MOUSE_WHEEL_EVENT_MASK
+               | AWTEvent.WINDOW_EVENT_MASK);
             //enableEvents(0xffffffffffffffffl);
          }
 
@@ -633,11 +639,11 @@ public abstract class UI {
             return name + super.toString();
          }
 
-         private final int fullwidth(Component cp,int yleft,
-               int xsize,Insets inset) {
+         private int fullwidth(Component cp, int yleft,
+                                     int xsize, Insets inset) {
 
             Dimension prefSize = cp.getPreferredSize(); // really to get height
-            prefSize.width=xsize-inset.left-inset.right;
+            prefSize.width = xsize - inset.left - inset.right;
             if (!cp.getSize().equals(prefSize)) {
                cp.setSize(prefSize);
                //trace("full width set size " + cp.getSize() + " " +  cp);
@@ -652,11 +658,11 @@ public abstract class UI {
             //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
             Toolkit kit = Toolkit.getDefaultToolkit();
             Insets inset = getInsets();
-            if (inset.top==0)
+            if (inset.top == 0)
                inset =   kit.getScreenInsets(getGraphicsConfiguration());
 
-            Dimension fsize = new Dimension(inset.right+ inset.left,
-                      inset.top+inset.bottom);
+            Dimension fsize = new Dimension(inset.right + inset.left,
+                                            inset.top + inset.bottom);
 
             if (tfc.vi.isVisible())
                fsize.height +=  tfc.vi.getPreferredSize().height;
@@ -667,11 +673,11 @@ public abstract class UI {
 
             int viewheight = 0;
             int ccount = getComponentCount();
-            for (int i =0; i<ccount; i++) {
-               Component cp =getComponent(i);
+            for (int i = 0; i < ccount; i++) {
+               Component cp = getComponent(i);
                //trace("component " + cp);
                if ((cp instanceof View) && (cp != tfc.vi)) {
-                  Dimension cpsize = cp.getPreferredSize(); // check if used all
+                  Dimension cpsize = cp.getPreferredSize();
                   //trace("component prefsize " + cpsize);
                   fsize.width += cpsize.width;
                   if (cpsize.height > viewheight)
@@ -685,12 +691,12 @@ public abstract class UI {
             return fsize;
          }
 
-         public void setSize(int width,int height) {
+         public void setSize(int width, int height) {
             //trace("!!!!!!!!! frame setSize ("+ width + "," + height +")");
-            super.setSize(width,height);
+            super.setSize(width, height);
          }
 
-         public void setCompSize(int width,int height) {
+         public void setCompSize(int width, int height) {
             //trace("frame setCompsize ("+ width + "," + height +")");
             //trace("tfc " + tfc);
             //trace("statusBar " + statusBar + " pref size " + getPreferredSize());
@@ -706,11 +712,11 @@ public abstract class UI {
                viewHeight -=  statusBar.getPreferredSize().height;
 
             Dimension viewSize = new Dimension(
-                  (width - inset.left - inset.right) / viewCount, viewHeight);
+               (width - inset.left - inset.right) / viewCount, viewHeight);
 
             int ccount = getComponentCount();
-            for (int i =0; i<ccount; i++) {
-               Component cp =getComponent(i);
+            for (int i = 0; i < ccount; i++) {
+               Component cp = getComponent(i);
                //trace("component " + cp);
                if ((cp instanceof View) && (cp != tfc.vi)) {
                   if (!cp.getSize().equals(viewSize)) {
@@ -725,47 +731,46 @@ public abstract class UI {
          public void processEvent(AWTEvent ev) {
             //trace("ev " + ev + "  has focus " + hasFocus());
             switch (ev.getID()) {
-            case KeyEvent.KEY_PRESSED:
-               if (ev instanceof KeyEvent) {
-                  KeyEvent kev = (KeyEvent)ev;
-                  if ((kev).getKeyChar()==KeyEvent.CHAR_UNDEFINED)
-                     switch ((kev).getKeyCode()) {
-                     case KeyEvent.VK_SHIFT:
-                     case KeyEvent.VK_CONTROL:
-                     case KeyEvent.VK_ALT:
-                        super.processEvent(ev);
-                        return;
-                     }
+               case KeyEvent.KEY_PRESSED:
+                  if (ev instanceof KeyEvent) {
+                     KeyEvent kev = (KeyEvent) ev;
+                     if ((kev).getKeyChar() == KeyEvent.CHAR_UNDEFINED)
+                        switch ((kev).getKeyCode()) {
+                           case KeyEvent.VK_SHIFT:
+                           case KeyEvent.VK_CONTROL:
+                           case KeyEvent.VK_ALT:
+                              super.processEvent(ev);
+                              return;
+                        }
 //???            if (fcontext.dispatchKeyEvent(kev))
-                  //???        break;
-               }
-            case MouseEvent.MOUSE_WHEEL:
-               EventQueue.insert(ev);
-               break;
-            case KeyEvent.KEY_RELEASED:
-            case KeyEvent.KEY_TYPED:
-            case WindowEvent.WINDOW_ACTIVATED:
-            case WindowEvent.WINDOW_DEACTIVATED:
-            case WindowEvent.WINDOW_OPENED:
-            case WindowEvent.WINDOW_CLOSED:
-            case FocusEvent.FOCUS_LOST:
-            case FocusEvent.FOCUS_GAINED:
-               break;
+                     //???        break;
+                  }
+               case MouseEvent.MOUSE_WHEEL:
+                  EventQueue.insert(ev);
+                  break;
+               case KeyEvent.KEY_RELEASED:
+               case KeyEvent.KEY_TYPED:
+               case WindowEvent.WINDOW_ACTIVATED:
+               case WindowEvent.WINDOW_DEACTIVATED:
+               case WindowEvent.WINDOW_OPENED:
+               case WindowEvent.WINDOW_CLOSED:
+               case FocusEvent.FOCUS_LOST:
+               case FocusEvent.FOCUS_GAINED:
+                  break;
 
-            case WindowEvent.WINDOW_CLOSING:
-               EventQueue.insert(new ExitEvent());
-               break;
+               case WindowEvent.WINDOW_CLOSING:
+                  EventQueue.insert(new ExitEvent());
+                  break;
 
-               // browsers may reach here, so wakeup run so it tests flag, and thread returns
-            case RunAwt.eventId:
-               ((RunAwt)ev).run();
-               break;
+               case RunAwt.eventId:
+                  ((RunAwt) ev).run();
+                  break;
 
-            default:
-               trace("unhandled event ev " + ev + "  has focus " +
-                    hasFocus() + " insets " + getInsets());
+               default:
+                  trace("unhandled event ev " + ev + "  has focus "
+                     + hasFocus() + " insets " + getInsets());
 
-               super.processEvent(ev);
+                  super.processEvent(ev);
             }
          }
       }
@@ -781,20 +786,22 @@ public abstract class UI {
       }
 
       class Flusher extends RunAwt {
-         boolean total;
-         Flusher (boolean totali) {
+         private boolean total;
+         Flusher(boolean totali) {
             super();
             total = totali;
-            synchronized(this) {
+            synchronized (this) {
                post();
                EventQueue.biglock2.assertUnOwned();
-               try {wait();} catch (InterruptedException e) {}
+               try {
+                  wait();
+               } catch (InterruptedException e) { }
             }
          }
-   
+
          public void run() {
             //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
-      
+
             /*
                if (total) {
                   if (tfc != null) {
@@ -820,30 +827,30 @@ public abstract class UI {
             if (fdialog != null) {
                fdialog.dispose();
                frm.remove(fdialog);
-               fdialog=null;
+               fdialog = null;
             }
             if (popmenu != null) {
                frm.remove(popmenu);
-               popmenu=null;
+               popmenu = null;
             }
             if (psinst != null) {
                frm.remove(psinst);
                psinst.dispose();
-               psinst=null;
+               psinst = null;
             }
             if (chinst != null) {
                frm.remove(chinst);
                chinst.dispose();
-               chinst=null;
+               chinst = null;
             }
 
             if (rdinst != null) {
                frm.remove(rdinst);
                rdinst.dispose();
-               rdinst=null;
+               rdinst = null;
             }
-      
-            synchronized(this) {
+
+            synchronized (this) {
                //trace("instance " + instance + " flag " + diaflag);
                notify();
                //trace("instance " + instance + " flag " + diaflag);
@@ -857,16 +864,16 @@ public abstract class UI {
 
 
       private static class Dropper extends DropTarget {
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
          Dropper(Component c) {
             super(c, DnDConstants.ACTION_LINK, null, true);
          }
 
          public void dragEnter(DropTargetDragEvent dtde)  { /* don't care */
          }
-         public void dragExit(DropTargetEvent dte) {/* don't care */
+         public void dragExit(DropTargetEvent dte) { /* don't care */
          }
-         public void dragOver(DropTargetDragEvent dtde)  {/* don't care */
+         public void dragOver(DropTargetDragEvent dtde)  { /* don't care */
          }
 
          public void drop(DropTargetDropEvent dtde)  {
@@ -878,18 +885,18 @@ public abstract class UI {
                //   DataFlavor.javaFileListFlavor).getClass());
                Transferable tran = dtde.getTransferable();
                //trace("flavor count = " + tran.getTransferDataFlavors().length);
-               for (DataFlavor flavor:tran.getTransferDataFlavors()) {
+               for (DataFlavor flavor : tran.getTransferDataFlavors()) {
                   //trace("flavor = " + flavor);
-                  if (flavor.equals( DataFlavor.javaFileListFlavor)) {
-                     EventQueue.insert(new FileList.FileListEvent
-                           ((List) tran.getTransferData(flavor)));
+                  if (flavor.equals(DataFlavor.javaFileListFlavor)) {
+                     EventQueue.insert(new FileList.FileListEvent(
+                        (List) tran.getTransferData(flavor)));
 
                      dtde.dropComplete(true);
                      return;
-                  } else if (flavor.equals( DataFlavor.stringFlavor)) {
+                  } else if (flavor.equals(DataFlavor.stringFlavor)) {
                      String str = tran.getTransferData(flavor).toString();
                      //trace("str len " + str.length() + " " + str);
-                     if (str.length()!=0) {
+                     if (str.length() != 0) {
                         UI.reportError("need to implement string for " + str);
                         dtde.dropComplete(true);
                         return;
@@ -899,7 +906,7 @@ public abstract class UI {
                }
 
                UI.reportError("drop of unexpected data" + Arrays.toString(
-                     tran.getTransferDataFlavors()));
+                                 tran.getTransferDataFlavors()));
 
             } catch (UnsupportedFlavorException e) {
                UI.reportError("drop of unexpected data");
@@ -911,12 +918,13 @@ public abstract class UI {
             dtde.dropComplete(false);
          }
          public  void dropActionChanged(DropTargetDragEvent dtde)  {
-            /* don't care */ }
+            /* don't care */
+         }
       }
 
       private TestFrame initfrm(String name) {
          //trace("initfrm");
-         TestFrame lFrm = new TestFrame("vi:",name);
+         TestFrame lFrm = new TestFrame("vi:", name);
          //lFrm.setUndecorated(true);
          trace("initfrm new Frame sure is slow!!!");
          lFrm.setResizable(true);
@@ -932,8 +940,8 @@ public abstract class UI {
 
 
 
-      static void mvcomp(Container from,Container to) {
-         for (Component comp:from.getComponents()) {
+      static void mvcomp(Container from, Container to) {
+         for (Component comp : from.getComponents()) {
             //trace("moving comp " + comp);
             to.add(comp);
          }
@@ -953,24 +961,24 @@ public abstract class UI {
             if (frm != normalFrame) {
                //trace("changing fullscreen to normal fullFrame " + fullFrame + " normalFrame " + normalFrame);
                currdev.setFullScreenWindow(null);
-               mvcomp(fullFrame,normalFrame);
+               mvcomp(fullFrame, normalFrame);
                frm = normalFrame;
                frm.setVisible(true);
             } else {
                frm.setVisible(false);
                //trace("!!!!!!enter fullscreen");
-               if (fullFrame ==null) {
-                  fullFrame=initfrm("fullFrame");
+               if (fullFrame == null) {
+                  fullFrame = initfrm("fullFrame");
                   fullFrame.setFont(frm.getFont());
                   fullFrame.setUndecorated(true);
                   GraphicsDevice[] devs =
                      java.awt.GraphicsEnvironment.
-                        getLocalGraphicsEnvironment().getScreenDevices();
+                     getLocalGraphicsEnvironment().getScreenDevices();
 
                   currdev = devs[0];
                   fullFrame.setResizable(false);
                }
-               mvcomp(normalFrame,fullFrame);
+               mvcomp(normalFrame, fullFrame);
                frm = fullFrame;
                currdev.setFullScreenWindow(fullFrame);
                fullFrame.validate();
@@ -983,40 +991,40 @@ public abstract class UI {
       }
 
       void init2() { // depends on instance being set
-            try {
-               View vi = mkview(false);
-               FontList.setDefaultFontSize(vi,-1,-1);
-               iconnectfv((TextEdit)FileList.getContext(vi).at(),vi);
-            } catch (InputException e) {
-               throw new RuntimeException("can't recover iaddview",e);
-            }
+         try {
+            View vi = mkview(false);
+            FontList.setDefaultFontSize(vi, -1, -1);
+            iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
+         } catch (InputException e) {
+            throw new RuntimeException("can't recover iaddview", e);
+         }
 
-            frm.requestFocus();
-            FontList.updateFont(); // prevents an extra redraw later
-            frm.requestFocus();
-            statusBar = new StatusBar();
-            statusBar.setVisible(false);
-            frm.add(statusBar,0);
-            ishow();
+         frm.requestFocus();
+         FontList.updateFont(); // prevents an extra redraw later
+         frm.requestFocus();
+         statusBar = new StatusBar();
+         statusBar.setVisible(false);
+         frm.add(statusBar, 0);
+         ishow();
       }
 
-      FvContext iconnectfv(TextEdit file,View vi) throws InputException {
+      FvContext iconnectfv(TextEdit file, View vi) throws InputException {
          //trace("vic.connectfv " + file + " vi " + vi);
          if (tfc != null && vi == tfc.vi)
             throw new InputException(
-                  "can't change command window to display other data");
+               "can't change command window to display other data");
          isetTitle(file.toString());
 
-         FvContext fvc = FvContext.getcontext(vi,file);
+         FvContext fvc = FvContext.getcontext(vi, file);
          fvc.setCurrView();
          return fvc;
       }
 
-      private View iaddview(boolean newview,FvContext fvc)
-            throws InputException {
+      private View iaddview(boolean newview, FvContext fvc) throws
+            InputException {
 
          View ta = mkview(newview);
-         iconnectfv(fvc.edvec,ta);
+         iconnectfv(fvc.edvec, ta);
          return ta;
       }
 
@@ -1026,7 +1034,7 @@ public abstract class UI {
          View ta = new OldView(true);
          viewCount++;
          ta.setFont(FontList.getCurr(ta));
-         frm.add(ta,-1);
+         frm.add(ta, -1);
          //frm.setComponentZOrder(ta,1);
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
          frm.validate();
@@ -1036,7 +1044,7 @@ public abstract class UI {
 
       private void delview(FvContext fvc) {
 
-         if (FvContext.viewCount() >1) {
+         if (FvContext.viewCount() > 1) {
             UI.remove(fvc.vi);
             FvContext newfvc = FvContext.dispose(fvc.vi);
             if (newfvc != null)
@@ -1056,7 +1064,7 @@ public abstract class UI {
       }
 
 
-      void isetStream(Reader inreader) { /* unimplemented */}
+      void isetStream(Reader inreader) { /* unimplemented */ }
 
       void iremove(View vi) {
          viewCount--;
@@ -1065,8 +1073,8 @@ public abstract class UI {
 
       void irepaint() {
          int ccount = frm.getComponentCount();
-         for (int i =0; i<ccount; i++) {
-            Component cp =frm.getComponent(i);
+         for (int i = 0; i < ccount; i++) {
+            Component cp = frm.getComponent(i);
             if (cp.isVisible())
                cp.repaint();
          }
@@ -1128,7 +1136,7 @@ public abstract class UI {
                isetFont(FontList.getCurr(vichanged));
                vichanged.setFont(FontList.getCurr(vichanged));
             }
-            if (statusBar !=null && statusBar.isVisible())
+            if (statusBar != null && statusBar.isVisible())
                statusBar.repaint();
             EventQueue.biglock2.unlock();
          }
@@ -1162,12 +1170,12 @@ public abstract class UI {
       }
 
       void istatusaddline(String str) {
-         statusBar.addline( str);
+         statusBar.addline(str);
          new Validate();
       }
 
       void istatusSetline(String str) {
-         statusBar.setline( str);
+         statusBar.setline(str);
          new Validate();
       }
 
@@ -1191,25 +1199,25 @@ public abstract class UI {
 
       void isetFont(Font font) {
          EventQueue.biglock2.assertOwned();
-         popmenu=null;
-         psinst=null;
-         chinst=null;
-         rdinst=null;
+         popmenu = null;
+         psinst = null;
+         chinst = null;
+         rdinst = null;
          frm.setFont(font);
          Component cp;
          int cpi = frm.getComponentCount();
-         for (cpi = cpi >2 ? 1 : cpi - 1;
-               cpi >=0 && null != (cp = frm.getComponent(cpi));
+         for (cpi = cpi > 2 ? 1 : cpi - 1;
+               cpi >= 0 && null != (cp = frm.getComponent(cpi));
                --cpi)
             cp.setFont(font);
       }
 
       private static class MyMenuItem extends MenuItem {
 
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
 
-         MyMenuItem(String label,String command,Menu men,
-               ActionListener listen) {
+         MyMenuItem(String label, String command, Menu men,
+                    ActionListener listen) {
 
             super(label);
             addActionListener(listen);
@@ -1220,10 +1228,10 @@ public abstract class UI {
 
       private static class MyCheckboxMenuItem extends CheckboxMenuItem {
 
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
 
-         MyCheckboxMenuItem(String label,String command,Menu men,
-               ItemListener listen) {
+         MyCheckboxMenuItem(String label, String command, Menu men,
+                            ItemListener listen) {
 
             super(label);
             addItemListener(listen);
@@ -1232,37 +1240,38 @@ public abstract class UI {
          }
       }
 
-      void ishowmenu(int x,int y) {
-         if (popmenu==null) {
+      void ishowmenu(int x, int y) {
+         if (popmenu == null) {
 
             popmenu = new PopupMenu();
 
             Menu filem = new Menu("File");
-            new MyMenuItem("Open","e",filem,this);
-            new MyMenuItem("Quit","q",filem,this);
-            new MyMenuItem("Save file","w",filem,this);
+            new MyMenuItem("Open", "e", filem, this);
+            new MyMenuItem("Quit", "q", filem, this);
+            new MyMenuItem("Save file", "w", filem, this);
             popmenu.add(filem);
 
             Menu sizem = new Menu("Size");
-            for (int i=4; i<20; i++)
-               new MyMenuItem(Integer.toString(i),"fontsize " + i,sizem,this);
+            for (int i = 4; i < 20; i++)
+               new MyMenuItem(Integer.toString(i), "fontsize " + i,
+                  sizem, this);
             popmenu.add(sizem);
 
             Menu typem  = new Menu("Type");
-            for (String mname:FontList.typest)
-               new MyMenuItem(mname,"fonttype " +
-                              mname,typem,this);
+            for (String mname : FontList.typest)
+               new MyMenuItem(mname, "fonttype "
+                  + mname, typem, this);
             popmenu.add(typem);
 
-            new MyCheckboxMenuItem("enableclip",null,popmenu,this);
-            new MyMenuItem("paste",null,popmenu,this);
-            new MyMenuItem("fullscreen",null,popmenu,this);
+            new MyCheckboxMenuItem("enableclip", null, popmenu, this);
+            new MyMenuItem("paste", null, popmenu, this);
+            new MyMenuItem("fullscreen", null, popmenu, this);
 
             frm.add(popmenu);
 
             popmenu.addActionListener(this);
          }
-         popmenu.show(frm,x,y);
+         popmenu.show(frm, x, y);
       }
 
       boolean ipopstring(String s) {
@@ -1272,11 +1281,11 @@ public abstract class UI {
       }
 
       static class NDialog extends Dialog implements ActionListener {
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
          NButton resb = null;
 
-         NDialog(Frame frm,String caption,LayoutManager lay) {
-            super(frm,caption,true);
+         NDialog(Frame frm, String caption, LayoutManager lay) {
+            super(frm, caption, true);
             setLayout(lay);
          }
 
@@ -1285,16 +1294,16 @@ public abstract class UI {
          }
 
          public void actionPerformed(ActionEvent e) {
-            resb = (NButton)e.getSource();
+            resb = (NButton) e.getSource();
             //trace("set resb to " + resb + " lable = " + resb.getLabel());
 
             setVisible(false);
          }
 
          static class NText extends TextField {
-            private static final long serialVersionUID=1;
-            Dialog dia;
-            NText(String s,NDialog nd) {
+            private static final long serialVersionUID = 1;
+            private Dialog dia;
+            NText(String s, NDialog nd) {
                super(s);
                nd.add(this);
                addActionListener(nd);
@@ -1302,9 +1311,9 @@ public abstract class UI {
          }
 
          static class NButton extends java.awt.Button  {
-            private static final long serialVersionUID=1;
+            private static final long serialVersionUID = 1;
 
-            NButton(String s,NDialog nd) {
+            NButton(String s, NDialog nd) {
                super(s);
                nd.add(this);
                addActionListener(nd);
@@ -1324,13 +1333,13 @@ public abstract class UI {
       }
 
       private static class PopString extends NDialog {
-         private static final long serialVersionUID=1;
-         TextArea ta = new TextArea("",30,80);
-         NButton Ign = new NButton("Ignore",this);
-         NButton rThrow = new NButton("reThrow",this);
+         private static final long serialVersionUID = 1;
+         private TextArea ta = new TextArea("", 30, 80);
+         private NButton ign = new NButton("Ignore", this);
+         private NButton rThrow = new NButton("reThrow", this);
 
          PopString(Frame frm) {
-            super(frm,"exception trace",new FlowLayout());
+            super(frm, "exception trace", new FlowLayout());
             add(ta);
          }
 
@@ -1345,60 +1354,61 @@ public abstract class UI {
       }
 
       static class ModVal extends NDialog {
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
 
-         NText tf;
+         private NText tf;
 
-         ModVal(final String caption,final String units,
-               final String []buttonVals,final long limit,Frame frame) {
+         ModVal(final String caption, final String units,
+                final String []buttonVals, final long limit, Frame frame) {
 
-            super(frame,caption,new FlowLayout());
-            tf = new NText(Long.toString(limit),this);
+            super(frame, caption, new FlowLayout());
+            tf = new NText(Long.toString(limit), this);
             Label cp = new Label(caption);
             add(cp);
             Label unl = new Label(units);
             add(unl);
             for (String bv : buttonVals)
-               new NButton(bv,this);
+               new NButton(bv, this);
             pack();
             Dimension d1 = cp.getPreferredSize();
             Dimension d2 = tf.getPreferredSize();
             Dimension d3 = unl.getPreferredSize();
-            this.setSize(d1.width+d2.width+d3.width+50,d2.height*5);
+            this.setSize(d1.width + d2.width + d3.width + 50, d2.height * 5);
             setVisible(true);
          }
       }
 
-      Result ireportModVal(final String caption,final String units,
-            final String []buttonVals,final long limit) {
+      Result ireportModVal(final String caption, final String units,
+                           final String []buttonVals, final long limit) {
 
-         ModVal b1= new ModVal(caption,units,buttonVals,limit,frm);
+         ModVal b1 = new ModVal(caption, units, buttonVals, limit, frm);
          return new Result(Integer.parseInt(
-            b1.tf.getText()),b1.resb.getLabel());
+                              b1.tf.getText()), b1.resb.getLabel());
       }
 
       private static class ChoseWrt extends NDialog {
-         private static final long serialVersionUID=1;
+         private static final long serialVersionUID = 1;
 
-         Label writelabel = new Label();;
+         private Label writelabel = new Label();;
 
-         NButton svnb =   new NButton("use svn base ",this);
-         NButton backb =   new NButton("back up to .orig file",this);
-         NButton checkoutb =   new NButton(
-            "checkout with version control",this);
+         private NButton svnb =   new NButton("use svn base ", this);
+         private NButton backb =   new NButton("back up to .orig file", this);
+         private NButton checkoutb =   new NButton(
+            "checkout with version control", this);
 
-         NButton forceWriteable =   new NButton("force writeable",this);
-         NButton nothing =   new NButton("do nothing",this);
+         private NButton forceWriteable =
+            new NButton("force writeable", this);
+         private NButton nothing =   new NButton("do nothing", this);
 
          ChoseWrt(AwtInterface jwin) {
 
-            super(jwin.frm,"Read only file action",new FlowLayout());
+            super(jwin.frm, "Read only file action", new FlowLayout());
             add(writelabel);
          }
 
          void chosefile(String filename) {
             String tstring =
-                  "You have tried to write to a read only file:" +filename;
+               "You have tried to write to a read only file:" + filename;
 
             this.setTitle(tstring);
 
@@ -1406,69 +1416,72 @@ public abstract class UI {
 
             this.pack();
             Dimension d = writelabel.getPreferredSize();
-            this.setSize(d.width,d.height*7);
+            this.setSize(d.width, d.height * 7);
             setVisible(true);
-            diaflag = 
-               resb==null
-                  ? UI.Buttons.IOERROR
+            diaflag =
+               resb == null
+               ? UI.Buttons.IOERROR
                : resb == svnb
-                  ? UI.Buttons.USESVN
+               ? UI.Buttons.USESVN
                : resb == backb
-                  ? UI.Buttons.MAKEBACKUP
+               ? UI.Buttons.MAKEBACKUP
                : resb == checkoutb
-                  ? UI.Buttons.CHECKOUT
+               ? UI.Buttons.CHECKOUT
                : resb == forceWriteable
-                  ? UI.Buttons.MAKEWRITEABLE
+               ? UI.Buttons.MAKEWRITEABLE
                : resb == nothing
-                  ? UI.Buttons.DONOTHING
+               ? UI.Buttons.DONOTHING
                : UI.Buttons.IOERROR;
          }
 
       }
 
       class HandleDiff extends RunAwt {
-   
-         final String filename;
-         final String backupname;
-         final int linenum;
-         final Object filevers;
-         final Object backupvers;
-         final UndoHistory.BackupStatus status;
 
-         HandleDiff (String filenamei, int linenumi, Object fileversi,
-               Object backupversi, UndoHistory.BackupStatus statusi,String backupnamei) {
+         private final String filename;
+         private final String backupname;
+         private final int linenum;
+         private final Object filevers;
+         private final Object backupvers;
+         private final UndoHistory.BackupStatus status;
+
+         HandleDiff(String filenamei, int linenumi, Object fileversi,
+               Object backupversi, UndoHistory.BackupStatus statusi,
+               String backupnamei) {
             super();
-            synchronized(this) {
-               filename =filenamei;
-               backupname =backupnamei;
-               linenum= linenumi;
-               filevers= fileversi;
-               backupvers= backupversi;
-               status=statusi;
+            synchronized (this) {
+               filename = filenamei;
+               backupname = backupnamei;
+               linenum = linenumi;
+               filevers = fileversi;
+               backupvers = backupversi;
+               status = statusi;
                post();
                EventQueue.biglock2.assertUnOwned();
-               try {wait();} catch (InterruptedException e) {}
+               try {
+                  wait();
+               } catch (InterruptedException e) { }
             }
          }
-   
+
          public void run() {
             //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
-      
-            if (rdinst==null)
-               rdinst=new Diff(frm);
+
+            if (rdinst == null)
+               rdinst = new Diff(frm);
             while (true) {
-               rdinst.pop(filename,linenum,filevers, backupvers,status);
+               rdinst.pop(filename, linenum, filevers, backupvers, status);
                if (diaflag == UI.Buttons.USEDIFF) {
                   try {
-                     String cmd =System.getProperties().getProperty(
-                        "java.javi.diffcmd",
-                        //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
-                        //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
-                        "C:\\Progra~1\\Beyond~1\\Bcomp.exe " );
-                        //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname
-                        //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
-                        //"kdiff3 "
-                        //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
+                     String cmd = System.getProperties().getProperty(
+                                     "java.javi.diffcmd",
+                                     //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
+                                     //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
+                                     "C:\\Progra~1\\Beyond~1\\Bcomp.exe ");
+                     //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname
+                     //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
+                     //"kdiff3 "
+                     //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
                      String [] lstr =  {cmd, filename, backupname};
                      Tools.execute(lstr);
                   } catch (IllegalArgumentException e) {
@@ -1480,9 +1493,9 @@ public abstract class UI {
                   }
                } else
                   break;
-            } 
-      
-            synchronized(this) {
+            }
+
+            synchronized (this) {
                //trace("instance " + instance + " flag " + diaflag);
                notify();
                //trace("instance " + instance + " flag " + diaflag);
@@ -1490,24 +1503,26 @@ public abstract class UI {
          }
       }
 
-      void ireportDiff(String filename,int linenum,Object filevers,
-             Object backupvers,UndoHistory.BackupStatus status,String backupName) {
-          new HandleDiff(filename,linenum,filevers, backupvers,status,backupName);
+      void ireportDiff(String filename, int linenum, Object filevers,
+            Object backupvers, UndoHistory.BackupStatus status,
+            String backupName) {
+         new HandleDiff(filename, linenum, filevers, backupvers,
+            status, backupName);
       }
 
       private static class Diff extends NDialog {
-         private static final long serialVersionUID=1;
-         Label replab1 = new Label();
-         Label replab2 = new Label();
-         Label sa1 = new Label();
-         Label sa2 = new Label();
+         private static final long serialVersionUID = 1;
+         private Label replab1 = new Label();
+         private Label replab2 = new Label();
+         private Label sa1 = new Label();
+         private Label sa2 = new Label();
 
-         NButton okbut = new NButton("OK",this);
-         NButton backbut= new NButton("use backup version",this);
-         NButton filebut= new NButton("use file version",this);
-         NButton diffbut= new NButton("launch diff",this);
+         private NButton okbut = new NButton("OK", this);
+         private NButton backbut = new NButton("use backup version", this);
+         private NButton filebut = new NButton("use file version", this);
+         private NButton diffbut = new NButton("launch diff", this);
 
-         String l1,l2,s1,s2;
+         private String l1, l2, s1, s2;
 //   public void setVisible(boolean vf) {
 //      if (!vf)
 //         Thread.dumpStack();
@@ -1520,7 +1535,7 @@ public abstract class UI {
             //trace("diffbut" + diffbut);
 
             //trace("res" + res);
-            return resb==null
+            return resb == null
                    ? UI.Buttons.IOERROR
                    : resb == okbut
                    ? UI.Buttons.OK
@@ -1541,28 +1556,28 @@ public abstract class UI {
 
          Diff(Frame frm)  {
 
-            super(frm,"file difference problem",new GridBagLayout());
+            super(frm, "file difference problem", new GridBagLayout());
 
-            GridBagLayout gb = (GridBagLayout)getLayout();
-            GridBagConstraints gbc =new GridBagConstraints();
-            gbc.anchor=GridBagConstraints.WEST;
-            gbc.weightx=1.0;
-            gbc.weighty=1.0;
-            gbc.gridwidth=3;
-            gb.setConstraints(replab1,gbc);
-            int ycount =1;
-            gbc.gridy=++ycount;
-            gb.setConstraints(replab2,gbc);
-            gbc.gridy=++ycount;
-            gb.setConstraints(sa1,gbc);
-            gbc.gridy=++ycount;
-            gb.setConstraints(sa2,gbc);
-            gbc.gridy=++ycount;
-            gb.setConstraints(okbut,gbc);
-            gbc.gridwidth=1;
-            gb.setConstraints(diffbut,gbc);
-            gb.setConstraints(filebut,gbc);
-            gb.setConstraints(backbut,gbc);
+            GridBagLayout gb = (GridBagLayout) getLayout();
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = 1.0;
+            gbc.weighty = 1.0;
+            gbc.gridwidth = 3;
+            gb.setConstraints(replab1, gbc);
+            int ycount = 1;
+            gbc.gridy = ++ycount;
+            gb.setConstraints(replab2, gbc);
+            gbc.gridy = ++ycount;
+            gb.setConstraints(sa1, gbc);
+            gbc.gridy = ++ycount;
+            gb.setConstraints(sa2, gbc);
+            gbc.gridy = ++ycount;
+            gb.setConstraints(okbut, gbc);
+            gbc.gridwidth = 1;
+            gb.setConstraints(diffbut, gbc);
+            gb.setConstraints(filebut, gbc);
+            gb.setConstraints(backbut, gbc);
             this.add(replab1);
             this.add(replab2);
             this.add(sa1);
@@ -1570,44 +1585,43 @@ public abstract class UI {
             setinvis();
          }
 
-         void pop (String filename,int linenum,Object filevers,
-                   Object backupvers,UndoHistory.BackupStatus status) {
+         void pop(String filename, int linenum, Object filevers,
+                   Object backupvers, UndoHistory.BackupStatus status) {
 //     try {Thread.sleep(150);} catch (Exception e) {} // work around focus problem ???
-            this.setTitle("discrepency in backup file:" +filename);
+            this.setTitle("discrepency in backup file:" + filename);
             setinvis();
-            if (status.error !=null) {
+            if (status.error != null) {
                replab1.setText(
-                     "corrupt backup file read in as far as possible. "
-                     + status.error);
+                  "corrupt backup file read in as far as possible. "
+                  + status.error);
 
                replab1.setForeground(Color.cyan);
                replab1.setVisible(true);
             } else if (!status.cleanQuit || !status.isQuitAtEnd) {
 
-               replab1.setText(
-                  (!status.cleanQuit
+               replab1.setText((
+                  !status.cleanQuit
                      ? "javi did not exit cleanly. "
                      : "")
-                  +
-                  (!status.isQuitAtEnd
-                     ? "There is undo history that is not in effect (use ^r to display)"
-                     :""));
+                  + (!status.isQuitAtEnd
+                     ? "There is undo history that is not in effect"
+                     : ""));
 
                replab1.setVisible(true);
                replab1.setForeground(Color.black);
             }
-            if (filevers==null && backupvers==null) {
+            if (filevers == null && backupvers == null) {
                replab2.setText(
                   "the written versions of the file are consistent");
 
                replab2.setForeground(Color.black);
                okbut.setVisible(true);
             } else {
-               l1=l2=s1=s2="";
-               if (filevers==null) {
+               l1 = l2 = s1 = s2 = "";
+               if (filevers == null) {
                   l1 = "backup version has extra lines at end";
                   s2 = backupvers.toString();
-               } else if (backupvers==null) {
+               } else if (backupvers == null) {
                   l1 = "file version has extra lines at end";
                   s1 = filevers.toString();
                } else  {
@@ -1632,7 +1646,7 @@ public abstract class UI {
             this.pack();
             //trace("setting visible modality " + getModalityType() + " thread " + Thread.currentThread().getName());
             setVisible(true);
-            diaflag=mapbut();
+            diaflag = mapbut();
          }
 
          private void setinvis() {
@@ -1651,23 +1665,29 @@ public abstract class UI {
       public void windowClosing(WindowEvent e) {
          //trace("" + this);
          e.getComponent().setVisible(false);
-         diaflag=Buttons.WINDOWCLOSE;
+         diaflag = Buttons.WINDOWCLOSE;
       }
 
       public void windowClosed(java.awt.event.WindowEvent e) {
-         /*trace("" + e); /* dont care */}
+         /*trace("" + e); /* dont care */
+      }
       public void windowOpened(WindowEvent e) {
-          /*trace("" + e);/* dont care */} //
+         /*trace("" + e);/* dont care */
+      } //
       public void windowActivated(WindowEvent e)  {
-          /*trace("" + e);/* dont care */}   //
+         /*trace("" + e);/* dont care */
+      }   //
       public void windowDeactivated(WindowEvent e) {
-         /*trace("" + e); /* dont care */} //
+         /*trace("" + e); /* dont care */
+      } //
       public void windowDeiconified(WindowEvent e) {
-         /*trace("" + e); /* dont care */} //
+         /*trace("" + e); /* dont care */
+      } //
       public void windowIconified(WindowEvent e) {
-         /*trace("" + e); /* dont care */} //
+         /*trace("" + e); /* dont care */
+      } //
 
-      private class Layout implements LayoutManager,java.io.Serializable {
+      private class Layout implements LayoutManager, java.io.Serializable {
 
          public void addLayoutComponent(String s, Component cont) {
             //trace("" + cont);
@@ -1681,20 +1701,20 @@ public abstract class UI {
             return cont.getPreferredSize();
          }
 
-         public void removeLayoutComponent(Component cont) {/*don't care */}
+         public void removeLayoutComponent(Component cont) { /*don't care */ }
 
-         private final int fullwidth(Component cp,int yleft,
-               int xsize,Insets inset) {
+         private int fullwidth(Component cp, int yleft,
+                                     int xsize, Insets inset) {
 
             Dimension cpsize = cp.getPreferredSize();
-            cpsize.width=xsize;
+            cpsize.width = xsize;
             int height = cpsize.height;
             //trace("yleft decreased by height " + height + " cp " + cp);
             if (!cp.getSize().equals(cpsize)) {
-               cp.setSize(xsize-inset.left-inset.right,height);
+               cp.setSize(xsize - inset.left - inset.right, height);
                //trace("full width set size " + cp.getSize() + " " +  cp);
             }
-            Point newloc = new Point(inset.left,yleft -height);
+            Point newloc = new Point(inset.left, yleft - height);
             Point oldloc = cp.getLocation();
             if (!newloc.equals(oldloc)) {
                //trace("full width set location " + newloc + " " +  cp);
@@ -1710,24 +1730,24 @@ public abstract class UI {
             Insets inset = frm.getInsets();
             //trace("entered layoutContainer insets = " + inset); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
-            if (cont!=frm) {
+            if (cont != frm) {
                trace("laying out wrong contaner ! cont = "
-                  + cont + " frame " + frm);
+                     + cont + " frame " + frm);
                return;
             }
 
             // what is the point of layout out before we get our insets?
-            if (frm  == normalFrame && inset.top==0)
+            if (frm  == normalFrame && inset.top == 0)
                return;
 
             Dimension startSize = frm.getSize();
 
             //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
-            frm.setCompSize(startSize.width,startSize.height);
+            frm.setCompSize(startSize.width, startSize.height);
 
-            if (normalFrame == frm &&
-                  !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+            if (normalFrame == frm 
+                  && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                   == Frame.MAXIMIZED_BOTH)) {
                Dimension pref = frm.getPreferredSize();
                if (!pref.equals(startSize)) {
@@ -1740,26 +1760,26 @@ public abstract class UI {
             int ccount = frm.getComponentCount();
             //trace("frame size at start of layout " + startSize + " insets " + inset);
 
-            int xsize =startSize.width;
-            int ysize =startSize.height;
+            int xsize = startSize.width;
+            int ysize = startSize.height;
             //trace("size =  " + frm.getSize());
             int yleft = ysize - inset.bottom;
             //trace("yleft = " + yleft + " inset.top = " + inset.top);
-            yleft = fullwidth(statusBar,yleft,xsize,inset); // status
-            fullwidth(tfc.vi,yleft,xsize,inset); // status
-            int left=inset.left;
-            for (int i=0; i<ccount; i++) { // views
+            yleft = fullwidth(statusBar, yleft, xsize, inset); // status
+            fullwidth(tfc.vi, yleft, xsize, inset); // status
+            int left = inset.left;
+            for (int i = 0; i < ccount; i++) { // views
                Component cp = frm.getComponent(i);
                //trace("processing component " + cp);
                if (cp.isVisible()) {
                   if ((cp instanceof View) && (cp != tfc.vi)) {
                      Point oldloc = cp.getLocation();
-                     Point newloc = new Point(left,inset.top);
+                     Point newloc = new Point(left, inset.top);
                      if (!oldloc.equals(newloc)) {
                         //trace("!!! setting new location " + newloc);
                         cp.setLocation(newloc);
                      }
-                     left+= cp.getSize().width;
+                     left += cp.getSize().width;
                   }
                }
             }
@@ -1830,14 +1850,14 @@ public abstract class UI {
 //     FocusManager.disableSwingFocusManager();
 
       String igetFile() {
-         if (fdialog ==null)
-            fdialog = new FileDialog(frm, "open new vifile",FileDialog.LOAD);
+         if (fdialog == null)
+            fdialog = new FileDialog(frm, "open new vifile", FileDialog.LOAD);
          fdialog.setVisible(true);
          return   fdialog.getFile();
       }
 
    }
    public static void trace(String str) {
-      Tools.trace(str,1);
+      Tools.trace(str, 1);
    }
 }
