@@ -1,7 +1,7 @@
 package javi;
 
 interface FileStatusListener {
-abstract void fileAdded(EditContainer ev);
-abstract void fileWritten(EditContainer ev);
-abstract boolean fileDisposed(EditContainer ev);
+   void fileAdded(EditContainer ev);
+   void fileWritten(EditContainer ev);
+   boolean fileDisposed(EditContainer ev);
 }
