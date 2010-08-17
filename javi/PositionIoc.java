@@ -1,6 +1,5 @@
 package javi;
 
-import java.io.IOException;
 import java.io.BufferedReader;
 
 
@@ -34,9 +33,10 @@ public class PositionIoc extends BufInIoc<Position> {
 
    private static final PositionConverter converter = new PositionConverter();
 
-   public Position parsefile(String line) throws IOException {
+   public Position parsefile() {
       //trace("parsefile this " + this.getClass());
-      do {
+      String line;
+      while (null != (line = getLine())) {
          //trace("line = " + line);
          if ("done".equals(line)) {
             trace("should exit immediatly");
@@ -47,59 +47,40 @@ public class PositionIoc extends BufInIoc<Position> {
                //trace("line len " + line.length());
                //trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);
             }
-      } while (null != (line = input.readLine()));
+      }
       return null;
    }
 
    PositionIoc(String name) { //??? should make private
       super(new FileProperties(
-         FileDescriptor.InternalFd.make(name), converter), true);
+         FileDescriptor.InternalFd.make(name), converter), true, null);
       //trace(label);
    }
 
-   public PositionIoc(String name, BufferedReader inputi) throws IOException {
+   public PositionIoc(String name, BufferedReader inputi) {
 
       super(new FileProperties(FileDescriptor.InternalFd.make(name),
-         converter), true);
-      input = inputi;
+         converter), true, inputi);
    }
 
    private int errcount = 0;
    public final Position getnext() {
       //trace("getnext input " + input + " this "+ this );
-      if (input == null)
-         return null;
-      try {
-         int c;
 
-         do
-            c = input.read();
-         while (c == '\n' || c == '\r');
-
-         //trace("c" +(int)c);
-
-         Position pos = (c != -1)
-                        ? parsefile((char) c + input.readLine())
-                        : null;
-         if (pos == null) {
-            input.close();
-            UI.reportMessage(this + "complete " + errcount + " results");
-            input = null;
-         } else {
-            if (pos.filename != null) {
-               EventQueue.biglock2.lock();
-               EditContainer ev =  EditContainer.findfile(pos.filename);
-               if (ev != null)
-                  ev.fixposition(pos);
-               EventQueue.biglock2.unlock();
-            }
-            errcount++;
+      Position pos = parsefile();
+      trace("get next got pos " + pos);
+      if (pos == null) {
+         UI.reportMessage(this + "complete " + errcount + " results");
+      } else {
+         if (pos.filename != null) {
+            EventQueue.biglock2.lock();
+            EditContainer ev =  EditContainer.findfile(pos.filename);
+            if (ev != null)
+               ev.fixposition(pos);
+            EventQueue.biglock2.unlock();
          }
-
-         return pos;
-      } catch (IOException e) {
-         trace("getnexterror caught " + e);
-         return null;
+         errcount++;
       }
+      return pos;
    }
 }

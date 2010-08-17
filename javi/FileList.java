@@ -422,10 +422,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
 
 
       FileParser(FileProperties fp, String fnames)  {
-         super(fp, true);
-         //input = new BufferedReader( new StringReader(
-         //                               fnames.replace(' ','\n')));
-         input = new BufferedReader(new StringReader(fnames));
+         super(fp, true, new BufferedReader(new StringReader(fnames)));
       }
 
       @SuppressWarnings("fallthrough")
@@ -440,19 +437,12 @@ final class FileList extends TextEdit<TextEdit<String>> {
                   case 1:  //trace("stage 1 ");
 
                      dupflag = false;
-                     if (input == null)
+
+                     searchName = getLine();
+                        //trace("searching for file " + searchName);
+                     if (searchName == null)
                         break oloop;
 
-                     try {
-                        searchName = input.readLine();
-                        //trace("searching for file " + searchName);
-                     } catch (IOException e) {
-                        searchName = null;
-                     }
-                     if (searchName == null) {
-                        input = null;
-                        break oloop;
-                     }
                      foundf = false;
                      //trace("looking for " + searchName + " edv = " + edv);
                      // for special names try and open right away an create

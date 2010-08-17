@@ -8,12 +8,60 @@ import java.io.IOException;
 */
 
 abstract class BufInIoc<OType>  extends IoConverter<OType>  {
-   protected transient BufferedReader  input;
+   private transient BufferedReader  input;
+
+   protected final String getLine() {
+      if (input == null)
+         return null;
+      try {
+         String retval = input.readLine();
+         if (retval != null)
+            return retval;
+      } catch (IOException e) {
+         trace("getLine caught " + e);
+      }
+      try {
+         input.close();
+         input = null;
+      } catch (IOException e) {
+         trace("getLine caught " + e);
+      }
+      return null;
+
+   }
+
+   protected final String getLine2() {
+      try {
+         if (input == null)
+            return null;
+         int c;
+
+         do
+            c = input.read();
+         while (c == '\n' || c == '\r');
+
+         if (c != -1) {
+            String retval = input.readLine();
+            if (retval != null)
+               return c + retval;
+         }
+      } catch (IOException e)  {
+         trace("getLine2 caught " + e);
+      }
+      try {
+         input.close();
+      } catch (IOException e)  {
+         trace("getLine2 caught " + e);
+      }
+      input = null;
+      return null;
+   }
 
    static final String copyright = "Copyright 1996 James Jensen";
 
-   BufInIoc(FileProperties fp, boolean initThread) {
+   BufInIoc(FileProperties fp, boolean initThread, BufferedReader inputi) {
       super(fp, initThread);
+      input = inputi;
    }
 
    public void dispose() throws IOException {

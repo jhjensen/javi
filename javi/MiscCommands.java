@@ -185,15 +185,23 @@ class MiscCommands extends Rgroup  {
       }
    }
 
-   static class ProcIo extends BufInIoc<String> {
+   static final class ProcIo extends BufInIoc<String> {
       private static final long serialVersionUID = 1;
       private transient Process proc;
-      ProcIo(String namei, String ...cmd) throws IOException {
-         super(new FileProperties(FileDescriptor.InternalFd.make(namei),
-                                  StringIoc.converter), true);
-         proc = Tools.iocmd(cmd);
-         input = new BufferedReader(new InputStreamReader(
+
+      static ProcIo mkProcIo(String namei, String ...cmd) throws
+            IOException {
+         Process proc = Tools.iocmd(cmd);
+         BufferedReader input = new BufferedReader(new InputStreamReader(
             proc.getInputStream()));
+         return new ProcIo(namei, proc, input, cmd);
+      }
+
+      private ProcIo(String namei, Process proci,
+            BufferedReader inp, String ...cmd) throws IOException {
+         super(new FileProperties(FileDescriptor.InternalFd.make(namei),
+            StringIoc.converter), true, inp);
+         proc = proci;
       }
 
       public String fromString(String str) {
@@ -204,21 +212,9 @@ class MiscCommands extends Rgroup  {
          proc.destroy();
          super.dispose();
       }
+
       public String getnext() {
-         if (input == null)
-            return null;
-         try {
-            String retval = input.readLine();
-            if (retval == null) {
-               input.close();
-               input = null;
-            }
-            return retval;
-         } catch (IOException e) {
-            trace("getnexterror caught " + e);
-            input = null;
-            return null;
-         }
+         return getLine();
       }
    };
 
@@ -235,7 +231,7 @@ class MiscCommands extends Rgroup  {
                lastcmd[3] = cname;
 
             EditContainer.registerListener(fli);
-            ProcIo pi  = new ProcIo(lastcmd[3], lastcmd);
+            ProcIo pi  = ProcIo.mkProcIo(lastcmd[3], lastcmd);
             cmdfile = new TextEdit<String>(pi, pi.prop);
          }
          UI.connectfv(cmdfile, fvc.vi);

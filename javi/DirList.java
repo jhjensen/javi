@@ -163,7 +163,7 @@ final class DirList extends TextEdit<DirEntry> {
       private static long sizeLimit = 1;
 
       GrepReader(String spec, ArrayList<DirEntry> dirlisti, boolean inverti) {
-         super("grep " + spec);
+         super("grep " + spec, null);
          dirlist = dirlisti;
          searchterm = spec;
          matcher = Pattern.compile("(^.*(" + spec

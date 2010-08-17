@@ -1,6 +1,5 @@
 package javi;
 
-import java.io.IOException;
 import org.mozilla.universalchardet.UniversalDetector;
 
 class FileInput extends BufInIoc<String> {
@@ -40,20 +39,11 @@ class FileInput extends BufInIoc<String> {
 
    public String getnext() {
       //trace("fileread getnext");
-      if (input != null) {
-         try {
-            String retval = input.readLine();
-            if (retval == null) {
-               input.close();
-               input = null;
-            }
-            //trace("fileread getnext returning " + retval);
-            return retval;
-         } catch (IOException e) {
-            //trace("fileread getnext returning " + null);
-            return null;
-         }
-      }
+      //trace("fileread getnext returning " + retval);
+      String retval = getLine();
+      if (retval != null)
+         return retval;
+
       String nextstring;
       if (rpos == Integer.MAX_VALUE && npos == Integer.MAX_VALUE) {
          if (fileend <= filestart) {
@@ -109,7 +99,7 @@ class FileInput extends BufInIoc<String> {
 
 
    FileInput(FileProperties fp) {
-      super(fp, false);
+      super(fp, false, null);
       //trace("new FileInput prop = " + fp);
       if (fp == null)
          throw new RuntimeException("file input with no File");

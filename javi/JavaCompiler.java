@@ -83,7 +83,7 @@ class JavaCompilerInst extends PositionIoc implements
    private int warncount = 0;
 
    JavaCompilerInst(String [] flisti) {
-      super("javac " +  Arrays.toString(flisti));
+      super("javac " +  Arrays.toString(flisti), null);
       flist = flisti;
    }
 

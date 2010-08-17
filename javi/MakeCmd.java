@@ -173,12 +173,11 @@ class GccInst extends PositionIoc {
    }
    GccInst(String filesi, String comstringi, boolean asmflagi) throws
          IOException {
-      super("gcc " +  comstringi + filesi);
-
+      super("gcc " +  comstringi + filesi, Tools.runcmd(comstringi + filesi));
       asmflag = asmflagi;
       String comstring = comstringi + filesi;
       trace(comstring);
-      input = Tools.runcmd(comstring);
+
    }
 
 }

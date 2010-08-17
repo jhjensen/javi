@@ -91,52 +91,56 @@ class CheckStyleInst extends PositionIoc {
       super("checkstyle", Tools.runcmd(filename));
    }
 
-   public Position parsefile(String line) {
-      if (line.length() == 0)
-         return Position.badpos;
+   public final Position parsefile() {
+      String line;
+      while (null != (line = getLine())) {
+         if (line.length() == 0)
+            continue;
 
-      trace("parsing len =  " + line.length() + " line: "  + line);
+         trace("parsing len =  " + line.length() + " line: "  + line);
 
-      int pos = line.indexOf(':', 3);  // three skips over any drive desc
+         int pos = line.indexOf(':', 3);  // three skips over any drive desc
 
-      if (pos == -1) {
-         //if (line.equals("Audit done.")
-         //   ||  line.equals("Starting audit..."))
-         //   return null;
-         trace("unexpected line:" + line);
-         return Position.badpos;
-      }
+         if (pos == -1) {
+            if (line.equals("Audit done.")
+                  ||  line.equals("Starting audit..."))
+               continue;
+            trace("unexpected line:" + line);
+            return Position.badpos;
+         }
 
-      String file = line.substring(0, pos);
+         String file = line.substring(0, pos);
 
-      line = line.substring(pos + 1, line.length());
-      pos = line.indexOf(':');
-
-      if (pos == -1)
-         return new Position(0, 0, file, line);
-
-      int lineno = Integer.parseInt(line.substring(0, pos).trim());
-
-      if (lineno <= 0)
-         lineno = 1;
-
-      line = line.substring(pos + 1, line.length());
-      pos = line.indexOf(':');
-
-      if (pos == -1)
-         return new Position(0, lineno, file, line);
-
-      try {
-         int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
          line = line.substring(pos + 1, line.length());
-         if (charno <= 0)
-            charno = 0;
+         pos = line.indexOf(':');
 
-         //trace(" returning " + new Position(0, lineno, file, line));
-         return new Position(charno, lineno, file, line);
-      } catch (NumberFormatException e) {
-         return new Position(0, lineno, file , "failed to parse line:" + line);
+         if (pos == -1)
+            return new Position(0, 0, file, line);
+
+         int lineno = Integer.parseInt(line.substring(0, pos).trim());
+
+         if (lineno <= 0)
+            lineno = 1;
+
+         line = line.substring(pos + 1, line.length());
+         pos = line.indexOf(':');
+
+         if (pos == -1)
+            return new Position(0, lineno, file, line);
+
+         try {
+            int charno = Integer.parseInt(line.substring(0, pos).trim()) - 1;
+            line = line.substring(pos + 1, line.length());
+            if (charno <= 0)
+               charno = 0;
+
+            //trace(" returning " + new Position(0, lineno, file, line));
+            return new Position(charno, lineno, file, line);
+         } catch (NumberFormatException e) {
+            return new Position(0, lineno, file ,
+               "failed to parse line:" + line);
+         }
       }
-
+      return null;
    }
 }

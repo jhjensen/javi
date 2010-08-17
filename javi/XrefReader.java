@@ -1,7 +1,7 @@
 package javi;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Arrays;
 
 
 class XrefReader extends PositionIoc {
@@ -19,9 +19,10 @@ class XrefReader extends PositionIoc {
       }
    }
 
-   public Position parsefile(String line) throws IOException {
+   public Position parsefile() {
       //trace("line = " + line);
-      do {
+      String line;
+      while (null != (line = getLine())) {
          if ("done".equals(line)) {
             //trace("should exit immediatly");
          } else if (!"".equals(line))
@@ -34,14 +35,12 @@ class XrefReader extends PositionIoc {
                //         trace("positionioc.parseline failed line = " + line);
                //      trace("positionioc.parseline exception = " + e);
             }
-      } while (null != (line = input.readLine()));
+      }
       return null;
    }
 
-   XrefReader(String s) {
-      super(s);
       //trace("greader");
-      String[] command = new String[9];
+        //String[] command = new String[9];
         //command[0] = "perl.exe";
         //command[1] = "-e";
         //command[2] = "$_=`lid " + s + "`;";
@@ -63,15 +62,18 @@ class XrefReader extends PositionIoc {
         //command[1] = "test.pl" ;
         //command[2] = s;
 
-      String[] commandline = {"lid", "-R", "grep", s};
+   static final String[] commandline = {"lid", "-R", "grep", null};
          //{"ssh", "speedy","cd sidewinder/src ;lid -R grep " + s + "| tr -d \r"};
          //"ssh nowind3 cd sidewinder/src ;lid -R grep " + s + "| tr -d \\\\r";
-      try {
-         //trace("starting " + commandline);
-         input = Tools.runcmd(commandline);
-      } catch (IOException e) {
-         UI.popError("unable to start " + Arrays.toString(commandline) , e);
-      }
+
+   private static BufferedReader getIn(String str) throws IOException {
+      commandline[3] = str;
+      return Tools.runcmd(commandline);
+   }
+
+
+   XrefReader(String s) throws IOException {
+      super(s, getIn(s));
    }
 
    private boolean failflag;
