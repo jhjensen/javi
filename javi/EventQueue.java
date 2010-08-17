@@ -58,7 +58,7 @@ public final class EventQueue {
    }
 
 //static ReentrantLock biglock = new ReentrantLock();
-   static DebugLock biglock2 = new DebugLock();
+   static final DebugLock biglock2 = new DebugLock();
    private static EventQueue eventq = new EventQueue();
 
    private static LinkedList<Object> queue = new LinkedList<Object>();

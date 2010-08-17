@@ -191,7 +191,7 @@ public static class Cmd extends Rgroup {
         "rep",               //  5
         "te",            
         "gotopllist",    
-        "jlint",         
+        "dummy1",         
         "nextpos" , 
         "gotopositionlist", //10
         "gotofontlist",
@@ -219,7 +219,7 @@ public static class Cmd extends Rgroup {
             return null;
          case 6: return null;//markex(new extext(new testr()),fvc); return null;
          case 7: inst.gotoList(fvc,inst);return null; // fallthrough
-         case 8: jlintcommand();return null;
+         case 8: return null; //jlintcommand();return null;
          case 9: inst.gotoNextPos(fvc,(boolean [])arg); return null;
          case 10: inst.gotoList(fvc,null); return null;
          case 11: inst.gotoList(fvc,FontList.getList()); return null;
@@ -245,10 +245,6 @@ public static class Cmd extends Rgroup {
       } catch (IOException e) { 
          ctags=null;
       }
-   }
-
-   private void jlintcommand() throws IOException {
-          setErrors(new JlintRunner());
    }
 
    private void poptag(View vi) throws InputException {
