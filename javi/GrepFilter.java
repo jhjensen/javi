@@ -7,22 +7,22 @@ import java.util.regex.Matcher;
 
 
 class GrepFilter implements FilenameFilter {
-Matcher regex;
-boolean invert;
-   
-GrepFilter(String spec,boolean inverti) {
-   regex =  Pattern.compile(spec).matcher("");
-   invert=inverti;
-   //trace("spec = " + spec + " invert = " + invert);
-}
+   private Matcher regex;
+   private boolean invert;
 
-public boolean accept(File dir,String name) {
+   GrepFilter(String spec, boolean inverti) {
+      regex =  Pattern.compile(spec).matcher("");
+      invert = inverti;
+      //trace("spec = " + spec + " invert = " + invert);
+   }
+
+   public boolean accept(File dir, String name) {
 
       //trace("filename = " + name);
       regex.reset(name);
       return  invert ^ regex.find();
-}
-static void trace(String str) {
-   Tools.trace(str,1);
-}
+   }
+   static void trace(String str) {
+      Tools.trace(str, 1);
+   }
 }
