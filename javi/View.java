@@ -326,22 +326,30 @@ abstract class View  extends Canvas {
 
    public void paint(Graphics g) {
       //trace("paint called ");
-      if (g != oldgr) {
-         oldgr = g;
-         newGraphics();
+      try {
+         if (g != oldgr) {
+            oldgr = g;
+            newGraphics();
+         }
+         op.redraw();
+         npaint((Graphics2D) g);
+      } catch (Throwable e) {
+         UI.popError("unexpected exception",e);
       }
-      op.redraw();
-      npaint((Graphics2D) g);
    }
 
    public void update(Graphics g) { //  paint will do it's own clearing
+      try {
       //trace("update called ");
       //if (op.currop == REDRAW) trace(" got update REDRAW!!");
-      if (g != oldgr) {
-         oldgr = g;
-         newGraphics();
+         if (g != oldgr) {
+            oldgr = g;
+            newGraphics();
+         }
+         npaint((Graphics2D) g);
+      } catch (Throwable e) {
+         UI.popError("unexpected exception",e);
       }
-      npaint((Graphics2D) g);
    }
 
    private void npaint(Graphics2D gr) {
