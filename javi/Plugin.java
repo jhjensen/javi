@@ -61,7 +61,7 @@ final class JarResources {
 
          // extract resources and put them into the hashtable.
          ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
-            new FileInputStream(jarFileName)));
+               new FileInputStream(jarFileName)));
 
          try {
             ZipEntry ze = null;
@@ -172,7 +172,7 @@ abstract class MultiClassLoader extends ClassLoader {
    }
 //---------- Abstract Implementation ---------------------
    public synchronized Class loadClass(String className,
-         boolean resolveIt) throws ClassNotFoundException {
+                                       boolean resolveIt) throws ClassNotFoundException {
 
       byte[]  classBytes;
       //trace(">> MultiClassLoader.loadClass(" + className + ", " + resolveIt + ")");
@@ -241,17 +241,17 @@ abstract class MultiClassLoader extends ClassLoader {
 } // End class
 
 public interface Plugin {
-   public static class Loader {
-      static void load(final String jarFile)
-         throws IOException, ClassNotFoundException,
+   public static final class Loader {
+      private Loader() { }
+      static void load(final String jarFile) throws
+         IOException, ClassNotFoundException,
          NoSuchFieldException, IllegalAccessException {
 
          java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction()  {
+               new java.security.PrivilegedAction()  {
             public Object run() {
                try {
                   final JarLoader jarLoader = new JarLoader(jarFile);
-
 
                   /* Load the class from the jar file and resolve it. */
                   Class c = jarLoader.loadClass("javi.plugin.FindBugs", true);

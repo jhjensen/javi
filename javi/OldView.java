@@ -55,11 +55,11 @@ class OldView  extends View {
       redraw();
    }
 
+   static final String teststr = "                                         abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~1!2@3#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
    void ssetFont(Font font) {
       //trace("entered " + this  + font);
       fontm = getFontMetrics(font);
       trace("the First usage of a font sure is slow!!!");
-      String teststr = "                                         abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~1!2@3#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
       charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
          / teststr.length();
       //trace("charwidth = " + charwidth + this);
@@ -85,7 +85,7 @@ class OldView  extends View {
       super.newfile(newfvc);
    }
 
-   void insertedElementsdraw(Graphics gr,int start, int amount) {
+   void insertedElementsdraw(Graphics gr, int start, int amount) {
 
       int screenstart = start - fcontext.inserty() + screenposy;
       int screenend = screenstart + amount; // end of bad screen
@@ -97,13 +97,13 @@ class OldView  extends View {
       if (screenend >= 0 && screenstart <= screenSize
             && screenend > screenstart) {
          if (screenend < screenSize)
-            copyLines(gr,screenstart, screenSize - (screenend - screenstart),
+            copyLines(gr, screenstart, screenSize - (screenend - screenstart),
                       screenend - screenstart);
-         paintLines(gr,screenstart, screenend);
+         paintLines(gr, screenstart, screenend);
       }
    }
 
-   void changeddraw(Graphics gr,int index, int index2) {
+   void changeddraw(Graphics gr, int index, int index2) {
       index = index - screenFirstLine();
       index2 = index2 - screenFirstLine() + 1;
       if (index < 0)
@@ -111,11 +111,11 @@ class OldView  extends View {
       if (index2 > screenSize)
          index2 = screenSize;
       if (index2 >= 0  && index < screenSize) {
-         paintLines(gr,index, index2);
+         paintLines(gr, index, index2);
       }
    }
 
-   void deletedElementsdraw(Graphics gr,int start, int amount) {
+   void deletedElementsdraw(Graphics gr, int start, int amount) {
 
       while (!text.contains(1))
          throw new RuntimeException();
@@ -129,8 +129,8 @@ class OldView  extends View {
       //      + " start = " + start + " amount = " + amount);
       if (gonee >= 0 && gones < screenSize && gonee > gones) {
          if (gonee < screenSize)
-            copyLines(gr,gonee, screenSize, gones - gonee);
-         paintLines(gr,screenSize - (gonee - gones), screenSize);
+            copyLines(gr, gonee, screenSize, gones - gonee);
+         paintLines(gr, screenSize - (gonee - gones), screenSize);
       }
 
    }
@@ -189,7 +189,7 @@ class OldView  extends View {
 
    private void fixcursor(int xChange, int yChange, int newXpixel) {
 
-      op.cursorChange(xChange,yChange);
+      op.cursorChange(xChange, yChange);
 
       int oldx = screenposx - xoffset;
       int diffx = newXpixel - oldx;
@@ -372,11 +372,11 @@ class OldView  extends View {
       gr.fillRect(0, 0, inset, screenSize * charheight);
       gr.fillRect(pixelWidth - inset, 0, inset , screenSize * charheight);
       gr.setClip(cliprect);
-      paintLines(gr,0, screenSize);
+      paintLines(gr, 0, screenSize);
       //trace(" done REDRAW " + this);
    }
 
-   private void copyLines(Graphics gr,int start, int end, int delta) {
+   private void copyLines(Graphics gr, int start, int end, int delta) {
       //trace("copyLines");
       if (start < 0 || end > screenSize || start >= end
             || start + delta < 0 || end + delta > screenSize)
@@ -408,7 +408,7 @@ class OldView  extends View {
 
    }
 
-   private int fillheader(Graphics gr,int start) {
+   private int fillheader(Graphics gr, int start) {
       //trace("fillheader");
       if (start + screenFirstLine() < 1) {
          start = 1 - screenFirstLine();
@@ -418,7 +418,7 @@ class OldView  extends View {
       return start;
    }
 
-   private int filltrailer(Graphics gr,int end) {
+   private int filltrailer(Graphics gr, int end) {
       //trace("filltrailer");
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " fin = " + text.finish());
       int numlines = text.readIn(); // number of lines read in
@@ -438,7 +438,7 @@ class OldView  extends View {
       return end;
    }
 
-   private void paintLines(Graphics gr,int start, int end) {
+   private void paintLines(Graphics gr, int start, int end) {
       //trace("paintLines start = " + start + " end " + end);
       //Thread.dumpStack();
       if (imageg == null)
@@ -449,8 +449,8 @@ class OldView  extends View {
          throw new RuntimeException("start = " + start + " end = " + end
             + " screenSize = " + screenSize);  // should never happen
 
-      start = fillheader(gr,start);
-      end = filltrailer(gr,end);
+      start = fillheader(gr, start);
+      end = filltrailer(gr, end);
 
       //trace("paint2 end = "  + end + " firstline = " + screenFirstLine());
       for (int index = start, tindex = index + screenFirstLine();
@@ -496,10 +496,10 @@ class OldView  extends View {
 
    private void moveScreen(int amount) {
       screenposy -= amount;
-      op.mscreen(amount,screenSize);
+      op.mscreen(amount, screenSize);
    }
 
-   void movescreendraw(Graphics gr,int amount) {
+   void movescreendraw(Graphics gr, int amount) {
       int cstart, cend, pstart, pend;
       if (amount > 0) {
          cstart = amount;
@@ -512,8 +512,8 @@ class OldView  extends View {
          pstart = 0;
          pend = -amount;
       }
-      copyLines(gr,cstart, cend, -amount);
-      paintLines(gr,pstart , pend);
+      copyLines(gr, cstart, cend, -amount);
+      paintLines(gr, pstart , pend);
    }
 
 
@@ -527,17 +527,19 @@ class OldView  extends View {
          //trace("stringWidth " + fontm.stringWidth(iString) + " iString:" + iString);
          cx += fontm.stringWidth(iString);
       }
-      int rx = cx -1;
+      int rx = cx - 1;
       int ry = (screenposy) * (charheight) - 1;
-      int rwidth= boldflag ? 2 : 1;
+      int rwidth = boldflag ? 2 : 1;
       int rheight = charheight + 1;
 
       if (sh instanceof Rectangle) {
          Rectangle rec = (Rectangle) sh;
-         if (rec.x  == rx && rec.y == ry && rec.height == rheight && rec.width == rwidth)
+         if (rec.x  == rx && rec.y == ry
+               && rec.height == rheight
+               && rec.width == rwidth)
             return sh;
-     }
-      return new Rectangle(rx,ry,rwidth,rheight);
+      }
+      return new Rectangle(rx, ry, rwidth, rheight);
    }
 
    int charOffset(String line, int xpos) {
