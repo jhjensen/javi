@@ -1746,7 +1746,7 @@ public abstract class UI {
 
             frm.setCompSize(startSize.width, startSize.height);
 
-            if (normalFrame == frm 
+            if (normalFrame == frm
                   && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                   == Frame.MAXIMIZED_BOTH)) {
                Dimension pref = frm.getPreferredSize();
