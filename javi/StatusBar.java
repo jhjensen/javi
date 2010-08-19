@@ -115,18 +115,19 @@ class StatusBar extends Canvas {
 
          if (col < 1)
             return;
+         synchronized (this) {
+            if (messeges.size() >= 1) {
+               for (String line : messeges) {
+                  for (int substr = 0; substr < line.length();) {
+                     int newsubstr = (line.length()
+                        - substr  < col
+                           ? line.length()
+                           : substr + col);
 
-         if (messeges.size() >= 1) {
-            for (String line : messeges) {
-               for (int substr = 0; substr < line.length();) {
-                  int newsubstr = (line.length()
-                     - substr  < col
-                        ? line.length()
-                        : substr + col);
-
-                  g.drawString(line.substring(substr, newsubstr),
-                     hoffset, charheight * voffset++ + charascent);
-                  substr = newsubstr;
+                     g.drawString(line.substring(substr, newsubstr),
+                        hoffset, charheight * voffset++ + charascent);
+                     substr = newsubstr;
+                  }
                }
             }
          }

@@ -775,6 +775,53 @@ public abstract class UI {
          }
       }
 
+      private void flusher(boolean total) {
+         if (total) {
+            if (tfc != null) {
+               frm.remove(tfc.vi);
+               tfc.dispose(tfc.vi);
+               try {
+                  tfc.dispose(tfc.edvec);
+               } catch (IOException e) {
+                  // should be harmless
+               }
+               try {
+                  tfc.dispose(tfc.edvec);
+               } catch (IOException ex) {
+                  popError("error in flush", ex);
+               }
+            }
+            if (statusBar != null) {
+               frm.remove(statusBar);
+               statusBar =  null;
+            }
+         }
+         if (fdialog != null) {
+            fdialog.dispose();
+            frm.remove(fdialog);
+            fdialog = null;
+         }
+         if (popmenu != null) {
+            frm.remove(popmenu);
+            popmenu = null;
+         }
+         if (psinst != null) {
+            frm.remove(psinst);
+            psinst.dispose();
+            psinst = null;
+         }
+         if (chinst != null) {
+            frm.remove(chinst);
+            chinst.dispose();
+            chinst = null;
+         }
+
+         if (rdinst != null) {
+            frm.remove(rdinst);
+            rdinst.dispose();
+            rdinst = null;
+         }
+      }
 
       public void actionPerformed(ActionEvent event) {
          //trace("reached actionPerformed " + event);
@@ -802,56 +849,9 @@ public abstract class UI {
          public void run() {
             //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
-            /*
-               if (total) {
-                  if (tfc != null) {
-                     frm.remove(tfc.vi);
-                     tfc.dispose(tfc.vi);
-                     try {
-                        tfc.dispose(tfc.edvec);
-                     } catch (IOException e) {
-                        // should be harmless
-                     }
-                     try {
-                        tfc.dispose(tfc.edvec);
-                     } catch (IOException ex) {
-                        popError("error in flush",ex);
-                     }
-                  }
-                  if (statusBar != null) {
-                     frm.remove(statusBar);
-                     statusBar =  null;
-                  }
-               }
-            */
-            if (fdialog != null) {
-               fdialog.dispose();
-               frm.remove(fdialog);
-               fdialog = null;
-            }
-            if (popmenu != null) {
-               frm.remove(popmenu);
-               popmenu = null;
-            }
-            if (psinst != null) {
-               frm.remove(psinst);
-               psinst.dispose();
-               psinst = null;
-            }
-            if (chinst != null) {
-               frm.remove(chinst);
-               chinst.dispose();
-               chinst = null;
-            }
-
-            if (rdinst != null) {
-               frm.remove(rdinst);
-               rdinst.dispose();
-               rdinst = null;
-            }
-
             synchronized (this) {
                //trace("instance " + instance + " flag " + diaflag);
+               flusher(total);
                notify();
                //trace("instance " + instance + " flag " + diaflag);
             }
@@ -861,7 +861,6 @@ public abstract class UI {
       void iflush(boolean total) {
          new Flusher(total);
       }
-
 
       private static class Dropper extends DropTarget {
          private static final long serialVersionUID = 1;
@@ -956,34 +955,53 @@ public abstract class UI {
          public void run() {
             //trace("full Screen " + frm);
             EventQueue.biglock2.lock();
-            iflush(false);
+            try {
+               flusher(false);
 
-            if (frm != normalFrame) {
-               //trace("changing fullscreen to normal fullFrame " + fullFrame + " normalFrame " + normalFrame);
-               currdev.setFullScreenWindow(null);
-               mvcomp(fullFrame, normalFrame);
-               frm = normalFrame;
-               frm.setVisible(true);
-            } else {
-               frm.setVisible(false);
-               //trace("!!!!!!enter fullscreen");
-               if (fullFrame == null) {
-                  fullFrame = initfrm("fullFrame");
-                  fullFrame.setFont(frm.getFont());
-                  fullFrame.setUndecorated(true);
-                  GraphicsDevice[] devs =
-                     java.awt.GraphicsEnvironment.
-                     getLocalGraphicsEnvironment().getScreenDevices();
+               if (frm != normalFrame) {
+                  //trace("changing fullscreen to normal fullFrame " + fullFrame + " normalFrame " + normalFrame);
+                  currdev.setFullScreenWindow(null);
+                  mvcomp(fullFrame, normalFrame);
+                  frm = normalFrame;
+                  frm.setVisible(true);
+               } else {
+                  frm.setVisible(false);
+                  //trace("!!!!!!enter fullscreen");
+                  if (fullFrame == null) {
+                     fullFrame = initfrm("fullFrame");
+                     fullFrame.setFont(frm.getFont());
+                     fullFrame.setUndecorated(true);
+                     GraphicsDevice[] devs =
+                        java.awt.GraphicsEnvironment.
+                        getLocalGraphicsEnvironment().getScreenDevices();
+                     int maxarea = 0;
+                     int biggestScreen = 0;
 
-                  currdev = devs[0];
-                  fullFrame.setResizable(false);
+                      // find biggest screen
+                     trace("dump graphics devices");
+                     int scount = 0;
+                     for (GraphicsDevice dev : devs)  {
+                         //System.err.println("   dev "+ dev);
+                        java.awt.DisplayMode dm = dev.getDisplayMode();
+                        int area = dm.getWidth() * dm.getHeight();
+                        if (area > maxarea) {
+                           maxarea = area;
+                           biggestScreen = scount;
+                        }
+                        scount++;
+                     }
+
+                     currdev = devs[biggestScreen];
+                     fullFrame.setResizable(false);
+                  }
+                  mvcomp(normalFrame, fullFrame);
+                  frm = fullFrame;
+                  currdev.setFullScreenWindow(fullFrame);
+                  fullFrame.validate();
                }
-               mvcomp(normalFrame, fullFrame);
-               frm = fullFrame;
-               currdev.setFullScreenWindow(fullFrame);
-               fullFrame.validate();
+            } finally {
+               EventQueue.biglock2.unlock();
             }
-            EventQueue.biglock2.unlock();
          }
       }
       void fullScreen() {
@@ -1282,7 +1300,10 @@ public abstract class UI {
 
       static class NDialog extends Dialog implements ActionListener {
          private static final long serialVersionUID = 1;
-         protected NButton resb = null;
+         private NButton resb = null;
+         final NButton getRes() {
+            return resb;
+         }
 
          NDialog(Frame frm, String caption, LayoutManager lay) {
             super(frm, caption, true);
@@ -1349,7 +1370,7 @@ public abstract class UI {
             trace("popstring visible ");
             setVisible(true);
             trace("popstring invisible ");
-            return resb == rThrow;
+            return getRes() == rThrow;
          }
       }
 
@@ -1379,11 +1400,11 @@ public abstract class UI {
       }
 
       Result ireportModVal(final String caption, final String units,
-                           final String []buttonVals, final long limit) {
+            final String []buttonVals, final long limit) {
 
          ModVal b1 = new ModVal(caption, units, buttonVals, limit, frm);
          return new Result(Integer.parseInt(
-                              b1.tf.getText()), b1.resb.getLabel());
+            b1.tf.getText()), b1.getRes().getLabel());
       }
 
       private static class ChoseWrt extends NDialog {
@@ -1419,18 +1440,18 @@ public abstract class UI {
             this.setSize(d.width, d.height * 7);
             setVisible(true);
             diaflag =
-               resb == null
-               ? UI.Buttons.IOERROR
-               : resb == svnb
-               ? UI.Buttons.USESVN
-               : resb == backb
-               ? UI.Buttons.MAKEBACKUP
-               : resb == checkoutb
-               ? UI.Buttons.CHECKOUT
-               : resb == forceWriteable
-               ? UI.Buttons.MAKEWRITEABLE
-               : resb == nothing
-               ? UI.Buttons.DONOTHING
+               getRes() == null
+                  ? UI.Buttons.IOERROR
+               : getRes() == svnb
+                  ? UI.Buttons.USESVN
+               : getRes() == backb
+                  ? UI.Buttons.MAKEBACKUP
+               : getRes() == checkoutb
+                  ? UI.Buttons.CHECKOUT
+               : getRes() == forceWriteable
+                  ? UI.Buttons.MAKEWRITEABLE
+               : getRes() == nothing
+                  ? UI.Buttons.DONOTHING
                : UI.Buttons.IOERROR;
          }
 
@@ -1535,17 +1556,17 @@ public abstract class UI {
             //trace("diffbut" + diffbut);
 
             //trace("res" + res);
-            return resb == null
-                   ? UI.Buttons.IOERROR
-                   : resb == okbut
-                   ? UI.Buttons.OK
-                   : resb == backbut
-                   ? UI.Buttons.USEBACKUP
-                   : resb == filebut
-                   ? UI.Buttons.USEFILE
-                   : resb == diffbut
-                   ? UI.Buttons.USEDIFF
-                   : UI.Buttons.IOERROR;
+            return getRes() == null
+                  ? UI.Buttons.IOERROR
+               : getRes() == okbut
+                  ? UI.Buttons.OK
+               : getRes() == backbut
+                  ? UI.Buttons.USEBACKUP
+               : getRes() == filebut
+                  ? UI.Buttons.USEFILE
+               : getRes() == diffbut
+                  ? UI.Buttons.USEDIFF
+               : UI.Buttons.IOERROR;
          }
 
 
