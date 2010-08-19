@@ -390,7 +390,7 @@ class UndoHistory<OType> extends PersistantStack {
       static final int INSERT = 5;
       static final int MOD = 6;
       static final int INSERTSTRING = 7;
-      int cindex;
+      protected int cindex;
 
       String getDate() {
          return null;

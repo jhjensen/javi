@@ -16,8 +16,8 @@ class EditGroup extends Rgroup {
    private char dotchar;
    private Object dotarg;
 
-   MapEvent evhandler;
-   InsertBuffer icontext;
+   final MapEvent evhandler;
+   final InsertBuffer icontext;
 
    EditGroup(MapEvent evhandleri) {
       final String[] rnames = {

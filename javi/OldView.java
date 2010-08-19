@@ -189,7 +189,7 @@ class OldView  extends View {
 
    private void fixcursor(int xChange, int yChange, int newXpixel) {
 
-      op.cursorChange(xChange, yChange);
+      cursorChange(xChange, yChange);
 
       int oldx = screenposx - xoffset;
       int diffx = newXpixel - oldx;
@@ -496,7 +496,7 @@ class OldView  extends View {
 
    private void moveScreen(int amount) {
       screenposy -= amount;
-      op.mscreen(amount, screenSize);
+      mscreen(amount, screenSize);
    }
 
    void movescreendraw(Graphics gr, int amount) {

@@ -113,7 +113,7 @@ abstract class View  extends Canvas {
          return changedpro(index, index);
       }   
 
-      void cursorChange(int xChange,int yChange) {
+      void cursorChange(int xChange, int yChange) {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
          pmark.markChange(fcontext.insertx() + xChange, fcontext.inserty());
 
@@ -235,10 +235,18 @@ abstract class View  extends Canvas {
       op.blink();
    }
 
-   protected final ChangeOpt op = new ChangeOpt();
+   private final ChangeOpt op = new ChangeOpt();
 
    void lineChanged(int index) {
       op.lineChanged(index);
+   }
+
+   void mscreen(int amount, int limit) {
+      op.mscreen(amount,limit);
+   }
+
+   void cursorChange(int xChange, int yChange) {
+      op.cursorChange(xChange,yChange);
    }
 
    protected static final transient int inset = 2;
@@ -392,6 +400,7 @@ abstract class View  extends Canvas {
       gr.setPaintMode();
       //trace("doCursor cursoron " + cursoron);
    }
+
    class Delayer implements Runnable {
       private int readin;
 

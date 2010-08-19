@@ -1282,7 +1282,7 @@ public abstract class UI {
 
       static class NDialog extends Dialog implements ActionListener {
          private static final long serialVersionUID = 1;
-         NButton resb = null;
+         protected NButton resb = null;
 
          NDialog(Frame frm, String caption, LayoutManager lay) {
             super(frm, caption, true);
