@@ -276,7 +276,8 @@ public abstract class UI {
             throw new RuntimeException("bad diaflag = " + diaflag);
       }
    }
-   static boolean popError(String errs, Throwable ex) {
+
+   static void popError(String errs, Throwable ex) {
       trace("poperror exception trace" + (errs == null ? "" : errs) + ex);
 
       StackTraceElement[] st = ex == null
@@ -300,8 +301,10 @@ public abstract class UI {
       }
 
       if (instance != null)
-         return instance.ipopstring(sw.toString());
-      return true;
+         if(instance.ipopstring(sw.toString()))
+            throw new RuntimeException("rethrow ",ex);
+         
+      return;
    }
 
    static FvContext connectfv(TextEdit file, View vi) throws InputException {
@@ -1292,10 +1295,42 @@ public abstract class UI {
          popmenu.show(frm, x, y);
       }
 
+      class Popper extends RunAwt {
+         private String str;
+         boolean result;
+         Popper(String stri) {
+            super();
+            str = stri;
+            synchronized (this) {
+               int holdCount = EventQueue.biglock2.getHoldCount();
+               for (int i =0;i<holdCount;i++) 
+                  EventQueue.biglock2.unlock();
+               post();
+                  
+               EventQueue.biglock2.assertUnOwned();
+               try {
+                  wait();
+               } catch (InterruptedException e) { }
+               for (int i =0;i<holdCount;i++) 
+                  EventQueue.biglock2.lock();
+            }
+         }
+
+         public void run() {
+            //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+
+            if (null == psinst)
+               psinst = new PopString(frm);
+            synchronized (this) {
+               //trace("instance " + instance + " flag " + diaflag);
+               result =  psinst.pop(str);
+               notify();
+               //trace("instance " + instance + " flag " + diaflag);
+            }
+         }
+      }
       boolean ipopstring(String s) {
-         if (null == psinst)
-            psinst = new PopString(frm);
-         return psinst.pop(s);
+         return new Popper(s).result;
       }
 
       static class NDialog extends Dialog implements ActionListener {

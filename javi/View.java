@@ -368,8 +368,7 @@ abstract class View  extends Canvas {
          fcontext.getChanges(op);
          op.rpaint(gr);
       } catch (Throwable e) {
-         if (UI.popError("npaint caught", e))
-            throw new RuntimeException("unignored error ",e);
+         UI.popError("npaint caught", e);
       } finally {
          EventQueue.biglock2.unlock();
       }
