@@ -186,7 +186,7 @@ abstract class View  extends Canvas {
             //trace("rpaint currop = " + currop + " this " + this);
 
             // cursor must be off before other drawing is done, or it messes up XOR
-            if (currop ==   BLINKCURSOR || cursoron) 
+            if (currop == BLINKCURSOR || cursoron)
                bcursor(gr);
 
             switch (currop) {
@@ -413,10 +413,11 @@ abstract class View  extends Canvas {
          try {
             while (true) {
                EditContainer text = fcontext.edvec;
-               trace("sleeping 50");
-               Thread.sleep(50);
+               trace("sleeping 200");
+               Thread.sleep(200);
                if (text.readIn() > readin || text.donereading()) {
                   delayerflag = false;
+                  op.currop = REDRAW;
                   repaint();
                   return;
                }
