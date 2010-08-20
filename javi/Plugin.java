@@ -172,7 +172,7 @@ abstract class MultiClassLoader extends ClassLoader {
    }
 //---------- Abstract Implementation ---------------------
    public synchronized Class loadClass(String className,
-                                       boolean resolveIt) throws ClassNotFoundException {
+         boolean resolveIt) throws ClassNotFoundException {
 
       byte[]  classBytes;
       //trace(">> MultiClassLoader.loadClass(" + className + ", " + resolveIt + ")");

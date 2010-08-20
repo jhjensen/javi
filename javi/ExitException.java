@@ -9,4 +9,3 @@ class ExitException extends InputException {
       super("exiting java", e);
    }
 }
-

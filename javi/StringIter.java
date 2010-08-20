@@ -3,7 +3,7 @@ import java.util.Iterator;
 
 final class StringIter implements Iterator<String> {
 
-   final Iterator baseIter;
+   private final Iterator baseIter;
    StringIter(Iterator it) {
       baseIter = it;
    }

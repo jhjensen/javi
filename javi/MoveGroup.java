@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
-class MoveGroup extends Rgroup {
+final class MoveGroup extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
    private static final MoveGroup inst = new MoveGroup();

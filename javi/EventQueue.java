@@ -7,6 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
 
 public final class EventQueue {
+   private EventQueue() { }
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 

@@ -257,7 +257,7 @@ final class FontEntry implements java.io.Serializable {
    }
 
    private static String deffontname = "SansSerif";
-   final static Float deffontsize = Float.valueOf(14);
+   static final Float deffontsize = Float.valueOf(14);
    private static Float deffontweight =  TextAttribute.WEIGHT_REGULAR;
    private static Float deffontposture = TextAttribute.POSTURE_REGULAR;
 

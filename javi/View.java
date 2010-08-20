@@ -78,7 +78,7 @@ abstract class View  extends Canvas {
 
       void redraw() {
          //trace("redraw");
-         currop = Opcode.REDRAW;
+         currop = REDRAW;
          repaint();
       }
 
@@ -87,39 +87,36 @@ abstract class View  extends Canvas {
             currop = BLINKCURSOR;
             //trace("blink cursor repaint");
             repaint();
-         } else {
-            //trace("blink cursor saveop not null " + currop);
          }
+         //else trace("blink cursor saveop not null " + currop);
       }
 
       boolean insert(int start, int amount) {
          //trace("insert currop " + currop +" start " + start  + " amount " + amount);
          pmark.resetMark(fcontext);  //???
-         if (currop == Opcode.NOOP || currop == Opcode.BLINKCURSOR) {
-            currop = Opcode.INSERT;
+         if (currop == NOOP || currop == BLINKCURSOR) {
+            currop = INSERT;
             savestart = start;
             saveamount = amount;
          } else {
             //trace("doing redraw oldsaveop = " + saveop);
-            currop = Opcode.REDRAW;
+            currop = REDRAW;
          }
          repaint();
-         return currop == Opcode.REDRAW;
+         return currop == REDRAW;
       }
 
       boolean lineChanged(int index) {
          //trace("linechange currop " + currop + " index " + index);
          pmark.resetMark(fcontext);
          return changedpro(index, index);
-      }   
+      }
 
       void cursorChange(int xChange, int yChange) {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
          pmark.markChange(fcontext.insertx() + xChange, fcontext.inserty());
-
-//         if (pmark.getMark() != null)
-            changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
-      } 
+         changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
+      }
 
       private boolean changedpro(int index1, int index2) {
          //trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
@@ -133,7 +130,7 @@ abstract class View  extends Canvas {
          switch (currop) {
             case NOOP:
             case BLINKCURSOR:
-               currop = Opcode.CHANGE;
+               currop = CHANGE;
                repaint();
                savestart = index1;
                saveamount = index2;
@@ -146,31 +143,31 @@ abstract class View  extends Canvas {
                break;
             default:
                //trace("doing redraw oldsaveop = " + currop);
-               currop = Opcode.REDRAW;
+               currop = REDRAW;
                repaint();
          }
-         return currop == Opcode.REDRAW;
+         return currop == REDRAW;
       }
 
       boolean delete(int start, int amount) {
          //trace("delete currop " + currop + " start " + start + " amount " + amount);
          pmark.resetMark(fcontext);
-         if (currop == Opcode.NOOP || currop == Opcode.BLINKCURSOR) {
-            currop = Opcode.DELETE;
+         if (currop == NOOP || currop == BLINKCURSOR) {
+            currop = DELETE;
             savestart = start;
             saveamount = amount;
          } else {
             //trace("doing redraw oldcurrop = " + currop);
-            currop = Opcode.REDRAW;
+            currop = REDRAW;
          }
          repaint();
-         return currop == Opcode.REDRAW;
+         return currop == REDRAW;
       }
-       
+
       void mscreen(int amount, int limit) {
          //trace("mscreen currop " + currop +"  amount " + amount  + " limit " + limit);
          //Thread.dumpStack();
-         if (currop == NOOP || currop == Opcode.BLINKCURSOR) {
+         if (currop == NOOP || currop == BLINKCURSOR) {
             saveamount = 0;
             currop = MSCREEN;
          }
@@ -242,11 +239,11 @@ abstract class View  extends Canvas {
    }
 
    void mscreen(int amount, int limit) {
-      op.mscreen(amount,limit);
+      op.mscreen(amount, limit);
    }
 
    void cursorChange(int xChange, int yChange) {
-      op.cursorChange(xChange,yChange);
+      op.cursorChange(xChange, yChange);
    }
 
    protected static final transient int inset = 2;
@@ -254,18 +251,21 @@ abstract class View  extends Canvas {
    private transient boolean delayerflag;
 
    protected FvContext fcontext;
+   private transient MarkInfo pmark = new MarkInfo();
+   protected final MarkInfo getPmark() {
+      return pmark;
+   }
 
-   protected transient MarkInfo pmark = new MarkInfo();
 
    private transient boolean cursoron = false;
    private transient boolean cursoractive = false;
    private transient Color cursorcolor =  AtView.cursorColor;
    private transient Shape cursorshape;
    private transient Graphics oldgr;
-   private boolean checkCursor= true;
+   private boolean checkCursor = true;
 
-   private void readObject(java.io.ObjectInputStream is)
-         throws ClassNotFoundException, java.io.IOException {
+   private void readObject(java.io.ObjectInputStream is) throws
+         ClassNotFoundException, java.io.IOException {
 
       is.defaultReadObject();
       pmark = new MarkInfo();
@@ -342,21 +342,21 @@ abstract class View  extends Canvas {
          op.redraw();
          npaint((Graphics2D) g);
       } catch (Throwable e) {
-         UI.popError("unexpected exception",e);
+         UI.popError("unexpected exception", e);
       }
    }
 
    public void update(Graphics g) { //  paint will do it's own clearing
       try {
       //trace("update called ");
-      //if (op.currop == REDRAW) trace(" got update REDRAW!!");
+         //if (op.currop == REDRAW) trace(" got update REDRAW!!");
          if (g != oldgr) {
             oldgr = g;
             newGraphics();
          }
          npaint((Graphics2D) g);
       } catch (Throwable e) {
-         UI.popError("unexpected exception",e);
+         UI.popError("unexpected exception", e);
       }
    }
 
@@ -364,20 +364,21 @@ abstract class View  extends Canvas {
       //trace("npaint");
       if (!EventQueue.biglock2.tryLock())
          repaint(200);
-     else try {
-         fcontext.getChanges(op);
-         op.rpaint(gr);
-      } catch (Throwable e) {
-         UI.popError("npaint caught", e);
-      } finally {
-         EventQueue.biglock2.unlock();
-      }
+      else
+         try {
+            fcontext.getChanges(op);
+            op.rpaint(gr);
+         } catch (Throwable e) {
+            UI.popError("npaint caught", e);
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
    }
 
    private void bcursor(Graphics2D gr) {
 
       // never move cursor or change cursor color except when off
-      if (!cursoron && checkCursor) { 
+      if (!cursoron && checkCursor) {
          cursorcolor =  inserter == null
             ? AtView.cursorColor
             : AtView.insertCursor;
@@ -420,7 +421,7 @@ abstract class View  extends Canvas {
                   return;
                }
             }
-         } catch (InterruptedException e) { /* ignore interrupts */
+         } catch (InterruptedException e) {
          }
          delayerflag = false;
       }

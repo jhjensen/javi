@@ -510,7 +510,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
          if (!contains(start + 1))
             break;
 
-         if (line.length() >0 && line.charAt(line.length() - 1) != ' ')
+         if (line.length() > 0 && line.charAt(line.length() - 1) != ' ')
             line.append(' ');
 
          retval = line.length();

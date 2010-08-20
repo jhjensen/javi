@@ -68,7 +68,7 @@ public class PositionIoc extends BufInIoc<Position> {
       //trace("getnext input " + input + " this "+ this );
 
       Position pos = parsefile();
-      trace("get next got pos " + pos);
+      //trace("get next got pos " + pos);
       if (pos == null) {
          UI.reportMessage(this + "complete " + errcount + " results");
       } else {

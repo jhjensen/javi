@@ -303,7 +303,7 @@ public abstract class UI {
       if (instance != null)
          if(instance.ipopstring(sw.toString()))
             throw new RuntimeException("rethrow ",ex);
-         
+
       return;
    }
 
@@ -1303,15 +1303,15 @@ public abstract class UI {
             str = stri;
             synchronized (this) {
                int holdCount = EventQueue.biglock2.getHoldCount();
-               for (int i =0;i<holdCount;i++) 
+               for (int i = 0; i < holdCount; i++)
                   EventQueue.biglock2.unlock();
                post();
-                  
+
                EventQueue.biglock2.assertUnOwned();
                try {
                   wait();
                } catch (InterruptedException e) { }
-               for (int i =0;i<holdCount;i++) 
+               for (int i = 0; i < holdCount; i++)
                   EventQueue.biglock2.lock();
             }
          }

@@ -254,7 +254,7 @@ public class MapEvent {
 
             } catch (ReadOnlyException e) {
                try {
-                  UI.makeWriteable(e.ev, e.getMessage());
+                  UI.makeWriteable(e.getEv(), e.getMessage());
                } catch (IOException e2) {
                   UI.reportError("making file writeable throw exception" + e2);
                }

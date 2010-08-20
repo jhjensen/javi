@@ -6,7 +6,10 @@ class ReadOnlyException extends java.lang.UnsupportedOperationException {
    static final String copyright = "Copyright 1996 James Jensen";
    private static final long serialVersionUID = 1;
 
-   final transient EditContainer ev;
+   private final transient EditContainer ev;
+   final EditContainer getEv() {
+      return ev;
+   }
 
    ReadOnlyException(EditContainer efi, String st) {
       super(st);

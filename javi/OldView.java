@@ -55,7 +55,13 @@ class OldView  extends View {
       redraw();
    }
 
-   static final String teststr = "                                         abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~1!2@3#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
+   static final String teststr = "                                         "
+      + "abcdefghi"
+      + " jklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxy"
+      + "zABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP"
+      + "QRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~1!2@3"
+      + "#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
+
    void ssetFont(Font font) {
       //trace("entered " + this  + font);
       fontm = getFontMetrics(font);
@@ -469,10 +475,11 @@ class OldView  extends View {
          }
 
          if (atIt.length() != 0) {
-            if (pmark.getMark() != null) {
+            MarkInfo mpmark = getPmark();
+            if (mpmark.getMark() != null) {
                //trace("highlight tindex = " + tindex + " pmark " + pmark);
                //trace("hilight " + pmark.starth(tindex) + "," + pmark.endh(tindex));
-               atIt.setHighlight(pmark.starth(tindex), pmark.endh(tindex));
+               atIt.setHighlight(mpmark.starth(tindex), mpmark.endh(tindex));
             }
             if (tabStop != 0)
                atIt.deTab(tabStop);
