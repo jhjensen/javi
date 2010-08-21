@@ -19,29 +19,37 @@ class StatusBar extends Canvas {
    private int charwidth;
    private ArrayList<String> messeges = new ArrayList<String>();
    private static final int hoffset = 4;
+   private boolean changed;
 
    StatusBar() {
       super();
       setBackground(AtView.foreground);
    }
 
-   void setUp() {
-      repaint();
+   public void paint(Graphics g) {
+      npaint(g);
    }
 
+   public void update(Graphics g) {
+      if (changed) {
+         if (!getPreferredSize().equals(getSize())) {
+             setSize(getPreferredSize());
+             getParent().validate();
+         }
+         npaint(g);
+         changed = false;
+     }
+  }
+      
    void addline(String line) {
       //trace("adding " + line);
       synchronized (this) {
          messeges.add(line);
+         changed = true;
+         if (!isVisible())
+            setVisible(true);
+         repaint();
       }
-      if (isVisible()) {
-         if (!getPreferredSize().equals(getSize())) {
-            setSize(getPreferredSize());
-         } else {
-            repaint();
-         }
-      } else
-         setVisible(true);
    }
 
    private void setmet() {
@@ -76,17 +84,28 @@ class StatusBar extends Canvas {
    }
 
    void setline(String line) {
-      //trace("line = " + line);
-      messeges.clear();
-      addline(line);
+      //trace("setline = " + line);
+      synchronized (this) {
+         messeges.clear();
+         addline(line);
+         changed= true;
+         if (!isVisible())
+            setVisible(true);
+         repaint();
+      }
    }
 
    boolean clearlines() {
-      if (messeges.size() != 0) {
-         messeges.clear();
-         return true;
+      //trace("clearlines");
+      synchronized (this) {
+         if (messeges.size() != 0) {
+            messeges.clear();
+            changed=true;
+            repaint();
+            return true;
+         }
+         return false;
       }
-      return false;
    }
 
    public boolean isFocusable() {
@@ -101,13 +120,12 @@ class StatusBar extends Canvas {
    public void setVisible(boolean b) {
       if (b == isVisible())
          return;
+      super.setVisible(b);
       if (!b)
          clearlines();
-      super.setVisible(b);
-
    }
 
-   public void paint(Graphics g) {
+   public void npaint(Graphics g) {
       try {
          g.setColor(AtView.background);
          int voffset = 0;
