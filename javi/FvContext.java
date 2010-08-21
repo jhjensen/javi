@@ -204,8 +204,19 @@ public final class FvContext<OType> implements Serializable {
 
    void setCurrView() {
       //trace("setting curr fvc to " + this);
+      if (currfvc != null) {
+         if (currfvc.vi == vi) // the usual case
+            currfvc.vis = false;
+         else
+            for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
+               FvContext fvc = fit.next();
+               if (fvc.vi == vi)
+                  fvc.vis = false;
+            }
+      }
       currfvc = this;
       vi.newfile(this);
+      vis = true;
    }
 
    static FvContext getCurrFvc() {
@@ -523,9 +534,9 @@ public final class FvContext<OType> implements Serializable {
          vi.placeline(lineno, amount);
    }
 
-   void setVisible(boolean visi) {
-      vis = visi;
-   }
+//   void setVisible(boolean visi) {
+//      vis = visi;
+//   }
 
    public void insertStrings(ArrayList<String> obarray, boolean after) {
       edvec.insertStrings(obarray, fileposy + (after ? 1 : 0));

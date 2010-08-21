@@ -522,7 +522,7 @@ public abstract class UI {
          tfc = FvContext.getcontext(tfview, cmbuff);
          frm.add(tfview, 0);
          frm.setComponentZOrder(tfview, 0);
-         tfc.vi.newfile(tfc);
+         tfc.setCurrView();
          //trace("this = " + this + " fr = " + fr);
       }
 
@@ -1849,61 +1849,6 @@ public abstract class UI {
       public void focusGained(FocusEvent e) {
          //trace("focusGained " +e);
       }
-
-      /*
-      class myFocus extends DefaultFocusManager {
-
-      FocusManager lastf;
-      myFocus() {
-          lastf = getCurrentManager();
-      //ui.trace("manager = " + lastf);
-           FocusManager.disableSwingFocusManager();
-      //ui.trace("manager = " + getCurrentManager());
-          setCurrentManager(this);
-      //ui.trace("manager = " + getCurrentManager());
-      }
-      public void focusNextComponent(Component aComponent) {
-         super.focusNextComponent(aComponent);
-         //ui.trace("entered");
-      }
-      public void focusPreviousComponent(Component aComponent) {
-         super.focusPreviousComponent(aComponent);
-         //ui.trace("entered");
-      }
-
-      public void processKeyEvent(Component focusedComponent,
-            KeyEvent anEvent) {
-
-         super.processKeyEvent(focusedComponent,anEvent);
-      //   trace("entered");
-      }
-      public boolean compareTabOrder(Component a, Component b)  {
-         return super.compareTabOrder(a,b);
-      }
-      public Component getComponentAfter(Container aContainer,
-            Component aComponent) {
-         return super.getComponentAfter(aContainer,aComponent);
-      }
-       public Component getComponentBefore(Container aContainer,
-             Component aComponent) {
-       return super.getComponentBefore(aContainer, aComponent);
-      }
-       public Component getFirstComponent(Container aContainer) {
-       return super.getFirstComponent(aContainer);
-      }
-       public Component getLastComponent(Container aContainer) {
-       return super.getLastComponent(aContainer);
-      }
-
-
-      }
-
-      //import javax.swing.DefaultFocusManager;
-      */
-//     new myFocus();
-//     FocusManager.disableSwingFocusManager();
-//     new myFocus();
-//     FocusManager.disableSwingFocusManager();
 
       String igetFile() {
          if (fdialog == null)

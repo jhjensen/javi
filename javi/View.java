@@ -304,13 +304,8 @@ abstract class View  extends Canvas {
    }
 
    void newfile(FvContext newfvc) {
-      //trace("newfvc = " + newfvc);
-      if (fcontext != null)
-         fcontext.setVisible(false);
-
 
       fcontext = newfvc;
-      fcontext.setVisible(true);
 
       if (!fcontext.edvec.contains(1))
          throw new RuntimeException(fcontext.edvec
@@ -416,13 +411,13 @@ abstract class View  extends Canvas {
                trace("sleeping 200");
                Thread.sleep(200);
                if (text.readIn() > readin || text.donereading()) {
-                  delayerflag = false;
                   op.currop = REDRAW;
                   repaint();
-                  return;
                }
             }
          } catch (InterruptedException e) {
+            op.currop = REDRAW;
+            repaint();
          }
          delayerflag = false;
       }
