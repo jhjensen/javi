@@ -70,7 +70,8 @@ public class PositionIoc extends BufInIoc<Position> {
       Position pos = parsefile();
       //trace("get next got pos " + pos);
       if (pos == null) {
-         UI.reportMessage(this + "complete " + errcount + " results");
+         if (toString().length() != 0)
+          UI.reportMessage(this + "complete " + errcount + " results");
       } else {
          if (pos.filename != null) {
             EventQueue.biglock2.lock();

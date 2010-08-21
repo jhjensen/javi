@@ -216,6 +216,7 @@ public final class FvContext<OType> implements Serializable {
       }
       currfvc = this;
       vi.newfile(this);
+      currfvc.cursorabs(currfvc.fileposx,currfvc.fileposy); // fix up cursor position
       vis = true;
    }
 

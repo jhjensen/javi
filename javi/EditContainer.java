@@ -463,6 +463,7 @@ public class EditContainer<OType> implements
          while (ecache.size() <= 1) {
             OType [] obarray = (OType []) new Object[1];
             obarray[0] =  prop.conv.fromString("");
+            //trace("creating entry for " + this);
             insertRecord(obarray, 0);
          }
          backup.baseRecord();

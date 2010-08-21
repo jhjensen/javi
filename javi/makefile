@@ -11,8 +11,7 @@ CC=g++
 LINK=ld
 
 
-all : vi
-all1: ID javi.jar remote vi
+all: ID javi.jar
 
 install : javi.jar
 	cp javi.jar vi.pl /usr/share/java
@@ -31,20 +30,14 @@ remote.jar: $(REM_CLASS) makefile
 	@echo REM_JAR $(REM_JAR)
 	cd ..;$(JDKPATH)/bin/jar -0cf javi/remote.jar $(REM_JAR)
 
-remote: remote.jar
-	scp  $< speedy:
-
 %.class : %.java 
 	$(JDKPATH)/bin/javac -target 1.6 -source 1.6 $<
 
 %_Stub.class : %.java 
 	cd ..;$(JDKPATH)/bin/rmic javi.$*
 
-vi: vi.cpp
-	$(CC) $(CFLAGS)  vi.cpp  $(LDFLAGS) -o vi
-
 clean:
-	rm -f vi.exe vi.obj
+	rm -f *.class ID javi.jar
 
 javi.jar: *.class ../MANIFEST.MF 
 	cd ..;$(JDKBIN)jar -0cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class

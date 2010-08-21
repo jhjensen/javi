@@ -311,7 +311,6 @@ abstract class View  extends Canvas {
          throw new RuntimeException(fcontext.edvec
             + " must contain at least line one ");
 
-      fcontext.fixCursor();
       clearMark();
       op.redraw();
    }
