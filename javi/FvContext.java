@@ -149,7 +149,6 @@ public final class FvContext<OType> implements Serializable {
    private int fileposy = 1;     // the position of the cursor in the file
    private int fileposx = 0;     // the position of the cursor in the file
    private boolean vis;
-   private transient UndoHistory.EhMark chmark;
    private transient KeyHandler preDispatch;
 
    static void dump() {
@@ -163,14 +162,11 @@ public final class FvContext<OType> implements Serializable {
    private void readObject(java.io.ObjectInputStream is) throws
          ClassNotFoundException, java.io.IOException {
       is.defaultReadObject();
-      chmark = edvec.copyCurr();
    }
 
    static void restoreState(ObjectInputStream is) throws
       IOException, ClassNotFoundException {
       currfvc = ((FvContext) is.readObject());
-      if (currfvc.chmark == null)
-         throw new RuntimeException("bad restore");
       fvmap = (FvMap) is.readObject();
    }
 
@@ -274,9 +270,6 @@ public final class FvContext<OType> implements Serializable {
    private FvContext(View vii, TextEdit<OType>  ei) {
       vi = vii;
       edvec = ei;
-      chmark = edvec.copyCurr();
-      if (chmark == null)
-         throw new RuntimeException("new fvcontext with null backup");
       //EditContainer.registerListener(this);
       //trace("created new fvc " + this);
    }
@@ -288,20 +281,13 @@ public final class FvContext<OType> implements Serializable {
               && p.x == fileposx && p.y == fileposy;
    }
 
-   void getChanges(View.ChangeOpt vii) {
-      chmark.getChanges(vii);
-   }
 
    static void invalidateBack(UndoHistory.EhMark ehm) {
 
-      int index = ehm.getIndex();
       for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
          FvContext fvc = fit.next();
-         //trace("invalidateBack fvc " + fvc);
-         //trace("invalidateBack chmark " + fvc.chmark);
-         if (ehm.sameBack(fvc.chmark))
-            if (fvc.chmark.getIndex() > index)
-               fvc.chmark.setInvalid();
+         if (fvc.vis)
+            fvc.vi.checkValid(ehm);
       }
    }
 

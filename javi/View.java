@@ -251,6 +251,8 @@ abstract class View  extends Canvas {
    private transient boolean delayerflag;
 
    protected FvContext fcontext;
+   private transient UndoHistory.EhMark chmark;
+
    private transient MarkInfo pmark = new MarkInfo();
    protected final MarkInfo getPmark() {
       return pmark;
@@ -306,6 +308,7 @@ abstract class View  extends Canvas {
    void newfile(FvContext newfvc) {
 
       fcontext = newfvc;
+      chmark = newfvc.edvec.copyCurr();
 
       if (!fcontext.edvec.contains(1))
          throw new RuntimeException(fcontext.edvec
@@ -354,13 +357,22 @@ abstract class View  extends Canvas {
       }
    }
 
+   void checkValid(UndoHistory.EhMark ehm) {
+      //trace("invalidateBack fvc " + fvc);
+      //trace("invalidateBack chmark " + fvc.chmark);
+      
+      if (ehm.sameBack(chmark))
+         if (chmark.getIndex() > ehm.getIndex())
+            chmark.setInvalid();
+   }
+   
    private void npaint(Graphics2D gr) {
       //trace("npaint");
       if (!EventQueue.biglock2.tryLock())
          repaint(200);
       else
          try {
-            fcontext.getChanges(op);
+            chmark.getChanges(op);
             op.rpaint(gr);
          } catch (Throwable e) {
             UI.popError("npaint caught", e);
