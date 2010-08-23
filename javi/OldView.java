@@ -133,7 +133,7 @@ class OldView  extends View {
       }
 
    }
-  
+
    private void fixcursor(int xChange, int yChange, int newXpixel) {
 
       cursorChange(xChange, yChange);
@@ -166,7 +166,7 @@ class OldView  extends View {
       }
    }
 
-   int yCursorChangedxxx(int newY) {
+   int yCursorChanged(int newY) {
 
       //trace(" newY " + newY);
 
@@ -207,15 +207,15 @@ class OldView  extends View {
          : fontm.stringWidth(nline.substring(0, charoff));
 
       //trace("nXchange = " + nXchange + " charoff " + charoff + " newx " + newx);
-      setFilePos(nXchange+getfileX(),newY);
+      setFilePos(nXchange + getfileX(), newY);
       fixcursor(nXchange, yChange, newx);
       return getfileX();
    }
-   
-   void cursorChangedxxx(int newX,int newY) {
+
+   void cursorChanged(int newX, int newY) {
 
       //trace(" yChange " + yChange);
- 
+
       int yChange = newY - getfileY();
       screenposy += yChange;
 
@@ -237,7 +237,7 @@ class OldView  extends View {
          ? 0
          : fontm.stringWidth(nline.substring(0, charoff));
       saveScreenX = newx;
-      setFilePos(newX,newY);
+      setFilePos(newX, newY);
       //trace(" saveScreenX changed " + saveScreenX);
 
       fixcursor(0, yChange, newx);
@@ -488,7 +488,7 @@ class OldView  extends View {
    }
 
    // returns amount cursor needs to be adjusted
-   int screenyxxx(int amount)  {
+   int screeny(int amount)  {
       //trace("screeny " + amount);
       //move the screen and if necessary the cursor
       if (screenFirstLine() + amount <= -screenSize + 1)

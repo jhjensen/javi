@@ -52,7 +52,7 @@ public final class FvContext<OType> implements Serializable {
       void dump() {
          for (HashMap<TextEdit, FvContext> ehash : viewhash.values())
             for (FvContext fvc : ehash.values())
-               trace("view hash contains" + fvc);
+               trace("view hash contains " + fvc);
       }
 
       FvContext get(View vi, TextEdit edvec) {
@@ -211,12 +211,13 @@ public final class FvContext<OType> implements Serializable {
             }
       }
       currfvc = this;
-      vi.newfile(edvec,fileposx,fileposy);
-      currfvc.cursorabs(currfvc.fileposx,currfvc.fileposy); // fix up cursor position
+      vi.newfile(edvec, fileposx, fileposy);
+      //???currfvc.cursorabs(currfvc.fileposx,currfvc.fileposy); // fix up cursor position
       vis = true;
    }
 
    static FvContext getCurrFvc() {
+      //trace("returning currfvc " + currfvc);
       return currfvc;
    }
 
@@ -344,13 +345,32 @@ public final class FvContext<OType> implements Serializable {
       currfvc = null;
    }
 
-   static void dispose(TextEdit  ed) throws IOException {
+   static void dispose(TextEdit  ed, TextEdit next) throws
+         InputException, IOException {
       //trace("disposing " + ed + " currfvc " + currfvc);
 
+      reconnect(ed, next);
       fvmap.remove(ed);
       ed.disposeFvc();
+   }
+
+   static void reconnect(TextEdit  ed, TextEdit next) throws
+         InputException, IOException {
+
+      //trace("reconnecting oldfile " + ed + " next  " + next);
       if (currfvc.edvec == ed)
-         defaultFvc.setCurrView();
+         UI.connectfv(next, currfvc.vi);
+      for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
+         FvContext fvc = fit.next();
+         if (fvc.edvec == ed) {
+            //trace("connecting " + next + " vi " + fvc.vi);
+            FvContext nextfv = getcontext(fvc.vi, next);
+            nextfv.vi.newfile(next, nextfv.fileposx, nextfv.fileposy);
+            //next.cursorabs(nextfv.fileposx,nextfv.fileposy); // fix up cursor position
+            nextfv.vis = true;
+            fvc.vis = false;
+         }
+      }
    }
 
    static FvContext dispose(View vi) { // should be called with first in chain
@@ -501,10 +521,11 @@ public final class FvContext<OType> implements Serializable {
       yoffset = newy - fileposy;
       fileposy = newy;
       if (vis)  {
-         int newx = vi.yCursorChangedxxx(newy);
+         int newx = vi.yCursorChanged(newy);
          fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
          if (fileposx != newx)
-            UI.popError("cursor wrong permission fileposx " + fileposx +" newx " + newx  ,null);
+            UI.popError("cursor wrong permission fileposx "
+               + fileposx + " newx " + newx , null);
       }
    }
 
@@ -514,7 +535,7 @@ public final class FvContext<OType> implements Serializable {
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
       fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
       if (vis)
-         vi.cursorChangedxxx(fileposx,fileposy);
+         vi.cursorChanged(fileposx, fileposy);
    }
 
    void placeline(int lineno, float amount) {
@@ -523,7 +544,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    void screeny(int count) {
-      cursory(vi.screenyxxx(count));
+      cursory(vi.screeny(count));
    }
 
    public void insertStrings(ArrayList<String> obarray, boolean after) {
@@ -547,14 +568,14 @@ public final class FvContext<OType> implements Serializable {
 
    void setMark() {
       Position pos = getPosition("mark position");
-      vi.setMarkxxx(pos);
+      vi.setMark(pos);
       cursorabs(pos);
    }
    void setMark(Position pos) {
-      vi.setMarkxxx(pos);
+      vi.setMark(pos);
       cursorabs(pos);
    }
-      
+
    static void trace(String str) {
       Tools.trace(str, 1);
    }

@@ -19,13 +19,13 @@ abstract class View  extends Canvas {
    abstract void changeddraw(Graphics gr, int start, int amount);
    abstract void movescreendraw(Graphics gr, int amount);
    abstract void refresh(Graphics gr);
-   abstract void cursorChangedxxx(int newX, int newY);
-   abstract int yCursorChangedxxx(int newY);
+   abstract void cursorChanged(int newX, int newY);
+   abstract int yCursorChanged(int newY);
    abstract Position mousepos(MouseEvent event);
    abstract int getRows(float scramount);
    abstract void setSizebyChar(int x, int y);
    abstract int screenFirstLine();
-   abstract int screenyxxx(int amount);
+   abstract int screeny(int amount);
    abstract Shape updateCursorShape(Shape sh);
    abstract void setTabStop(int ts);
    abstract int getTabStop();
@@ -445,8 +445,8 @@ abstract class View  extends Canvas {
                if (text.readIn() > readin || text.donereading()) {
                   op.currop = REDRAW;
                   repaint();
-               } 
-            }while (!text.donereading());
+               }
+            } while (!text.donereading());
          } catch (InterruptedException e) {
             op.currop = REDRAW;
             repaint();
@@ -460,7 +460,7 @@ abstract class View  extends Canvas {
          new Thread(new Delayer(), "oldview delayer").start();
    }
 
-   void setMarkxxx(Position markposi) {
+   void setMark(Position markposi) {
       Position pos = pmark.getMark();
       if (pos == markposi)
          return;
@@ -615,7 +615,7 @@ abstract class View  extends Canvas {
       int row = getRows(amount);
       screenFirstLine();
       row =  lineno - screenFirstLine() - row;
-      return screenyxxx(row);
+      return screeny(row);
    }
 
    static void trace(String str) {

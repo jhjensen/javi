@@ -301,8 +301,8 @@ public abstract class UI {
       }
 
       if (instance != null)
-         if(instance.ipopstring(sw.toString()))
-            throw new RuntimeException("rethrow ",ex);
+         if (instance.ipopstring(sw.toString()))
+            throw new RuntimeException("rethrow ", ex);
 
       return;
    }
@@ -784,13 +784,8 @@ public abstract class UI {
                frm.remove(tfc.vi);
                tfc.dispose(tfc.vi);
                try {
-                  tfc.dispose(tfc.edvec);
-               } catch (IOException e) {
-                  // should be harmless
-               }
-               try {
-                  tfc.dispose(tfc.edvec);
-               } catch (IOException ex) {
+                  tfc.dispose(tfc.edvec, null);
+               } catch (Exception ex) {
                   popError("error in flush", ex);
                }
             }
@@ -1064,8 +1059,9 @@ public abstract class UI {
       }
 
       private void delview(FvContext fvc) {
-
-         if (FvContext.viewCount() > 1) {
+         //trace("viewCount " + viewCount);
+         if (viewCount > 1) {
+            trace("removing " + fvc.vi);
             UI.remove(fvc.vi);
             FvContext newfvc = FvContext.dispose(fvc.vi);
             if (newfvc != null)
@@ -1295,9 +1291,16 @@ public abstract class UI {
          popmenu.show(frm, x, y);
       }
 
+      boolean dopop(String str) {
+         if (null == psinst)
+            psinst = new PopString(frm);
+         //trace("instance " + instance + " flag " + diaflag);
+         return psinst.pop(str);
+      }
+
       class Popper extends RunAwt {
          private String str;
-         boolean result;
+         private boolean result;
          Popper(String stri) {
             super();
             str = stri;
@@ -1319,18 +1322,29 @@ public abstract class UI {
          public void run() {
             //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
-            if (null == psinst)
-               psinst = new PopString(frm);
             synchronized (this) {
-               //trace("instance " + instance + " flag " + diaflag);
-               result =  psinst.pop(str);
+               result = dopop(str);
                notify();
                //trace("instance " + instance + " flag " + diaflag);
             }
          }
       }
-      boolean ipopstring(String s) {
-         return new Popper(s).result;
+      boolean ipopstring(String str) {
+
+         try {
+
+            throw new Exception("");
+         } catch (Exception ex) {
+
+            StackTraceElement[] tr = ex.getStackTrace();
+            for (StackTraceElement elem : tr)  {
+               if  (elem.getMethodName().indexOf("paint") != -1)
+                  if  (elem.getClassName().indexOf("npaint") != -1)  {
+                     return dopop(str);
+                  }
+            }
+         }
+         return new Popper(str).result;
       }
 
       static class NDialog extends Dialog implements ActionListener {
@@ -1400,6 +1414,8 @@ public abstract class UI {
          }
 
          boolean pop(String s) {
+            if (isVisible())
+               return false;
             ta.setText(s);
             this.pack();
             trace("popstring visible ");

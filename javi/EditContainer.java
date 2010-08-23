@@ -187,7 +187,7 @@ public class EditContainer<OType> implements
 
 // should generally be called from FvContext
    public void disposeFvc() throws IOException {
-//   return
+
       //trace("dispose " + super.toString()  + "\"" + prop.fdes.canonName+  "\" class = " + prop.conv.getClass() );
       cleanup();
       fixedpos = null;
@@ -621,6 +621,9 @@ public class EditContainer<OType> implements
              + (isModified()
                 ? " MODIFIED "
                 : " ")
+             + (ecache == null
+                ? "!!!! disposed"
+                : "")
 
              + prop.fdes.canonName;
    }

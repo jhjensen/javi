@@ -587,35 +587,43 @@ final class FileList extends TextEdit<TextEdit<String>> {
       if (EventQueue.nextKey(currview) == 'Z') {
          try {
             TextEdit ev =  fvc.edvec;
+            int fileIndex = instance.indexOf(ev);
+            TextEdit nextFile;
             //trace("processZ ev " + ev + " instance " + instance);
-            if (ev == instance)
+            if (ev == instance) {
                ev = (TextEdit) FvContext.getcurobj(instance);
+               nextFile = instance;
+            } else if (-1 == fileIndex) {
+               nextFile = (TextEdit) FvContext.getcurobj(instance);
+            } else {
+               nextFile = instance.contains(fileIndex + 1)
+                  ? instance.at(fileIndex + 1)
+                  : instance.at(1);
+            }
 
             // gross hack because if a dummy file is created first the parent is root.
-            if (ev.parentEq(instance) || (ev.parentEq(TextEdit.root)
-                                           && (-1 != instance.indexOf(ev)))) {
+
+            if (-1 != fileIndex) {
+
                if (ev.isModified())
                   ev.printout();
-
-               if (instance.finish() == 2) // on last file
+trace("instance.finish " + instance.finish());
+               if (instance.finish() == 2) { // on last file
                   quit(true, fvc);
-               FvContext fv = FvContext.getcontext(currview, instance);
-               int remindex = fv.inserty();
-               fv.cursory(-1); // the remove already move the cursor up by one.
-               instance.remove(remindex, 1);
-            } else if (!(ev.at(0) instanceof Position))
-               if (!(ev instanceof FontList))
-                  if (!(ev instanceof PosListList))
-                     if (!(ev instanceof DirList))
-                        FvContext.dispose(ev);
-
+               } else {
+                  FvContext.reconnect(ev, nextFile);
+                  instance.remove(fileIndex, 1);
+               }
+            } else if (!(ev.at(0) instanceof Position)
+                              &&  !(ev instanceof FontList)
+                              && !(ev instanceof PosListList)
+                              && !(ev instanceof DirList)) {
+               FvContext.dispose(ev, nextFile);
+            } else {
+               FvContext.reconnect(ev, nextFile);
+            }
          } catch (IOException e) {
             UI.reportMessage("unable to save file" + e);
-         } finally {
-            TextEdit newfile = (TextEdit) FvContext.getcontext(
-                                  currview, instance).at();
-            //trace("newfile = " + newfile);
-            UI.connectfv(newfile, currview);
          }
       }
    }

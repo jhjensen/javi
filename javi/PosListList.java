@@ -99,8 +99,8 @@ public final class PosListList extends TextList<Position> implements
             lastlist = null;
          //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          try {
-            FvContext.dispose(oldList);
-         } catch (IOException e) {
+            FvContext.dispose(oldList,newList);
+         } catch (Exception e) {
             UI.popError("attempting to dispose of list" , e);
          }
       } else {
@@ -115,12 +115,13 @@ public final class PosListList extends TextList<Position> implements
       lastlist2 = null;
       //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
 
-      ((EditContainer) at(1)).reload();
+      TextEdit base = at(1);
+      base.reload();
       //trace("finish = " + plist.finish());
       try {
          for (int i = 1; i < finish(); i++)
-            FvContext.dispose(at(i));
-      } catch (IOException e) {
+            FvContext.dispose(at(i),base);
+      } catch (Exception e) {
          UI.popError("attempting to dispose of list" , e);
       }
       //trace("finish = " + plist.finish());
