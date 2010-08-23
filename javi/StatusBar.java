@@ -73,7 +73,7 @@ class StatusBar extends Canvas {
       synchronized (this) {
          messeges.clear();
          addline(line);
-         sizeChanged= true;
+         sizeChanged = true;
          if (!isVisible())
             setVisible(true);
          repaint();
@@ -85,7 +85,7 @@ class StatusBar extends Canvas {
       synchronized (this) {
          if (messeges.size() != 0) {
             messeges.clear();
-            sizeChanged=true;
+            sizeChanged = true;
             repaint();
             return true;
          }
@@ -113,11 +113,11 @@ class StatusBar extends Canvas {
    public void paint(Graphics g) {
       if (sizeChanged) {
          if (!getPreferredSize().equals(getSize())) {
-             setSize(getPreferredSize());
-             getParent().validate();
+            setSize(getPreferredSize());
+            getParent().validate();
          }
-     }
-     sizeChanged = false;
+      }
+      sizeChanged = false;
       try {
          g.setColor(AtView.background);
          int voffset = 0;
