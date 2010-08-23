@@ -19,33 +19,18 @@ class StatusBar extends Canvas {
    private int charwidth;
    private ArrayList<String> messeges = new ArrayList<String>();
    private static final int hoffset = 4;
-   private boolean changed;
+   private boolean sizeChanged;
 
    StatusBar() {
       super();
       setBackground(AtView.foreground);
    }
 
-   public void paint(Graphics g) {
-      npaint(g);
-   }
-
-   public void update(Graphics g) {
-      if (changed) {
-         if (!getPreferredSize().equals(getSize())) {
-             setSize(getPreferredSize());
-             getParent().validate();
-         }
-         npaint(g);
-         changed = false;
-     }
-  }
-      
    void addline(String line) {
       //trace("adding " + line);
       synchronized (this) {
          messeges.add(line);
-         changed = true;
+         sizeChanged = true;
          if (!isVisible())
             setVisible(true);
          repaint();
@@ -88,7 +73,7 @@ class StatusBar extends Canvas {
       synchronized (this) {
          messeges.clear();
          addline(line);
-         changed= true;
+         sizeChanged= true;
          if (!isVisible())
             setVisible(true);
          repaint();
@@ -100,7 +85,7 @@ class StatusBar extends Canvas {
       synchronized (this) {
          if (messeges.size() != 0) {
             messeges.clear();
-            changed=true;
+            sizeChanged=true;
             repaint();
             return true;
          }
@@ -125,7 +110,14 @@ class StatusBar extends Canvas {
          clearlines();
    }
 
-   public void npaint(Graphics g) {
+   public void paint(Graphics g) {
+      if (sizeChanged) {
+         if (!getPreferredSize().equals(getSize())) {
+             setSize(getPreferredSize());
+             getParent().validate();
+         }
+     }
+     sizeChanged = false;
       try {
          g.setColor(AtView.background);
          int voffset = 0;

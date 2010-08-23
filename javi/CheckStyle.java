@@ -97,7 +97,7 @@ class CheckStyleInst extends PositionIoc {
          if (line.length() == 0)
             continue;
 
-         trace("parsing len =  " + line.length() + " line: "  + line);
+         //trace("parsing len =  " + line.length() + " line: "  + line);
 
          int pos = line.indexOf(':', 3);  // three skips over any drive desc
 

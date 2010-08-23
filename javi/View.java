@@ -439,14 +439,14 @@ abstract class View  extends Canvas {
       public void run() {
          delayerflag = true;
          try {
-            while (true) {
+            do {
                trace("sleeping 200");
                Thread.sleep(200);
                if (text.readIn() > readin || text.donereading()) {
                   op.currop = REDRAW;
                   repaint();
-               }
-            }
+               } 
+            }while (!text.donereading());
          } catch (InterruptedException e) {
             op.currop = REDRAW;
             repaint();
