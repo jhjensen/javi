@@ -24,7 +24,6 @@ class OldView  extends View {
    private int screenposy;
    private int screenposx;
 
-   private EditContainer text;
    private int xoffset = inset;
    private Rectangle cliprect = new Rectangle(inset - 1, 0, 0, 0);
 
@@ -85,15 +84,9 @@ class OldView  extends View {
    }
 
 
-   void newfile(FvContext newfvc) {
-      //trace("texti = " + newfvc.edvec + " oldview " + this);
-      text = newfvc.edvec;
-      super.newfile(newfvc);
-   }
-
    void insertedElementsdraw(Graphics gr, int start, int amount) {
 
-      int screenstart = start - fcontext.inserty() + screenposy;
+      int screenstart = start - getfileY() + screenposy;
       int screenend = screenstart + amount; // end of bad screen
 
       screenstart =  screenstart < 0 ? 0 : screenstart;
@@ -123,7 +116,7 @@ class OldView  extends View {
 
    void deletedElementsdraw(Graphics gr, int start, int amount) {
 
-      while (!text.contains(1))
+      while (!gettext().contains(1))
          throw new RuntimeException();
 
       int gones = start - screenFirstLine(); // start of redrawing
@@ -140,59 +133,7 @@ class OldView  extends View {
       }
 
    }
-   /*
-   private final int findcharx(fvcontext fvc) {
-      int tabOffset;
-      if (tabStop != 0) {
-         int oldy = fvc.inserty();
-         int newy = oldy + count;
-         if (newy > 0 && newy < text.readIn()) {
-            String line = text.at(newy).toString();
-            if  (-1 != (tabOffset = line.indexOf('\t'))) {
-               int[] tvals = new int[1];
-               int charoffset = charOffset(
-                  extext.deTab(line, tabOffset, tabStop, tvals), screenposx);
-               fvc.cursorabs(charoffset, newy);
-            } else
-               fvc.cursory(count);
-         }
-      } else
-         fvc.cursory(count);
-   }
-   */
-   /*
-   int findNewX(String nline) {
-      if (tabStop != 0) {
-         int tabOffset = oline.indexOf('\t');
-         if (tabOffset != -1)  {
-            int[] tvals = new int[1];
-            nline = DeTabber.deTab(oline, tabOffset, tabStop , tvals);
-            charoff = charOffset(nline, saveScreenX);
-            int xTabOff = DeTabber.tabFind(oline, tabOffset, tabStop, charoff);
-            //trace("xTabOff = " + xTabOff  + " inx = " + inx + " charoff = " + charoff);
-            tvals[0]= xTabOff;
-            DeTabber.deTab(oline, tabOffset, tabStop, tvals);
-            charoff = tvals[0];
-            nXchange = xTabOff - fcontext.insertx();
-            //trace("nXchange = " + nXchange  + " inx = " + inx);
-         }  else {
-            charoff = charOffset(nline, saveScreenX);
-            nXchange = charoff - fcontext.insertx();
-            //trace("nXchange = " + nXchange  + " inx = " + inx);
-         }
-      } else {
-         charoff = charOffset(oline, saveScreenX);
-         nXchange = charoff - fcontext.insertx();
-         //trace("nXchange = " + nXchange  + " inx = " + inx);
-      }
-      //trace("charoff " + charoff + " xChange " + xChange  + " linelen = " + oline.length());
-      newx = charoff == 0
-            ? 0
-            : fontm.stringWidth(nline.substring(0, charoff));
-   } else {
-
-   */
-
+  
    private void fixcursor(int xChange, int yChange, int newXpixel) {
 
       cursorChange(xChange, yChange);
@@ -225,14 +166,15 @@ class OldView  extends View {
       }
    }
 
-   int yCursorChanged(int yChange) {
+   int yCursorChangedxxx(int newY) {
 
-      //trace(" yChange " + yChange);
+      //trace(" newY " + newY);
 
+      int yChange = newY - getfileY();
       screenposy += yChange;
 
       //trace("cursorchanged " + xChange + "," + yChange + " screenSaveX " + saveScreenX + " inx " + inx);
-      String oline = text.at(fcontext.inserty()).toString();
+      String oline = gettext().at(newY).toString();
       String nline = oline;
 
       int nXchange;
@@ -248,110 +190,39 @@ class OldView  extends View {
             tvals[0] = xTabOff;
             DeTabber.deTab(oline, tabOffset, tabStop, tvals);
             charoff = tvals[0];
-            nXchange = xTabOff - fcontext.insertx();
+            nXchange = xTabOff - getfileX();
             //trace("nXchange = " + nXchange);
          }  else {
             charoff = charOffset(nline, saveScreenX);
-            nXchange = charoff - fcontext.insertx();
+            nXchange = charoff - getfileX();
             //trace("nXchange = " + nXchange);
          }
       } else {
          charoff = charOffset(oline, saveScreenX);
-         nXchange = charoff - fcontext.insertx();
+         nXchange = charoff - getfileX();
          //trace("nXchange = " + nXchange);
       }
-      //trace("charoff " + charoff + " xChange " + xChange  + " linelen = " + oline.length());
       int newx = charoff == 0
-                ? 0
-                : fontm.stringWidth(nline.substring(0, charoff));
+         ? 0
+         : fontm.stringWidth(nline.substring(0, charoff));
+
+      //trace("nXchange = " + nXchange + " charoff " + charoff + " newx " + newx);
+      setFilePos(nXchange+getfileX(),newY);
       fixcursor(nXchange, yChange, newx);
-      return nXchange;
+      return getfileX();
    }
-   /*
-   int cursorchanged(int xChange, int yChange) {
-
-       //trace("xchange " + xChange + " yChange " + yChange);
-
-       screenposy += yChange;
-
-       int newx;
-       //trace("cursorchanged " + xChange + "," + yChange + " screenSaveX " + saveScreenX + " inx " + inx);
-       String oline = text.at(fcontext.inserty()).toString();
-       String nline = oline;
-
-       int inx = fcontext.insertx() + xChange;
-       if (inx < 0)
-          inx = 0;
-       else if (inx > oline.length())
-          inx = oline.length();
-
-       int nXchange;
-       if (xChange == 0) {
-          int charoff;
-          if (tabStop != 0) {
-             int tabOff = oline.indexOf('\t');
-             if (tabOff !=-1)  {
-                int[] tvals = new int[1];
-                nline = DeTabber.deTab(oline, tabOff, tabStop, tvals);
-                charoff = charOffset(nline, saveScreenX);
-                int xTabOff = DeTabber.tabFind(oline, tabOff, tabStop, charoff);
-   //trace("xTabOff = " + xTabOff  + " inx = " + inx + " charoff = " + charoff);
-   //             if (xTabOff != inx) {
-                   tvals[0]= xTabOff;
-                   DeTabber.deTab(oline, tabOff, tabStop, tvals);
-                   charoff = tvals[0];
-   //             }
-                nXchange = xTabOff - fcontext.insertx();
-                //trace("nXchange = " + nXchange  + " inx = " + inx);
-             }  else {
-                charoff = charOffset(nline, saveScreenX);
-                nXchange = charoff - fcontext.insertx();
-                //trace("nXchange = " + nXchange  + " inx = " + inx);
-             }
-          } else {
-             charoff = charOffset(oline, saveScreenX);
-             nXchange = charoff - fcontext.insertx();
-             //trace("nXchange = " + nXchange  + " inx = " + inx);
-          }
-   //trace("charoff " + charoff + " xChange " + xChange  + " linelen = " + oline.length());
-          newx = charoff == 0
-                ? 0
-                : fontm.stringWidth(nline.substring(0, charoff));
-       } else {
-          int charoff = inx;
-          if (tabStop != 0) {
-             int tabOff = oline.indexOf('\t');
-             if (tabOff !=-1) {
-                int[] tvals = new int[1];
-                tvals[0]= charoff;
-                nline = DeTabber.deTab(nline, tabOff, tabStop, tvals);
-                charoff = tvals[0];
-             }
-          }
-          newx = charoff == 0
-             ? 0
-             : fontm.stringWidth(nline.substring(0, charoff));
-          saveScreenX = newx;
-          nXchange = inx - fcontext.insertx();
-          //trace("nxChange " + nXchange + " saveScreenX changed " + saveScreenX);
-      }
-
-      fixcursor(nXchange, yChange, newx);
-      return nXchange;
-   }
-   */
-
-
-   void cursorChanged(int yChange) {
+   
+   void cursorChangedxxx(int newX,int newY) {
 
       //trace(" yChange " + yChange);
-
+ 
+      int yChange = newY - getfileY();
       screenposy += yChange;
 
-      String oline = text.at(fcontext.inserty()).toString();
+      String oline = gettext().at(newY).toString();
       String nline = oline;
 
-      int charoff = fcontext.insertx();
+      int charoff = newX;
       if (tabStop != 0) {
          int tabOffset = oline.indexOf('\t');
          if (tabOffset != -1) {
@@ -361,10 +232,12 @@ class OldView  extends View {
             charoff = tvals[0];
          }
       }
+
       int newx = charoff == 0
-                 ? 0
-                 : fontm.stringWidth(nline.substring(0, charoff));
+         ? 0
+         : fontm.stringWidth(nline.substring(0, charoff));
       saveScreenX = newx;
+      setFilePos(newX,newY);
       //trace(" saveScreenX changed " + saveScreenX);
 
       fixcursor(0, yChange, newx);
@@ -426,13 +299,13 @@ class OldView  extends View {
 
    private int filltrailer(Graphics gr, int end) {
       //trace("filltrailer");
-      //trace("end = "  + end + " firstline = " + screenFirstLine()+ " fin = " + text.finish());
-      int numlines = text.readIn(); // number of lines read in
+      //trace("end = "  + end + " firstline = " + screenFirstLine()+ " fin = " + gettext().finish());
+      int numlines = gettext().readIn(); // number of lines read in
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " numlines " + numlines);
       if (end + screenFirstLine() > numlines) {
          end = numlines - screenFirstLine();
          if (end != screenSize) {
-            if (!text.donereading())  {
+            if (!gettext().donereading())  {
                gr.setColor(AtView.unFinished);
                needMoreText();
             } else
@@ -465,13 +338,13 @@ class OldView  extends View {
          //trace("imageg " + imageg);
          imageg.setColor(AtView.background);
          imageg.fillRect(0, 0, pixelWidth , charheight);
-         atIt.setText(text.at(tindex).toString());
+         atIt.setText(gettext().at(tindex).toString());
 
          if ((index == screenposy))  {
             atIt.emphasize(true);
             String iString = getInsertString();
             if (iString != null)
-               atIt.addOlineText(iString, fcontext.insertx(), getOverwrite());
+               atIt.addOlineText(iString, getfileX(), getOverwrite());
          }
 
          if (atIt.length() != 0) {
@@ -498,7 +371,7 @@ class OldView  extends View {
 
    int screenFirstLine() {
       //trace( "sfl " + fileposy + " screenposy " + screenposy);
-      return fcontext.inserty() - screenposy;
+      return getfileY() - screenposy;
    }
 
    private void moveScreen(int amount) {
@@ -551,12 +424,12 @@ class OldView  extends View {
 
    int charOffset(String line, int xpos) {
       int charguess = xpos / charwidth;
-//trace("charOffset xpos " + xpos + " line:" + line + " chargues = " + charguess);
+      //trace("charOffset xpos " + xpos + " line:" + line + " chargues = " + charguess);
       if (charguess > line.length())
          charguess = line.length();
       int xguess = fontm.stringWidth(line.substring(0, charguess));
       int lastxguess = xguess;
-//trace("guess1 = " + charguess);
+      //trace("guess1 = " + charguess);
       if (xpos < xguess) {
          while (xpos < xguess) {
             if (charguess <= 0)
@@ -564,7 +437,7 @@ class OldView  extends View {
             charguess--;
             lastxguess = xguess;
             xguess = fontm.stringWidth(line.substring(0, charguess));
-//trace("guess2 = " + charguess + " xguess " + xguess + " lastxguess " + lastxguess);
+           //trace("guess2 = " + charguess + " xguess " + xguess + " lastxguess " + lastxguess);
          }
          return (xpos - xguess) <= (lastxguess - xpos)
                 ? charguess
@@ -576,7 +449,7 @@ class OldView  extends View {
             charguess++;
             lastxguess = xguess;
             xguess = fontm.stringWidth(line.substring(0, charguess));
-//trace("guess3 = " + charguess + " xguess " + xguess + " lastxguess " + lastxguess);
+            //trace("guess3 = " + charguess + " xguess " + xguess + " lastxguess " + lastxguess);
          }
          return (xguess - xpos) <= (xpos - lastxguess)
                 ? charguess
@@ -599,22 +472,23 @@ class OldView  extends View {
 
    Position mousepos(MouseEvent event) {
       int ypos = event.getY() / charheight;
-      ypos = ypos - screenposy + fcontext.inserty();
+      ypos = ypos - screenposy + getfileY();
       if (ypos < 1)
          ypos = 1;
-      else if (!text.containsNow(ypos))
-         ypos = text.finish() - 1;
+      else if (!gettext().containsNow(ypos))
+         ypos = gettext().finish() - 1;
       // figure out where in the line x is
-      String line = text.at(ypos).toString();
+      String line = gettext().at(ypos).toString();
       //trace("xoffset " + xoffset + " getX " + event.getX());
       int xpos = event.getX() - xoffset;
       if (xpos <= 0)
          xpos = 0;
       return new Position(tcharOffset(line, xpos), ypos,
-         fcontext.edvec.fdes(), "mouse pos");
+         gettext().fdes(), "mouse pos");
    }
 
-   void screeny(int amount)  {
+   // returns amount cursor needs to be adjusted
+   int screenyxxx(int amount)  {
       //trace("screeny " + amount);
       //move the screen and if necessary the cursor
       if (screenFirstLine() + amount <= -screenSize + 1)
@@ -622,9 +496,9 @@ class OldView  extends View {
             amount = 0;
          else
             amount =  -screenFirstLine();
-      else if (!text.containsNow(screenFirstLine() + amount))
-         if (text.containsNow(screenFirstLine() + screenSize))
-            amount = text.finish() - 1 - screenFirstLine();
+      else if (!gettext().containsNow(screenFirstLine() + amount))
+         if (gettext().containsNow(screenFirstLine() + screenSize))
+            amount = gettext().finish() - 1 - screenFirstLine();
          else
             amount = 0;
 
@@ -632,8 +506,9 @@ class OldView  extends View {
          moveScreen(amount);
          if ((screenposy >= screenSize)
                || (screenposy < 0))
-            fcontext.cursory(amount);
+            return amount;
       }
+      return 0;
       //trace("exit screensize = " + screenSize + " fcontext.screenFirstLine()= " + fcontext.screenFirstLine());
    }
 

@@ -19,13 +19,13 @@ abstract class View  extends Canvas {
    abstract void changeddraw(Graphics gr, int start, int amount);
    abstract void movescreendraw(Graphics gr, int amount);
    abstract void refresh(Graphics gr);
-   abstract int yCursorChanged(int ychange);
-   abstract void cursorChanged(int ychange);
+   abstract void cursorChangedxxx(int newX, int newY);
+   abstract int yCursorChangedxxx(int newY);
    abstract Position mousepos(MouseEvent event);
    abstract int getRows(float scramount);
    abstract void setSizebyChar(int x, int y);
    abstract int screenFirstLine();
-   abstract void screeny(int amount);
+   abstract int screenyxxx(int amount);
    abstract Shape updateCursorShape(Shape sh);
    abstract void setTabStop(int ts);
    abstract int getTabStop();
@@ -93,7 +93,7 @@ abstract class View  extends Canvas {
 
       boolean insert(int start, int amount) {
          //trace("insert currop " + currop +" start " + start  + " amount " + amount);
-         pmark.resetMark(fcontext);  //???
+         pmark.resetMark(text, fileX, fileY);  //???
          if (currop == NOOP || currop == BLINKCURSOR) {
             currop = INSERT;
             savestart = start;
@@ -108,14 +108,14 @@ abstract class View  extends Canvas {
 
       boolean lineChanged(int index) {
          //trace("linechange currop " + currop + " index " + index);
-         pmark.resetMark(fcontext);
+         pmark.resetMark(text, fileX, fileY);
          return changedpro(index, index);
       }
 
       void cursorChange(int xChange, int yChange) {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
-         pmark.markChange(fcontext.insertx() + xChange, fcontext.inserty());
-         changedpro(fcontext.inserty(), fcontext.inserty() - yChange);
+         pmark.markChange(fileX + xChange, fileY);
+         changedpro(fileY, fileY - yChange);
       }
 
       private boolean changedpro(int index1, int index2) {
@@ -151,7 +151,7 @@ abstract class View  extends Canvas {
 
       boolean delete(int start, int amount) {
          //trace("delete currop " + currop + " start " + start + " amount " + amount);
-         pmark.resetMark(fcontext);
+         pmark.resetMark(text, fileX, fileY);
          if (currop == NOOP || currop == BLINKCURSOR) {
             currop = DELETE;
             savestart = start;
@@ -250,7 +250,27 @@ abstract class View  extends Canvas {
 
    private transient boolean delayerflag;
 
-   protected FvContext fcontext;
+   private TextEdit text;
+   protected final TextEdit gettext() {
+      return text;
+   }
+
+   private transient int fileX;
+   protected final int getfileX() {
+      return fileX;
+   }
+
+   private transient int fileY;
+
+   protected final int getfileY() {
+      return fileY;
+   }
+
+   void setFilePos(int fx, int fy) {
+      fileX = fx;
+      fileY = fy;
+   }
+
    private transient UndoHistory.EhMark chmark;
 
    private transient MarkInfo pmark = new MarkInfo();
@@ -305,13 +325,15 @@ abstract class View  extends Canvas {
       common();
    }
 
-   void newfile(FvContext newfvc) {
+   void newfile(TextEdit texti, int curX, int curY) {
+      //trace("newfile curX" + curX + " curY " + curY + " " + texti);
+      fileX = curX;
+      fileY = curY;
+      text = texti;
+      chmark = text.copyCurr();
 
-      fcontext = newfvc;
-      chmark = newfvc.edvec.copyCurr();
-
-      if (!fcontext.edvec.contains(1))
-         throw new RuntimeException(fcontext.edvec
+      if (!text.contains(1))
+         throw new RuntimeException(text
             + " must contain at least line one ");
 
       clearMark();
@@ -319,7 +341,7 @@ abstract class View  extends Canvas {
    }
 
    TextEdit getCurrFile() {
-      return fcontext.edvec;
+      return text;
    }
 
    public void setFont(Font font) {
@@ -360,12 +382,12 @@ abstract class View  extends Canvas {
    void checkValid(UndoHistory.EhMark ehm) {
       //trace("invalidateBack fvc " + fvc);
       //trace("invalidateBack chmark " + fvc.chmark);
-      
+
       if (ehm.sameBack(chmark))
          if (chmark.getIndex() > ehm.getIndex())
             chmark.setInvalid();
    }
-   
+
    private void npaint(Graphics2D gr) {
       //trace("npaint");
       if (!EventQueue.biglock2.tryLock())
@@ -411,14 +433,13 @@ abstract class View  extends Canvas {
       private int readin;
 
       Delayer() {
-         readin = fcontext.edvec.readIn();
+         readin = text.readIn();
       }
 
       public void run() {
          delayerflag = true;
          try {
             while (true) {
-               EditContainer text = fcontext.edvec;
                trace("sleeping 200");
                Thread.sleep(200);
                if (text.readIn() > readin || text.donereading()) {
@@ -439,22 +460,21 @@ abstract class View  extends Canvas {
          new Thread(new Delayer(), "oldview delayer").start();
    }
 
-   void setMark(Position markposi) {
+   void setMarkxxx(Position markposi) {
       Position pos = pmark.getMark();
       if (pos == markposi)
          return;
       if (pos != null)
-         pmark.clearMark(fcontext);
-      pmark.setMark(markposi, fcontext);
-      op.changedpro(markposi.y, fcontext.inserty());
-      fcontext.cursorabs(markposi);
+         pmark.clearMark(fileX, fileY);
+      pmark.setMark(markposi, fileX, fileY);
+      op.changedpro(markposi.y, fileY);
    }
 
    void clearMark() {
       Position pos = pmark.getMark();
-      pmark.clearMark(fcontext);
+      pmark.clearMark(fileX, fileY);
       if (pos != null)
-         op.changedpro(pos.y, fcontext.inserty());
+         op.changedpro(pos.y, fileY);
    }
 
    Position getMark() {
@@ -529,30 +549,29 @@ abstract class View  extends Canvas {
             : new Position(markpos, "vt100 emu", "savecursor");
       }
 
-      void resetMark(FvContext fvc) {
-         EditContainer ev = fvc.edvec;
+      void resetMark(EditContainer ev, int fileX, int fileY) {
          if (markpos != null) {
             if (!ev.containsNow(markpos.y))
                markpos.y = ev.finish() - 1;
             if (markpos.x > ev.at(markpos.y).toString().length())
                markpos.x = ev.at(markpos.y).toString().length();
-            markChange(fvc.insertx(), fvc.inserty());
+            markChange(fileX, fileY);
          }
       }
 
-      void clearMark(FvContext fvc) {
+      void clearMark(int fileX, int fileY) {
          markpos = null;
-         markChange(fvc.insertx(), fvc.inserty());
+         markChange(fileX, fileY);
       }
 
-      void setMark(Position markposi, FvContext fvc) {
+      void setMark(Position markposi, int fileX, int fileY) {
          if (markposi == null)
             markpos = null;
          else if (markpos == null)
             markpos = new MovePos(markposi);
          else
             markpos.set(markposi);
-         markChange(fvc.insertx(), fvc.inserty());
+         markChange(fileX, fileY);
       }
    }
 
@@ -592,11 +611,11 @@ abstract class View  extends Canvas {
       blinkcursor();
    }
 
-   void placeline(int lineno, float amount) {
+   int placeline(int lineno, float amount) {
       int row = getRows(amount);
       screenFirstLine();
       row =  lineno - screenFirstLine() - row;
-      screeny(row);
+      return screenyxxx(row);
    }
 
    static void trace(String str) {

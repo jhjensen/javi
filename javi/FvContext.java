@@ -211,7 +211,7 @@ public final class FvContext<OType> implements Serializable {
             }
       }
       currfvc = this;
-      vi.newfile(this);
+      vi.newfile(edvec,fileposx,fileposy);
       currfvc.cursorabs(currfvc.fileposx,currfvc.fileposy); // fix up cursor position
       vis = true;
    }
@@ -501,19 +501,20 @@ public final class FvContext<OType> implements Serializable {
       yoffset = newy - fileposy;
       fileposy = newy;
       if (vis)  {
-         int newx = fileposx + vi.yCursorChanged(yoffset);
+         int newx = vi.yCursorChangedxxx(newy);
          fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
+         if (fileposx != newx)
+            UI.popError("cursor wrong permission fileposx " + fileposx +" newx " + newx  ,null);
       }
    }
 
    private void cursor2abs(int newx, int newy) {
       //trace("newx = " + newx + " newy = " + newy + " this " + this);
       // adjust the insertion point
-      int yold = fileposy;
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
       fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
       if (vis)
-         vi.cursorChanged(fileposy - yold);
+         vi.cursorChangedxxx(fileposx,fileposy);
    }
 
    void placeline(int lineno, float amount) {
@@ -521,9 +522,9 @@ public final class FvContext<OType> implements Serializable {
          vi.placeline(lineno, amount);
    }
 
-//   void setVisible(boolean visi) {
-//      vis = visi;
-//   }
+   void screeny(int count) {
+      cursory(vi.screenyxxx(count));
+   }
 
    public void insertStrings(ArrayList<String> obarray, boolean after) {
       edvec.insertStrings(obarray, fileposy + (after ? 1 : 0));
@@ -544,6 +545,16 @@ public final class FvContext<OType> implements Serializable {
       return edvec.getElementsAt(fileposy, number);
    }
 
+   void setMark() {
+      Position pos = getPosition("mark position");
+      vi.setMarkxxx(pos);
+      cursorabs(pos);
+   }
+   void setMark(Position pos) {
+      vi.setMarkxxx(pos);
+      cursorabs(pos);
+   }
+      
    static void trace(String str) {
       Tools.trace(str, 1);
    }

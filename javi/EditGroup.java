@@ -229,7 +229,7 @@ class EditGroup extends Rgroup {
             if (!vMode)
                xold = fvc.insertx();
             yold = fvc.inserty();
-            fvc.vi.setMark(fvc.getPosition("mark position"));
+            fvc.setMark();
          } else {
             xold = markpos.x;
             yold = markpos.y;
@@ -291,7 +291,7 @@ class EditGroup extends Rgroup {
                   Position markpos = fvc.vi.getMark();
                   xold = fvc.insertx();
                   yold = fvc.inserty();
-                  fvc.vi.setMark(fvc.getPosition("mark position"));
+                  fvc.setMark();
                   fvc.cursorabs(markpos);
                   continue;
                case 'd':

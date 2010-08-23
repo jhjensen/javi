@@ -176,7 +176,9 @@ final class MoveGroup extends Rgroup {
          case 26:
             return null;  //movehalfscreen(arg,count,fvc.vi); return null;
          case 27:
-            movescreenline(arg, count, fvc.vi);
+            fvc.screeny((((Integer) arg).intValue() == 1) 
+               ? count
+               : -count);
             return null;
          default:
             throw new RuntimeException();
@@ -924,12 +926,4 @@ final class MoveGroup extends Rgroup {
       fvc.cursorabs(xindex, yindex);
    }
 
-   private void movescreenline(Object arg, int count, View vi) {
-      //trace("movescreenline " + arg);
-      if (((Integer) arg).intValue() == 1)
-         vi.screeny(count);
-      else
-         vi.screeny(-count);
-   }
 }
-

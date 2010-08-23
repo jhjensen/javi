@@ -305,7 +305,7 @@ public class MapEvent {
          case MouseEvent.BUTTON1:
             if (fvc.vi != vi)
                UI.setView(newfvc);
-            newfvc.vi.setMark(p);
+            newfvc.setMark(p);
             break;
 
          case MouseEvent.BUTTON2:
