@@ -1339,9 +1339,7 @@ public abstract class UI {
             StackTraceElement[] tr = ex.getStackTrace();
             for (StackTraceElement elem : tr)  {
                if  (elem.getMethodName().indexOf("paint") != -1)
-                  if  (elem.getClassName().indexOf("npaint") != -1)  {
-                     return dopop(str);
-                  }
+                  return dopop(str);
             }
          }
          return new Popper(str).result;
