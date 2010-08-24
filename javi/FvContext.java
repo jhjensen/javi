@@ -199,7 +199,11 @@ public final class FvContext<OType> implements Serializable {
    }
 
    void setCurrView() {
-      //trace("setting curr fvc to " + this);
+      activate();
+      currfvc = this;
+   }
+   private void activate() {
+      //trace("activate " + this);
       if (currfvc != null) {
          if (currfvc.vi == vi) // the usual case
             currfvc.vis = false;
@@ -210,9 +214,14 @@ public final class FvContext<OType> implements Serializable {
                   fvc.vis = false;
             }
       }
-      currfvc = this;
+
+      if (!edvec.contains(1))
+         throw new RuntimeException(edvec
+            + " must contain at least line one ");
+
+      fileposy = inrange(fileposy, 1, edvec.readIn() - 1);
+      fileposx = inrange(fileposx, 0, edvec.at(fileposy).toString().length());
       vi.newfile(edvec, fileposx, fileposy);
-      //???currfvc.cursorabs(currfvc.fileposx,currfvc.fileposy); // fix up cursor position
       vis = true;
    }
 
@@ -248,7 +257,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public String toString() {
-      return "(" + fileposx + "," + fileposy + ")" + edvec + vi;
+      return "(" + fileposx + "," + fileposy + ")" + (vis ? "vis" : "") + edvec + vi;
    }
 
    boolean dispatchKeyEvent(KeyEvent ev) {
@@ -362,14 +371,8 @@ public final class FvContext<OType> implements Serializable {
          UI.connectfv(next, currfvc.vi);
       for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
          FvContext fvc = fit.next();
-         if (fvc.edvec == ed) {
-            //trace("connecting " + next + " vi " + fvc.vi);
-            FvContext nextfv = getcontext(fvc.vi, next);
-            nextfv.vi.newfile(next, nextfv.fileposx, nextfv.fileposy);
-            //next.cursorabs(nextfv.fileposx,nextfv.fileposy); // fix up cursor position
-            nextfv.vis = true;
-            fvc.vis = false;
-         }
+         if (fvc.edvec == ed)
+            getcontext(fvc.vi, next).activate();
       }
    }
 
@@ -531,6 +534,7 @@ public final class FvContext<OType> implements Serializable {
 
    private void cursor2abs(int newx, int newy) {
       //trace("newx = " + newx + " newy = " + newy + " this " + this);
+      //trace("edvec.readIn " + edvec.readIn());
       // adjust the insertion point
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
       fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());

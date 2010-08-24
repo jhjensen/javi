@@ -255,12 +255,12 @@ abstract class View  extends Canvas {
       return text;
    }
 
-   private transient int fileX;
+   private transient int fileX = 0;
    protected final int getfileX() {
       return fileX;
    }
 
-   private transient int fileY;
+   private transient int fileY = 1;
 
    protected final int getfileY() {
       return fileY;
@@ -327,16 +327,11 @@ abstract class View  extends Canvas {
 
    void newfile(TextEdit texti, int curX, int curY) {
       //trace("newfile curX" + curX + " curY " + curY + " " + texti);
-      fileX = curX;
-      fileY = curY;
       text = texti;
       chmark = text.copyCurr();
 
-      if (!text.contains(1))
-         throw new RuntimeException(text
-            + " must contain at least line one ");
-
       clearMark();
+      cursorChanged(curX,curY);
       op.redraw();
    }
 

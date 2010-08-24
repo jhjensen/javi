@@ -592,6 +592,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
             //trace("processZ ev " + ev + " instance " + instance);
             if (ev == instance) {
                ev = (TextEdit) FvContext.getcurobj(instance);
+               fileIndex = instance.indexOf(ev);
                nextFile = instance;
             } else if (-1 == fileIndex) {
                nextFile = (TextEdit) FvContext.getcurobj(instance);
@@ -607,12 +608,12 @@ final class FileList extends TextEdit<TextEdit<String>> {
 
                if (ev.isModified())
                   ev.printout();
-trace("instance.finish " + instance.finish());
                if (instance.finish() == 2) { // on last file
                   quit(true, fvc);
                } else {
-                  FvContext.reconnect(ev, nextFile);
                   instance.remove(fileIndex, 1);
+                  fvc.fixCursor();
+                  FvContext.reconnect(ev, nextFile);
                }
             } else if (!(ev.at(0) instanceof Position)
                               &&  !(ev instanceof FontList)
