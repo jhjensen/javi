@@ -307,7 +307,7 @@ class OldView  extends View {
          if (end != screenSize) {
             if (!gettext().donereading())  {
                gr.setColor(AtView.unFinished);
-               needMoreText();
+               needMoreText(end + screenFirstLine());
             } else
                gr.setColor(AtView.noFile);
             gr.fillRect(0, end * charheight,

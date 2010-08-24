@@ -426,33 +426,39 @@ abstract class View  extends Canvas {
 
    class Delayer implements Runnable {
       private int readin;
+      private int needed;
 
-      Delayer() {
+      Delayer(int neededi) {
          readin = text.readIn();
+         needed = neededi;
       }
 
       public void run() {
          delayerflag = true;
          try {
+            int newReadin;
             do {
+               newReadin = text.readIn();
+               //trace("needed " + needed + " newReadin" + newReadin + " readin " + readin);
                trace("sleeping 200");
                Thread.sleep(200);
-               if (text.readIn() > readin || text.donereading()) {
+               if (newReadin > readin || text.donereading()) {
+                  readin = newReadin;
                   op.currop = REDRAW;
                   repaint();
                }
-            } while (!text.donereading());
+            } while (!text.donereading() && newReadin <= needed);
          } catch (InterruptedException e) {
-            op.currop = REDRAW;
-            repaint();
          }
+         op.currop = REDRAW;
+         repaint();
          delayerflag = false;
       }
    }
 
-   void needMoreText() {
+   void needMoreText(int needed) {
       if (!delayerflag)
-         new Thread(new Delayer(), "oldview delayer").start();
+         new Thread(new Delayer(needed), "oldview delayer").start();
    }
 
    void setMark(Position markposi) {
