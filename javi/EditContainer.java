@@ -1016,7 +1016,7 @@ public class EditContainer<OType> implements
          FileDescriptor.LocalFile.make(prop.fdes.canonName + ".new");
 
       try {
-         tempFile.writeAll(getStringIter(), prop.lsep);
+         tempFile.writeAll(getStringIter(), prop.getSeperator());
 
       } catch (IOException e) {
          tempFile.delete();
@@ -1041,7 +1041,7 @@ public class EditContainer<OType> implements
 
       prop.fdes.renameTo(file2);
 
-      prop.fdes.writeAll(getStringIter(), prop.lsep);
+      prop.fdes.writeAll(getStringIter(), prop.getSeperator());
       setReadOnly(false);
    }
 

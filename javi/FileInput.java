@@ -150,11 +150,11 @@ class FileInput extends BufInIoc<String> {
                   ? FileMode.MS
                   : FileMode.MIXED;
 
-      prop.lsep = inputmode == FileMode.UNIX
-                  ? "\n"
-                  : inputmode == FileMode.MS
-                  ? "\r\n"
-                  : System.getProperty("line.separator");
+      prop.setSeperator(inputmode == FileMode.UNIX
+         ? "\n"
+         : inputmode == FileMode.MS
+            ? "\r\n"
+            : System.getProperty("line.separator"));
 
       if (npos == -1) npos = Integer.MAX_VALUE;
       if (rpos == -1) rpos = Integer.MAX_VALUE;

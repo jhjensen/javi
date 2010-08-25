@@ -11,7 +11,7 @@ class FileProperties<OType> implements Serializable {
    private static String staticLine = System.getProperty("line.separator");
    final FileDescriptor fdes;
    final ClassConverter<OType> conv;
-   String lsep = staticLine;
+   private String lsep = staticLine; //??? final
 
    FileProperties(FileDescriptor fd, ClassConverter<OType> convi) {
       fdes = fd;
@@ -22,8 +22,12 @@ class FileProperties<OType> implements Serializable {
       return fdes.toString();
    }
 
+   String getSeperator() {
+      return lsep;
+   }
+
    void setSeperator(String sep) {
-      if (lsep != null)
+      if (lsep != staticLine)
          throw new RuntimeException("attempt to reset line seperator");
       lsep = sep;
    }
@@ -241,7 +245,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
          FileDescriptor.LocalFile tfile =
             FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
          tfile.deleteOnExit();
-         tfile.writeAll(new StringIter(mainArray.iterator()), prop.lsep);
+         tfile.writeAll(new StringIter(mainArray.iterator()), prop.getSeperator());
 
          return (UI.reportDiff(prop.fdes.shortName, index, fileObj,
                                backObj, backupstatus, tfile.shortName));
