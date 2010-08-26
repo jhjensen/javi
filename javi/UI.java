@@ -539,6 +539,43 @@ public abstract class UI {
             eventQueue.postEvent(this);
          }
       }
+
+      abstract class SyncAwt<OType> extends RunAwt {
+         private OType result;
+         OType getResult() {
+            return result;
+         }
+
+         SyncAwt() {
+            super();
+            synchronized (this) {
+               int holdCount = EventQueue.biglock2.getHoldCount();
+               for (int i = 0; i < holdCount; i++)
+                  EventQueue.biglock2.unlock();
+
+               EventQueue.biglock2.assertUnOwned();
+               post();
+               try {
+                  wait();
+               } catch (InterruptedException e) { }
+               for (int i = 0; i < holdCount; i++)
+                  EventQueue.biglock2.lock();
+            }
+         }
+
+         abstract OType doAwt();
+         
+         public void run() {
+            //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+
+            result = doAwt();
+            synchronized (this) {
+               notify();
+               //trace("instance " + instance + " flag " + diaflag);
+            }
+         }
+      }
+
       class Commands extends Rgroup   {
          private final String[] rnames = {
             "",
@@ -1196,11 +1233,8 @@ public abstract class UI {
          new Validate();
       }
 
-//void itoFront(boolean front) {
       void itoFront() {
 
-//   frm.setAlwaysOnTop(true);
-//   frm.setAlwaysOnTop(false);
          frm.setVisible(false);
          frm.setVisible(true);
          frm.toFront();
@@ -1298,37 +1332,18 @@ public abstract class UI {
          return psinst.pop(str);
       }
 
-      class Popper extends RunAwt {
+      class Popper extends SyncAwt<Boolean> {
          private String str;
-         private boolean result;
          Popper(String stri) {
             super();
             str = stri;
-            synchronized (this) {
-               int holdCount = EventQueue.biglock2.getHoldCount();
-               for (int i = 0; i < holdCount; i++)
-                  EventQueue.biglock2.unlock();
-               post();
-
-               EventQueue.biglock2.assertUnOwned();
-               try {
-                  wait();
-               } catch (InterruptedException e) { }
-               for (int i = 0; i < holdCount; i++)
-                  EventQueue.biglock2.lock();
-            }
          }
 
-         public void run() {
-            //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
-
-            synchronized (this) {
-               result = dopop(str);
-               notify();
-               //trace("instance " + instance + " flag " + diaflag);
-            }
+         Boolean doAwt() {
+            return dopop(str);
          }
       }
+
       boolean ipopstring(String str) {
 
          try {
@@ -1342,7 +1357,7 @@ public abstract class UI {
                   return dopop(str);
             }
          }
-         return new Popper(str).result;
+         return new Popper(str).getResult();
       }
 
       static class NDialog extends Dialog implements ActionListener {
@@ -1864,11 +1879,20 @@ public abstract class UI {
          //trace("focusGained " +e);
       }
 
+
+      class GetFile extends SyncAwt<String> {
+
+         String doAwt()  {
+         
+            if (fdialog == null)
+               fdialog = new FileDialog(frm, "open new vifile", FileDialog.LOAD);
+            fdialog.setVisible(true);
+            return   fdialog.getFile();
+         }
+      }
+
       String igetFile() {
-         if (fdialog == null)
-            fdialog = new FileDialog(frm, "open new vifile", FileDialog.LOAD);
-         fdialog.setVisible(true);
-         return   fdialog.getFile();
+         return new GetFile().getResult();
       }
 
    }
