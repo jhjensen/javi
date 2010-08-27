@@ -145,7 +145,7 @@ public final class Command extends Rgroup {
             ev.insertOne(prompt, ev.finish());
          }
          commFvc.cursorabs(prompt.length(), ev.finish() - 1);
-         egroup.icontext.insertmode(false, 1, commFvc, false, true);
+         egroup.setInsertMode(commFvc, false);
 
       } catch (InputException e) {
          UI.reportMessage(e.toString());

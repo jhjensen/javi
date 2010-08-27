@@ -16,8 +16,12 @@ class EditGroup extends Rgroup {
    private char dotchar;
    private Object dotarg;
 
-   final MapEvent evhandler;
-   final InsertBuffer icontext;
+   private final MapEvent evhandler;
+   private final InsertBuffer icontext;
+   void setInsertMode(FvContext fvc, boolean overwrite) throws
+         InputException, IOException {
+      icontext.insertmode(false, 1, fvc, overwrite, true);
+   }
 
    EditGroup(MapEvent evhandleri) {
       final String[] rnames = {
@@ -52,8 +56,8 @@ class EditGroup extends Rgroup {
       };
 
       register(rnames);
-      icontext = new InsertBuffer(this);
       evhandler = evhandleri;
+      icontext = new InsertBuffer(evhandler);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -240,9 +244,10 @@ class EditGroup extends Rgroup {
          KeyEvent event;
          if (!dotmode) {
             try {
-               while (evhandler.domovement(event =
-                  EventQueue.nextKeye(fvc.vi), count, rcount, dotmode, fvc))
-                     ;
+               do
+                  event = EventQueue.nextKeye(fvc.vi);
+                while (evhandler.domovement(
+                   event, count, rcount, dotmode, fvc));
             } catch (InterruptedException e) {
                trace("markmode caught " + e);
                break out;
@@ -373,6 +378,7 @@ class EditGroup extends Rgroup {
          bufid = dotbufid;
          event = dotevent2;
       }
+
       switch(event.getKeyChar()) {
          case 'p':
             if (dotmode && bufid >= '0' && bufid <= '8')
@@ -439,6 +445,7 @@ class EditGroup extends Rgroup {
             dotevent2 = event;
             break;
          case 27: //escape
+         default:
             break;
       }
    }
@@ -458,8 +465,8 @@ class EditGroup extends Rgroup {
 
    private void putbuffer(char id, boolean after, FvContext fvc)  {
 
-
       Object buf = Buffers.getbuf(id);
+      //trace("putbuffer id " + id  + " buf " + buf);
       if (buf == null)
          return;
 
@@ -489,26 +496,6 @@ class EditGroup extends Rgroup {
       icontext.insertmode(dotmode, count, fvc, false, false);
       fvc.edvec.checkpoint();
       fvc.fixCursor();
-   }
-   int findspacebound(FvContext fvc, int linepos) {
-      int j;
-      int lineno;
-
-      for (lineno = fvc.inserty() - 1; lineno > 0; lineno--) {
-         String line =  fvc.at(lineno).toString();
-         // skip non spaces
-         for (j = linepos; j < line.length(); j++)
-            if (line.charAt(j) == ' ')
-               break;
-         // skip spaces
-         for (; j < line.length(); j++)
-            if (line.charAt(j) != ' ')
-               break;
-         if (j < line.length()) { // found good line
-            return j - linepos;
-         }
-      }
-      return 0;
    }
 
    static void deleteChars(char bufid, FvContext fvc,
@@ -555,6 +542,7 @@ class EditGroup extends Rgroup {
 
    private static void deletetext(char bufid, FvContext fvc,
          boolean preserve, int xstart, int ystart, int xend, int yend) {
+      trace("deletetext id " + bufid);
       Buffers.deleted(bufid,
          fvc.edvec.deletetext(preserve, xstart, ystart, xend, yend));
    }
@@ -613,14 +601,12 @@ class EditGroup extends Rgroup {
       } else
          event = dotevent3;
 
-      switch(event.getKeyChar()) {
-
-         case 'y':
-            if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
-               count = fvc.edvec.finish() - 1;
-            Buffers.deleted(bufid, fvc.getElementsAt(count));
-            return;
-
+      if (event.getKeyChar() == 'y') {
+         if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
+            count = fvc.edvec.finish() - 1;
+         Buffers.deleted(bufid, fvc.getElementsAt(count));
+         trace("yanking a buffer");
+         return;
       }
       Position save = fvc.getPosition("yankmark");
       evhandler.domovement(event, count, rcount, dotmode, fvc);
@@ -636,6 +622,7 @@ class EditGroup extends Rgroup {
       }
       fvc.cursorabs(save);
    }
+
    private void changemode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc) throws
          InterruptedException, InputException, IOException {
@@ -655,21 +642,22 @@ class EditGroup extends Rgroup {
             return;
          case 27: //esc
             return;
-      }
-      if (!dotmode)
-         EventQueue.pushback(event);
+         default:
+            if (!dotmode)
+               EventQueue.pushback(event);
 
-      deletemode(bufid, dotmode, count, rcount, fvc);
-      icontext.insertmode(dotmode, 1, fvc, false, false);
+            deletemode(bufid, dotmode, count, rcount, fvc);
+            icontext.insertmode(dotmode, 1, fvc, false, false);
+      }
    }
 
    private void subChar(boolean dotmode, int count, FvContext fvc) throws
       ExitException {
 
       if (!dotmode)
-         while ((dotchar = EventQueue.nextKey(fvc.vi))
-               == KeyEvent.CHAR_UNDEFINED)
-            ;
+         do
+            dotchar = EventQueue.nextKey(fvc.vi);
+         while (dotchar  == KeyEvent.CHAR_UNDEFINED);
       if (dotchar == 27)
          return;
       String line = fvc.at().toString();

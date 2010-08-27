@@ -377,7 +377,7 @@ public class EditContainer<OType> implements
       lptr = start.y;
       if (exp == null)
          throw new RuntimeException();
-      if (!direction)
+      if (!direction) {
          if (!searchForward(exp, start.x + 1, lptr))
             for (lptr++; true; lptr++) {
                if (!containsNow(lptr))
@@ -387,8 +387,7 @@ public class EditContainer<OType> implements
                if (lptr == finish.y)
                   return null;
             }
-         else ;
-      else if ((start.x <= 0) || !searchBackward(exp, start.x - 1, lptr)) {
+      } else if ((start.x <= 0) || !searchBackward(exp, start.x - 1, lptr)) {
          for (lptr--; true; lptr--) {
             if (lptr == 0)
                lptr = finish() - 1; // wrap

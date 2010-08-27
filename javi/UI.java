@@ -564,7 +564,7 @@ public abstract class UI {
          }
 
          abstract OType doAwt();
-         
+
          public void run() {
             //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
@@ -1044,7 +1044,7 @@ public abstract class UI {
       }
 
       class Initer extends SyncAwt {
-          // makeing this run sychronously makes the window become visible about 20-30 
+          // makeing this run sychronously makes the window become visible about 20-30
           // ms quicker, but ready for events quit 90 ms slower
 
          public Object doAwt() {
@@ -1058,7 +1058,7 @@ public abstract class UI {
             } finally {
                EventQueue.biglock2.unlock();
             }
-   
+
             frm.requestFocus();
             FontList.updateFont(); // prevents an extra redraw later
             frm.requestFocus();
@@ -1897,9 +1897,10 @@ public abstract class UI {
       class GetFile extends SyncAwt<String> {
 
          String doAwt()  {
-         
+
             if (fdialog == null)
-               fdialog = new FileDialog(frm, "open new vifile", FileDialog.LOAD);
+               fdialog = new FileDialog(frm, "open new vifile", 
+                  FileDialog.LOAD);
             fdialog.setVisible(true);
             return   fdialog.getFile();
          }

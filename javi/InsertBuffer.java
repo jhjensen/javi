@@ -34,7 +34,7 @@ class InsertBuffer extends Rgroup
 
    private MyInserter insert = new MyInserter();
 
-   private EditGroup eg;
+   private final MapEvent evhandler;
    private String dotbuffer;
    private KeyGroup ikeys = new KeyGroup();
    private KeyGroup commandikeys = new KeyGroup();
@@ -47,12 +47,15 @@ class InsertBuffer extends Rgroup
    private FvContext myfvc;
    private int committed;
 
+   static final boolean [] ff = {false, false};
+
    InsertBuffer(String str) { // fordebug
       buffer.append(str);
+      evhandler=null;
    }
-   static final boolean [] ff = {false, false};
-   InsertBuffer(EditGroup egi) {
-      eg = egi;
+
+   InsertBuffer(MapEvent eventhandleri) {
+      evhandler = eventhandleri;
       final String[] rnames = {
          "",
          "imode.toggleinsert",
@@ -128,7 +131,7 @@ class InsertBuffer extends Rgroup
             //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
             //int tabStop = (tb == null) ? 0 : tb.getTab();
             int linepos = fvc.insertx() + buffer.length();
-            int spcount = eg.findspacebound(fvc, linepos);
+            int spcount = findspacebound(fvc, linepos);
 
             while (--spcount >= 0)
                buffer.append(' ');
@@ -300,11 +303,11 @@ class InsertBuffer extends Rgroup
                            }
                         } else {
                            itext(count, fvc);
-                           eg.evhandler.hevent(ke, fvc);
+                           evhandler.hevent(ke, fvc);
                         }
                   } else {
                      itext(count, fvc);
-                     eg.evhandler.hevent(ae, fvc);
+                     evhandler.hevent(ae, fvc);
                   }
                } else
                   trace("nextevent not AWTEvent" + e);
@@ -316,6 +319,26 @@ class InsertBuffer extends Rgroup
       }
    }
 
+   static int findspacebound(FvContext fvc, int linepos) {
+      int j;
+      int lineno;
+
+      for (lineno = fvc.inserty() - 1; lineno > 0; lineno--) {
+         String line =  fvc.at(lineno).toString();
+         // skip non spaces
+         for (j = linepos; j < line.length(); j++)
+            if (line.charAt(j) == ' ')
+               break;
+         // skip spaces
+         for (; j < line.length(); j++)
+            if (line.charAt(j) != ' ')
+               break;
+         if (j < line.length()) { // found good line
+            return j - linepos;
+         }
+      }
+      return 0;
+   }
    void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
       fvc.vi.clearInsert();
