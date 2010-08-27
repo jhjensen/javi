@@ -40,4 +40,4 @@ clean:
 	rm -f *.class ID javi.jar
 
 javi.jar: *.class ../MANIFEST.MF 
-	cd ..;$(JDKBIN)jar -0cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class
+	cd ..;$(JDKBIN)jar -cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class
