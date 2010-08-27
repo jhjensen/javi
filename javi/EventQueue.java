@@ -87,6 +87,7 @@ public final class EventQueue {
    private static Object inextEvent(View vi) {
       Object ev = null;
       biglock2.unlock();
+      //trace("Init time trace: getting event");
       synchronized (EventQueue.class) {
          if (queue.size() != 0)
             ev = queue.removeFirst();

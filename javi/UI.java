@@ -94,7 +94,6 @@ public abstract class UI {
    abstract void iclearStatus();
    abstract boolean iisGotoOk(FvContext fvc);
    abstract FvContext iconnectfv(TextEdit file, View vi) throws InputException;
-   abstract void init2();
    abstract void isetView(FvContext fvc);
 
    abstract Result ireportModVal(String caption, String units,
@@ -118,10 +117,10 @@ public abstract class UI {
    }
 
    public static void init(boolean isAwt) {
+      //trace("");
       instance = isAwt
                  ? (UI) new AwtInterface()
                  : (UI) new StreamInterface();
-      instance.init2();
    }
 
    static void setStream(Reader inreader) {
@@ -447,8 +446,6 @@ public abstract class UI {
 //void idle() {throw new RuntimeException("unimplemented");}
       FvContext iconnectfv(TextEdit file, View vi) { return null; }
       View iaddview(boolean newview, FvContext fvc) { return null; }
-      void init2() { /* unimplemented */ }
-
 
       void istatusaddline(String s) {
          trace(s);
@@ -508,7 +505,9 @@ public abstract class UI {
          //1.4setUndecorated(true);
          //fr.setUndecorated(true);
          //FontList.updateFont(); //??? avoid calling this?
+
          frm = initfrm("normal");
+
          normalFrame = frm;
          common();
 
@@ -523,6 +522,7 @@ public abstract class UI {
          frm.add(tfview, 0);
          frm.setComponentZOrder(tfview, 0);
          tfc.setCurrView();
+         new Initer();
          //trace("this = " + this + " fr = " + fr);
       }
 
@@ -960,7 +960,7 @@ public abstract class UI {
          //trace("initfrm");
          TestFrame lFrm = new TestFrame("vi:", name);
          //lFrm.setUndecorated(true);
-         trace("initfrm new Frame sure is slow!!!");
+         //trace("initfrm new Frame sure is slow!!!");
          lFrm.setResizable(true);
          lFrm.setLayout(new Layout());
          //frm.setBackground(AtView.background);
@@ -1043,22 +1043,33 @@ public abstract class UI {
          new FScreen();
       }
 
-      void init2() { // depends on instance being set
-         try {
-            View vi = mkview(false);
-            FontList.setDefaultFontSize(vi, -1, -1);
-            iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
-         } catch (InputException e) {
-            throw new RuntimeException("can't recover iaddview", e);
+      class Initer extends SyncAwt {
+          // makeing this run sychronously makes the window become visible about 20-30 
+          // ms quicker, but ready for events quit 90 ms slower
+
+         public Object doAwt() {
+            EventQueue.biglock2.lock();
+            try {
+               View vi = mkview(false);
+               FontList.setDefaultFontSize(vi, -1, -1);
+               iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
+            } catch (InputException e) {
+               throw new RuntimeException("can't recover iaddview", e);
+            } finally {
+               EventQueue.biglock2.unlock();
+            }
+   
+            frm.requestFocus();
+            FontList.updateFont(); // prevents an extra redraw later
+            frm.requestFocus();
+            statusBar = new StatusBar();
+            statusBar.setVisible(false);
+            frm.add(statusBar, 0);
+            trace("setting visible");
+            ishow();
+            return null;
          }
 
-         frm.requestFocus();
-         FontList.updateFont(); // prevents an extra redraw later
-         frm.requestFocus();
-         statusBar = new StatusBar();
-         statusBar.setVisible(false);
-         frm.add(statusBar, 0);
-         ishow();
       }
 
       FvContext iconnectfv(TextEdit file, View vi) throws InputException {
@@ -1136,7 +1147,7 @@ public abstract class UI {
       }
 
       void ishow() {
-         //trace("!!! setting frm visible ");
+         trace("!!! setting frm visible ");
          frm.setSize(frm.getPreferredSize());
          frm.setVisible(true);
          //trace("!!! done set frm visible insets " + frm.getInsets());
@@ -1185,14 +1196,17 @@ public abstract class UI {
 
          public void run() {
             EventQueue.biglock2.lock();
-            View vichanged =  FontList.updateFont();
-            if (vichanged != null) {
-               isetFont(FontList.getCurr(vichanged));
-               vichanged.setFont(FontList.getCurr(vichanged));
+            try {
+               View vichanged =  FontList.updateFont();
+               if (vichanged != null) {
+                  isetFont(FontList.getCurr(vichanged));
+                  vichanged.setFont(FontList.getCurr(vichanged));
+               }
+               if (statusBar != null && statusBar.isVisible())
+                  statusBar.repaint();
+            } finally {
+               EventQueue.biglock2.unlock();
             }
-            if (statusBar != null && statusBar.isVisible())
-               statusBar.repaint();
-            EventQueue.biglock2.unlock();
          }
 
       }

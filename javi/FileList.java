@@ -256,7 +256,8 @@ final class FileList extends TextEdit<TextEdit<String>> {
          FvContext.getcontext(fvc.vi, instance).cursoryabs(fileIndex);
          TextEdit mfile = (TextEdit) instance.at(fileIndex);
          UI.reportMessage(mfile + " is modified");
-         //trace("currfvc.quit going to currfvc =  " +  currfvc);
+         //trace(mfile + " is modified");
+         //trace("quit fvc " + fvc);
          try {
             UI.connectfv(mfile, fvc.vi);
             return true;

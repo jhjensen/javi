@@ -64,7 +64,6 @@ class OldView  extends View {
    void ssetFont(Font font) {
       //trace("entered " + this  + font);
       fontm = getFontMetrics(font);
-      trace("the First usage of a font sure is slow!!!");
       charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
          / teststr.length();
       //trace("charwidth = " + charwidth + this);

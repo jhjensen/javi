@@ -73,7 +73,7 @@ public final class Javi {
          //trace("preserver");
          new Server(6001);
       } catch (Exception e) {
-         trace("error starting Server" + e);
+         //trace("error starting Server" + e);
       }
 
       //new v8();
@@ -84,7 +84,7 @@ public final class Javi {
       new JavaCompiler();
       new CheckStyle();
       Buffers.initCmd();
-      trace("unexpectedly slow");
+      //trace("unexpectedly slow");
       new JS();
       //new vcs.cmvc();
 
@@ -99,7 +99,7 @@ public final class Javi {
       trace("enter Javi Main");
       new Thread(new Preloader(), "preloader").start();
       Thread curr = Thread.currentThread();
-      curr.setPriority(curr.getPriority() + 1);
+      curr.setPriority(curr.getPriority() - 1);
       StringBuilder sb = new StringBuilder();
       int i;
       String command = null;

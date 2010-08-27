@@ -10,18 +10,18 @@ import java.util.List;
 
 public final class Tools {
    private Tools() { }
-   private static Date lastDate =  new Date();
+   private static long lastTime = System.nanoTime();
    public static void trace(String str, int offset) {
       try {
 
          throw new Exception("");
       } catch (Exception e) {
 
-         Date newDate = new Date();
-         long timediff = newDate.getTime() - lastDate.getTime();
-         lastDate = newDate;
+         long newTime = System.nanoTime();
+         long timediff = newTime- lastTime;
+         lastTime = newTime;
          StackTraceElement[] tr = e.getStackTrace();
-         System.err.println(timediff + " " + tr[1 + offset].getFileName() + ":"
+         System.err.println(timediff/1000000 + " " + tr[1 + offset].getFileName() + ":"
             + tr[1 + offset].getLineNumber() + " " + str);
          //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
       }
