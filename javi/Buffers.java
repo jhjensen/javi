@@ -8,6 +8,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
+import static javi.Tools.trace;
 
 final class Buffers {
 
@@ -54,26 +55,29 @@ final class Buffers {
    }
 
    static void deleted(char bufid, String buffer) {
-
       if (buffer == null)
          return;
 
       if (bufid == '0') {
          delbuffer.add(buffer);
       } else {
+         Object bufo;
          if (bufid >= 'A' && bufid <= 'Z') {
             bufid = (char) (bufid + ('a' - 'A'));
-            Object bufo =  buflist.get(Integer.valueOf(bufid));
-            if (bufo != null) {
-               if (bufo instanceof ArrayList) {
+            bufo =  buflist.get(Integer.valueOf(bufid));
+            if (bufo == null)
+               bufo = buffer;
+            else
+               if (bufo instanceof ArrayList)
                   ((ArrayList<String>) bufo).add(buffer);
-                  buflist.put(Integer.valueOf(bufid), bufo);
-
-               } else { // bufo is string
-                  buflist.put(Integer.valueOf(bufid), bufo + buffer);
-               }
-            }
+               else
+                  bufo = bufo + buffer;
+         } else {
+            bufo = buffer;
          }
+
+         //trace("buffers adding id " + bufid + " buffer " + bufo);
+         buflist.put(Integer.valueOf(bufid), bufo);
       }
    }
 
@@ -89,19 +93,25 @@ final class Buffers {
             strs.add(obj.toString());
          delbuffer.add(strs);
       } else {
+         Object bufo;
          if (bufid >= 'A' && bufid <= 'Z') {
             bufid = (char) (bufid + ('a' - 'A'));
-            Object bufo =  buflist.get(Integer.valueOf(bufid));
-            if (bufo != null) {
+            bufo =  buflist.get(Integer.valueOf(bufid));
+            if (bufo == null) {
+               bufo = buffer;
+            } else {
                if (bufo instanceof ArrayList) {
                   ((ArrayList<String>) bufo).addAll(buffer);
-                  buflist.put(Integer.valueOf(bufid), bufo);
                } else { // bufo is string
                   buffer.add(0, (String) bufo);
-                  buflist.put(Integer.valueOf(bufid), buffer);
+                  bufo = buffer;
                }
             }
+         } else {
+            bufo = buffer;
          }
+         //trace("buffers adding id " + bufid + " buffer " + bufo);
+         buflist.put(Integer.valueOf(bufid), bufo);
       }
    }
 
