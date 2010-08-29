@@ -8,6 +8,7 @@ tags
 ID
 dist
 build
+lib
 javitests/junit3.8.2
 build.txt
 dummy0
