@@ -272,16 +272,16 @@ class InsertBuffer extends Rgroup
                   if (ae instanceof KeyEvent) {
                      KeyEvent ke = (KeyEvent) ae;
                      //trace("event = " + e);
-                     //KeyBinding binding;
-                     //if (!verbatim && (binding = activekeys.get(ke)) != null) {
-                     //   if (null != binding.rg.doroutine(binding.index,
-                     //         binding.arg, count, 0, fvc, false))
-                     //      break;
-                     if (!verbatim) {
-                        KeyBinding binding = activekeys.get(ke);
-                        if (binding != null && null != binding.rg.doroutine(
-                              binding.index, binding.arg, count, 0, fvc, false))
+                     KeyBinding binding;
+                     if (!verbatim && (binding = activekeys.get(ke)) != null) {
+                        if (null != binding.rg.doroutine(binding.index,
+                              binding.arg, count, 0, fvc, false))
                            break;
+                     //if (!verbatim) {
+                     //   KeyBinding binding = activekeys.get(ke);
+                     //   if (binding != null && null != binding.rg.doroutine(
+                     //         binding.index, binding.arg, count, 0, fvc, false))
+                     //      break;
                      }  else if (ke.getID() == KeyEvent.KEY_PRESSED)
                         if (!ke.isActionKey()) {
                            key = ke.getKeyChar();
