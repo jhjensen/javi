@@ -58,7 +58,7 @@ class CheckStyle extends Rgroup {
          List<String> cmd =
             new LinkedList<String>(listModFiles(".*\\.java", fvc));
 
-         cmd.add(0, "cstyle");
+         cmd.add(0, "./cstyle");
          cmd.add(0, "bash");
          PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
       } catch (InputException e) {
@@ -68,19 +68,27 @@ class CheckStyle extends Rgroup {
 
    private void cstylea() throws IOException, InputException {
       FileList.writeModifiedFiles(".*\\.java");  // write out java files
-      String[] dlist =
-         FileDescriptor.LocalFile.cwdlist(new GrepFilter(".*\\.java$", false));
+
+      ArrayList<FileDescriptor.LocalFile> fdlist =
+         DirList.getDefault().fileList(
+         new GrepFilter(".*\\.java$", false));
+
 
       //trace("dlist = " + dlist);
-      if (dlist.length == 0)
+      if (fdlist.size() == 0)
          UI.reportMessage("no files to compile");
       else  {
-         List<String> cmd =
-            new LinkedList<String>(java.util.Arrays.asList(dlist));
+         ArrayList<String> dlist = new ArrayList<String>(fdlist.size());
+         dlist.add(0, "cstyle");
+         dlist.add(0, "bash");
 
-         cmd.add(0, "../cstyle");
-         cmd.add(0, "bash");
-         PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
+         for (FileDescriptor fd : fdlist)
+            dlist.add(fd.shortName);
+
+         //List<String> cmd =
+         //   new LinkedList<String>(java.util.Arrays.asList(dlist));
+
+         PosListList.Cmd.setErrors(new CheckStyleInst(dlist));
       }
    }
 }
