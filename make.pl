@@ -58,7 +58,11 @@ sub parsemake  {
          if (!/warning C4200: nonstandard extension used : zero-sized array in struct/) {
             mkerror($1,$3,0,$4);
          }
-      } elsif (/(^(\w:)?[\w.\/\\]+):([0-9]+):(.*)/) { # gcc and others
+
+#C:\Docume~1\utftbwx\Desktop\cyghome\javt\src\javi\UI.java:1916: ';' expected
+#         FontList.setDefaultFontSize(int width, int height) {
+#                                              ^
+      } elsif (/(^(\w:)?[~\w.\/\\]+):([0-9]+):(.*)/) { # gcc and others
          mkerror($1,$3,0,$4);
       } elsif (/: error LNK/) {   # recognizes MS link errors
          mkerror($logfile,$.,0,$_);
@@ -331,7 +335,8 @@ print "%origenv\n";
       mysetenv($target);
       foreach my $extra (@extras) {
          #my $mycommand = "smake -f $mkfile $extra all install 2>&1|";
-         my $mycommand = "make $extra all 2>&1|";
+         #my $mycommand = "make $extra all 2>&1|";
+         my $mycommand = "ant -e $extra 2>&1|";
          #my $mycommand = "python2.3 setup.py build 2>&1|";
          print TEEOUT "results of  $mycommand for $target\n";
          print TEEOUT "cdir:$cdir \n";

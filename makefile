@@ -18,8 +18,8 @@ install : javi.jar
 	chmod +x javi.jar vi.pl /usr/share/java/vi.pl /usr/share/java/javi.jar
 
 ID: *.java
-	ctags -n -R . ../history plugin
-	mkid . ../history plugin
+	ctags -n -R history javi
+	mkid history javi
 
 REM= Compute Task rtest rtest_Stub rtestClient
 REM_CLASS = $(addsuffix .class,$(REM)) 

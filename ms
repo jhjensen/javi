@@ -1,19 +1,16 @@
 #!/bin/bash
 if [ $OS == Windows_NT ] ; then
    listsep=\;
-   JDK=jdk1.6.0_20
-   JDK1=/cygdrive/c/Progra~1/Java/$JDK
    JDK2=c:\\Progra~1\\Java\\$JDK
-   myprog="C:\Docume~1\utftbwx\Desktop\cyghome\javt"
-   export JAVA_FONTS=$myprog\\fonts
-   mycp="$myprog;$myprog\juniversalchardet-1.0.3.jar;$myprog\rhino1_7R2\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
+   jroot="C:\Docume~1\utftbwx\Desktop\cyghome\javt"
+   myprog="$jroot\dist\lib"
+   mycp="$jroot\build;$myprog\juniversalchardet-1.0.3.jar;$myprog\rhino1_7R2\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
 
    export CLASSPATH=$mycp 
+   echo $mycp
    DEBUGFLAGS="-Xdebug -Xrunjdwp:transport=dt_shmem,address=currjdbconn,server=y,suspend=n"
 
-   export PATH=$JDK1/bin:/usr/local/bin:$PATH
-
-   #jarf=$myprog\\javi\\javi.jar
+   #jarf=$myprog\\dist\\javi.jar
 
    BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar"
 else
@@ -25,4 +22,4 @@ else
    export CLASSPATH="$mycp" 
    #jarf=$myprog/javi/javi.jar
 fi
-   java -cp "$jarf$listsep$mycp" $BTCLASS  -Xmx64m javi.Javi todo.txt ../history plugin
+   java -cp "$jarf$listsep$mycp" $BTCLASS  -Xmx64m javi.Javi todo.txt src javi history javi/plugin

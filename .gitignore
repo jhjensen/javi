@@ -4,12 +4,11 @@ findbugs-1.3.9
 *.o
 *.dmp2
 *.class
-*/tags
-*/ID
-rhino1_7R2
-juniversalchardet-1.0.3.jar
+tags
+ID
+dist
+build
 javitests/junit3.8.2
-checkstyle-5.1
 build.txt
 dummy0
 *.log

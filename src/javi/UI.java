@@ -141,6 +141,10 @@ public abstract class UI {
       //   + " status = " + status
       //);
       while (true)  {
+         while(instance == null)
+               try {
+                  Thread.sleep(200);
+               } catch (InterruptedException e) { /*Ignore*/ }
          instance.ireportDiff(filename, linenum, filevers, backupvers,
              status, backupname);
          switch (diaflag) {
