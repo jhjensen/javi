@@ -12,9 +12,12 @@ import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Iterator;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
 
 public class FileDescriptor implements Serializable {
 
@@ -99,6 +102,39 @@ public class FileDescriptor implements Serializable {
       }
 
    */
+
+   private static final class Fiter implements Iterable<File> {
+
+      private final Iterator<FileDescriptor.LocalFile> input;
+
+      Fiter(Iterable<FileDescriptor.LocalFile> inputi) {
+         input =  inputi.iterator();
+      }
+
+      private final class Iter implements Iterator<File> {
+         public boolean hasNext() {
+            return input.hasNext();
+         }
+         public File next() {
+            File retval = input.next().fh;
+            return retval;
+         }
+         public void remove() {
+            input.remove();
+         }
+      }
+
+      public Iterator<File> iterator() {
+         return new Iter();
+      }
+
+   }
+
+   static Iterable<? extends JavaFileObject> getFileObjs(
+         StandardJavaFileManager fileManager  ,
+         Iterable<FileDescriptor.LocalFile> flist) {
+      return fileManager.getJavaFileObjectsFromFiles(new Fiter(flist));
+   }
 
    public static class InternalFd extends FileDescriptor {
       private static long uniqCtr;
@@ -234,6 +270,15 @@ public class FileDescriptor implements Serializable {
          return (fh.list(fl));
       }
 
+      ArrayList<FileDescriptor.LocalFile>  listDes(FilenameFilter fl) {
+         File[] flist = fh.listFiles(fl);
+         ArrayList<FileDescriptor.LocalFile> dlist =
+            new ArrayList<FileDescriptor.LocalFile>(flist.length);
+         for (File file : flist)
+            dlist.add(LocalFile.make(file));
+         return (dlist);
+      }
+
       void renameTo(LocalFile target) throws IOException {
          if (!fh.renameTo(target.fh))
             throw new IOException("unable to rename file");
@@ -278,6 +323,15 @@ public class FileDescriptor implements Serializable {
          File fh =  new File(fname);
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fname, cname);
+         //trace("cname " + cname  + " normName " + normName);
+         return fh.isDirectory()
+                ? new LocalDir(normName, cname, fh)
+                : new LocalFile(normName, cname, fh);
+      }
+
+      static LocalFile make(File fh) {
+         String cname = LocalFile.makecname(fh);
+         String normName = LocalFile.normalize(fh.getName(), cname);
          //trace("cname " + cname  + " normName " + normName);
          return fh.isDirectory()
                 ? new LocalDir(normName, cname, fh)

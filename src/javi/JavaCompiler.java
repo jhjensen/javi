@@ -47,15 +47,16 @@ class JavaCompiler extends Rgroup {
          int count = efs.size();
 
          if (count == 0 && fvc != null)  {
-            String [] flist = new String[1];
-            flist[0] =  fvc.edvec.getName();
+            ArrayList<FileDescriptor.LocalFile> flist =
+               new ArrayList<FileDescriptor.LocalFile>(1);
+            flist.add((FileDescriptor.LocalFile) fvc.edvec.fdes());
             PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
 
          } else {
-            String [] flist = new String[count];
-            int i = 0;
+            ArrayList<FileDescriptor.LocalFile> flist =
+               new ArrayList<FileDescriptor.LocalFile>(count);
             for (EditContainer ef : efs)
-               flist[i++] =  ef.getName();
+               flist.add((FileDescriptor.LocalFile) ef.fdes());
             PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
          }
 
@@ -64,11 +65,12 @@ class JavaCompiler extends Rgroup {
       }
    }
    private void compacommand() throws IOException, InputException {
+      trace("compa");
       FileList.writeModifiedFiles(".*\\.java"); // write out java files
-      String[] dlist = FileDescriptor.LocalFile.cwdlist(
-                          new GrepFilter(".*\\.java$", false));
-      //trace("dlist = " + dlist);
-      if (dlist.length == 0)
+      ArrayList<FileDescriptor.LocalFile> dlist = DirList.getDefault().fileList(
+         new GrepFilter(".*\\.java$", false));
+
+      if (dlist.size() == 0)
          UI.reportMessage("no files to compile");
       else
          PosListList.Cmd.setErrors(new JavaCompilerInst(dlist));
@@ -78,12 +80,12 @@ class JavaCompiler extends Rgroup {
 class JavaCompilerInst extends PositionIoc implements
    DiagnosticListener<JavaFileObject>  {
 
-   private final String [] flist;
+   private final ArrayList<FileDescriptor.LocalFile> flist;
    private int errcount = 0;
    private int warncount = 0;
 
-   JavaCompilerInst(String [] flisti) {
-      super("javac " +  Arrays.toString(flisti), null);
+   JavaCompilerInst(ArrayList<FileDescriptor.LocalFile>  flisti) {
+      super("javac " +  flisti, null);
       flist = flisti;
    }
 
@@ -93,8 +95,8 @@ class JavaCompilerInst extends PositionIoc implements
       Object source = diagnostic.getSource();
       String mess = diagnostic.getMessage(null);
       String src = source == null
-                   ? mess.split(":")[0]
-                   : diagnostic.getSource().toString();
+         ? mess.split(":")[0]
+         : diagnostic.getSource().toString();
 
       switch(diagnostic.getKind()) {
          case ERROR:
@@ -130,10 +132,10 @@ class JavaCompilerInst extends PositionIoc implements
 //            new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
 //         ));
          Iterable<? extends JavaFileObject> clist =
-            fileManager.getJavaFileObjectsFromStrings(Arrays.asList(flist));
+            FileDescriptor.getFileObjs(fileManager, flist);
 
          //String [] options = {"-Xlint"};
-         String [] options = {};
+         String [] options = {"-d", "build"};
 
          boolean success = compiler.getTask(null, fileManager,
             this, Arrays.asList(options), null, clist).call();

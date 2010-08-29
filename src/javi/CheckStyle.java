@@ -58,7 +58,7 @@ class CheckStyle extends Rgroup {
          List<String> cmd =
             new LinkedList<String>(listModFiles(".*\\.java", fvc));
 
-         cmd.add(0, "../cstyle");
+         cmd.add(0, "cstyle");
          cmd.add(0, "bash");
          PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
       } catch (InputException e) {

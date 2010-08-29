@@ -1,5 +1,6 @@
 package javi;
 import java.io.IOException;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 
 import java.util.regex.Pattern;
@@ -28,6 +29,18 @@ final class DirList extends TextEdit<DirEntry> {
       super(new IoConverter(fp, true), fp);
       //Thread.dumpStack();
       finish();
+   }
+
+   ArrayList<FileDescriptor.LocalFile> fileList(FilenameFilter fl) {
+      int size = readIn();
+      ArrayList<FileDescriptor.LocalFile> flist =
+         new ArrayList<FileDescriptor.LocalFile>(100 * size);
+      for (int i = 1; i < size; i++) {
+         for (FileDescriptor.LocalFile str : at(i).fh.listDes(fl))  {
+            flist.add(str);
+         }
+      }
+      return flist;
    }
 
    TextEdit<Position> globalgrep(String searchstr) {

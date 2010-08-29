@@ -34,6 +34,14 @@
    </exec>
   </target>
 
+  <target name="depend">
+     <depend srcdir="${src}" destdir="${build}"
+           cache="depcache" closure="yes">
+       <include name="**/*.java"/>
+       <excludesfile name="${java.dir}/build_excludes"/>
+     </depend>
+  </target>
+
   <target name="compile" depends="init"
         description="compile the source " >
     <!-- Compile the java code from ${src} into ${build} -->
