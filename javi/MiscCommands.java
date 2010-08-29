@@ -253,7 +253,7 @@ class MiscCommands extends Rgroup  {
          else  {
             //trace("scchange " + scchange);
             if (scchange != 0)
-               FontList.setDefaultFontSize(fvc.vi, -1, scchange);
+               UI.setViewSize(fvc.vi, -1, scchange);
             if (rcount != 0)
                fvc.cursoryabs(rcount);
             switch (key) {

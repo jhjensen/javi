@@ -512,27 +512,26 @@ class OldView  extends View {
    }
 
    public Dimension getPreferredSize() {
-      //trace("getPreferredSize screensize " + screenSize + " charheight +" + charheight  + " pixelWidth " + pixelWidth);
+      //trace("getPreferredSize screensize " + screenSize + " charheight " + charheight  + " pixelWidth " + pixelWidth);
+      //trace("screen y = " + screenSize * charheight);
       return new Dimension(pixelWidth, screenSize * charheight);
 //Thread.dumpStack();
    }
 
-   void setSizebyChar(int x, int y) {
-      //trace("setSizebyChar x = " + x + " y = " + y);
-      if (x < 0)
-         x = minColumns;
-      if (y < 0)
-         y = screenSize;
-      minColumns = x;
-      screenSize = y;
-      pixelWidth = minColumns * charwidth + 2 * inset;
+   void setSizebyChar(int xchar, int ychar) {
+      //trace("setSizebyChar xchar = " + xchar + " ychar = " + ychar);
+      if (xchar < 0)
+         xchar = minColumns;
+      if (ychar < 0)
+         ychar = screenSize;
+      setSize(xchar*charwidth, ychar*charheight);
       //UI.resize();
       //invalidate();//???
       //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
    }
 
    public  void setSize(int newx, int newy) {
-      //trace("setSize entered (" + x + "," + y + ")" + this);
+      //trace("setSize entered (" + newx + "," + newy + ")" + this);
       //if (y == 0){
       // Thread.dumpStack();
       // return;

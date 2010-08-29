@@ -99,6 +99,8 @@ public abstract class UI {
    abstract Result ireportModVal(String caption, String units,
                                  String []buttonVals, long limit);
 
+   abstract void isetViewSize(View vi, int width, int height);
+     
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
@@ -353,6 +355,10 @@ public abstract class UI {
       return instance.ireportModVal(caption, units, buttonVals, limit);
    }
 
+   static void setViewSize(View vi, int width, int height) {
+      instance.isetViewSize(vi, width, height);
+   }
+
    private static class StreamInterface extends UI {
       void isetStream(Reader inreader) {
          inStr = inreader;
@@ -474,6 +480,9 @@ public abstract class UI {
 
          return null;
       }
+      void isetViewSize(View vi, int width, int height) {
+      }
+
    }
 
    static class AwtInterface extends UI implements java.io.Serializable,
@@ -709,8 +718,6 @@ public abstract class UI {
             if (statusBar.isVisible())
                fsize.height +=  statusBar.getPreferredSize().height;
 
-
-
             int viewheight = 0;
             int ccount = getComponentCount();
             for (int i = 0; i < ccount; i++) {
@@ -722,6 +729,7 @@ public abstract class UI {
                   fsize.width += cpsize.width;
                   if (cpsize.height > viewheight)
                      viewheight = cpsize.height;
+                     //trace("viewheight " + viewheight);
                }
             }
 
@@ -1843,8 +1851,6 @@ public abstract class UI {
 
             //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
-            frm.setCompSize(startSize.width, startSize.height);
-
             if (normalFrame == frm
                   && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                   == Frame.MAXIMIZED_BOTH)) {
@@ -1855,6 +1861,8 @@ public abstract class UI {
                   startSize = pref;
                }
             }
+
+            frm.setCompSize(startSize.width, startSize.height);
 
             int ccount = frm.getComponentCount();
             //trace("frame size at start of layout " + startSize + " insets " + inset);
@@ -1910,7 +1918,14 @@ public abstract class UI {
          return new GetFile().getResult();
       }
 
+      void isetViewSize(View vi, int width, int height) {
+         //trace("width " + width + " height " + height + " view = " + vi);
+         FontList.setDefaultFontSize(vi,width, height);
+         vi.setSizebyChar(width, height);
+         new Validate();
+      }
    }
+
    public static void trace(String str) {
       Tools.trace(str, 1);
    }
