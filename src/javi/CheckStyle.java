@@ -71,7 +71,7 @@ class CheckStyle extends Rgroup {
 
       ArrayList<FileDescriptor.LocalFile> fdlist =
          DirList.getDefault().fileList(
-         new GrepFilter(".*\\.java$", false));
+            new GrepFilter(".*\\.java$", false));
 
 
       //trace("dlist = " + dlist);

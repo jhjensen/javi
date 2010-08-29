@@ -257,7 +257,8 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public String toString() {
-      return "(" + fileposx + "," + fileposy + ")" + (vis ? "vis" : "") + edvec + vi;
+      return "(" + fileposx + "," + fileposy + ")" 
+         + (vis ? "vis" : "") + edvec + vi;
    }
 
    boolean dispatchKeyEvent(KeyEvent ev) {
