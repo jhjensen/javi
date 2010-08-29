@@ -535,7 +535,7 @@ public abstract class UI {
          frm.add(tfview, 0);
          frm.setComponentZOrder(tfview, 0);
          tfc.setCurrView();
-         new Initer();
+         new Initer().postWait();
          //trace("this = " + this + " fr = " + fr);
       }
 
@@ -561,6 +561,9 @@ public abstract class UI {
 
          SyncAwt() {
             super();
+         }
+
+         SyncAwt<OType> postWait() {
             synchronized (this) {
                int holdCount = EventQueue.biglock2.getHoldCount();
                for (int i = 0; i < holdCount; i++)
@@ -574,6 +577,7 @@ public abstract class UI {
                for (int i = 0; i < holdCount; i++)
                   EventQueue.biglock2.lock();
             }
+            return this;
          }
 
          abstract OType doAwt();
@@ -1354,7 +1358,7 @@ public abstract class UI {
       boolean dopop(String str) {
          if (null == psinst)
             psinst = new PopString(frm);
-         //trace("instance " + instance + " flag " + diaflag);
+         trace("popping string " + str);
          return psinst.pop(str);
       }
 
@@ -1363,9 +1367,12 @@ public abstract class UI {
          Popper(String stri) {
             super();
             str = stri;
+            trace("str " + str);
+            postWait();
          }
 
          Boolean doAwt() {
+            trace("str " + str);
             return dopop(str);
          }
       }
@@ -1383,7 +1390,8 @@ public abstract class UI {
                   return dopop(str);
             }
          }
-         return new Popper(str).getResult();
+         trace("str " + str);
+         return new Popper(str).postWait().getResult();
       }
 
       static class NDialog extends Dialog implements ActionListener {
@@ -1919,7 +1927,7 @@ public abstract class UI {
       }
 
       String igetFile() {
-         return new GetFile().getResult();
+         return new GetFile().postWait().getResult();
       }
 
       void isetViewSize(View vi, int width, int height) {
