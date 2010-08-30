@@ -188,21 +188,19 @@ class JDebugger extends IoConverter<String> {
       }
    }
 
-   void dorun() {
+   void dorun() throws InterruptedException {
 
       addElement("running program " + this);
       StreamVreader iinput = new StreamVreader(vm.process().getInputStream());
       StreamVreader einput = new StreamVreader(vm.process().getErrorStream());
       String obj;
-      try {
-         while (!(iinput.finished() && einput.finished())) {
-            while ((obj = einput.getnext()) != null
-                  || (obj = iinput.getnext()) != null) {
-               addElement(obj);
-            }
-            Thread.sleep(200);
+      while (!(iinput.finished() && einput.finished())) {
+         while ((obj = einput.getnext()) != null
+               || (obj = iinput.getnext()) != null) {
+            addElement(obj);
          }
-      } catch (InterruptedException e) { }
+         Thread.sleep(200);
+      }
    }
 
    public String fromString(String s) {

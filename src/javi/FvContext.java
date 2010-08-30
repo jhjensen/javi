@@ -258,7 +258,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public String toString() {
-      return "(" + fileposx + "," + fileposy + ")" 
+      return "(" + fileposx + "," + fileposy + ")"
          + (vis ? "vis" : "") + edvec + vi;
    }
 
