@@ -73,7 +73,7 @@ public final class Javi {
          //trace("preserver");
          new Server(6001);
       } catch (Exception e) {
-         //trace("error starting Server" + e);
+         trace("error starting Server" + e);
       }
 
       //new v8();
@@ -175,9 +175,11 @@ public final class Javi {
          }
          ev.run();
       } catch (Throwable e) {
-         trace("main caught vic exception "  + e);
-         e.printStackTrace();
-         trace("exiting");
+         if (!(e instanceof ExitException)) {
+            trace("main caught vic exception "  + e);
+            e.printStackTrace();
+            trace("exiting");
+         }
       }
 
       if (pfile != null)  {
