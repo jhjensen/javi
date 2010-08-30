@@ -67,6 +67,7 @@ public final class FvContext<OType> implements Serializable {
       }
 
       void put(FvContext fvc) {
+         //trace("putting a new fvcontext " + fvc);
          HashMap<TextEdit, FvContext> ehash = viewhash.get(fvc.vi);
          if (ehash == null) {
             // this only happens when we get a new view
@@ -107,8 +108,8 @@ public final class FvContext<OType> implements Serializable {
 
          FvIterator() {
             fvit = viit.hasNext()
-                   ? viit.next().values().iterator()
-                   : new ArrayList<FvContext>().iterator();
+               ? viit.next().values().iterator()
+               : new ArrayList<FvContext>().iterator();
          }
 
          public boolean hasNext() {
@@ -370,11 +371,13 @@ public final class FvContext<OType> implements Serializable {
       //trace("reconnecting oldfile " + ed + " next  " + next);
       if (currfvc.edvec == ed)
          UI.connectfv(next, currfvc.vi);
+      //trace("starting iterator");
       for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
          FvContext fvc = fit.next();
          if (fvc.edvec == ed)
             getcontext(fvc.vi, next).activate();
       }
+      //trace("done iterator");
    }
 
    static FvContext dispose(View vi) { // should be called with first in chain

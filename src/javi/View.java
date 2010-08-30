@@ -348,6 +348,8 @@ abstract class View  extends Canvas {
 
    public void paint(Graphics g) {
       //trace("paint called ");
+      if (text==null)
+         return;
       try {
          if (g != oldgr) {
             oldgr = g;

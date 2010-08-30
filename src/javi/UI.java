@@ -528,7 +528,7 @@ public abstract class UI {
          TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
 
          View tfview = new OldView(false);
-         tfview.setFont(FontList.getCurr(tfview));
+         tfview.setFont(FontList.getCurr(null));
          tfview.setSizebyChar(80, 1);
          tfview.setVisible(false);
          tfc = FvContext.getcontext(tfview, cmbuff);
@@ -1068,6 +1068,7 @@ public abstract class UI {
             try {
                View vi = mkview(false);
                FontList.setDefaultFontSize(vi, -1, -1);
+               trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
                iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
             } catch (InputException e) {
                throw new RuntimeException("can't recover iaddview", e);
@@ -1113,7 +1114,7 @@ public abstract class UI {
          //trace("mkview");
          View ta = new OldView(true);
          viewCount++;
-         ta.setFont(FontList.getCurr(ta));
+         ta.setFont(FontList.getCurr(null));
          frm.add(ta, -1);
          //frm.setComponentZOrder(ta,1);
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
