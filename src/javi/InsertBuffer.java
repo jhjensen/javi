@@ -277,11 +277,6 @@ class InsertBuffer extends Rgroup
                         if (null != binding.rg.doroutine(binding.index,
                               binding.arg, count, 0, fvc, false))
                            break;
-                     //if (!verbatim) {
-                     //   KeyBinding binding = activekeys.get(ke);
-                     //   if (binding != null && null != binding.rg.doroutine(
-                     //         binding.index, binding.arg, count, 0, fvc, false))
-                     //      break;
                      }  else if (ke.getID() == KeyEvent.KEY_PRESSED)
                         if (!ke.isActionKey()) {
                            key = ke.getKeyChar();
@@ -317,7 +312,8 @@ class InsertBuffer extends Rgroup
                } else
                   trace("nextevent not AWTEvent" + e);
             }
-         } catch (InterruptedException e) { /* Ignore Interrupts */
+         } catch (InterruptedException e) {
+            trace("Interrupted Exception!!!");
          } finally  {
             cleanup(fvc);
          }
@@ -408,10 +404,7 @@ class InsertBuffer extends Rgroup
 
          buffer.setLength(committed);
          CharacterIterator charit = ev.getText();
-         if (charit == null) {
-            //      vic.eventq.insert(new KeyEvent(myfvc.vi,  KeyEvent.KEY_PRESSED , 0, 0, 10, (char)10)) ;
-            //trace("got null char it");
-         } else {
+         if (charit != null) {
             //trace("iterate " + (int)charit.next());
             for (char c = charit.first();
                     c != CharacterIterator.DONE;
