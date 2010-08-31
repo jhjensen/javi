@@ -51,7 +51,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
             }
          }
       } catch (InterruptedException e) {
-         // ignore
+         trace("ignoring InterruptedException");
       } catch (Throwable e) {
          UI.popError("Vt100 caught ", e);
       }

@@ -23,9 +23,7 @@ class XrefReader extends PositionIoc {
       //trace("line = " + line);
       String line;
       while (null != (line = getLine())) {
-         if ("done".equals(line)) {
-            //trace("should exit immediatly");
-         } else if (!"".equals(line))
+         if (!"done".equals(line)) {
             try {
                Position retval = parseline(line);
                if (retval != null)
@@ -35,6 +33,7 @@ class XrefReader extends PositionIoc {
                //         trace("positionioc.parseline failed line = " + line);
                //      trace("positionioc.parseline exception = " + e);
             }
+         }
       }
       return null;
    }

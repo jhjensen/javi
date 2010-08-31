@@ -64,7 +64,10 @@ abstract class View  extends Canvas {
 
    private transient Inserter inserter;
 
-   final boolean nextFlag;
+   private final boolean traverse;
+   boolean isTraverseable() {
+      return traverse;
+   }
 
    enum Opcode { NOOP, INSERT, CHANGE,
       DELETE, REDRAW , MSCREEN, BLINKCURSOR
@@ -318,9 +321,9 @@ abstract class View  extends Canvas {
       enableEvents(AWTEvent.MOUSE_EVENT_MASK);
    }
 
-   View(boolean next) {
+   View(boolean traversei) {
       super();
-      nextFlag = next;
+      traverse = traversei;
       setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
       common();
    }
@@ -331,7 +334,7 @@ abstract class View  extends Canvas {
       chmark = text.copyCurr();
 
       clearMark();
-      cursorChanged(curX,curY);
+      cursorChanged(curX, curY);
       op.redraw();
    }
 
@@ -348,7 +351,7 @@ abstract class View  extends Canvas {
 
    public void paint(Graphics g) {
       //trace("paint called ");
-      if (text==null)
+      if (text == null)
          return;
       try {
          if (g != oldgr) {
@@ -451,6 +454,7 @@ abstract class View  extends Canvas {
                }
             } while (!text.donereading() && newReadin <= needed);
          } catch (InterruptedException e) {
+            trace("ignoring InterruptedException");
          }
          op.currop = REDRAW;
          repaint();

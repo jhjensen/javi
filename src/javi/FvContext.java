@@ -238,11 +238,11 @@ public final class FvContext<OType> implements Serializable {
          if (vi == eve.next()) {
             while (eve.hasNext()) {
                View nview = eve.next();
-               if (nview.nextFlag)
+               if (nview.isTraverseable())
                   return nview;
             }
             for (View nv : views)
-               if (nv.nextFlag) {
+               if (nv.isTraverseable()) {
                   return nv;
                }
             throw new RuntimeException("findNextView is confused");
