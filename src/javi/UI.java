@@ -1876,6 +1876,8 @@ public abstract class UI {
 
             //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
+            frm.setCompSize(startSize.width, startSize.height);
+
             if (normalFrame == frm
                   && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                   == Frame.MAXIMIZED_BOTH)) {
@@ -1886,8 +1888,6 @@ public abstract class UI {
                   startSize = pref;
                }
             }
-
-            frm.setCompSize(startSize.width, startSize.height);
 
             int ccount = frm.getComponentCount();
             //trace("frame size at start of layout " + startSize + " insets " + inset);
@@ -1947,6 +1947,12 @@ public abstract class UI {
          //trace("width " + width + " height " + height + " view = " + vi);
          FontList.setDefaultFontSize(vi, width, height);
          vi.setSizebyChar(width, height);
+         if (normalFrame == frm
+               && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+               == Frame.MAXIMIZED_BOTH)) {
+            Dimension pref = frm.getPreferredSize();
+            frm.setSize(pref);
+         }
          new Validate();
       }
    }
