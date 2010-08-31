@@ -176,7 +176,7 @@ final class MoveGroup extends Rgroup {
          case 26:
             return null;  //movehalfscreen(arg,count,fvc.vi); return null;
          case 27:
-            fvc.screeny((((Integer) arg).intValue() == 1) 
+            fvc.screeny((((Integer) arg).intValue() == 1)
                ? count
                : -count);
             return null;
@@ -271,8 +271,9 @@ final class MoveGroup extends Rgroup {
       Position startpos = fvc.getPosition(null);
       int i = 0;
       do {
-         if (null == (startpos = fvc.edvec.regsearch(startpos, startpos,
-               dotrev ^ dir ^ searchdir, exp, searchOffset, searchOffsetType)))
+         startpos = fvc.edvec.regsearch(startpos, startpos,
+               dotrev ^ dir ^ searchdir, exp, searchOffset, searchOffsetType);
+         if (null == startpos)
             return;
       } while (++i < count);
 
@@ -368,6 +369,8 @@ final class MoveGroup extends Rgroup {
                               + (line.charAt(lindex) - '0');
                            trace("searchOffset = " + searchOffset);
                            break;
+                        default:
+                           throw new InputException("invalid regex modifier");
                      }
                if (minusFlag)
                   searchOffset = -searchOffset;
@@ -490,11 +493,13 @@ final class MoveGroup extends Rgroup {
          fvc.cursory(-count);
    }
 
-   private void shiftmoveline(boolean reverse, int count, FvContext fvc) {
+   private void shiftmoveline(boolean reverse,
+         int count, FvContext fvc) {
+      int amount =  (int) Math.ceil(Math.sqrt(fvc.vi.getRows((float) 1.)));
       if (reverse ^ dotrev)
-         fvc.cursory(count * (int) Math.ceil(Math.sqrt(fvc.vi.getRows((float) 1.))));
+         fvc.cursory(count * amount);
       else
-         fvc.cursory(-count * (int) Math.ceil(Math.sqrt(fvc.vi.getRows((float) 1.))));
+         fvc.cursory(-count * amount);
    }
 
    static void starttext(FvContext fvc) {
@@ -700,7 +705,7 @@ final class MoveGroup extends Rgroup {
                xindex = line.length();
             }
          try {
-            while (!iswhite(line.charAt(--xindex))) ; //find first word
+            while (!iswhite(line.charAt(--xindex))); //find first word
          } catch (StringIndexOutOfBoundsException e) { /*ignore*/ }
          xindex++;
       }
@@ -738,16 +743,18 @@ final class MoveGroup extends Rgroup {
       }
       fvc.cursorabs(xindex, yindex);
    }
+   static final String[] bchars1 = {
+      "(<)|(>)",
+      "(\\{)|(\\})",
+      "(\\[)|(\\])",
+      "(\\()|(\\))",
+      "(\\/\\*)|(\\*\\/)",
+      "(^[ \\t]*#if)|(^[ \\t]*#ifdef)|(^[ \\t]*#endif)"
+         + "|(^[ \\t]*#else)|(^[ \\t]*#elif)",
+      "(^[ \\t]*ifdef)|(^[ \\t]*ifndef)|(^[ \\t]*ifeq)|"
+         + "(^[ \\t]*ifneq)|(^[ \\t]*endif)|(^[ \\t]*else)"
+   };
    private void initbalance() {
-      String[] bchars1 = {
-         "(<)|(>)",
-         "(\\{)|(\\})",
-         "(\\[)|(\\])",
-         "(\\()|(\\))",
-         "(\\/\\*)|(\\*\\/)",
-         "(^[ \\t]*#if)|(^[ \\t]*#ifdef)|(^[ \\t]*#endif)|(^[ \\t]*#else)|(^[ \\t]*#elif)",
-         "(^[ \\t]*ifdef)|(^[ \\t]*ifndef)|(^[ \\t]*ifeq)|(^[ \\t]*ifneq)|(^[ \\t]*endif)|(^[ \\t]*else)"
-      };
       brega = new Matcher[bchars1.length];
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < bchars1.length; i++) {
@@ -781,7 +788,6 @@ final class MoveGroup extends Rgroup {
       throw new RuntimeException("Regexp.java reverse search logic error");
 
    }
-
 
    private static int calcinc(int bindex, MatchResult reg) {
       switch (bindex) {

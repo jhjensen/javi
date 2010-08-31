@@ -524,7 +524,7 @@ class OldView  extends View {
          xchar = minColumns;
       if (ychar < 0)
          ychar = screenSize;
-      setSize(xchar*charwidth, ychar*charheight);
+      setSize(xchar * charwidth, ychar * charheight);
       //UI.resize();
       //invalidate();//???
       //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);

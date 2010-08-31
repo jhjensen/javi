@@ -248,33 +248,34 @@ public interface Plugin {
          NoSuchFieldException, IllegalAccessException {
 
          java.security.AccessController.doPrivileged(
-               new java.security.PrivilegedAction()  {
-            public Object run() {
-               try {
-                  final JarLoader jarLoader = new JarLoader(jarFile);
+            new java.security.PrivilegedAction()  {
+               public Object run() {
+                  try {
+                     final JarLoader jarLoader = new JarLoader(jarFile);
 
-                  /* Load the class from the jar file and resolve it. */
-                  Class c = jarLoader.loadClass("javi.plugin.FindBugs", true);
-                  //trace("class loaded");
-                  if (Plugin.class.isAssignableFrom(c)) {
-                     // Yep, lets call a method  we know about.  */
-                     //java.lang.reflect.Method m = c.getDeclaredMethod("init");
-                     //m.invoke(c);
+                     /* Load the class from the jar file and resolve it. */
+                     Class c = jarLoader.loadClass(
+                        "javi.plugin.FindBugs", true);
+                     //trace("class loaded");
+                     if (Plugin.class.isAssignableFrom(c)) {
+                        // Yep, lets call a method  we know about.  */
+                        //java.lang.reflect.Method m = c.getDeclaredMethod("init");
+                        //m.invoke(c);
 
-                     //c.toString();
+                        //c.toString();
 
-                     java.lang.reflect.Field m =
-                        c.getDeclaredField("pluginInfo");
-                     trace("plugin info " + m.get(null));
-                  } else {
-                     trace("unable to run class " + c);
+                        java.lang.reflect.Field m =
+                           c.getDeclaredField("pluginInfo");
+                        trace("plugin info " + m.get(null));
+                     } else {
+                        trace("unable to run class " + c);
+                     }
+                  } catch (Throwable e) {
+                     trace("no plugins to load");
                   }
-               } catch (Throwable e) {
-                  // not really an error UI.popError("unable to load plugin " , e);
+                  return null;
                }
-               return null;
-            }
-         });
+            });
       }
       static void trace(String str) {
          Tools.trace(str, 1);

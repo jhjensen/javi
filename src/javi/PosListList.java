@@ -99,7 +99,7 @@ public final class PosListList extends TextList<Position> implements
             lastlist = null;
          //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          try {
-            FvContext.dispose(oldList,newList);
+            FvContext.dispose(oldList, newList);
          } catch (Exception e) {
             UI.popError("attempting to dispose of list" , e);
          }
@@ -120,7 +120,7 @@ public final class PosListList extends TextList<Position> implements
       //trace("finish = " + plist.finish());
       try {
          for (int i = 1; i < finish(); i++)
-            FvContext.dispose(at(i),base);
+            FvContext.dispose(at(i), base);
       } catch (Exception e) {
          UI.popError("attempting to dispose of list" , e);
       }
@@ -207,7 +207,7 @@ public final class PosListList extends TextList<Position> implements
          flush();
       }
 
-      public Object doroutine(int rnum, Object arg, int count, int rcount,
+      public final Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws
             IOException, InputException {
          //trace("rnum = " + rnum );
@@ -345,7 +345,9 @@ public final class PosListList extends TextList<Position> implements
             filereg.reset("smtp_hfilter.c:254");
             myassert(filereg.find(), "");
 
-            filereg.reset("smtp_hfilter.c:254 hfilter_find SUBJECTsmtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
+            filereg.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
+               + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
+               + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
             myassert(filereg.find(), "");
             myassert(filereg.group(4).equals("254"), filereg.group(4));
             myassert(filereg.group(1).equals("smtp_hfilter.c"),
@@ -407,7 +409,9 @@ public final class PosListList extends TextList<Position> implements
                int maxscore = 0;
 
             out:
-               for (int symindex = symlist.length - 2; symindex >= 0; symindex--) {
+               for (int symindex = symlist.length - 2;
+                     symindex >= 0;
+                     symindex--) {
                   String currsym = symlist[symindex];
 
                   boolean findflag = true;

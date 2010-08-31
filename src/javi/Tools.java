@@ -1,7 +1,5 @@
 package javi;
 
-import java.util.Date;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -18,10 +16,11 @@ public final class Tools {
       } catch (Exception e) {
 
          long newTime = System.nanoTime();
-         long timediff = newTime- lastTime;
+         long timediff = newTime - lastTime;
          lastTime = newTime;
          StackTraceElement[] tr = e.getStackTrace();
-         System.err.println(timediff/1000000 + " " + tr[1 + offset].getFileName() + ":"
+         System.err.println(timediff / 1000000 + " "
+            + tr[1 + offset].getFileName() + ":"
             + tr[1 + offset].getLineNumber() + " " + str);
          //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
       }
@@ -56,6 +55,7 @@ public final class Tools {
             output.add(str);
          proc.waitFor();
       } catch (InterruptedException e) {
+         trace("!!!! interupted executing " + command);
       } finally {
          in.close();
       }

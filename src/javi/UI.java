@@ -100,7 +100,7 @@ public abstract class UI {
                                  String []buttonVals, long limit);
 
    abstract void isetViewSize(View vi, int width, int height);
-     
+
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
@@ -141,10 +141,12 @@ public abstract class UI {
       //   + " status = " + status
       //);
       while (true)  {
-         while(instance == null)
-               try {
-                  Thread.sleep(200);
-               } catch (InterruptedException e) { /*Ignore*/ }
+         while (instance == null)
+            try {
+               Thread.sleep(200);
+            } catch (InterruptedException e) {
+               trace("ignoring interrupted exception");
+            }
          instance.ireportDiff(filename, linenum, filevers, backupvers,
              status, backupname);
          switch (diaflag) {
@@ -172,7 +174,9 @@ public abstract class UI {
                    + filename + " bad diaflag = " + diaflag);
                try {
                   Thread.sleep(5000);
-               } catch (InterruptedException e) { /*Ignore*/ }
+               } catch (InterruptedException e) {
+                  trace("ignoring InterruptedException");
+               }
                trace("Thread " + Thread.currentThread() + " filename "
                   + filename + " bad diaflag = " + diaflag);
          }
@@ -573,7 +577,9 @@ public abstract class UI {
                post();
                try {
                   wait();
-               } catch (InterruptedException e) { }
+               } catch (InterruptedException e) {
+                  trace("ignoring InterruptedException");
+               }
                for (int i = 0; i < holdCount; i++)
                   EventQueue.biglock2.lock();
             }
@@ -797,6 +803,8 @@ public abstract class UI {
                            case KeyEvent.VK_ALT:
                               super.processEvent(ev);
                               return;
+                           default:
+                              break;
                         }
 //???            if (fcontext.dispatchKeyEvent(kev))
                      //???        break;
@@ -893,7 +901,9 @@ public abstract class UI {
                EventQueue.biglock2.assertUnOwned();
                try {
                   wait();
-               } catch (InterruptedException e) { }
+               } catch (InterruptedException e) {
+                  trace("ignoring interruptedException");
+               }
             }
          }
 
@@ -1580,7 +1590,9 @@ public abstract class UI {
                EventQueue.biglock2.assertUnOwned();
                try {
                   wait();
-               } catch (InterruptedException e) { }
+               } catch (InterruptedException e) {
+                  trace("ignoring InterruptedException");
+               }
             }
          }
 
@@ -1920,7 +1932,7 @@ public abstract class UI {
          String doAwt()  {
 
             if (fdialog == null)
-               fdialog = new FileDialog(frm, "open new vifile", 
+               fdialog = new FileDialog(frm, "open new vifile",
                   FileDialog.LOAD);
             fdialog.setVisible(true);
             return   fdialog.getFile();
@@ -1933,7 +1945,7 @@ public abstract class UI {
 
       void isetViewSize(View vi, int width, int height) {
          //trace("width " + width + " height " + height + " view = " + vi);
-         FontList.setDefaultFontSize(vi,width, height);
+         FontList.setDefaultFontSize(vi, width, height);
          vi.setSizebyChar(width, height);
          new Validate();
       }

@@ -71,7 +71,7 @@ public class PositionIoc extends BufInIoc<Position> {
       //trace("get next got pos " + pos);
       if (pos == null) {
          if (toString().length() != 0)
-          UI.reportMessage(this + "complete " + errcount + " results");
+            UI.reportMessage(this + "complete " + errcount + " results");
       } else {
          if (pos.filename != null) {
             EventQueue.biglock2.lock();
