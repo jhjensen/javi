@@ -120,7 +120,7 @@ public final class PosListList extends TextList<Position> implements
       //trace("finish = " + plist.finish());
       try {
          for (int i = 1; i < finish(); i++)
-            FvContext.dispose(at(i), base);
+            FvContext.dispose(at(i), this);
       } catch (Exception e) {
          UI.popError("attempting to dispose of list" , e);
       }
