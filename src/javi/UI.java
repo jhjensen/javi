@@ -1949,10 +1949,9 @@ public abstract class UI {
          vi.setSizebyChar(width, height);
          if (normalFrame == frm
                && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
-               == Frame.MAXIMIZED_BOTH)) {
-            Dimension pref = frm.getPreferredSize();
-            frm.setSize(pref);
-         }
+               == Frame.MAXIMIZED_BOTH)) 
+            frm.setSize(frm.getPreferredSize());
+         
          new Validate();
       }
    }

@@ -289,7 +289,8 @@ public class MapEvent {
          case MouseEvent.BUTTON1:
             if (fvc.vi != vi)
                UI.setView(newfvc);
-            newfvc.vi.setMark(p);
+            fvc.cursorabs(p);
+            //newfvc.vi.setMark(p);
             break;
 
          case MouseEvent.BUTTON2:
@@ -315,7 +316,7 @@ public class MapEvent {
    }
 
    final void mouserelease(MouseEvent event, FvContext fvc) throws
-          InputException {
+          InputException,InterruptedException,IOException {
       //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
 
       View vi = (View) event.getComponent();
@@ -326,22 +327,13 @@ public class MapEvent {
 
       if (event.getButton()  == MouseEvent.BUTTON1) {
          //trace("setting markmode ");
-         fvc.cursorabs(p);
-         Position markpos = vi.getMark();
-         if (markpos != null)
-            if  (p.x == markpos.x && p.y == markpos.y)
-               vi.clearMark();
-            else
-               try {
-                  Rgroup.doroutine("markmode", 0, 1, 1,
-                     fvc, false);
-               } catch (ExitException e) {
-                  throw e;
-               } catch (Exception e) {
-                  e.printStackTrace();
-                  throw new RuntimeException(
-                     "mouserelease should not have gotten exception " + e , e);
-               }
+         //fvc.cursorabs(p);
+         if (fvc.inserty() != p.y || fvc.insertx() != p.x)  {
+            Position oldPos = fvc.getPosition("");
+            fvc.cursorabs(p);
+            fvc.vi.setMark(oldPos);
+            Rgroup.doroutine("markmode", 0, 1, 1, fvc, false);
+         }
       }
    }
 

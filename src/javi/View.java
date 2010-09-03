@@ -318,7 +318,8 @@ abstract class View  extends Canvas {
 
          enableInputMethods(false);
       */
-      enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK
+         | AWTEvent.MOUSE_MOTION_EVENT_MASK);
    }
 
    View(boolean traversei) {
@@ -582,15 +583,33 @@ abstract class View  extends Canvas {
       }
    }
 
+   private int mousePressed = 0;
+
    @SuppressWarnings("fallthrough")
    public void processEvent(AWTEvent ev) {
       //trace("ev " + ev.getID() + "  has focus " + hasFocus());
       switch (ev.getID()) {
          case MouseEvent.MOUSE_PRESSED:
+            EventQueue.insert(ev);
+            mousePressed = ((MouseEvent)ev).getButton();
+            break;
          case MouseEvent.MOUSE_RELEASED:
+            EventQueue.insert(ev);
+            mousePressed = 0;
+            break;
          case MouseEvent.MOUSE_WHEEL:
             EventQueue.insert(ev);
             break;
+         case MouseEvent.MOUSE_DRAGGED:
+            MouseEvent mev = (MouseEvent)ev;
+            if (mousePressed == 1) {
+               //fvc.cursorabs(p);
+               Position evPos = mousepos(mev);
+               if (fileX != evPos.y || fileY != evPos.x)
+                  setMark(evPos);
+            }
+            break;
+         case MouseEvent.MOUSE_MOVED:
          case MouseEvent.MOUSE_ENTERED:
          case MouseEvent.MOUSE_EXITED:
          case MouseEvent.MOUSE_CLICKED:

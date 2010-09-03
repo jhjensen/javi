@@ -437,6 +437,7 @@ public final class FvContext<OType> implements Serializable {
          currfvc.fileposy + "," +  (currfvc.fileposx + 1));
       //trace("char = " + (int)((String)currfvc.edvec.at(currfvc.inserty())).charAt(currfvc.insertx()));
       //trace("sb " + sb);
+      trace("getCurrState " + currfvc);
       currfvc.edvec.addState(sb);
       return sb.toString();
    }
@@ -448,14 +449,9 @@ public final class FvContext<OType> implements Serializable {
          throw new RuntimeException(
             "invalid fileposy " + fileposy);
 
-      if (!edvec.contains(fileposy))
-         throw new RuntimeException(
-            "invalid fileposy " + fileposy);
-
-      if (!edvec.contains(1))
-         throw new RuntimeException("editvec missing a line");
-
-      return edvec.at(fileposy);
+      return edvec.at(edvec.contains(fileposy)
+         ? fileposy
+         :  edvec.readIn()-1);
    }
 
 
