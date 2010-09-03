@@ -64,8 +64,10 @@ class UndoHistory<OType> extends PersistantStack {
    }
 
    void addState(StringBuilder sb) {
+      //trace("current " + current +  " + currmark " + currmark);
       //trace("current " + current +  " + curr = " + currmark.curr());
       //trace("savewrite " + savewrite);
+      //trace("sb " + sb);
       String st;
       sb.append((currmark.isWritten())
          ? " unchanged"

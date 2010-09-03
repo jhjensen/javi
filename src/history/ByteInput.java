@@ -229,8 +229,4 @@ public class ByteInput implements DataInput {
 //trace("readUTF returning " + retval);
    }
 */
-static void trace(String str) {
-   PersistantStack.trace(str,1);
-}
-
 }

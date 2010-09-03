@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import static history.Tools.trace;
 
 // PersistantStack is a funny sort of Stack.  If you add an element
 // in the middle the rest of the array is deleted.  The array is backed by a 
@@ -663,20 +664,5 @@ public abstract class PersistantStack {
    private ByteInput binp = null;
    private int filesize;
 
-static void trace(String str) {
-   trace(str,1);
-}
-
-static void trace(String str,int offset) {
-   try { 
-
-       throw new Exception("");
-   } catch (Exception e) {
-      
-      StackTraceElement[] tr = e.getStackTrace();
-      System.err.println(tr[1+offset].getClassName().replace('$','.') + "." + tr[1+offset].getMethodName() + " " + str);
-   }
-}
 
 }
-

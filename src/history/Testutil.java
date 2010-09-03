@@ -40,22 +40,6 @@ static boolean arraycmp(byte[] b1,int offset1,int length,byte[] b2,int offset2) 
    return true;
 }
 
-static void trace(String str,int offset) {
-   try { 
-
-       throw new Exception("");
-   } catch (Exception e) {
-      
-      StackTraceElement[] tr = e.getStackTrace();
-      //trace(tr[1+offset].getClassName().replace('$','.') + "." + tr[1+offset].getMethodName() + " " + str);
-      System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
-   }
-}
-
-static void trace(String str) {
-   trace(str,1);
-}
-
 static boolean myassert(boolean flag,Object dump) {
    if (!flag)
         throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());

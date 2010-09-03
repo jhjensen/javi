@@ -76,6 +76,7 @@ public class EditContainer<OType> implements
    final void clearUndo() {
       trace("clearUndo " + this);
       backup.ereset();
+      backup.baseRecord();
    }
 
    final void reload(boolean cleararray) {
@@ -902,7 +903,7 @@ public class EditContainer<OType> implements
    }
 
    final void addState(StringBuilder sb) {
-      //trace("\"" + canonname()+  "\" class = " + prop.conv.getClass() );
+      //trace("\"" + prop.fdes.shortName +  "\" class = " + prop.conv.getClass() );
       if (!donereading())
          sb.append(" still reading file");
 
