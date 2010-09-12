@@ -818,8 +818,14 @@ public abstract class UI {
                case WindowEvent.WINDOW_DEACTIVATED:
                case WindowEvent.WINDOW_OPENED:
                case WindowEvent.WINDOW_CLOSED:
+                  break;
+
                case FocusEvent.FOCUS_LOST:
+                  EventQueue.focusLost();
+                  break;
+
                case FocusEvent.FOCUS_GAINED:
+                  EventQueue.focusGained();
                   break;
 
                case WindowEvent.WINDOW_CLOSING:

@@ -67,7 +67,7 @@ public final class EventQueue {
 //private BufferedReader sourceStream;
 
 
-   private static final int timeout = 500;
+   private static int timeout = 500;
 
    abstract static class IEvent {
       abstract void execute() throws ExitException;
@@ -144,6 +144,19 @@ public final class EventQueue {
       return ev;
    }
 
+   static void focusGained() {
+      synchronized (EventQueue.class) { 
+         EventQueue.class.notifyAll();  // make sure cursor starts blinking
+         timeout = 500;
+      }
+   }
+
+   static void focusLost() {
+      synchronized (EventQueue.class) { 
+         timeout = 1000 *60 *60; // redo cursor every once in a while, and do gc
+      }
+   }
+         
    static Object nextEvent(View vi) throws ExitException {
       while (true) {
          Object ev = inextEvent(vi);
