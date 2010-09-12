@@ -16,7 +16,7 @@ import static history.Tools.trace;
 // disk file, and in fact may not keep any of the array in memory.
 //
 
-public final abstract class PersistantStack {
+public abstract class PersistantStack {
    protected abstract void usercb(ByteInput dis) throws EOFException;
    protected abstract void deletecb(int index);
 
@@ -29,18 +29,18 @@ public final abstract class PersistantStack {
       protected abstract boolean matches(Object ob, Object ob2);
       private int recordIndex;
 
-      public int getIndex() {
+      public final int getIndex() {
          return recordIndex;
       }
 
-      public void setEqual(PSIterator it) {
+      public final void setEqual(PSIterator it) {
          recordIndex = it.recordIndex;
       }
 
-      public void setInvalid() {
+      public final void setInvalid() {
          recordIndex = -Integer.MAX_VALUE;
       }
-      public boolean isValid() {
+      public final boolean isValid() {
          return recordIndex >= -1;
       }
       protected PSIterator() {
@@ -53,39 +53,39 @@ public final abstract class PersistantStack {
       }
 
 
-      public boolean hasPrevious() {
+      public final boolean hasPrevious() {
          return recordIndex > 0;
       }
 
-      public void set(Object obj) {
+      public final void set(Object obj) {
          throw new UnsupportedOperationException();
       }
-      public int nextIndex() { return recordIndex + 1; }
-      public int previousIndex() { return recordIndex - 1; }
+      public final int nextIndex() { return recordIndex + 1; }
+      public final int previousIndex() { return recordIndex - 1; }
 
-      public void add(Object obj) {
+      public final void add(Object obj) {
          throw new UnsupportedOperationException();
       }
 
-      public void decrement() {
+      public final void decrement() {
          --recordIndex;
       }
 
-      public void increment() {
+      public final void increment() {
          ++recordIndex;
       }
 
-      public void remove() {
+      public final void remove() {
          throw new UnsupportedOperationException();
       }
 
-      public boolean hasNext() {
+      public final boolean hasNext() {
          //trace("recordIndex = " + recordIndex  + " size = " + size);
          //trace("returning = " +(recordIndex+1 < size));
          return recordIndex + 1 < size;
       }
 
-      public Object next() {
+      public final Object next() {
          //trace("next pieceIndex = " + recordIndex + " size " + size );
          if (++recordIndex >= size) {
             recordIndex--;
@@ -94,7 +94,7 @@ public final abstract class PersistantStack {
          return curr();
       }
 
-      public Object previous() {
+      public final Object previous() {
          //trace("recordIndex = " + recordIndex + " cache size = " + cache.size());
          --recordIndex;
          Object retval;
@@ -118,7 +118,7 @@ public final abstract class PersistantStack {
          return retval;
       }
 
-      public Object curr() {
+      public final Object curr() {
          //trace(
          //     " recordIndex = "  + recordIndex
          //    + " binp  = " + binp
@@ -145,7 +145,7 @@ public final abstract class PersistantStack {
 
       }
 
-      public boolean remove(Object obi) { //??? needs test
+      public final boolean remove(Object obi) { //??? needs test
          //trace("size = " + size + " writtenCount = " + writtenCount);
          for (int i = size - 1; i >= writtenCount; i--) {
             Object ob = cache.get(i - (size - cache.size()));
@@ -159,7 +159,7 @@ public final abstract class PersistantStack {
          return false;
       }
 
-      public void push(Object obj) {
+      public final void push(Object obj) {
          //trace("index = " +  recordIndex
          //   + " size= " + size + " cache.size = " + cache.size()
          //   + " obj = " + obj);
@@ -201,7 +201,7 @@ public final abstract class PersistantStack {
          //    + " obj = " + obj);
       }
 
-      public void resetCache() throws IOException {
+      public final void resetCache() throws IOException {
          //trace(
          //    " recordIndex = " + recordIndex
          //   + " size = " + size + " offsets.size = " + offsets.size());
@@ -219,7 +219,7 @@ public final abstract class PersistantStack {
          //trace(dump());
       }
 
-      public void close() throws IOException {
+      public final void close() throws IOException {
          //trace("rfile = " +rfile + " recordIndex = " + recordIndex + " size = " + size + dump());
          if (recordIndex >= size)
             throw new IOException("Illegal quitmark recordIndex = "
@@ -316,11 +316,11 @@ public final abstract class PersistantStack {
          //trace("exit unwritten = " + unwritten);
       }
 
-      public void idleSave() throws IOException {
+      public final void idleSave() throws IOException {
          flush();
       }
 
-      public boolean beforeQuit() {
+      public final boolean beforeQuit() {
          return (recordIndex < lastquit);
       }
    }
@@ -332,16 +332,16 @@ public final abstract class PersistantStack {
       quitAtEnd = true;
    }
 
-   public boolean isQuitAtEnd() {
+   public final boolean isQuitAtEnd() {
       //trace("lastquit = " + lastquit + " size = " + size);
       return lastquit == (size - 1);
    }
 
-   public boolean cleanClose() {
+   public final boolean cleanClose() {
       return quitAtEnd;
    }
 
-   void checkQuit(int i) { // for testcase
+   final void checkQuit(int i) { // for testcase
       Testutil.myassert(lastquit == i, Integer.valueOf(lastquit));
    }
 
@@ -349,12 +349,12 @@ public final abstract class PersistantStack {
       return "PersitantStack " + rfile + "\n" + dump();
    }
 
-   public boolean hasFile() {
+   public final boolean hasFile() {
       //trace("rfile = " + rfile + " delayFile = " + delayFile);
       return rfile != null || delayFile != null;
    }
 
-   public void pushend(Object obj) {
+   public final void pushend(Object obj) {
       //trace("index = " +
       //    recordIndex + " size= " + size
       //    + " cache.size = " + cache.size()
@@ -419,7 +419,7 @@ public final abstract class PersistantStack {
       }
    }
 
-   void readUserCB() throws IOException {
+   final void readUserCB() throws IOException {
       int len = 0x000000ff & binp.readByte();
       offsets.add(binp.getOffset());
       //trace("adding len = " + len + " offset = "  + binp.getOffset());
@@ -434,7 +434,7 @@ public final abstract class PersistantStack {
          throw new IOException("USER callback bad opcode");
    }
 
-   void readQuit() throws IOException {
+   final void readQuit() throws IOException {
       lastquit = binp.readInt();
       if (lastquit >= size)
          throw new IOException("inconsistant quit mark size "
@@ -446,14 +446,14 @@ public final abstract class PersistantStack {
          quitAtEnd = true;
    }
 
-   void readObj(int len) {
+   final void readObj(int len) {
       //trace("adding len = " + len + " offset = "  + binp.getOffset());
       offsets.add(binp.getOffset());
       size++;
       binp.skipBytes(len);
    }
 
-   public Exception setFile(File filei) {
+   public final Exception setFile(File filei) {
       //trace("file =  " + filei);
       if (filei.equals(rfile))
          return null;
@@ -547,12 +547,12 @@ public final abstract class PersistantStack {
       return null;
    }
 
-   public void newFile(File file) {
+   public final void newFile(File file) {
       //trace(file);
       delayFile = file;
    }
 
-   public StringBuffer dump() {
+   public final StringBuffer dump() {
 
       StringBuffer sb = new StringBuffer("   dumping ran cache starts at "
          + (size - cache.size())  + "\n");
@@ -567,13 +567,13 @@ public final abstract class PersistantStack {
       return sb;
    }
 
-   void kill() throws IOException {
+   final void kill() throws IOException {
       // trace("deleteing " + rfile);
       if (!rfile.delete())
          throw new IOException("unable to delete " + rfile);
       invalidate();
    }
-   public void  terminateWEP() {
+   public final void  terminateWEP() {
       // test entry to simulate sudden death of system.
       invalidate();
       rfile = null;
@@ -618,11 +618,11 @@ public final abstract class PersistantStack {
 
    }
 
-   int size() {
+   final int size() {
       return size;
    }
 
-   protected void finalize() {
+   protected final void finalize() {
       if (writtenCount != -1)
          trace(
             "*********************************************************\n"
@@ -633,7 +633,7 @@ public final abstract class PersistantStack {
 
    }
 
-   public void reset() { //??? needs test
+   public final void reset() { //??? needs test
       quitAtEnd = false;
       delayFile = null;
       rfile = null;

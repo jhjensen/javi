@@ -64,10 +64,10 @@ class UndoHistory<OType> extends PersistantStack {
    }
 
    void addState(StringBuilder sb) {
-      //trace("current " + current +  " + currmark " + currmark);
-      //trace("current " + current +  " + curr = " + currmark.curr());
-      //trace("savewrite " + savewrite);
-      //trace("sb " + sb);
+      trace("current " + current +  " + currmark " + currmark);
+      trace("current " + current +  " + curr = " + currmark.curr());
+      trace("savewrite " + savewrite);
+      trace("sb " + sb);
       String st;
       sb.append((currmark.isWritten())
          ? " unchanged"
@@ -352,9 +352,6 @@ class UndoHistory<OType> extends PersistantStack {
       boolean isWritten() {
          //trace("index = " + getIndex() + " savewrite = " + savewrite);
          return getIndex() == savewrite;
-      }
-      public void push(Object obj) {
-         super.push(obj);
       }
 
       void getChanges(View.ChangeOpt vi) {
