@@ -1302,12 +1302,12 @@ public abstract class UI {
          chinst = null;
          rdinst = null;
          frm.setFont(font);
-         Component cp;
          int cpi = frm.getComponentCount();
-         for (cpi = cpi > 2 ? 1 : cpi - 1;
-               cpi >= 0 && null != (cp = frm.getComponent(cpi));
-               --cpi)
-            cp.setFont(font);
+         for (cpi = cpi > 2 ? 1 : cpi - 1; cpi >= 0; --cpi) {
+            Component cp = frm.getComponent(cpi);
+            if (null != frm.getComponent(cpi))
+               cp.setFont(font);
+         }
       }
 
       private static class MyMenuItem extends MenuItem {

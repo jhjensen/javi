@@ -341,7 +341,8 @@ final class FileList extends TextEdit<TextEdit<String>> {
       DirList dlist = DirList.getDefault();
       DirList.getDefault().initSearch(fname);
       //trace(" looking for " + fname + "in directory list"); EditContainer.dumpStatic();
-      for (FileDescriptor.LocalFile fh; null != (fh = dlist.findNextFile());) {
+      FileDescriptor.LocalFile fh;
+      while (null != (fh = dlist.findNextFile())) {
          TextEdit<String> te = (TextEdit<String>) EditContainer.findfile(fh);
          //trace("returning te " + te);
          if (te != null)
@@ -503,19 +504,20 @@ final class FileList extends TextEdit<TextEdit<String>> {
                   case 3:
                      //trace("stage 3 regexp directory list search:" + searchName + " edv = " + edv);
                      dlist = DirList.getDefault();
-                     for (FileDescriptor fh; null != (fh = dlist.findNextFileR());) {
-                        if (fh instanceof FileDescriptor.LocalDir) {
+                     FileDescriptor fha;
+                     while (null != (fha = dlist.findNextFileR())) {
+                        if (fha instanceof FileDescriptor.LocalDir) {
                            foundf |= DirList.getDefault().addSearchDir((
-                                        FileDescriptor.LocalDir) fh);
+                                        FileDescriptor.LocalDir) fha);
                         } else {
-                           if (EditContainer.findfile(fh) != null)
+                           if (EditContainer.findfile(fha) != null)
                               dupflag = true;
                            else  {
-                              if (EditContainer.findfile(fh) != null)
+                              if (EditContainer.findfile(fha) != null)
                                  dupflag = true;
-                              else if (fh instanceof FileDescriptor.LocalFile) {
+                              else if (fha instanceof FileDescriptor.LocalFile) {
                                  edv = FileConverter.findfileopen((
-                                    FileDescriptor.LocalFile) fh, false);
+                                    FileDescriptor.LocalFile) fha, false);
                                  if (edv != null)
                                     break oloop;
                               }

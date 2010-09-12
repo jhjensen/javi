@@ -316,6 +316,7 @@ class InsertBuffer extends Rgroup
             trace("Interrupted Exception!!!");
          } finally  {
             cleanup(fvc);
+            buffer.setLength(0);
          }
       }
    }

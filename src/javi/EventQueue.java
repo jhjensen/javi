@@ -145,18 +145,19 @@ public final class EventQueue {
    }
 
    static void focusGained() {
-      synchronized (EventQueue.class) { 
+      synchronized (EventQueue.class) {
          EventQueue.class.notifyAll();  // make sure cursor starts blinking
          timeout = 500;
       }
    }
 
    static void focusLost() {
-      synchronized (EventQueue.class) { 
-         timeout = 1000 *60 *60; // redo cursor every once in a while, and do gc
+      synchronized (EventQueue.class) {
+         // redo cursor every once in a while, and do gc
+         timeout = 1000 * 60 * 60;
       }
    }
-         
+
    static Object nextEvent(View vi) throws ExitException {
       while (true) {
          Object ev = inextEvent(vi);
