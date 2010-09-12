@@ -27,7 +27,7 @@ class FileProperties<OType> implements Serializable {
    }
 
    void setSeperator(String sep) {
-      //e! resets this if (lsep != staticLine) 
+      //e! resets this if (lsep != staticLine)
       //   throw new RuntimeException("attempt to reset line seperator");
       lsep = sep;
    }

@@ -592,7 +592,7 @@ abstract class View  extends Canvas {
       switch (ev.getID()) {
          case MouseEvent.MOUSE_PRESSED:
             EventQueue.insert(ev);
-            mousePressed = ((MouseEvent)ev).getButton();
+            mousePressed = ((MouseEvent) ev).getButton();
             break;
          case MouseEvent.MOUSE_RELEASED:
             EventQueue.insert(ev);
@@ -602,7 +602,7 @@ abstract class View  extends Canvas {
             EventQueue.insert(ev);
             break;
          case MouseEvent.MOUSE_DRAGGED:
-            MouseEvent mev = (MouseEvent)ev;
+            MouseEvent mev = (MouseEvent) ev;
             if (mousePressed == 1) {
                //fvc.cursorabs(p);
                Position evPos = mousepos(mev);

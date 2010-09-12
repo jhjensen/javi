@@ -64,12 +64,12 @@ public final class Tools {
 
    static BufferedReader runcmd(List<String>  str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(),"UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
    static BufferedReader runcmd(String ... str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(),"UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
    static synchronized Process iocmd(List<String>  str) throws IOException {

@@ -316,7 +316,7 @@ public class MapEvent {
    }
 
    final void mouserelease(MouseEvent event, FvContext fvc) throws
-          InputException,InterruptedException,IOException {
+          InputException, InterruptedException, IOException {
       //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
 
       View vi = (View) event.getComponent();

@@ -451,7 +451,7 @@ public final class FvContext<OType> implements Serializable {
 
       return edvec.at(edvec.contains(fileposy)
          ? fileposy
-         :  edvec.readIn()-1);
+         :  edvec.readIn() - 1);
    }
 
 

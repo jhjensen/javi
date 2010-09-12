@@ -151,7 +151,7 @@ public class FileDescriptor implements Serializable {
 
       static LocalDir make(String fname) {
          LocalFile fh = LocalFile.make(fname);
-            
+
          return fh.isDirectory()
             ? (LocalDir) fh
             : new LocalDir(fh.shortName, "Bad Dir:" + fh.canonName, fh.fh);
@@ -335,10 +335,10 @@ public class FileDescriptor implements Serializable {
                   : fname;
             File fh2 = new File(fname2);
             if (fh2.exists()) {
-              fh=fh2;
-              fname=fname2;
-           }
-        }
+               fh = fh2;
+               fname = fname2;
+            }
+         }
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fname, cname);
          //trace("cname " + cname  + " normName " + normName);

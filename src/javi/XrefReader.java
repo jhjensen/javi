@@ -86,12 +86,12 @@ class XrefReader extends PositionIoc {
    private static Matcher linepat = Pattern.compile(
       "(^(\\w:)?[~\\w.\\/\\\\]+):([0-9]+): *(.*)").matcher("");
    private Position parseline(String line) {
-      trace("parsing line len =  " + line.length() + " line "  +line);
+      //trace("parsing line len =  " + line.length() + " line "  + line);
       linepat.reset(line);
       if (linepat.matches()) {
          int y = Integer.parseInt(linepat.group(3));
          String fname = linepat.group(1);
-         return new Position(0,y,fname,linepat.group(4));
+         return new Position(0, y, fname, linepat.group(4));
       }
       if (line.length() == 0)
          return null;
