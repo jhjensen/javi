@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -116,7 +116,7 @@ class JDebugger extends IoConverter<String> {
    static debugcom comd;
    */
    private transient VirtualMachine vm;
-   private transient Vector<String> inarray = new Vector<String>();
+   private transient ArrayList<String> inarray = new ArrayList<String>();
 
    public void dispose() throws IOException {
       super.dispose();
@@ -167,24 +167,27 @@ class JDebugger extends IoConverter<String> {
       public void run() {
          try {
             String str;
-            while ((str = inStream.readLine()) != null)
-               inarray.add(str);
+            while ((str = inStream.readLine()) != null) {
+               synchronized (inarray) {
+                  inarray.add(str);
+                  inarray.notifyAll();
+               }
+            }
          } catch (IOException e) {
-            /*Ignore Interrupts */
+            trace("ignoring exception " + e);
          }
-         running = false;
+         synchronized (inarray) {
+            running = false;
+            inarray.notifyAll();
+         }
 
          //trace("JDebugger.run exiting");
       }
 
-      String getnext() {
-         return inarray.size() == 0
-                ? null
-                : inarray.remove(0);
-      }
-
       boolean finished() {
-         return !running && inarray.size() == 0;
+         synchronized (inarray) {
+            return !running;
+         }
       }
    }
 
@@ -193,13 +196,17 @@ class JDebugger extends IoConverter<String> {
       addElement("running program " + this);
       StreamVreader iinput = new StreamVreader(vm.process().getInputStream());
       StreamVreader einput = new StreamVreader(vm.process().getErrorStream());
-      String obj;
       while (!(iinput.finished() && einput.finished())) {
-         while ((obj = einput.getnext()) != null
-               || (obj = iinput.getnext()) != null) {
-            addElement(obj);
+         synchronized (inarray) {
+            while (inarray.size() != 0)
+               addElement(inarray.remove(0));
+            inarray.wait(5000);
          }
-         Thread.sleep(200);
+      }
+      synchronized (inarray) {
+         while (inarray.size() != 0)
+            addElement(inarray.remove(0));
+         inarray.wait(5000);
       }
    }
 

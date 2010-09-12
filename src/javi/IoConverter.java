@@ -119,7 +119,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
       EditCache<OType> ret = new EditCache<OType>();
       //trace("retval " + retval);
-      for (OType ob; (ob = getnext()) != null;)
+      OType ob;
+      while ((ob = getnext()) != null)
          ret.add(ob);
 
       return ret;
