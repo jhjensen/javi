@@ -1,5 +1,6 @@
-full screen mode, going to command line is slow, and appears to repaint alot.
-OldView used to zero out imageg, fixed one probem, but is still not thread safe.
+resizeing with mouse doesn't work.
+togglestatus changes window size.
+something funny going on with mouse and V mode
 
 modal dialog
 lock access to .dmp2
@@ -11,6 +12,7 @@ improve vt100
 redo PersitantStack->RanFileArray
 
 jython
+
 diredit
 fix cmd line.
 multiple ssh
@@ -36,6 +38,8 @@ static import.
 varargs?, boxing
 
 done :
+   OldView used to zero out imageg, fixed one probem, but is still not thread safe.
+   full screen mode, going to command line is slow, and appears to repaint alot.
    :asdf\r up arrow right arrow down arrow(down arrow isnt fixing posx)
    fix ^g problem
    fix tag waiting for file read problem

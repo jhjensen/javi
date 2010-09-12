@@ -469,23 +469,24 @@ abstract class View  extends Canvas {
    }
 
    void setMark(Position markposi) {
-      Position pos = pmark.getMark();
-      if (pos == markposi)
-         return;
-      if (pos != null)
+      MovePos pos = pmark.getMark();
+      if (pos != null) {
+         if (markposi.equals(pos))
+            return;
          pmark.clearMark(fileX, fileY);
+      }
       pmark.setMark(markposi, fileX, fileY);
       op.changedpro(markposi.y, fileY);
    }
 
    void clearMark() {
-      Position pos = pmark.getMark();
+      MovePos pos = pmark.getMark();
       pmark.clearMark(fileX, fileY);
       if (pos != null)
          op.changedpro(pos.y, fileY);
    }
 
-   Position getMark() {
+   MovePos getMark() {
       return pmark.getMark();
    }
 
@@ -551,10 +552,10 @@ abstract class View  extends Canvas {
             : 0;
       }
 
-      Position getMark() {
+      MovePos getMark() {
          return  markpos == null
             ? null
-            : new Position(markpos, "vt100 emu", "savecursor");
+            : new MovePos(markpos);
       }
 
       void resetMark(EditContainer ev, int fileX, int fileY) {

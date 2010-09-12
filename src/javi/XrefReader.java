@@ -2,6 +2,8 @@ package javi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 class XrefReader extends PositionIoc {
@@ -39,7 +41,7 @@ class XrefReader extends PositionIoc {
    }
 
       //trace("greader");
-        //String[] command = new String[9];
+        //static final String[] commandline =  {
         //command[0] = "perl.exe";
         //command[1] = "-e";
         //command[2] = "$_=`lid " + s + "`;";
@@ -50,7 +52,8 @@ class XrefReader extends PositionIoc {
         //command[7] = "-e";
         //command[8]= "print 'done\n';";
         //String commandline =
-           //"perl.exe \"-e $_=`lid " + s + "`; s/\\/home\\/jjensen/z:\\//; $_= qx(grep -n -H $_ ); print; print 'done\n';\"";
+           //"perl.exe \"-e $_=`lid " + s + "`; s/\\//usr\\/include\\/c:/cygwin/usr/include/\\//; $_= qx(grep -n -H $_ ); print; print 'done\n';\"";
+
         //String[] command = new String[3];
 
         //command[0] = "perl.exe ";
@@ -62,11 +65,14 @@ class XrefReader extends PositionIoc {
         //command[2] = s;
 
    static final String[] commandline = {"lid", "-R", "grep", null};
+   //static final String[] commandline = {"bash ", "-c",  null};
          //{"ssh", "speedy","cd sidewinder/src ;lid -R grep " + s + "| tr -d \r"};
          //"ssh nowind3 cd sidewinder/src ;lid -R grep " + s + "| tr -d \\\\r";
 
    private static BufferedReader getIn(String str) throws IOException {
       commandline[3] = str;
+      //commandline[2] = "lid -R grep " + str  | perl.exe -p -e \" s/\\/usr\\/include\\/c:\\/cygwin\\/usr\\/include\\//; print; ne\n';\"";
+      trace("running command:" + commandline[2]);
       return Tools.runcmd(commandline);
    }
 
@@ -76,8 +82,17 @@ class XrefReader extends PositionIoc {
    }
 
    private boolean failflag;
+
+   private static Matcher linepat = Pattern.compile(
+      "(^(\\w:)?[~\\w.\\/\\\\]+):([0-9]+): *(.*)").matcher("");
    private Position parseline(String line) {
-      //trace("parsing line len =  " + line.length() + " line "  +line);
+      trace("parsing line len =  " + line.length() + " line "  +line);
+      linepat.reset(line);
+      if (linepat.matches()) {
+         int y = Integer.parseInt(linepat.group(3));
+         String fname = linepat.group(1);
+         return new Position(0,y,fname,linepat.group(4));
+      }
       if (line.length() == 0)
          return null;
       try {
@@ -91,7 +106,9 @@ class XrefReader extends PositionIoc {
             comment = comment.substring(0, 200);
          int x = 0;
          failflag = false;
-         return new Position(x, y, file, comment);
+         Position retval = new Position(x, y, file, comment);
+         trace("xref reader returning " + retval);
+         return retval;
       } catch (Exception e) {
          trace("for line:" + line + ":\ncaught exception " + e);
          trace("this " + this);
@@ -106,5 +123,4 @@ class XrefReader extends PositionIoc {
          return null;
       }
    }
-
 }

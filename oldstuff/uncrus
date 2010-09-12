@@ -1,0 +1,2 @@
+#!/bin/sh
+/cygdrive/d/uncrustify-0.56-win32/uncrustify.exe -c ../crust.cfg $*

@@ -12,6 +12,11 @@ final class MovePos {
       y = yi;
    }
 
+   MovePos(MovePos xo) {
+      x = xo.x;
+      y = xo.y;
+   }
+
    public String toString() {
       return x == 0
              ?  "("  + y + ")"

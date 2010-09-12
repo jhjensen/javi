@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import static history.Tools.trace;
 
 final class PSTest extends Testutil {
 

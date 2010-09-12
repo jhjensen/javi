@@ -284,7 +284,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
    static boolean gotoposition(Position p, boolean setstatus, View vi) throws
       InputException {
       //trace("gotoposition p " + p);
-      if (p == null  || p.filename == null)
+      if (p == null)
          return false;
       try {
          //trace("goto position " + p);

@@ -150,12 +150,11 @@ public class FileDescriptor implements Serializable {
    static class LocalDir extends LocalFile {
 
       static LocalDir make(String fname) {
-         File fh = new File(fname);
-         String cname = LocalFile.makecname(fh);
-         String normName = LocalFile.normalize(fname, cname);
-         if (!fh.isDirectory())
-            cname = "Bad Dir:" + cname;
-         return new LocalDir(normName, cname, fh);
+         LocalFile fh = LocalFile.make(fname);
+            
+         return fh.isDirectory()
+            ? (LocalDir) fh
+            : new LocalDir(fh.shortName, "Bad Dir:" + fh.canonName, fh.fh);
       }
 
       FileDescriptor getPersistantFd() {
@@ -319,8 +318,27 @@ public class FileDescriptor implements Serializable {
          }
       }
 
+
       static LocalFile make(String fname) {
-         File fh =  new File(fname);
+         //trace("make " + fname);
+         File fh = new File(fname);
+         if (!fh.exists()) {
+            // fix up cygwin names
+            String fname2 = fname.length()  == 0
+               ? fname
+               : fname.charAt(0) == '/'
+                  ? separator.equals("/")
+                     ? fname
+                     : fname.indexOf("cygdrive") == 1
+                        ? fname.charAt(10) + ":" + fname.substring(11)
+                        : "c:/cygwin" + fname
+                  : fname;
+            File fh2 = new File(fname2);
+            if (fh2.exists()) {
+              fh=fh2;
+              fname=fname2;
+           }
+        }
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fname, cname);
          //trace("cname " + cname  + " normName " + normName);

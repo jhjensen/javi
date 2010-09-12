@@ -73,13 +73,11 @@ public class PositionIoc extends BufInIoc<Position> {
          if (toString().length() != 0)
             UI.reportMessage(this + "complete " + errcount + " results");
       } else {
-         if (pos.filename != null) {
-            EventQueue.biglock2.lock();
-            EditContainer ev =  EditContainer.findfile(pos.filename);
-            if (ev != null)
-               ev.fixposition(pos);
-            EventQueue.biglock2.unlock();
-         }
+         EventQueue.biglock2.lock();
+         EditContainer ev =  EditContainer.findfile(pos.filename);
+         if (ev != null)
+            ev.fixposition(pos);
+         EventQueue.biglock2.unlock();
          errcount++;
       }
       return pos;

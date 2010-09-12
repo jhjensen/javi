@@ -390,7 +390,7 @@ public final class PosListList extends TextList<Position> implements
             return null;
 
          String sym = symlist[symlist.length - 1];
-         TextEdit taglist = tahash.get(sym);
+         TextEdit<Position> taglist = tahash.get(sym);
          try {
             if (taglist == null)
                taglist = createtags(sym);
@@ -450,12 +450,10 @@ public final class PosListList extends TextList<Position> implements
 
                   if (scores[i] == maxscore) {
                      Position  ctagpos = (Position) taglist.at(i);
-                     if (ctagpos.filename != null) {
-                        FileList.gotoposition(ctagpos, false, vi);
-                        FvContext tagfvc =  FvContext.getcontext(vi, taglist);
-                        tagfvc.cursoryabs(i);
-                        break;
-                     }
+                     FileList.gotoposition(taglist.at(i), false, vi);
+                     FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+                     tagfvc.cursoryabs(i);
+                     break;
                   }
                }
             }

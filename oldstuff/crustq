@@ -1,0 +1,40 @@
+I am experimenting with uncrustify, and havn't been able to configure it for a few ways
+I like to format my code:
+
+I like to double indent the following:
+
+   public Object foo(int arg1, Object arg2, int count,
+         int arg3, int arg4, boolean arg5                          // double indent
+         int arg6, Object arg7, boolean arg8) {              // double indent
+      switch (arg1) {                                                      // single indent
+
+
+but single indent:
+
+x =whatever
+   +whaterver ;
+
+and I don't see how to do that.  I think I want a rule that says "double indent continuations that
+end in a {, but single indent others.
+
+I also have a problem with conditional assignments.
+
+I like to indent them like this:
+
+x = cond1
+   ? cond2
+      ? val1
+      : val2
+   : val3;
+
+This parallels "if then else" indentation, with the indent set to 3.
+
+uncrustify seems to insist on lining them up like this
+
+x = cond1
+      ? cond2
+      ? val1
+      : val2
+      : val3;
+
+At the least I would like it to be able to ignore these lines.

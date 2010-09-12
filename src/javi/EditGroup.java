@@ -228,7 +228,7 @@ class EditGroup extends Rgroup {
       int xold = 0;
       int yold = 0;
       if (!dotmode) {
-         Position markpos = fvc.vi.getMark();
+         MovePos markpos = fvc.vi.getMark();
          if (markpos == null) {
             if (!vMode)
                xold = fvc.insertx();
@@ -293,7 +293,7 @@ class EditGroup extends Rgroup {
          try {
             switch(key) {
                case 'o':
-                  Position markpos = fvc.vi.getMark();
+                  MovePos markpos = fvc.vi.getMark();
                   xold = fvc.insertx();
                   yold = fvc.inserty();
                   fvc.setMark();

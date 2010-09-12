@@ -17,6 +17,8 @@ public final class Position {
       comment = commenti;
    }
    public Position(int xi, int yi, FileDescriptor filenamei, String commenti) {
+      if (filenamei == null)
+         throw new NullPointerException();
       x = xi;
       y = yi;
       filename = filenamei;

@@ -437,7 +437,7 @@ public final class FvContext<OType> implements Serializable {
          currfvc.fileposy + "," +  (currfvc.fileposx + 1));
       //trace("char = " + (int)((String)currfvc.edvec.at(currfvc.inserty())).charAt(currfvc.insertx()));
       //trace("sb " + sb);
-      trace("getCurrState " + currfvc);
+      //trace("getCurrState " + currfvc);
       currfvc.edvec.addState(sb);
       return sb.toString();
    }
@@ -489,6 +489,12 @@ public final class FvContext<OType> implements Serializable {
    }
 
    void cursorabs(Position pos) {
+      //trace("cursorabs pos = " + pos);
+      //cursor(pos.x-fileposx,pos.y-fileposy);
+      cursor2abs(pos.x, pos.y);
+   }
+
+   void cursorabs(MovePos pos) {
       //trace("cursorabs pos = " + pos);
       //cursor(pos.x-fileposx,pos.y-fileposy);
       cursor2abs(pos.x, pos.y);
