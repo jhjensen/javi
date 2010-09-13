@@ -1,5 +1,6 @@
 package javi;
 
+import java.io.IOException;
 import org.mozilla.universalchardet.UniversalDetector;
 
 class FileInput extends BufInIoc<String> {
@@ -115,7 +116,7 @@ class FileInput extends BufInIoc<String> {
    private transient int rpos;
    private transient FileMode inputmode;
 
-   protected void preRun() {
+   protected void preRun() throws IOException {
       if (prop.fdes instanceof FileDescriptor.LocalFile) {
          byte [] filebyte = ((FileDescriptor.LocalFile) prop.fdes).readFile();
          try {

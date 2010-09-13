@@ -442,6 +442,10 @@ public class FileDescriptor implements Serializable {
       }
 
       byte[] readFile() throws IOException {
+
+         if (!exists())
+            return new byte[0];
+
          FileInputStream localInput = new FileInputStream(fh);
          try {
             int length = (int) fh.length();

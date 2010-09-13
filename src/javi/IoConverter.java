@@ -128,14 +128,16 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    final void reload() {
       //trace("reload state = "  + tstate);
-      preRun();
       try {
+         preRun();
          dorun();
       } catch (InterruptedException ad) {
          UI.popError("IoConverter caught ", ad);
+      } catch (IOException ie) {
+         UI.popError("IoConverter caught ", ie);
+      } finally {
+         truncIo();
       }
-      truncIo();
-
    }
 // should not be called after returning 0.
 //This should only be called from editvec.
@@ -232,7 +234,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
          addElement(ob);
    }
 
-   protected void preRun() {
+   protected void preRun() throws IOException {
    }
 
    protected void truncIo() {
