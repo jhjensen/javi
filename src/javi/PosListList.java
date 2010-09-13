@@ -42,7 +42,6 @@ public final class PosListList extends TextList<Position> implements
 
       for (Position pos : errlist) {
          if (ev.fdes().equals(pos.filename))  {
-            ev.finish();
             ev.fixposition(pos);
          }
       }
