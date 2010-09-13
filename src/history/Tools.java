@@ -51,7 +51,8 @@ public final class Tools {
          new InputStreamReader(proc.getInputStream()));
       ArrayList<String> output = new ArrayList<String>();
       try {
-         for (String str = null; null != (str = in.readLine());)
+         String str;
+         while (null != (str = in.readLine()))
             output.add(str);
          proc.waitFor();
       } catch (InterruptedException e) {

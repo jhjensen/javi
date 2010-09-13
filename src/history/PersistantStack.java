@@ -478,8 +478,8 @@ public abstract class PersistantStack {
          while (binp.available() != 0) {
             int len = 0x000000ff & binp.readByte();
             if (len == 0) {
-               int op;
-               switch (op = binp.readByte()) {
+               int op= binp.readByte();
+               switch (op) {
                   case POP:
                      deletecb(readPop(binp));
                      break;

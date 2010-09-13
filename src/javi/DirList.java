@@ -226,18 +226,22 @@ final class DirList extends TextEdit<DirEntry> {
                            continue;
                         }
                      }
-                     int linecount = 1;
-                     matcher.reset(new String(fd.readFile()));
-                     while (matcher.find()) {
-                        if (matcher.start(2) != -1)  {
-                           //trace("matcher found " + matcher.group(0));
-                           Position pos = new Position(matcher.start(2)
-                              - matcher.start(), linecount,
-                              fd, matcher.group(0));
+                     try {
+                        int linecount = 1;
+                        matcher.reset(new String(fd.readFile()));
+                        while (matcher.find()) {
+                           if (matcher.start(2) != -1)  {
+                              //trace("matcher found " + matcher.group(0));
+                              Position pos = new Position(matcher.start(2)
+                                 - matcher.start(), linecount,
+                                 fd, matcher.group(0));
 
-                           addElement(pos);
+                              addElement(pos);
+                           }
+                           linecount++;
                         }
-                        linecount++;
+                     } catch (IOException e) {
+                        trace("caught IOexception while grepping file " + fd);
                      }
                   }
                }

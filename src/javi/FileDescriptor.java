@@ -441,30 +441,25 @@ public class FileDescriptor implements Serializable {
          Tools.trace(str, 1);
       }
 
-      byte[] readFile() {
+      byte[] readFile() throws IOException {
+         FileInputStream localInput = new FileInputStream(fh);
          try {
-            FileInputStream localInput = new FileInputStream(fh);
-            try {
-               int length = (int) fh.length();
-               byte[] iarray = new byte[length];
-               int ilen;
-               ilen = localInput.read(iarray, 0, length);
-               if (ilen != length)
-                  throw new RuntimeException(
-                     "filereader.getFile: read in length doesnt match");
-               //??? should take care of case of growing file      if (-1!= input.read(iarray,0,length))
-               //         throw new RuntimeException("filereader.getFile: read has more data to go");
-               //String str = new String(iarray);
-               //      String str = new String(iarray,"UTF-8");
-               //return str;
-               return iarray;
-            } finally {
-               localInput.close();
-            }
-         } catch (IOException e) {
-            // happens all the time trace("caught " + e);
+            int length = (int) fh.length();
+            byte[] iarray = new byte[length];
+            int ilen;
+            ilen = localInput.read(iarray, 0, length);
+            if (ilen != length)
+               throw new RuntimeException(
+                  "filereader.getFile: read in length doesnt match");
+            //??? should take care of case of growing file      if (-1!= input.read(iarray,0,length))
+            //         throw new RuntimeException("filereader.getFile: read has more data to go");
+            //String str = new String(iarray);
+            //      String str = new String(iarray,"UTF-8");
+            //return str;
+            return iarray;
+         } finally {
+            localInput.close();
          }
-         return new byte[0];
       }
 
       long length() {
