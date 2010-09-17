@@ -220,7 +220,7 @@ class OldView  extends View {
 
       int newx = 0;
 
-      if (newX !=0) {
+      if (newX != 0) {
          int charoff = newX;
          String oline = gettext().at(newY).toString();
          String nline = oline;

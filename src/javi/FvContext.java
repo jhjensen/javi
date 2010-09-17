@@ -216,12 +216,13 @@ public final class FvContext<OType> implements Serializable {
             }
       }
 
-      if (!edvec.containsNow(1) ) {
+      if (!edvec.containsNow(1)) {
          fileposy = 1;
          fileposx = 0;
-     } else {
+      } else {
          fileposy = inrange(fileposy, 1, edvec.readIn() - 1);
-         fileposx = inrange(fileposx, 0, edvec.at(fileposy).toString().length());
+         fileposx = inrange(fileposx, 0,
+            edvec.at(fileposy).toString().length());
       }
       vi.newfile(edvec, fileposx, fileposy);
       vis = true;

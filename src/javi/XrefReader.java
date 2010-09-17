@@ -32,8 +32,8 @@ class XrefReader extends PositionIoc {
                   return retval;
 
             } catch (Exception e) {
-               //         trace("positionioc.parseline failed line = " + line);
-               //      trace("positionioc.parseline exception = " + e);
+               trace("XrefReader failed line = " + line);
+               trace("exception = " + e);
             }
          }
       }

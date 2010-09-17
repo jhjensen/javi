@@ -389,7 +389,9 @@ abstract class View  extends Canvas {
 
    private void npaint(Graphics2D gr) {
       //trace("npaint");
-      if ((text == null) || !text.containsNow(1) || !EventQueue.biglock2.tryLock())
+      if ((text == null)
+            || !text.containsNow(1)
+            || !EventQueue.biglock2.tryLock())
          repaint(200);
       else
          try {
