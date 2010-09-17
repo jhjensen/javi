@@ -503,11 +503,13 @@ public class TextEdit<OType> extends EditContainer<OType> {
          count = 2;
       StringBuilder line = new StringBuilder(at(start).toString());
 
+      finish();
+
       int retval = line.length();
       //trace("retval " + retval);
 
       while (0 != --count) {
-         if (!contains(start + 1))
+         if (!containsNow(start + 1))
             break;
 
          if (line.length() > 0 && line.charAt(line.length() - 1) != ' ')
@@ -663,7 +665,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                if (ex.searchForward(exp, 0, i))
                   return i;
          } else  {
-            while (ex.contains(++i))
+            while (ex.containsNow(++i))
                if (ex.searchForward(exp, 0, i))
                   return i;
          }

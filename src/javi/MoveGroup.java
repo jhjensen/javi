@@ -512,7 +512,82 @@ final class MoveGroup extends Rgroup {
       fvc.cursorxabs(i);
    }
 
+   private static Matcher wordpat = Pattern.compile("\\W\\w").matcher("");
    private void forwardword(int count, FvContext fvc)  {
+      int xindex = fvc.insertx();
+      int yindex = fvc.inserty();
+
+      String line = fvc.at().toString();
+      wordpat.reset(line);
+      while (count > 0) {
+         if (wordpat.find(xindex)
+               && (wordpat.start() + 1 != line.length())) {
+            xindex = 1 + wordpat.start();
+            count--;
+         } else if (fvc.edvec.containsNow(yindex + 1)) {
+            xindex = 0;
+            line = fvc.at(++yindex).toString();
+            if (line.length() == 0 || !iswhite(line.charAt(0)))
+               count--;
+            else
+               wordpat.reset(line);
+         } else
+            break;
+      }
+      fvc.cursorabs(xindex, yindex);
+   }
+
+   private static Matcher endpat = Pattern.compile("\\w(\\W|$)").matcher("");
+   private static void endword(int count, FvContext fvc)  {
+      int xindex = fvc.insertx();
+      int yindex = fvc.inserty();
+
+      String line = fvc.at().toString();
+      endpat.reset(line);
+      while (count > 0) {
+         //trace("parsing line len =  " + line.length() + " line "  + line);
+         //trace("parsing line xindex =  " + xindex);
+         if (endpat.find(xindex)) {
+            //trace("found " + endpat.start());
+            xindex = 1 + endpat.start();
+            count--;
+         } else if (fvc.edvec.containsNow(yindex + 1)) {
+            xindex = 0;
+            line = fvc.at(++yindex).toString();
+            endpat.reset(line);
+         } else
+            break;
+      }
+      fvc.cursorabs(xindex, yindex);
+   }
+
+   private static Matcher endpatW = Pattern.compile("\\w(\\s|$)").matcher("");
+//   private static Matcher endpatW = Pattern.compile("[a-z] ").matcher("");
+   private void endWord(int count, FvContext fvc)  {
+      int xindex = fvc.insertx();
+      int yindex = fvc.inserty();
+
+      String line = fvc.at().toString();
+      endpatW.reset(line);
+      while (count > 0) {
+         trace("parsing line len =  " + line.length() + " line "  + line);
+         trace("xindex =  " + xindex);
+         trace("pattern  " + endpatW);
+         if (endpatW.find(xindex)) {
+            trace("found " + endpatW.start());
+            xindex = 1 + endpatW.start();
+            count--;
+         } else if (fvc.edvec.containsNow(yindex + 1)) {
+            xindex = 0;
+            line = fvc.at(++yindex).toString();
+            endpatW.reset(line);
+         } else
+            break;
+      }
+      fvc.cursorabs(xindex, yindex);
+   }
+/*
+   private void forwardwordxxx(int count, FvContext fvc)  {
 // I suspect there is some simple algorithm used in vi, but I don't see it.
 // trying to work the same as vi - there seem to be three different word types
 // whitespace, alpha numeric  and everything else
@@ -555,7 +630,7 @@ final class MoveGroup extends Rgroup {
       fvc.cursorabs(xindex, yindex);
    }
 
-   private static void endword(int count, FvContext fvc)  {
+   private static void endwordxxx(int count, FvContext fvc)  {
 // I suspect there is some simple algorithm used in vi, but I don't see it.
 // trying to work the same as vi - there seem to be three different word types
 // whitespace, alpha numeric  and everything else
@@ -628,11 +703,12 @@ final class MoveGroup extends Rgroup {
                   break;  // white space counts for both
                xindex++;
             }
-         } catch (StringIndexOutOfBoundsException e) { /*Ignore */ }
+         } catch (StringIndexOutOfBoundsException e) { }
       }
       fvc.cursorabs(xindex, yindex);
    }
 
+*/
 //replace with regex?
    private void backwardword(int count, FvContext fvc)  {
 // I suspect there is some simple algorithm used in vi, but I don't see it.

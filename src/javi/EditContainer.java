@@ -842,11 +842,11 @@ public class EditContainer<OType> implements
 
    private void mkback(int index) {
       //trace("mkback");
-      if (index != 0 && !contains(index))
+      finish();
+      if (index != 0 && !containsNow(index))
          throw new ArrayIndexOutOfBoundsException(index);
       if (readonly)
          throw new ReadOnlyException(this, fdes().shortName);
-      finish();
 
       if (!backupMade) {
          FileDescriptor bfd = prop.fdes.getPersistantFd();

@@ -216,12 +216,13 @@ public final class FvContext<OType> implements Serializable {
             }
       }
 
-      if (!edvec.contains(1))
-         throw new RuntimeException(edvec
-            + " must contain at least line one ");
-
-      fileposy = inrange(fileposy, 1, edvec.readIn() - 1);
-      fileposx = inrange(fileposx, 0, edvec.at(fileposy).toString().length());
+      if (!edvec.containsNow(1) ) {
+         fileposy = 1;
+         fileposx = 0;
+     } else {
+         fileposy = inrange(fileposy, 1, edvec.readIn() - 1);
+         fileposx = inrange(fileposx, 0, edvec.at(fileposy).toString().length());
+      }
       vi.newfile(edvec, fileposx, fileposy);
       vis = true;
    }
@@ -465,9 +466,9 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public int getCurrentIndex() {
-      if (!edvec.contains(fileposy))
+      if (!edvec.containsNow(fileposy))
          cursoryabs(edvec.finish() - 1);
-      if (!edvec.contains(1))
+      if (!edvec.containsNow(1))
          throw new RuntimeException("editvec missing a line");
       return fileposy;
    }

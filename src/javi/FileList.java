@@ -326,6 +326,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
          if (index > 0)
             FvContext.getcontext(vi, this).cursoryabs(index);
          FvContext fv2 = UI.connectfv(ec, vi);
+         fv2.edvec.contains(pos.y);
          fv2.cursorabs(pos);
       }
       return ec != null;
@@ -600,7 +601,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
             } else if (-1 == fileIndex) {
                nextFile = (TextEdit) FvContext.getcurobj(instance);
             } else {
-               nextFile = instance.contains(fileIndex + 1)
+               nextFile = instance.containsNow(fileIndex + 1)
                   ? instance.at(fileIndex + 1)
                   : instance.at(1);
             }
@@ -638,7 +639,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
          //perftest();
          make("test1\ntest2");
          instance.finish();
-         Tools.Assert(instance.contains(2), instance);
+         Tools.Assert(instance.containsNow(2), instance);
          instance.checkpoint();
          //trace("instance[1] " + instance.at(1));
          //trace("instance[2] " + instance.at(2));

@@ -352,8 +352,6 @@ abstract class View  extends Canvas {
 
    public void paint(Graphics g) {
       //trace("paint called ");
-      if (text == null)
-         return;
       try {
          if (g != oldgr) {
             oldgr = g;
@@ -366,7 +364,7 @@ abstract class View  extends Canvas {
       }
    }
 
-   public void update(Graphics g) { //  paint will do it's own clearing
+   public void update(Graphics g) {
       try {
       //trace("update called ");
          //if (op.currop == REDRAW) trace(" got update REDRAW!!");
@@ -391,7 +389,7 @@ abstract class View  extends Canvas {
 
    private void npaint(Graphics2D gr) {
       //trace("npaint");
-      if (!EventQueue.biglock2.tryLock())
+      if ((text == null) || !text.containsNow(1) || !EventQueue.biglock2.tryLock())
          repaint(200);
       else
          try {
@@ -561,7 +559,7 @@ abstract class View  extends Canvas {
       void resetMark(EditContainer ev, int fileX, int fileY) {
          if (markpos != null) {
             if (!ev.containsNow(markpos.y))
-               markpos.y = ev.finish() - 1;
+               markpos.y = ev.readIn() - 1;
             if (markpos.x > ev.at(markpos.y).toString().length())
                markpos.x = ev.at(markpos.y).toString().length();
             markChange(fileX, fileY);

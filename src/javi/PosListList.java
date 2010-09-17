@@ -60,7 +60,7 @@ public final class PosListList extends TextList<Position> implements
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)) + ui.isGotoOk(fvc));
       if (list == null)
          list = lastlist;
-      if ((list == null) || (!list.contains(1)) || !UI.isGotoOk(fvc))
+      if ((list == null) || (!list.containsNow(1)) || !UI.isGotoOk(fvc))
          return;
       lastlist2 = null;
       lastlist = list;
@@ -135,12 +135,12 @@ public final class PosListList extends TextList<Position> implements
       if (fvc.edvec instanceof FileList)
          UI.connectfv((TextEdit) fvc.at(), fvc.vi);
       else  {
-         if ((lastlist == null) || !lastlist.contains(1)) {
+         if ((lastlist == null) || !lastlist.containsNow(1)) {
             lastlist = lastlist2;
             lastlist2 = null;
             //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          }
-         if ((lastlist == null) || !lastlist.contains(1))
+         if ((lastlist == null) || !lastlist.containsNow(1))
             return;
 
          FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
@@ -267,7 +267,6 @@ public final class PosListList extends TextList<Position> implements
          inst.flush();
          try {
             ctags = new Ctag("tags");
-            //ctags.contains(1); // startup the reader process
          } catch (IOException e) {
             ctags = null;
          }
@@ -312,7 +311,9 @@ public final class PosListList extends TextList<Position> implements
             //if (FileList.gotoposition(pos,false,fvc.vi))
             FvContext nfvc = FileList.openFileName(filereg.group(1), fvc.vi);
             if (null != nfvc) {
-               nfvc.cursoryabs(Integer.parseInt(filereg.group(4)));
+               int ypos = Integer.parseInt(filereg.group(4));
+               nfvc.edvec.contains(ypos);
+               nfvc.cursoryabs(ypos);
                //trace("add stack porig = "  + porig);
                tagstack.add(porig);
                return;
@@ -451,6 +452,7 @@ public final class PosListList extends TextList<Position> implements
                      Position  ctagpos = (Position) taglist.at(i);
                      FileList.gotoposition(taglist.at(i), false, vi);
                      FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+                     tagfvc.edvec.contains(i);
                      tagfvc.cursoryabs(i);
                      break;
                   }

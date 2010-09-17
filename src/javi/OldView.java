@@ -115,8 +115,8 @@ class OldView  extends View {
 
    void deletedElementsdraw(Graphics gr, int start, int amount) {
 
-      while (!gettext().contains(1))
-         throw new RuntimeException();
+      if (!gettext().containsNow(1))
+         throw new RuntimeException("not ready to draw");
 
       int gones = start - screenFirstLine(); // start of redrawing
       int gonee = start + amount - screenFirstLine(); // end of bad screen
@@ -172,7 +172,7 @@ class OldView  extends View {
       int yChange = newY - getfileY();
       screenposy += yChange;
 
-      //trace("cursorchanged " + xChange + "," + yChange + " screenSaveX " + saveScreenX + " inx " + inx);
+      //trace("cursorchanged " + yChange + " screenSaveX " + saveScreenX);
       String oline = gettext().at(newY).toString();
       String nline = oline;
 
@@ -213,28 +213,31 @@ class OldView  extends View {
 
    void cursorChanged(int newX, int newY) {
 
-      //trace(" yChange " + yChange);
 
+      //trace(" newX " + newX + " newY " + newY);
       int yChange = newY - getfileY();
       screenposy += yChange;
 
-      String oline = gettext().at(newY).toString();
-      String nline = oline;
+      int newx = 0;
 
-      int charoff = newX;
-      if (tabStop != 0) {
-         int tabOffset = oline.indexOf('\t');
-         if (tabOffset != -1) {
-            int[] tvals = new int[1];
-            tvals[0] = charoff;
-            nline = DeTabber.deTab(nline, tabOffset, tabStop, tvals);
-            charoff = tvals[0];
+      if (newX !=0) {
+         int charoff = newX;
+         String oline = gettext().at(newY).toString();
+         String nline = oline;
+
+         if (tabStop != 0) {
+            int tabOffset = oline.indexOf('\t');
+            if (tabOffset != -1) {
+               int[] tvals = new int[1];
+               tvals[0] = charoff;
+               nline = DeTabber.deTab(nline, tabOffset, tabStop, tvals);
+               charoff = tvals[0];
+            }
          }
+         if (charoff != 0)
+            newx = fontm.stringWidth(nline.substring(0, charoff));
       }
 
-      int newx = charoff == 0
-         ? 0
-         : fontm.stringWidth(nline.substring(0, charoff));
       saveScreenX = newx;
       setFilePos(newX, newY);
       //trace(" saveScreenX changed " + saveScreenX);
@@ -287,7 +290,7 @@ class OldView  extends View {
    }
 
    private int fillheader(Graphics gr, int start) {
-      //trace("fillheader");
+      //trace("fillheader " + screenFirstLine());
       if (start + screenFirstLine() < 1) {
          start = 1 - screenFirstLine();
          gr.setColor(AtView.noFile);
@@ -298,7 +301,7 @@ class OldView  extends View {
 
    private int filltrailer(Graphics gr, int end) {
       //trace("filltrailer");
-      //trace("end = "  + end + " firstline = " + screenFirstLine()+ " fin = " + gettext().finish());
+      //trace("end = "  + end + " firstline = " + screenFirstLine()
       int numlines = gettext().readIn(); // number of lines read in
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " numlines " + numlines);
       if (end + screenFirstLine() > numlines) {
@@ -475,7 +478,7 @@ class OldView  extends View {
       if (ypos < 1)
          ypos = 1;
       else if (!gettext().containsNow(ypos))
-         ypos = gettext().finish() - 1;
+         ypos = gettext().readIn() - 1;
       // figure out where in the line x is
       String line = gettext().at(ypos).toString();
       //trace("xoffset " + xoffset + " getX " + event.getX());
@@ -497,7 +500,7 @@ class OldView  extends View {
             amount =  -screenFirstLine();
       else if (!gettext().containsNow(screenFirstLine() + amount))
          if (gettext().containsNow(screenFirstLine() + screenSize))
-            amount = gettext().finish() - 1 - screenFirstLine();
+            amount = gettext().readIn() - 1 - screenFirstLine();
          else
             amount = 0;
 

@@ -314,7 +314,8 @@ class EditGroup extends Rgroup {
                      fvc.edvec.getElementsAt(starty, markamount));
                   break out;
                case 'D':
-                  if (!fvc.edvec.contains(starty + markamount - 1))
+                  fvc.edvec.finish();
+                  if (!fvc.edvec.containsNow(starty + markamount - 1))
                      markamount = fvc.edvec.finish() - 1;
                   Buffers.deleted(bufid, fvc.edvec.remove(starty, markamount));
                   fvc.edvec.checkpoint();
@@ -565,7 +566,8 @@ class EditGroup extends Rgroup {
       switch(event.getKeyChar()) {
 
          case 'd':
-            if (!fvc.edvec.contains(fvc.inserty() + count - 1))
+            fvc.edvec.finish();
+            if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
                count = fvc.edvec.finish() - 1;
             Buffers.deleted(bufid, fvc.edvec.remove(fvc.inserty(), count));
             fvc.edvec.checkpoint();
