@@ -185,9 +185,7 @@ class JDebugger extends IoConverter<String> {
       }
 
       boolean finished() {
-         synchronized (inarray) {
-            return !running;
-         }
+         return !running;
       }
    }
 
@@ -196,17 +194,16 @@ class JDebugger extends IoConverter<String> {
       addElement("running program " + this);
       StreamVreader iinput = new StreamVreader(vm.process().getInputStream());
       StreamVreader einput = new StreamVreader(vm.process().getErrorStream());
-      while (!(iinput.finished() && einput.finished())) {
-         synchronized (inarray) {
+      synchronized (inarray) {
+         while (!(iinput.finished() && einput.finished())) {
             while (inarray.size() != 0)
                addElement(inarray.remove(0));
-            inarray.wait(5000);
+            inarray.wait(20000);
          }
       }
       synchronized (inarray) {
          while (inarray.size() != 0)
             addElement(inarray.remove(0));
-         inarray.wait(5000);
       }
    }
 
