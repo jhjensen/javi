@@ -512,17 +512,16 @@ final class MoveGroup extends Rgroup {
       fvc.cursorxabs(i);
    }
 
-   private static Matcher wordpat = Pattern.compile("\\W\\w").matcher("");
-   private void forwardword(int count, FvContext fvc)  {
+   private void forwardPat(int count, FvContext fvc, Matcher pat)  {
       int xindex = fvc.insertx();
       int yindex = fvc.inserty();
 
       String line = fvc.at().toString();
-      wordpat.reset(line);
+      pat.reset(line);
       while (count > 0) {
-         if (wordpat.find(xindex)
-               && (wordpat.start() + 1 != line.length())) {
-            xindex = 1 + wordpat.start();
+         if (pat.find(xindex)
+               && (pat.start() + 1 != line.length())) {
+            xindex = 1 + pat.start();
             count--;
          } else if (fvc.edvec.containsNow(yindex + 1)) {
             xindex = 0;
@@ -530,295 +529,113 @@ final class MoveGroup extends Rgroup {
             if (line.length() == 0 || !iswhite(line.charAt(0)))
                count--;
             else
-               wordpat.reset(line);
+               pat.reset(line);
          } else
             break;
       }
       fvc.cursorabs(xindex, yindex);
    }
 
-   private static Matcher endpat = Pattern.compile("\\w(\\W|$)").matcher("");
-   private static void endword(int count, FvContext fvc)  {
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-      endpat.reset(line);
-      while (count > 0) {
-         //trace("parsing line len =  " + line.length() + " line "  + line);
-         //trace("parsing line xindex =  " + xindex);
-         if (endpat.find(xindex)) {
-            //trace("found " + endpat.start());
-            xindex = 1 + endpat.start();
-            count--;
-         } else if (fvc.edvec.containsNow(yindex + 1)) {
-            xindex = 0;
-            line = fvc.at(++yindex).toString();
-            endpat.reset(line);
-         } else
-            break;
-      }
-      fvc.cursorabs(xindex, yindex);
+   private void forwardword(int count, FvContext fvc)  {
+      forwardPat(count, fvc, wordpat);
    }
-
-   private static Matcher endpatW = Pattern.compile("\\w(\\s|$)").matcher("");
-//   private static Matcher endpatW = Pattern.compile("[a-z] ").matcher("");
-   private void endWord(int count, FvContext fvc)  {
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-      endpatW.reset(line);
-      while (count > 0) {
-         trace("parsing line len =  " + line.length() + " line "  + line);
-         trace("xindex =  " + xindex);
-         trace("pattern  " + endpatW);
-         if (endpatW.find(xindex)) {
-            trace("found " + endpatW.start());
-            xindex = 1 + endpatW.start();
-            count--;
-         } else if (fvc.edvec.containsNow(yindex + 1)) {
-            xindex = 0;
-            line = fvc.at(++yindex).toString();
-            endpatW.reset(line);
-         } else
-            break;
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-/*
-   private void forwardwordxxx(int count, FvContext fvc)  {
-// I suspect there is some simple algorithm used in vi, but I don't see it.
-// trying to work the same as vi - there seem to be three different word types
-// whitespace, alpha numeric  and everything else
-
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-
-   out:
-      while (count-- > 0) {
-         boolean foundpunc = false;
-         boolean foundalpha = false;
-         try {
-
-            while (true) {
-               if (isalphanum(line.charAt(xindex)))
-                  foundalpha = true;
-               else if (!iswhite(line.charAt(xindex)))
-                  foundpunc = true;
-               else break;  // white space counts for both
-               if  (foundalpha && foundpunc)
-                  break;
-               xindex++;
-            }
-         } catch (StringIndexOutOfBoundsException e) {
-            // end of line considerd white space. but only once
-            if (!fvc.edvec.containsNow(yindex + 1))
-               break out;
-            yindex++;
-            xindex = 0;
-            line = fvc.at(yindex).toString();
-         }
-
-         try {
-            while (iswhite(line.charAt(xindex)))
-               ++xindex;
-         } catch (StringIndexOutOfBoundsException e) { }
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-
-   private static void endwordxxx(int count, FvContext fvc)  {
-// I suspect there is some simple algorithm used in vi, but I don't see it.
-// trying to work the same as vi - there seem to be three different word types
-// whitespace, alpha numeric  and everything else
-
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-
-   out:
-      while (count-- > 0) {
-         boolean foundalpha = false;
-         boolean foundpunc = false;
-         try {
-
-            while (iswhite(line.charAt(xindex)))
-               ++xindex;
-         } catch (StringIndexOutOfBoundsException e) {
-            // end of line considerd white space. but only once
-            if (!fvc.edvec.containsNow(yindex + 1))
-               break out;
-            yindex++;
-            xindex = 0;
-            line = fvc.at(yindex).toString();
-         }
-
-         try {
-            while (true) {
-               if (isalphanum(line.charAt(xindex)))
-                  foundalpha = true;
-               else if (!iswhite(line.charAt(xindex)))
-                  foundpunc = true;
-               else break;  // white space counts for both
-               if  (foundalpha && foundpunc)
-                  break;
-               xindex++;
-            }
-         } catch (StringIndexOutOfBoundsException e) { }
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-
-   private void endWord(int count, FvContext fvc)  {
-// I suspect there is some simple algorithm used in vi, but I don't see it.
-// trying to work the same as vi - there seem to be three different word types
-// whitespace, alpha numeric  and everything else
-
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-      String line = fvc.at().toString();
-
-   out:
-      while (count-- > 0) {
-         try {
-
-            while (iswhite(line.charAt(xindex)))
-               ++xindex;
-         } catch (StringIndexOutOfBoundsException e) {
-            // end of line considerd white space. but only once
-            if (!fvc.edvec.containsNow(yindex + 1))
-               break out;
-            yindex++;
-            xindex = 0;
-            line = fvc.at(yindex).toString();
-         }
-
-         try {
-            while (true) {
-               if (iswhite(line.charAt(xindex)))
-                  break;  // white space counts for both
-               xindex++;
-            }
-         } catch (StringIndexOutOfBoundsException e) { }
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-
-*/
-//replace with regex?
-   private void backwardword(int count, FvContext fvc)  {
-// I suspect there is some simple algorithm used in vi, but I don't see it.
-// trying to work the same as vi - there seem to be three different word types
-// whitespace, alpha numeric  and everything else
-
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-      int xindex = line.length() - 1;
-
-      if (fvc.insertx() < xindex)
-         xindex = fvc.insertx();
-
-   out:
-      while (count-- > 0) {
-         int foundalpha = 0;
-         int foundpunc = 0;
-         int foundwhite = 0;
-         int newline = 0;
-         try  {
-            while (foundalpha + foundpunc + foundwhite < 2)
-               if (-1 >=  --xindex) {
-                  if (yindex == 1)
-                     break out;
-                  yindex--;
-                  line = fvc.at(yindex).toString();
-                  xindex = line.length() - 1;
-                  if (0 != foundpunc + foundalpha + newline)
-                     foundwhite += newline + 1; // second new line stops us
-                  newline++;
-               } else if (isalphanum(line.charAt(xindex)))
-                  foundalpha = 1;
-               else if (iswhite(line.charAt(xindex)))
-                  if (0 != foundpunc + foundalpha)
-                     foundwhite = 1;
-                  else ;
-               else
-                  foundpunc = 1;
-
-         } catch (StringIndexOutOfBoundsException e) {
-            throw new RuntimeException("backwardword", e);
-         }
-
-         xindex++;
-         if (xindex == (fvc.at(yindex)).toString().length()) {
-            yindex++;
-            xindex = 0;
-         }
-
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-
-   private void backwardWord(int count, FvContext fvc)  {
-      int xindex = fvc.insertx();
-      int yindex = fvc.inserty();
-
-      String line = fvc.at().toString();
-      while (count-- > 0) {
-      loop1:
-         while (true)
-            try {
-               if  (!iswhite(line.charAt(--xindex)))  break loop1;
-            } catch (StringIndexOutOfBoundsException e) {
-               if (yindex - 1 == 0)
-                  break loop1;
-               yindex--;
-               line = fvc.at(yindex).toString();
-               xindex = line.length();
-            }
-         try {
-            while (!iswhite(line.charAt(--xindex))); //find first word
-         } catch (StringIndexOutOfBoundsException e) { /*ignore*/ }
-         xindex++;
-      }
-      fvc.cursorabs(xindex, yindex);
-   }
-
    private void forwardWord(int count, FvContext fvc)  {
-      String line;
+      forwardPat(count, fvc, wordPat);
+   }
+
+   private static void endPat(int count, FvContext fvc, Matcher pat)  {
       int xindex = fvc.insertx();
       int yindex = fvc.inserty();
 
-      line = fvc.at().toString();
-      while (count-- > 0) {
-         try {
-            while (!iswhite(line.charAt(++xindex)));
-         } catch (StringIndexOutOfBoundsException e) {
-            if (!fvc.edvec.containsNow(yindex + 1))
-               break;
-            yindex++;
-            line = fvc.at(yindex).toString();
+      String line = fvc.at(yindex).toString();
+      trace("endPat xindex " + xindex + " yindex "  + yindex + " line:" + line);
+      pat.reset(line);
+      while (count > 0) {
+         if (pat.find(xindex)) {
+            xindex = 1 + pat.start();
+            count--;
+         } else if (fvc.edvec.containsNow(yindex + 1)) {
             xindex = 0;
-         }
-      loop1 :
-         while (true)
-            try {
-               while (iswhite(line.charAt(xindex))) xindex++;
-               break loop1;
-            } catch (StringIndexOutOfBoundsException e) {
-               if (!fvc.edvec.containsNow(yindex + 1))
-                  break;
-               yindex++;
-               line = fvc.at(yindex).toString();
-               xindex = 0;
-            }
+            line = fvc.at(++yindex).toString();
+            pat.reset(line);
+         } else
+            break;
       }
       fvc.cursorabs(xindex, yindex);
    }
+
+   private static Matcher endpat = Pattern.compile(
+      "([^ \ta-zA-Z_0-9](\\w|$))|(\\S(\\s|$))|(\\w(\\W|$))").matcher("");
+   private static void endword(int count, FvContext fvc)  {
+      endPat(count, fvc, endpat);
+   }
+
+   private static Matcher endpatW = Pattern.compile("\\S(\\s|$)").matcher("");
+   private void endWord(int count, FvContext fvc)  {
+      endPat(count, fvc, endpatW);
+   }
+
+   int searchBackward2(Matcher reg, String str, int start, int offset) {
+      //trace("searchBackward start = " + start  + " offset = " +offset + "line:" + str);
+
+      reg.reset(str);
+      int lastfound = -1;
+
+      if (!reg.find())
+         return -1;
+
+      do {
+         int newF = reg.start();
+         trace("newF " + newF);
+         if (newF + offset >= start)
+            break;
+         lastfound = newF;
+         trace("lastfound " + lastfound);
+      } while (reg.find(reg.start() + 1));
+      return lastfound == -1
+         ? -1
+         : lastfound + offset;
+   }
+
+
+   private void backwardPattern(int count, FvContext fvc, Matcher pat)  {
+      trace("backwardword");
+      int yindex = fvc.inserty();
+      int xindex = fvc.insertx();
+      String line = fvc.edvec.at(yindex).toString();
+      while (count > 0) {
+         int offset = searchBackward2(pat, line, xindex, 1);
+         trace("offset " + offset);
+         if (offset != -1) {
+            xindex = offset;
+            count--;
+         } else if (xindex != 0
+                           && line.length() > 0
+                           && !iswhite(line.charAt(0))) {
+            xindex = 0;
+            count--;
+         } else if (yindex > 1) {
+            --yindex;
+            line = fvc.edvec.at(yindex).toString();
+            xindex = line.length();
+         } else
+            break;
+      }
+      fvc.cursorabs(xindex, yindex);
+   }
+
+   private static Matcher wordpat = Pattern.compile(
+      "(\\w[^ \ta-zA-Z_0-9])|(\\s\\S)|(\\W\\w)").matcher("");
+   private void backwardword(int count, FvContext fvc)  {
+      backwardPattern(count, fvc, wordpat);
+   }
+
+   private static Matcher wordPat = Pattern.compile(
+      "\\s\\S").matcher("");
+   private void backwardWord(int count, FvContext fvc)  {
+      backwardPattern(count, fvc, wordPat);
+   }
+
    static final String[] bchars1 = {
       "(<)|(>)",
       "(\\{)|(\\})",
