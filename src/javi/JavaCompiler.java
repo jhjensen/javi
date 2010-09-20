@@ -84,8 +84,18 @@ class JavaCompilerInst extends PositionIoc implements
    private int errcount = 0;
    private int warncount = 0;
 
+   private static String shortString(
+         ArrayList<FileDescriptor.LocalFile>  flisti) {
+      StringBuffer sb = new StringBuffer("javac ");
+      for (FileDescriptor.LocalFile fd : flisti) {
+         sb.append(fd.shortName);
+         sb.append(' ');
+      }
+      return sb.toString();
+   }
+
    JavaCompilerInst(ArrayList<FileDescriptor.LocalFile>  flisti) {
-      super("javac " +  flisti, null);
+      super(shortString(flisti), null);
       flist = flisti;
    }
 
