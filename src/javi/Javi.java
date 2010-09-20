@@ -11,7 +11,11 @@ public final class Javi {
 
       public void run() {
          try {
+            //trace("preload java.awt.Frame");
+            Class.forName("java.awt.Frame");
+            //trace("preload javi.RealJs");
             Class.forName("javi.RealJs");
+            //trace("done ");
          } catch (Throwable e) {
             UI.popError("preloader ", e);
          }
@@ -97,7 +101,7 @@ public final class Javi {
       //trace("prop : \n" + System.getProperties());
       EventQueue.biglock2.lock();
       trace("enter Javi Main");
-      new Thread(new Preloader(), "preloader").start();
+      //new Thread(new Preloader(), "preloader").start();
       Thread curr = Thread.currentThread();
       curr.setPriority(curr.getPriority() - 1);
       StringBuilder sb = new StringBuilder();

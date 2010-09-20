@@ -586,11 +586,9 @@ final class MoveGroup extends Rgroup {
 
       do {
          int newF = reg.start();
-         trace("newF " + newF);
          if (newF + offset >= start)
             break;
          lastfound = newF;
-         trace("lastfound " + lastfound);
       } while (reg.find(reg.start() + 1));
       return lastfound == -1
          ? -1
@@ -605,7 +603,6 @@ final class MoveGroup extends Rgroup {
       String line = fvc.edvec.at(yindex).toString();
       while (count > 0) {
          int offset = searchBackward2(pat, line, xindex, 1);
-         trace("offset " + offset);
          if (offset != -1) {
             xindex = offset;
             count--;

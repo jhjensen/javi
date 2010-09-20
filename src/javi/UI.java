@@ -1132,7 +1132,7 @@ public abstract class UI {
          View ta = new OldView(true);
          viewCount++;
          ta.setFont(FontList.getCurr(null));
-         ta.setSizebyChar(FontList.getWidth(), FontList.getWidth());
+         ta.setSizebyChar(FontList.getWidth(), FontList.getHeight());
          frm.add(ta, -1);
          //frm.setComponentZOrder(ta,1);
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");

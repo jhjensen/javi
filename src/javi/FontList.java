@@ -191,7 +191,7 @@ final class FontList extends TextEdit<FontEntry> {
    }
 
    static void setDefaultFontSize(int width, int height) {
-      trace("width " + width + " height " + height);
+      //trace("width " + width + " height " + height);
       if (height != -1)
          defheight = height;
       if (width != -1)

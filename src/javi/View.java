@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.Graphics;
 import java.awt.Font;
 import static javi.View.Opcode.*;
+import java.util.concurrent.TimeUnit;
 
 abstract class View  extends Canvas {
 
@@ -388,13 +389,13 @@ abstract class View  extends Canvas {
             chmark.setInvalid();
    }
 
-   private void npaint(Graphics2D gr) {
+   private void npaint(Graphics2D gr) throws InterruptedException {
       //trace("npaint");
       if (text == null)
          return;
 
-      if (!EventQueue.biglock2.tryLock()) {
-         //trace("repaint because of null " + text + " or lock");
+      if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
+         trace("repaint because failed lock " + text + " or lock");
          repaint(200);
       } else
          try {
