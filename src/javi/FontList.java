@@ -21,27 +21,7 @@ final class FontList extends TextEdit<FontEntry> {
       os.writeObject(inst.at(1));
    }
 
-   private Float oBToFloat(Object str) throws InputException {
-      if (str == null)
-         throw new InputException("command needs decimal number");
-      try {
-         return Float.valueOf(str.toString().trim());
-      } catch (NumberFormatException e) {
-         throw new InputException("command needs decimal number", e);
-      }
-   }
-
-   private int oBToInt(Object str) throws InputException {
-      if (str == null)
-         throw new InputException("command needs decimal number");
-      try {
-         return Integer.parseInt(str.toString().trim());
-      } catch (NumberFormatException e) {
-         throw new InputException("command needs decimal number", e);
-      }
-   }
-
-   private class Commands extends Rgroup {
+   private static class Commands extends Rgroup {
       Commands() {
          final String[] rnames = {
             "",
@@ -54,47 +34,85 @@ final class FontList extends TextEdit<FontEntry> {
          };
          register(rnames);
       }
+
+      private Float oBToFloat(Object str) throws InputException {
+         if (str == null)
+            throw new InputException("command needs decimal number");
+         try {
+            return Float.valueOf(str.toString().trim());
+         } catch (NumberFormatException e) {
+            throw new InputException("command needs decimal number", e);
+         }
+      }
+
+      private int oBToInt(Object str) throws InputException {
+         if (str == null)
+            throw new InputException("command needs decimal number");
+         try {
+            return Integer.parseInt(str.toString().trim());
+         } catch (NumberFormatException e) {
+            throw new InputException("command needs decimal number", e);
+         }
+      }
+
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws
             InputException {
+
+         View vi = fvc == null
+            ? null
+            : fvc.vi;
+
+         FontEntry fe = (FontEntry) (vi == null
+            ? inst.at(1)
+            : (FvContext.getcontext(vi, inst).at()));
+
          //trace("rnum = " + rnum);
          switch (rnum) {
             case 0:
                return null; // noop
+
             case 1:
-               setFontSize(oBToFloat(arg), fvc == null ? null : fvc.vi);
+               fe.setSize(oBToFloat(arg));
+               if (vi != null)
+                  UI.fontChange(fe.getFont(), vi);
                return null;
+
             case 2:
-               setFontType((String) arg, fvc == null ? null : fvc.vi);
+               fe.setFontType(arg.toString());
+               if (vi != null)
+                  UI.fontChange(fe.getFont(), vi);
                return null;
 
             case 3:
-               setFontName(arg.toString(), fvc == null ? null : fvc.vi);
+               fe.setName(arg.toString());
+               if (vi != null)
+                  UI.fontChange(fe.getFont(), vi);
                return null;
+
             case 4:
-               setFontWeight(oBToFloat(arg), fvc == null ? null : fvc.vi);
+               fe.setWeight(oBToFloat(arg));
+               if (vi != null)
+                  UI.fontChange(fe.getFont(), vi);
                return null;
+
             case 5:
-               setDefaultFontSize(fvc == null
-                                                   ? null
-                                                   : fvc.vi, -1, oBToInt(arg));
+               inst.setDefaultFontSize(-1, oBToInt(arg));
                return null;
+
             case 6:
-               setDefaultFontSize(fvc == null
-                                                   ? null
-                                                   : fvc.vi, oBToInt(arg), -1);
+               inst.setDefaultFontSize(oBToInt(arg), -1);
                return null;
+
             default:
                throw new RuntimeException("doroutine called with " + rnum);
          }
       }
-
    }
 
    private static FontList inst;
 
    static final String [] typest = {"plain", "bold", "italic", "bold+italic"};
-   private static View changedVi;
    private static int defwidth;
    private static int defheight;
 
@@ -104,7 +122,6 @@ final class FontList extends TextEdit<FontEntry> {
 
       inst = new FontList(new FontParser());
    }
-
 
    private static FontEntry [] getdefarray() {
       FontEntry[] retval = new FontEntry[1];
@@ -154,56 +171,6 @@ final class FontList extends TextEdit<FontEntry> {
       }
    }
 
-   static String setFontName(String fontname, View vi) {
-
-      //trace("fontname" + fontname + " vi " + vi);
-      FontEntry fe = (FontEntry) (vi == null
-                                  ? inst.at(1)
-                                  : (FvContext.getcontext(vi, inst).at()));
-      String retval =  fe.setName(fontname);
-      changedVi = vi;
-      //trace("changedVi set");
-      //MiscCommands.wakeUp();
-      return retval;
-   }
-
-   static void setFontType(String type, View vi) {
-      //trace("fontname" + type + " fvc " + fvc);
-      FontEntry fe = (FontEntry) (vi == null
-                                  ? inst.at(1)
-                                  : (FvContext.getcontext(vi, inst).at()));
-      fe.setFontType(type);
-      // trace("changedVi set");
-      changedVi = vi;
-      //MiscCommands.wakeUp();
-   }
-
-   static Float setFontSize(Float size, View vi) {
-      //trace("size " + size + " vi " + vi);
-      FontEntry fe = (FontEntry) (vi == null
-                                  ? inst.at(1)
-                                  : (FvContext.getcontext(vi, inst).at()));
-      Float retval = fe.setSize(size);
-      changedVi = vi;
-      //MiscCommands.wakeUp();
-      return retval;
-   }
-
-   static void setFontWeight(Float weight, View vi) {
-      //trace("weight " + weight + " fvc " + fvc);
-      FontEntry fe = (FontEntry) (vi == null
-                                  ? inst.at(1)
-                                  : (FvContext.getcontext(vi, inst).at()));
-      fe.setWeight(weight);
-      changedVi = vi;
-      //MiscCommands.wakeUp();
-   }
-
-   static void setFontCurr(View vi) {
-      changedVi = vi;
-      //MiscCommands.wakeUp();
-   }
-
    static Font getCurr(View vi) {
       if (vi == null) {
          //trace("font.getCurr default " + inst.at(1));
@@ -215,26 +182,20 @@ final class FontList extends TextEdit<FontEntry> {
       return  fe.getFont();
    }
 
-   static View updateFont() {
-      if (changedVi != null) {
-         View retval = changedVi;
-         changedVi = null;
-         return retval;
-      }
-
-      return null;
+   static int getHeight() {
+      return defheight;
    }
 
-   static void setDefaultFontSize(View vi, int width, int height) {
-      //trace("width " + width + " height " + height + " view = " + vi);
+   static int getWidth() {
+      return defwidth;
+   }
+
+   static void setDefaultFontSize(int width, int height) {
+      trace("width " + width + " height " + height);
       if (height != -1)
          defheight = height;
       if (width != -1)
          defwidth = width;
-      if (vi != null) {
-         vi.setSizebyChar(defwidth, defheight);
-         changedVi = vi;
-      }
    }
 
    static TextEdit getList() {
@@ -304,15 +265,15 @@ final class FontEntry implements java.io.Serializable {
 
          nameReg.reset(str);
          atmap.put(TextAttribute.FAMILY,  nameReg.find()
-                   ? nameReg.group(1)
-                   : deffontname);
+            ? nameReg.group(1)
+            : deffontname);
 
          styleReg.reset(str);
          sizeReg.reset(str);
 
          atmap.put(TextAttribute.SIZE,  sizeReg.find()
-                   ? Float.valueOf(sizeReg.group(1))
-                   : deffontsize);
+            ? Float.valueOf(sizeReg.group(1))
+            : deffontsize);
 
          if (styleReg.find())
             setFontType(styleReg.group(1));
@@ -322,12 +283,12 @@ final class FontEntry implements java.io.Serializable {
             postureReg.reset(str);
 
             atmap.put(TextAttribute.WEIGHT, weightReg.find()
-                      ? Float.valueOf(weightReg.group(1))
-                      : deffontweight);
+               ? Float.valueOf(weightReg.group(1))
+               : deffontweight);
 
             atmap.put(TextAttribute.POSTURE,  postureReg.find()
-                      ? Float.valueOf(postureReg.group(1))
-                      : deffontposture);
+               ? Float.valueOf(postureReg.group(1))
+               : deffontposture);
 
          }
       }
@@ -351,11 +312,11 @@ final class FontEntry implements java.io.Serializable {
    void setFontType(String type) {
       //trace("type = " + type);
       Object weight =
-         "plain".equals(type)
+            "plain".equals(type)
          ? TextAttribute.WEIGHT_REGULAR
-         : "demi".equals(type)
+            : "demi".equals(type)
          ? TextAttribute.WEIGHT_DEMIBOLD
-         : "bold".equals(type)
+            : "bold".equals(type)
          ? TextAttribute.WEIGHT_BOLD
          : atmap.get(TextAttribute.WEIGHT);
 
@@ -363,9 +324,9 @@ final class FontEntry implements java.io.Serializable {
          atmap.put(TextAttribute.WEIGHT, weight);
 
       atmap.put(TextAttribute.POSTURE,
-                "italic".equals(type)
-                   ? TextAttribute.POSTURE_OBLIQUE
-                   : TextAttribute.POSTURE_REGULAR);
+         "italic".equals(type)
+            ? TextAttribute.POSTURE_OBLIQUE
+            : TextAttribute.POSTURE_REGULAR);
       font = null;
    }
 
@@ -391,4 +352,3 @@ final class FontEntry implements java.io.Serializable {
    }
 
 }
-

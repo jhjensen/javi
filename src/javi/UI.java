@@ -76,18 +76,14 @@ public abstract class UI {
    abstract void irepaint();
    abstract void idispose();
    abstract String igetFile();
-//   abstract void iadd(Component vi, int index);
    abstract boolean iisVisible();
    abstract void iremove(View vi);
    abstract void ishow();
-//   abstract void ipack();
    abstract void ishowmenu(int x, int y);
    abstract void itoFront();
    abstract void itransferFocus();
    abstract void ichooseWriteable(String filename);
    abstract boolean ipopstring(String str);
-   abstract void isetFont(Font font);
-//   abstract void ivalidate();
    abstract void iflush(boolean totalFlush);
    abstract void istatusaddline(String str);
    abstract void istatusSetline(String str);
@@ -95,6 +91,11 @@ public abstract class UI {
    abstract boolean iisGotoOk(FvContext fvc);
    abstract FvContext iconnectfv(TextEdit file, View vi) throws InputException;
    abstract void isetView(FvContext fvc);
+
+   abstract void isetFont(Font font, View vi);
+   static void fontChange(Font font, View vi) {
+      instance.isetFont(font, vi);
+   }
 
    abstract Result ireportModVal(String caption, String units,
                                  String []buttonVals, long limit);
@@ -114,7 +115,6 @@ public abstract class UI {
 //         :(UI) new StreamInterface();
       instance = (AwtInterface) is.readObject();
       instance.ishow();
-      FontList.updateFont(); // prevents an extra redraw later
       instance.toFront();
    }
 
@@ -263,7 +263,9 @@ public abstract class UI {
                int lineno = 0;
                int linemax = edv.finish();
                String line;
-               while ((line = fr.readLine()) != null && ++lineno < linemax) {
+               while ((line = fr.readLine()) != null) {
+                  if ((++lineno  >= linemax))
+                     break;
                   if (!line.equals(edv.at(lineno))) {
                      reportMessage(
                         "svn base file not equal to current file at "
@@ -453,7 +455,7 @@ public abstract class UI {
       void itransferFocus() { /* unimplemented */ }
       void ichooseWriteable(java.lang.String str) { /* unimplemented */ }
       boolean ipopstring(java.lang.String str) { return false; }
-      void isetFont(java.awt.Font font) { /* unimplemented */ }
+      void isetFont(java.awt.Font font, View vi) { /* unimplemented */ }
 //      void ivalidate() {/* unimplemented */}
       void iflush(boolean total) { /* unimplemented */ }
       void itoggleStatus() { /* unimplemented */ }
@@ -527,25 +529,15 @@ public abstract class UI {
 
          normalFrame = frm;
          common();
-
-         StringIoc sio = new StringIoc("command buffer", null);
-         TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
-
-         View tfview = new OldView(false);
-         tfview.setFont(FontList.getCurr(null));
-         tfview.setSizebyChar(80, 1);
-         tfview.setVisible(false);
-         tfc = FvContext.getcontext(tfview, cmbuff);
-         frm.add(tfview, 0);
-         frm.setComponentZOrder(tfview, 0);
-         tfc.setCurrView();
          new Initer().postWait();
+
          //trace("this = " + this + " fr = " + fr);
       }
 
 
       private static java.awt.EventQueue eventQueue =
          java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
+
       abstract class RunAwt extends AWTEvent implements Runnable {
          public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
 
@@ -709,7 +701,7 @@ public abstract class UI {
             prefSize.width = xsize - inset.left - inset.right;
             if (!cp.getSize().equals(prefSize)) {
                cp.setSize(prefSize);
-               //trace("full width set size " + cp.getSize() + " " +  cp);
+               trace("full width set size " + cp.getSize() + " " +  cp);
             }
             return cp.isVisible()
                    ? yleft - prefSize.height
@@ -1080,11 +1072,22 @@ public abstract class UI {
           // ms quicker, but ready for events quit 90 ms slower
 
          public Object doAwt() {
+            //trace("start initer");
+            View tfview = new OldView(false);
+            tfview.setVisible(false);
+            frm.add(tfview, 0);
+            frm.setComponentZOrder(tfview, 0);
             EventQueue.biglock2.lock();
             try {
+               StringIoc sio = new StringIoc("command buffer", null);
+               TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
+
+               tfview.setFont(FontList.getCurr(null));
+               tfview.setSizebyChar(80, 1);
+               tfc = FvContext.getcontext(tfview, cmbuff);
+               tfc.setCurrView();
                View vi = mkview(false);
-               FontList.setDefaultFontSize(vi, -1, -1);
-               trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
+               //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
                iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
             } catch (InputException e) {
                throw new RuntimeException("can't recover iaddview", e);
@@ -1092,8 +1095,6 @@ public abstract class UI {
                EventQueue.biglock2.unlock();
             }
 
-            frm.requestFocus();
-            FontList.updateFont(); // prevents an extra redraw later
             frm.requestFocus();
             statusBar = new StatusBar();
             statusBar.setVisible(false);
@@ -1131,6 +1132,7 @@ public abstract class UI {
          View ta = new OldView(true);
          viewCount++;
          ta.setFont(FontList.getCurr(null));
+         ta.setSizebyChar(FontList.getWidth(), FontList.getWidth());
          frm.add(ta, -1);
          //frm.setComponentZOrder(ta,1);
          //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
@@ -1230,11 +1232,6 @@ public abstract class UI {
          public void run() {
             EventQueue.biglock2.lock();
             try {
-               View vichanged =  FontList.updateFont();
-               if (vichanged != null) {
-                  isetFont(FontList.getCurr(vichanged));
-                  vichanged.setFont(FontList.getCurr(vichanged));
-               }
                if (statusBar != null && statusBar.isVisible())
                   statusBar.repaint();
             } finally {
@@ -1295,19 +1292,52 @@ public abstract class UI {
          chinst.chosefile(filename);
       }
 
-      void isetFont(Font font) {
-         EventQueue.biglock2.assertOwned();
-         popmenu = null;
-         psinst = null;
-         chinst = null;
-         rdinst = null;
-         frm.setFont(font);
-         int cpi = frm.getComponentCount();
-         for (cpi = cpi > 2 ? 1 : cpi - 1; cpi >= 0; --cpi) {
-            Component cp = frm.getComponent(cpi);
-            if (null != frm.getComponent(cpi))
-               cp.setFont(font);
+      void isetViewSize(View vi, int width, int height) {
+         //trace("width " + width + " height " + height + " view = " + vi);
+         FontList.setDefaultFontSize(width, height);
+         vi.setSizebyChar(width, height);
+         if (normalFrame == frm
+               && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+               == Frame.MAXIMIZED_BOTH))
+            frm.setSize(frm.getPreferredSize());
+
+         new Validate();
+      }
+
+      class SetFont extends RunAwt {
+         private final Font font;
+         private final View vi;
+
+         SetFont(Font fonti, View vii) {
+            font = fonti;
+            vi = vii;
+            post();
          }
+
+         public void run() {
+            popmenu = null;
+            psinst = null;
+            chinst = null;
+            rdinst = null;
+            frm.setFont(font);
+            vi.setFont(font);
+            int cpi = frm.getComponentCount();
+            for (cpi = cpi > 2 ? 1 : cpi - 1; cpi >= 0; --cpi) {
+               Component cp = frm.getComponent(cpi);
+               if (null != frm.getComponent(cpi))
+                  cp.setFont(font);
+            }
+            if (normalFrame == frm
+                  && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+                  == Frame.MAXIMIZED_BOTH))
+               frm.setSize(frm.getPreferredSize());
+
+            frm.validate();
+         }
+      }
+
+      void isetFont(Font font, View vi) {
+         new SetFont(font, vi);
       }
 
       private static class MyMenuItem extends MenuItem {
@@ -1949,17 +1979,6 @@ public abstract class UI {
          return new GetFile().postWait().getResult();
       }
 
-      void isetViewSize(View vi, int width, int height) {
-         //trace("width " + width + " height " + height + " view = " + vi);
-         FontList.setDefaultFontSize(vi, width, height);
-         vi.setSizebyChar(width, height);
-         if (normalFrame == frm
-               && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
-               == Frame.MAXIMIZED_BOTH))
-            frm.setSize(frm.getPreferredSize());
-
-         new Validate();
-      }
    }
 
    public static void trace(String str) {

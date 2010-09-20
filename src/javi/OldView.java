@@ -518,7 +518,6 @@ class OldView  extends View {
       //trace("getPreferredSize screensize " + screenSize + " charheight " + charheight  + " pixelWidth " + pixelWidth);
       //trace("screen y = " + screenSize * charheight);
       return new Dimension(pixelWidth, screenSize * charheight);
-//Thread.dumpStack();
    }
 
    void setSizebyChar(int xchar, int ychar) {

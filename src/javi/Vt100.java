@@ -59,7 +59,7 @@ abstract class Vt100 extends TextEdit<String> {
    public void startHandle(FvContext fvc) {
       //trace("startHandle " + fvc);
       if (fvc != null) {
-         oldfont = FontList.setFontName("Courier New" , fvc.vi);
+//         oldfont = FontList.setFontName("Courier New" , fvc.vi);
 //        oldfont = FontList.setFontName("Vrinda" ,fvc.vi);
 //        oldsize =  FontList.setFontSize(new Float(15.0) ,fvc.vi);
          //trace("oldfont = " + oldfont);
@@ -70,11 +70,6 @@ abstract class Vt100 extends TextEdit<String> {
             //trace("setfvc inserting line at "  + ev.readIn());
             insertOne("", readIn());
          }
-      } else {
-         //trace("oldfont " + oldfont + " currfvc " + currfvc);
-         if (currfvc != null)
-            FontList.setFontName(oldfont, currfvc.vi);
-//        FontList.setFontSize(oldsize,currfvc.vi);
       }
 
       currfvc = fvc;

@@ -205,6 +205,9 @@ public class EditContainer<OType> implements
       }
    }
 
+   boolean isValid() {
+      return ecache != null;
+   }
 
    static void disposeAll() throws IOException {
       Iterator<Map.Entry<FileDescriptor, EditContainer>> eve;

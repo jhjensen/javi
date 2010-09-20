@@ -146,7 +146,7 @@ public final class PosListList extends TextList<Position> implements
          FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
 
          if (lastlist instanceof FontList) {
-            FontList.setFontCurr(fvc.vi);
+            UI.fontChange(FontList.getCurr(fvc.vi), fvc.vi);
          } else {
             Object obj = listfvc.at();
             if (obj instanceof Position) {

@@ -1,3 +1,6 @@
+build/csytle on commit
+circular font/setsize
+
 resizeing with mouse doesn't work.
 togglestatus changes window size.
 something funny going on with mouse and V mode
@@ -38,6 +41,7 @@ static import.
 varargs?, boxing
 
 done :
+compa makes status to big
    OldView used to zero out imageg, fixed one probem, but is still not thread safe.
    full screen mode, going to command line is slow, and appears to repaint alot.
    :asdf\r up arrow right arrow down arrow(down arrow isnt fixing posx)

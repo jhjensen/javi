@@ -327,6 +327,7 @@ abstract class View  extends Canvas {
       traverse = traversei;
       setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
       common();
+      //trace("created view " + this);
    }
 
    void newfile(TextEdit texti, int curX, int curY) {
@@ -345,7 +346,7 @@ abstract class View  extends Canvas {
 
    public void setFont(Font font) {
 
-      EventQueue.biglock2.assertOwned();
+      //trace("setting View font " + font + " "  + this);
       ssetFont(font);
       super.setFont(font);
    }
@@ -389,14 +390,21 @@ abstract class View  extends Canvas {
 
    private void npaint(Graphics2D gr) {
       //trace("npaint");
-      if ((text == null)
-            || !text.containsNow(1)
-            || !EventQueue.biglock2.tryLock())
+      if (text == null)
+         return;
+
+      if (!EventQueue.biglock2.tryLock()) {
+         //trace("repaint because of null " + text + " or lock");
          repaint(200);
-      else
+      } else
          try {
-            chmark.getChanges(op);
-            op.rpaint(gr);
+            if (text.isValid() && text.containsNow(1)) {
+               chmark.getChanges(op);
+               op.rpaint(gr);
+            } else {
+               trace("repaint because of invalid or empty");
+               repaint(200);
+            }
          } catch (Throwable e) {
             UI.popError("npaint caught", e);
          } finally {
