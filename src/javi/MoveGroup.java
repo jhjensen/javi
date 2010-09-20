@@ -548,7 +548,7 @@ final class MoveGroup extends Rgroup {
       int yindex = fvc.inserty();
 
       String line = fvc.at(yindex).toString();
-      trace("endPat xindex " + xindex + " yindex "  + yindex + " line:" + line);
+      //trace("endPat xindex " + xindex + " yindex "  + yindex + " line:" + line);
       pat.reset(line);
       while (count > 0) {
          if (pat.find(xindex)) {
@@ -597,7 +597,6 @@ final class MoveGroup extends Rgroup {
 
 
    private void backwardPattern(int count, FvContext fvc, Matcher pat)  {
-      trace("backwardword");
       int yindex = fvc.inserty();
       int xindex = fvc.insertx();
       String line = fvc.edvec.at(yindex).toString();
