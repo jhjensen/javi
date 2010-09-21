@@ -59,7 +59,7 @@ class CheckStyle extends Rgroup {
             new LinkedList<String>(listModFiles(".*\\.java", fvc));
 
          cmd.add(0, "./cstyle");
-         cmd.add(0, "bash");
+         cmd.add(0, "perl");
          PosListList.Cmd.setErrors(new CheckStyleInst(cmd));
       } catch (InputException e) {
          throw new RuntimeException("cccommand has bad spec", e);
@@ -80,7 +80,7 @@ class CheckStyle extends Rgroup {
       else  {
          ArrayList<String> dlist = new ArrayList<String>(fdlist.size());
          dlist.add(0, "cstyle");
-         dlist.add(0, "bash");
+         dlist.add(0, "perl");
 
          for (FileDescriptor fd : fdlist)
             dlist.add(fd.shortName);
@@ -98,7 +98,7 @@ class CheckStyleInst extends PositionIoc {
    CheckStyleInst(List<String> filename) throws IOException {
       super("checkstyle", Tools.runcmd(filename));
    }
-
+/*
    public final Position parsefile() {
       String line;
       while (null != (line = getLine())) {
@@ -151,4 +151,5 @@ class CheckStyleInst extends PositionIoc {
       }
       return null;
    }
+*/
 }

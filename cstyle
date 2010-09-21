@@ -1,3 +1,103 @@
-#!/bin/sh 
-#CLASSPATH="../checkstyle-5.1/checkstyle-5.1.jar;../checkstyle-5.1/antlr.jar;../checkstyle-5.1/commons-logging.jar;../checkstyle-5.1/commons-cli-1.1.jar;../checkstyle-5.1/google-collect-1.0.jar;../checkstyle-5.1/commons-beanutils-core.jar;$CLASSPATH"
-java  -cp $CLASSPATH\;lib/checkstyle-5.1/checkstyle-all-5.1.jar com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml $*
+#!/bin/perl 
+
+use strict;
+use integer;
+use ops;
+use Cwd;
+
+my %filelist;
+
+system("printenv | sort >penv") && die;
+$_ = getcwd();
+$_ = `cygpath -wal \"$_\"`;
+chomp;
+my $rootdir =lc;
+
+my $JDK2="c:\\Progra~1\\Java\\jdk1.6.0_20";
+
+my $jroot="C:\\Docume~1\\utftbwx\\Desktop\\cyghome\\javt";
+my $myprog="$jroot\\lib";
+my $mycp="$jroot\\build;$myprog\\juniversalchardet-1.0.3.jar;$myprog\\rhino1_7R2\\js.jar;$myprog\\junit3.8.2\\junit.jar;$JDK2\\lib\\tools.jar";
+
+my $cmd ="java  -cp \"$mycp;lib/checkstyle-5.1/checkstyle-all-5.1.jar\" com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
+
+#print "running $cmd\n";
+
+open(CST, "$cmd 2>&1|") || die ("$cmd failed $!");
+
+my $old_fh = select(MAKE);
+$| = 1;
+select($old_fh);
+$| = 1;
+
+while (<CST>) {
+
+   chomp;
+   #print "!!!! line$_";
+   if (/Starting audit.../) {
+       #do nothing
+   } elsif (/Audit done./) {
+       #do nothing
+   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):([0-9]+):(.*)$/) { # gcc and others
+      my $fname = mkerror($1,$3,$4-1,$5);
+      #print("fname :$fname:\n");
+      $filelist{$fname }++; 
+   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):(.*)$/) { # gcc and others
+      my $fname = mkerror($1,$3,$0,$4);
+      #print("fname :$fname:\n");
+      $filelist{$fname }++; 
+   } else {
+      print "bad line !!!!:$_";
+   }
+}
+
+my @array=keys(%filelist);
+my $size=1 + $#array;
+
+print("\nfound errors in $size files\n");
+
+if ($size != 0) {
+   
+   my %db;
+   open(ERRLST, "cs_errcnt") || die ("$cmd failed $!");
+   while (<ERRLST>) {
+      chomp;
+      (my $fname,my $cnt) = split(/,/);
+      $db{$fname} = $cnt;
+   }
+
+   my $errcnt = 0;
+   foreach my $key (@array) { 
+      #print "xxxkey $key,$filelist{$key},$db{$key}\n";
+      if ($filelist{$key} > $db{$key} ) {
+         print("$key(0,1)-cstyle new count $filelist{$key}greater than before:$db{$key}:\n");
+         $errcnt ++;
+      }
+   }
+   if ($errcnt) {
+      exit 255;
+   }
+  
+}
+
+#open(ERRLST, ">cs_errcnt") || die ("$cmd failed $!");
+#foreach my $key (@array) { 
+#   print ERRLST "$key,$filelist{$key}\n";
+#   print "cs_ $key,$filelist{$key}\n";
+#}
+
+exit 0;
+
+sub mkerror {
+    my($filename,$linenumber,$charnumber,$messege) = @_;
+    #print "mkerr filename = $filename\n";
+    $filename = lc(`cygpath -wal \"$filename\"`);
+    chomp $filename;
+    my $ind = index($filename,$rootdir);
+     if ($ind==0) {
+       $filename=substr($filename,1+length($rootdir));
+    }
+          
+    print "$filename($charnumber,$linenumber)-$messege\n";
+    return $filename;
+}

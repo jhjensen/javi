@@ -17,7 +17,7 @@ sub getline() {
     my $line = (<MAKE>);
     if ($line) {
           print TEEOUT $line;
-          print TEEOUT "LINE:::$line";  # for debugging
+          #print TEEOUT "LINE:::$line";  # for debugging
     }
     return $line;
 }
@@ -188,8 +188,22 @@ sub parsemake  {
              mkerror($logfile,$.,0,$_);
       } elsif (/^FAILED: copy/) {    # sea.pl error message
              mkerror("",$.,0,$_);
-      } elsif (/at ([a-z]+\.pl) line ([0-9]+)\./) {    # perl syntax error message
-             mkerror($1,$2,0,$_);
+      } elsif (/(.*) stopped at (\S+) line ([0-9]+)(.*)/) {  #perl
+         print "1\n";
+         mkerror($2,$3,0,"$1$4");
+      } elsif (/syntax error at (\S+) line ([0-9]+)(.*)/) {  #perl
+         print "_:$_\n";
+         print "2 3 :$3: \n";
+         print "2 4 :$4: \n";
+         print "2 5 :$5: \n";
+         mkerror($1,$2,0,"syntax error $3");
+      } elsif (/(.*) at (\S+) line ([0-9]+)(.*)/) {  #perl
+         print "3\n";
+         mkerror($2,$3,0,"$1$4");
+      } elsif (/(.*) at (\S+) line ([0-9]+)(.*)/) {  #perl
+         print "4\n";
+         mkerror($3,$4,0,"$1$2$5");
+
       } elsif (/at ([a-z]+\.pl) line ([0-9]+), near \"(.*)\"/) {    # perl syntax error message
              mkerror($1,$2,0,$_);
 
@@ -337,6 +351,7 @@ print "%origenv\n";
          #my $mycommand = "smake -f $mkfile $extra all install 2>&1|";
          #my $mycommand = "make $extra all 2>&1|";
          my $mycommand = "ant -e $extra 2>&1|";
+         my $mycommand = "find src -name \\*.java | xargs cstyle 2>&1|";
          #my $mycommand = "python2.3 setup.py build 2>&1|";
          print TEEOUT "results of  $mycommand for $target\n";
          print TEEOUT "cdir:$cdir \n";
@@ -350,7 +365,7 @@ exit(0);  # redundant exit
 
 sub mkerror {
     my($filename,$linenumber,$charnumber,$messege) = @_;
-    #$print "mkerr filename = $filename\n";
+    print "mkerr filename = $filename\n";
     $_=$filename;
     #my @cal = caller();
     #print  "xxxxx @cal\n";
