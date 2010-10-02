@@ -81,13 +81,16 @@ final class DirList extends TextEdit<DirEntry> {
    }
 
    void initSearch(String searchNamei) {
+
       dindex = 0;
       findex = -1;
       maxIndex = readIn();
-      searchName = FileDescriptor.LocalFile.make(searchNamei).shortName;
+      //searchName = FileDescriptor.LocalFile.make(searchNamei).shortName;
+      searchName = searchNamei;
    }
 
    boolean initSearchR() {
+      trace("searchName " + searchName);
       dindex = 0;
       findex = -1;
       maxIndex = readIn();
