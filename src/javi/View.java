@@ -478,6 +478,7 @@ abstract class View  extends Canvas {
    }
 
    void setMark(Position markposi) {
+      //trace("setMark");
       MovePos pos = pmark.getMark();
       if (pos != null) {
          if (markposi.equals(pos))
@@ -489,6 +490,7 @@ abstract class View  extends Canvas {
    }
 
    void clearMark() {
+      //trace("clearMark");
       MovePos pos = pmark.getMark();
       pmark.clearMark(fileX, fileY);
       if (pos != null)
@@ -615,8 +617,10 @@ abstract class View  extends Canvas {
             if (mousePressed == 1) {
                //fvc.cursorabs(p);
                Position evPos = mousepos(mev);
-               if (fileX != evPos.y || fileY != evPos.x)
+               if (fileX != evPos.x || fileY != evPos.y)
                   setMark(evPos);
+               else
+                  clearMark();
             }
             break;
          case MouseEvent.MOUSE_MOVED:

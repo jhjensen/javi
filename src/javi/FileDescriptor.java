@@ -342,7 +342,7 @@ public class FileDescriptor implements Serializable {
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fname, cname);
          //trace("exists " + fh.exists() + " cname " + cname  + " normName " + normName);
-         
+
          return fh.isDirectory()
                 ? new LocalDir(normName, cname, fh)
                 : new LocalFile(normName, cname, fh);

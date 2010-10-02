@@ -1,11 +1,6 @@
-build/csytle on commit
-circular font/setsize
-
-resizeing with mouse doesn't work.
-togglestatus changes window size.
+not saving history when X out.
 something funny going on with mouse and V mode
 
-modal dialog
 lock access to .dmp2
 list of shells
 improve remote ctag.
@@ -38,10 +33,14 @@ Junit testcases
 new view
 findbugs
 static import.
-varargs?, boxing
 
 done :
-compa makes status to big
+   modal dialog
+   build/csytle on commit
+   resizeing with mouse doesn't work.
+   togglestatus changes window size.
+   circular font/setsize
+   compa makes status to big
    OldView used to zero out imageg, fixed one probem, but is still not thread safe.
    full screen mode, going to command line is slow, and appears to repaint alot.
    :asdf\r up arrow right arrow down arrow(down arrow isnt fixing posx)
