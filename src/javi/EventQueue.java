@@ -50,7 +50,7 @@ public final class EventQueue {
             InterruptedException {
          //Tools.trace("locking " + this,1);
          if (!super.tryLock(time, TimeUnit.SECONDS)) {
-            Tools.trace("failed to get lock, shutdown anyway.", 1);
+            Tools.trace("failed to get lock continueing .", 1);
             Tools.trace("owning thread: " + getOwner(), 1);
             return false;
          }

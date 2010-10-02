@@ -583,6 +583,7 @@ public final class FvContext<OType> implements Serializable {
       vi.setMark(pos);
       cursorabs(pos);
    }
+
    void setMark(Position pos) {
       vi.setMark(pos);
       cursorabs(pos);

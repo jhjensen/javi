@@ -38,12 +38,12 @@ while (<CST>) {
        #do nothing
    } elsif (/Audit done./) {
        #do nothing
-   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):([0-9]+):(.*)$/) { # gcc and others
+   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):([0-9]+):(.*)$/) {
       my $fname = mkerror($1,$3,$4-1,$5);
       #print("fname :$fname:\n");
       $filelist{$fname }++; 
-   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):(.*)$/) { # gcc and others
-      my $fname = mkerror($1,$3,$0,$4);
+   } elsif (/(^(\w:)?[ ~\w.\/\\]+):([0-9]+):(.*)$/) {
+      my $fname = mkerror($1,$3,0,$4);
       #print("fname :$fname:\n");
       $filelist{$fname }++; 
    } else {

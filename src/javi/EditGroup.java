@@ -543,7 +543,7 @@ class EditGroup extends Rgroup {
 
    private static void deletetext(char bufid, FvContext fvc,
          boolean preserve, int xstart, int ystart, int xend, int yend) {
-      trace("deletetext id " + bufid);
+      //trace("deletetext id " + bufid);
       Buffers.deleted(bufid,
          fvc.edvec.deletetext(preserve, xstart, ystart, xend, yend));
    }

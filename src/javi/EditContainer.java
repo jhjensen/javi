@@ -153,9 +153,9 @@ public class EditContainer<OType> implements
    private static HashMap<FileDescriptor, EditContainer> filehash =
       new HashMap<FileDescriptor, EditContainer>();
 
-//static {
-//   EventQueue.registerIdle(new IdleHandler());
-//}
+   static {
+      EventQueue.registerIdle(new IdleHandler());
+   }
 
    static void dumpStatic() {
       Thread.dumpStack();
@@ -437,10 +437,12 @@ public class EditContainer<OType> implements
    private static class IdleHandler implements EventQueue.Idler {
       public void idle() throws IOException {
 
+         //trace("idle handler ");
          EventQueue.biglock2.assertOwned();
          for (EditContainer ev : filehash.values())
             if (ev.backup != null)
                try {
+                  //trace("backing up " + ev);
                   ev.backup.idleSave();
                } catch (Throwable e) {
                   UI.popError("Problem with backup File starting over" , e);
