@@ -30,13 +30,6 @@ public final class Position {
              : (filename.shortName + "(" + x + "," + y + ")" + "-" + comment);
    }
 
-   Position(MovePos p, String fname, String commi) {
-      x = p.x;
-      y = p.y;
-      filename = FileDescriptor.make(fname);
-      comment = commi;
-   }
-
    public static final Position badpos = new Position(0, 0, "", null);
 
    boolean equals(Position p) {
