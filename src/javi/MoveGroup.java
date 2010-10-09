@@ -1,6 +1,7 @@
 package javi;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
@@ -65,8 +66,25 @@ final class MoveGroup extends Rgroup {
          "movescreenline",
       };
       register(rnames);
+      EditContainer.registerChangeListen(new FCH());
    }
 
+   class FCH extends EditContainer.FileChangeListener  {
+      void addedLines(FileDescriptor fd, int count, int index) {
+         for (Map.Entry<Integer, Position> me : markpos.entrySet()) {
+            Position pos = me.getValue();
+            if (pos.filename.equals(fd) && pos.y > index) {
+               Position npos = new Position(pos.x,
+                   (index > 0 || pos.y > index + count
+                     ? pos.y + count
+                     : index
+                   ),
+                  pos.filename, pos.comment);
+               markpos.put(me.getKey(), npos);
+            }
+         }
+      }
+   }
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws InputException, IOException {
       if (!dotmode && (rnum != 24)) {
@@ -222,15 +240,8 @@ final class MoveGroup extends Rgroup {
       EditContainer ev = fvc.edvec;
 
       Integer idObj = Integer.valueOf(bufid);
-      Position pos = markpos.get(idObj);
-      if (pos != null) {
-         EditContainer ev1 = EditContainer.findfile(pos.filename);
-         if (ev1 != null)
-            ev1.unfixposition(pos);
-      }
-      pos = fvc.getPosition("mark " + bufid);
+      Position pos = fvc.getPosition("mark " + bufid);
       markpos.put(idObj, pos);
-      ev.fixposition(pos);
 
       if (!fvc.equals(lastmark2))
          lastmark2 = pos;

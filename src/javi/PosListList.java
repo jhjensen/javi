@@ -14,8 +14,7 @@ class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
    }
 }
 
-public final class PosListList extends TextList<Position> implements
-      FileStatusListener {
+public final class PosListList extends TextList<Position> {
 
    private static final long serialVersionUID = 1;
    private transient TextEdit lastlist = null;
@@ -26,23 +25,25 @@ public final class PosListList extends TextList<Position> implements
       super(ioc, ioc.prop);
       //plist=this;
       finish();
-      EditContainer.registerListener(this);
+      EditContainer.registerChangeListen(new FCH());
    }
 
-   public boolean fileDisposed(EditContainer ev) { return false; }
-   public void fileWritten(EditContainer ev) { }
-   public void fileAdded(EditContainer ev) {
+   class FCH extends EditContainer.FileChangeListener  {
 
-      if (readIn() < 2)
-         return;
-      EditContainer<Position> errlist = at(1);
-
-      if (errlist == ev) // can't fix positions in error list
-         return;
-
-      for (Position pos : errlist) {
-         if (ev.fdes().equals(pos.filename))  {
-            ev.fixposition(pos);
+      void addedLines(FileDescriptor fd, int count, int index) {
+         //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
+         EditContainer<Position> errlist = at(1);
+         for (int ii = 1; ii < errlist.readIn(); ii++) {
+            Position pos = errlist.at(ii);
+            if (pos.filename.equals(fd) && pos.y > index) {
+               Position npos = new Position(pos.x,
+                   (index > 0 || pos.y > index + count
+                     ? pos.y + count
+                     : index
+                   ),
+                   pos.filename, pos.comment);
+               errlist.changeElementAt(npos, ii);
+            }
          }
       }
    }
@@ -79,11 +80,6 @@ public final class PosListList extends TextList<Position> implements
       TextEdit<Position> oldList = at(1);
       //trace("olderrlist " + oldList);
       //trace("oldList.readIn() = " + oldList.readIn());
-      for (Position pos : oldList) {
-         EditContainer ev = EditContainer.findfile(pos.filename);
-         if (ev != null)
-            ev.unfixposition(pos);
-      }
 
       if (newIo != null) {
          //trace("add new ioc " + newIo);

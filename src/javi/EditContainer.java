@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 import java.util.NoSuchElementException;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -102,7 +101,6 @@ public class EditContainer<OType> implements
    private transient boolean ioError = false;
    private transient boolean backupMade;
    private transient boolean readonly = false;
-   private transient Vector<MovePos> fixedpos;
    private transient UndoHistory.ChangeRecord []prototypes;
 
    private void writeObject(java.io.ObjectOutputStream os) throws IOException {
@@ -115,7 +113,6 @@ public class EditContainer<OType> implements
       is.defaultReadObject();
       common(null);
    }
-
 
    final void saveList(java.io.ObjectOutputStream os) throws IOException {
       os.writeInt(ecache.size());
@@ -191,7 +188,6 @@ public class EditContainer<OType> implements
 
       //trace("dispose " + super.toString()  + "\"" + prop.fdes.canonName+  "\" class = " + prop.conv.getClass() );
       cleanup();
-      fixedpos = null;
       ecache = null;
       try {
          ioc.dispose();
@@ -638,23 +634,6 @@ public class EditContainer<OType> implements
        it will affect insert and delete performance.
    */
 
-   final void fixposition(Position p) {
-//trace("p = " + p);
-      if (fixedpos == null)
-         fixedpos = new Vector<MovePos>();
-      fixedpos.add(new MovePos(p));
-   }
-
-
-   /** this un-registers a position as fixed. */
-   final void unfixposition(Position p) {
-//trace("p = " + p);
-      if (fixedpos != null) {
-         fixedpos.remove(new MovePos(p));
-         if (fixedpos.size() == 0)
-            fixedpos = null;
-      }
-   }
 
    final OType insertStream(BufferedReader input, int index) throws
          InputException, IOException {
@@ -872,6 +851,22 @@ public class EditContainer<OType> implements
 
    }
 
+   abstract static class FileChangeListener {
+      abstract void addedLines(FileDescriptor fd, int count, int index);
+   }
+
+   private static FileChangeListener[] changeListeners =
+      new FileChangeListener[2];
+
+   static void registerChangeListen(FileChangeListener fl) {
+      if (changeListeners[0] == null)
+         changeListeners[0] = fl;
+      else if (changeListeners[1] == null)
+         changeListeners[1] = fl;
+      else
+         throw new RuntimeException("register to many changeListenerss");
+   }
+
 // should only be called by changerecords.
    final void addObjects(int cindex, OType [] objs) {
       //trace("cindex = " + cindex + " currsize = " + ecache.size() + " objtype = " + objs[0].getClass() );
@@ -880,10 +875,10 @@ public class EditContainer<OType> implements
             ((ReAnimator) objs[i]).reAnimate();
       ecache.addAll(cindex, objs);
 
-      if (fixedpos != null)
-         for (MovePos p : fixedpos)
-            if (p.y >= cindex)
-               p.y += objs.length;
+
+      for (FileChangeListener changeListener : changeListeners)
+         if (null != changeListener)
+            changeListener.addedLines(fdes(), objs.length, cindex);
    }
 
    final void deleteObjects(int cindex, Object [] objs) {
@@ -893,10 +888,6 @@ public class EditContainer<OType> implements
       int number = objs.length + cindex;
       ecache.clear(cindex, number);
 
-      if (fixedpos != null)
-         for (MovePos p : fixedpos)
-            if (p.y >= cindex)
-               p.y -= number;
       if (objs[0] instanceof ReAnimator)
          for (int i = 0; i < objs.length; i++)
             try {
@@ -905,6 +896,9 @@ public class EditContainer<OType> implements
             } catch (IOException e) {
                UI.popError("unable to dispose obj", e);
             }
+      for (FileChangeListener changeListener : changeListeners)
+         if (null != changeListener)
+            changeListener.addedLines(fdes(), -objs.length, cindex);
    }
 
    final void addState(StringBuilder sb) {
