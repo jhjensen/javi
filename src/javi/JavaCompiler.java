@@ -100,7 +100,7 @@ class JavaCompilerInst extends PositionIoc implements
    }
 
    public void report(Diagnostic diagnostic) {
-      //trace("diagnostic.getSource() " + diagnostic.getSource());
+      trace("diagnostic.getSource() " + diagnostic.getSource());
       //trace("diagnostic.getClass() " + diagnostic.getClass());
       Object source = diagnostic.getSource();
       String mess = diagnostic.getMessage(null);
@@ -145,7 +145,9 @@ class JavaCompilerInst extends PositionIoc implements
             FileDescriptor.getFileObjs(fileManager, flist);
 
          //String [] options = {"-Xlint"};
-         String [] options = {"-d", "build"};
+
+         //String [] options = {"-d", "build"};
+         String [] options = {"-d", "gbuild/java/build","-cp", "gbuild/java/build"};
 
          boolean success = compiler.getTask(null, fileManager,
             this, Arrays.asList(options), null, clist).call();

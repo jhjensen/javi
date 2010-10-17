@@ -351,7 +351,7 @@ print "%origenv\n";
          #my $mycommand = "smake -f $mkfile $extra all install 2>&1|";
          #my $mycommand = "make $extra all 2>&1|";
          my $mycommand = "ant -e $extra 2>&1|";
-         my $mycommand = "find src -name \\*.java | xargs cstyle 2>&1|";
+         #my $mycommand = "find src -name \\*.java | xargs cstyle 2>&1|";
          #my $mycommand = "python2.3 setup.py build 2>&1|";
          print TEEOUT "results of  $mycommand for $target\n";
          print TEEOUT "cdir:$cdir \n";

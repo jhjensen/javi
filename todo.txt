@@ -1,5 +1,8 @@
-not saving history when X out.
-something funny going on with mouse and V mode
+F1 to soon fails makes me need F6
+editing file doesn't fixup positions.
+Circular MovePos/Position
+Circular UI.
+Circular within JS.
 
 lock access to .dmp2
 list of shells
@@ -35,6 +38,8 @@ findbugs
 static import.
 
 done :
+   something funny going on with mouse and V mode
+   not saving history when X out.
    modal dialog
    build/csytle on commit
    resizeing with mouse doesn't work.
