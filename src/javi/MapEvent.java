@@ -73,6 +73,7 @@ public class MapEvent {
       skeys.keybind((char) 7, "togglestatus", null, CTRL_MASK);
       skeys.keybind(':', "commandproc", null);
       skeys.keybind('Z', "Zprocess", null);
+      skeys.keyactionbind(KeyEvent.VK_F1, "nextposwait", ff, CTRL_MASK);
       skeys.keyactionbind(KeyEvent.VK_F1, "nextpos", ff, 0);
       skeys.keyactionbind(KeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
       skeys.keyactionbind(KeyEvent.VK_F2, "gotofilelist", null, 0);

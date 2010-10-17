@@ -126,17 +126,21 @@ public final class PosListList extends TextList<Position> {
       finish();
    }
 
-   void gotoNextPos(FvContext fvc, boolean [] reverse) throws InputException {
-      //trace(" goto nextpos lastlist = " + lastlist);
+   void gotoNextPos(FvContext fvc, boolean [] reverse,
+         boolean wait) throws InputException {
+      trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
          UI.connectfv((TextEdit) fvc.at(), fvc.vi);
       else  {
-         if ((lastlist == null) || !lastlist.containsNow(1)) {
+         if ((lastlist == null)) {
             lastlist = lastlist2;
             lastlist2 = null;
             //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          }
-         if ((lastlist == null) || !lastlist.containsNow(1))
+         if (lastlist == null)
+            return;
+
+         if ((wait && !lastlist.contains(1)) || (!lastlist.containsNow(1)))
             return;
 
          FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
@@ -197,6 +201,7 @@ public final class PosListList extends TextList<Position> {
             "gotofontlist",
             "gotodirlist",
             "gotoroot",
+            "nextposwait" ,
          };
          register(rnames);
          flush();
@@ -233,7 +238,7 @@ public final class PosListList extends TextList<Position> {
             case 8:
                return null; //jlintcommand();return null;
             case 9:
-               inst.gotoNextPos(fvc, (boolean []) arg);
+               inst.gotoNextPos(fvc, (boolean []) arg, false);
                return null;
             case 10:
                inst.gotoList(fvc, null);
@@ -246,6 +251,9 @@ public final class PosListList extends TextList<Position> {
                return null;
             case 13:
                UI.connectfv(TextEdit.root, fvc.vi);
+               return null;
+            case 14:
+               inst.gotoNextPos(fvc, (boolean []) arg, true);
                return null;
             default:
                throw new RuntimeException("vigroup:default");

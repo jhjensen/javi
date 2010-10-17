@@ -1,6 +1,4 @@
 F1 to soon fails makes me need F6
-editing file doesn't fixup positions.
-Circular MovePos/Position
 Circular UI.
 Circular within JS.
 
@@ -38,6 +36,8 @@ findbugs
 static import.
 
 done :
+   Circular MovePos/Position
+   editing file doesn't fixup positions.
    something funny going on with mouse and V mode
    not saving history when X out.
    modal dialog

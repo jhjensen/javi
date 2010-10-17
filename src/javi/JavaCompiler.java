@@ -146,8 +146,9 @@ class JavaCompilerInst extends PositionIoc implements
 
          //String [] options = {"-Xlint"};
 
-         //String [] options = {"-d", "build"};
-         String [] options = {"-d", "gbuild/java/build","-cp", "gbuild/java/build"};
+         String [] options = {"-d", "build"};
+         //String [] options = {"-d", "gbuild/java/build", "-cp",
+         //   "gbuild/java/build"};
 
          boolean success = compiler.getTask(null, fileManager,
             this, Arrays.asList(options), null, clist).call();
