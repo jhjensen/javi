@@ -75,94 +75,95 @@ class JavaCompiler extends Rgroup {
       else
          PosListList.Cmd.setErrors(new JavaCompilerInst(dlist));
    }
-}
 
-class JavaCompilerInst extends PositionIoc implements
-   DiagnosticListener<JavaFileObject>  {
+   private static class JavaCompilerInst extends PositionIoc implements
+      DiagnosticListener<JavaFileObject>  {
 
-   private final ArrayList<FileDescriptor.LocalFile> flist;
-   private int errcount = 0;
-   private int warncount = 0;
+      private final ArrayList<FileDescriptor.LocalFile> flist;
+      private int errcount = 0;
+      private int warncount = 0;
 
-   private static String shortString(
-         ArrayList<FileDescriptor.LocalFile>  flisti) {
-      StringBuffer sb = new StringBuffer("javac ");
-      for (FileDescriptor.LocalFile fd : flisti) {
-         sb.append(fd.shortName);
-         sb.append(' ');
+      private static String shortString(
+            ArrayList<FileDescriptor.LocalFile>  flisti) {
+         StringBuffer sb = new StringBuffer("javac ");
+         for (FileDescriptor.LocalFile fd : flisti) {
+            sb.append(fd.shortName);
+            sb.append(' ');
+         }
+         return sb.toString();
       }
-      return sb.toString();
-   }
 
-   JavaCompilerInst(ArrayList<FileDescriptor.LocalFile>  flisti) {
-      super(shortString(flisti), null);
-      flist = flisti;
-   }
-
-   public void report(Diagnostic diagnostic) {
-      trace("diagnostic.getSource() " + diagnostic.getSource());
-      //trace("diagnostic.getClass() " + diagnostic.getClass());
-      Object source = diagnostic.getSource();
-      String mess = diagnostic.getMessage(null);
-      String src = source == null
-         ? mess.split(":")[0]
-         : diagnostic.getSource().toString();
-
-      switch(diagnostic.getKind()) {
-         case ERROR:
-         case NOTE:
-         case OTHER:
-            errcount++;
-            break;
-         case MANDATORY_WARNING:
-         case WARNING:
-            warncount++;
-            break;
+      JavaCompilerInst(ArrayList<FileDescriptor.LocalFile>  flisti) {
+         super(shortString(flisti), null);
+         flist = flisti;
       }
-      mess = mess.replace('\n', ' ');
-      addElement(new Position((int) diagnostic.getColumnNumber(),
-         (int) diagnostic.getLineNumber(), src, mess));
-   }
 
-   protected void preRun() {
-      //trace(" array = " + array);
-      try {
-         javax.tools.JavaCompiler compiler =
-            ToolProvider.getSystemJavaCompiler();
+      public void report(Diagnostic diagnostic) {
+         trace("diagnostic.getSource() " + diagnostic.getSource());
+         //trace("diagnostic.getClass() " + diagnostic.getClass());
+         Object source = diagnostic.getSource();
+         String mess = diagnostic.getMessage(null);
+         String src = source == null
+            ? mess.split(":")[0]
+            : diagnostic.getSource().toString();
 
-         StandardJavaFileManager fileManager =
-            compiler.getStandardFileManager(null, null, null);
+         switch(diagnostic.getKind()) {
+            case ERROR:
+            case NOTE:
+            case OTHER:
+               errcount++;
+               break;
+            case MANDATORY_WARNING:
+            case WARNING:
+               warncount++;
+               break;
+         }
+         mess = mess.replace('\n', ' ');
+         addElement(new Position((int) diagnostic.getColumnNumber(),
+            (int) diagnostic.getLineNumber(), src, mess));
+      }
 
-         //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
-//         fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,Arrays.asList(
-//            new File(".."),
-//            new File("../rhino1_7R2/js.jar"),
-//            new File("../junit3.8.2/junit.jar"),
-//            new File("../juniversalchardet-1.0.3.jar"),
-//            new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
-//         ));
-         Iterable<? extends JavaFileObject> clist =
-            FileDescriptor.getFileObjs(fileManager, flist);
+      protected void preRun() {
+         //trace(" array = " + array);
+         try {
+            javax.tools.JavaCompiler compiler =
+               ToolProvider.getSystemJavaCompiler();
 
-         //String [] options = {"-Xlint"};
+            StandardJavaFileManager fileManager =
+               compiler.getStandardFileManager(null, null, null);
 
-         String [] options = {"-d", "build"};
-         //String [] options = {"-d", "gbuild/java/build", "-cp",
-         //   "gbuild/java/build"};
+            //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
+   //         fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,Arrays.asList(
+   //            new File(".."),
+   //            new File("../rhino1_7R2/js.jar"),
+   //            new File("../junit3.8.2/junit.jar"),
+   //            new File("../juniversalchardet-1.0.3.jar"),
+   //            new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
+   //         ));
+            Iterable<? extends JavaFileObject> clist =
+               FileDescriptor.getFileObjs(fileManager, flist);
 
-         boolean success = compiler.getTask(null, fileManager,
-            this, Arrays.asList(options), null, clist).call();
+            //String [] options = {"-Xlint"};
 
-         UI.reportError("done compiling " + (success
-            ? "successfully"
-            : (" with " + errcount + " errors and " + warncount + " warnings")
-            ));
+            String [] options = {"-d", "build"};
+            //String [] options = {"-d", "gbuild/java/build", "-cp",
+            //   "gbuild/java/build"};
 
-         fileManager.close();
-      } catch (IOException e) {
-         UI.reportError("JavaCompiler caught " + e);
-      } catch (IllegalArgumentException e) {
-         UI.reportError("" + e.getMessage());
+            boolean success = compiler.getTask(null, fileManager,
+               this, Arrays.asList(options), null, clist).call();
+
+            UI.reportError("done compiling " + (success
+               ? "successfully"
+               : (" with " + errcount + " errors and "
+                  + warncount + " warnings")
+               ));
+
+            fileManager.close();
+         } catch (IOException e) {
+            UI.reportError("JavaCompiler caught " + e);
+         } catch (IllegalArgumentException e) {
+            UI.reportError("" + e.getMessage());
+         }
       }
    }
 }

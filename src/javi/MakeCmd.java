@@ -3,7 +3,6 @@ package javi;
 import java.io.IOException;
 import java.util.ArrayList;
 
-
 class MakeCmd extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
@@ -94,90 +93,89 @@ class MakeCmd extends Rgroup {
          throw new RuntimeException("cccommand has bad spec", e);
       }
    }
-}
 
-class GccInst extends PositionIoc {
+   private static class GccInst extends PositionIoc {
 
+      private boolean asmflag = false;
 
-   private boolean asmflag = false;
-
-   static Position asmparse(String line) {
-      trace("parsing line + " + line);
-      String file;
-      String comment;
-      int y;
-      int pos = line.indexOf('(', 3); // three skips over any drive desc
-      if (pos == -1) {
-         return null;
-      } else {
-         try {
-            file = line.substring(0, pos);
-            line = line.substring(pos + 1, line.length());
-            pos = line.indexOf(')');
-            y = Integer.parseInt(line.substring(0, pos));
-            comment = line.substring(pos + 3, line.length());
-            //trace("comment = " + comment);
-            return new Position(0, y, file, comment);
-         } catch (Throwable e) {
+      static Position asmparse(String line) {
+         trace("parsing line + " + line);
+         String file;
+         String comment;
+         int y;
+         int pos = line.indexOf('(', 3); // three skips over any drive desc
+         if (pos == -1) {
             return null;
+         } else {
+            try {
+               file = line.substring(0, pos);
+               line = line.substring(pos + 1, line.length());
+               pos = line.indexOf(')');
+               y = Integer.parseInt(line.substring(0, pos));
+               comment = line.substring(pos + 3, line.length());
+               //trace("comment = " + comment);
+               return new Position(0, y, file, comment);
+            } catch (Throwable e) {
+               return null;
+            }
          }
       }
+
+      private String pline;
+      public Position fromString(String line) {
+         if (line.length() == 0)
+            return null;
+         if (asmflag)
+            return asmparse(line);
+         trace("parsing line len =  " + line.length() + " line "  + line);
+         if (line.startsWith("In file included")) {
+            pline = line;
+            return null;
+         }
+
+         if (line.startsWith("          ")) {
+            pline += line;
+            return null;
+         }
+
+         int pos = line.indexOf(':', 3); // three skips over any drive desc
+         if (pos == -1)
+            return null;
+
+         String file = line.substring(0, pos);
+         line = line.substring(pos + 1, line.length());
+         pos = line.indexOf(':');
+         int y;
+         try {
+            y = Integer.parseInt(line.substring(0, pos).trim());
+         } catch (Exception e) {
+            y = 1;
+            if (!line.substring(0, pos).trim().startsWith("In function"))
+               trace("gcc.parseline caught " + e);
+            pline = null;
+            return null;
+         }
+
+
+         String comment = line.substring(pos + 1, line.length());
+         if (pline != null) {
+            comment += pline;
+            pline = null;
+         }
+
+         if (comment.length() > 100)
+            comment = comment.substring(0, 100);
+         int x = 0;
+         return new Position(x, y, file, comment);
+      }
+
+      GccInst(String filesi, String comstringi, boolean asmflagi) throws
+            IOException {
+         super("gcc " +  comstringi + filesi,
+            Tools.runcmd(comstringi + filesi));
+         asmflag = asmflagi;
+         String comstring = comstringi + filesi;
+         trace(comstring);
+      }
    }
-
-   private String pline;
-   public Position fromString(String line) {
-      if (line.length() == 0)
-         return null;
-      if (asmflag)
-         return asmparse(line);
-      trace("parsing line len =  " + line.length() + " line "  + line);
-      if (line.startsWith("In file included")) {
-         pline = line;
-         return null;
-      }
-
-      if (line.startsWith("          ")) {
-         pline += line;
-         return null;
-      }
-
-      int pos = line.indexOf(':', 3); // three skips over any drive desc
-      if (pos == -1)
-         return null;
-
-      String file = line.substring(0, pos);
-      line = line.substring(pos + 1, line.length());
-      pos = line.indexOf(':');
-      int y;
-      try {
-         y = Integer.parseInt(line.substring(0, pos).trim());
-      } catch (Exception e) {
-         y = 1;
-         if (!line.substring(0, pos).trim().startsWith("In function"))
-            trace("gcc.parseline caught " + e);
-         pline = null;
-         return null;
-      }
-
-
-      String comment = line.substring(pos + 1, line.length());
-      if (pline != null) {
-         comment += pline;
-         pline = null;
-      }
-
-      if (comment.length() > 100)
-         comment = comment.substring(0, 100);
-      int x = 0;
-      return new Position(x, y, file, comment);
-   }
-   GccInst(String filesi, String comstringi, boolean asmflagi) throws
-         IOException {
-      super("gcc " +  comstringi + filesi, Tools.runcmd(comstringi + filesi));
-      asmflag = asmflagi;
-      String comstring = comstringi + filesi;
-      trace(comstring);
-
-   }
-
 }
