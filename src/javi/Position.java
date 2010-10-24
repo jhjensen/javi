@@ -4,11 +4,11 @@ public final class Position {
 
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
-   final int x;
-   final int y;
+   public final int x;
+   public final int y;
    /*private*/
-   final FileDescriptor filename;
-   final String comment;
+   public final FileDescriptor filename;
+   public final String comment;
 
    public Position(int xi, int yi, String filenamei, String commenti) {
       x = xi;

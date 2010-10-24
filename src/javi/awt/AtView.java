@@ -1,4 +1,4 @@
-package javi;
+package javi.awt;
 
 import java.util.Set;
 import java.util.Map;
@@ -7,6 +7,9 @@ import java.text.AttributedCharacterIterator;
 import java.awt.font.TextAttribute;
 import java.awt.Font;
 import java.awt.Color;
+
+import javi.DeTabber;
+import history.Tools;
 
 class AtView implements
       AttributedCharacterIterator, Cloneable, java.io.Serializable {

@@ -406,7 +406,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
          }
    }
 
-   synchronized void execute() {
+   public synchronized void execute() {
 
       //trace("ParseInput executing on recbyte " + recbyte);
       int inc;

@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-final class FileList extends TextEdit<TextEdit<String>> {
+import javi.awt.AwtFontList;
+
+public final class FileList extends TextEdit<TextEdit<String>> {
    static class FileConverter extends ClassConverter<TextEdit<String>> {
       public TextEdit<String> fromString(String str) {
          //trace("S = "  + S);
@@ -51,8 +53,8 @@ final class FileList extends TextEdit<TextEdit<String>> {
             new FileProperties<String>(fh, StringIoc.converter);
          TextEdit<String> ev = new TextEdit<String>(new FileInput(fp),
                FileList.instance == null
-               ? TextEdit.root
-               : FileList.instance,
+                  ? TextEdit.getRoot()
+                  : FileList.instance,
                fp); //??? should be filelist
 
          //trace("opened ev = " + ev);
@@ -156,14 +158,14 @@ final class FileList extends TextEdit<TextEdit<String>> {
 
    static final String copyright = "Copyright 1996 James Jensen";
 
-   static class FileListEvent extends MapEvent.JaviEvent {
+   public static class FileListEvent extends MapEvent.JaviEvent {
       private List mlist;
 
-      FileListEvent(List lst) {
+      public FileListEvent(List lst) {
          mlist = lst;
       }
 
-      void execute() {
+      final void execute() {
          try {
             Iterator eve = mlist.iterator();
             while (eve.hasNext())
@@ -213,7 +215,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
       new Commands();
    }
 
-   static FvContext getContext(View newView) {
+   public static FvContext getContext(View newView) {
       return FvContext.getcontext(newView, instance);
    }
 
@@ -281,8 +283,8 @@ final class FileList extends TextEdit<TextEdit<String>> {
       return efs;
    }
 
-   static boolean gotoposition(Position p, boolean setstatus, View vi) throws
-      InputException {
+   public static boolean gotoposition(Position p,
+      boolean setstatus, View vi) throws InputException {
       //trace("gotoposition p " + p);
       if (p == null)
          return false;
@@ -516,7 +518,8 @@ final class FileList extends TextEdit<TextEdit<String>> {
                            else  {
                               if (EditContainer.findfile(fha) != null)
                                  dupflag = true;
-                              else if (fha instanceof FileDescriptor.LocalFile) {
+                              else if (fha
+                                    instanceof FileDescriptor.LocalFile) {
                                  edv = FileConverter.findfileopen((
                                     FileDescriptor.LocalFile) fha, false);
                                  if (edv != null)
@@ -620,7 +623,7 @@ final class FileList extends TextEdit<TextEdit<String>> {
                   FvContext.reconnect(ev, nextFile);
                }
             } else if (!(ev.at(0) instanceof Position)
-                              &&  !(ev instanceof FontList)
+                              &&  !(ev instanceof AwtFontList)
                               && !(ev instanceof PosListList)
                               && !(ev instanceof DirList)) {
                FvContext.dispose(ev, nextFile);

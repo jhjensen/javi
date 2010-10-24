@@ -1,6 +1,7 @@
 package javi;
 
 import java.io.IOException;
+import java.io.File;
 import javax.tools.DiagnosticListener;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -133,13 +134,14 @@ class JavaCompiler extends Rgroup {
                compiler.getStandardFileManager(null, null, null);
 
             //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
-   //         fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,Arrays.asList(
-   //            new File(".."),
-   //            new File("../rhino1_7R2/js.jar"),
-   //            new File("../junit3.8.2/junit.jar"),
-   //            new File("../juniversalchardet-1.0.3.jar"),
-   //            new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
-   //         ));
+            fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
+                  Arrays.asList(
+                  new File("./build"),
+                  new File("../lib/rhino1_7R2/js.jar"),
+                  new File("../lib/junit3.8.2/junit.jar"),
+                  new File("../lib/juniversalchardet-1.0.3.jar"),
+                  new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
+               ));
             Iterable<? extends JavaFileObject> clist =
                FileDescriptor.getFileObjs(fileManager, flist);
 

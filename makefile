@@ -17,9 +17,11 @@ install : javi.jar
 	cp javi.jar vi.pl /usr/share/java
 	chmod +x javi.jar vi.pl /usr/share/java/vi.pl /usr/share/java/javi.jar
 
-ID: *.java
-	ctags -n -R history javi
-	mkid history javi
+FORCE:
+
+ID: FORCE
+	ctags -n -R src
+	mkid src
 
 REM= Compute Task rtest rtest_Stub rtestClient
 REM_CLASS = $(addsuffix .class,$(REM)) 

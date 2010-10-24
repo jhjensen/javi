@@ -1,18 +1,18 @@
 package javi;
 
-final class MovePos {
+public final class MovePos {
 
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
-   int x = 0;
-   int y = 0;
+   public int x = 0;
+   public int y = 0;
 
-   MovePos(int xi, int yi) {
+   public MovePos(int xi, int yi) {
       x = xi;
       y = yi;
    }
 
-   MovePos(MovePos xo) {
+   public MovePos(MovePos xo) {
       x = xo.x;
       y = xo.y;
    }
@@ -25,11 +25,11 @@ final class MovePos {
 //    : (filename.getShortName() + "(" + x + "," + y + ")" + "-" + comment);
    }
 
-   MovePos(Position p) {
+   public MovePos(Position p) {
       set(p);
    }
 
-   void set(Position p) {
+   public void set(Position p) {
       x = p.x;
       y = p.y;
       //filename = p.filename;

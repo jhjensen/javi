@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javi.awt.AwtFontList;
 
 class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
 
@@ -145,8 +146,8 @@ public final class PosListList extends TextList<Position> {
 
          FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
 
-         if (lastlist instanceof FontList) {
-            UI.fontChange(FontList.getCurr(fvc.vi), fvc.vi);
+         if (lastlist instanceof AwtFontList) {
+            UI.fontChange(AwtFontList.getCurr(fvc.vi), fvc.vi);
          } else {
             Object obj = listfvc.at();
             if (obj instanceof Position) {
@@ -244,13 +245,13 @@ public final class PosListList extends TextList<Position> {
                inst.gotoList(fvc, null);
                return null;
             case 11:
-               inst.gotoList(fvc, FontList.getList());
+               inst.gotoList(fvc, AwtFontList.getList());
                return null;
             case 12:
                UI.connectfv(DirList.getDefault(), fvc.vi);
                return null;
             case 13:
-               UI.connectfv(TextEdit.root, fvc.vi);
+               UI.connectfv(TextEdit.getRoot(), fvc.vi);
                return null;
             case 14:
                inst.gotoNextPos(fvc, (boolean []) arg, true);
@@ -453,7 +454,6 @@ public final class PosListList extends TextList<Position> {
                for (int i = 1; i < tagcount; i++) {
 
                   if (scores[i] == maxscore) {
-                     Position  ctagpos = (Position) taglist.at(i);
                      FileList.gotoposition(taglist.at(i), false, vi);
                      FvContext tagfvc =  FvContext.getcontext(vi, taglist);
                      tagfvc.edvec.contains(i);

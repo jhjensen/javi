@@ -15,7 +15,7 @@ import java.text.CharacterIterator;
 
 /* Copyright 1996 James Jensen all rights reserved */
 
-class InsertBuffer extends Rgroup
+public final class InsertBuffer extends Rgroup
    implements InputMethodRequests, InputMethodListener {
    static final String copyright = "Copyright 1996 James Jensen";
 
@@ -30,6 +30,12 @@ class InsertBuffer extends Rgroup
       boolean getOverwrite() {
          return overwrite;
       }
+
+      // this is temporary to get things compiling.
+      public InsertBuffer getSuper() {
+         return InsertBuffer.this;
+      }
+
    }
 
    private MyInserter insert = new MyInserter();
@@ -254,8 +260,6 @@ class InsertBuffer extends Rgroup
          try {
             View viewer = fvc.vi;
             viewer.setInsert(insert);
-            viewer.addInputMethodListener(this);
-            viewer.enableInputMethods(true);
             verbatim = false;
             overwrite = overwritei;
             currline = fvc.inserty();
@@ -341,13 +345,12 @@ class InsertBuffer extends Rgroup
       }
       return 0;
    }
+
    void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
       fvc.vi.clearInsert();
-      fvc.vi.enableInputMethods(false);
       myfvc  = null;
       committed = 0;
-      fvc.vi.removeInputMethodListener(this);
    }
 
    public AttributedCharacterIterator cancelLatestCommittedText(
@@ -399,7 +402,7 @@ class InsertBuffer extends Rgroup
       TextChanged(InputMethodEvent evi, InsertBuffer conti) {
          ev = evi;
       }
-      void execute() {
+      public void execute() {
          trace(ev.toString());
          trace("commited = " + committed + " buffer = " + buffer);
 

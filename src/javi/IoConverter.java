@@ -11,7 +11,7 @@ import java.util.Collection;
 public class IoConverter<OType> implements Runnable, Serializable {
    private static final long serialVersionUID = 1;
 
-   final FileProperties<OType> prop;
+   public final FileProperties<OType> prop;
    private transient EditCache<OType> ioarray;
    private transient EditCache<OType> mainArray = null;
    private transient Thread  rthread;
@@ -23,7 +23,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    private enum ThreadState { INIT, INITSTART, STARTED, FINISHED };
 
 
-   IoConverter(FileProperties<OType> fpi, boolean quickThread) {
+   public IoConverter(FileProperties<OType> fpi, boolean quickThread) {
       tstate = quickThread
                ? ThreadState.INITSTART
                : ThreadState.INIT;
@@ -226,7 +226,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
             mainArray.iterator()), prop.getSeperator());
 
          return (UI.reportDiff(prop.fdes.shortName, index, fileObj,
-                               backObj, backupstatus, tfile.shortName));
+            backObj, backupstatus, tfile.shortName));
 
          //trace("setting backupstatus to null mainArray == ioarray");
          //trace("ioarray " + ioarray + " mainArray " + mainArray);

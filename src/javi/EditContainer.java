@@ -59,7 +59,7 @@ public class EditContainer<OType> implements
       return prop.fdes.shortName;
    }
 
-   final FileDescriptor fdes() {
+   public final FileDescriptor fdes() {
       return prop.fdes;
    }
 
@@ -201,7 +201,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   boolean isValid() {
+   public boolean isValid() {
       return ecache != null;
    }
 
@@ -546,7 +546,7 @@ public class EditContainer<OType> implements
 
    /** returns true if IO is complete
        also reads :*/
-   final boolean donereading() {
+   public final boolean donereading() {
 //trace(this);
       if (finishedread)
          return true;
@@ -557,7 +557,7 @@ public class EditContainer<OType> implements
    /** This routine number of elements currently in the vector.  It does not
    wait for the input stream to finish reading.
    */
-   final int readIn() {
+   public final int readIn() {
       if (!finishedread)
          myexpand(0);
       return ecache.size();
@@ -575,7 +575,7 @@ public class EditContainer<OType> implements
       return desired < ecache.size();
    }
 
-   final boolean containsNow(int desired) {
+   public final boolean containsNow(int desired) {
       //trace("requested = " + desired + " editvec = " + this);
       if (!finishedread)
          myexpand(0);
@@ -603,8 +603,8 @@ public class EditContainer<OType> implements
        attempt to write the file may still fail if the
        file permissions do not allow writing and renameing.
    */
-   final void setReadOnly(boolean flag) throws IOException {
-      if (this == TextEdit.root)
+   public final void setReadOnly(boolean flag) throws IOException {
+      if (this == TextEdit.getRoot())
          throw new IOException("not allowed to make this writable");
       readonly = flag;
    }
@@ -652,7 +652,7 @@ public class EditContainer<OType> implements
          throw new InputException("trying to input stream into non input file");
    }
 
-   final UndoHistory.EhMark copyCurr() {
+   public final UndoHistory.EhMark copyCurr() {
       if (backup == null)
          return null;
       return backup.copyCurr();
@@ -769,12 +769,12 @@ public class EditContainer<OType> implements
       insertRecord(obs.iterator(), index, obs.size());
    }
 
-   final void checkpoint() {
+   public final void checkpoint() {
       //trace("backup = " + backup);
       backup.checkRecord();
    }
 
-   final synchronized void changeElementAtStr(String ob, int index) {
+   public final synchronized void changeElementAtStr(String ob, int index) {
 
       //if (ob==null) {Thread.dumpStack() ;trace("changing null object");}
       //trace("ob = " + ob);
@@ -784,7 +784,7 @@ public class EditContainer<OType> implements
    }
 
    /** substitutes the object at the given index with the new object */
-   final synchronized void changeElementAt(OType ob, int index) {
+   public final synchronized void changeElementAt(OType ob, int index) {
 
       if (ob instanceof ReAnimator)
          try {
@@ -1029,7 +1029,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   final void backup(String extension) throws IOException {
+   public final void backup(String extension) throws IOException {
 
       FileDescriptor.LocalFile file2 =
          FileDescriptor.LocalFile.make(prop.fdes.shortName + extension);

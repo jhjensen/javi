@@ -25,7 +25,7 @@ public final class Tools {
          //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
       }
    }
-   static void trace(String str) {
+   public static void trace(String str) {
       Tools.trace(str, 1);
    }
 
@@ -45,7 +45,8 @@ public final class Tools {
 
    private static final ProcessBuilder pb = new ProcessBuilder();
 
-   static ArrayList<String> execute(String ... command) throws IOException {
+   public static ArrayList<String> execute(
+         String ... command) throws IOException {
       Process proc = iocmd(command);
       BufferedReader in =  new BufferedReader(
          new InputStreamReader(proc.getInputStream()));

@@ -1,6 +1,6 @@
 package javi;
 
-class StringIoc extends IoConverter<String> {
+public final class StringIoc extends IoConverter<String> {
    private static class StringConverter extends ClassConverter<String> {
 
       public String fromString(String str) {
@@ -13,7 +13,7 @@ class StringIoc extends IoConverter<String> {
 
    private String input;
 
-   StringIoc(String name, String value) {
+   public StringIoc(String name, String value) {
       super(new FileProperties(FileDescriptor.InternalFd.make(name),
          converter), true);
       input = value;

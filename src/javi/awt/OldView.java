@@ -1,19 +1,39 @@
-package javi;
+package javi.awt;
 /* Copyright 1996 James Jensen all rights reserved */
+
+import java.awt.AWTEvent;
+import java.awt.Canvas;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.event.MouseEvent;
+
+import java.util.concurrent.TimeUnit;
+
+import javi.DeTabber;
+import javi.EventQueue;
+import javi.FileList;
+import javi.FvContext;
+import javi.MarkEvent;
+import javi.PosEvent;
+import javi.Position;
+import javi.UI;
+import javi.View;
+
 import static javi.View.Opcode.*;
+import static history.Tools.trace;
 
 //import java.awt.RenderingHints;
 
-class OldView  extends View {
+class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
    private static final String copyright = "Copyright 1996 James Jensen";
@@ -30,26 +50,42 @@ class OldView  extends View {
    private FontMetrics fontm;
    private int charascent;
 
-   private transient Image dbuf;
-   private transient Graphics2D imageg;
    private int saveScreenX;
    private int charheight;
    private int charwidth;   // not an acurate number
    private boolean boldflag;
    private AtView atIt;
    private int tabStop;
+   private final MyCanvas canvas = new MyCanvas();
+
+   Canvas getComponent() {
+      return canvas;
+   }
+
+   public final boolean isVisible() {
+      return canvas.isVisible();
+   }
+
+   public final void repaint() {
+      canvas.repaint();
+   }
+
+   public KeyEvent createEvent(int id, long when, int modifiers,
+         int keyCode, char keyChar) {
+      return new KeyEvent(canvas, id, when, modifiers, keyCode, keyChar);
+   }
 
    OldView(boolean nextFlag) {
 
       super(nextFlag);
       screenposx = inset;
       tabStop = 8;
-      setBackground(AtView.background);
+      canvas.setBackground(AtView.background);
 //      setBackground(new java.awt.Color(0,255,0));
 
    }
 
-   void setTabStop(int ts) {
+   public void setTabStop(int ts) {
       tabStop = ts;
       redraw();
    }
@@ -63,27 +99,28 @@ class OldView  extends View {
 
    void ssetFont(Font font) {
       //trace("entered " + this  + font);
-      fontm = getFontMetrics(font);
+      fontm = canvas.getFontMetrics(font);
       charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
          / teststr.length();
       //trace("charwidth = " + charwidth + this);
       charheight = fontm.getHeight();
+      //trace("charheight = " + charheight);
       boldflag = font.isBold();
       atIt = new AtView(font);
       charascent = fontm.getMaxAscent();
    }
 
-   int getTabStop() {
+   public int getTabStop() {
       return tabStop;
    }
 
-   int getRows(float scramount) {
+   public int getRows(float scramount) {
       //trace("getRows screenSize" + screenSize + " amount " + scramount + " ret " + (int)(screenSize * scramount));
       return (int) (screenSize * scramount);
    }
 
 
-   void insertedElementsdraw(Graphics gr, int start, int amount) {
+   public void insertedElementsdraw(Graphics gr, int start, int amount) {
 
       int screenstart = start - getfileY() + screenposy;
       int screenend = screenstart + amount; // end of bad screen
@@ -97,11 +134,11 @@ class OldView  extends View {
          if (screenend < screenSize)
             copyLines(gr, screenstart, screenSize - (screenend - screenstart),
                       screenend - screenstart);
-         paintLines(gr, screenstart, screenend);
+         canvas.paintLines(gr, screenstart, screenend);
       }
    }
 
-   void changeddraw(Graphics gr, int index, int index2) {
+   public void changeddraw(Graphics gr, int index, int index2) {
       index = index - screenFirstLine();
       index2 = index2 - screenFirstLine() + 1;
       if (index < 0)
@@ -109,11 +146,11 @@ class OldView  extends View {
       if (index2 > screenSize)
          index2 = screenSize;
       if (index2 >= 0  && index < screenSize) {
-         paintLines(gr, index, index2);
+         canvas.paintLines(gr, index, index2);
       }
    }
 
-   void deletedElementsdraw(Graphics gr, int start, int amount) {
+   public void deletedElementsdraw(Graphics gr, int start, int amount) {
 
       if (!gettext().containsNow(1))
          throw new RuntimeException("not ready to draw");
@@ -128,7 +165,7 @@ class OldView  extends View {
       if (gonee >= 0 && gones < screenSize && gonee > gones) {
          if (gonee < screenSize)
             copyLines(gr, gonee, screenSize, gones - gonee);
-         paintLines(gr, screenSize - (gonee - gones), screenSize);
+         canvas.paintLines(gr, screenSize - (gonee - gones), screenSize);
       }
 
    }
@@ -165,7 +202,7 @@ class OldView  extends View {
       }
    }
 
-   int yCursorChanged(int newY) {
+   public int yCursorChanged(int newY) {
 
       //trace(" newY " + newY);
 
@@ -211,7 +248,7 @@ class OldView  extends View {
       return getfileX();
    }
 
-   void cursorChanged(int newX, int newY) {
+   public void cursorChanged(int newX, int newY) {
 
 
       //trace(" newX " + newX + " newY " + newY);
@@ -245,7 +282,7 @@ class OldView  extends View {
       fixcursor(0, yChange, newx);
    }
 
-   void refresh(Graphics gr) {
+   public void refresh(Graphics gr) {
       //trace("refresh " + this);
       //trace("cliprect = " + gr.getClipBounds()  + " my cliprect = " + cliprect);
       gr.setClip(null);
@@ -253,7 +290,7 @@ class OldView  extends View {
       gr.fillRect(0, 0, inset, screenSize * charheight);
       gr.fillRect(pixelWidth - inset, 0, inset , screenSize * charheight);
       gr.setClip(cliprect);
-      paintLines(gr, 0, screenSize);
+      canvas.paintLines(gr, 0, screenSize);
       //trace(" done REDRAW " + this);
    }
 
@@ -273,22 +310,6 @@ class OldView  extends View {
 //      }
    }
 
-   void newGraphics() {
-      //trace("allocImage");
-      dbuf = createImage(pixelWidth * 2, charheight);
-      imageg = (Graphics2D) dbuf.getGraphics();
-      //trace("imageg " + imageg);
-      if (imageg == null)
-         throw new RuntimeException("imageg null!!");  // should never happen
-
-//RenderingHints qualityHints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-//qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-////qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-//imageg.setRenderingHints(qualityHints);
-
-   }
-
    private int fillheader(Graphics gr, int start) {
       //trace("fillheader " + screenFirstLine());
       if (start + screenFirstLine() < 1) {
@@ -300,8 +321,8 @@ class OldView  extends View {
    }
 
    private int filltrailer(Graphics gr, int end) {
-      //trace("filltrailer");
-      //trace("end = "  + end + " firstline = " + screenFirstLine()
+      //trace("filltrailer end " + end);
+      //trace("end = "  + end + " firstline = " + screenFirstLine());
       int numlines = gettext().readIn(); // number of lines read in
       //trace("end = "  + end + " firstline = " + screenFirstLine()+ " numlines " + numlines);
       if (end + screenFirstLine() > numlines) {
@@ -319,59 +340,7 @@ class OldView  extends View {
       return end;
    }
 
-   private void paintLines(Graphics gr, int start, int end) {
-      //trace("paintLines start = " + start + " end " + end);
-      //Thread.dumpStack();
-      if (imageg == null)
-         newGraphics();
-      //trace("imageg " + imageg);
-      //assert start >= 0 && end <= screenSize && start < end;
-      if (start < 0 || end > screenSize || start >= end)
-         throw new RuntimeException("start = " + start + " end = " + end
-            + " screenSize = " + screenSize);  // should never happen
-
-      start = fillheader(gr, start);
-      end = filltrailer(gr, end);
-
-      //trace("paint2 end = "  + end + " firstline = " + screenFirstLine());
-      for (int index = start, tindex = index + screenFirstLine();
-              index < end;
-              index++, tindex++) {
-         //trace("imageg " + imageg);
-         imageg.setColor(AtView.background);
-         imageg.fillRect(0, 0, pixelWidth , charheight);
-         atIt.setText(gettext().at(tindex).toString());
-
-         if ((index == screenposy))  {
-            atIt.emphasize(true);
-            String iString = getInsertString();
-            if (iString != null)
-               atIt.addOlineText(iString, getfileX(), getOverwrite());
-         }
-
-         if (atIt.length() != 0) {
-            MarkInfo mpmark = getPmark();
-            if (mpmark.getMark() != null) {
-               //trace("highlight tindex = " + tindex + " pmark " + pmark);
-               //trace("hilight " + pmark.starth(tindex) + "," + pmark.endh(tindex));
-               atIt.setHighlight(mpmark.starth(tindex), mpmark.endh(tindex));
-            }
-            if (tabStop != 0)
-               atIt.deTab(tabStop);
-            imageg.drawString(atIt, xoffset, charascent);
-         }
-//      gr.setColor(Color.cyan);
-//      gr.fillRect(xoffset, index * charheight, pixelWidth , charheight);
-//      gr.setColor(atIt.lightYellow);
-//      if (atIt.length() != 0) {
-//         gr.drawString(atIt, xoffset, charascent + index * charheight);
-//      }
-         gr.drawImage(dbuf, 0, index * charheight, null);
-         //try {Thread.sleep(100);} catch (InterruptedException e) {/*Ignore*/}
-      }
-   }
-
-   int screenFirstLine() {
+   public int screenFirstLine() {
       //trace( "sfl " + fileposy + " screenposy " + screenposy);
       return getfileY() - screenposy;
    }
@@ -381,7 +350,7 @@ class OldView  extends View {
       mscreen(amount, screenSize);
    }
 
-   void movescreendraw(Graphics gr, int amount) {
+   public void movescreendraw(Graphics gr, int amount) {
       int cstart, cend, pstart, pend;
       if (amount > 0) {
          cstart = amount;
@@ -395,7 +364,7 @@ class OldView  extends View {
          pend = -amount;
       }
       copyLines(gr, cstart, cend, -amount);
-      paintLines(gr, pstart , pend);
+      canvas.paintLines(gr, pstart , pend);
    }
 
 
@@ -421,6 +390,7 @@ class OldView  extends View {
                && rec.width == rwidth)
             return sh;
       }
+      //trace("updateCursorShape returning " + new Rectangle(rx, ry, rwidth, rheight));
       return new Rectangle(rx, ry, rwidth, rheight);
    }
 
@@ -490,7 +460,7 @@ class OldView  extends View {
    }
 
    // returns amount cursor needs to be adjusted
-   int screeny(int amount)  {
+   public int screeny(int amount)  {
       //trace("screeny " + amount);
       //move the screen and if necessary the cursor
       if (screenFirstLine() + amount <= -screenSize + 1)
@@ -514,44 +484,305 @@ class OldView  extends View {
       //trace("exit screensize = " + screenSize + " fcontext.screenFirstLine()= " + fcontext.screenFirstLine());
    }
 
-   public Dimension getPreferredSize() {
-      //trace("getPreferredSize screensize " + screenSize + " charheight " + charheight  + " pixelWidth " + pixelWidth);
-      //trace("screen y = " + screenSize * charheight);
-      return new Dimension(pixelWidth, screenSize * charheight);
-   }
-
-   void setSizebyChar(int xchar, int ychar) {
+   public void setSizebyChar(int xchar, int ychar) {
       //trace("setSizebyChar xchar = " + xchar + " ychar = " + ychar);
       if (xchar < 0)
          xchar = minColumns;
       if (ychar < 0)
          ychar = screenSize;
-      setSize(xchar * charwidth, ychar * charheight);
+      canvas.setSize(xchar * charwidth, ychar * charheight);
       //UI.resize();
       //invalidate();//???
       //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
    }
 
-   public  void setSize(int newx, int newy) {
-      //trace("setSize entered (" + newx + "," + newy + ")" + this);
-      //if (y == 0){
-      // Thread.dumpStack();
-      // return;
-      //}
+   protected void startInsertion(javi.View.Inserter ins) {
+      canvas.addInputMethodListener(ins.getSuper());
+      canvas.enableInputMethods(true);
+   }
 
-      screenSize = newy / charheight;
+   protected void endInsertion(javi.View.Inserter ins) {
+      canvas.enableInputMethods(false);
+      canvas.removeInputMethodListener(ins.getSuper());
+   }
+   class MyCanvas extends Canvas {
 
-      minColumns = (newx - 2 * inset) / charwidth;
-      newy = screenSize * charheight;
-      pixelWidth =  minColumns * charwidth + 2 * inset;
-      cliprect.y = 0;
-      cliprect.width = pixelWidth - 2 * inset + 1;
-      cliprect.height = newy;
-      super.setSize(pixelWidth , newy);
-      if (screenposy >= screenSize)
-         moveScreen(screenposy - screenSize + 1);
-      //imageg = null;
-      //trace("oldview = " + this + " cliprect = " + cliprect);
-      //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
+      private int mousePressed = 0;
+      private transient Graphics oldgr;
+      private transient Image dbuf;
+      private transient Graphics2D imageg;
+
+//RenderingHints qualityHints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+//qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+////qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+//imageg.setRenderingHints(qualityHints);
+
+      private void common() {
+         /*
+            HashSet<AWTKeyStroke> keyset =
+                new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
+                KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS)
+            );
+
+            for (Iterator it = keyset.iterator();it.hasNext();) {
+                AWTKeyStroke key = (AWTKeyStroke)(it.next());
+                if (key.getKeyCode()== KeyEvent.VK_TAB
+                      && key.getModifiers() == 0)
+                  it.remove();
+            }
+            setFocusTraversalKeys(KeyboardFocusManager.
+               FORWARD_TRAVERSAL_KEYS, keyset);
+
+            enableInputMethods(false);
+         */
+         enableEvents(AWTEvent.MOUSE_EVENT_MASK
+            | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      }
+
+      private void readObject(java.io.ObjectInputStream is) throws
+            ClassNotFoundException, java.io.IOException {
+
+         is.defaultReadObject();
+         setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+         common();
+      }
+
+      MyCanvas() {
+         common();
+      }
+
+      public Dimension getPreferredSize() {
+         //trace("getPreferredSize screensize " + screenSize + " charheight " + charheight  + " pixelWidth " + pixelWidth);
+         //trace("screen y = " + screenSize * charheight);
+         return new Dimension(pixelWidth, screenSize * charheight);
+      }
+
+      public  void setSize(int newx, int newy) {
+         //trace("setSize entered (" + newx + "," + newy + ")" + this);
+         //if (y == 0){
+         // Thread.dumpStack();
+         // return;
+         //}
+
+         screenSize = newy / charheight;
+
+         minColumns = (newx - 2 * inset) / charwidth;
+         newy = screenSize * charheight;
+         pixelWidth =  minColumns * charwidth + 2 * inset;
+         cliprect.y = 0;
+         cliprect.width = pixelWidth - 2 * inset + 1;
+         cliprect.height = newy;
+         if (screenposy >= screenSize)
+            moveScreen(screenposy - screenSize + 1);
+         super.setSize(pixelWidth, newy);
+         //imageg = null;
+         //trace("oldview = " + this + " cliprect = " + cliprect);
+         //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
+      }
+
+      @SuppressWarnings("fallthrough")
+
+      private void mousepress(MouseEvent event) {
+         //trace("modifiers = " +Integer.toHexString( event.getModifiers()));
+
+         Position p = mousepos(event);
+
+         //trace("Position " + p + " event vi " + vi);
+         FvContext newfvc = FvContext.getcontext(OldView.this, getCurrFile());
+
+         //trace("fvc " + fvc  + " newfvc " + newfvc);
+         switch (event.getButton()) {
+            case MouseEvent.BUTTON1:
+               EventQueue.insert(new PosEvent(newfvc, p));
+               break;
+
+            case MouseEvent.BUTTON2:
+               if (newfvc.edvec.containsNow(p.y)) {
+                  Object line = newfvc.edvec.at(p.y);
+                  if (line instanceof Position) {
+                     View nextView = newfvc.findNextView();
+                     try {
+                        FileList.gotoposition((Position) line, true, nextView);
+                     } catch (Exception ex) {
+                        UI.popError("unexpected Exception ", ex);
+                     }
+                  }
+               }
+               break;
+
+            case MouseEvent.BUTTON3:
+               Point pt = getLocation();
+               UI.showmenu(event.getX() + pt.x, event.getY() + pt.y);
+               break;
+
+            default:
+               trace("no button ???? event modifiers = " + Integer.toHexString(
+                  event.getModifiers()));
+         }
+      }
+      final void mouserelease(MouseEvent event) {
+         //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
+
+         Position p = mousepos(event);
+         FvContext fvc = FvContext.getCurrFvc();
+         //trace("Position " + p + " event vi " + vi);
+         if (fvc != FvContext.getcontext(OldView.this, getCurrFile()))
+            return;
+
+         if (event.getButton()  == MouseEvent.BUTTON1) {
+            //trace("setting markmode ");
+            //fvc.cursorabs(p);
+            if (fvc.inserty() != p.y || fvc.insertx() != p.x)  {
+               EventQueue.insert(new MarkEvent(p));
+            }
+         }
+      }
+
+      public void processEvent(AWTEvent ev) {
+         //trace("ev " + ev.getID() + "  has focus " + hasFocus());
+         switch (ev.getID()) {
+            case MouseEvent.MOUSE_PRESSED:
+               mousepress((MouseEvent) ev);
+               mousePressed = ((MouseEvent) ev).getButton();
+               break;
+            case MouseEvent.MOUSE_RELEASED:
+               mouserelease((MouseEvent) ev);
+               mousePressed = 0;
+               break;
+            case MouseEvent.MOUSE_WHEEL:
+               EventQueue.insert(ev);
+               break;
+            case MouseEvent.MOUSE_DRAGGED:
+               MouseEvent mev = (MouseEvent) ev;
+               if (mousePressed == 1)
+                  updateTempMarkPos(mousepos(mev));
+               break;
+            case MouseEvent.MOUSE_MOVED:
+            case MouseEvent.MOUSE_ENTERED:
+            case MouseEvent.MOUSE_EXITED:
+            case MouseEvent.MOUSE_CLICKED:
+            case KeyEvent.KEY_RELEASED:
+            case KeyEvent.KEY_TYPED:
+               break;
+
+            default:
+               trace("unhandle event ev " + ev + "  has focus " + hasFocus());
+               super.processEvent(ev);
+         }
+      }
+
+      public void paint(Graphics g) {
+         //trace("paint called ");
+         try {
+            redraw();
+            npaint((Graphics2D) g);
+         } catch (Throwable e) {
+            UI.popError("unexpected exception", e);
+         }
+      }
+
+      public void update(Graphics g) {
+         try {
+         //trace("update called ");
+            //if (op.currop == REDRAW) trace(" got update REDRAW!!");
+            npaint((Graphics2D) g);
+         } catch (Throwable e) {
+            UI.popError("unexpected exception", e);
+         }
+      }
+
+      private void npaint(Graphics2D gr) throws InterruptedException {
+         //trace("npaint");
+         if (gettext() == null)
+            return;
+
+         if ((imageg == null) || (gr != oldgr)) {
+            dbuf = canvas.createImage(pixelWidth * 2, charheight);
+            imageg = (Graphics2D) dbuf.getGraphics();
+            //trace("imageg " + imageg);
+            if (imageg == null)
+               throw new RuntimeException("imageg null!!");
+            oldgr = gr;
+         }
+
+         if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
+            trace("repaint because failed lock " + gettext() + " or lock");
+            repaint(200);
+         } else
+            try {
+               if (gettext().isValid() && gettext().containsNow(1)) {
+                  getChanges();
+                  rpaint(gr);
+               } else {
+                  trace("repaint because of invalid or empty");
+                  repaint(200);
+               }
+            } catch (Throwable e) {
+               UI.popError("npaint caught", e);
+            } finally {
+               EventQueue.biglock2.unlock();
+            }
+      }
+      public void setFont(Font font) {
+
+         //trace("setting View font " + font + " "  + this);
+         ssetFont(font);
+      }
+
+      void paintLines(Graphics gr, int start, int end) {
+         //trace("paintLines start = " + start + " end " + end);
+         //Thread.dumpStack();
+         //trace("imageg " + imageg);
+         assert start >= 0 && end <= screenSize && start < end;
+         if (start < 0 || end > screenSize || start >= end)
+            throw new RuntimeException("start = " + start + " end = " + end
+               + " screenSize = " + screenSize);  // should never happen
+
+         start = fillheader(gr, start);
+         end = filltrailer(gr, end);
+
+         //trace("paint2 end = "  + end + " firstline = " + screenFirstLine());
+         for (int index = start, tindex = index + screenFirstLine();
+                 index < end;
+                 index++, tindex++) {
+            imageg.setColor(AtView.background);
+            imageg.fillRect(0, 0, pixelWidth , charheight);
+            //trace("setting text " + gettext().at(tindex).toString());
+            atIt.setText(gettext().at(tindex).toString());
+
+            if ((index == screenposy))  {
+               atIt.emphasize(true);
+               String iString = getInsertString();
+               if (iString != null)
+                  atIt.addOlineText(iString, getfileX(), getOverwrite());
+            }
+
+            if (atIt.length() != 0) {
+               MarkInfo mpmark = getPmark();
+               if (mpmark.getMark() != null) {
+                  //trace("highlight tindex = " + tindex + " pmark " + pmark);
+                  //trace("hilight " + pmark.starth(tindex) + "," + pmark.endh(tindex));
+                  atIt.setHighlight(mpmark.starth(tindex), mpmark.endh(tindex));
+               }
+               if (tabStop != 0)
+                  atIt.deTab(tabStop);
+               imageg.drawString(atIt, xoffset, charascent);
+            }
+   //      gr.setColor(Color.cyan);
+   //      gr.fillRect(xoffset, index * charheight, pixelWidth , charheight);
+   //      gr.setColor(atIt.lightYellow);
+   //      if (atIt.length() != 0) {
+   //         gr.drawString(atIt, xoffset, charascent + index * charheight);
+   //      }
+            gr.drawImage(dbuf, 0, index * charheight, null);
+            //try {Thread.sleep(100);} catch (InterruptedException e) {/*Ignore*/}
+         }
+      }
+      public final boolean isFocusable() {
+         return false;
+      }
+
+
    }
 }

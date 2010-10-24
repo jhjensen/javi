@@ -7,7 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Date;
 
-class UndoHistory<OType> extends PersistantStack {
+public final class UndoHistory<OType> extends PersistantStack {
    static final String copyright = "Copyright 1996 James Jensen";
    private EhMark currmark; // index of current position in undo
    private ChangeRecord current = null;
@@ -86,7 +86,7 @@ class UndoHistory<OType> extends PersistantStack {
       savewrite = currmark.getIndex();
    }
 
-   final void push(ChangeRecord cr) {
+   void push(ChangeRecord cr) {
       //trace("push record  type " + cr.getType()   +" :"+ cr);
       //Thread.dumpStack();
       currmark.push(current = cr);
@@ -191,10 +191,10 @@ class UndoHistory<OType> extends PersistantStack {
       return chindex;
    }
 
-   static class BackupStatus {
-      final boolean cleanQuit;
-      final boolean isQuitAtEnd;
-      final Throwable error;
+   public static final class BackupStatus {
+      public final boolean cleanQuit;
+      public final boolean isQuitAtEnd;
+      public final Throwable error;
       BackupStatus(boolean c, boolean i, Throwable e) {
          cleanQuit = c;
          isQuitAtEnd = i;
@@ -297,7 +297,8 @@ class UndoHistory<OType> extends PersistantStack {
 
    */
 
-   class EhMark<OType> extends PersistantStack.PSIterator implements Cloneable {
+   public final class EhMark<OType> extends
+         PersistantStack.PSIterator implements Cloneable {
 
       EhMark() {
          super();
@@ -311,7 +312,7 @@ class UndoHistory<OType> extends PersistantStack {
          }
       }
 
-      boolean sameBack(EhMark ehm) {
+      public boolean sameBack(EhMark ehm) {
          //throw new RuntimeException ("fix this");
          return UndoHistory.this.prop.fdes == prop.fdes;
       }
@@ -356,7 +357,7 @@ class UndoHistory<OType> extends PersistantStack {
          return getIndex() == savewrite;
       }
 
-      void getChanges(View.ChangeOpt vi) {
+      public void getChanges(View.ChangeOpt vi) {
          //trace("changemark " + this + " currmark = " + currmark);
          //trace("current " + current );
          if (!isValid()) {

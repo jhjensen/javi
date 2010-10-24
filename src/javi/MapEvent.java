@@ -8,7 +8,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.Point;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -276,67 +275,6 @@ public class MapEvent {
    private static final int buttonmask  =   InputEvent.BUTTON3_MASK
       | InputEvent.BUTTON3_MASK | InputEvent.BUTTON3_MASK;
 
-   final void mousepress(MouseEvent event, FvContext fvc) throws
-         InputException {
-      //trace("modifiers = " +Integer.toHexString( event.getModifiers()));
-
-      View vi = (View) event.getComponent();
-      Position p = vi.mousepos(event);
-      //trace("Position " + p + " event vi " + vi);
-      FvContext newfvc = FvContext.getcontext(vi, vi.getCurrFile());
-
-      //trace("fvc " + fvc  + " newfvc " + newfvc);
-      switch (event.getButton()) {
-         case MouseEvent.BUTTON1:
-            if (fvc.vi != vi)
-               UI.setView(newfvc);
-            fvc.cursorabs(p);
-            //newfvc.vi.setMark(p);
-            break;
-
-         case MouseEvent.BUTTON2:
-            if (newfvc.edvec.containsNow(p.y)) {
-               Object line = newfvc.edvec.at(p.y);
-               if (line instanceof Position) {
-
-                  View nextView = newfvc.findNextView();
-                  FileList.gotoposition((Position) line, true, nextView);
-               }
-            }
-            break;
-
-         case MouseEvent.BUTTON3:
-            Point pt = vi.getLocation();
-            UI.showmenu(event.getX() + pt.x, event.getY() + pt.y);
-            break;
-
-         default:
-            trace("no button ???? event modifiers = " + Integer.toHexString(
-               event.getModifiers()));
-      }
-   }
-
-   final void mouserelease(MouseEvent event, FvContext fvc) throws
-          InputException, InterruptedException, IOException {
-      //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
-
-      View vi = (View) event.getComponent();
-      Position p = vi.mousepos(event);
-      //trace("Position " + p + " event vi " + vi);
-      if (fvc != FvContext.getcontext(vi, vi.getCurrFile()))
-         return;
-
-      if (event.getButton()  == MouseEvent.BUTTON1) {
-         //trace("setting markmode ");
-         //fvc.cursorabs(p);
-         if (fvc.inserty() != p.y || fvc.insertx() != p.x)  {
-            Position oldPos = fvc.getPosition("");
-            fvc.cursorabs(p);
-            fvc.vi.setMark(oldPos);
-            Rgroup.doroutine("markmode", 0, 1, 1, fvc, false);
-         }
-      }
-   }
 
    final void hevent(Object ev, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
@@ -345,14 +283,6 @@ public class MapEvent {
       if (ev instanceof AWTEvent) {
          AWTEvent awtEv = (AWTEvent) ev;
          switch (awtEv.getID()) {
-            case MouseEvent.MOUSE_CLICKED:
-               return;
-            case MouseEvent.MOUSE_PRESSED:
-               mousepress((MouseEvent) awtEv, fvc);
-               return;
-            case MouseEvent.MOUSE_RELEASED:
-               mouserelease((MouseEvent) awtEv, fvc);
-               return;
             case MouseEvent.MOUSE_WHEEL:
                MouseWheelEvent mev = (MouseWheelEvent) ev;
                if (mev.getScrollType() == MouseWheelEvent.WHEEL_BLOCK_SCROLL)

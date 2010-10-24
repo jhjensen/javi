@@ -1,7 +1,7 @@
 package javi;
 
-class ExitEvent extends EventQueue.IEvent {
-   void execute() throws ExitException {
+public class ExitEvent extends EventQueue.IEvent {
+   public final void execute() throws ExitException {
       //trace("ExitEvent");
       throw new ExitException();
    }

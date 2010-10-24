@@ -1,44 +1,47 @@
 package javi;
 
-import java.awt.Cursor;
-import java.awt.Shape;
-import java.awt.Color;
-import java.awt.Canvas;
-import java.awt.event.MouseEvent;
-import java.awt.event.KeyEvent;
-import java.awt.AWTEvent;
-import java.awt.Graphics2D;
 import java.awt.Graphics;
-import java.awt.Font;
+import java.awt.Graphics2D;
 import static javi.View.Opcode.*;
-import java.util.concurrent.TimeUnit;
+import static history.Tools.trace;
 
-abstract class View  extends Canvas {
+public abstract class View  {
 
-   abstract void insertedElementsdraw(Graphics gr, int start, int amount);
-   abstract void deletedElementsdraw(Graphics gr, int start, int amount);
-   abstract void changeddraw(Graphics gr, int start, int amount);
-   abstract void movescreendraw(Graphics gr, int amount);
-   abstract void refresh(Graphics gr);
-   abstract void cursorChanged(int newX, int newY);
-   abstract int yCursorChanged(int newY);
-   abstract Position mousepos(MouseEvent event);
-   abstract int getRows(float scramount);
-   abstract void setSizebyChar(int x, int y);
-   abstract int screenFirstLine();
-   abstract int screeny(int amount);
-   abstract Shape updateCursorShape(Shape sh);
-   abstract void setTabStop(int ts);
-   abstract int getTabStop();
-   abstract void ssetFont(Font font);
-   abstract void newGraphics();
+   public abstract void cursorChanged(int newX, int newY);
+   public abstract int yCursorChanged(int newY);
+   public abstract int getRows(float scramount);
+   public abstract int screenFirstLine();
+   public abstract int screeny(int amount);
+   public abstract void setTabStop(int ts);
+   public abstract int getTabStop();
+   public abstract void repaint();
+   public abstract boolean isVisible();
+
+   public abstract void bcursor(Graphics2D gr,
+      boolean isInsert, boolean updateShape);
+   public abstract void insertedElementsdraw(
+      Graphics gr, int start, int amount);
+   public abstract void deletedElementsdraw(Graphics gr, int start, int amount);
+   public abstract void changeddraw(Graphics gr, int start, int amount);
+   public abstract void movescreendraw(Graphics gr, int amount);
+   public abstract void refresh(Graphics gr);
+   public abstract java.awt.event.KeyEvent createEvent(
+      int id, long when, int modifiers, int keyCode, char keyChar);
+   protected abstract void startInsertion(Inserter ins);
+   protected abstract void endInsertion(Inserter ins);
 
    /* Copyright 1996 James Jensen all rights reserved */
    private static final String copyright = "Copyright 1996 James Jensen";
 
-   abstract static class Inserter {
+
+   private transient boolean cursoron = false;
+   private transient boolean cursoractive = false;
+   private boolean checkCursor = true;
+
+   public abstract static class Inserter {
       abstract String getString();
       abstract boolean getOverwrite();
+      public abstract InsertBuffer getSuper(); // temp
    }
 
    protected final String getInsertString() {
@@ -57,36 +60,39 @@ abstract class View  extends Canvas {
 
    final void setInsert(Inserter ins)  {
       inserter = ins;
+      startInsertion(ins);
    }
 
    final void clearInsert()  {
+      endInsertion(inserter);
       inserter = null;
    }
 
    private transient Inserter inserter;
 
    private final boolean traverse;
-   boolean isTraverseable() {
+
+   final boolean isTraverseable() {
       return traverse;
    }
 
-   enum Opcode { NOOP, INSERT, CHANGE,
+   public enum Opcode { NOOP, INSERT, CHANGE,
       DELETE, REDRAW , MSCREEN, BLINKCURSOR
    }
 
-   final class ChangeOpt {
+   public final class ChangeOpt {
 
       private  Opcode currop = NOOP;
       private  int saveamount;
       private int savestart;
 
-      void redraw() {
+      public void redraw() {
          //trace("redraw");
          currop = REDRAW;
          repaint();
       }
 
-      void blink() {
+      public void blink() {
          if (currop == NOOP) {
             currop = BLINKCURSOR;
             //trace("blink cursor repaint");
@@ -110,13 +116,13 @@ abstract class View  extends Canvas {
          return currop == REDRAW;
       }
 
-      boolean lineChanged(int index) {
+      public boolean lineChanged(int index) {
          //trace("linechange currop " + currop + " index " + index);
          pmark.resetMark(text, fileX, fileY);
          return changedpro(index, index);
       }
 
-      void cursorChange(int xChange, int yChange) {
+      public void cursorChange(int xChange, int yChange) {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
          pmark.markChange(fileX + xChange, fileY);
          changedpro(fileY, fileY - yChange);
@@ -190,8 +196,10 @@ abstract class View  extends Canvas {
             //trace("rpaint currop = " + currop + " this " + this);
 
             // cursor must be off before other drawing is done, or it messes up XOR
-            if (currop == BLINKCURSOR || cursoron)
-               bcursor(gr);
+            if (currop == BLINKCURSOR || cursoron) {
+               //trace(" blinking cursor ");
+               mybcursor(gr);
+            }
 
             switch (currop) {
 
@@ -220,33 +228,51 @@ abstract class View  extends Canvas {
                   break;
             }
             if (currop != BLINKCURSOR)
-               bcursor(gr); // always leave cursor on after doing something
+               mybcursor(gr); // always leave cursor on after doing something
          }
          currop = NOOP;
       }
 
    };
 
-   final void redraw() {
+   public final void mybcursor(Graphics2D gr) {
+
+      // never move cursor or change cursor color except when off
+      //trace("bcursor cursoron " + cursoron + " checkCursor " + checkCursor);
+      boolean update = checkCursor && !cursoron;
+
+      if (cursoractive || cursoron) { // if cursor is not active turn it off
+         bcursor(gr, inserter == null, update);
+         if (update)
+            checkCursor = false;
+         cursoron = !cursoron;
+      }
+   }
+
+   public final void redraw() {
       op.redraw();
    }
 
-   void blinkcursor() {
+   final void blinkcursor() {
       //trace("this blink cursor " + this);
       op.blink();
    }
 
+   public final void rpaint(Graphics2D gr) {
+      op.rpaint(gr);
+   }
+
    private final ChangeOpt op = new ChangeOpt();
 
-   void lineChanged(int index) {
+   final void lineChanged(int index) {
       op.lineChanged(index);
    }
 
-   void mscreen(int amount, int limit) {
+   public final void mscreen(int amount, int limit) {
       op.mscreen(amount, limit);
    }
 
-   void cursorChange(int xChange, int yChange) {
+   public final void cursorChange(int xChange, int yChange) {
       op.cursorChange(xChange, yChange);
    }
 
@@ -270,68 +296,39 @@ abstract class View  extends Canvas {
       return fileY;
    }
 
-   void setFilePos(int fx, int fy) {
+   public final void setFilePos(int fx, int fy) {
       fileX = fx;
       fileY = fy;
    }
 
    private transient UndoHistory.EhMark chmark;
 
+   public final void getChanges() {
+      chmark.getChanges(op);
+   }
+
    private transient MarkInfo pmark = new MarkInfo();
    protected final MarkInfo getPmark() {
       return pmark;
    }
-
-
-   private transient boolean cursoron = false;
-   private transient boolean cursoractive = false;
-   private transient Color cursorcolor =  AtView.cursorColor;
-   private transient Shape cursorshape;
-   private transient Graphics oldgr;
-   private boolean checkCursor = true;
 
    private void readObject(java.io.ObjectInputStream is) throws
          ClassNotFoundException, java.io.IOException {
 
       is.defaultReadObject();
       pmark = new MarkInfo();
-      common();
    }
 
-   public boolean isFocusable() {
+   public final boolean isFocusable() {
       return false;
    }
 
-   private void common() {
-      /*
-         HashSet<AWTKeyStroke> keyset =
-             new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
-             KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS)
-         );
-
-         for (Iterator it = keyset.iterator();it.hasNext();) {
-             AWTKeyStroke key = (AWTKeyStroke)(it.next());
-             if (key.getKeyCode()== KeyEvent.VK_TAB && key.getModifiers() == 0)
-               it.remove();
-         }
-         setFocusTraversalKeys(KeyboardFocusManager.
-            FORWARD_TRAVERSAL_KEYS, keyset);
-
-         enableInputMethods(false);
-      */
-      enableEvents(AWTEvent.MOUSE_EVENT_MASK
-         | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-   }
-
-   View(boolean traversei) {
-      super();
+   public View(boolean traversei) {
       traverse = traversei;
-      setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-      common();
       //trace("created view " + this);
    }
 
-   void newfile(TextEdit texti, int curX, int curY) {
+   final void newfile(TextEdit texti, int curX, int curY) {
       //trace("newfile curX" + curX + " curY " + curY + " " + texti);
       text = texti;
       chmark = text.copyCurr();
@@ -341,102 +338,26 @@ abstract class View  extends Canvas {
       op.redraw();
    }
 
-   TextEdit getCurrFile() {
+   public final TextEdit getCurrFile() {
       return text;
    }
 
+/*
    public void setFont(Font font) {
 
       //trace("setting View font " + font + " "  + this);
       ssetFont(font);
       super.setFont(font);
    }
+*/
 
-   public void paint(Graphics g) {
-      //trace("paint called ");
-      try {
-         if (g != oldgr) {
-            oldgr = g;
-            newGraphics();
-         }
-         op.redraw();
-         npaint((Graphics2D) g);
-      } catch (Throwable e) {
-         UI.popError("unexpected exception", e);
-      }
-   }
-
-   public void update(Graphics g) {
-      try {
-      //trace("update called ");
-         //if (op.currop == REDRAW) trace(" got update REDRAW!!");
-         if (g != oldgr) {
-            oldgr = g;
-            newGraphics();
-         }
-         npaint((Graphics2D) g);
-      } catch (Throwable e) {
-         UI.popError("unexpected exception", e);
-      }
-   }
-
-   void checkValid(UndoHistory.EhMark ehm) {
+   final void checkValid(UndoHistory.EhMark ehm) {
       //trace("invalidateBack fvc " + fvc);
       //trace("invalidateBack chmark " + fvc.chmark);
 
       if (ehm.sameBack(chmark))
          if (chmark.getIndex() > ehm.getIndex())
             chmark.setInvalid();
-   }
-
-   private void npaint(Graphics2D gr) throws InterruptedException {
-      //trace("npaint");
-      if (text == null)
-         return;
-
-      if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
-         trace("repaint because failed lock " + text + " or lock");
-         repaint(200);
-      } else
-         try {
-            if (text.isValid() && text.containsNow(1)) {
-               chmark.getChanges(op);
-               op.rpaint(gr);
-            } else {
-               trace("repaint because of invalid or empty");
-               repaint(200);
-            }
-         } catch (Throwable e) {
-            UI.popError("npaint caught", e);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-   }
-
-   private void bcursor(Graphics2D gr) {
-
-      // never move cursor or change cursor color except when off
-      if (!cursoron && checkCursor) {
-         cursorcolor =  inserter == null
-            ? AtView.cursorColor
-            : AtView.insertCursor;
-         cursorshape = updateCursorShape(cursorshape);
-         checkCursor = false;
-      }
-
-      if (cursoractive || cursoron) { // if cursor is not active turn it off
-         doCursor(gr);
-      }
-   }
-
-   private void doCursor(Graphics2D gr) {
-      //trace("doCursor cursoron " + cursoron + " cursorColor " + cursorcolor);
-      cursoron = !cursoron;
-      gr.setXORMode(cursorcolor);
-      gr.setColor(AtView.background);
-      gr.fill(cursorshape);
-      gr.setPaintMode();
-      //trace("doCursor cursoron " + cursoron);
    }
 
    class Delayer implements Runnable {
@@ -472,12 +393,19 @@ abstract class View  extends Canvas {
       }
    }
 
-   void needMoreText(int needed) {
+   public final void needMoreText(int needed) {
       if (!delayerflag)
          new Thread(new Delayer(needed), "oldview delayer").start();
    }
 
-   void setMark(Position markposi) {
+   public final void updateTempMarkPos(Position evPos) {
+      if (fileX != evPos.x || fileY != evPos.y)
+         setMark(evPos);
+      else
+         clearMark();
+   }
+
+   final void setMark(Position markposi) {
       //trace("setMark");
       MovePos pos = pmark.getMark();
       if (pos != null) {
@@ -489,7 +417,7 @@ abstract class View  extends Canvas {
       op.changedpro(markposi.y, fileY);
    }
 
-   void clearMark() {
+   final void clearMark() {
       //trace("clearMark");
       MovePos pos = pmark.getMark();
       pmark.clearMark(fileX, fileY);
@@ -497,11 +425,11 @@ abstract class View  extends Canvas {
          op.changedpro(pos.y, fileY);
    }
 
-   MovePos getMark() {
+   final MovePos getMark() {
       return pmark.getMark();
    }
 
-   static final class MarkInfo {
+   public static final class MarkInfo {
 
       private int sx1 = 0;
       private int sx2 = 0;
@@ -549,7 +477,7 @@ abstract class View  extends Canvas {
             //trace("sx1 " + sx1 + " sy1 " + sy1 + " sx2 " + sx2 + " sy2 " + sy2);
       }
 
-      int endh(int tline) {
+      public int endh(int tline) {
          return  (tline >= sy1 &&  tline <= sy2)
             ? (tline == sy2)
                    ? sx2
@@ -557,13 +485,13 @@ abstract class View  extends Canvas {
              : 0;
       }
 
-      int starth(int tline) {
+      public int starth(int tline) {
          return (tline >= sy1 &&  tline <= sy2 && tline == sy1)
             ? sx1
             : 0;
       }
 
-      MovePos getMark() {
+      public MovePos getMark() {
          return  markpos == null
             ? null
             : new MovePos(markpos);
@@ -595,71 +523,27 @@ abstract class View  extends Canvas {
       }
    }
 
-   private int mousePressed = 0;
-
    @SuppressWarnings("fallthrough")
-   public void processEvent(AWTEvent ev) {
-      //trace("ev " + ev.getID() + "  has focus " + hasFocus());
-      switch (ev.getID()) {
-         case MouseEvent.MOUSE_PRESSED:
-            EventQueue.insert(ev);
-            mousePressed = ((MouseEvent) ev).getButton();
-            break;
-         case MouseEvent.MOUSE_RELEASED:
-            EventQueue.insert(ev);
-            mousePressed = 0;
-            break;
-         case MouseEvent.MOUSE_WHEEL:
-            EventQueue.insert(ev);
-            break;
-         case MouseEvent.MOUSE_DRAGGED:
-            MouseEvent mev = (MouseEvent) ev;
-            if (mousePressed == 1) {
-               //fvc.cursorabs(p);
-               Position evPos = mousepos(mev);
-               if (fileX != evPos.x || fileY != evPos.y)
-                  setMark(evPos);
-               else
-                  clearMark();
-            }
-            break;
-         case MouseEvent.MOUSE_MOVED:
-         case MouseEvent.MOUSE_ENTERED:
-         case MouseEvent.MOUSE_EXITED:
-         case MouseEvent.MOUSE_CLICKED:
-         case KeyEvent.KEY_RELEASED:
-         case KeyEvent.KEY_TYPED:
-            break;
 
-         default:
-            trace("unhandle event ev " + ev + "  has focus " + hasFocus());
-            super.processEvent(ev);
-      }
-   }
-
-   void cursoroff() {
+   final void cursoroff() {
       //trace("cursoroff cursoractive " + cursoractive + " cursoron " + cursoron +"");
       cursoractive = false;
       if (cursoron)
          blinkcursor();
    }
 
-   void cursoron() {
+   final void cursoron() {
       //trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
       checkCursor = true;
       cursoractive = true;
       blinkcursor();
    }
 
-   int placeline(int lineno, float amount) {
+   final int placeline(int lineno, float amount) {
       int row = getRows(amount);
       screenFirstLine();
       row =  lineno - screenFirstLine() - row;
       return screeny(row);
-   }
-
-   static void trace(String str) {
-      Tools.trace(str, 1);
    }
 
 }

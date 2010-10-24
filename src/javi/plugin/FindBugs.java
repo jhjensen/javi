@@ -69,7 +69,7 @@ public class FindBugs extends Rgroup implements Plugin {
          super("findbug", new BufferedReader(new FileReader("findout")));
 //  trace("threadstart " + threadstart);
 //  threadstart=true;
-//         ../findbugs-1.3.9/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;../rhino1_7R2/js.jar;../juniversalchardet-1.0.3.jar"  -exclude filter.xml  . ../history > findout
+//         lib/findbugs-1.3.9/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R2/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
       }
 
 //filename:1:something

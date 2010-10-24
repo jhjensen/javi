@@ -1,23 +1,36 @@
-package javi;
+package javi.awt;
+
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.awt.font.TextAttribute;
+import java.awt.GraphicsEnvironment;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.IOException;
 
-final class FontList extends TextEdit<FontEntry> {
+import javi.ClassConverter;
+import javi.FileDescriptor;
+import javi.FileProperties;
+import javi.FvContext;
+import javi.InputException;
+import javi.IoConverter;
+import javi.Rgroup;
+import javi.UI;
+import javi.TextEdit;
+import javi.View;
 
-   static void restoreState(java.io.ObjectInputStream is) throws
+public final class AwtFontList extends TextEdit<FontEntry> {
+
+   public static void restoreState(java.io.ObjectInputStream is) throws
          ClassNotFoundException, IOException {
       init();
       FontEntry fe = (FontEntry) is.readObject();
       inst.changeElementAt(fe, 1);
    }
 
-   static void saveState(java.io.ObjectOutputStream os) throws IOException {
+   public static void saveState(java.io.ObjectOutputStream os) throws
+         IOException {
       os.writeObject(inst.at(1));
    }
 
@@ -110,17 +123,17 @@ final class FontList extends TextEdit<FontEntry> {
       }
    }
 
-   private static FontList inst;
+   private static AwtFontList inst;
 
    static final String [] typest = {"plain", "bold", "italic", "bold+italic"};
    private static int defwidth;
    private static int defheight;
 
-   static void init() {
+   public static void init() {
       defwidth = 80;
       defheight = 80;
 
-      inst = new FontList(new FontParser());
+      inst = new AwtFontList(new FontParser());
    }
 
    private static FontEntry [] getdefarray() {
@@ -129,7 +142,7 @@ final class FontList extends TextEdit<FontEntry> {
       return retval;
    }
 
-   private FontList(FontParser fp) {
+   private AwtFontList(FontParser fp) {
       super(fp, getdefarray(), fp.prop); //??? should have seperate parser
       checkpoint(); // first record
       new Commands();
@@ -171,7 +184,7 @@ final class FontList extends TextEdit<FontEntry> {
       }
    }
 
-   static Font getCurr(View vi) {
+   public static Font getCurr(View vi) {
       if (vi == null) {
          //trace("font.getCurr default " + inst.at(1));
          return inst.at(1).getFont();
@@ -182,15 +195,15 @@ final class FontList extends TextEdit<FontEntry> {
       return  fe.getFont();
    }
 
-   static int getHeight() {
+   public static int getHeight() {
       return defheight;
    }
 
-   static int getWidth() {
+   public static int getWidth() {
       return defwidth;
    }
 
-   static void setDefaultFontSize(int width, int height) {
+   public static void setDefaultFontSize(int width, int height) {
       //trace("width " + width + " height " + height);
       if (height != -1)
          defheight = height;
@@ -198,7 +211,7 @@ final class FontList extends TextEdit<FontEntry> {
          defwidth = width;
    }
 
-   static TextEdit getList() {
+   public static TextEdit getList() {
       return inst;
    }
 }

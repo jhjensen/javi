@@ -1,4 +1,4 @@
-package javi;
+package javi.awt;
 
 import java.awt.Canvas;
 import java.awt.Dimension;
@@ -7,6 +7,10 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.ArrayList;
 
+import javi.EventQueue;
+import javi.FvContext;
+import javi.UI;
+import history.Tools;
 
 class StatusBar extends Canvas {
    private static final long serialVersionUID = 1;

@@ -1,6 +1,6 @@
 package javi;
 
-final class DeTabber {
+public final class DeTabber {
    private static int mytabs = 0;
    private static String[] tabstrings;
 
@@ -23,7 +23,7 @@ final class DeTabber {
          tabstrings[i] = tabstrings[0].substring(i);
    }
 
-   static String deTab(String text , int tabOffset,
+   public static String deTab(String text , int tabOffset,
          int tabstop, int[] tracking) {
       //trace("deTab " + tabstop + " tabOffset " + tabOffset);
       if (tabstop != mytabs)
@@ -50,7 +50,7 @@ final class DeTabber {
       return tbuf.toString();
    }
 
-   static int tabFind(String line, int tabOffset,
+   public static int tabFind(String line, int tabOffset,
       int tabstop, int charoffset) {
       //trace("tabFind tabOffset " + tabOffset + " tabstop " + tabstop + " charoffset " +  charoffset + " line " + line);
       if (tabstop != mytabs)

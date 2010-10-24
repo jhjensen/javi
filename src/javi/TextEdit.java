@@ -19,7 +19,11 @@ public class TextEdit<OType> extends EditContainer<OType> {
    /* Copyright 1996 James Jensen all rights reserved */
    private static final String copyright = "Copyright 1996 James Jensen";
 
-   static TextEdit<String> root;
+   private static TextEdit<String> root;
+   static TextEdit getRoot() {
+      return root;
+   }
+   
 
    static {
       StringIoc strio = new StringIoc("root EditContainer",
@@ -46,11 +50,12 @@ public class TextEdit<OType> extends EditContainer<OType> {
       super(e, parent, prop);
    }
 
-   TextEdit(IoConverter<OType> e, FileProperties<OType> prop) {
+   public TextEdit(IoConverter<OType> e, FileProperties<OType> prop) {
       super(e, root, prop);
    }
 
-   TextEdit(IoConverter<OType> e, OType[] inarr, FileProperties<OType> prop) {
+   public TextEdit(IoConverter<OType> e, OType[] inarr,
+         FileProperties<OType> prop) {
       super(e, inarr, root, prop);
    }
 

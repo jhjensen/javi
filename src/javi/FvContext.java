@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
+
 public final class FvContext<OType> implements Serializable {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
@@ -145,8 +146,8 @@ public final class FvContext<OType> implements Serializable {
    private static FvContext currfvc;             // the main text display area
    private static final TextEdit<String> defaultText;
 
-   final TextEdit<OType> edvec;
-   final View vi;
+   public final TextEdit<OType> edvec;
+   public final View vi;
    private int fileposy = 1;     // the position of the cursor in the file
    private int fileposx = 0;     // the position of the cursor in the file
    private boolean vis;
@@ -199,7 +200,7 @@ public final class FvContext<OType> implements Serializable {
       return (getcontext(currfvc.vi, list).at());
    }
 
-   void setCurrView() {
+   public void setCurrView() {
       activate();
       currfvc = this;
    }
@@ -228,13 +229,13 @@ public final class FvContext<OType> implements Serializable {
       vis = true;
    }
 
-   static FvContext getCurrFvc() {
+   public static FvContext getCurrFvc() {
       //trace("returning currfvc " + currfvc);
       return currfvc;
    }
 
 
-   View findNextView() {
+   public View findNextView() {
       Collection<View> views = fvmap.viewCollection();
       for (Iterator<View> eve = views.iterator(); eve.hasNext();) {
          if (vi == eve.next()) {
@@ -253,7 +254,7 @@ public final class FvContext<OType> implements Serializable {
       throw new RuntimeException("findNextView cant find vi " + vi);
    }
 
-   static FvContext nextView() {
+   public static FvContext nextView() {
       View nvi = currfvc.findNextView();
       getcontext(nvi, nvi.getCurrFile()).setCurrView();
       return currfvc;
@@ -358,7 +359,7 @@ public final class FvContext<OType> implements Serializable {
       currfvc = null;
    }
 
-   static void dispose(TextEdit  ed, TextEdit next) throws
+   public static void dispose(TextEdit  ed, TextEdit next) throws
          InputException, IOException {
       //trace("disposing " + ed + " currfvc " + currfvc);
 
@@ -382,7 +383,7 @@ public final class FvContext<OType> implements Serializable {
       //trace("done iterator");
    }
 
-   static FvContext dispose(View vi) { // should be called with first in chain
+   public static FvContext dispose(View vi) {
       //trace("removing " + vi);
       FvContext retval = null;
       if (currfvc.vi == vi)
@@ -418,7 +419,7 @@ public final class FvContext<OType> implements Serializable {
       return newcontext;
    }
 
-   static FvContext getcontext(View viloc, TextEdit  te) {
+   public static FvContext getcontext(View viloc, TextEdit  te) {
       //trace("fvcontext.getcontext " + e + " and " + viloc);
 
       FvContext context = fvmap.get(viloc, te);
@@ -434,7 +435,7 @@ public final class FvContext<OType> implements Serializable {
       return context;
    }
 
-   static String getCurrState() {
+   public static String getCurrState() {
       StringBuilder sb = new StringBuilder(
          currfvc.fileposy + "," +  (currfvc.fileposx + 1));
       //trace("char = " + (int)((String)currfvc.edvec.at(currfvc.inserty())).charAt(currfvc.insertx()));
@@ -529,7 +530,6 @@ public final class FvContext<OType> implements Serializable {
       //cursor(0,yoffset);
 
       int newy = inrange(yoffset + fileposy, 1, edvec.readIn() - 1);
-      yoffset = newy - fileposy;
       fileposy = newy;
       if (vis)  {
          int newx = vi.yCursorChanged(newy);

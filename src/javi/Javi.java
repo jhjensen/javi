@@ -3,6 +3,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import static javi.Tools.trace;
+import javi.awt.AwtFontList;
 
 public final class Javi {
 
@@ -50,7 +51,7 @@ public final class Javi {
       //try {Thread.sleep(1000);} catch (InterruptedException e) {/*Ignore*/}
 
       new Jcmds();
-      FontList.init();
+      AwtFontList.init();
       try {
          Command.readini();
       } catch (Exception e) {
@@ -146,7 +147,7 @@ public final class Javi {
                TextEdit.restoreState(pis);
                FileList.restoreState(pis);
                FvContext.restoreState(pis);
-               FontList.restoreState(pis);
+               AwtFontList.restoreState(pis);
                UI.restoreState(pis);
                //UI.trace("!!!!!!!!!!!!!!!! end restore ");
                FvContext fvc = FvContext.getCurrFvc();
@@ -161,7 +162,7 @@ public final class Javi {
                trace("Exception while restoring state " + e);
                e.printStackTrace();
                System.exit(0);
-               UI.trace("");
+               trace("");
             }
          }
       }
@@ -195,7 +196,7 @@ public final class Javi {
             TextEdit.saveState(pout);
             FileList.saveState(pout);
             FvContext.saveState(pout);
-            FontList.saveState(pout);
+            AwtFontList.saveState(pout);
             UI.saveState(pout);
             //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
 
@@ -206,7 +207,7 @@ public final class Javi {
       }
 
       EventQueue.biglock2.unlock();
-      trace("calling UI.dispose");
+      //trace("calling UI.dispose");
       UI.dispose();
       trace("calling System.exit");
       System.exit(0);

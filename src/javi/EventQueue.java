@@ -15,7 +15,7 @@ public final class EventQueue {
 //       Thread.dumpStack();
 //}
 
-   static final class DebugLock extends ReentrantLock {
+   public static final class DebugLock extends ReentrantLock {
       public   void lock() {
          //Tools.trace("locking " + this,1);
          //super.lock();
@@ -41,7 +41,7 @@ public final class EventQueue {
             throw new RuntimeException(
                "lock not held " + Thread.currentThread());
       }
-      void assertUnOwned() {
+      public void assertUnOwned() {
          if (isHeldByCurrentThread())
             throw new RuntimeException(
                "lock held " + Thread.currentThread());
@@ -59,7 +59,7 @@ public final class EventQueue {
    }
 
 //static ReentrantLock biglock = new ReentrantLock();
-   static final DebugLock biglock2 = new DebugLock();
+   public static final DebugLock biglock2 = new DebugLock();
    private static EventQueue eventq = new EventQueue();
 
    private static LinkedList<Object> queue = new LinkedList<Object>();
@@ -69,17 +69,17 @@ public final class EventQueue {
 
    private static int timeout = 500;
 
-   abstract static class IEvent {
-      abstract void execute() throws ExitException;
+   public abstract static class IEvent {
+      public abstract void execute() throws ExitException;
    }
 
-   interface Idler {
+   public interface Idler {
       void idle() throws IOException;
    }
 
    private static ArrayList<Idler> iList = new ArrayList<Idler>(3);
 
-   static void registerIdle(Idler inst) {
+   public static void registerIdle(Idler inst) {
       //trace("adding Idler " + inst);
       iList.add(inst);
    }
@@ -144,14 +144,14 @@ public final class EventQueue {
       return ev;
    }
 
-   static void focusGained() {
+   public static void focusGained() {
       synchronized (EventQueue.class) {
          EventQueue.class.notifyAll();  // make sure cursor starts blinking
          timeout = 500;
       }
    }
 
-   static void focusLost() {
+   public static void focusLost() {
       synchronized (EventQueue.class) {
          // redo cursor every once in a while, and do gc
          timeout = 1000 * 60 * 60;
@@ -180,7 +180,7 @@ public final class EventQueue {
          else {
             //trace("nextKeye returning esc ");
             pushback(e);
-            return new KeyEvent(vi, KeyEvent.KEY_PRESSED, 0, 0, 27, (char) 27);
+            return vi.createEvent(KeyEvent.KEY_PRESSED, 0, 0, 27, (char) 27);
          }
       }
    }
@@ -190,7 +190,7 @@ public final class EventQueue {
       EventQueue.class.notifyAll();
    }
 
-   static synchronized void insert(Object e) {
+   public static synchronized void insert(Object e) {
       //trace("inserting " + e);
       queue.addLast(e);
       EventQueue.class.notifyAll();
