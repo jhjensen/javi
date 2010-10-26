@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import javi.awt.AwtFontList;
-
 public final class FileList extends TextEdit<TextEdit<String>> {
    static class FileConverter extends ClassConverter<TextEdit<String>> {
       public TextEdit<String> fromString(String str) {
@@ -622,10 +620,10 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                   fvc.fixCursor();
                   FvContext.reconnect(ev, nextFile);
                }
-            } else if (!(ev.at(0) instanceof Position)
-                              &&  !(ev instanceof AwtFontList)
-                              && !(ev instanceof PosListList)
-                              && !(ev instanceof DirList)) {
+            } else if (instance.isParent(ev)
+                  // This could be cleaned up with a misc file list
+                  || (ev instanceof Vt100)
+                  || (ev.fdes().canonName.startsWith("JDebugger"))) {
                FvContext.dispose(ev, nextFile);
             } else {
                FvContext.reconnect(ev, nextFile);

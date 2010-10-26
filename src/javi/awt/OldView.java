@@ -6,6 +6,7 @@ import java.awt.Canvas;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.KeyEvent;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -27,6 +28,7 @@ import javi.PosEvent;
 import javi.Position;
 import javi.UI;
 import javi.View;
+import javi.ScrollEvent;
 
 import static javi.View.Opcode.*;
 import static history.Tools.trace;
@@ -537,7 +539,9 @@ class OldView extends AwtView {
             enableInputMethods(false);
          */
          enableEvents(AWTEvent.MOUSE_EVENT_MASK
-            | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+            | AWTEvent.MOUSE_MOTION_EVENT_MASK
+            | AWTEvent.MOUSE_WHEEL_EVENT_MASK
+         );
       }
 
       private void readObject(java.io.ObjectInputStream is) throws
@@ -651,8 +655,17 @@ class OldView extends AwtView {
                mousePressed = 0;
                break;
             case MouseEvent.MOUSE_WHEEL:
-               EventQueue.insert(ev);
-               break;
+               MouseWheelEvent mwv = (MouseWheelEvent) ev;
+               int mvAmt = mwv.getScrollType()
+                     == MouseWheelEvent.WHEEL_BLOCK_SCROLL
+                  ? getRows(1.f)
+                  : mwv.isControlDown()
+                     ? getRows(1.f)
+                     : mwv.getScrollAmount();
+               EventQueue.insert(new ScrollEvent(mvAmt
+                  * mwv.getWheelRotation()));
+               return;
+
             case MouseEvent.MOUSE_DRAGGED:
                MouseEvent mev = (MouseEvent) ev;
                if (mousePressed == 1)

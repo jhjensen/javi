@@ -1,13 +1,8 @@
 package javi;
 
 import java.awt.AWTEvent;
-import java.awt.CheckboxMenuItem;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.awt.event.ItemEvent;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -278,20 +273,11 @@ public class MapEvent {
 
    final void hevent(Object ev, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
-      //trace("hevent" + awtEv);
+      //trace("hevent" + ev);
 
       if (ev instanceof AWTEvent) {
          AWTEvent awtEv = (AWTEvent) ev;
          switch (awtEv.getID()) {
-            case MouseEvent.MOUSE_WHEEL:
-               MouseWheelEvent mev = (MouseWheelEvent) ev;
-               if (mev.getScrollType() == MouseWheelEvent.WHEEL_BLOCK_SCROLL)
-                  fvc.cursory(fvc.vi.getRows(1.f) * mev.getWheelRotation());
-               else if (mev.isControlDown())
-                  fvc.cursory(fvc.vi.getRows(1.f) * mev.getWheelRotation());
-               else
-                  fvc.cursory(mev.getScrollAmount() * mev.getWheelRotation());
-               return;
             case KeyEvent.KEY_PRESSED :
                KeyEvent event = (KeyEvent) awtEv;
                char ch = event.getKeyChar();
@@ -315,22 +301,8 @@ public class MapEvent {
                }
 
                break;
-            case ActionEvent.ACTION_PERFORMED:
-               ActionEvent aevent = (ActionEvent) awtEv;
-               //trace("hevent got  " + aevent);
-               Command.command(aevent.getActionCommand(), fvc, null);
-               return;
-            case ItemEvent.ITEM_STATE_CHANGED:
-               ItemEvent ievent = (ItemEvent) awtEv;
-               String istr =
-                  ((CheckboxMenuItem) (ievent.getSource())).getActionCommand()
-                     + (ievent.getStateChange() == ItemEvent.SELECTED
-                        ? " on"
-                        : " off");
-               Command.command(istr, fvc, null);
-               return;
             default:
-               trace("unhandled event ");
+               trace("unhandled event " + ev);
 
          }
       } else if (ev instanceof JaviEvent)  {

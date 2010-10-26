@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javi.awt.AwtFontList;
 
 class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
 
@@ -49,7 +48,7 @@ public final class PosListList extends TextList<Position> {
       }
    }
 
-   void setLastList(TextEdit list) {
+   private void setLastList(TextEdit list) {
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)));
       if (list == null)
          return;
@@ -58,7 +57,7 @@ public final class PosListList extends TextList<Position> {
       //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
    }
 
-   void gotoList(FvContext fvc, TextEdit list)throws InputException  {
+   private void gotoList(FvContext fvc, TextEdit list)throws InputException  {
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)) + ui.isGotoOk(fvc));
       if (list == null)
          list = lastlist;
@@ -70,7 +69,7 @@ public final class PosListList extends TextList<Position> {
       UI.connectfv(list, fvc.vi); //??? exception safety
    }
 
-   void addList(TextEdit<Position> poslist) {
+   private void addList(TextEdit<Position> poslist) {
       insertOne(poslist, finish());
       poslist.readIn(); // force it to start reading
       setLastList(poslist);
@@ -127,9 +126,9 @@ public final class PosListList extends TextList<Position> {
       finish();
    }
 
-   void gotoNextPos(FvContext fvc, boolean [] reverse,
+   private void gotoNextPos(FvContext fvc, boolean [] reverse,
          boolean wait) throws InputException {
-      trace(" goto nextpos lastlist = " + lastlist);
+      //trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
          UI.connectfv((TextEdit) fvc.at(), fvc.vi);
       else  {
@@ -145,23 +144,22 @@ public final class PosListList extends TextList<Position> {
             return;
 
          FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
-
-         if (lastlist instanceof AwtFontList) {
-            UI.fontChange(AwtFontList.getCurr(fvc.vi), fvc.vi);
-         } else {
-            Object obj = listfvc.at();
-            if (obj instanceof Position) {
-               Position p = (Position) obj;
-               FileList.gotoposition(p, true, fvc.vi);
-            } else if (obj instanceof TextEdit) {
-               TextEdit ex = (TextEdit) obj;
-               if (ex.at(0) instanceof Position)
-                  gotoList(fvc, ex);
-               else
-                  UI.connectfv(ex, fvc.vi);
-            } else
-               throw new RuntimeException("vic.gotonextpos unexpected object");
-         }
+         Object obj = listfvc.at();
+         //trace("obj class = " + obj.getClass());
+         if (obj instanceof Position) {
+            Position p = (Position) obj;
+            FileList.gotoposition(p, true, fvc.vi);
+         } else if (obj instanceof TextEdit) {
+            TextEdit ex = (TextEdit) obj;
+            if (ex.at(0) instanceof Position)
+               gotoList(fvc, ex);
+            else
+               UI.connectfv(ex, fvc.vi);
+         } else if (obj instanceof FvExecute) {
+            FvExecute fe = (FvExecute) obj;
+            fe.execute(fvc);
+         } else
+            throw new RuntimeException("vic.gotonextpos unexpected object");
       }
    }
    static void trace(String str) {
@@ -186,6 +184,11 @@ public final class PosListList extends TextList<Position> {
       private static HashMap<String, TextEdit> tahash =
          new HashMap<String, TextEdit>();
 
+      public static void gotoList(FvContext fvc, TextEdit list) throws
+            InputException  {
+         inst.gotoList(fvc, list);
+      }
+
       Cmd() {
          final String[] rnames = {
             "",
@@ -199,7 +202,7 @@ public final class PosListList extends TextList<Position> {
             "dummy1",
             "nextpos" ,
             "gotopositionlist", //10
-            "gotofontlist",
+            "dummypll",
             "gotodirlist",
             "gotoroot",
             "nextposwait" ,
@@ -245,8 +248,8 @@ public final class PosListList extends TextList<Position> {
                inst.gotoList(fvc, null);
                return null;
             case 11:
-               inst.gotoList(fvc, AwtFontList.getList());
-               return null;
+               throw new InputException("bad command");
+
             case 12:
                UI.connectfv(DirList.getDefault(), fvc.vi);
                return null;

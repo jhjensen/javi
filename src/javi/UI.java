@@ -49,6 +49,10 @@ public abstract class UI {
    public abstract void isetView(FvContext fvc);
 
    public abstract void isetFont(Font font, View vi);
+   public abstract void iRestoreState(java.io.ObjectInputStream is) throws
+      ClassNotFoundException, IOException;
+   public abstract void iSaveState(java.io.ObjectOutputStream os) throws
+      IOException;
    public static void fontChange(Font font, View vi) {
       instance.isetFont(font, vi);
    }
@@ -62,6 +66,7 @@ public abstract class UI {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
       os.writeObject(instance);
+      instance.iSaveState(os);
    }
 
    static void restoreState(java.io.ObjectInputStream is) throws
@@ -70,6 +75,7 @@ public abstract class UI {
 //         ? (UI)new AwtInterface()
 //         :(UI) new StreamInterface();
       instance = (UI) is.readObject();
+      instance.iRestoreState(is);
       instance.ishow();
       instance.toFront();
    }

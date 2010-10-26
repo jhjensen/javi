@@ -3,6 +3,8 @@ package javi;
 
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 
 public final class Command extends Rgroup {
@@ -69,6 +71,7 @@ public final class Command extends Rgroup {
       return null;
    }
 
+   public static final ArrayList<String> cmdlist = new ArrayList<String>();
    static void readini() throws IOException {
       FileDescriptor.LocalFile ifile = FileDescriptor.LocalFile.make(".javini");
       if (!ifile.isFile())
@@ -76,12 +79,31 @@ public final class Command extends Rgroup {
       BufferedReader ini = ifile.getBufferedReader();
       try {
          String line;
-         while (null != (line = ini.readLine())) {
-            //trace("about to execute command:" + line);
-            command(line, null, null);
-         }
+         while (null != (line = ini.readLine()))
+            cmdlist.add(line);
       } finally {
          ini.close();
+      }
+   }
+
+   public static void execCmdList() {
+      Iterator<String> cit = cmdlist.iterator();
+      while (cit.hasNext()) {
+         command(cit.next(), null, null);
+         cit.remove();
+      }
+   }
+
+   static void doneInit() {
+      if (cmdlist.size() != 0) {
+         StringBuffer bf = new StringBuffer(
+            "command list has unexecuted commands:\n");
+         Iterator<String> cit = cmdlist.iterator();
+         while (cit.hasNext()) {
+            bf.append(cit.next());
+            cit.remove();
+         }
+         UI.reportMessage(bf.toString());
       }
    }
 

@@ -19,9 +19,12 @@ public final class Tools {
          long timediff = newTime - lastTime;
          lastTime = newTime;
          StackTraceElement[] tr = e.getStackTrace();
+         StackTraceElement el = tr[1 + offset];
+         if (str.length() == 0)
+            str = el.getMethodName() + "." + el.getClassName();
          System.err.println(timediff / 1000000 + " "
-            + tr[1 + offset].getFileName() + ":"
-            + tr[1 + offset].getLineNumber() + " " + str);
+            + el.getFileName() + ":"
+            + el.getLineNumber() + " " + str);
          //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
       }
    }

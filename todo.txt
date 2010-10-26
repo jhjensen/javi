@@ -1,4 +1,5 @@
 FontList not working
+get rid of getnext
 findbug cmd not working
 F1 to soon fails makes me need F6
 Circular UI.

@@ -3,17 +3,15 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import static javi.Tools.trace;
-import javi.awt.AwtFontList;
 
 public final class Javi {
 
    private Javi() { }
+/*  attempt to speed up loading, didn't seem to work
    static class Preloader implements Runnable {
 
       public void run() {
          try {
-            //trace("preload java.awt.Frame");
-            Class.forName("java.awt.Frame");
             //trace("preload javi.RealJs");
             Class.forName("javi.RealJs");
             //trace("done ");
@@ -22,6 +20,7 @@ public final class Javi {
          }
       }
    }
+*/
 
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
@@ -51,7 +50,6 @@ public final class Javi {
       //try {Thread.sleep(1000);} catch (InterruptedException e) {/*Ignore*/}
 
       new Jcmds();
-      AwtFontList.init();
       try {
          Command.readini();
       } catch (Exception e) {
@@ -147,7 +145,6 @@ public final class Javi {
                TextEdit.restoreState(pis);
                FileList.restoreState(pis);
                FvContext.restoreState(pis);
-               AwtFontList.restoreState(pis);
                UI.restoreState(pis);
                //UI.trace("!!!!!!!!!!!!!!!! end restore ");
                FvContext fvc = FvContext.getCurrFvc();
@@ -178,6 +175,7 @@ public final class Javi {
             //UI.trace("doing command " + command);
             Command.command(command, null, null);
          }
+         Command.doneInit();
          ev.run();
       } catch (Throwable e) {
          if (!(e instanceof ExitException)) {
@@ -196,7 +194,6 @@ public final class Javi {
             TextEdit.saveState(pout);
             FileList.saveState(pout);
             FvContext.saveState(pout);
-            AwtFontList.saveState(pout);
             UI.saveState(pout);
             //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
 

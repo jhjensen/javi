@@ -1064,6 +1064,11 @@ public class EditContainer<OType> implements
       //trace("DeleteRecord");
       backup.push(new DeleteRecord(start, number));
    }
+
+   final boolean isParent(EditContainer ev) {
+      return this == ev.parent;
+   }
+
    private class InsertRecord extends UndoHistory.ChangeRecord<OType> {
       private OType[] obj;
 

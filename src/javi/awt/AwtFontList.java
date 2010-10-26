@@ -19,6 +19,11 @@ import javi.Rgroup;
 import javi.UI;
 import javi.TextEdit;
 import javi.View;
+import javi.FvExecute;
+import javi.PosListList;
+import javi.Command;
+
+//import static history.Tools.trace;
 
 public final class AwtFontList extends TextEdit<FontEntry> {
 
@@ -44,6 +49,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             "fontweight",
             "lines", // 5
             "setwidth" ,
+            "gotofontlist",
          };
          register(rnames);
       }
@@ -117,6 +123,10 @@ public final class AwtFontList extends TextEdit<FontEntry> {
                inst.setDefaultFontSize(oBToInt(arg), -1);
                return null;
 
+            case 7:
+               PosListList.Cmd.gotoList(fvc, getList());
+               return null;
+
             default:
                throw new RuntimeException("doroutine called with " + rnum);
          }
@@ -134,6 +144,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       defheight = 80;
 
       inst = new AwtFontList(new FontParser());
+      Command.execCmdList(); // pickup font commands
    }
 
    private static FontEntry [] getdefarray() {
@@ -216,7 +227,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    }
 }
 
-final class FontEntry implements java.io.Serializable {
+final class FontEntry implements FvExecute, java.io.Serializable {
    private static final long serialVersionUID = 1;
    private static Matcher nameReg;
    private static Matcher styleReg;
@@ -364,4 +375,7 @@ final class FontEntry implements java.io.Serializable {
          " *posture\\=(\\-?[0-9.]+)(($)|([ ,\\]]))").matcher("");
    }
 
+   public void execute(FvContext fvc) {
+      UI.fontChange(getFont(), fvc.vi);
+   }
 }

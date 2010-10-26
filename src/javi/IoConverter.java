@@ -36,7 +36,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
       tstate = ThreadState.INIT;
    }
 
-   OType getnext() {
+   public OType getnext() {
       return null;
    }
 
@@ -71,6 +71,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
    final synchronized void init1(EditCache<OType> evi, BuildCB arr) {
+      //trace("init1 tstate " + tstate + this);
       if (tstate == ThreadState.INITSTART)
          startThread();
       ioarray = evi;
@@ -203,6 +204,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
    void dorun() throws InterruptedException {
+      //trace("dorun " + tstate + this);
       OType ob;
       while ((ob = getnext()) != null) //??? get rid of getnext
          addElement(ob);
@@ -239,6 +241,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    public final void run() {
       try {
+         //trace("start of run " + this);
          Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
          synchronized (this) {
             backupstatus = aNotify.getBackupStatus();

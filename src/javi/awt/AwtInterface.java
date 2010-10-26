@@ -2,7 +2,6 @@ package javi.awt;
 
 import java.awt.AWTKeyStroke;
 import java.awt.AWTEvent;
-import java.awt.CheckboxMenuItem;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -37,13 +36,12 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
-import java.awt.event.MouseEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +49,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.awt.event.KeyEvent;
 
+import javi.CommandEvent;
 import javi.EventQueue;
 import javi.ExitEvent;
 import javi.ExitException;
@@ -68,7 +67,7 @@ import history.Tools;
 import static history.Tools.trace;
 
 public final class AwtInterface extends UI implements java.io.Serializable,
-   WindowListener, FocusListener, ActionListener, ItemListener,
+   WindowListener, FocusListener, ActionListener,
    EventQueue.Idler {
 
 
@@ -90,6 +89,15 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       common();
    }
 
+   public void iRestoreState(ObjectInputStream is) throws
+         IOException, ClassNotFoundException {
+      AwtFontList.restoreState(is);
+   }
+
+   public void iSaveState(ObjectOutputStream os) throws IOException {
+      AwtFontList.saveState(os);
+   }
+
    public AwtInterface() {
       //super("vi:");
       //outfor 1.4 FocusManager.disableSwingFocusManager();
@@ -97,6 +105,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //fr.setUndecorated(true);
       //FontList.updateFont(); //??? avoid calling this?
 
+      AwtFontList.init();
       frm = initfrm("normal");
 
       normalFrame = frm;
@@ -259,7 +268,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          enableInputMethods(false);
          enableEvents(AWTEvent.KEY_EVENT_MASK
             | AWTEvent.MOUSE_EVENT_MASK
-            | AWTEvent.MOUSE_WHEEL_EVENT_MASK
+            //| AWTEvent.MOUSE_WHEEL_EVENT_MASK
             | AWTEvent.WINDOW_EVENT_MASK);
          //enableEvents(0xffffffffffffffffl);
       }
@@ -378,7 +387,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 //???            if (fcontext.dispatchKeyEvent(kev))
                   //???        break;
                }
-            case MouseEvent.MOUSE_WHEEL:
                EventQueue.insert(ev);
                break;
             case KeyEvent.KEY_RELEASED:
@@ -461,12 +469,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    public void actionPerformed(ActionEvent event) {
       //trace("reached actionPerformed " + event);
-      EventQueue.insert(event);
+      EventQueue.insert(new CommandEvent(event.getActionCommand()));
    }
 
-   public void itemStateChanged(ItemEvent event) {
-      EventQueue.insert(event);
-   }
+//   public void itemStateChanged(ItemEvent event) {
+//      EventQueue.insert(event);
+//   }
 
    class Flusher extends RunAwt {
       private boolean total;
@@ -944,20 +952,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   private static class MyCheckboxMenuItem extends CheckboxMenuItem {
-
-      private static final long serialVersionUID = 1;
-
-      MyCheckboxMenuItem(String label, String command, Menu men,
-                         ItemListener listen) {
-
-         super(label);
-         addItemListener(listen);
-         setActionCommand(command);
-         men.add(this);
-      }
-   }
-
    public void ishowmenu(int x, int y) {
       if (popmenu == null) {
 
@@ -981,7 +975,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                + mname, typem, this);
          popmenu.add(typem);
 
-         new MyCheckboxMenuItem("enableclip", null, popmenu, this);
          new MyMenuItem("paste", null, popmenu, this);
          new MyMenuItem("fullscreen", null, popmenu, this);
 

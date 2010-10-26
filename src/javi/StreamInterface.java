@@ -12,8 +12,6 @@ class StreamInterface extends UI {
    }
    private Reader inStr = new InputStreamReader(System.in);
 
-
-
    public void ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,
                     UndoHistory.BackupStatus status, String backupname) {
@@ -130,4 +128,8 @@ class StreamInterface extends UI {
    public void isetViewSize(View vi, int width, int height) {
    }
 
+   public void iRestoreState(java.io.ObjectInputStream is) {
+   }
+   public void iSaveState(java.io.ObjectOutputStream os) {
+   }
 }
