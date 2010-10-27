@@ -1,6 +1,5 @@
 package javi;
 
-import java.awt.Component;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -80,21 +79,17 @@ class StreamInterface extends UI {
    public void irepaint() { /* unimplemented */ }
    public void idispose() { /* unimplemented */ }
    public String igetFile() { return "filename"; }
-   public void iadd(Component vi, int index) { /* unimplemented */ }
    public boolean iisVisible() { return true; }
    public void iremove(View vi) { /* unimplemented */ }
    public void ishow() { /* unimplemented */ }
-//      void ipack() {/* unimplemented */}
    public void ishowmenu(int x, int y) { /* unimplemented */ }
    public void itoFront() { /* unimplemented */ }
    public void itransferFocus() { /* unimplemented */ }
    public void ichooseWriteable(java.lang.String str) { /* unimplemented */ }
    public boolean ipopstring(java.lang.String str) { return false; }
    public void isetFont(java.awt.Font font, View vi) { /* unimplemented */ }
-//      void ivalidate() {/* unimplemented */}
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
-//void idle() {throw new RuntimeException("unimplemented");}
    public FvContext iconnectfv(TextEdit file, View vi) { return null; }
    public View iaddview(boolean newview, FvContext fvc) { return null; }
 

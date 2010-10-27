@@ -10,8 +10,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
 
-import java.awt.Font;
-
 public abstract class UI {
    public enum Buttons {
       CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP ,
@@ -48,14 +46,10 @@ public abstract class UI {
       View vi) throws InputException;
    public abstract void isetView(FvContext fvc);
 
-   public abstract void isetFont(Font font, View vi);
    public abstract void iRestoreState(java.io.ObjectInputStream is) throws
       ClassNotFoundException, IOException;
    public abstract void iSaveState(java.io.ObjectOutputStream os) throws
       IOException;
-   public static void fontChange(Font font, View vi) {
-      instance.isetFont(font, vi);
-   }
 
    public abstract Result ireportModVal(String caption, String units,
                                  String []buttonVals, long limit);

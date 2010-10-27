@@ -346,7 +346,7 @@ public final class PosListList extends TextList<Position> {
             //final Matcher filereg = Pattern.compile(
             //"(\b([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
             // "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
-            filereg.reset("UI.java:1118 java.awt.event.");
+            filereg.reset("UI.java:1118 java.xxx.event.");
             myassert(filereg.find(), "UI");
             filereg.reset("smtp_hfilter.c:254 ");
             myassert(filereg.find(), "");

@@ -71,6 +71,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    EventQueue.Idler {
 
 
+   private static AwtInterface instance;
    private void common() {
       new Commands();
       EventQueue.registerIdle(this);
@@ -99,6 +100,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public AwtInterface() {
+      if (instance != null)
+         throw new RuntimeException("attempt to create two Awt singletons");
+      instance = this;
       //super("vi:");
       //outfor 1.4 FocusManager.disableSwingFocusManager();
       //1.4setUndecorated(true);
@@ -934,8 +938,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   public void isetFont(Font font, View vi) {
-      new SetFont(font, vi);
+   public static void fontChange(Font font, View vi) {
+      instance.new SetFont(font, vi);
    }
 
    private static class MyMenuItem extends MenuItem {

@@ -16,7 +16,6 @@ import javi.FvContext;
 import javi.InputException;
 import javi.IoConverter;
 import javi.Rgroup;
-import javi.UI;
 import javi.TextEdit;
 import javi.View;
 import javi.FvExecute;
@@ -94,25 +93,25 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             case 1:
                fe.setSize(oBToFloat(arg));
                if (vi != null)
-                  UI.fontChange(fe.getFont(), vi);
+                  AwtInterface.fontChange(fe.getFont(), vi);
                return null;
 
             case 2:
                fe.setFontType(arg.toString());
                if (vi != null)
-                  UI.fontChange(fe.getFont(), vi);
+                  AwtInterface.fontChange(fe.getFont(), vi);
                return null;
 
             case 3:
                fe.setName(arg.toString());
                if (vi != null)
-                  UI.fontChange(fe.getFont(), vi);
+                  AwtInterface.fontChange(fe.getFont(), vi);
                return null;
 
             case 4:
                fe.setWeight(oBToFloat(arg));
                if (vi != null)
-                  UI.fontChange(fe.getFont(), vi);
+                  AwtInterface.fontChange(fe.getFont(), vi);
                return null;
 
             case 5:
@@ -376,6 +375,6 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    }
 
    public void execute(FvContext fvc) {
-      UI.fontChange(getFont(), fvc.vi);
+      AwtInterface.fontChange(getFont(), fvc.vi);
    }
 }

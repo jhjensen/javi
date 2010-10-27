@@ -67,7 +67,7 @@ class KeyGroup {
 
       es[1] = (char) code;
       es[3] = (modifiers & InputEvent.CTRL_MASK) != 0 ? 'C' : 'c';
-//trace("modifiers " + modifiers  + " ctrl = " + KeyEvent.CTRL_MASK + " es[3]= " + es[3]);
+     //trace("modifiers " + modifiers  + " ctrl = " + KeyEvent.CTRL_MASK + " es[3]= " + es[3]);
       es[4] = (modifiers & InputEvent.ALT_MASK) != 0 ? 'A' : 'a';
       return new String(es);
    }
