@@ -1,6 +1,5 @@
 package javi;
 
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -234,7 +233,6 @@ public final class FvContext<OType> implements Serializable {
       return currfvc;
    }
 
-
    public View findNextView() {
       Collection<View> views = fvmap.viewCollection();
       for (Iterator<View> eve = views.iterator(); eve.hasNext();) {
@@ -265,7 +263,7 @@ public final class FvContext<OType> implements Serializable {
          + (vis ? "vis" : "") + edvec + vi;
    }
 
-   boolean dispatchKeyEvent(KeyEvent ev) {
+   boolean dispatchKeyEvent(JeyEvent ev) {
       if (preDispatch == null)
          return  false;
       else if (!preDispatch.dispatchKeyEvent(ev)) {

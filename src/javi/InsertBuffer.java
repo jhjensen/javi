@@ -1,7 +1,5 @@
 package javi;
 
-import java.awt.event.KeyEvent;
-import java.awt.AWTEvent;
 import java.awt.im.InputMethodRequests;
 import java.awt.event.InputEvent;
 import java.awt.event.InputMethodListener;
@@ -79,7 +77,7 @@ public final class InsertBuffer extends Rgroup
       };
 
       register(rnames);
-      ikeys.keyactionbind(KeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
+      ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
       ikeys.keybind('\t', "imode.tabinsert", null);
       ikeys.keybind((char) 8, "imode.backspace", null);
       ikeys.keybind((char) 127, "imode.delete", null);
@@ -97,7 +95,7 @@ public final class InsertBuffer extends Rgroup
       ikeys.keybind((char) 12, "redraw", null, InputEvent.CTRL_MASK);
 
       commandikeys.keyactionbind(
-         KeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
+         JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
       commandikeys.keybind('\t', "imode.tabinsert", null);
       commandikeys.keybind((char) 8, "imode.backspace", null);
       commandikeys.keybind((char) 127, "imode.delete", null);
@@ -109,8 +107,8 @@ public final class InsertBuffer extends Rgroup
       commandikeys.keybind('\r', "imode.complete", null, InputEvent.CTRL_MASK);
       commandikeys.keybind('\n', "imode.complete", null);
       commandikeys.keybind('\n', "imode.complete", null, InputEvent.CTRL_MASK);
-      commandikeys.keyactionbind(KeyEvent.VK_DOWN, "imode.nextline", null, 0);
-      commandikeys.keyactionbind(KeyEvent.VK_UP, "imode.prevline", null, 0);
+      commandikeys.keyactionbind(JeyEvent.VK_DOWN, "imode.nextline", null, 0);
+      commandikeys.keyactionbind(JeyEvent.VK_UP, "imode.prevline", null, 0);
       commandikeys.keybind((char) 16, "imode.putbuf", null);
       commandikeys.keybind((char) 16,
          "imode.putbuf", null, InputEvent.CTRL_MASK);
@@ -270,51 +268,41 @@ public final class InsertBuffer extends Rgroup
             original =  fvc.at();
             KeyGroup activekeys =  singleline ? commandikeys : ikeys;
             while  (true) {
-               Object e = EventQueue.nextEvent(viewer);
-               if (e instanceof AWTEvent) {
-                  AWTEvent ae = (AWTEvent) e;
-                  if (ae instanceof KeyEvent) {
-                     KeyEvent ke = (KeyEvent) ae;
-                     //trace("event = " + e);
-                     KeyBinding binding;
-                     if (!verbatim && (binding = activekeys.get(ke)) != null) {
-                        if (null != binding.rg.doroutine(binding.index,
-                              binding.arg, count, 0, fvc, false))
-                           break;
-                     }  else if (ke.getID() == KeyEvent.KEY_PRESSED)
-                        if (!ke.isActionKey()) {
-                           key = ke.getKeyChar();
+               JeyEvent ke = EventQueue.nextEvent(viewer);
+               //trace("event = " + e);
+               KeyBinding binding;
+               if (!verbatim && (binding =
+                     activekeys.get(ke.eventToString())) != null) {
+                  if (null != binding.rg.doroutine(binding.index,
+                        binding.arg, count, 0, fvc, false))
+                     break;
+               } else if (ke.isActionKey()) {
+                  itext(count, fvc);
+                  evhandler.hevent(ke, fvc);
+               } else {
+                  key = ke.getKeyChar();
 
-                           if (verbatim && (key >= '0' && key <= '9')) {
-                              verbatimCount++;
-                              verbatimAcc = verbatimAcc * 10 + (key - '0');
-                              if (verbatimCount == 3) {
-                                 buffer.append((char) verbatimAcc);
-                                 viewer.lineChanged(fvc.inserty());
-                                 verbatim = false;
-                                 verbatimAcc = 0;
-                                 verbatimCount = 0;
-                              }
+                  if (verbatim && (key >= '0' && key <= '9')) {
+                     verbatimCount++;
+                     verbatimAcc = verbatimAcc * 10 + (key - '0');
+                     if (verbatimCount == 3) {
+                        buffer.append((char) verbatimAcc);
+                        viewer.lineChanged(fvc.inserty());
+                        verbatim = false;
+                        verbatimAcc = 0;
+                        verbatimCount = 0;
+                     }
 
-                           } else {
-                              if (verbatimCount != 0)
-                                 buffer.append((char) verbatimAcc);
-                              verbatim = false;
-                              verbatimAcc = 0;
-                              verbatimCount = 0;
-                              buffer.append((char) key);
-                              viewer.lineChanged(fvc.inserty());
-                           }
-                        } else {
-                           itext(count, fvc);
-                           evhandler.hevent(ke, fvc);
-                        }
                   } else {
-                     itext(count, fvc);
-                     evhandler.hevent(ae, fvc);
+                     if (verbatimCount != 0)
+                        buffer.append((char) verbatimAcc);
+                     verbatim = false;
+                     verbatimAcc = 0;
+                     verbatimCount = 0;
+                     buffer.append((char) key);
+                     viewer.lineChanged(fvc.inserty());
                   }
-               } else
-                  trace("nextevent not AWTEvent" + e);
+               }
             }
          } catch (InterruptedException e) {
             trace("Interrupted Exception!!!");

@@ -72,11 +72,6 @@ class OldView extends AwtView {
       canvas.repaint();
    }
 
-   public KeyEvent createEvent(int id, long when, int modifiers,
-         int keyCode, char keyChar) {
-      return new KeyEvent(canvas, id, when, modifiers, keyCode, keyChar);
-   }
-
    OldView(boolean nextFlag) {
 
       super(nextFlag);

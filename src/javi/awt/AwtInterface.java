@@ -51,6 +51,7 @@ import java.awt.event.KeyEvent;
 
 import javi.CommandEvent;
 import javi.EventQueue;
+import javi.JeyEvent;
 import javi.ExitEvent;
 import javi.ExitException;
 import javi.FileList;
@@ -390,8 +391,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      }
 //???            if (fcontext.dispatchKeyEvent(kev))
                   //???        break;
+                  EventQueue.insert(new JeyEvent(kev.getModifiers(),
+                     kev.getKeyCode(), kev.getKeyChar()));
                }
-               EventQueue.insert(ev);
                break;
             case KeyEvent.KEY_RELEASED:
             case KeyEvent.KEY_TYPED:

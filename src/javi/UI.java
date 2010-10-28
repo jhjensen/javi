@@ -77,8 +77,8 @@ public abstract class UI {
    public static void init(boolean isAwt) {
       //trace("");
       instance = isAwt
-                 ? (UI) new javi.awt.AwtInterface()
-                 : (UI) new StreamInterface();
+         ? (UI) new javi.awt.AwtInterface()
+         : (UI) new StreamInterface();
    }
 
    static void setStream(Reader inreader) {

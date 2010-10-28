@@ -87,7 +87,6 @@ class StreamInterface extends UI {
    public void itransferFocus() { /* unimplemented */ }
    public void ichooseWriteable(java.lang.String str) { /* unimplemented */ }
    public boolean ipopstring(java.lang.String str) { return false; }
-   public void isetFont(java.awt.Font font, View vi) { /* unimplemented */ }
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
    public FvContext iconnectfv(TextEdit file, View vi) { return null; }

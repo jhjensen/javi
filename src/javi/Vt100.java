@@ -9,7 +9,6 @@ import gnu.io.UnsupportedCommOperationException;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.awt.event.KeyEvent;
 
 
 abstract class Vt100 extends TextEdit<String> {
@@ -43,7 +42,7 @@ abstract class Vt100 extends TextEdit<String> {
 
    private class Keyhandle extends KeyHandler {
 
-      boolean dispatchKeyEvent(KeyEvent ev) {
+      boolean dispatchKeyEvent(JeyEvent ev) {
          return handleKey(ev);
       }
       void startDispatch(FvContext fvc) {
@@ -80,32 +79,32 @@ abstract class Vt100 extends TextEdit<String> {
       return str;
    }
 
-   public boolean handleKey(KeyEvent kev) {
+   public boolean handleKey(JeyEvent kev) {
       //trace("dispatchKeyEvent" + kev);
       char ch = kev.getKeyChar();
       try {
-         if (ch == KeyEvent.CHAR_UNDEFINED) {
+         if (ch == JeyEvent.CHAR_UNDEFINED) {
             switch (kev.getKeyCode()) {
                default:
                   trace("unhandle KeyCode " + kev.getKeyCode());
                   return true;
-               case KeyEvent.VK_LEFT:
+               case JeyEvent.VK_LEFT:
                   //writer.write("\33D");
                   writer.write("\33[D");
                   break;
-               case KeyEvent.VK_RIGHT:
+               case JeyEvent.VK_RIGHT:
                   writer.write("\33[C");
                   //writer.write("\33C");
                   break;
-               case KeyEvent.VK_UP:
+               case JeyEvent.VK_UP:
                   writer.write("\33[A");
                   //writer.write("\33A");
                   break;
-               case KeyEvent.VK_DOWN:
+               case JeyEvent.VK_DOWN:
                   writer.write("\33[B");
                   //writer.write("\33B");
                   break;
-               case KeyEvent.VK_INSERT:
+               case JeyEvent.VK_INSERT:
                   return false;
             }
             writer.flush();

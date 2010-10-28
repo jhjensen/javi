@@ -156,14 +156,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    static final String copyright = "Copyright 1996 James Jensen";
 
-   public static class FileListEvent extends MapEvent.JaviEvent {
+   public static class FileListEvent extends EventQueue.IEvent {
       private List mlist;
 
       public FileListEvent(List lst) {
          mlist = lst;
       }
 
-      final void execute() {
+      public final void execute() {
          try {
             Iterator eve = mlist.iterator();
             while (eve.hasNext())
@@ -587,7 +587,6 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private static void processZ(FvContext fvc) throws
          InputException {
-      //trace("processZ");
       View currview = fvc.vi;
       if (EventQueue.nextKey(currview) == 'Z') {
          try {

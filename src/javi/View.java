@@ -25,8 +25,6 @@ public abstract class View  {
    public abstract void changeddraw(Graphics gr, int start, int amount);
    public abstract void movescreendraw(Graphics gr, int amount);
    public abstract void refresh(Graphics gr);
-   public abstract java.awt.event.KeyEvent createEvent(
-      int id, long when, int modifiers, int keyCode, char keyChar);
    protected abstract void startInsertion(Inserter ins);
    protected abstract void endInsertion(Inserter ins);
 

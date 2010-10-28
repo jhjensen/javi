@@ -1,5 +1,4 @@
 package javi;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -9,8 +8,8 @@ class EditGroup extends Rgroup {
 
    private int dotcommand;
    private char dotbufid;
-   private KeyEvent dotevent2;
-   private KeyEvent dotevent3;
+   private JeyEvent dotevent2;
+   private JeyEvent dotevent3;
    private int dotcount = 1;
    private int dotrcount = 0;
    private char dotchar;
@@ -189,7 +188,7 @@ class EditGroup extends Rgroup {
             InterruptedException, IOException, InputException {
       if (!dotmode)
          dotevent3 = EventQueue.nextKeye(fvc.vi);
-      KeyEvent event = dotevent3;
+      JeyEvent event = dotevent3;
 
       switch(event.getKeyChar()) {
          case '<':
@@ -241,7 +240,7 @@ class EditGroup extends Rgroup {
       }
    out:
       do {
-         KeyEvent event;
+         JeyEvent event;
          if (!dotmode) {
             try {
                do
@@ -369,7 +368,7 @@ class EditGroup extends Rgroup {
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
 
-      KeyEvent event;
+      JeyEvent event;
       char bufid;
 
       if (!dotmode) {
@@ -553,7 +552,7 @@ class EditGroup extends Rgroup {
        InterruptedException, IOException, InputException {
 //trace("count = " + count + " rcount = " + rcount
 //    +  " fvc = " + fvc);
-      KeyEvent event;
+      JeyEvent event;
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
@@ -593,7 +592,7 @@ class EditGroup extends Rgroup {
       int rcount, FvContext fvc) throws
       InterruptedException, IOException, InputException {
 //trace("count = " + count + " rcount = " + rcount);
-      KeyEvent event;
+      JeyEvent event;
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
@@ -629,7 +628,7 @@ class EditGroup extends Rgroup {
          int rcount, FvContext fvc) throws
          InterruptedException, InputException, IOException {
 
-      KeyEvent event;
+      JeyEvent event;
       if (!dotmode)
          event = EventQueue.nextKeye(fvc.vi);
       else
@@ -659,7 +658,7 @@ class EditGroup extends Rgroup {
       if (!dotmode)
          do
             dotchar = EventQueue.nextKey(fvc.vi);
-         while (dotchar  == KeyEvent.CHAR_UNDEFINED);
+         while (dotchar  == JeyEvent.CHAR_UNDEFINED);
       if (dotchar == 27)
          return;
       String line = fvc.at().toString();

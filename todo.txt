@@ -1,4 +1,4 @@
-FontList not working
+configuration for javac for ml2i/F7
 get rid of getnext
 findbug cmd not working
 F1 to soon fails makes me need F6

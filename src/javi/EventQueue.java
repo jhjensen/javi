@@ -1,5 +1,4 @@
 package javi;
-import java.awt.event.KeyEvent;
 import java.util.LinkedList;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -158,13 +157,13 @@ public final class EventQueue {
       }
    }
 
-   static Object nextEvent(View vi) throws ExitException {
+   static JeyEvent nextEvent(View vi) throws ExitException {
       while (true) {
          Object ev = inextEvent(vi);
          if (ev instanceof IEvent) {
             ((IEvent) ev).execute();
          } else
-            return ev;
+            return (JeyEvent) ev;
       }
    }
 
@@ -172,15 +171,15 @@ public final class EventQueue {
       return nextKeye(vi).getKeyChar();
    }
 
-   static synchronized KeyEvent nextKeye(View vi) throws ExitException {
+   static synchronized JeyEvent nextKeye(View vi) throws ExitException {
       while (true) {
          Object e = nextEvent(vi);
-         if (e instanceof KeyEvent)
-            return (KeyEvent) e;
+         if (e instanceof JeyEvent)
+            return (JeyEvent) e;
          else {
             //trace("nextKeye returning esc ");
             pushback(e);
-            return vi.createEvent(KeyEvent.KEY_PRESSED, 0, 0, 27, (char) 27);
+            return new JeyEvent(0, 27, (char) 27);
          }
       }
    }
@@ -190,7 +189,13 @@ public final class EventQueue {
       EventQueue.class.notifyAll();
    }
 
-   public static synchronized void insert(Object e) {
+   public static synchronized void insert(JeyEvent e) {
+      //trace("inserting " + e);
+      queue.addLast(e);
+      EventQueue.class.notifyAll();
+   }
+
+   public static synchronized void insert(IEvent e) {
       //trace("inserting " + e);
       queue.addLast(e);
       EventQueue.class.notifyAll();
@@ -199,4 +204,5 @@ public final class EventQueue {
    static void trace(String str) {
       Tools.trace(str, 1);
    }
+
 }

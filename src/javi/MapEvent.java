@@ -1,15 +1,11 @@
 package javi;
 
-import java.awt.AWTEvent;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import static java.awt.event.InputEvent.SHIFT_MASK;
 import static java.awt.event.InputEvent.CTRL_MASK;
-import static java.awt.event.KeyEvent.VK_DOWN;
-import static java.awt.event.KeyEvent.VK_END;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
@@ -59,29 +55,29 @@ public class MapEvent {
       mkeys.keybind((char) 21, "movescreen", mhalf, CTRL_MASK);
       mkeys.keybind((char) 25, "movescreenline", mone, CTRL_MASK);
       mkeys.keybind((char) 5, "movescreenline", one, CTRL_MASK);
-      mkeys.keyactionbind(KeyEvent.VK_PAGE_UP, "movescreen", mf1 , 0);
-      mkeys.keyactionbind(KeyEvent.VK_PAGE_DOWN, "movescreen", f1 , 0);
+      mkeys.keyactionbind(JeyEvent.VK_PAGE_UP, "movescreen", mf1 , 0);
+      mkeys.keyactionbind(JeyEvent.VK_PAGE_DOWN, "movescreen", f1 , 0);
 
       skeys.keybind('z', "zprocess", null);
       skeys.keybind((char) 12, "redraw", null, CTRL_MASK);
       skeys.keybind((char) 7, "togglestatus", null, CTRL_MASK);
       skeys.keybind(':', "commandproc", null);
       skeys.keybind('Z', "Zprocess", null);
-      skeys.keyactionbind(KeyEvent.VK_F1, "nextposwait", ff, CTRL_MASK);
-      skeys.keyactionbind(KeyEvent.VK_F1, "nextpos", ff, 0);
-      skeys.keyactionbind(KeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
-      skeys.keyactionbind(KeyEvent.VK_F2, "gotofilelist", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F3, "gotodirlist", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F4, "gotofontlist", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F5, "gotopositionlist", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F6, "gotopllist", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F7, "jdebug", null, 0);
-      skeys.keyactionbind(KeyEvent.VK_F8, "vt", null, 0);
-      //skeys.keyactionbind(KeyEvent.VK_F9,"startcon",null,0);
-      skeys.keyactionbind(KeyEvent.VK_F10, "comm", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F1, "nextposwait", ff, CTRL_MASK);
+      skeys.keyactionbind(JeyEvent.VK_F1, "nextpos", ff, 0);
+      skeys.keyactionbind(JeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
+      skeys.keyactionbind(JeyEvent.VK_F2, "gotofilelist", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F3, "gotodirlist", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F4, "gotofontlist", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F5, "gotopositionlist", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F6, "gotopllist", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F7, "jdebug", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F8, "vt", null, 0);
+      //skeys.keyactionbind(JeyEvent.VK_F9,"startcon",null,0);
+      skeys.keyactionbind(JeyEvent.VK_F10, "comm", null, 0);
 
-      //skeys.keyactionbind(KeyEvent.VK_F11,"exec",null,0);
-      skeys.keyactionbind(KeyEvent.VK_F11, "fullscreen", null, 0);
+      //skeys.keyactionbind(JeyEvent.VK_F11,"exec",null,0);
+      skeys.keyactionbind(JeyEvent.VK_F11, "fullscreen", null, 0);
 
 
       mkeys.keybind('h', "movechar", FALSE);
@@ -95,24 +91,24 @@ public class MapEvent {
       mkeys.keybind('E', "endWord", null);
       mkeys.keybind('e', "endword", null);
       mkeys.keybind('%', "balancechar", null);
-      mkeys.keyactionbind(KeyEvent.VK_LEFT, "backwardword", null, CTRL_MASK);
-      mkeys.keyactionbind(KeyEvent.VK_LEFT, "movechar", FALSE, 0);
-      mkeys.keyactionbind(KeyEvent.VK_RIGHT, "movechar", TRUE, 0);
-      mkeys.keyactionbind(KeyEvent.VK_RIGHT, "forwardword", null, CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_LEFT, "backwardword", null, CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_LEFT, "movechar", FALSE, 0);
+      mkeys.keyactionbind(JeyEvent.VK_RIGHT, "movechar", TRUE, 0);
+      mkeys.keyactionbind(JeyEvent.VK_RIGHT, "forwardword", null, CTRL_MASK);
       mkeys.keybind('k', "moveline", FALSE);
       mkeys.keybind('j', "moveline", TRUE);
-      mkeys.keyactionbind(KeyEvent.VK_UP, "moveline", FALSE, 0);
-      mkeys.keyactionbind(KeyEvent.VK_UP, "shiftmoveline", FALSE , SHIFT_MASK);
-      mkeys.keyactionbind(KeyEvent.VK_UP, "movescreenline", mone , CTRL_MASK);
-      mkeys.keyactionbind(VK_DOWN, "moveline", TRUE, 0);
-      mkeys.keyactionbind(VK_DOWN, "shiftmoveline", TRUE , SHIFT_MASK);
-      mkeys.keyactionbind(VK_DOWN, "movescreenline", one , CTRL_MASK);
-      mkeys.keyactionbind(VK_END, "linepos", MAX_VALUE, 0);
-      mkeys.keyactionbind(VK_END, "gotoline", MAX_VALUE, SHIFT_MASK);
-      mkeys.keyactionbind(KeyEvent.VK_HOME, "linepos", zero, 0);
-      mkeys.keyactionbind(KeyEvent.VK_HOME, "gotoline", one, SHIFT_MASK);
-      mkeys.keyactionbind(KeyEvent.VK_HOME, "gotoline", one, CTRL_MASK);
-      mkeys.keyactionbind(VK_END, "gotoline", null, CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_UP, "moveline", FALSE, 0);
+      mkeys.keyactionbind(JeyEvent.VK_UP, "shiftmoveline", FALSE , SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_UP, "movescreenline", mone , CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_DOWN, "moveline", TRUE, 0);
+      mkeys.keyactionbind(JeyEvent.VK_DOWN, "shiftmoveline", TRUE , SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_DOWN, "movescreenline", one , CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_END, "linepos", MAX_VALUE, 0);
+      mkeys.keyactionbind(JeyEvent.VK_END, "gotoline", MAX_VALUE, SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_HOME, "linepos", zero, 0);
+      mkeys.keyactionbind(JeyEvent.VK_HOME, "gotoline", one, SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_HOME, "gotoline", one, CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_END, "gotoline", null, CTRL_MASK);
       mkeys.keybind('+', "movelinestart", one);
       mkeys.keybind((char) 13, "movelinestart", one);
       mkeys.keybind((char) 10, "moveline", TRUE, CTRL_MASK);
@@ -128,7 +124,7 @@ public class MapEvent {
       mkeys.keybind(';', "repeatfind", tt);
       mkeys.keybind(',', "repeatfind", ff);
       mkeys.keybind('n', "regsearch", FALSE);
-      skeys.keyactionbind(KeyEvent.VK_F3, "regsearch", FALSE, CTRL_MASK);
+      skeys.keyactionbind(JeyEvent.VK_F3, "regsearch", FALSE, CTRL_MASK);
       mkeys.keybind('N', "regsearch", TRUE);
       mkeys.keybind('/', "searchcommand", FALSE);
       mkeys.keybind('?', "searchcommand", TRUE);
@@ -191,18 +187,19 @@ public class MapEvent {
       skeys.keybind('"', "qmode", null); //??? test if still works
       skeys.keybind('<', "shiftmode", one); //??? test if still works
       skeys.keybind('>', "shiftmode", mone); //??? test if still works
-      skeys.keyactionbind(KeyEvent.VK_DELETE, "deletechars", one, 0);
-      skeys.keyactionbind(KeyEvent.VK_DELETE, "deletetoend", null, SHIFT_MASK);
-      skeys.keyactionbind(KeyEvent.VK_INSERT, "insert", ft, 0);
+      skeys.keyactionbind(JeyEvent.VK_DELETE, "deletechars", one, 0);
+      skeys.keyactionbind(JeyEvent.VK_DELETE, "deletetoend", null, SHIFT_MASK);
+      skeys.keyactionbind(JeyEvent.VK_INSERT, "insert", ft, 0);
    }
 
-   final boolean domovement(KeyEvent ein, int fiteratei, int riteratei,
+   final boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
-      KeyBinding binding = mkeys.get(ein);
+      trace("domovement ev = " + ein);
+      KeyBinding binding = mkeys.get(ein.eventToString());
       if (binding != null) {
-         //trace("binding rg = " + binding.rg+ " event " + ein);
+         trace("binding rg = " + binding.rg + " event " + ein);
          binding.rg.doroutine(binding.index, binding.arg, fiteratei, riteratei,
             fvc, dotmode);
          return true;
@@ -210,9 +207,9 @@ public class MapEvent {
          return false;
    }
 
-   private boolean screenmovement(AWTEvent e1, FvContext fvc) throws
+   private boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
-      KeyBinding binding = skeys.get((KeyEvent) e1);
+      KeyBinding binding = skeys.get(e1.eventToString());
       if (binding == null)
          return false;
       //trace("binding  = " + binding);
@@ -229,7 +226,7 @@ public class MapEvent {
          try {
             while (true) {
                FvContext fvc = FvContext.getCurrFvc();
-               Object e = EventQueue.nextEvent(fvc.vi);
+               JeyEvent e = EventQueue.nextEvent(fvc.vi);
                hevent(e, fvc);
             }
          } catch (InterruptedException ex) {
@@ -263,54 +260,33 @@ public class MapEvent {
    //trace("returning from run");
    }
 
-   abstract static class JaviEvent {
-      abstract void execute() throws IOException;
-   }
-
    private static final int buttonmask  =   InputEvent.BUTTON3_MASK
       | InputEvent.BUTTON3_MASK | InputEvent.BUTTON3_MASK;
 
 
-   final void hevent(Object ev, FvContext fvc)  throws InputException,
+   final void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
-      //trace("hevent" + ev);
+      trace("hevent" + jEv);
 
-      if (ev instanceof AWTEvent) {
-         AWTEvent awtEv = (AWTEvent) ev;
-         switch (awtEv.getID()) {
-            case KeyEvent.KEY_PRESSED :
-               KeyEvent event = (KeyEvent) awtEv;
-               char ch = event.getKeyChar();
-               if (((ch != '0') || (aiterate != 0))
-                     && (ch >= '0' && ch <= '9')) {
-                  aiterate = aiterate * 10 + (ch & 0x0f);
-                  return;
-               } else if (event.getKeyChar() == 27) {
-                  aiterate = 0;
-                  return;
-               }
-
-               riterate = aiterate;   // iterations for command that use 0
-               fiterate = aiterate;  // number of iterations forced to 1
-               if (fiterate == 0)
-                  fiterate = 1;
-               if (domovement(event, fiterate, riterate, false, fvc)
-                     || screenmovement(awtEv, fvc)) {
-                  aiterate = 0;
-                  return;
-               }
-
-               break;
-            default:
-               trace("unhandled event " + ev);
-
-         }
-      } else if (ev instanceof JaviEvent)  {
-         ((JaviEvent) ev).execute();
-//         return true;
+      char ch = jEv.getKeyChar();
+      if (((ch != '0') || (aiterate != 0))
+            && (ch >= '0' && ch <= '9')) {
+         aiterate = aiterate * 10 + (ch & 0x0f);
+         return;
+      } else if (jEv.getKeyChar() == 27) {
+         aiterate = 0;
+         return;
       }
 
-     // return false;
+      riterate = aiterate;   // iterations for command that use 0
+      fiterate = aiterate;  // number of iterations forced to 1
+      if (fiterate == 0)
+         fiterate = 1;
+      if (domovement(jEv, fiterate, riterate, false, fvc)
+            || screenmovement(jEv, fvc)) {
+         aiterate = 0;
+         return;
+      }
    }
 
 
