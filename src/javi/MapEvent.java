@@ -1,11 +1,10 @@
 package javi;
 
-import java.awt.event.InputEvent;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import static java.awt.event.InputEvent.SHIFT_MASK;
-import static java.awt.event.InputEvent.CTRL_MASK;
+import static javi.JeyEvent.SHIFT_MASK;
+import static javi.JeyEvent.CTRL_MASK;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
@@ -153,7 +152,7 @@ public class MapEvent {
       skeys.keybind((char) 18, "redo", null, CTRL_MASK);
       skeys.keybind((char) 26, "redo", null, CTRL_MASK | SHIFT_MASK);
       skeys.keybind('Y', "redo", null, CTRL_MASK);
-      skeys.keybind((char) 8, "redo", null, SHIFT_MASK | InputEvent.ALT_MASK);
+      skeys.keybind((char) 8, "redo", null, SHIFT_MASK | JeyEvent.ALT_MASK);
       skeys.keybind('U', "undoline", null); // ??? ALT should redo
       skeys.keybind('i', "insert", ff);
       skeys.keybind('I', "Insert", ff);
@@ -167,7 +166,7 @@ public class MapEvent {
       skeys.keybind('y', "yankmode", null);
       skeys.keybind('Y', "yank", null);
       skeys.keybind('u', "undo", null);
-      skeys.keybind((char) 8, "undo", null, InputEvent.ALT_MASK);
+      skeys.keybind((char) 8, "undo", null, JeyEvent.ALT_MASK);
       skeys.keybind((char) 26, "undo", null, CTRL_MASK);
       skeys.keybind('S', "Substitute", null);
       skeys.keybind('X', "deletechars", ff);
@@ -196,10 +195,10 @@ public class MapEvent {
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
-      trace("domovement ev = " + ein);
-      KeyBinding binding = mkeys.get(ein.eventToString());
+      //trace("domovement ev = " + ein);
+      KeyBinding binding = mkeys.get(ein);
       if (binding != null) {
-         trace("binding rg = " + binding.rg + " event " + ein);
+         //trace("binding rg = " + binding.rg + " event " + ein);
          binding.rg.doroutine(binding.index, binding.arg, fiteratei, riteratei,
             fvc, dotmode);
          return true;
@@ -209,7 +208,7 @@ public class MapEvent {
 
    private boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
-      KeyBinding binding = skeys.get(e1.eventToString());
+      KeyBinding binding = skeys.get(e1);
       if (binding == null)
          return false;
       //trace("binding  = " + binding);
@@ -260,13 +259,9 @@ public class MapEvent {
    //trace("returning from run");
    }
 
-   private static final int buttonmask  =   InputEvent.BUTTON3_MASK
-      | InputEvent.BUTTON3_MASK | InputEvent.BUTTON3_MASK;
-
-
    final void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
-      trace("hevent" + jEv);
+      //trace("hevent" + jEv);
 
       char ch = jEv.getKeyChar();
       if (((ch != '0') || (aiterate != 0))

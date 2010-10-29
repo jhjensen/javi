@@ -1,7 +1,6 @@
 package javi;
 
 import java.awt.im.InputMethodRequests;
-import java.awt.event.InputEvent;
 import java.awt.event.InputMethodListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.font.TextHitInfo;
@@ -82,17 +81,17 @@ public final class InsertBuffer extends Rgroup
       ikeys.keybind((char) 8, "imode.backspace", null);
       ikeys.keybind((char) 127, "imode.delete", null);
       ikeys.keybind((char) 27, "imode.complete", null);
-      ikeys.keybind((char) 91, "imode.complete", null, InputEvent.CTRL_MASK);
+      ikeys.keybind((char) 91, "imode.complete", null, JeyEvent.CTRL_MASK);
       ikeys.keybind((char) 22, "imode.setverbatim", null);
-      ikeys.keybind((char) 22, "imode.setverbatim", null, InputEvent.CTRL_MASK);
+      ikeys.keybind((char) 22, "imode.setverbatim", null, JeyEvent.CTRL_MASK);
       ikeys.keybind('\r', "imode.insertnewline", null);
-      ikeys.keybind('\r', "imode.insertnewline", null, InputEvent.CTRL_MASK);
+      ikeys.keybind('\r', "imode.insertnewline", null, JeyEvent.CTRL_MASK);
       ikeys.keybind('\n', "imode.insertnewline", null);
       ikeys.keybind((char) 16, "imode.putbuf", null);
-      ikeys.keybind((char) 16, "imode.putbuf", null, InputEvent.CTRL_MASK);
-      ikeys.keybind((char) 6, "imode.find", ff, InputEvent.CTRL_MASK);
-      ikeys.keybind('\n', "imode.insertnewline", null, InputEvent.CTRL_MASK);
-      ikeys.keybind((char) 12, "redraw", null, InputEvent.CTRL_MASK);
+      ikeys.keybind((char) 16, "imode.putbuf", null, JeyEvent.CTRL_MASK);
+      ikeys.keybind((char) 6, "imode.find", ff, JeyEvent.CTRL_MASK);
+      ikeys.keybind('\n', "imode.insertnewline", null, JeyEvent.CTRL_MASK);
+      ikeys.keybind((char) 12, "redraw", null, JeyEvent.CTRL_MASK);
 
       commandikeys.keyactionbind(
          JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
@@ -102,18 +101,18 @@ public final class InsertBuffer extends Rgroup
       commandikeys.keybind((char) 27, "imode.cancel", null);
       commandikeys.keybind((char) 22, "imode.setverbatim", null);
       commandikeys.keybind((char) 22,
-         "imode.setverbatim", null, InputEvent.CTRL_MASK);
+         "imode.setverbatim", null, JeyEvent.CTRL_MASK);
       commandikeys.keybind('\r', "imode.complete", null);
-      commandikeys.keybind('\r', "imode.complete", null, InputEvent.CTRL_MASK);
+      commandikeys.keybind('\r', "imode.complete", null, JeyEvent.CTRL_MASK);
       commandikeys.keybind('\n', "imode.complete", null);
-      commandikeys.keybind('\n', "imode.complete", null, InputEvent.CTRL_MASK);
+      commandikeys.keybind('\n', "imode.complete", null, JeyEvent.CTRL_MASK);
       commandikeys.keyactionbind(JeyEvent.VK_DOWN, "imode.nextline", null, 0);
       commandikeys.keyactionbind(JeyEvent.VK_UP, "imode.prevline", null, 0);
       commandikeys.keybind((char) 16, "imode.putbuf", null);
       commandikeys.keybind((char) 16,
-         "imode.putbuf", null, InputEvent.CTRL_MASK);
-      commandikeys.keybind((char) 6, "imode.find", ff, InputEvent.CTRL_MASK);
-      commandikeys.keybind((char) 12, "redraw", null, InputEvent.CTRL_MASK);
+         "imode.putbuf", null, JeyEvent.CTRL_MASK);
+      commandikeys.keybind((char) 6, "imode.find", ff, JeyEvent.CTRL_MASK);
+      commandikeys.keybind((char) 12, "redraw", null, JeyEvent.CTRL_MASK);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -271,18 +270,16 @@ public final class InsertBuffer extends Rgroup
                JeyEvent ke = EventQueue.nextEvent(viewer);
                //trace("event = " + e);
                KeyBinding binding;
-               if (!verbatim && (binding =
-                     activekeys.get(ke.eventToString())) != null) {
+               if (!verbatim && (binding = activekeys.get(ke)) != null) {
                   if (null != binding.rg.doroutine(binding.index,
                         binding.arg, count, 0, fvc, false))
                      break;
-               } else if (ke.isActionKey()) {
-                  itext(count, fvc);
-                  evhandler.hevent(ke, fvc);
                } else {
                   key = ke.getKeyChar();
-
-                  if (verbatim && (key >= '0' && key <= '9')) {
+                  if (key == JeyEvent.CHAR_UNDEFINED) {
+                     itext(count, fvc);
+                     evhandler.hevent(ke, fvc);
+                  } else if (verbatim && (key >= '0' && key <= '9')) {
                      verbatimCount++;
                      verbatimAcc = verbatimAcc * 10 + (key - '0');
                      if (verbatimCount == 3) {

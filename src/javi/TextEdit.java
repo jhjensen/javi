@@ -23,7 +23,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
    static TextEdit getRoot() {
       return root;
    }
-   
+
    static {
       StringIoc strio = new StringIoc("root EditContainer",
                                       "should never see root container");
