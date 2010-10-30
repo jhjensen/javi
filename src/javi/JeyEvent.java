@@ -1,6 +1,6 @@
 package javi;
 
-import static history.Tools.trace;
+//import static history.Tools.trace;
 
 public final class JeyEvent {
 
@@ -38,7 +38,7 @@ public final class JeyEvent {
    }
 
    public boolean equals(Object ev) {
-      trace("equals ev " + ev  + " this " + this);
+      //trace("equals ev " + ev  + " this " + this);
 
       if (ev instanceof JeyEvent) {
          JeyEvent jv = (JeyEvent) ev;

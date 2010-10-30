@@ -46,7 +46,7 @@ public final class Javi {
       }
    }
 
-   public static void initToUi() {
+   public static void initToUi() throws ExitException {
       //try {Thread.sleep(1000);} catch (InterruptedException e) {/*Ignore*/}
 
       new Jcmds();
@@ -165,10 +165,10 @@ public final class Javi {
       }
       DirList.getDefault(); // force initialization of dirlist
       FileList.make(sb.toString());
-      if (normalInit) {
-         initToUi();
-      }
       try {
+         if (normalInit) {
+            initToUi();
+         }
 
          MapEvent ev =  initPostUi();
          if (command != null) {

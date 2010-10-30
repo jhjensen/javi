@@ -32,25 +32,28 @@ public abstract class AwtView  extends View {
       //trace("created view " + this);
    }
 
-   public final void bcursor(Graphics2D gr,
-         boolean isInsert, boolean updateShape) {
+   final void bcursor(Graphics2D gr) {
 
-      // never move cursor or change cursor color except when off
-      //trace("bcursor cursoron " + cursoron + " checkCursor " + checkCursor);
-      if (updateShape)
+      int bfla = needBlink();
+      //trace("bcursor bfla " + Integer.toHexString(bfla));
+
+      if (0 != (bfla & updateCursor))
          cursorshape = updateCursorShape(cursorshape);
 
-      cursorcolor =  isInsert
-         ? AtView.cursorColor
-         : AtView.insertCursor;
+      if (0 != (bfla & doBlink)) {
+         if (0 != (bfla & onFlag))
+            cursorcolor = 0 ==  (bfla & insertFlag)
+               ? AtView.cursorColor
+               : AtView.insertCursor;
 
-      //trace("doCursor cursoron " + cursoron + " cursorColor " + cursorcolor);
-      gr.setXORMode(cursorcolor);
-      gr.setColor(AtView.background);
-      gr.fill(cursorshape);
-      gr.setPaintMode();
-      //trace("doCursor cursoron " + cursoron);
+         //trace("doCursor cursoron " + cursoron + " cursorColor " + cursorcolor);
+         gr.setXORMode(cursorcolor);
+         gr.setColor(AtView.background);
+         gr.fill(cursorshape);
+         gr.setPaintMode();
+         //trace("doCursor cursoron " + cursoron);
 
+      }
    }
 
    final int placeline(int lineno, float amount) {

@@ -74,7 +74,7 @@ public abstract class UI {
       instance.toFront();
    }
 
-   public static void init(boolean isAwt) {
+   public static void init(boolean isAwt) throws ExitException {
       //trace("");
       instance = isAwt
          ? (UI) new javi.awt.AwtInterface()
@@ -245,7 +245,7 @@ public abstract class UI {
    }
 
    public static void popError(String errs, Throwable ex) {
-      trace("poperror exception trace" + (errs == null ? "" : errs) + ex);
+      trace("poperror exception trace " + (errs == null ? "" : errs) + ex);
 
       StackTraceElement[] st = ex == null
                                ? Thread.currentThread().getStackTrace()

@@ -1,6 +1,6 @@
 package javi;
 import java.util.HashMap;
-import static history.Tools.trace;
+//import static history.Tools.trace;
 
 final class KeyGroup {
    /* Copyright 1996 James Jensen all rights reserved */
@@ -33,7 +33,7 @@ final class KeyGroup {
    void keyactionbind(int c, String name, Object arg, int modifiers)  {
       JeyEvent binding = new JeyEvent(modifiers, c, JeyEvent.CHAR_UNDEFINED);
 
-      trace("keyactionbind " + c + " name:" + name + " binding " + binding);
+      //trace("keyactionbind " + c + " name:" + name + " binding " + binding);
       if (null != map.put(binding, getkb(name, arg)))
          throw new RuntimeException("mapping identical keymaps: " + binding);
    }

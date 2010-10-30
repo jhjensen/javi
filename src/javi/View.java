@@ -1,7 +1,5 @@
 package javi;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import static javi.View.Opcode.*;
 import static history.Tools.trace;
 
@@ -17,14 +15,6 @@ public abstract class View  {
    public abstract void repaint();
    public abstract boolean isVisible();
 
-   public abstract void bcursor(Graphics2D gr,
-      boolean isInsert, boolean updateShape);
-   public abstract void insertedElementsdraw(
-      Graphics gr, int start, int amount);
-   public abstract void deletedElementsdraw(Graphics gr, int start, int amount);
-   public abstract void changeddraw(Graphics gr, int start, int amount);
-   public abstract void movescreendraw(Graphics gr, int amount);
-   public abstract void refresh(Graphics gr);
    protected abstract void startInsertion(Inserter ins);
    protected abstract void endInsertion(Inserter ins);
 
@@ -33,6 +23,11 @@ public abstract class View  {
 
 
    private transient boolean cursoron = false;
+
+   protected final boolean getCursorOn() {
+      return cursoron;
+   }
+
    private transient boolean cursoractive = false;
    private boolean checkCursor = true;
 
@@ -78,19 +73,31 @@ public abstract class View  {
       DELETE, REDRAW , MSCREEN, BLINKCURSOR
    }
 
-   public final class ChangeOpt {
+   public abstract class ChangeOpt {
 
       private  Opcode currop = NOOP;
-      private  int saveamount;
-      private int savestart;
+      private  int saveAmount;
+      protected final int getSaveAmount() {
+         return saveAmount;
+      }
+      private int saveStart;
+      protected final int getSaveStart() {
+         return saveStart;
+      }
 
-      public void redraw() {
+      protected final Opcode resetOp() {
+         Opcode retval = currop;
+         currop = NOOP;
+         return retval;
+      }
+
+      public final void redraw() {
          //trace("redraw");
          currop = REDRAW;
          repaint();
       }
 
-      public void blink() {
+      public final void blink() {
          if (currop == NOOP) {
             currop = BLINKCURSOR;
             //trace("blink cursor repaint");
@@ -99,13 +106,13 @@ public abstract class View  {
          //else trace("blink cursor saveop not null " + currop);
       }
 
-      boolean insert(int start, int amount) {
+      final boolean insert(int start, int amount) {
          //trace("insert currop " + currop +" start " + start  + " amount " + amount);
          pmark.resetMark(text, fileX, fileY);  //???
          if (currop == NOOP || currop == BLINKCURSOR) {
             currop = INSERT;
-            savestart = start;
-            saveamount = amount;
+            saveStart = start;
+            saveAmount = amount;
          } else {
             //trace("doing redraw oldsaveop = " + saveop);
             currop = REDRAW;
@@ -114,13 +121,13 @@ public abstract class View  {
          return currop == REDRAW;
       }
 
-      public boolean lineChanged(int index) {
+      public final boolean lineChanged(int index) {
          //trace("linechange currop " + currop + " index " + index);
          pmark.resetMark(text, fileX, fileY);
          return changedpro(index, index);
       }
 
-      public void cursorChange(int xChange, int yChange) {
+      public final void cursorChange(int xChange, int yChange) {
          //trace("cursorChange currop " + currop + " xchange " + xChange + " yChange " + yChange);
          pmark.markChange(fileX + xChange, fileY);
          changedpro(fileY, fileY - yChange);
@@ -140,14 +147,14 @@ public abstract class View  {
             case BLINKCURSOR:
                currop = CHANGE;
                repaint();
-               savestart = index1;
-               saveamount = index2;
+               saveStart = index1;
+               saveAmount = index2;
                break;
             case CHANGE:
-               if (savestart > index1)
-                  savestart = index1;
-               if (saveamount < index2)
-                  saveamount = index2;
+               if (saveStart > index1)
+                  saveStart = index1;
+               if (saveAmount < index2)
+                  saveAmount = index2;
                break;
             default:
                //trace("doing redraw oldsaveop = " + currop);
@@ -157,13 +164,13 @@ public abstract class View  {
          return currop == REDRAW;
       }
 
-      boolean delete(int start, int amount) {
+      final boolean delete(int start, int amount) {
          //trace("delete currop " + currop + " start " + start + " amount " + amount);
          pmark.resetMark(text, fileX, fileY);
          if (currop == NOOP || currop == BLINKCURSOR) {
             currop = DELETE;
-            savestart = start;
-            saveamount = amount;
+            saveStart = start;
+            saveAmount = amount;
          } else {
             //trace("doing redraw oldcurrop = " + currop);
             currop = REDRAW;
@@ -172,79 +179,46 @@ public abstract class View  {
          return currop == REDRAW;
       }
 
-      void mscreen(int amount, int limit) {
+      final void mscreen(int amount, int limit) {
          //trace("mscreen currop " + currop +"  amount " + amount  + " limit " + limit);
          //Thread.dumpStack();
          if (currop == NOOP || currop == BLINKCURSOR) {
-            saveamount = 0;
+            saveAmount = 0;
             currop = MSCREEN;
          }
 
          if (currop == MSCREEN && Math.abs(amount) < limit)
-            saveamount += amount;
+            saveAmount += amount;
          else {
             currop = REDRAW;
          }
          repaint();
       }
 
-      private void rpaint(Graphics2D gr) {
-         if (currop != NOOP) {
-            //if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
-            //trace("rpaint currop = " + currop + " this " + this);
-
-            // cursor must be off before other drawing is done, or it messes up XOR
-            if (currop == BLINKCURSOR || cursoron) {
-               //trace(" blinking cursor ");
-               mybcursor(gr);
-            }
-
-            switch (currop) {
-
-               case REDRAW:
-                  refresh(gr);
-                  break;
-
-               case INSERT:
-                  insertedElementsdraw(gr, savestart, saveamount);
-                  break;
-
-               case DELETE:
-                  deletedElementsdraw(gr, savestart, saveamount);
-                  break;
-
-               case CHANGE:
-                  changeddraw(gr, savestart, saveamount);
-                  break;
-
-               case MSCREEN:
-                  movescreendraw(gr, saveamount);
-                  break;
-
-               case NOOP:
-               case BLINKCURSOR:
-                  break;
-            }
-            if (currop != BLINKCURSOR)
-               mybcursor(gr); // always leave cursor on after doing something
-         }
-         currop = NOOP;
-      }
-
    };
 
-   public final void mybcursor(Graphics2D gr) {
+   public static final int updateCursor = 0x1;  // cursor needs updating
+   public static final int doBlink = 0x2;            // cursor needs blinking
+   public static final int insertFlag = 0x4;            // in insert mode
+   public static final int onFlag = 0x8;              // cursor is turning on
+
+   public final int needBlink() {
 
       // never move cursor or change cursor color except when off
-      //trace("bcursor cursoron " + cursoron + " checkCursor " + checkCursor);
+      //trace("needBlink cursoron " + cursoron + " checkCursor " + checkCursor);
       boolean update = checkCursor && !cursoron;
 
       if (cursoractive || cursoron) { // if cursor is not active turn it off
-         bcursor(gr, inserter == null, update);
          if (update)
             checkCursor = false;
          cursoron = !cursoron;
+         return  doBlink
+            | (inserter == null ? 0 : insertFlag)
+            | (cursoron ? onFlag :  0)
+            | (update ? updateCursor : 0);
+
       }
+      return 0;
    }
 
    public final void redraw() {
@@ -255,12 +229,6 @@ public abstract class View  {
       //trace("this blink cursor " + this);
       op.blink();
    }
-
-   public final void rpaint(Graphics2D gr) {
-      op.rpaint(gr);
-   }
-
-   private final ChangeOpt op = new ChangeOpt();
 
    final void lineChanged(int index) {
       op.lineChanged(index);
@@ -321,7 +289,12 @@ public abstract class View  {
       return false;
    }
 
+   private final ChangeOpt op;
+   protected abstract ChangeOpt getChangeOpt();
+
    public View(boolean traversei) {
+      op = getChangeOpt();
+      //trace("op " + op + " this " + this);
       traverse = traversei;
       //trace("created view " + this);
    }

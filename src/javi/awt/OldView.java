@@ -620,9 +620,10 @@ class OldView extends AwtView {
                   event.getModifiers()));
          }
       }
-      final void mouserelease(MouseEvent event) {
-         //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
 
+      final void mouserelease(MouseEvent event) {
+
+         //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
          Position p = mousepos(event);
          FvContext fvc = FvContext.getCurrFvc();
          //trace("Position " + p + " event vi " + vi);
@@ -645,10 +646,12 @@ class OldView extends AwtView {
                mousepress((MouseEvent) ev);
                mousePressed = ((MouseEvent) ev).getButton();
                break;
+
             case MouseEvent.MOUSE_RELEASED:
                mouserelease((MouseEvent) ev);
                mousePressed = 0;
                break;
+
             case MouseEvent.MOUSE_WHEEL:
                MouseWheelEvent mwv = (MouseWheelEvent) ev;
                int mvAmt = mwv.getScrollType()
@@ -721,7 +724,7 @@ class OldView extends AwtView {
             try {
                if (gettext().isValid() && gettext().containsNow(1)) {
                   getChanges();
-                  rpaint(gr);
+                  copt.rpaint(gr);
                } else {
                   trace("repaint because of invalid or empty");
                   repaint(200);
@@ -786,11 +789,61 @@ class OldView extends AwtView {
             gr.drawImage(dbuf, 0, index * charheight, null);
             //try {Thread.sleep(100);} catch (InterruptedException e) {/*Ignore*/}
          }
+
+
       }
+
       public final boolean isFocusable() {
          return false;
       }
+   }
+   class Ch extends ChangeOpt {
+      public void rpaint(Graphics2D gr) {
+         Opcode currop = resetOp();
+         if (currop != NOOP) {
+            //if (currop != BLINKCURSOR) trace("rpaint currop = " + currop + " this " + this);
+            //trace("rpaint currop = " + currop + " this " + this);
 
+            // cursor must be off before other drawing is done, or it messes up XOR
+            if (currop == BLINKCURSOR || getCursorOn()) {
+               bcursor(gr);
+            }
 
+            switch (currop) {
+
+               case REDRAW:
+                  refresh(gr);
+                  break;
+
+               case INSERT:
+                  insertedElementsdraw(gr, getSaveStart(), getSaveAmount());
+                  break;
+
+               case DELETE:
+                  deletedElementsdraw(gr, getSaveStart(), getSaveAmount());
+                  break;
+
+               case CHANGE:
+                  changeddraw(gr, getSaveStart(), getSaveAmount());
+                  break;
+
+               case MSCREEN:
+                  movescreendraw(gr, getSaveAmount());
+                  break;
+
+               case NOOP:
+               case BLINKCURSOR:
+                  break;
+            }
+            if (currop != BLINKCURSOR)
+               bcursor(gr); // always leave cursor on after doing something
+         }
+      }
+   }
+   private Ch copt;
+   protected ChangeOpt getChangeOpt() {
+      if (copt == null)
+         copt = new Ch();
+      return copt;
    }
 }

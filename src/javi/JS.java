@@ -147,9 +147,9 @@ public class JS extends Rgroup {
    }
 
    public static void main(String[] args) {
-      UI.init(false);
       try {
 
+         UI.init(false);
          Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
          myassert("ok".equals(obj), obj);
 

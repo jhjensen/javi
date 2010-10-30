@@ -100,7 +100,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       AwtFontList.saveState(os);
    }
 
-   public AwtInterface() {
+   public AwtInterface() throws ExitException {
       if (instance != null)
          throw new RuntimeException("attempt to create two Awt singletons");
       instance = this;
@@ -115,7 +115,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       normalFrame = frm;
       common();
-      new Initer().postWait();
+       // do we really need to wait???
+      if (null == new Initer().postWait().getResult())
+         throw new ExitException();
 
       //trace("this = " + this + " fr = " + fr);
    }
@@ -666,38 +668,44 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       public Object doAwt() {
          //trace("start initer");
-         OldView tfview = new OldView(false);
-         Component cmdComp = tfview.getComponent();
-
-         cmdComp.setVisible(false);
-         frm.add(cmdComp, 0);
-         frm.setComponentZOrder(cmdComp, 0);
-         EventQueue.biglock2.lock();
          try {
-            StringIoc sio = new StringIoc("command buffer", null);
-            TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
-            cmdComp.setFont(AwtFontList.getCurr(null));
-            tfview.setSizebyChar(80, 1);
-            tfc = FvContext.getcontext(tfview, cmbuff);
-            tfc.setCurrView();
-            View vi = mkview(false);
-            //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
-            iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
-         } catch (InputException e) {
-            throw new RuntimeException("can't recover iaddview", e);
-         } finally {
-            EventQueue.biglock2.unlock();
+            OldView tfview = new OldView(false);
+            Component cmdComp = tfview.getComponent();
+
+            cmdComp.setVisible(false);
+            frm.add(cmdComp, 0);
+            frm.setComponentZOrder(cmdComp, 0);
+            EventQueue.biglock2.lock();
+            try {
+               StringIoc sio = new StringIoc("command buffer", null);
+               TextEdit<String> cmbuff = new TextEdit<String>(sio, sio.prop);
+               cmdComp.setFont(AwtFontList.getCurr(null));
+               tfview.setSizebyChar(80, 1);
+               tfc = FvContext.getcontext(tfview, cmbuff);
+               tfc.setCurrView();
+               View vi = mkview(false);
+               //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
+               iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
+            } catch (InputException e) {
+               throw new RuntimeException("can't recover iaddview", e);
+            } finally {
+               EventQueue.biglock2.unlock();
+            }
+
+            frm.requestFocus();
+            statusBar = new StatusBar();
+            statusBar.setVisible(false);
+            frm.add(statusBar, 0);
+            trace("setting visible");
+            ishow();
+         } catch (Throwable ex) {
+            return null;
+            // if anything goes wrong during init give up
+            // otherwise there is no window to shutdown with
+            //EventQueue.insert(new ExitEvent());
          }
-
-         frm.requestFocus();
-         statusBar = new StatusBar();
-         statusBar.setVisible(false);
-         frm.add(statusBar, 0);
-         trace("setting visible");
-         ishow();
-         return null;
+         return this;
       }
-
    }
 
    public FvContext iconnectfv(TextEdit file, View vi) throws InputException {

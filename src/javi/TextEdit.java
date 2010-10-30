@@ -1406,11 +1406,11 @@ final class EditTester1 {
    }
 
    public static void main(String[] args) {
-      UI.init(false);
       try { // forces static initialization that makes debugging more confusing
+         UI.init(false);
          TextEdit<String> dummy = newTe("dummy");
          dummy.disposeFvc();
-      } catch (IOException e) {
+      } catch (Throwable e) {
          myassert(false, e);
       }
       try {

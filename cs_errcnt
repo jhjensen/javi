@@ -20,7 +20,7 @@ src\history\pstest.java,5
 src\javi\position.java,4
 src\javi\undohistory.java,19
 src\javi\javacompiler.java,1
-src\javi\view.java,1
+src\javi\awt\oldview.java,1
 src\javi\js.java,2
 src\javi\awt\awtinterface.java,3
-src\javi\jeyevent.java,24
+src\javi\jeyevent.java,27
