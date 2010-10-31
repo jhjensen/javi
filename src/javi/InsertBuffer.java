@@ -1,41 +1,28 @@
 package javi;
 
-import java.awt.im.InputMethodRequests;
-import java.awt.event.InputMethodListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.font.TextHitInfo;
-import java.awt.Rectangle;
-import java.text.AttributedCharacterIterator;
 import java.io.IOException;
 import java.text.CharacterIterator;
 
+import static history.Tools.trace;
+import static javi.JeyEvent.CTRL_MASK;
 
 /* Copyright 1996 James Jensen all rights reserved */
 
-public final class InsertBuffer extends Rgroup
-   implements InputMethodRequests, InputMethodListener {
+public abstract class InsertBuffer extends View.Inserter {
    static final String copyright = "Copyright 1996 James Jensen";
 
    private StringBuilder buffer = new StringBuilder();
    private boolean overwrite;
 
-   private class MyInserter  extends View.Inserter {
-      String getString() {
-         return buffer.toString();
-      }
-
-      boolean getOverwrite() {
-         return overwrite;
-      }
-
-      // this is temporary to get things compiling.
-      public InsertBuffer getSuper() {
-         return InsertBuffer.this;
-      }
-
+   final String getString() {
+      return buffer.toString();
    }
 
-   private MyInserter insert = new MyInserter();
+   final boolean getOverwrite() {
+      return overwrite;
+   }
+
+   public abstract void  insertReset();
 
    private final MapEvent evhandler;
    private String dotbuffer;
@@ -48,173 +35,174 @@ public final class InsertBuffer extends Rgroup
    private Object original;
    private boolean singleline;
    private FvContext myfvc;
-   private int committed;
 
    static final boolean [] ff = {false, false};
 
-   InsertBuffer(String str) { // fordebug
-      buffer.append(str);
-      evhandler = null;
-   }
-
-   InsertBuffer(MapEvent eventhandleri) {
+   public InsertBuffer(MapEvent eventhandleri) {
+      new Cmd();
       evhandler = eventhandleri;
-      final String[] rnames = {
-         "",
-         "imode.toggleinsert",
-         "imode.tabinsert",
-         "imode.backspace",
-         "imode.delete",
-         "imode.complete",       //5
-         "imode.insertnewline",
-         "imode.cancel",
-         "imode.setverbatim",
-         "imode.prevline",
-         "imode.nextline",       //10
-         "imode.putbuf",
-         "imode.find",
-      };
-
-      register(rnames);
-      ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
-      ikeys.keybind('\t', "imode.tabinsert", null);
-      ikeys.keybind((char) 8, "imode.backspace", null);
-      ikeys.keybind((char) 127, "imode.delete", null);
-      ikeys.keybind((char) 27, "imode.complete", null);
-      ikeys.keybind((char) 91, "imode.complete", null, JeyEvent.CTRL_MASK);
-      ikeys.keybind((char) 22, "imode.setverbatim", null);
-      ikeys.keybind((char) 22, "imode.setverbatim", null, JeyEvent.CTRL_MASK);
-      ikeys.keybind('\r', "imode.insertnewline", null);
-      ikeys.keybind('\r', "imode.insertnewline", null, JeyEvent.CTRL_MASK);
-      ikeys.keybind('\n', "imode.insertnewline", null);
-      ikeys.keybind((char) 16, "imode.putbuf", null);
-      ikeys.keybind((char) 16, "imode.putbuf", null, JeyEvent.CTRL_MASK);
-      ikeys.keybind((char) 6, "imode.find", ff, JeyEvent.CTRL_MASK);
-      ikeys.keybind('\n', "imode.insertnewline", null, JeyEvent.CTRL_MASK);
-      ikeys.keybind((char) 12, "redraw", null, JeyEvent.CTRL_MASK);
-
-      commandikeys.keyactionbind(
-         JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
-      commandikeys.keybind('\t', "imode.tabinsert", null);
-      commandikeys.keybind((char) 8, "imode.backspace", null);
-      commandikeys.keybind((char) 127, "imode.delete", null);
-      commandikeys.keybind((char) 27, "imode.cancel", null);
-      commandikeys.keybind((char) 22, "imode.setverbatim", null);
-      commandikeys.keybind((char) 22,
-         "imode.setverbatim", null, JeyEvent.CTRL_MASK);
-      commandikeys.keybind('\r', "imode.complete", null);
-      commandikeys.keybind('\r', "imode.complete", null, JeyEvent.CTRL_MASK);
-      commandikeys.keybind('\n', "imode.complete", null);
-      commandikeys.keybind('\n', "imode.complete", null, JeyEvent.CTRL_MASK);
-      commandikeys.keyactionbind(JeyEvent.VK_DOWN, "imode.nextline", null, 0);
-      commandikeys.keyactionbind(JeyEvent.VK_UP, "imode.prevline", null, 0);
-      commandikeys.keybind((char) 16, "imode.putbuf", null);
-      commandikeys.keybind((char) 16,
-         "imode.putbuf", null, JeyEvent.CTRL_MASK);
-      commandikeys.keybind((char) 6, "imode.find", ff, JeyEvent.CTRL_MASK);
-      commandikeys.keybind((char) 12, "redraw", null, JeyEvent.CTRL_MASK);
    }
 
-   public Object doroutine(int rnum, Object arg, int count, int rcount,
-         FvContext fvc, boolean dotmode) throws InputException {
-      //trace("rnum = " + rnum);
+   private class Cmd extends Rgroup {
 
-      switch (rnum) {
-         case 1:
-            itext(1, fvc);
-            overwrite = !overwrite;
-            if (overwrite) {
-               trace("entering terminal mode");
-               fvc.addKeyEventDispatcher();
-               trace("exit insertmode?");
-               return this;
-            }
-            break;
-         case 2:
-            //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
-            //int tabStop = (tb == null) ? 0 : tb.getTab();
-            int linepos = fvc.insertx() + buffer.length();
-            int spcount = findspacebound(fvc, linepos);
+      Cmd() {
+         final String[] rnames = {
+            "",
+            "imode.toggleinsert",
+            "imode.tabinsert",
+            "imode.backspace",
+            "imode.delete",
+            "imode.complete",       //5
+            "imode.insertnewline",
+            "imode.cancel",
+            "imode.setverbatim",
+            "imode.prevline",
+            "imode.nextline",       //10
+            "imode.putbuf",
+            "imode.find",
+         };
+         register(rnames);
+         ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
+         ikeys.keybind('\t', "imode.tabinsert", null);
+         ikeys.keybind((char) 8, "imode.backspace", null);
+         ikeys.keybind((char) 127, "imode.delete", null);
+         ikeys.keybind((char) 27, "imode.complete", null);
+         ikeys.keybind((char) 91, "imode.complete", null, CTRL_MASK);
+         ikeys.keybind((char) 22, "imode.setverbatim", null);
+         ikeys.keybind((char) 22, "imode.setverbatim", null, CTRL_MASK);
+         ikeys.keybind('\r', "imode.insertnewline", null);
+         ikeys.keybind('\r', "imode.insertnewline", null, CTRL_MASK);
+         ikeys.keybind('\n', "imode.insertnewline", null);
+         ikeys.keybind((char) 16, "imode.putbuf", null);
+         ikeys.keybind((char) 16, "imode.putbuf", null, CTRL_MASK);
+         ikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
+         ikeys.keybind('\n', "imode.insertnewline", null, CTRL_MASK);
+         ikeys.keybind((char) 12, "redraw", null, CTRL_MASK);
 
-            while (--spcount >= 0)
-               buffer.append(' ');
-            fvc.vi.lineChanged(fvc.inserty());
-            break;
-         case 3:
-            if (0 == buffer.length()) {
-               fvc.cursorx(-1);
-               EditGroup.deleteChars('0', fvc, false, true, 1);
-            } else {
-               buffer.setLength(buffer.length() - 1);
+         commandikeys.keyactionbind(
+            JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
+         commandikeys.keybind('\t', "imode.tabinsert", null);
+         commandikeys.keybind((char) 8, "imode.backspace", null);
+         commandikeys.keybind((char) 127, "imode.delete", null);
+         commandikeys.keybind((char) 27, "imode.cancel", null);
+         commandikeys.keybind((char) 22, "imode.setverbatim", null);
+         commandikeys.keybind((char) 22,
+            "imode.setverbatim", null, CTRL_MASK);
+         commandikeys.keybind('\r', "imode.complete", null);
+         commandikeys.keybind('\r', "imode.complete", null, CTRL_MASK);
+         commandikeys.keybind('\n', "imode.complete", null);
+         commandikeys.keybind('\n', "imode.complete", null, CTRL_MASK);
+         commandikeys.keyactionbind(JeyEvent.VK_DOWN,
+            "imode.nextline", null, 0);
+         commandikeys.keyactionbind(JeyEvent.VK_UP, "imode.prevline", null, 0);
+         commandikeys.keybind((char) 16, "imode.putbuf", null);
+         commandikeys.keybind((char) 16,
+            "imode.putbuf", null, CTRL_MASK);
+         commandikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
+         commandikeys.keybind((char) 12, "redraw", null, CTRL_MASK);
+      }
+
+      public Object doroutine(int rnum, Object arg, int count, int rcount,
+            FvContext fvc, boolean dotmode) throws InputException {
+         //trace("rnum = " + rnum);
+
+         switch (rnum) {
+            case 1:
+               itext(1, fvc);
+               overwrite = !overwrite;
+               if (overwrite) {
+                  trace("entering terminal mode");
+                  fvc.addKeyEventDispatcher();
+                  trace("exit insertmode?");
+                  return this;
+               }
+               break;
+            case 2:
+               //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
+               //int tabStop = (tb == null) ? 0 : tb.getTab();
+               int linepos = fvc.insertx() + buffer.length();
+               int spcount = findspacebound(fvc, linepos);
+
+               while (--spcount >= 0)
+                  buffer.append(' ');
                fvc.vi.lineChanged(fvc.inserty());
-            }
-            break;
-         case  4: // delete
-            EditGroup.deleteChars('0', fvc, false, true, 1);
-            break;
-         case 5:
-            itext(count, fvc);
-            if (count > 1) {
-               if (overwrite)
-                  EditGroup.deleteChars(
-                     '0', fvc, false, true, (count - 1) * dotbuffer.length());
-               for (int i = 1; i < count; i++)
-                  fvc.cursorabs(fvc.inserttext(dotbuffer));
-            }
-            return this;
-         case 6:
-            buffer.append('\n');
-            itext(count, fvc);
-            break;
-         case 7:
-            buffer.setLength(0);
-            fvc.changeElement(original);
-            return this;
-         case 8:
-            verbatim = true;
-            break;
-         case 9:
-            int temp = currline;
-            char prompt = fvc.at().toString().charAt(0);
-            while (--temp > 1)
-               if (prompt == fvc.at(temp).toString().charAt(0))
-                  break;
-            if (temp > 1) {
+               break;
+            case 3:
+               if (0 == buffer.length()) {
+                  fvc.cursorx(-1);
+                  EditGroup.deleteChars('0', fvc, false, true, 1);
+               } else {
+                  buffer.setLength(buffer.length() - 1);
+                  fvc.vi.lineChanged(fvc.inserty());
+               }
+               break;
+            case  4: // delete
+               EditGroup.deleteChars('0', fvc, false, true, 1);
+               break;
+            case 5:
+               itext(count, fvc);
+               if (count > 1) {
+                  if (overwrite)
+                     EditGroup.deleteChars('0', fvc, false, true,
+                        (count - 1) * dotbuffer.length());
+                  for (int i = 1; i < count; i++)
+                     fvc.cursorabs(fvc.inserttext(dotbuffer));
+               }
+               return this;
+            case 6:
+               buffer.append('\n');
+               itext(count, fvc);
+               break;
+            case 7:
+               buffer.setLength(0);
+               fvc.changeElement(original);
+               return this;
+            case 8:
+               verbatim = true;
+               break;
+            case 9:
+               int temp = currline;
+               char prompt = fvc.at().toString().charAt(0);
+               while (--temp > 1)
+                  if (prompt == fvc.at(temp).toString().charAt(0))
+                     break;
+               if (temp > 1) {
+                  currline = temp;
+                  buffer.setLength(0);
+                  fvc.changeElement(fvc.at(currline));
+               }
+               break;
+            case 10:
+               temp = currline;
+               prompt = fvc.at().toString().charAt(0);
+               if (temp == fvc.inserty())
+                  return null;
+               while (true) {
+                  ++temp;
+                  if (temp == fvc.inserty()) {
+                     fvc.changeElement(Character.toString(prompt));
+                     currline = temp;
+                     return null;
+                  }
+                  if (prompt == fvc.at(temp).toString().charAt(0))
+                     break;
+               }
                currline = temp;
                buffer.setLength(0);
                fvc.changeElement(fvc.at(currline));
-            }
-            break;
-         case 10:
-            temp = currline;
-            prompt = fvc.at().toString().charAt(0);
-            if (temp == fvc.inserty())
-               return null;
-            while (true) {
-               ++temp;
-               if (temp == fvc.inserty()) {
-                  fvc.changeElement(Character.toString(prompt));
-                  currline = temp;
-                  return null;
-               }
-               if (prompt == fvc.at(temp).toString().charAt(0))
-                  break;
-            }
-            currline = temp;
-            buffer.setLength(0);
-            fvc.changeElement(fvc.at(currline));
-            break;
-         case 11:
-            EditGroup.appendCurrBuf(buffer, singleline);
-            fvc.changeElement(fvc.at(currline)); // force redraw
-            break;
-         case 12:
-            itext(count, fvc);
-            MoveGroup.searchcommand(((boolean []) arg)[0] ,
-               count, fvc, dotmode);
-            break;
+               break;
+            case 11:
+               EditGroup.appendCurrBuf(buffer, singleline);
+               fvc.changeElement(fvc.at(currline)); // force redraw
+               break;
+            case 12:
+               itext(count, fvc);
+               MoveGroup.searchcommand(((boolean []) arg)[0] ,
+                  count, fvc, dotmode);
+               break;
+         }
+         return null;
       }
-      return null;
    }
 
    private void itext(int count, FvContext fvc) {
@@ -236,10 +224,10 @@ public final class InsertBuffer extends Rgroup
             dotbuffer += temps;
          buffer.setLength(0);
       }
-      committed = 0;
+      insertReset();
    }
 
-   void insertmode(boolean dotmode, int count, FvContext fvc,
+   final void insertmode(boolean dotmode, int count, FvContext fvc,
          boolean overwritei, boolean singlelinei) throws
          IOException, InputException {
 
@@ -256,7 +244,7 @@ public final class InsertBuffer extends Rgroup
       } else {
          try {
             View viewer = fvc.vi;
-            viewer.setInsert(insert);
+            viewer.setInsert(this);
             verbatim = false;
             overwrite = overwritei;
             currline = fvc.inserty();
@@ -330,90 +318,25 @@ public final class InsertBuffer extends Rgroup
       }
       return 0;
    }
+   public final boolean isActive() {
+      return myfvc != null;
+   }
 
-   void cleanup(FvContext fvc) {
+   final void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
       fvc.vi.clearInsert();
       myfvc  = null;
-      committed = 0;
+      insertReset();
    }
 
-   public AttributedCharacterIterator cancelLatestCommittedText(
-      AttributedCharacterIterator.Attribute[] attributes)  {
-      trace("unexpected");
-      return null;
-   }
-   public AttributedCharacterIterator getCommittedText(int beginIndex,
-         int endIndex, AttributedCharacterIterator.Attribute[] attributes)  {
-      trace("unexpected getCommittedText");
-      return null;
-   }
-   public int getCommittedTextLength()  {
-      trace("unexpected getCommittedTextLength");
-      return 0;
-   }
-   public int getInsertPositionOffset()  {
-      trace("");
-      return 200;
-   }
-   public  TextHitInfo getLocationOffset(int x, int y) {
-      trace("getLocationOffset (" + x + "," + y + ")");
-      return TextHitInfo.afterOffset(0);
-   }
-   public AttributedCharacterIterator getSelectedText(
-         AttributedCharacterIterator.Attribute[] attributes) {
-      trace("getSelectedText");
-      return null;
-   }
-   public Rectangle getTextLocation(TextHitInfo offset) {
-      trace("getTextLocation" + offset);
-      return new Rectangle(50, 50);
-//   return null;
-   }
-   public void caretPositionChanged(InputMethodEvent event) {
-      trace(event.toString());
-   }
-
-   public void inputMethodTextChanged(InputMethodEvent event) {
-      trace("inputMethodTextChanged " + event);
-      if (myfvc == null)
-         return;
-      EventQueue.insert(new TextChanged(event, this));
-   }
-
-   class TextChanged extends EventQueue.IEvent {
-      private InputMethodEvent ev;
-
-      TextChanged(InputMethodEvent evi, InsertBuffer conti) {
-         ev = evi;
-      }
-      public void execute() {
-         trace(ev.toString());
-         trace("commited = " + committed + " buffer = " + buffer);
-
-         buffer.setLength(committed);
-         CharacterIterator charit = ev.getText();
-         if (charit != null) {
-            //trace("iterate " + (int)charit.next());
-            for (char c = charit.first();
-                    c != CharacterIterator.DONE;
-                    c = charit.next()) {
-               buffer.append(c);
-            }
-            committed += ev.getCommittedCharacterCount();
+   public final void insertChars(CharacterIterator charit, int trunc) {
+      if (charit != null) {
+         //trace("iterate " + (int)charit.next());
+         for (char c = charit.first();
+                 c != CharacterIterator.DONE;
+                 c = charit.next()) {
+            buffer.append(c);
          }
-         /*
-               myfvc.vi.cursoron(); //??? questionable threading
-               myfvc.vi.changed(myfvc.inserty());
-               try {
-                     vic.wakeup();  // repaints the window
-               } catch (IOException e) {
-                  trace("caught unexpected exception " +e );
-                  e.printStackTrace();
-               }
-         */
-         //trace("commited = " + committed + " changed input buffer to " + buffer);
       }
-
    }
 }

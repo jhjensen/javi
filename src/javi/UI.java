@@ -56,6 +56,12 @@ public abstract class UI {
 
    public abstract void isetViewSize(View vi, int width, int height);
 
+   public abstract InsertBuffer igetInsertBuffer(MapEvent me);
+
+   public static InsertBuffer getInsertBuffer(MapEvent me) {
+      return instance.igetInsertBuffer(me);
+   }
+
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);

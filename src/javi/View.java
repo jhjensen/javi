@@ -34,7 +34,6 @@ public abstract class View  {
    public abstract static class Inserter {
       abstract String getString();
       abstract boolean getOverwrite();
-      public abstract InsertBuffer getSuper(); // temp
    }
 
    protected final String getInsertString() {

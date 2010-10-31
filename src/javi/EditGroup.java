@@ -56,7 +56,7 @@ class EditGroup extends Rgroup {
 
       register(rnames);
       evhandler = evhandleri;
-      icontext = new InsertBuffer(evhandler);
+      icontext = UI.getInsertBuffer(evhandler);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,

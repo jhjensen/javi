@@ -57,6 +57,8 @@ import javi.ExitException;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
+import javi.InsertBuffer;;
+import javi.MapEvent;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -912,6 +914,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          frm.setSize(frm.getPreferredSize());
 
       new Validate();
+   }
+
+   public InsertBuffer igetInsertBuffer(MapEvent me)  {
+      return new InHandler(me);
    }
 
    class SetFont extends RunAwt {

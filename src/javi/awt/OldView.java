@@ -494,13 +494,13 @@ class OldView extends AwtView {
    }
 
    protected void startInsertion(javi.View.Inserter ins) {
-      canvas.addInputMethodListener(ins.getSuper());
+      canvas.addInputMethodListener((InHandler) ins);
       canvas.enableInputMethods(true);
    }
 
    protected void endInsertion(javi.View.Inserter ins) {
       canvas.enableInputMethods(false);
-      canvas.removeInputMethodListener(ins.getSuper());
+      canvas.removeInputMethodListener((InHandler) ins);
    }
    class MyCanvas extends Canvas {
 
