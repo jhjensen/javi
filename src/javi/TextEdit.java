@@ -1440,7 +1440,6 @@ final class EditTester1 {
          trace("memory before clear " + (Runtime.getRuntime().totalMemory()
                                          - Runtime.getRuntime().freeMemory()));
          UI.flush();
-         Buffers.clearmem();
          FvContext.dump();
          EditContainer.dumpStatic();
          Tools.doGC();

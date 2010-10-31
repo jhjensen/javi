@@ -1,16 +1,11 @@
 package javi;
 /* Copyright 1996 James Jensen all rights reserved */
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.util.HashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
-import static javi.Tools.trace;
+//import static javi.Tools.trace;
 
-final class Buffers {
+public final class Buffers {
 
    private Buffers() {
       throw new UnsupportedOperationException();
@@ -19,39 +14,11 @@ final class Buffers {
    private static HashMap<Integer, Object> buflist
       = new HashMap<Integer, Object>();
    private static final int circSize = 10; // addressable by single digit int.
-   private static CircBuffer delbuffer = new CircBuffer(circSize);
-   //private static Buffers bufs = new Buffers(); // this has to be static to force instantiation
-   static void initCmd() {
-      new BuffersCmd();
-   }
-   static void clearmem() {
+   private static CircBuffer delbuffer;
+
+   public static void init(CircBuffer cbuf) {
       buflist.clear();
-      delbuffer = new CircBuffer(circSize);
-   }
-   private static final class BuffersCmd extends Rgroup {
-      static final String[] rnames = {
-         "",
-         "enableclip",
-         "paste"
-      };
-      private BuffersCmd() {
-         //trace("registern paste command");
-         register(rnames);
-      }
-      public Object doroutine(int rnum, Object arg, int count,
-            int rcount, FvContext fvc, boolean dotmode) {
-         switch (rnum) {
-            case 1:
-               delbuffer.enableClip(arg);
-               return null;
-            case 2:
-               delbuffer.getclip();
-               return null;
-            default:
-               trace("doroutine called with " + rnum);
-               throw new RuntimeException();
-         }
-      }
+      delbuffer = cbuf;
    }
 
    static void deleted(char bufid, String buffer) {
@@ -130,71 +97,20 @@ final class Buffers {
 
 
 //   private static class CircBuffer implements Transferable,ClipboardOwner
-   private static final class CircBuffer extends StringSelection {
+   public abstract static class CircBuffer {
       private Object[] buf;
       private int index;
-      private Clipboard systemclip =
-         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
 
-      void flush() {
+      final void flush() {
          Arrays.fill(buf, null);
       }
 
-      CircBuffer(int size) {
-         super("");
-         buf = new Object[size];
-         setclip();
+      public abstract void setclip();
+      public CircBuffer() {
+         buf = new Object[circSize];
       }
 
-      /*
-            public DataFlavor[] getTransferDataFlavors() {
-               //trace("got getTransferDataFlavors");
-               DataFlavor[] temp = {DataFlavor.stringFlavor};
-               return temp;
-            }
-
-      */
-      public boolean isDataFlavorSupported(DataFlavor flavor) {
-         Tools.trace("got isdataflavorsupported " + flavor);
-         return (flavor == DataFlavor.stringFlavor)
-            ? true
-            : false;
-      }
-
-      void enableClip(Object arg) {
-         //trace("enable clip arg = " + arg);
-         if ("on".equals(arg.toString())) {
-            try {
-               systemclip =
-                  java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
-               //           systemclip = java.awt.Toolkit.getDefaultToolkit().getSystemSelection();
-               //trace("sytemclip = " + systemclip);
-               setclip();
-
-               //trace("sytemclip contentents = " + systemclip.getContents(this));
-            } catch (Exception e) {
-               e.printStackTrace();
-               Tools.trace("caught exception getting clipboard" + e);
-            }
-         } else {
-            systemclip = null;
-            //trace("disable clipboard");
-         }
-      }
-      public Object getTransferData(DataFlavor flavor) throws
-            UnsupportedFlavorException {
-         ////trace("got getTransferData" + flavor);
-
-         if (flavor != DataFlavor.stringFlavor)
-            throw new UnsupportedFlavorException(flavor);
-
-         Object ret = get(0);
-         return ret == null
-                ? ""
-                : myToString(ret);
-      }
-
-      void add(String ob) {
+      public final void add(String ob) {
          if (++index >= buf.length)
             index = 0;
          buf[index] = ob;
@@ -202,7 +118,7 @@ final class Buffers {
          //trace("add buffer " + index + " = " + buf[index]);
       }
 
-      void add(ArrayList<String> ob) {
+      final void add(ArrayList<String> ob) {
          if (++index >= buf.length)
             index = 0;
          //trace("add buffer " + index + " = " + ob);
@@ -210,7 +126,7 @@ final class Buffers {
          setclip();
       }
 
-      Object get(int i) {
+      public final Object get(int i) {
          int tindex = index - i;
          if (tindex < 0)
             tindex += buf.length;
@@ -222,7 +138,7 @@ final class Buffers {
       //   //trace("lost ownership");
       //}
 
-      private static String myToString(Object obj) {
+      public static String myToString(Object obj) {
          //trace("reached myToString" + obj.getClass());
          String s = "";
          if (obj instanceof String) {
@@ -248,35 +164,5 @@ final class Buffers {
          return s;
       }
 
-      void setclip() {
-         //trace("reached setclip");
-         if (systemclip == null)
-            return;
-         //trace("reached setclip2");
-
-         systemclip.setContents(this, this);
-         //trace("exiting setclip");
-
-
-//        StringSelection temp = new StringSelection(myToString(get(0)));
-//        systemclip.setContents(temp,temp);
-
-      }
-
-      void  getclip() {
-         if (systemclip == null)
-            return;
-         try {
-            Transferable tr = systemclip.getContents(this);
-            //trace("trans = " + tr);
-            //trace(" trans flavors size = " + tr.getTransferDataFlavors().length);
-            //trace(" trans flavors = " + tr.getTransferDataFlavors()[0]);
-            //trace("trans :" + tr.getTransferData(DataFlavor.stringFlavor) +":");
-            add(tr.getTransferData(DataFlavor.stringFlavor).toString());
-         } catch (Throwable e) {
-            e.printStackTrace();
-            Tools.trace("caught exception in getclip " + e);
-         }
-      }
    }
 }

@@ -450,6 +450,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             statusBar =  null;
          }
       }
+      AwtCircBuffer.initCmd();
       if (fdialog != null) {
          fdialog.dispose();
          frm.remove(fdialog);
@@ -688,6 +689,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                View vi = mkview(false);
                //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
                iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
+               AwtCircBuffer.initCmd();
             } catch (InputException e) {
                throw new RuntimeException("can't recover iaddview", e);
             } finally {

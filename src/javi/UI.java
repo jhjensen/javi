@@ -286,6 +286,7 @@ public abstract class UI {
    static void setView(FvContext fvc) {
       instance.isetView(fvc);
    }
+
    static void flush() {
       instance.iflush(false);
    }

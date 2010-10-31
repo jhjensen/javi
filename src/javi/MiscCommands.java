@@ -291,7 +291,6 @@ class MiscCommands extends Rgroup  {
             EventQueue.biglock2.unlock();
             UI.flush();
             EventQueue.biglock2.lock();
-            Buffers.clearmem();
             FvContext.dump();
             EditContainer.dumpStatic();
             FileList.iclearUndo();

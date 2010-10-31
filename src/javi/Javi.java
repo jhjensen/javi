@@ -86,7 +86,6 @@ public final class Javi {
       //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
-      Buffers.initCmd();
       //trace("unexpectedly slow");
       new JS();
       //new vcs.cmvc();
