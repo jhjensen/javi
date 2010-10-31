@@ -27,7 +27,7 @@ public final class FvContext<OType> implements Serializable {
          EditContainer.registerListener(new FS());
       }
 
-      private class FS implements FileStatusListener {
+      private class FS implements EditContainer.FileStatusListener {
          public void fileAdded(EditContainer ev) { }
          public void fileWritten(EditContainer ev) { }
          public boolean fileDisposed(EditContainer ev) {

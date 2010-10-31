@@ -70,7 +70,7 @@ class MiscCommands extends Rgroup  {
 //trace("end ");
    }
 
-   private static class MyFl implements FileStatusListener {
+   private static class MyFl implements EditContainer.FileStatusListener {
       public void fileAdded(EditContainer ev)  { }
       public void fileWritten(EditContainer ev) { }
       public boolean fileDisposed(EditContainer ev) {

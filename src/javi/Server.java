@@ -9,7 +9,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import static javi.Tools.trace;
 
-class Server implements Runnable, FileStatusListener {
+class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
    private HashMap<EditContainer, BufferedOutputStream> shash =

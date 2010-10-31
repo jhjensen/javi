@@ -283,6 +283,7 @@ public abstract class UI {
    static FvContext connectfv(TextEdit file, View vi) throws InputException {
       return instance.iconnectfv(file, vi);
    }
+
    static void setView(FvContext fvc) {
       instance.isetView(fvc);
    }

@@ -1,1 +1,1 @@
-java -jar lib/Classycle1.3.3/classycle.jar -mergeInnerClasses -cycles build/javi
+java -jar lib/Classycle1.3.3/classycle.jar -mergeInnerClasses -cycles -xmlFile=cycle.xml build/javi

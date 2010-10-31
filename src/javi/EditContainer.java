@@ -1379,4 +1379,10 @@ public class EditContainer<OType> implements
          return vi.lineChanged(cindex);
       }
    }
+
+   interface FileStatusListener {
+      void fileAdded(EditContainer ev);
+      void fileWritten(EditContainer ev);
+      boolean fileDisposed(EditContainer ev);
+   }
 }
