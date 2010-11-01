@@ -108,7 +108,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                nextfile(fvc);
                return null;
             case 5:
-               UI.connectfv(instance, fvc.vi);
+               FvContext.connectFv(instance, fvc.vi);
                return null;
             case 6:
             case 7:
@@ -259,7 +259,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          //trace(mfile + " is modified");
          //trace("quit fvc " + fvc);
          try {
-            UI.connectfv(mfile, fvc.vi);
+            FvContext.connectFv(mfile, fvc.vi);
             return true;
          } catch (Throwable  e) {
             throw new RuntimeException("unexpected inability to connect", e);
@@ -325,7 +325,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          int index = indexOf(ec);
          if (index > 0)
             FvContext.getcontext(vi, this).cursoryabs(index);
-         FvContext fv2 = UI.connectfv(ec, vi);
+         FvContext fv2 = FvContext.connectFv(ec, vi);
          fv2.edvec.contains(pos.y);
          fv2.cursorabs(pos);
       }
@@ -382,7 +382,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             vi = FvContext.getCurrFvc().vi;
          if (vi != null) {
             FvContext.getcontext(vi, this).cursoryabs(index);
-            return UI.connectfv(ed, vi);
+            return FvContext.connectFv(ed, vi);
          }
       }
       return null;
@@ -566,7 +566,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    private void nextfile(FvContext fvc) throws InputException {
       FvContext fileListFvc = fvc.switchContext(this, 1);
       if (fvc.edvec != this)
-         UI.connectfv((TextEdit) fileListFvc.at(), fvc.vi);
+         FvContext.connectFv((TextEdit) fileListFvc.at(), fvc.vi);
    }
 
    static void quit(boolean save, FvContext fvc) {

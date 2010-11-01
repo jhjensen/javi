@@ -73,8 +73,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    WindowListener, FocusListener, ActionListener,
    EventQueue.Idler {
 
-
-   private static AwtInterface instance;
    private void common() {
       new Commands();
       EventQueue.registerIdle(this);
@@ -103,9 +101,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public AwtInterface() throws ExitException {
-      if (instance != null)
-         throw new RuntimeException("attempt to create two Awt singletons");
-      instance = this;
+      setInstance(this);
       //super("vi:");
       //outfor 1.4 FocusManager.disableSwingFocusManager();
       //1.4setUndecorated(true);
@@ -688,7 +684,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                tfc.setCurrView();
                View vi = mkview(false);
                //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
-               iconnectfv((TextEdit) FileList.getContext(vi).at(), vi);
+               FvContext.connectFv((TextEdit) FileList.getContext(vi).at(), vi);
                AwtCircBuffer.initCmd();
             } catch (InputException e) {
                throw new RuntimeException("can't recover iaddview", e);
@@ -703,6 +699,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             trace("setting visible");
             ishow();
          } catch (Throwable ex) {
+            trace("failure in awt Initer ");
+            ex.printStackTrace();
             return null;
             // if anything goes wrong during init give up
             // otherwise there is no window to shutdown with
@@ -712,23 +710,19 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   public FvContext iconnectfv(TextEdit file, View vi) throws InputException {
+   public void iconnectfv(TextEdit file, View vi) throws InputException {
       //trace("vic.connectfv " + file + " vi " + vi);
       if (tfc != null && vi == tfc.vi)
          throw new InputException(
             "can't change command window to display other data");
       isetTitle(file.toString());
-
-      FvContext fvc = FvContext.getcontext(vi, file);
-      fvc.setCurrView();
-      return fvc;
    }
 
    private View iaddview(boolean newview, FvContext fvc) throws
          InputException {
 
       View ta = mkview(newview);
-      iconnectfv(fvc.edvec, ta);
+      FvContext.connectFv(fvc.edvec, ta);
       return ta;
    }
 
@@ -957,7 +951,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public static void fontChange(Font font, View vi) {
-      instance.new SetFont(font, vi);
+      ((AwtInterface)getInstance()).new SetFont(font, vi);
    }
 
    private static class MyMenuItem extends MenuItem {

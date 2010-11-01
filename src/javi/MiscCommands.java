@@ -110,7 +110,7 @@ class MiscCommands extends Rgroup  {
          IOException, InputException {
       trace("reached startshell " + host);
       if (shellfile != null && host != null) {
-         UI.connectfv(shellfile, fvc.vi);
+         FvContext.connectFv(shellfile, fvc.vi);
       } else {
          EditContainer.registerListener(fli);
          if (host == null)
@@ -118,7 +118,7 @@ class MiscCommands extends Rgroup  {
          else
             lastshell = host;
          shellfile = Vt100.Telnet.make(host);
-         FvContext newfvc = UI.connectfv(shellfile, fvc.vi);
+         FvContext newfvc = FvContext.connectFv(shellfile, fvc.vi);
          newfvc.addKeyEventDispatcher();
       }
 
@@ -160,10 +160,10 @@ class MiscCommands extends Rgroup  {
             }
          EditContainer.registerListener(fli);
          commCon = Vt100.CommReader.make(portname, baudrate);
-         FvContext newfvc = UI.connectfv(commCon, fvc.vi);
+         FvContext newfvc = FvContext.connectFv(commCon, fvc.vi);
          newfvc.addKeyEventDispatcher();
       } else
-         UI.connectfv(commCon, fvc.vi);
+         FvContext.connectFv(commCon, fvc.vi);
    }
 
    private static void startDebug(String cname, FvContext fvc) {
@@ -178,7 +178,7 @@ class MiscCommands extends Rgroup  {
             JDebugger jd = new JDebugger(cname);
             debugfile = new TextEdit<String>(jd, jd.prop);
          }
-         UI.connectfv(debugfile, fvc.vi);
+         FvContext.connectFv(debugfile, fvc.vi);
       } catch (Throwable e) {
          UI.reportError("startDebug failed:" + e);
          e.printStackTrace();
@@ -234,7 +234,7 @@ class MiscCommands extends Rgroup  {
             ProcIo pi  = ProcIo.mkProcIo(lastcmd[3], lastcmd);
             cmdfile = new TextEdit<String>(pi, pi.prop);
          }
-         UI.connectfv(cmdfile, fvc.vi);
+         FvContext.connectFv(cmdfile, fvc.vi);
       } catch (Throwable e) {
          UI.reportError("startDebug failed:" + e);
          e.printStackTrace();

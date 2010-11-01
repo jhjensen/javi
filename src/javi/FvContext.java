@@ -366,12 +366,20 @@ public final class FvContext<OType> implements Serializable {
       ed.disposeFvc();
    }
 
+   public static FvContext connectFv(TextEdit file, View vi) throws
+         InputException {
+      UI.connect(file, vi);
+      FvContext fvc = FvContext.getcontext(vi, file);
+      fvc.setCurrView();
+      return fvc;
+   }
+
    static void reconnect(TextEdit  ed, TextEdit next) throws
          InputException, IOException {
 
       //trace("reconnecting oldfile " + ed + " next  " + next);
       if (currfvc.edvec == ed)
-         UI.connectfv(next, currfvc.vi);
+         FvContext.connectFv(next, currfvc.vi);
       //trace("starting iterator");
       for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
          FvContext fvc = fit.next();

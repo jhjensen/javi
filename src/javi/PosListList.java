@@ -66,7 +66,7 @@ public final class PosListList extends TextList<Position> {
       lastlist2 = null;
       lastlist = list;
       //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
-      UI.connectfv(list, fvc.vi); //??? exception safety
+      FvContext.connectFv(list, fvc.vi); //??? exception safety
    }
 
    private void addList(TextEdit<Position> poslist) {
@@ -130,7 +130,7 @@ public final class PosListList extends TextList<Position> {
          boolean wait) throws InputException {
       //trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
-         UI.connectfv((TextEdit) fvc.at(), fvc.vi);
+         FvContext.connectFv((TextEdit) fvc.at(), fvc.vi);
       else  {
          if ((lastlist == null)) {
             lastlist = lastlist2;
@@ -154,7 +154,7 @@ public final class PosListList extends TextList<Position> {
             if (ex.at(0) instanceof Position)
                gotoList(fvc, ex);
             else
-               UI.connectfv(ex, fvc.vi);
+               FvContext.connectFv(ex, fvc.vi);
          } else if (obj instanceof FvExecute) {
             FvExecute fe = (FvExecute) obj;
             fe.execute(fvc);
@@ -251,10 +251,10 @@ public final class PosListList extends TextList<Position> {
                throw new InputException("bad command");
 
             case 12:
-               UI.connectfv(DirList.getDefault(), fvc.vi);
+               FvContext.connectFv(DirList.getDefault(), fvc.vi);
                return null;
             case 13:
-               UI.connectfv(TextEdit.getRoot(), fvc.vi);
+               FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
             case 14:
                inst.gotoNextPos(fvc, (boolean []) arg, true);
@@ -490,4 +490,3 @@ public final class PosListList extends TextList<Position> {
    }
    private static final PllConverter converter = new PllConverter();
 }
-

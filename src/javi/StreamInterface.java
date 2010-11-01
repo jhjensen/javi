@@ -6,6 +6,10 @@ import java.io.Reader;
 import static history.Tools.trace;
 
 class StreamInterface extends UI {
+   StreamInterface() {
+      setInstance(this);
+   }
+
    public void isetStream(Reader inreader) {
       inStr = inreader;
    }
@@ -89,7 +93,7 @@ class StreamInterface extends UI {
    public boolean ipopstring(java.lang.String str) { return false; }
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
-   public FvContext iconnectfv(TextEdit file, View vi) { return null; }
+   public void iconnectfv(TextEdit file, View vi) { }
    public View iaddview(boolean newview, FvContext fvc) { return null; }
 
    public void istatusaddline(String s) {

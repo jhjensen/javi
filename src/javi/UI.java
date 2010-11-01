@@ -17,7 +17,18 @@ public abstract class UI {
    };
 
    public static Buttons diaflag;
+
    private static UI instance = null;
+   protected static void setInstance(UI inst) {
+      if (instance != null)
+         throw new RuntimeException("attempt to create two Awt singletons");
+      instance = inst;
+   }
+
+   protected static UI getInstance() {
+      return instance;
+   }
+
    public abstract void itoggleStatus();
    public abstract void isetStream(Reader inreader);
    public abstract void ireportDiff(String filename, int linenum,
@@ -42,7 +53,7 @@ public abstract class UI {
    public abstract void istatusSetline(String str);
    public abstract void iclearStatus();
    public abstract boolean iisGotoOk(FvContext fvc);
-   public abstract FvContext iconnectfv(TextEdit file,
+   public abstract void iconnectfv(TextEdit file,
       View vi) throws InputException;
    public abstract void isetView(FvContext fvc);
 
@@ -280,8 +291,8 @@ public abstract class UI {
       return;
    }
 
-   static FvContext connectfv(TextEdit file, View vi) throws InputException {
-      return instance.iconnectfv(file, vi);
+   static void connect(TextEdit file, View vi) throws InputException {
+      instance.iconnectfv(file, vi);
    }
 
    static void setView(FvContext fvc) {
