@@ -19,7 +19,7 @@ my $jroot="C:\\Docume~1\\utftbwx\\Desktop\\cyghome\\javt";
 my $myprog="$jroot\\lib";
 my $mycp="$jroot\\build;$myprog\\juniversalchardet-1.0.3.jar;$myprog\\rhino1_7R2\\js.jar;$myprog\\junit3.8.2\\junit.jar;$JDK2\\lib\\tools.jar";
 
-my $cmd ="java  -cp \"$mycp;lib/checkstyle-5.1/checkstyle-all-5.1.jar\" com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
+my $cmd ="java  -cp \"$mycp;lib/checkstyle-5.3/checkstyle-5.3-all.jar\" com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
 
 #print "running $cmd\n";
 

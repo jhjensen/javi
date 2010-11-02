@@ -57,7 +57,7 @@ import javi.ExitException;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
-import javi.InsertBuffer;;
+import javi.InsertBuffer;
 import javi.MapEvent;
 import javi.Rgroup;
 import javi.StringIoc;
@@ -231,7 +231,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private transient ChoseWrt chinst;
    private transient Diff rdinst;
    private transient StatusBar statusBar;
-   private transient FvContext tfc;  // command context ??? could use FvContext.tfc
+   // command context ??? could use FvContext.tfc
+   private transient FvContext tfc;
 
    public static class ForceIdle extends EventQueue.IEvent {
       public void execute() throws ExitException {
@@ -435,7 +436,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             Component cmdComp = atv.getComponent();
             frm.remove(cmdComp);
             tfc.dispose(atv);
-            tfc=null;
+            tfc = null;
             try {
                tfc.dispose(tfc.edvec, null);
             } catch (Exception ex) {
@@ -931,7 +932,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public static void fontChange(Font font, View vi) {
-      ((AwtInterface)getInstance()).new SetFont(font, vi);
+      ((AwtInterface) getInstance()).new SetFont(font, vi);
    }
 
    private static class MyMenuItem extends MenuItem {
@@ -1235,7 +1236,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             } else
                break;
          }
-          return diaflag;
+         return diaflag;
       }
    }
 

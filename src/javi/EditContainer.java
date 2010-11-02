@@ -201,7 +201,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   public boolean isValid() {
+   final public boolean isValid() {
       return ecache != null;
    }
 

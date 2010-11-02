@@ -6,7 +6,6 @@ import static javi.Tools.trace;
 
 public final class Javi {
 
-   private Javi() { }
 /*  attempt to speed up loading, didn't seem to work
    static class Preloader implements Runnable {
 
