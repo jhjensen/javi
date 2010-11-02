@@ -13,7 +13,7 @@ import static java.lang.Integer.MAX_VALUE;
 
 import static javi.UI.Buttons.*;
 
-public class MapEvent {
+public final class MapEvent {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
@@ -47,7 +47,7 @@ public class MapEvent {
       mkeys.keybind(c, cmd, arg, modifiers);
    }
 
-   final void bindCommands() {
+   void bindCommands() {
       Matcher sentenceRegex = Pattern.compile("\\.( |$)").matcher("");
       Matcher paragraphRegex = Pattern.compile("^ *$").matcher("");
       Matcher sectionRegex = Pattern.compile("^[^ ].*\\{").matcher("");
@@ -195,7 +195,7 @@ public class MapEvent {
       skeys.keyactionbind(JeyEvent.VK_INSERT, "insert", ft, 0);
    }
 
-   final boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
+   boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
@@ -281,7 +281,7 @@ public class MapEvent {
       }
    }
 
-   public final void run() throws ExitException {
+   public void run() throws ExitException {
 //     try {Thread.sleep(20000);} catch (InterruptedException e) {/*Ignore*/}
 //trace("" + e  + " exitflag " + exitflag);
       while (true)
@@ -322,7 +322,7 @@ public class MapEvent {
    //trace("returning from run");
    }
 
-   final void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
+   void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
       //trace("hevent" + jEv);
 

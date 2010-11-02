@@ -1,5 +1,6 @@
 package javi;
 
+//cycle MapEvent View
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -35,7 +36,6 @@ public abstract class UI {
    public abstract void idispose();
    public abstract String igetFile();
    public abstract boolean iisVisible();
-   public abstract void iremove(View vi);
    public abstract void ishow();
    public abstract void ishowmenu(int x, int y);
    public abstract void itoFront();
@@ -173,16 +173,11 @@ public abstract class UI {
       return instance.iisVisible();
    }
 
-   static void remove(View vi) {
-      instance.iremove(vi);
-   }
 
    static void show() {
       instance.ishow();
    }
-//   static void pack() {
-//      instance.ipack();
-//   }
+
    public static void showmenu(int x, int y) {
       instance.ishowmenu(x, y);
    }

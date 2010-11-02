@@ -231,7 +231,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private transient ChoseWrt chinst;
    private transient Diff rdinst;
    private transient StatusBar statusBar;
-   private transient FvContext tfc;  // command context
+   private transient FvContext tfc;  // command context ??? could use FvContext.tfc
 
    public static class ForceIdle extends EventQueue.IEvent {
       public void execute() throws ExitException {
@@ -435,6 +435,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             Component cmdComp = atv.getComponent();
             frm.remove(cmdComp);
             tfc.dispose(atv);
+            tfc=null;
             try {
                tfc.dispose(tfc.edvec, null);
             } catch (Exception ex) {
@@ -697,7 +698,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             statusBar = new StatusBar();
             statusBar.setVisible(false);
             frm.add(statusBar, 0);
-            trace("setting visible");
+            trace("setting frame visible");
             ishow();
          } catch (Throwable ex) {
             trace("failure in awt Initer ");
@@ -739,7 +740,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("viewCount " + viewCount);
       if (viewCount > 1) {
          trace("removing " + fvc.vi);
-         iremove(fvc.vi);
+         viewCount--;
+         OldView ta = (OldView) fvc.vi;
+         Component cmdComp = ta.getComponent();
+         frm.remove(cmdComp);
+
          FvContext newfvc = FvContext.dispose(fvc.vi);
          if (newfvc != null)
             isetTitle(newfvc.edvec.toString());
@@ -754,13 +759,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
 
    public void isetStream(Reader inreader) { /* unimplemented */ }
-
-   public void iremove(View vi) {
-      viewCount--;
-      OldView ta = (OldView) vi;
-      Component cmdComp = ta.getComponent();
-      frm.remove(cmdComp);
-   }
 
    public void irepaint() {
       int ccount = frm.getComponentCount();
@@ -1047,7 +1045,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       static class NText extends TextField {
          private static final long serialVersionUID = 1;
-         private Dialog dia;
          NText(String s, NDialog nd) {
             super(s);
             nd.add(this);
