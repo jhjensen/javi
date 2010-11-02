@@ -15,7 +15,7 @@ class StreamInterface extends UI {
    }
    private Reader inStr = new InputStreamReader(System.in);
 
-   public void ireportDiff(String filename, int linenum,
+   public Buttons ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,
                     UndoHistory.BackupStatus status, String backupname) {
 
@@ -54,28 +54,22 @@ class StreamInterface extends UI {
             //trace("read in " + (char)ch);
             switch (ch) {
                case 'f':
-                  diaflag = Buttons.USEFILE;
-                  return;
+                  return Buttons.USEFILE;
                case 'b':
-                  diaflag = Buttons.USEBACKUP;
-                  return;
+                  return Buttons.USEBACKUP;
                case 'd':
-                  diaflag = Buttons.USEDIFF;
-                  return;
+                  return Buttons.USEDIFF;
                case 'o':
-                  diaflag = Buttons.OK;
-                  return;
+                  return Buttons.OK;
                case -1:
-                  diaflag = Buttons.IOERROR;
-                  return;
+                  return Buttons.IOERROR;
                default:
                   trace("stream got unexpected char = " + ch);
             }
          }
       } catch (IOException e) {
          trace("ireportDiff can not read from input Stream ");
-         diaflag = Buttons.IOERROR;
-         return;
+         return Buttons.IOERROR;
       }
 
    }
@@ -89,11 +83,13 @@ class StreamInterface extends UI {
    public void ishowmenu(int x, int y) { /* unimplemented */ }
    public void itoFront() { /* unimplemented */ }
    public void itransferFocus() { /* unimplemented */ }
-   public void ichooseWriteable(java.lang.String str) { /* unimplemented */ }
+   public Buttons ichooseWriteable(java.lang.String str) {
+      throw new RuntimeException("unimplemented");
+   }
    public boolean ipopstring(java.lang.String str) { return false; }
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
-   public void iconnectfv(TextEdit file, View vi) { }
+   public void isetTitle(String str) { }
    public View iaddview(boolean newview, FvContext fvc) { return null; }
 
    public void istatusaddline(String s) {
@@ -101,18 +97,15 @@ class StreamInterface extends UI {
    }
    public void istatusSetline(String s) { /*unimplemented*/ }
    public void iclearStatus() { /* unimplemented */ }
-   public FvContext istartComLine() {
+   public void ishowCommand() {
       throw new RuntimeException("unimplemented");
    }
 
-   public String iendComLine() { return ""; }
-   public boolean iisGotoOk(FvContext fvc) { return true; }
+   public void ihideCommand() { }
    public Object doroutine(int rnum, Object arg, int count, int rcount,
                            FvContext fvc, boolean dotmode) {
 
       throw new RuntimeException("doroutine called with " + rnum);
-   }
-   public void isetView(FvContext fvc) {
    }
 
    public void inextView(FvContext fvc) {

@@ -681,6 +681,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                cmdComp.setFont(AwtFontList.getCurr(null));
                tfview.setSizebyChar(80, 1);
                tfc = FvContext.getcontext(tfview, cmbuff);
+               FvContext.setCommand(tfc);
                tfc.setCurrView();
                View vi = mkview(false);
                //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
@@ -708,14 +709,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
          return this;
       }
-   }
-
-   public void iconnectfv(TextEdit file, View vi) throws InputException {
-      //trace("vic.connectfv " + file + " vi " + vi);
-      if (tfc != null && vi == tfc.vi)
-         throw new InputException(
-            "can't change command window to display other data");
-      isetTitle(file.toString());
    }
 
    private View iaddview(boolean newview, FvContext fvc) throws
@@ -752,11 +745,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             isetTitle(newfvc.edvec.toString());
          frm.validate();
       }
-   }
-
-   public void isetView(FvContext fvc) {
-      fvc.setCurrView();
-      isetTitle(fvc.edvec.toString());
    }
 
    void inextView(FvContext fvc) {
@@ -796,7 +784,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
 
-   void isetTitle(java.lang.String title) {
+   public void isetTitle(java.lang.String title) {
       frm.setTitle(title);
    }
 
@@ -808,27 +796,19 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       frm.transferFocus();
    }
 
-   public FvContext istartComLine() {
-      //tfc.setCurrView();
-      OldView ta = (OldView) tfc.vi;
-      Component cmdComp = ta.getComponent();
+   public void ishowCommand() {
+      Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(true);
       cmdComp.repaint();
-      return tfc;
    }
 
-   public String iendComLine() {
-      OldView ta = (OldView) tfc.vi;
-      Component cmdComp = ta.getComponent();
+   public void ihideCommand() {
+      Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(false);
       statusBar.clearlines();
       //trace("comline:"+ tfc.at().toString());
-      return tfc.at().toString();
    }
 
-   public boolean iisGotoOk(FvContext fvc) {
-      return fvc != tfc;
-   }
 
    class IdleEvent extends RunAwt {
       IdleEvent() {
@@ -892,11 +872,13 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       frm.requestFocus();
    }
 
-   public void ichooseWriteable(String filename) {
+   private static Buttons diaflag;
+   public Buttons ichooseWriteable(String filename) {
 
       if (chinst == null)
          chinst = new ChoseWrt(this);
       chinst.chosefile(filename);
+      return diaflag;
    }
 
    public void isetViewSize(View vi, int width, int height) {
@@ -1084,11 +1066,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
 
       public void windowClosing(WindowEvent e) {
-         //trace("" + e);
+         trace("" + e);
          setVisible(false);
       }
 
       public void setVisible(boolean vis) {
+         //trace("setVisible " + vis);
          if (vis)
             resb = null;
          super.setVisible(vis);
@@ -1201,7 +1184,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    }
 
-   class HandleDiff extends RunAwt {
+   class HandleDiff extends SyncAwt<Buttons> {
 
       private final String filename;
       private final String backupname;
@@ -1221,17 +1204,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             filevers = fileversi;
             backupvers = backupversi;
             status = statusi;
-            post();
             EventQueue.biglock2.assertUnOwned();
-            try {
-               wait();
-            } catch (InterruptedException e) {
-               trace("ignoring InterruptedException");
-            }
          }
       }
 
-      public void run() {
+      public Buttons doAwt() {
          //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
          if (rdinst == null)
@@ -1261,20 +1238,15 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             } else
                break;
          }
-
-         synchronized (this) {
-            //trace("instance " + instance + " flag " + diaflag);
-            notify();
-            //trace("instance " + instance + " flag " + diaflag);
-         }
+          return diaflag;
       }
    }
 
-   public void ireportDiff(String filename, int linenum, Object filevers,
+   public Buttons ireportDiff(String filename, int linenum, Object filevers,
          Object backupvers, UndoHistory.BackupStatus status,
          String backupName) {
-      new HandleDiff(filename, linenum, filevers, backupvers,
-         status, backupName);
+      return new HandleDiff(filename, linenum, filevers, backupvers,
+         status, backupName).postWait().getResult();
    }
 
    private static class Diff extends NDialog {
@@ -1301,7 +1273,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          //trace("filebut" + filebut);
          //trace("diffbut" + diffbut);
 
-         //trace("res" + res);
+         trace("getres" + getRes());
          return getRes() == null
                ? UI.Buttons.IOERROR
             : getRes() == okbut

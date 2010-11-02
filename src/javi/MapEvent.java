@@ -1,5 +1,7 @@
 package javi;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -8,6 +10,8 @@ import static javi.JeyEvent.CTRL_MASK;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
+
+import static javi.UI.Buttons.*;
 
 public class MapEvent {
    /* Copyright 1996 James Jensen all rights reserved */
@@ -218,6 +222,65 @@ public class MapEvent {
 
    }
 
+   private static Matcher findfile =
+      Pattern.compile("(.*[\\\\/])([^\\/]*)$").matcher("");
+
+   static void makeWriteable(EditContainer edv, String filename) throws
+         IOException {
+
+      UI.Buttons diaflag = UI.chooseWriteable(filename);
+      switch (diaflag) {
+
+         case CHECKOUT:
+            Command.command("vcscheckout", null, filename);
+            break;
+         case MAKEWRITEABLE:
+            edv.setReadOnly(false);
+            break;
+         case DONOTHING:
+         case WINDOWCLOSE:
+            break;
+         case MAKEBACKUP:
+            edv.backup(".orig");
+            break;
+         case USESVN:
+            findfile.reset(filename);
+            String svnstr =  (findfile.find()
+               ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
+               : "./.svn/text-base/" + filename
+               )  + ".svn-base";
+
+            //trace("svnstr "  + svnstr);
+            BufferedReader fr = new BufferedReader(new FileReader(svnstr));
+            try {
+               int lineno = 0;
+               int linemax = edv.finish();
+               String line;
+               while ((line = fr.readLine()) != null) {
+                  if ((++lineno  >= linemax))
+                     break;
+                  if (!line.equals(edv.at(lineno))) {
+                     UI.reportMessage(
+                        "svn base file not equal to current file at "
+                        + (lineno - 1) + ":" + edv.at(lineno - 1) + ":"
+                        + line + ":");
+                     return;
+                  }
+               }
+               if (line == null && lineno + 1 == linemax)
+                  edv.setReadOnly(false);
+               else
+                  UI.reportMessage("svn base file not equal to current file");
+            } finally {
+               fr.close();
+            }
+            break;
+         default:
+
+            throw new RuntimeException("bad diaflag = " + diaflag);
+      }
+   }
+
    public final void run() throws ExitException {
 //     try {Thread.sleep(20000);} catch (InterruptedException e) {/*Ignore*/}
 //trace("" + e  + " exitflag " + exitflag);
@@ -232,7 +295,7 @@ public class MapEvent {
             trace("!! caught interrupted exception");
          } catch (ReadOnlyException e) {
             try {
-               UI.makeWriteable(e.getEv(), e.getMessage());
+               makeWriteable(e.getEv(), e.getMessage());
             } catch (IOException e2) {
                UI.reportError("making file writeable throw exception" + e2);
             }

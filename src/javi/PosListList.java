@@ -61,7 +61,7 @@ public final class PosListList extends TextList<Position> {
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)) + ui.isGotoOk(fvc));
       if (list == null)
          list = lastlist;
-      if ((list == null) || (!list.containsNow(1)) || !UI.isGotoOk(fvc))
+      if ((list == null) || (!list.containsNow(1)) || !fvc.isGotoOk())
          return;
       lastlist2 = null;
       lastlist = list;

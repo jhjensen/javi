@@ -368,7 +368,11 @@ public final class FvContext<OType> implements Serializable {
 
    public static FvContext connectFv(TextEdit file, View vi) throws
          InputException {
-      UI.connect(file, vi);
+
+      if (tfc != null && vi == tfc.vi)
+         throw new InputException(
+            "can't change command window to display other data");
+      UI.setTitle(file.toString());
       FvContext fvc = FvContext.getcontext(vi, file);
       fvc.setCurrView();
       return fvc;
@@ -599,4 +603,25 @@ public final class FvContext<OType> implements Serializable {
       Tools.trace(str, 1);
    }
 
+   private static FvContext tfc;
+
+   public static void setCommand(FvContext tfci) {
+      tfc = tfci;
+   }
+
+   static FvContext startComLine() {
+      //tfc.setCurrView();
+      UI.showCommand();
+      return tfc;
+   }
+
+   static String endComLine() {
+      //tfc.setCurrView();
+      UI.hideCommand();
+      return tfc.at().toString();
+   }
+
+   boolean isGotoOk() {
+      return this != tfc;
+   }
 }

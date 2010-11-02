@@ -160,7 +160,7 @@ public final class Command extends Rgroup {
    }
 
    static String getcomline(String prompt) {
-      FvContext<String> commFvc =  UI.startComLine();
+      FvContext<String> commFvc =  FvContext.startComLine();
       EditContainer ev = commFvc.edvec;
       try {
          if (!(commFvc.at(ev.finish() - 1).toString().equals(prompt))) {
@@ -175,7 +175,7 @@ public final class Command extends Rgroup {
          UI.popError("exception in command processing ", e);
       }
 
-      String line = UI.endComLine();
+      String line = FvContext.endComLine();
       if (line.startsWith(prompt, 0))
          return line;
       else {

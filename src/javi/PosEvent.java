@@ -11,8 +11,10 @@ public class PosEvent extends EventQueue.IEvent {
    }
 
    public final void execute() {
-      if (fvc != FvContext.getCurrFvc())
-         UI.setView(fvc);
+      if (fvc != FvContext.getCurrFvc()) {
+         UI.setTitle(fvc.edvec.toString());
+         fvc.setCurrView();
+      }
       fvc.cursorabs(pos);
    }
 }

@@ -1,13 +1,9 @@
 package javi;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import static history.Tools.trace;
 
 public abstract class UI {
@@ -15,8 +11,6 @@ public abstract class UI {
       CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP ,
       USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN
    };
-
-   public static Buttons diaflag;
 
    private static UI instance = null;
    protected static void setInstance(UI inst) {
@@ -31,12 +25,12 @@ public abstract class UI {
 
    public abstract void itoggleStatus();
    public abstract void isetStream(Reader inreader);
-   public abstract void ireportDiff(String filename, int linenum,
+   public abstract Buttons ireportDiff(String filename, int linenum,
       Object filevers, Object backupvers, UndoHistory.BackupStatus status,
       String backupName);
 
-   public abstract FvContext istartComLine();
-   public abstract String iendComLine();
+   public abstract void ishowCommand();
+   public abstract void ihideCommand();
    public abstract void irepaint();
    public abstract void idispose();
    public abstract String igetFile();
@@ -46,16 +40,13 @@ public abstract class UI {
    public abstract void ishowmenu(int x, int y);
    public abstract void itoFront();
    public abstract void itransferFocus();
-   public abstract void ichooseWriteable(String filename);
+   public abstract Buttons ichooseWriteable(String filename);
    public abstract boolean ipopstring(String str);
    public abstract void iflush(boolean totalFlush);
    public abstract void istatusaddline(String str);
    public abstract void istatusSetline(String str);
    public abstract void iclearStatus();
-   public abstract boolean iisGotoOk(FvContext fvc);
-   public abstract void iconnectfv(TextEdit file,
-      View vi) throws InputException;
-   public abstract void isetView(FvContext fvc);
+   public abstract void isetTitle(String str);
 
    public abstract void iRestoreState(java.io.ObjectInputStream is) throws
       ClassNotFoundException, IOException;
@@ -120,8 +111,8 @@ public abstract class UI {
             } catch (InterruptedException e) {
                trace("ignoring interrupted exception");
             }
-         instance.ireportDiff(filename, linenum, filevers, backupvers,
-             status, backupname);
+         Buttons diaflag = instance.ireportDiff(filename, linenum,
+            filevers, backupvers, status, backupname);
          switch (diaflag) {
             case WINDOWCLOSE:
                break;
@@ -157,15 +148,14 @@ public abstract class UI {
       }
    }
 
-   static FvContext startComLine() {
-      return instance.istartComLine();
+   static void showCommand() {
+      instance.ishowCommand();
    }
-   static String endComLine() {
-      return instance.iendComLine();
+
+   static void hideCommand() {
+      instance.ihideCommand();
    }
-   static  boolean isGotoOk(FvContext fvc) {
-      return instance.iisGotoOk(fvc);
-   }
+
    static void repaint() {
       instance.irepaint();
    }
@@ -182,6 +172,7 @@ public abstract class UI {
    static boolean isVisible() {
       return instance.iisVisible();
    }
+
    static void remove(View vi) {
       instance.iremove(vi);
    }
@@ -203,62 +194,9 @@ public abstract class UI {
       instance.itransferFocus();
    }
 
-   private static Matcher findfile =
-      Pattern.compile("(.*[\\\\/])([^\\/]*)$").matcher("");
 
-   static void makeWriteable(EditContainer edv, String filename) throws
-         IOException {
-      instance.ichooseWriteable(filename);
-      switch (diaflag) {
-
-         case CHECKOUT:
-            Command.command("vcscheckout", null, filename);
-            break;
-         case MAKEWRITEABLE:
-            edv.setReadOnly(false);
-            break;
-         case DONOTHING:
-         case WINDOWCLOSE:
-            break;
-         case MAKEBACKUP:
-            edv.backup(".orig");
-            break;
-         case USESVN:
-            findfile.reset(filename);
-            String svnstr =  (findfile.find()
-               ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
-               : "./.svn/text-base/" + filename
-               )  + ".svn-base";
-
-            //trace("svnstr "  + svnstr);
-            BufferedReader fr = new BufferedReader(new FileReader(svnstr));
-            try {
-               int lineno = 0;
-               int linemax = edv.finish();
-               String line;
-               while ((line = fr.readLine()) != null) {
-                  if ((++lineno  >= linemax))
-                     break;
-                  if (!line.equals(edv.at(lineno))) {
-                     reportMessage(
-                        "svn base file not equal to current file at "
-                        + (lineno - 1) + ":" + edv.at(lineno - 1) + ":"
-                        + line + ":");
-                     return;
-                  }
-               }
-               if (line == null && lineno + 1 == linemax)
-                  edv.setReadOnly(false);
-               else
-                  reportMessage("svn base file not equal to current file");
-            } finally {
-               fr.close();
-            }
-            break;
-         default:
-
-            throw new RuntimeException("bad diaflag = " + diaflag);
-      }
+   static Buttons chooseWriteable(String filename) {
+      return instance.ichooseWriteable(filename);
    }
 
    public static void popError(String errs, Throwable ex) {
@@ -291,12 +229,8 @@ public abstract class UI {
       return;
    }
 
-   static void connect(TextEdit file, View vi) throws InputException {
-      instance.iconnectfv(file, vi);
-   }
-
-   static void setView(FvContext fvc) {
-      instance.isetView(fvc);
+   static void setTitle(String str) {
+      instance.isetTitle(str);
    }
 
    static void flush() {
