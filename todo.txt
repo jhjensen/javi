@@ -1,3 +1,5 @@
+don't search .dll.
+^l^l in filelist messes up everythin.
 configuration for javac for ml2i/F7
 get rid of getnext
 findbug cmd not working

@@ -147,9 +147,9 @@ class JavaCompiler extends Rgroup {
 
             //String [] options = {"-Xlint"};
 
-            //String [] options = {"-d", "build"};
-            String [] options = {"-d", "gbuild/java/build", "-cp",
-               "gbuild/java/build"};
+            String [] options = {"-d", "build", "-Xlint:all"};
+            //String [] options = {"-d", "gbuild/java/build", "-cp",
+             //  "gbuild/java/build","-Xlint"};
 
             boolean success = compiler.getTask(null, fileManager,
                this, Arrays.asList(options), null, clist).call();

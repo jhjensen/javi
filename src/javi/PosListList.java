@@ -405,7 +405,7 @@ public final class PosListList extends TextList<Position> {
 
             int tagcount = 1;
             for (; taglist.readIn() > tagcount; tagcount++) {
-               Position  ctagpos = (Position) taglist.at(tagcount);
+               Position  ctagpos = taglist.at(tagcount);
                if (!Ctag.getTagName(ctagpos).equals(sym))
                   break;
             }
@@ -416,7 +416,6 @@ public final class PosListList extends TextList<Position> {
                   scores[i] = 0;
                int maxscore = 0;
 
-            out:
                for (int symindex = symlist.length - 2;
                      symindex >= 0;
                      symindex--) {
@@ -424,7 +423,7 @@ public final class PosListList extends TextList<Position> {
 
                   boolean findflag = true;
                   for (int i = 1; i < tagcount && findflag; i++) {
-                     Position pos = (Position) taglist.at(i);
+                     Position pos = taglist.at(i);
                      classmatcher.reset(pos.comment);
                      if (classmatcher.find()) {
                         String clss =  classmatcher.group(1);

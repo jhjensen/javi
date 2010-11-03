@@ -115,11 +115,11 @@ public final class AwtFontList extends TextEdit<FontEntry> {
                return null;
 
             case 5:
-               inst.setDefaultFontSize(-1, oBToInt(arg));
+               setDefaultFontSize(-1, oBToInt(arg));
                return null;
 
             case 6:
-               inst.setDefaultFontSize(oBToInt(arg), -1);
+               setDefaultFontSize(oBToInt(arg), -1);
                return null;
 
             case 7:
@@ -175,7 +175,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       }
 
       FontParser() {
-         super(new FileProperties(
+         super(new FileProperties<FontEntry>(
             FileDescriptor.InternalFd.make("Font List"), converter), false);
       }
       private transient Font [] fontArr;

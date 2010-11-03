@@ -297,7 +297,7 @@ public final class UndoHistory<OType> extends PersistantStack {
 
    */
 
-   public final class EhMark<OType> extends
+   public final class EhMark extends
          PersistantStack.PSIterator implements Cloneable {
 
       EhMark() {

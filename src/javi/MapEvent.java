@@ -11,8 +11,6 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
 
-import static javi.UI.Buttons.*;
-
 public final class MapEvent {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";

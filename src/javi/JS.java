@@ -17,14 +17,14 @@ final class RealJs {
 
    static void jsClear() {
       if (ctx != null)
-         ctx.exit();
+         Context.exit();
       ctx = Context.enter();
       ImporterTopLevel iscope = new ImporterTopLevel();
       //   scope = new ImporterTopLevel();
       iscope.initStandardObjects(ctx, false);
       //ScriptableObject scope = ctx.initStandardObjects(new ImporterTopLevel());
       scope = iscope;
-      ctx.enter();
+      Context.enter();
       scope.put("jsobj", scope, new JSObj());
    }
 

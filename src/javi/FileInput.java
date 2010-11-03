@@ -121,7 +121,6 @@ class FileInput extends BufInIoc<String> {
          byte [] filebyte = ((FileDescriptor.LocalFile) prop.fdes).readFile();
          try {
             UniversalDetector detector = new UniversalDetector(null);
-            int nread;
             detector.handleData(filebyte, 0, filebyte.length);
             detector.dataEnd();
             String encoding = detector.getDetectedCharset();

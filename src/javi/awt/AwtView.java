@@ -55,11 +55,5 @@ public abstract class AwtView  extends View {
       }
    }
 
-   final int placeline(int lineno, float amount) {
-      int row = getRows(amount);
-      screenFirstLine();
-      row =  lineno - screenFirstLine() - row;
-      return screeny(row);
-   }
 
 }

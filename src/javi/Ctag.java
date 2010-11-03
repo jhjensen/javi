@@ -211,9 +211,6 @@ class Ctag {
    }
 
    /* Copyright 1996 James Jensen all rights reserved */
-   private static void trace(String str) {
-      Tools.trace(str, 1);
-   }
    public static void main(String[] args) {
       try {
          Ctag ct = new Ctag(args[0]);

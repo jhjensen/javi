@@ -32,6 +32,9 @@ public final class Javi {
          "",
          "persistfile" ,
       };
+      Jcmds() {
+         register(rnames);
+      }
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws InputException {
          switch (rnum) {
@@ -145,7 +148,7 @@ public final class Javi {
                FvContext.restoreState(pis);
                UI.restoreState(pis);
                //UI.trace("!!!!!!!!!!!!!!!! end restore ");
-               FvContext fvc = FvContext.getCurrFvc();
+               //FvContext fvc = FvContext.getCurrFvc();
                //fvc.vi.requestFocus();
 
                normalInit = false;

@@ -79,14 +79,14 @@ public abstract class UI {
       instance = (UI) is.readObject();
       instance.iRestoreState(is);
       instance.ishow();
-      instance.toFront();
+      toFront();
    }
 
    public static void init(boolean isAwt) throws ExitException {
       //trace("");
       instance = isAwt
-         ? (UI) new javi.awt.AwtInterface()
-         : (UI) new StreamInterface();
+         ? new javi.awt.AwtInterface()
+         : new StreamInterface();
    }
 
    static void setStream(Reader inreader) {

@@ -3,7 +3,7 @@ package javi;
 import static javi.View.Opcode.*;
 import static history.Tools.trace;
 
-public abstract class View  {
+public abstract class View  implements java.io.Serializable {
 
    public abstract void cursorChanged(int newX, int newY);
    public abstract int yCursorChanged(int newY);

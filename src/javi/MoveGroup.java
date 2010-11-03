@@ -202,14 +202,6 @@ final class MoveGroup extends Rgroup {
             throw new RuntimeException();
       }
    }
-   private static boolean isalphanum(char c) {
-      return (
-                (c >= 'a' && c <= 'z')
-                ||  (c >= 'A' && c <= 'Z')
-                || (c >= '0' && c <= '9')
-                || c == '_'
-             );
-   }
 
    private void linepos(Object arg, int rcount, FvContext fvc) {
       if (arg == null)
@@ -237,7 +229,6 @@ final class MoveGroup extends Rgroup {
       //trace("lastmark = " + lastmark + "lastmark2= " + lastmark2);
       if (bufid == 27)
          return;
-      EditContainer ev = fvc.edvec;
 
       Integer idObj = Integer.valueOf(bufid);
       Position pos = fvc.getPosition("mark " + bufid);

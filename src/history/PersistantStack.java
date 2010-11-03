@@ -606,12 +606,6 @@ public abstract class PersistantStack {
          System.arraycopy(b, off, writebuffer, bufoff, len);
          bufoff += len;
       }
-      void seek(long offset) throws IOException {
-         throw new IOException();
-      }
-      long getFilePointer()throws IOException {
-         throw new IOException();
-      }
       public void flush() throws IOException {
          throw new IOException();
       }

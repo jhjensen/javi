@@ -190,14 +190,6 @@ final class DirList extends TextEdit<DirEntry> {
          invert = inverti;
       }
 
-      String getCanonicalName() {
-         return searchterm + " grep" + hashCode();
-      }
-
-      String getName() {
-         return searchterm + " grep";
-      }
-
       protected void dorun() {
          for (DirEntry dir : dirlist) {
             //trace("GrepReader dir = " + dir);

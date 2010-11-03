@@ -41,10 +41,6 @@ public final class FvContext<OType> implements Serializable {
          return viewhash.keySet();
       }
 
-      Iterator<FvContext> fvIterator() {
-         return new FvIterator();
-      }
-
       int viewCount() {
          return viewhash.size();
       }

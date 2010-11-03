@@ -1205,6 +1205,7 @@ public class EditContainer<OType> implements
          //trace("InsertStringRecord " + this.toString()  + " InsertStringRecord type = " + obj.getClass());
       }
 
+/*
       InsertStringRecord(Iterator<String> it, int indexi, int count) {
          super(indexi);
          obj = new String[count];
@@ -1216,6 +1217,7 @@ public class EditContainer<OType> implements
          //        trace(" array.size = " + ev.array.size());
          //        trace("array.finish = " + ev.finish());
       }
+*/
       OType[] mkobj() {
          OType[] ob2 = (OType []) new Object[obj.length];
          for (int i = 0; i < obj.length; i++) {

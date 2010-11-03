@@ -100,7 +100,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             case 2:
                //trace("fopen command arg" + arg);
                //trace("instance " + instance);
-               return instance.openFileName((String) arg, fvc.vi);
+               return openFileName((String) arg, fvc.vi);
             case 3:
                processZ(fvc);
                return null;

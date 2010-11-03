@@ -283,20 +283,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          return name + super.toString();
       }
 
-      private int fullwidth(Component cp, int yleft,
-                                  int xsize, Insets inset) {
-
-         Dimension prefSize = cp.getPreferredSize(); // really to get height
-         prefSize.width = xsize - inset.left - inset.right;
-         if (!cp.getSize().equals(prefSize)) {
-            cp.setSize(prefSize);
-            trace("full width set size " + cp.getSize() + " " +  cp);
-         }
-         return cp.isVisible()
-                ? yleft - prefSize.height
-                : yleft;
-      }
-
       public Dimension getPreferredSize() {
 
          //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
@@ -1079,11 +1065,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private static class PopString extends NDialog {
       private static final long serialVersionUID = 1;
       private TextArea ta = new TextArea("", 30, 80);
-      private NButton ign = new NButton("Ignore", this);
       private NButton rThrow = new NButton("reThrow", this);
 
       PopString(Frame frm) {
          super(frm, "exception trace", new FlowLayout());
+         new NButton("Ignore", this);
          add(ta);
       }
 
@@ -1259,7 +1245,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       private NButton filebut = new NButton("use file version", this);
       private NButton diffbut = new NButton("launch diff", this);
 
-      private String l1, l2, s1, s2;
+      private String l1, s1, s2;
 //   public void setVisible(boolean vf) {
 //      if (!vf)
 //         Thread.dumpStack();
@@ -1284,12 +1270,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                ? UI.Buttons.USEDIFF
             : UI.Buttons.IOERROR;
       }
-
-
-      private enum Buttons {
-         CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP , USEFILE ,
-         USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN
-      };
 
       Diff(Frame frm)  {
 
@@ -1354,7 +1334,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             replab2.setForeground(Color.black);
             okbut.setVisible(true);
          } else {
-            l1 = l2 = s1 = s2 = "";
+            l1 = s1 = s2 = "";
             if (filevers == null) {
                l1 = "backup version has extra lines at end";
                s2 = backupvers.toString();
