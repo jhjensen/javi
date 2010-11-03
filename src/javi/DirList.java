@@ -171,7 +171,7 @@ final class DirList extends TextEdit<DirEntry> {
          "(.*\\.bin)|(.*\\.ml3)|(.*\\.rom)|(.*\\.loc)|(.*\\.axe)|"
          + "(.*\\.o)|(.*\\.class)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|"
          + "(.*\\.ilk)|(^tags)|(.*\\.exe)|(^ID)|(.*\\.cla +ss)|"
-         + "(.*\\.core)|(^.dll)|"
+         + "(.*\\.core)|(.*\\.dll)|"
          + "(.*\\.hex)|(.*\\.dmp)|(.*\\.dmp2)|(.*\\.jar)|(^tags)$";
 
       private static final Matcher fileMatcher =  Pattern.compile(

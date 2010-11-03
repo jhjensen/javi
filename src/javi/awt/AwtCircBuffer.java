@@ -15,8 +15,11 @@ import static history.Tools.trace;
 public final class AwtCircBuffer extends CircBuffer implements
       Transferable, ClipboardOwner {
 
+   private static AwtCircBuffer cbuf;
    static void initCmd() {
-      Buffers.init(new AwtCircBuffer());
+      if (cbuf == null)
+         cbuf = new AwtCircBuffer();
+      Buffers.init(cbuf);
    }
 
    private Clipboard systemclip =
