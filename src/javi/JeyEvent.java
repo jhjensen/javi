@@ -39,7 +39,8 @@ public final class JeyEvent {
 
    public boolean equals(Object ev) {
       //trace("equals ev " + ev  + " this " + this);
-
+      if (ev == this)
+         return true;
       if (ev instanceof JeyEvent) {
          JeyEvent jv = (JeyEvent) ev;
          return code == jv.code && modifiers == jv.modifiers;

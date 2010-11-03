@@ -360,7 +360,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
          }
          if (xstart != 0) { // we have the tail of a line to remove
             delline.append(line.substring(xstart, line.length()));
-            delline.append("\n");
+            delline.append('\n');
             line = line.substring(0, xstart);
             if (!preserve)
                changeElementAtStr(line, ystart);
@@ -384,7 +384,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                                         : remove(ystart, yend - ystart);
             for (Object obj : obarray) {
                delline.append(obj);
-               delline.append("\n");
+               delline.append('\n');
             }
          }
       }

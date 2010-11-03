@@ -287,13 +287,18 @@ public final class FvContext<OType> implements Serializable {
       //trace("created new fvc " + this);
    }
 
-   public boolean equals(Position p) {
-      if (p == null)
+   public boolean equals(Object ob) {
+      if (ob == null)
          return false;
-      return  edvec.fdes().equals(p.filename)
-              && p.x == fileposx && p.y == fileposy;
+      if (ob == this)
+         return true;
+      if (ob instanceof Position) {
+         Position po = (Position) ob;
+         return  edvec.fdes().equals(po.filename)
+            && po.x == fileposx && po.y == fileposy;
+      }
+      return false;
    }
-
 
    static void invalidateBack(UndoHistory.EhMark ehm) {
 

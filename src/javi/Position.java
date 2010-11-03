@@ -32,21 +32,26 @@ public final class Position {
 
    public static final Position badpos = new Position(0, 0, "", null);
 
-   boolean equals(Position p) {
-      return p == null
-             ? false
-             : filename.equals(p.filename) && p.x == x && p.y == y;
-   }
 
-   public boolean equals(Object p) {
-      return p instanceof Position
-             ? equals((Position) p)
-             : false;
+   public boolean equals(Object ob) {
+      if (ob == null)
+         return  false;
+
+      if (ob == this)
+         return true;
+
+      if (ob instanceof Position) {
+         Position po = (Position) ob;
+         return  filename.equals(po.filename) && po.x == x && po.y == y;
+      }
+
+      return false;
    }
 
    public int hashCode() {
       return filename.hashCode() + x * y;
    }
+
    static void trace(String str) {
       Tools.trace(str, 1);
    }

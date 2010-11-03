@@ -280,9 +280,11 @@ class DirEntry {
    }
 
    public boolean equals(Object de) {
-      return de instanceof DirEntry
-             ?  fh.equals(((DirEntry) de).fh)
-             : false;
+      return de == this
+         ? true
+         : de instanceof DirEntry
+            ?  fh.equals(((DirEntry) de).fh)
+            : false;
    }
 
    public int hashCode() {

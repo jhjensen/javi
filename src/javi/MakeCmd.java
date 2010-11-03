@@ -37,11 +37,11 @@ class MakeCmd extends Rgroup {
 
       for (EditContainer ef : efs)
          if (!ef.getName().endsWith("h")) {
-            newstr.append(" ");
+            newstr.append(' ');
             newstr.append(ef.getName());
          }
       if (newstr.length() == 0)  {
-         newstr.append(" ");
+         newstr.append(' ');
          newstr.append(alt);
       }
       return newstr.toString().replace('\\', '/');

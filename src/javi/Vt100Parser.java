@@ -24,7 +24,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
    private final StringBuffer oscstring = new StringBuffer();
    private final BufferedInputStream input;
    private int recbyte;
-   private Thread rthread = new Thread(this);
+   private Thread rthread = new Thread(this, "vt100 parser thread");
 //   private CharFifo fifo=new CharFifo();
 
    Vt100Parser(Vt100 win, BufferedInputStream ins) {

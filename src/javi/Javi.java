@@ -120,7 +120,7 @@ public final class Javi {
             pflag = true;
          } else {
             sb.append(str);
-            sb.append("\n");
+            sb.append('\n');
          }
       }
       FileDescriptor pfile = persistName == null

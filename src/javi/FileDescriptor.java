@@ -424,7 +424,9 @@ public class FileDescriptor implements Serializable {
       }
 
       public boolean equals(Object de) {
-         return de instanceof FileDescriptor
+         return de == this
+            ? true
+            : de instanceof FileDescriptor
                 ? canonName.equals(((FileDescriptor) de).canonName)
                 : false;
       }

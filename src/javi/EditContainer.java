@@ -911,9 +911,9 @@ public class EditContainer<OType> implements
       else
          sb.append(" dead file!!!!");
 
-      sb.append("(");
+      sb.append('(');
       sb.append(Integer.toString(readIn() - 1));
-      sb.append(")");
+      sb.append(')');
       sb.append(fdes().shortName);
    }
 

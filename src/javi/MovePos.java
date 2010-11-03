@@ -36,17 +36,19 @@ public final class MovePos {
       //comment = p.comment;
    }
 
-   boolean equals(MovePos p) {
-      return p == null
-             ? false
-//      : filename.equals(p.filename) && p.x == x && p.y == y;
-             :  p.x == x && p.y == y;
-   }
-
-   public boolean equals(Object p) {
-      return p instanceof MovePos
-             ? equals((MovePos) p)
-             : false;
+   public boolean equals(Object ob) {
+      if (ob == this)
+         return true;
+      if (ob == null)
+         return false;
+      if (ob instanceof MovePos) {
+         MovePos po = (MovePos) ob;
+         return po == null
+                ? false
+                          //      : filename.equals(po.filename) && po.x == x && po.y == y;
+                :  po.x == x && po.y == y;
+      }
+      return false;
    }
 
    public int hashCode() {

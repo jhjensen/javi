@@ -5,7 +5,6 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 
 import javi.View;
-import static javi.View.Opcode.*;
 
 //import static history.Tools.trace;
 
