@@ -15,14 +15,13 @@ class EditGroup extends Rgroup {
    private char dotchar;
    private Object dotarg;
 
-   private final MapEvent evhandler;
    private final InsertBuffer icontext;
    void setInsertMode(FvContext fvc, boolean overwrite) throws
          InputException, IOException {
       icontext.insertmode(false, 1, fvc, overwrite, true);
    }
 
-   EditGroup(MapEvent evhandleri) {
+   EditGroup() {
       final String[] rnames = {
          "",
          "insert",
@@ -55,8 +54,7 @@ class EditGroup extends Rgroup {
       };
 
       register(rnames);
-      evhandler = evhandleri;
-      icontext = UI.getInsertBuffer(evhandler);
+      icontext = UI.getInsertBuffer();
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -202,7 +200,7 @@ class EditGroup extends Rgroup {
          default:
             int yold = fvc.inserty();
             int starty, amount;
-            if (!evhandler.domovement(event, count, rcount, dotmode, fvc))
+            if (!MapEvent.domovement(event, count, rcount, dotmode, fvc))
                break;
             if (yold < fvc.inserty()) {
                starty = yold;
@@ -245,7 +243,7 @@ class EditGroup extends Rgroup {
             try {
                do
                   event = EventQueue.nextKeye(fvc.vi);
-                while (evhandler.domovement(
+                while (MapEvent.domovement(
                    event, count, rcount, dotmode, fvc));
             } catch (InterruptedException e) {
                trace("markmode caught " + e);
@@ -574,7 +572,7 @@ class EditGroup extends Rgroup {
             return;
 
          default:
-            evhandler.domovement(event, count, rcount, dotmode, fvc);
+            MapEvent.domovement(event, count, rcount, dotmode, fvc);
             if (yold > fvc.inserty() || (yold == fvc.inserty()
                && xold > fvc.insertx())) {
                deletetext(bufid, fvc, false, fvc.insertx(),
@@ -610,7 +608,7 @@ class EditGroup extends Rgroup {
          return;
       }
       Position save = fvc.getPosition("yankmark");
-      evhandler.domovement(event, count, rcount, dotmode, fvc);
+      MapEvent.domovement(event, count, rcount, dotmode, fvc);
 
       if (yold > fvc.inserty()
             || (yold == fvc.inserty() && xold > fvc.insertx())) {

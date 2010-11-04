@@ -66,14 +66,12 @@ public final class Javi {
       //trace("");
    }
 
-   public static MapEvent initPostUi() throws Exception {
+   public static void initPostUi() throws Exception {
 
-      MapEvent eview = new MapEvent();
-
-      Command.init(new EditGroup(eview));
+      Command.init(new EditGroup());
       new PosListList.Cmd();
 
-      eview.bindCommands();
+      MapEvent.bindCommands();
       try {
          //trace("preserver");
          new Server(6001);
@@ -93,7 +91,6 @@ public final class Javi {
       //new vcs.cmvc();
 
       //trace("javi Version " + version);
-      return eview;
    }
 
    public static void main(String[] args) {
@@ -171,13 +168,13 @@ public final class Javi {
             initToUi();
          }
 
-         MapEvent ev =  initPostUi();
+         initPostUi();
          if (command != null) {
             //UI.trace("doing command " + command);
             Command.command(command, null, null);
          }
          Command.doneInit();
-         ev.run();
+         MapEvent.run();
       } catch (Throwable e) {
          if (!(e instanceof ExitException)) {
             trace("main caught vic exception "  + e);

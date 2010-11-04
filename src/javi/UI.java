@@ -1,6 +1,6 @@
 package javi;
 
-//cycle MapEvent
+//cycle MapEvent InsertBuffer?
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -58,10 +58,10 @@ public abstract class UI {
 
    public abstract void isizeChange();
 
-   public abstract InsertBuffer igetInsertBuffer(MapEvent me);
+   public abstract InsertBuffer igetInsertBuffer();
 
-   public static InsertBuffer getInsertBuffer(MapEvent me) {
-      return instance.igetInsertBuffer(me);
+   public static InsertBuffer getInsertBuffer() {
+      return instance.igetInsertBuffer();
    }
 
    static void saveState(java.io.ObjectOutputStream os) throws IOException {

@@ -877,8 +877,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       new Validate();
    }
 
-   public InsertBuffer igetInsertBuffer(MapEvent me)  {
-      return new InHandler(me);
+   public InsertBuffer igetInsertBuffer()  {
+      return new InHandler();
    }
 
    class SetFont extends RunAwt {

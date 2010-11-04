@@ -7,15 +7,14 @@ import java.awt.Rectangle;
 import java.text.AttributedCharacterIterator;
 
 import javi.EventQueue;
-import javi.MapEvent;
 import static history.Tools.trace;
 
 class InHandler extends javi.InsertBuffer implements InputMethodListener {
 
    private int commited;
 
-   InHandler(MapEvent eventhandler) {
-      super(eventhandler);
+   InHandler() {
+      super();
    }
 
    public AttributedCharacterIterator cancelLatestCommittedText(

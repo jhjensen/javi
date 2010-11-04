@@ -123,7 +123,7 @@ class StreamInterface extends UI {
    }
    public void iSaveState(java.io.ObjectOutputStream os) {
    }
-   public InsertBuffer igetInsertBuffer(MapEvent me) {
+   public InsertBuffer igetInsertBuffer() {
       return null;
    }
 }

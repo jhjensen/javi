@@ -24,7 +24,6 @@ public abstract class InsertBuffer extends View.Inserter {
 
    public abstract void  insertReset();
 
-   private final MapEvent evhandler;
    private String dotbuffer;
    private KeyGroup ikeys = new KeyGroup();
    private KeyGroup commandikeys = new KeyGroup();
@@ -38,9 +37,8 @@ public abstract class InsertBuffer extends View.Inserter {
 
    static final boolean [] ff = {false, false};
 
-   public InsertBuffer(MapEvent eventhandleri) {
+   public InsertBuffer() {
       new Cmd();
-      evhandler = eventhandleri;
    }
 
    private class Cmd extends Rgroup {
@@ -266,7 +264,7 @@ public abstract class InsertBuffer extends View.Inserter {
                   key = ke.getKeyChar();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
-                     evhandler.hevent(ke, fvc);
+                     MapEvent.hevent(ke, fvc);
                   } else if (verbatim && (key >= '0' && key <= '9')) {
                      verbatimCount++;
                      verbatimAcc = verbatimAcc * 10 + (key - '0');

@@ -11,11 +11,13 @@ import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
 
+import static history.Tools.trace;
+
 public final class MapEvent {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
-   private KeyGroup skeys = new KeyGroup();
+   private static KeyGroup skeys = new KeyGroup();
    private static KeyGroup mkeys = new KeyGroup();
 
 //private FvContext fvc=0;
@@ -32,20 +34,15 @@ public final class MapEvent {
    private static final Float half = .5f;
    private static final Float mhalf = -.5f;
 
-   private int aiterate = 0;
-   private int riterate = 0;   //iterations for command that use 0
-   private int fiterate = 0;  //number of iterations forced to 1
+   private static int aiterate = 0;
+   private static int riterate = 0;   //iterations for command that use 0
+   private static int fiterate = 0;  //number of iterations forced to 1
 
-   MapEvent() {
+   static {
       MoveGroup.init();
    }
 
-   public static void mKeybind(char c, String cmd, Object arg, int modifiers) {
-      trace("");
-      mkeys.keybind(c, cmd, arg, modifiers);
-   }
-
-   void bindCommands() {
+   static void bindCommands() {
       Matcher sentenceRegex = Pattern.compile("\\.( |$)").matcher("");
       Matcher paragraphRegex = Pattern.compile("^ *$").matcher("");
       Matcher sectionRegex = Pattern.compile("^[^ ].*\\{").matcher("");
@@ -193,7 +190,7 @@ public final class MapEvent {
       skeys.keyactionbind(JeyEvent.VK_INSERT, "insert", ft, 0);
    }
 
-   boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
+   static boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
@@ -208,7 +205,7 @@ public final class MapEvent {
          return false;
    }
 
-   private boolean screenmovement(JeyEvent e1, FvContext fvc) throws
+   private static boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
       KeyBinding binding = skeys.get(e1);
       if (binding == null)
@@ -279,7 +276,7 @@ public final class MapEvent {
       }
    }
 
-   public void run() throws ExitException {
+   static void run() throws ExitException {
 //     try {Thread.sleep(20000);} catch (InterruptedException e) {/*Ignore*/}
 //trace("" + e  + " exitflag " + exitflag);
       while (true)
@@ -320,7 +317,7 @@ public final class MapEvent {
    //trace("returning from run");
    }
 
-   void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
+   static void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException , IOException {
       //trace("hevent" + jEv);
 
@@ -343,10 +340,5 @@ public final class MapEvent {
          aiterate = 0;
          return;
       }
-   }
-
-
-   private static void trace(String str) {
-      Tools.trace(str, 1);
    }
 }
