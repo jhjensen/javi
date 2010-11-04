@@ -92,4 +92,25 @@ public abstract class Rgroup {
    public static void trace(String str) {
       Tools.trace(str, 1);
    }
+
+   public final Float oBToFloat(Object str) throws InputException {
+      if (str == null)
+         throw new InputException("command needs decimal number");
+      try {
+         return Float.valueOf(str.toString().trim());
+      } catch (NumberFormatException e) {
+         throw new InputException("command needs decimal number", e);
+      }
+   }
+
+   public final int oBToInt(Object str) throws InputException {
+      if (str == null)
+         throw new InputException("command needs decimal number");
+      try {
+         return Integer.parseInt(str.toString().trim());
+      } catch (NumberFormatException e) {
+         throw new InputException("command needs decimal number", e);
+      }
+   }
+
 }

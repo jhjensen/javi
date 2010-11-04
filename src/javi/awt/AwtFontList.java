@@ -46,31 +46,9 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             "fonttype",
             "fontname",
             "fontweight",
-            "lines", // 5
-            "setwidth" ,
             "gotofontlist",
          };
          register(rnames);
-      }
-
-      private Float oBToFloat(Object str) throws InputException {
-         if (str == null)
-            throw new InputException("command needs decimal number");
-         try {
-            return Float.valueOf(str.toString().trim());
-         } catch (NumberFormatException e) {
-            throw new InputException("command needs decimal number", e);
-         }
-      }
-
-      private int oBToInt(Object str) throws InputException {
-         if (str == null)
-            throw new InputException("command needs decimal number");
-         try {
-            return Integer.parseInt(str.toString().trim());
-         } catch (NumberFormatException e) {
-            throw new InputException("command needs decimal number", e);
-         }
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -115,14 +93,6 @@ public final class AwtFontList extends TextEdit<FontEntry> {
                return null;
 
             case 5:
-               setDefaultFontSize(-1, oBToInt(arg));
-               return null;
-
-            case 6:
-               setDefaultFontSize(oBToInt(arg), -1);
-               return null;
-
-            case 7:
                PosListList.Cmd.gotoList(fvc, getList());
                return null;
 
@@ -135,13 +105,8 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    private static AwtFontList inst;
 
    static final String [] typest = {"plain", "bold", "italic", "bold+italic"};
-   private static int defwidth;
-   private static int defheight;
 
    public static void init() {
-      defwidth = 80;
-      defheight = 80;
-
       inst = new AwtFontList(new FontParser());
       Command.execCmdList(); // pickup font commands
    }
@@ -203,22 +168,6 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       FontEntry fe = (FontEntry) (FvContext.getcontext(vi, inst).at());
       //trace("font.getCurr " + fe);
       return  fe.getFont();
-   }
-
-   public static int getHeight() {
-      return defheight;
-   }
-
-   public static int getWidth() {
-      return defwidth;
-   }
-
-   public static void setDefaultFontSize(int width, int height) {
-      //trace("width " + width + " height " + height);
-      if (height != -1)
-         defheight = height;
-      if (width != -1)
-         defwidth = width;
    }
 
    public static TextEdit getList() {

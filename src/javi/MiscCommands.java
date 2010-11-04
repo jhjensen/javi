@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Date;
 
-class MiscCommands extends Rgroup  {
+public class MiscCommands extends Rgroup  {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
    MiscCommands() {
@@ -21,6 +21,8 @@ class MiscCommands extends Rgroup  {
          "loadgroup",
          "comm",
          "exec",            //10
+         "lines", // 5
+         "setwidth" ,
       };
       register(rnames);
    }
@@ -29,8 +31,10 @@ class MiscCommands extends Rgroup  {
    private static TextEdit cmdfile;
    private static String lastdebug = "javi.Javi";
    private static String lastshell = null;
+   private static int defwidth = 80;
+   private static int defheight = 80;
 
-   public Object doroutine(int rnum, Object arg, int count, int rcount,
+   public final Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
       //trace("rnum = " + rnum );
       switch (rnum) {
@@ -63,11 +67,26 @@ class MiscCommands extends Rgroup  {
          case 10:
             startcmd((String) arg, fvc);
             return null;
+         case 11:
+            defheight = oBToInt(arg);
+            return null;
+         case 12:
+            defwidth = oBToInt(arg);
+            return null;
+
          default:
             throw new RuntimeException("vigroup:default");
       }
 
 //trace("end ");
+   }
+
+   public static int getHeight() {
+      return defheight;
+   }
+
+   public static int getWidth() {
+      return defwidth;
    }
 
    private static class MyFl implements EditContainer.FileStatusListener {
@@ -101,9 +120,6 @@ class MiscCommands extends Rgroup  {
       if (index != -1)
          fvc.cursoryabs(index);
       fvc.fixCursor();
-   }
-   public String toString() {
-      return ("vigroup");
    }
 
    private void startshell(FvContext fvc, String host) throws
@@ -252,8 +268,11 @@ class MiscCommands extends Rgroup  {
             scchange = scchange * 10 + (key & 0x0f);
          else  {
             //trace("scchange " + scchange);
-            if (scchange != 0)
-               UI.setViewSize(fvc.vi, -1, scchange);
+            if (scchange != 0) {
+               defheight = scchange;
+               fvc.vi.setSizebyChar(-1, scchange);
+               UI.sizeChange();
+            }
             if (rcount != 0)
                fvc.cursoryabs(rcount);
             switch (key) {

@@ -1,6 +1,6 @@
 package javi;
 
-//cycle MapEvent View
+//cycle MapEvent
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -56,7 +56,7 @@ public abstract class UI {
    public abstract Result ireportModVal(String caption, String units,
                                  String []buttonVals, long limit);
 
-   public abstract void isetViewSize(View vi, int width, int height);
+   public abstract void isizeChange();
 
    public abstract InsertBuffer igetInsertBuffer(MapEvent me);
 
@@ -269,7 +269,7 @@ public abstract class UI {
       return instance.ireportModVal(caption, units, buttonVals, limit);
    }
 
-   static void setViewSize(View vi, int width, int height) {
-      instance.isetViewSize(vi, width, height);
+   static void sizeChange() {
+      instance.isizeChange();
    }
 }

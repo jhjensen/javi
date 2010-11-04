@@ -14,6 +14,7 @@ public abstract class View  implements java.io.Serializable {
    public abstract int getTabStop();
    public abstract void repaint();
    public abstract boolean isVisible();
+   public abstract void setSizebyChar(int xchar, int ychar);
 
    protected abstract void startInsertion(Inserter ins);
    protected abstract void endInsertion(Inserter ins);

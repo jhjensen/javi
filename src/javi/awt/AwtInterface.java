@@ -59,6 +59,7 @@ import javi.FvContext;
 import javi.InputException;
 import javi.InsertBuffer;
 import javi.MapEvent;
+import javi.MiscCommands;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -714,7 +715,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       Component cmdComp = ta.getComponent();
       viewCount++;
       cmdComp.setFont(AwtFontList.getCurr(null));
-      ta.setSizebyChar(AwtFontList.getWidth(), AwtFontList.getHeight());
+      ta.setSizebyChar(MiscCommands.getWidth(), MiscCommands.getHeight());
       frm.add(cmdComp, -1);
       //frm.setComponentZOrder(ta,1);
       //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
@@ -866,11 +867,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return diaflag;
    }
 
-   public void isetViewSize(View vi, int width, int height) {
+   public void isizeChange() {
       //trace("width " + width + " height " + height + " view = " + vi);
-      AwtFontList.setDefaultFontSize(width, height);
-      OldView ta = (OldView) vi;
-      ta.setSizebyChar(width, height);
       if (normalFrame == frm
             && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
             == Frame.MAXIMIZED_BOTH))

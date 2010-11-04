@@ -52,6 +52,7 @@ public final class Javi {
       //try {Thread.sleep(1000);} catch (InterruptedException e) {/*Ignore*/}
 
       new Jcmds();
+      new MiscCommands();
       try {
          Command.readini();
       } catch (Exception e) {
@@ -69,7 +70,6 @@ public final class Javi {
 
       MapEvent eview = new MapEvent();
 
-      new MiscCommands();
       Command.init(new EditGroup(eview));
       new PosListList.Cmd();
 

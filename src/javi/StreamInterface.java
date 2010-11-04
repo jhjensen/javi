@@ -116,7 +116,7 @@ class StreamInterface extends UI {
 
       return null;
    }
-   public void isetViewSize(View vi, int width, int height) {
+   public void isizeChange() {
    }
 
    public void iRestoreState(java.io.ObjectInputStream is) {

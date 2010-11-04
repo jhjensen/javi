@@ -145,9 +145,9 @@ class JavaCompiler extends Rgroup {
             Iterable<? extends JavaFileObject> clist =
                FileDescriptor.getFileObjs(fileManager, flist);
 
-            //String [] options = {"-Xlint"};
+            //String [] options = {"-Xlint:all"};
 
-            String [] options = {"-d", "build", "-Xlint:all"};
+            String [] options = {"-d", "build"};
             //String [] options = {"-d", "gbuild/java/build", "-cp",
              //  "gbuild/java/build","-Xlint"};
 
