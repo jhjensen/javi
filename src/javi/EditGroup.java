@@ -15,10 +15,9 @@ class EditGroup extends Rgroup {
    private char dotchar;
    private Object dotarg;
 
-   private final InsertBuffer icontext;
    void setInsertMode(FvContext fvc, boolean overwrite) throws
          InputException, IOException {
-      icontext.insertmode(false, 1, fvc, overwrite, true);
+      InsertBuffer.insertMode(false, 1, fvc, overwrite, true);
    }
 
    EditGroup() {
@@ -54,7 +53,6 @@ class EditGroup extends Rgroup {
       };
 
       register(rnames);
-      icontext = UI.getInsertBuffer();
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -72,31 +70,31 @@ class EditGroup extends Rgroup {
       switch (rnum) {
          case 1:
             boolean[] a2 = (boolean[]) arg;
-            icontext.insertmode(dotmode, count, fvc, a2[0], a2[1]);
+            InsertBuffer.insertMode(dotmode, count, fvc, a2[0], a2[1]);
             break;
          case 2:
             fvc.cursorxabs(0);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 3:
             fvc.cursorx(1);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 4:
             fvc.cursorxabs(Integer.MAX_VALUE);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 5:
             fvc.cursorxabs(Integer.MAX_VALUE);
             fvc.inserttext("\n");
             fvc.cursory(1);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 6:
             fvc.cursorxabs(0);
             fvc.inserttext("\n");
 
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 7:
             substitute(dotmode, count, fvc);
@@ -113,7 +111,7 @@ class EditGroup extends Rgroup {
             break;
          case 11:
             deletetoend('0', count, fvc);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             break;
          case 12:
             deletemode('0', dotmode, count, rcount, fvc);
@@ -423,7 +421,7 @@ class EditGroup extends Rgroup {
             break;
          case 'C' :
             deletetoend(bufid, count, fvc);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             dotbufid = bufid;
             dotevent2 = event;
             break;
@@ -483,7 +481,7 @@ class EditGroup extends Rgroup {
          InputException , IOException {
       deleteChars('0', fvc, true, true, count);
       count = 1;
-      icontext.insertmode(dotmode, count, fvc, false, false);
+      InsertBuffer.insertMode(dotmode, count, fvc, false, false);
    }
 
    private void ucSubstitute(boolean dotmode, int count, FvContext fvc) throws
@@ -491,7 +489,7 @@ class EditGroup extends Rgroup {
       MoveGroup.starttext(fvc);
       deletetoend('0', count, fvc);
       count = 1;
-      icontext.insertmode(dotmode, count, fvc, false, false);
+      InsertBuffer.insertMode(dotmode, count, fvc, false, false);
       fvc.edvec.checkpoint();
       fvc.fixCursor();
    }
@@ -637,7 +635,7 @@ class EditGroup extends Rgroup {
             dotevent3 = event;
             MoveGroup.starttext(fvc);
             deletetoend(bufid, count, fvc);
-            icontext.insertmode(dotmode, count, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
             return;
          case 27: //esc
             return;
@@ -646,7 +644,7 @@ class EditGroup extends Rgroup {
                EventQueue.pushback(event);
 
             deletemode(bufid, dotmode, count, rcount, fvc);
-            icontext.insertmode(dotmode, 1, fvc, false, false);
+            InsertBuffer.insertMode(dotmode, 1, fvc, false, false);
       }
    }
 

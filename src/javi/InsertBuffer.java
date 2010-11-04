@@ -22,6 +22,8 @@ public abstract class InsertBuffer extends View.Inserter {
       return overwrite;
    }
 
+   private static InsertBuffer instance;
+
    public abstract void  insertReset();
 
    private String dotbuffer;
@@ -39,6 +41,13 @@ public abstract class InsertBuffer extends View.Inserter {
 
    public InsertBuffer() {
       new Cmd();
+      instance = this;
+   }
+
+   static final void insertMode(boolean dotmode, int count, FvContext fvc,
+         boolean overwritei, boolean singlelinei) throws
+         IOException, InputException {
+      instance.insertmode(dotmode, count, fvc, overwritei, singlelinei);
    }
 
    private class Cmd extends Rgroup {

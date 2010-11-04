@@ -95,6 +95,7 @@ public final class EventQueue {
          biglock2.lock();
          return ev;
       }
+
       while (true)
          try {
             for (Idler id : iList) {

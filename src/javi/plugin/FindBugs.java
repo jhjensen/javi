@@ -44,7 +44,7 @@ public class FindBugs extends Rgroup implements Plugin {
 
    public static void main(String[] args) {
       try {
-         javi.UI.init(false);
+         new javi.StreamInterface();
 
          FindBugRunner gr = (args.length == 0)
             ? new FindBugRunner(".")

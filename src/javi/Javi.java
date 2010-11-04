@@ -62,7 +62,11 @@ public final class Javi {
          e.printStackTrace();
       }
       //trace("");
-      UI.init(true);
+      //UI instance = isAwt
+      //   ? new javi.awt.AwtInterface()
+       //  : new StreamInterface();
+      new javi.awt.AwtInterface();
+
       //trace("");
    }
 

@@ -1407,7 +1407,7 @@ final class EditTester1 {
 
    public static void main(String[] args) {
       try { // forces static initialization that makes debugging more confusing
-         UI.init(false);
+         new StreamInterface();
          TextEdit<String> dummy = newTe("dummy");
          dummy.disposeFvc();
       } catch (Throwable e) {

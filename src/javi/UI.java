@@ -14,10 +14,11 @@ public abstract class UI {
    };
 
    private static UI instance = null;
-   protected static void setInstance(UI inst) {
+
+   public UI() {
       if (instance != null)
          throw new RuntimeException("attempt to create two Awt singletons");
-      instance = inst;
+      instance = this;
    }
 
    protected static UI getInstance() {
@@ -58,12 +59,6 @@ public abstract class UI {
 
    public abstract void isizeChange();
 
-   public abstract InsertBuffer igetInsertBuffer();
-
-   public static InsertBuffer getInsertBuffer() {
-      return instance.igetInsertBuffer();
-   }
-
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
@@ -80,13 +75,6 @@ public abstract class UI {
       instance.iRestoreState(is);
       instance.ishow();
       toFront();
-   }
-
-   public static void init(boolean isAwt) throws ExitException {
-      //trace("");
-      instance = isAwt
-         ? new javi.awt.AwtInterface()
-         : new StreamInterface();
    }
 
    static void setStream(Reader inreader) {

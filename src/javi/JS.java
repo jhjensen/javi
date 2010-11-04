@@ -149,7 +149,7 @@ public class JS extends Rgroup {
    public static void main(String[] args) {
       try {
 
-         UI.init(false);
+         new StreamInterface();
          Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
          myassert("ok".equals(obj), obj);
 

@@ -58,7 +58,6 @@ import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
 import javi.InsertBuffer;
-import javi.MapEvent;
 import javi.MiscCommands;
 import javi.Rgroup;
 import javi.StringIoc;
@@ -102,7 +101,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public AwtInterface() throws ExitException {
-      setInstance(this);
       //super("vi:");
       //outfor 1.4 FocusManager.disableSwingFocusManager();
       //1.4setUndecorated(true);
@@ -688,6 +686,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             frm.add(statusBar, 0);
             trace("setting frame visible");
             ishow();
+            new InHandler();
          } catch (Throwable ex) {
             trace("failure in awt Initer ");
             ex.printStackTrace();
@@ -875,10 +874,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          frm.setSize(frm.getPreferredSize());
 
       new Validate();
-   }
-
-   public InsertBuffer igetInsertBuffer()  {
-      return new InHandler();
    }
 
    class SetFont extends RunAwt {
