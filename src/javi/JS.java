@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import static history.Tools.trace;
 
 final class RealJs {
    private RealJs() { }

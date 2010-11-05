@@ -195,11 +195,10 @@ public final class MapEvent {
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
       //trace("domovement ev = " + ein);
-      KeyBinding binding = mkeys.get(ein);
+      Rgroup.KeyBinding binding = mkeys.get(ein);
       if (binding != null) {
          //trace("binding rg = " + binding.rg + " event " + ein);
-         binding.rg.doroutine(binding.index, binding.arg, fiteratei, riteratei,
-            fvc, dotmode);
+         binding.dobind(fiteratei, riteratei, fvc, dotmode);
          return true;
       } else
          return false;
@@ -207,12 +206,11 @@ public final class MapEvent {
 
    private static boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
-      KeyBinding binding = skeys.get(e1);
+      Rgroup.KeyBinding binding = skeys.get(e1);
       if (binding == null)
          return false;
       //trace("binding  = " + binding);
-      binding.rg.doroutine(binding.index, binding.arg, fiterate, riterate,
-          fvc, false);
+      binding.dobind(fiterate, riterate, fvc, false);
       return true;
 
    }

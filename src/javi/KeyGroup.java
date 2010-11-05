@@ -5,15 +5,13 @@ import java.util.HashMap;
 final class KeyGroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
-   private HashMap<JeyEvent, KeyBinding> map =
-      new HashMap<JeyEvent, KeyBinding>();
+   private HashMap<JeyEvent, Rgroup.KeyBinding> map =
+      new HashMap<JeyEvent, Rgroup.KeyBinding>();
 
-   private static KeyBinding getkb(String name, Object arg) {
+   private static Rgroup.KeyBinding getkb(String name, Object arg) {
       //trace("looking up " + name);
-      KeyBinding kb = Rgroup.bindingLookup(name);
-      return (kb.arg != arg) // use default bind if arguments the same
-             ? new KeyBinding(kb.rg, arg, kb.index)
-             : kb;
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup(name);
+      return kb.proto(arg); // use default bind if arguments the same
    }
 
    void keybind(char c, String name, Object arg, int modifiers) {
@@ -38,7 +36,7 @@ final class KeyGroup {
          throw new RuntimeException("mapping identical keymaps: " + binding);
    }
 
-   KeyBinding get(JeyEvent e) {
+   Rgroup.KeyBinding get(JeyEvent e) {
       //trace("get " + e + " return " + map.get(e) jjjjjjjjjjjjjjjjjjjjjjjjjjjj+ " event hash " + e.hashCode());
       return map.get(e);
    }

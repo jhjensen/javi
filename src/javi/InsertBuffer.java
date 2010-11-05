@@ -264,10 +264,9 @@ public abstract class InsertBuffer extends View.Inserter {
             while  (true) {
                JeyEvent ke = EventQueue.nextEvent(viewer);
                //trace("event = " + e);
-               KeyBinding binding;
+               Rgroup.KeyBinding binding;
                if (!verbatim && (binding = activekeys.get(ke)) != null) {
-                  if (null != binding.rg.doroutine(binding.index,
-                        binding.arg, count, 0, fvc, false))
+                  if (null != binding.dobind(count, 0, fvc, false))
                      break;
                } else {
                   key = ke.getKeyChar();

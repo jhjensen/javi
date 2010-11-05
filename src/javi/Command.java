@@ -146,7 +146,7 @@ public final class Command extends Rgroup {
       if (kb == null)
          throw new InputException("setting unknown variable:" + var);
 
-      return kb.rg.doroutine(kb.index, val, 0, 0, fvc, false);
+      return kb.dobind(val, 0, 0, fvc, false);
    }
 
    private int oToInt(Object str) throws InputException {
@@ -204,13 +204,12 @@ public final class Command extends Rgroup {
          //trace("command kb = " + kb);
          boolean comdone = false;
          if (kb != null) {
-            if (args == null && kb.arg != null)
-               args = kb.arg;
-            if (kb.rg == instance) {
-               instance.doroutine(kb.index, args, 0, 0, fvc, false);
+            if (kb.match(instance)) {
+               kb.dobind(args, 0, 0, fvc, false);
                comdone = true;
             }
          }
+
          //trace("vic.command 3 kb= " + kb + "comdone " + comdone + " fvc " + fvc);
          if (!comdone) {
             if (fvc != null)  {
@@ -219,7 +218,7 @@ public final class Command extends Rgroup {
                if (newpos == -1) {
                   if (kb != null) {
                      //trace("doing routine " +kb);
-                     kb.rg.doroutine(kb.index, args, 0, 0, fvc, false);
+                     kb.dobind(args, 0, 0, fvc, false);
                   } else
                      UI.reportMessage("Unknown Command:" + line);
                } else {
@@ -229,7 +228,7 @@ public final class Command extends Rgroup {
             } else {
                if (kb != null) {
                   //trace("doing routine " +kb);
-                  kb.rg.doroutine(kb.index, args, 0, 0, null, false);
+                  kb.dobind(args, 0, 0, null, false);
                } else {
                   UI.reportMessage("Unknown Command:" + line);
                }

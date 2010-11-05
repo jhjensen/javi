@@ -6,9 +6,51 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
 import java.io.IOException;
-
+import static history.Tools.trace;
 
 public abstract class Rgroup {
+
+   final class KeyBinding {
+   /* Copyright 1996 James Jensen all rights reserved */
+      static final String copyright = "Copyright 1996 James Jensen";
+      private final Object arg;
+      private final int index;
+      KeyBinding(Object argi , int indexi) {
+         arg = argi;
+         index = indexi;
+      }
+      public String toString() {
+         return (Rgroup.this + "|" + arg + "|" + index);
+      }
+
+      Object dobind(int count,
+         int rcount, FvContext fvc , boolean dotmode) throws
+            IOException, InterruptedException, InputException {
+         return doroutine(index, arg, count, rcount, fvc, dotmode);
+      }
+
+      Object dobind(Object arg2, int count,
+         int rcount, FvContext fvc , boolean dotmode) throws
+            IOException, InterruptedException, InputException {
+
+         return doroutine(index, arg2 == null
+               ? arg
+               : arg2
+            , count, rcount, fvc, dotmode);
+      }
+
+
+      boolean match(Rgroup rg) {
+         return rg == Rgroup.this;
+      }
+
+      KeyBinding proto(Object arg2) {
+         return (arg != arg2) // use default bind if arguments the same
+            ? new KeyBinding(arg2, index)
+            : this;
+
+      }
+   }
 
    private static HashMap<String, KeyBinding> cmhash =
       new HashMap<String, KeyBinding>(100);
@@ -35,7 +77,7 @@ public abstract class Rgroup {
       if (arg == null)
          arg = cm.arg;
 
-      return cm.rg.doroutine(cm.index, arg, count, rcount, fvc, dotmode);
+      return cm.dobind(arg, count, rcount, fvc, dotmode);
    }
 
    public final void register(String[] commands) {
@@ -44,10 +86,12 @@ public abstract class Rgroup {
          if (cmhash.containsKey(commands[i]))
             throw new RuntimeException("duplicate command:" + commands[i]);
          else
-            cmhash.put(commands[i], new KeyBinding(this, null, i));
+            cmhash.put(commands[i], new KeyBinding(null, i));
 
       }
    }
+
+/*
    public final void register(String command, int index) {
       trace("register");
       if (cmhash.containsKey(command))
@@ -55,6 +99,7 @@ public abstract class Rgroup {
       else
          cmhash.put(command, new KeyBinding(this, null, index));
    }
+*/
 
 
    public final void unregister()  {
@@ -63,8 +108,8 @@ public abstract class Rgroup {
             cmhash.entrySet().iterator(); eve.hasNext();) {
          Map.Entry<String, KeyBinding> me = eve.next();
          trace("examine unregistering cmd " + me.getKey() + " rg "
-            + me.getValue().rg);
-         if (me.getValue().rg == this) {
+            + me.getValue());
+         if (me.getValue().match(this)) {
             trace("unregistering cmd " + me.getKey());
             eve.remove();
          }
@@ -87,10 +132,6 @@ public abstract class Rgroup {
       } catch (ClassNotFoundException e) {
          throw new RuntimeException("vigroup ", e);
       }
-   }
-
-   public static void trace(String str) {
-      Tools.trace(str, 1);
    }
 
    public final Float oBToFloat(Object str) throws InputException {

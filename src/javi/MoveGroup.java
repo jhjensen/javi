@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
+import static history.Tools.trace;
 
 final class MoveGroup extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */

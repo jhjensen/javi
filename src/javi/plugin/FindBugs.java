@@ -8,6 +8,7 @@ import javi.FvContext;
 import javi.Position;
 import javi.PositionIoc;
 import javi.Plugin;
+import static history.Tools.trace;
 
 public class FindBugs extends Rgroup implements Plugin {
 
