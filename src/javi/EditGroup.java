@@ -16,11 +16,6 @@ class EditGroup extends Rgroup {
    private char dotchar;
    private Object dotarg;
 
-   void setInsertMode(FvContext fvc, boolean overwrite) throws
-         InputException, IOException {
-      InsertBuffer.insertMode(false, 1, fvc, overwrite, true);
-   }
-
    EditGroup() {
       final String[] rnames = {
          "",
@@ -105,7 +100,7 @@ class EditGroup extends Rgroup {
             break;
          case 9:
             boolean[] a1 = (boolean[]) arg;
-            deleteChars('0', fvc, a1[0], a1[1], count);
+            fvc.deleteChars('0', a1[0], a1[1], count);
             break;
          case 10:
             deletetoend('0', count, fvc);
@@ -354,7 +349,7 @@ class EditGroup extends Rgroup {
                default:
                   continue;
             }
-         } catch (ReadOnlyException e) {
+         } catch (EditContainer.ReadOnlyException e) {
             fvc.vi.clearMark();
             throw e;
          }
@@ -406,12 +401,12 @@ class EditGroup extends Rgroup {
             break;
          case 'X' :
          case 127 :
-            deleteChars(bufid, fvc, false, false, count);
+            fvc.deleteChars(bufid, false, false, count);
             dotbufid = bufid;
             dotevent2 = event;
             break;
          case 'x' :
-            deleteChars(bufid, fvc, true, true, count);
+            fvc.deleteChars(bufid, true, true, count);
             dotbufid = bufid;
             dotevent2 = event;
             break;
@@ -447,19 +442,6 @@ class EditGroup extends Rgroup {
       }
    }
 
-   static void appendCurrBuf(StringBuilder sb , boolean singleline) {
-      Object obj = Buffers.getbuf('0');
-      if (obj != null)  {
-         if (obj instanceof ArrayList) {
-            for (Object obj1 : (ArrayList) obj)  {
-               sb.append(obj1.toString());
-               sb.append(singleline ? ' ' : '\n');
-            }
-         } else
-            sb.append(obj.toString());
-      }
-   }
-
    private void putbuffer(char id, boolean after, FvContext fvc)  {
 
       Object buf = Buffers.getbuf(id);
@@ -480,7 +462,7 @@ class EditGroup extends Rgroup {
 
    private void substitute(boolean dotmode, int count, FvContext fvc) throws
          InputException , IOException {
-      deleteChars('0', fvc, true, true, count);
+      fvc.deleteChars('0', true, true, count);
       count = 1;
       InsertBuffer.insertMode(dotmode, count, fvc, false, false);
    }
@@ -493,40 +475,6 @@ class EditGroup extends Rgroup {
       InsertBuffer.insertMode(dotmode, count, fvc, false, false);
       fvc.edvec.checkpoint();
       fvc.fixCursor();
-   }
-
-   static void deleteChars(char bufid, FvContext fvc,
-         boolean reversable, boolean forward, int count) {
-      String line = fvc.at().toString();
-      String deleted = null;
-
-
-      //Thread.dumpStack();
-
-      //trace("count = " + count + " llen = " + line.length());
-
-      if (line.length() == fvc.insertx() && reversable)
-         forward = false;
-      if (forward) {
-         if (fvc.insertx() + count > line.length())
-            count = line.length() - fvc.insertx();
-         deleted = line.substring(fvc.insertx(), fvc.insertx() + count);
-         line = line.substring(0, fvc.insertx())
-            + line.substring(fvc.insertx() + count, line.length());
-      } else {
-         if (fvc.insertx() < count)
-            count = fvc.insertx();
-         if  (0 == count)
-            return;
-         deleted = line.substring(fvc.insertx() - count, fvc.insertx());
-         line = line.substring(0, fvc.insertx() - count)
-            + line.substring(fvc.insertx(), line.length());
-         fvc.cursorx(-count);
-      }
-      Buffers.deleted(bufid, deleted);
-      fvc.changeElementStr(line);
-      //trace("count = " + count + " llen = " + line.length());
-      return;
    }
 
    static void deletetoend(char bufid, int count, FvContext fvc) {

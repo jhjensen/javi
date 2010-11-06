@@ -14,7 +14,7 @@ public class StreamInterface extends UI {
 
    public final Buttons ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,
-                    UndoHistory.BackupStatus status, String backupname) {
+                    BackupStatus status, String backupname) {
 
       StringBuilder sb = new StringBuilder("problem found in file ");
       sb.append(filename);

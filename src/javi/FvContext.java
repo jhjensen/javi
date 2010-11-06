@@ -625,4 +625,38 @@ public final class FvContext<OType> implements Serializable {
    boolean isGotoOk() {
       return this != tfc;
    }
+   void deleteChars(char bufid, boolean reversable,
+         boolean forward, int count) {
+      String line = at().toString();
+      String deleted = null;
+
+
+      //Thread.dumpStack();
+
+      //trace("count = " + count + " llen = " + line.length());
+
+      if (line.length() == insertx() && reversable)
+         forward = false;
+      if (forward) {
+         if (insertx() + count > line.length())
+            count = line.length() - insertx();
+         deleted = line.substring(insertx(), insertx() + count);
+         line = line.substring(0, insertx())
+            + line.substring(insertx() + count, line.length());
+      } else {
+         if (insertx() < count)
+            count = insertx();
+         if  (0 == count)
+            return;
+         deleted = line.substring(insertx() - count, insertx());
+         line = line.substring(0, insertx() - count)
+            + line.substring(insertx(), line.length());
+         cursorx(-count);
+      }
+      Buffers.deleted(bufid, deleted);
+      changeElementStr(line);
+      //trace("count = " + count + " llen = " + line.length());
+      return;
+   }
+
 }

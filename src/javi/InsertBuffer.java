@@ -44,10 +44,40 @@ public abstract class InsertBuffer extends View.Inserter {
       instance = this;
    }
 
+   static void setInsertMode(FvContext fvc, boolean overwrite) throws
+         InputException, IOException {
+      insertMode(false, 1, fvc, overwrite, true);
+   }
+
    static final void insertMode(boolean dotmode, int count, FvContext fvc,
          boolean overwritei, boolean singlelinei) throws
          IOException, InputException {
       instance.insertmode(dotmode, count, fvc, overwritei, singlelinei);
+   }
+
+   static String getcomline(String prompt) {
+      FvContext<String> commFvc =  FvContext.startComLine();
+      EditContainer ev = commFvc.edvec;
+      try {
+         if (!(commFvc.at(ev.finish() - 1).toString().equals(prompt))) {
+            ev.insertOne(prompt, ev.finish());
+         }
+         commFvc.cursorabs(prompt.length(), ev.finish() - 1);
+         setInsertMode(commFvc, false);
+
+      } catch (InputException e) {
+         UI.reportMessage(e.toString());
+      } catch (Throwable e) {
+         UI.popError("exception in command processing ", e);
+      }
+
+      String line = FvContext.endComLine();
+      if (line.startsWith(prompt, 0))
+         return line;
+      else {
+         UI.reportMessage("deleted prompt");
+         return prompt;
+      }
    }
 
    private class Cmd extends Rgroup {
@@ -137,20 +167,20 @@ public abstract class InsertBuffer extends View.Inserter {
             case 3:
                if (0 == buffer.length()) {
                   fvc.cursorx(-1);
-                  EditGroup.deleteChars('0', fvc, false, true, 1);
+                  fvc.deleteChars('0', false, true, 1);
                } else {
                   buffer.setLength(buffer.length() - 1);
                   fvc.vi.lineChanged(fvc.inserty());
                }
                break;
             case  4: // delete
-               EditGroup.deleteChars('0', fvc, false, true, 1);
+               fvc.deleteChars('0', false, true, 1);
                break;
             case 5:
                itext(count, fvc);
                if (count > 1) {
                   if (overwrite)
-                     EditGroup.deleteChars('0', fvc, false, true,
+                     fvc.deleteChars('0', false, true,
                         (count - 1) * dotbuffer.length());
                   for (int i = 1; i < count; i++)
                      fvc.cursorabs(fvc.inserttext(dotbuffer));
@@ -199,7 +229,7 @@ public abstract class InsertBuffer extends View.Inserter {
                fvc.changeElement(fvc.at(currline));
                break;
             case 11:
-               EditGroup.appendCurrBuf(buffer, singleline);
+               Buffers.appendCurrBuf(buffer, singleline);
                fvc.changeElement(fvc.at(currline)); // force redraw
                break;
             case 12:
@@ -219,7 +249,7 @@ public abstract class InsertBuffer extends View.Inserter {
          String temps = buffer.toString();
 
          if (overwrite)
-            EditGroup.deleteChars('0', fvc, false,
+            fvc.deleteChars('0', false,
                true, (count) * temps.length());
 
          //for (char chr :temps) trace("inserting " + (int)chr);
@@ -244,8 +274,7 @@ public abstract class InsertBuffer extends View.Inserter {
       int key;
       if (dotmode) {
          if (overwrite)
-            EditGroup.deleteChars('0', fvc,
-               false, true, count * dotbuffer.length());
+            fvc.deleteChars('0', false, true, count * dotbuffer.length());
          for (int i = 0; i < count; i++)
             fvc.cursorabs(fvc.inserttext(dotbuffer));
       } else {

@@ -201,7 +201,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   final public boolean isValid() {
+   public final boolean isValid() {
       return ecache != null;
    }
 
@@ -479,7 +479,7 @@ public class EditContainer<OType> implements
          reload(false);
       }
 
-      UndoHistory.BackupStatus getBackupStatus() {
+      BackupStatus getBackupStatus() {
          FileDescriptor fd = prop.fdes.getPersistantFd();
          if (fd != null) {
             if  (fd.exists()) {
@@ -488,21 +488,21 @@ public class EditContainer<OType> implements
                      Exception seterror = backup.setFile(
                         ((FileDescriptor.LocalFile) fd).fh);
                      ecache.clear(1); // why do I need this?
-                     UndoHistory.BackupStatus readError = backup.readToQuit();
+                     BackupStatus readError = backup.readToQuit();
                      backupMade = true;
 
                      return seterror == null
                             ? readError
-                            : new UndoHistory.BackupStatus(
+                            : new BackupStatus(
                                false, false, seterror);
                   } catch (Throwable e) {
                      trace("backup failed exception = " + e);
                      backup.ereset();
                      e.printStackTrace();
-                     return new UndoHistory.BackupStatus(false, false, e);
+                     return new BackupStatus(false, false, e);
                   }
                } else {
-                  return new UndoHistory.BackupStatus(false, false,
+                  return new BackupStatus(false, false,
                      new IOException("backup file not writeable"));
                }
             }
@@ -1386,5 +1386,21 @@ public class EditContainer<OType> implements
       void fileAdded(EditContainer ev);
       void fileWritten(EditContainer ev);
       boolean fileDisposed(EditContainer ev);
+   }
+
+   static class ReadOnlyException extends UnsupportedOperationException {
+   /* Copyright 1996 James Jensen all rights reserved */
+
+      static final String copyright = "Copyright 1996 James Jensen";
+
+      private final EditContainer ev;
+      final EditContainer getEv() {
+         return ev;
+      }
+
+      ReadOnlyException(EditContainer efi, String st) {
+         super(st);
+         ev = efi;
+      }
    }
 }

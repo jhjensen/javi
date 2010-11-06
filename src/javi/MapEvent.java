@@ -38,10 +38,6 @@ public final class MapEvent {
    private static int riterate = 0;   //iterations for command that use 0
    private static int fiterate = 0;  //number of iterations forced to 1
 
-   static {
-      MoveGroup.init();
-   }
-
    static void bindCommands() {
       Matcher sentenceRegex = Pattern.compile("\\.( |$)").matcher("");
       Matcher paragraphRegex = Pattern.compile("^ *$").matcher("");
@@ -225,7 +221,7 @@ public final class MapEvent {
       switch (diaflag) {
 
          case CHECKOUT:
-            Command.command("vcscheckout", null, filename);
+            //Command.command("vcscheckout", null, filename);
             break;
          case MAKEWRITEABLE:
             edv.setReadOnly(false);
@@ -286,7 +282,7 @@ public final class MapEvent {
             }
          } catch (InterruptedException ex) {
             trace("!! caught interrupted exception");
-         } catch (ReadOnlyException e) {
+         } catch (EditContainer.ReadOnlyException e) {
             try {
                makeWriteable(e.getEv(), e.getMessage());
             } catch (IOException e2) {

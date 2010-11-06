@@ -165,4 +165,18 @@ public final class Buffers {
       }
 
    }
+
+   static void appendCurrBuf(StringBuilder sb , boolean singleline) {
+      Object obj = Buffers.getbuf('0');
+      if (obj != null)  {
+         if (obj instanceof ArrayList) {
+            for (Object obj1 : (ArrayList) obj)  {
+               sb.append(obj1.toString());
+               sb.append(singleline ? ' ' : '\n');
+            }
+         } else
+            sb.append(obj.toString());
+      }
+   }
+
 }

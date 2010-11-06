@@ -265,7 +265,8 @@ public class TextEdit<OType> extends EditContainer<OType> {
          case 'w':
             File file = new File(args);
             if (file.exists() && !file.canWrite())
-               throw new ReadOnlyException(this, file.getCanonicalPath());
+               throw new EditContainer.ReadOnlyException(
+                  this, file.getCanonicalPath());
             PrintWriter os = new PrintWriter(new FileWriter(file));
             try {
 

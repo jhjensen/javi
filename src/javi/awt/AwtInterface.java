@@ -63,7 +63,7 @@ import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
-import javi.UndoHistory;
+import javi.BackupStatus;
 import javi.View;
 import history.Tools;
 
@@ -674,6 +674,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                //trace("connecting " + FileList.getContext(vi).at() + "vi " + vi);
                FvContext.connectFv((TextEdit) FileList.getContext(vi).at(), vi);
                AwtCircBuffer.initCmd();
+               FontEntry.init(new AFontChanger());
             } catch (InputException e) {
                throw new RuntimeException("can't recover iaddview", e);
             } finally {
@@ -910,8 +911,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   public static void fontChange(Font font, View vi) {
-      ((AwtInterface) getInstance()).new SetFont(font, vi);
+   class AFontChanger extends FontEntry.FontChanger {
+      void setFont(Font font, View vi) {
+         ((AwtInterface) getInstance()).new SetFont(font, vi);
+      }
    }
 
    private static class MyMenuItem extends MenuItem {
@@ -1168,10 +1171,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       private final int linenum;
       private final Object filevers;
       private final Object backupvers;
-      private final UndoHistory.BackupStatus status;
+      private final BackupStatus status;
 
       HandleDiff(String filenamei, int linenumi, Object fileversi,
-            Object backupversi, UndoHistory.BackupStatus statusi,
+            Object backupversi, BackupStatus statusi,
             String backupnamei) {
          super();
          synchronized (this) {
@@ -1220,7 +1223,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public Buttons ireportDiff(String filename, int linenum, Object filevers,
-         Object backupvers, UndoHistory.BackupStatus status,
+         Object backupvers, BackupStatus status,
          String backupName) {
       return new HandleDiff(filename, linenum, filevers, backupvers,
          status, backupName).postWait().getResult();
@@ -1296,7 +1299,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
 
       void pop(String filename, int linenum, Object filevers,
-                Object backupvers, UndoHistory.BackupStatus status) {
+                Object backupvers, BackupStatus status) {
 //     try {Thread.sleep(150);} catch (Exception e) {} // work around focus problem ???
          this.setTitle("discrepency in backup file:" + filename);
          setinvis();

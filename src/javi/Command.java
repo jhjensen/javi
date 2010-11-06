@@ -6,13 +6,10 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-
 public final class Command extends Rgroup {
 
    static final String copyright = "Copyright 1996 James Jensen";
    private static Command instance;
-
-   private static EditGroup egroup;
 
    private static final String[] rnames = {
       "",
@@ -25,10 +22,9 @@ public final class Command extends Rgroup {
       "e!",
    };
 
-   static void init(EditGroup egroupi)  {
+   static void init()  {
       instance = new Command();
       instance.register(rnames);
-      egroup = egroupi;
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -124,7 +120,7 @@ public final class Command extends Rgroup {
 
    private static void commandproc(FvContext fvc) {
 
-      String line = getcomline(":");
+      String line = InsertBuffer.getcomline(":");
       line = line.substring(1, line.length());
       command(line, fvc, null);
    }
@@ -156,31 +152,6 @@ public final class Command extends Rgroup {
          return Integer.parseInt(str.toString().trim());
       } catch (NumberFormatException e) {
          throw new InputException("command needs decimal number", e);
-      }
-   }
-
-   static String getcomline(String prompt) {
-      FvContext<String> commFvc =  FvContext.startComLine();
-      EditContainer ev = commFvc.edvec;
-      try {
-         if (!(commFvc.at(ev.finish() - 1).toString().equals(prompt))) {
-            ev.insertOne(prompt, ev.finish());
-         }
-         commFvc.cursorabs(prompt.length(), ev.finish() - 1);
-         egroup.setInsertMode(commFvc, false);
-
-      } catch (InputException e) {
-         UI.reportMessage(e.toString());
-      } catch (Throwable e) {
-         UI.popError("exception in command processing ", e);
-      }
-
-      String line = FvContext.endComLine();
-      if (line.startsWith(prompt, 0))
-         return line;
-      else {
-         UI.reportMessage("deleted prompt");
-         return prompt;
       }
    }
 

@@ -71,10 +71,11 @@ public final class Javi {
    }
 
    public static void initPostUi() throws Exception {
-
-      Command.init(new EditGroup());
+      new EditGroup();
+      Command.init();
       new PosListList.Cmd();
 
+      MoveGroup.init();
       MapEvent.bindCommands();
       try {
          //trace("preserver");
@@ -91,7 +92,8 @@ public final class Javi {
       new JavaCompiler();
       new CheckStyle();
       //trace("unexpectedly slow");
-      new JS();
+      new JS.JSR();
+
       //new vcs.cmvc();
 
       //trace("javi Version " + version);

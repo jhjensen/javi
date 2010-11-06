@@ -28,7 +28,7 @@ public abstract class UI {
    public abstract void itoggleStatus();
    public abstract void isetStream(Reader inreader);
    public abstract Buttons ireportDiff(String filename, int linenum,
-      Object filevers, Object backupvers, UndoHistory.BackupStatus status,
+      Object filevers, Object backupvers, BackupStatus status,
       String backupName);
 
    public abstract void ishowCommand();
@@ -83,7 +83,7 @@ public abstract class UI {
 
    @SuppressWarnings("fallthrough")
    static boolean reportDiff(String filename, int linenum, Object filevers,
-         Object backupvers, UndoHistory.BackupStatus status,
+         Object backupvers, BackupStatus status,
          String backupname) throws IOException {
       //trace(
       //   " filename = " + filename

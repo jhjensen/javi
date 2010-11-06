@@ -15,7 +15,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    private transient EditCache<OType> ioarray;
    private transient EditCache<OType> mainArray = null;
    private transient Thread  rthread;
-   private transient UndoHistory.BackupStatus backupstatus;
+   private transient BackupStatus backupstatus;
    private transient BuildCB aNotify;
    private transient ThreadState tstate;
    private transient boolean swapArray;
@@ -128,7 +128,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    abstract static class BuildCB {
       abstract void notify(EditCache ed);
-      abstract UndoHistory.BackupStatus getBackupStatus();
+      abstract BackupStatus getBackupStatus();
    }
 
    final boolean expand(int desired) throws IOException {

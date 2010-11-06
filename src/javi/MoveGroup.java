@@ -323,7 +323,7 @@ final class MoveGroup extends Rgroup {
          regsearch(false, count, fvc);
 
       else {
-         String line  = Command.getcomline(!direction ? "/" : "?");
+         String line  = InsertBuffer.getcomline(!direction ? "/" : "?");
          line = line.substring(1, line.length());
          if ("".equals(line))
             regsearch(false, count, fvc);

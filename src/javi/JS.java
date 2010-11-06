@@ -10,9 +10,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import static history.Tools.trace;
 
-final class RealJs {
-   private RealJs() { }
-   static final Class oclass = JS.class;
+final class JS {
+   private JS() { }
+   static final Class oclass = JSR.class;
    static Context ctx;
    static ScriptableObject scope;
 
@@ -32,145 +32,145 @@ final class RealJs {
    static {
       jsClear();
    }
-
-}
-
-class JSObj {
-   public void myprint(String s)  {
-      //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
-      JS.jsoutput.insertOne(s, JS.jsoutput.finish());
-   }
-}
-
-/* Copyright 1996 James Jensen all rights reserved */
-public class JS extends Rgroup {
-   JS() {
-      final String[] rnames = {
-         "",
-         "jseval",
-         "jsevalfile",
-         "jsclear",
-      };
-
-      register(rnames);
-   }
-
-   static final StringIoc sio = new StringIoc("jsoutput", "start");
-   static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
-
-   public static class JSgroup extends Rgroup {
-      private final Function func;
-
-      public JSgroup(String funcname) throws Exception {
-         Object fobj =  RealJs.scope.get(funcname, RealJs.scope);
-         if (fobj == null || !(fobj instanceof Function))
-            throw new Exception("illegal function name " + funcname);
-         else
-            func = (Function) fobj;
-      }
-
-      public JSgroup(Function funci) throws Exception {
-         func = funci;
-      }
-
-      public final Object doroutine(int rnum, Object arg, int count,
-            int rcount, FvContext fvc , boolean dotmode) throws
-            IOException {
-         Object[] fargs = {rnum, arg, count, rcount, fvc, dotmode};
-         return func.call(RealJs.ctx, RealJs.scope, RealJs.scope, fargs);
-      }
-
-   }
-
-   public static JSgroup gfac(String str) throws Exception {
-      return new JSgroup(str);
-   }
-
-   public final Object doroutine(int rnum, Object arg, int count, int rcount,
-         FvContext fvc , boolean dotmode) throws IOException {
-      //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
-
-      switch (rnum) {
-         case 1:
-            return execRoutine(rnum, arg, count, rcount, fvc, dotmode);
-         case 2:
-            try {
-               jsEvalIter(fvc.edvec.iterator(), fvc.edvec.getName());
-            } catch (org.mozilla.javascript.EcmaError e) {
-               UI.reportError(e.toString());
-            } catch (org.mozilla.javascript.EvaluatorException e) {
-               UI.reportError(e.toString());
-            }
-            return null;
-         case 3:
-            RealJs.jsClear();
-            return null;
-         default:
-            throw new RuntimeException();
+   static class JSObj {
+      public void myprint(String s)  {
+         //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
+         JSR.jsoutput.insertOne(s, JSR.jsoutput.finish());
       }
    }
 
-   private static Object execRoutine(int rnum, Object arg, int count,
-         int rcount, FvContext fvc , boolean dotmode) {
-      try {
-         if (arg != null) {
-            Object jresult = RealJs.ctx.evaluateString(
-                                RealJs.scope, arg.toString(), "cmd", 1, null);
-            Object result = Context.jsToJava(jresult , RealJs.oclass);
-            return result;
-         }
-      } catch (org.mozilla.javascript.EcmaError e) {
-         UI.reportError(e.toString());
-      } catch (org.mozilla.javascript.EvaluatorException e) {
-         UI.reportError(e.toString());
-      }
-      return null;
-   }
 
-   static String jsEvalIter(Iterator src, String lable) throws IOException {
-      Object eres = RealJs.ctx.evaluateReader(
-                       RealJs.scope, new IteratorReader(src), lable, 1, null);
-      return eres.toString();
-   }
-
-   static String jsEvalString(String src) throws IOException {
-      Object eres =
-         RealJs.ctx.evaluateString(RealJs.scope, src, "cmd", 1, null);
-      // trace("" + eres);
-      return eres.toString();
-
-   }
-
-   static boolean myassert(boolean flag, Object dump) {
-      if (!flag)
-         throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
-      return flag;
-   }
-
-   public static void main(String[] args) {
-      try {
-
-         new StreamInterface();
-         Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
-         myassert("ok".equals(obj), obj);
-
-         myassert(jsEvalString(
-                     "function f(x){return x+1} f(7)").equals("8.0"), "8.0");
-         String[] strarr = {
-            "java.lang.System.out.println(300000); ",
-            "function f(x){return x+1} ",
-            "f(9);"
+   /* Copyright 1996 James Jensen all rights reserved */
+   public static class JSR extends Rgroup {
+      JSR() {
+         final String[] rnames = {
+            "",
+            "jseval",
+            "jsevalfile",
+            "jsclear",
          };
-         myassert(jsEvalIter(Arrays.asList(strarr).iterator(),
-            "test").equals("10.0"), "10.0");
-         trace("test executed successfully");
-      } catch (Throwable e) {
-         trace("main caught exception " + e);
-         e.printStackTrace();
-      }
-      System.exit(0);
 
+         register(rnames);
+      }
+
+      static final StringIoc sio = new StringIoc("jsoutput", "start");
+      static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
+
+      public static class JSgroup extends Rgroup {
+         private final Function func;
+
+         public JSgroup(String funcname) throws Exception {
+            Object fobj =  JS.scope.get(funcname, JS.scope);
+            if (fobj == null || !(fobj instanceof Function))
+               throw new Exception("illegal function name " + funcname);
+            else
+               func = (Function) fobj;
+         }
+
+         public JSgroup(Function funci) throws Exception {
+            func = funci;
+         }
+
+         public final Object doroutine(int rnum, Object arg, int count,
+               int rcount, FvContext fvc , boolean dotmode) throws
+               IOException {
+            Object[] fargs = {rnum, arg, count, rcount, fvc, dotmode};
+            return func.call(JS.ctx, JS.scope, JS.scope, fargs);
+         }
+
+      }
+
+      public static JSgroup gfac(String str) throws Exception {
+         return new JSgroup(str);
+      }
+
+      public final Object doroutine(int rnum, Object arg, int count, int rcount,
+            FvContext fvc , boolean dotmode) throws IOException {
+         //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
+
+         switch (rnum) {
+            case 1:
+               return execRoutine(rnum, arg, count, rcount, fvc, dotmode);
+            case 2:
+               try {
+                  jsEvalIter(fvc.edvec.iterator(), fvc.edvec.getName());
+               } catch (org.mozilla.javascript.EcmaError e) {
+                  UI.reportError(e.toString());
+               } catch (org.mozilla.javascript.EvaluatorException e) {
+                  UI.reportError(e.toString());
+               }
+               return null;
+            case 3:
+               JS.jsClear();
+               return null;
+            default:
+               throw new RuntimeException();
+         }
+      }
+
+      private static Object execRoutine(int rnum, Object arg, int count,
+            int rcount, FvContext fvc , boolean dotmode) {
+         try {
+            if (arg != null) {
+               Object jresult = JS.ctx.evaluateString(
+                  JS.scope, arg.toString(), "cmd", 1, null);
+               Object result = Context.jsToJava(jresult , JS.oclass);
+               return result;
+            }
+         } catch (org.mozilla.javascript.EcmaError e) {
+            UI.reportError(e.toString());
+         } catch (org.mozilla.javascript.EvaluatorException e) {
+            UI.reportError(e.toString());
+         }
+         return null;
+      }
+
+      static String jsEvalIter(Iterator src, String lable) throws IOException {
+         Object eres = JS.ctx.evaluateReader(
+            JS.scope, new IteratorReader(src), lable, 1, null);
+         return eres.toString();
+      }
+
+      static String jsEvalString(String src) throws IOException {
+         Object eres =
+            JS.ctx.evaluateString(JS.scope, src, "cmd", 1, null);
+         // trace("" + eres);
+         return eres.toString();
+
+      }
+
+      static boolean myassert(boolean flag, Object dump) {
+         if (!flag)
+            throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
+         return flag;
+      }
+
+      public static void main(String[] args) {
+         try {
+
+            new StreamInterface();
+            Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
+            myassert("ok".equals(obj), obj);
+
+            myassert(jsEvalString(
+                        "function f(x){return x+1} f(7)").equals("8.0"), "8.0");
+            String[] strarr = {
+               "java.lang.System.out.println(300000); ",
+               "function f(x){return x+1} ",
+               "f(9);"
+            };
+            myassert(jsEvalIter(Arrays.asList(strarr).iterator(),
+               "test").equals("10.0"), "10.0");
+            trace("test executed successfully");
+         } catch (Throwable e) {
+            trace("main caught exception " + e);
+            e.printStackTrace();
+         }
+         System.exit(0);
+
+      }
    }
+
 }
 
 final class IteratorReader extends java.io.Reader {
