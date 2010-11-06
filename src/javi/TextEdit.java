@@ -677,7 +677,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
          throw new InputException("pattern not found");
       }
 
-      Matcher getpattern() {
+      private Matcher getpattern() {
          char stopc = next();
          if (stopc == 0)
             return GState.getRegex();

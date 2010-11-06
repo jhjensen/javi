@@ -36,7 +36,7 @@ abstract class Vt100 extends TextEdit<String> {
       //StringIoc ioc = new StringIoc("vt100 start",null);
       super(ioc, ioc.prop);
       //str = ostri;
-      parser = new Vt100Parser(this, istr);
+      parser = new Vt100Parser(new ECScreen(), istr);
       writer = new OutputStreamWriter(ostri);
    }
 
@@ -127,119 +127,121 @@ abstract class Vt100 extends TextEdit<String> {
       }
    }
 
-   void incX(int amount, StringBuffer sb) {
-      insertString(sb);
-      vtcursor.x += amount;
-      if (vtcursor.x < 0)
-         vtcursor.x = 0;
-   }
-
-   void incY(int amount, StringBuffer sb)  {
-      updateScreen(sb);
-      vtcursor.y += amount;
-      if (vtcursor.y < readIn() - rows)
-         vtcursor.y = readIn() - rows;
-   }
-   void setX(int val, StringBuffer sb) {
-      insertString(sb);
-      vtcursor.x = val - 1;
-   }
-
-   void setY(int val, StringBuffer sb) {
-      //trace("setY " + val);
-      updateScreen(sb);
-      vtcursor.y = readIn() - 1 - rows + val;
-      //trace("after setY vtcursor" + vtcursor + " ev.readIn = " + ev.readIn() + " rows " + rows + " val " + val);
-   }
-
-   void setXY(int xval, int yval, StringBuffer sb) {
-      //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
-
-      updateScreen(sb);
-      //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor + " rows " + rows );
-      vtcursor.y = readIn() - 1 - rows + yval;
-      vtcursor.x = xval - 1;
-      //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
-      //updateScreen(sb);
-      //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
-   }
-
-   void eraseScreen(StringBuffer sb) {
-      updateScreen(sb);
-      int end = readIn();
-      int start = end - rows - 1;
-      if (start < 1)
-         start = 1;
-      for (int i = start; i < end; i++)
-         changeElementAt("", i);
-
-      //???vtcursor.x=0;
-      //???vtcursor.y=ev.readIn()-1;
-   }
-
-   void eraseToEnd(StringBuffer sb) {
-      updateScreen(sb);
-      if (vtcursor.y < readIn()) {
-         int lend = at(vtcursor.y).length();
-         deletetext(false, vtcursor.x, vtcursor.y, lend, vtcursor.y);
+   private class ECScreen extends VScreen {
+      void incX(int amount, StringBuffer sb) {
+         insertString(sb);
+         vtcursor.x += amount;
+         if (vtcursor.x < 0)
+            vtcursor.x = 0;
       }
-   }
 
-   void eraseLine(StringBuffer sb) {
-      insertString(sb);
-      changeElementAt("", vtcursor.y);
-   }
-
-   void eraseChars(int count, StringBuffer sb) {
-      insertString(sb);
-      int delto = vtcursor.x + count;
-      int strlen =  at(vtcursor.y).length();
-      if (delto > strlen) {
-         delto = strlen;
-         trace("attempt to delete more character that possible delto "
-            + delto + " strlen " + strlen);
+      void incY(int amount, StringBuffer sb)  {
+         updateScreen(sb);
+         vtcursor.y += amount;
+         if (vtcursor.y < readIn() - rows)
+            vtcursor.y = readIn() - rows;
       }
-      deletetext(false, vtcursor.x, vtcursor.y, delto , vtcursor.y);
-   }
 
-   void insertLines(int count, StringBuffer sb) {
-      trace("insertLines count " + count);
-      insertString(sb);
-      remove(readIn() - count, count);
-      while (--count >= 0)
-         insertOne("", vtcursor.y);
-      trace("leave insertLines readIn = " + readIn());
-   }
-
-   void setInsertMode(boolean val, StringBuffer sb) {
-      insertString(sb);
-      insertmode = val;
-   }
-
-   void updateScreen(StringBuffer sb) {
-      insertString(sb);
-      fixline();
-      //rows = currfvc.vi.getRows((float).99999);
-      if (currfvc != null) {
-         currfvc.cursorabs(vtcursor.x, vtcursor.y);
-         currfvc.placeline(readIn() - 1, (float) .99999);
+      void setX(int val, StringBuffer sb) {
+         setXmy(val, sb);
       }
-      //trace("leaving update screen vtcursor = " + vtcursor + " readIn  " + ev.readIn());
+
+      void setY(int val, StringBuffer sb) {
+         //trace("setY " + val);
+         updateScreen(sb);
+         vtcursor.y = readIn() - 1 - rows + val;
+         //trace("after setY vtcursor" + vtcursor + " ev.readIn = " + ev.readIn() + " rows " + rows + " val " + val);
+      }
+
+      void setXY(int xval, int yval, StringBuffer sb) {
+         //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
+
+         updateScreen(sb);
+         //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor + " rows " + rows );
+         vtcursor.y = readIn() - 1 - rows + yval;
+         vtcursor.x = xval - 1;
+         //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
+         //updateScreen(sb);
+         //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
+      }
+
+      void eraseScreen(StringBuffer sb) {
+         updateScreen(sb);
+         int end = readIn();
+         int start = end - rows - 1;
+         if (start < 1)
+            start = 1;
+         for (int i = start; i < end; i++)
+            changeElementAt("", i);
+
+         //???vtcursor.x=0;
+         //???vtcursor.y=ev.readIn()-1;
+      }
+
+      void eraseToEnd(StringBuffer sb) {
+         updateScreen(sb);
+         if (vtcursor.y < readIn()) {
+            int lend = at(vtcursor.y).length();
+            deletetext(false, vtcursor.x, vtcursor.y, lend, vtcursor.y);
+         }
+      }
+
+      void eraseLine(StringBuffer sb) {
+         insertString(sb);
+         changeElementAt("", vtcursor.y);
+      }
+
+      void eraseChars(int count, StringBuffer sb) {
+         insertString(sb);
+         int delto = vtcursor.x + count;
+         int strlen =  at(vtcursor.y).length();
+         if (delto > strlen) {
+            delto = strlen;
+            trace("attempt to delete more character that possible delto "
+               + delto + " strlen " + strlen);
+         }
+         deletetext(false, vtcursor.x, vtcursor.y, delto , vtcursor.y);
+      }
+
+      void insertLines(int count, StringBuffer sb) {
+         trace("insertLines count " + count);
+         insertString(sb);
+         remove(readIn() - count, count);
+         while (--count >= 0)
+            insertOne("", vtcursor.y);
+         trace("leave insertLines readIn = " + readIn());
+      }
+
+      void setInsertMode(boolean val, StringBuffer sb) {
+         insertString(sb);
+         insertmode = val;
+      }
+
+      void updateScreen(StringBuffer sb) {
+         insertString(sb);
+         fixline();
+         //rows = currfvc.vi.getRows((float).99999);
+         if (currfvc != null) {
+            currfvc.cursorabs(vtcursor.x, vtcursor.y);
+            currfvc.placeline(readIn() - 1, (float) .99999);
+         }
+         //trace("leaving update screen vtcursor = " + vtcursor + " readIn  " + ev.readIn());
+
+      }
+
+      void saveCursor(StringBuffer sb) {
+         insertString(sb);
+         savecursor.x = vtcursor.x;
+         savecursor.y = readIn() - vtcursor.y;
+      }
+
+      void restoreCursor(StringBuffer sb) {
+         insertString(sb);
+         vtcursor.y = readIn() - savecursor.y;
+         vtcursor.x = savecursor.x;
+      }
 
    }
-
-   void saveCursor(StringBuffer sb) {
-      insertString(sb);
-      savecursor.x = vtcursor.x;
-      savecursor.y = readIn() - vtcursor.y;
-   }
-
-   void restoreCursor(StringBuffer sb) {
-      insertString(sb);
-      vtcursor.y = readIn() - savecursor.y;
-      vtcursor.x = savecursor.x;
-   }
-
    private String fixline() {
       String eline = at(vtcursor.y);
       if (vtcursor.x > eline.length()) {
@@ -250,6 +252,11 @@ abstract class Vt100 extends TextEdit<String> {
          changeElementAt(eline, vtcursor.y);
       }
       return eline;
+   }
+
+   private void setXmy(int val, StringBuffer sb) {
+      insertString(sb);
+      vtcursor.x = val - 1;
    }
 
    private void insertString(StringBuffer sb) {
@@ -338,11 +345,9 @@ abstract class Vt100 extends TextEdit<String> {
          vtcursor.set(inserttext(itext, vtcursor.x, vtcursor.y));
       }
       if (setxflag)
-         setX(1, sb);
+         setXmy(1, sb);
       //trace("insertString exit vtcursor " + vtcursor + " readIn = " + ev.readIn());
    }
-
-
 
    public String getnext() {
       return null;

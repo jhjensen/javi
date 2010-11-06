@@ -96,7 +96,6 @@ public abstract class InsertBuffer extends View.Inserter {
             "imode.prevline",
             "imode.nextline",       //10
             "imode.putbuf",
-            "imode.find",
          };
          register(rnames);
          ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
@@ -112,7 +111,7 @@ public abstract class InsertBuffer extends View.Inserter {
          ikeys.keybind('\n', "imode.insertnewline", null);
          ikeys.keybind((char) 16, "imode.putbuf", null);
          ikeys.keybind((char) 16, "imode.putbuf", null, CTRL_MASK);
-         ikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
+//         ikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
          ikeys.keybind('\n', "imode.insertnewline", null, CTRL_MASK);
          ikeys.keybind((char) 12, "redraw", null, CTRL_MASK);
 
@@ -135,7 +134,7 @@ public abstract class InsertBuffer extends View.Inserter {
          commandikeys.keybind((char) 16, "imode.putbuf", null);
          commandikeys.keybind((char) 16,
             "imode.putbuf", null, CTRL_MASK);
-         commandikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
+//         commandikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
          commandikeys.keybind((char) 12, "redraw", null, CTRL_MASK);
       }
 
@@ -232,11 +231,12 @@ public abstract class InsertBuffer extends View.Inserter {
                Buffers.appendCurrBuf(buffer, singleline);
                fvc.changeElement(fvc.at(currline)); // force redraw
                break;
-            case 12:
-               itext(count, fvc);
-               MoveGroup.searchcommand(((boolean []) arg)[0] ,
-                  count, fvc, dotmode);
-               break;
+// causes circular dependency, don't think we really need it
+//            case 12:
+//               itext(count, fvc);
+//               MoveGroup.searchcommand(((boolean []) arg)[0] ,
+//                  count, fvc, dotmode);
+//               break;
          }
          return null;
       }

@@ -14,7 +14,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
    private static final int OSCMODE3 = 7;
    // private final static int GETTITLE =8;
    private static final int CR = 9;
-   private final Vt100 window;
+   private final VScreen window;
    private final StringBuffer sb = new StringBuffer();
    private int[] numacc = null;
    private int currnumacc;
@@ -27,7 +27,7 @@ class Vt100Parser extends EventQueue.IEvent implements Runnable {
    private Thread rthread = new Thread(this, "vt100 parser thread");
 //   private CharFifo fifo=new CharFifo();
 
-   Vt100Parser(Vt100 win, BufferedInputStream ins) {
+   Vt100Parser(VScreen win, BufferedInputStream ins) {
       window = win;
       input = ins;
       rthread.start();
