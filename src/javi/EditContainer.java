@@ -604,9 +604,7 @@ public class EditContainer<OType> implements
        attempt to write the file may still fail if the
        file permissions do not allow writing and renameing.
    */
-   public final void setReadOnly(boolean flag) throws IOException {
-      if (this == TextEdit.getRoot())
-         throw new IOException("not allowed to make this writable");
+   public final void setReadOnly(boolean flag) {
       readonly = flag;
    }
 

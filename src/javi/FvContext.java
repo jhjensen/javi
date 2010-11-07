@@ -540,6 +540,8 @@ public final class FvContext<OType> implements Serializable {
       //trace("newx = " + newx + " newy = " + newy + " this " + this);
       //trace("edvec.readIn " + edvec.readIn());
       // adjust the insertion point
+      if (newy < 1)
+         return;
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
       fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
       if (vis)

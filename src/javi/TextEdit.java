@@ -28,6 +28,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       StringIoc strio = new StringIoc("root EditContainer",
                                       "should never see root container");
       root = new TextEdit<String>(strio, strio.prop);
+      root.setReadOnly(true);
    }
 
    static void saveState(java.io.ObjectOutputStream os) throws IOException {

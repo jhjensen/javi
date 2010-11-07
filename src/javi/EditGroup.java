@@ -214,7 +214,7 @@ class EditGroup extends Rgroup {
    private int donex, markamount;
    private void markmode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc, boolean vMode) throws
-         InputException, IOException {
+         InputException, IOException, InterruptedException {
       int starty, startx, doney;
       int xold = 0;
       int yold = 0;
@@ -231,130 +231,131 @@ class EditGroup extends Rgroup {
          }
       }
    out:
-      do {
-         JeyEvent event;
-         if (!dotmode) {
-            try {
-               do
+      try {
+         do {
+            JeyEvent event;
+            if (!dotmode) {
+               do {
                   event = EventQueue.nextKeye(fvc.vi);
-                while (MapEvent.domovement(
+               } while (MapEvent.domovement(
                    event, count, rcount, dotmode, fvc));
-            } catch (InterruptedException e) {
-               trace("markmode caught " + e);
-               break out;
-            }
 
-            dotevent3 = event;
-            if (vMode)
-               fvc.cursorxabs(Integer.MAX_VALUE);
-            if (yold < fvc.inserty()) {
-               starty = yold;
-               startx = xold;
-               donex = fvc.insertx();
-               doney = fvc.inserty();
-               markamount = fvc.inserty() - yold + 1;
-            } else  {
+               dotevent3 = event;
+               if (vMode)
+                  fvc.cursorxabs(Integer.MAX_VALUE);
+               if (yold < fvc.inserty()) {
+                  starty = yold;
+                  startx = xold;
+                  donex = fvc.insertx();
+                  doney = fvc.inserty();
+                  markamount = fvc.inserty() - yold + 1;
+               } else  {
+                  starty = fvc.inserty();
+                  startx = fvc.insertx();
+                  donex = xold;
+                  doney = yold;
+                  markamount = yold - starty + 1;
+                  if ((yold == fvc.inserty()) && (donex < startx)) {
+                     int temp = startx;
+                     startx = donex;
+                     donex = temp;
+                  }
+               }
+            } else {
+               bufid = dotbufid;
+               event = dotevent3;
                starty = fvc.inserty();
                startx = fvc.insertx();
-               donex = xold;
-               doney = yold;
-               markamount = yold - starty + 1;
-               if ((yold == fvc.inserty()) && (donex < startx)) {
-                  int temp = startx;
-                  startx = donex;
-                  donex = temp;
+               doney = starty + markamount - 1;
+               if (vMode) {
+                  donex = Integer.MAX_VALUE;
+                  startx = 0;
+               } else {
+                  if (markamount == 1)
+                     donex = startx + donex;
+                  startx = fvc.insertx();
                }
             }
-         } else {
-            bufid = dotbufid;
-            event = dotevent3;
-            starty = fvc.inserty();
-            startx = fvc.insertx();
-            doney = starty + markamount - 1;
-            if (vMode) {
-               donex = Integer.MAX_VALUE;
-               startx = 0;
-            } else {
-               if (markamount == 1)
-                  donex = startx + donex;
-               startx = fvc.insertx();
-            }
-         }
-         char key = event.getKeyChar();
-         try {
-            switch(key) {
-               case 'o':
-                  MovePos markpos = fvc.vi.getMark();
-                  xold = fvc.insertx();
-                  yold = fvc.inserty();
-                  fvc.setMark();
-                  fvc.cursorabs(markpos);
-                  continue;
-               case 'd':
-                  deletetext(bufid, fvc, false, startx, starty, donex, doney);
-                  break out;
-               case 'y':
-                  deletetext(bufid, fvc, true, startx, starty, donex, doney);
-                  break out;
-               case 'v':
-               case 'V':
-               case 27: // esc
-                  break out;
-               case 'Y':
-                  Buffers.deleted(bufid,
-                     fvc.edvec.getElementsAt(starty, markamount));
-                  break out;
-               case 'D':
-                  fvc.edvec.finish();
-                  if (!fvc.edvec.containsNow(starty + markamount - 1))
-                     markamount = fvc.edvec.finish() - 1;
-                  Buffers.deleted(bufid, fvc.edvec.remove(starty, markamount));
-                  fvc.edvec.checkpoint();
-                  fvc.fixCursor();
-                  break out;
-               case '~':
-                  fvc.edvec.changecase(startx, starty, donex, doney);
-                  break out;
-               case 'J':
-                  fvc.cursorabs(fvc.edvec.joinlines(markamount, starty),
-                                starty);
-                  break out;
-               case '<':
-                  fvc.cursorx(fvc.edvec.shiftright(starty, markamount));
-                  break out;
-               case '>':
-                  fvc.cursorx(fvc.edvec.shiftleft(starty, markamount));
-                  break out;
-               case 'S':
-               case 's':
-                  fvc.cursorabs(startx, starty);
-                  String line = fvc.edvec.gettext(startx, starty, donex, doney);
-                  MoveGroup.dosearch(key == 'S', 1, fvc, line);
-                  break out;
-               case 12:
-                  MiscCommands.redraw(true);
-                  continue;
-               case 29:
-                  line = fvc.edvec.gettext(startx, starty, donex, doney);
-                  try {
-                     Rgroup.doroutine("gototag", line, 1, 1, fvc, false);
-                  } catch (IOException e) {
-                     throw new RuntimeException(
-                        "editgroup.markmode got unexpected " , e);
-                  } catch (InterruptedException e) {
-                     UI.popError("caught int" , e);
-                  }
+            char key = event.getKeyChar();
+            try {
+               switch(key) {
+                  case 'o':
+                     MovePos markpos = fvc.vi.getMark();
+                     xold = fvc.insertx();
+                     yold = fvc.inserty();
+                     fvc.setMark();
+                     fvc.cursorabs(markpos);
+                     continue;
+                  case 'd':
+                     deletetext(bufid, fvc, false, startx,
+                        starty, donex, doney);
+                     break out;
+                  case 'y':
+                     deletetext(bufid, fvc, true, startx, starty, donex, doney);
+                     break out;
+                  case 'v':
+                  case 'V':
+                  case 27: // esc
+                     break out;
+                  case 'Y':
+                     Buffers.deleted(bufid,
+                        fvc.edvec.getElementsAt(starty, markamount));
+                     break out;
+                  case 'D':
+                     fvc.edvec.finish();
+                     if (!fvc.edvec.containsNow(starty + markamount - 1))
+                        markamount = fvc.edvec.finish() - 1;
+                     Buffers.deleted(bufid,
+                        fvc.edvec.remove(starty, markamount));
+                     fvc.edvec.checkpoint();
+                     fvc.fixCursor();
+                     break out;
+                  case '~':
+                     fvc.edvec.changecase(startx, starty, donex, doney);
+                     break out;
+                  case 'J':
+                     fvc.cursorabs(fvc.edvec.joinlines(markamount, starty),
+                                   starty);
+                     break out;
+                  case '<':
+                     fvc.cursorx(fvc.edvec.shiftright(starty, markamount));
+                     break out;
+                  case '>':
+                     fvc.cursorx(fvc.edvec.shiftleft(starty, markamount));
+                     break out;
+                  case 'S':
+                  case 's':
+                     fvc.cursorabs(startx, starty);
+                     String line = fvc.edvec.gettext(startx,
+                        starty, donex, doney);
+                     MoveGroup.dosearch(key == 'S', 1, fvc, line);
+                     break out;
+                  case 12:
+                     MiscCommands.redraw(true);
+                     continue;
+                  case 29:
+                     line = fvc.edvec.gettext(startx, starty, donex, doney);
+                     try {
+                        Rgroup.doroutine("gototag", line, 1, 1, fvc, false);
+                     } catch (IOException e) {
+                        throw new RuntimeException(
+                           "editgroup.markmode got unexpected " , e);
+                     } catch (InterruptedException e) {
+                        UI.popError("caught int" , e);
+                     }
 
-                  break out;
-               default:
-                  continue;
+                     break out;
+                  default:
+                     continue;
+               }
+            } catch (EditContainer.ReadOnlyException e) {
+               fvc.vi.clearMark();
+               throw e;
             }
-         } catch (EditContainer.ReadOnlyException e) {
-            fvc.vi.clearMark();
-            throw e;
-         }
-      } while (!dotmode);
-      fvc.vi.clearMark();
+         } while (!dotmode);
+      } finally {
+         fvc.vi.clearMark();
+      }
    }
    private void qmode(int count, int rcount,
          boolean dotmode, FvContext fvc) throws
@@ -598,7 +599,7 @@ class EditGroup extends Rgroup {
    }
 
    private void subChar(boolean dotmode, int count, FvContext fvc) throws
-      ExitException {
+      InputException {
 
       if (!dotmode)
          do

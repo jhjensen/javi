@@ -49,19 +49,13 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
          FileProperties<String>  fp =
             new FileProperties<String>(fh, StringIoc.converter);
-         TextEdit<String> ev = new TextEdit<String>(new FileInput(fp),
-               FileList.instance == null
-                  ? TextEdit.getRoot()
-                  : FileList.instance,
-               fp); //??? should be filelist
+         TextEdit<String> ev = FileList.instance == null
+            ? new TextEdit<String>(new FileInput(fp), fp)
+            : new TextEdit<String>(new FileInput(fp), FileList.instance, fp);
 
          //trace("opened ev = " + ev);
          if (fh.isFile() && !fh.canWrite())
-            try {
-               ev.setReadOnly(true);
-            } catch (IOException e) {
-               return null;
-            }
+            ev.setReadOnly(true);
          return ev;
       }
       private static TextEdit<String> findfileopen(String filename,

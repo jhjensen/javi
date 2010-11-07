@@ -723,7 +723,7 @@ class OldView extends AwtView {
             repaint(200);
          } else
             try {
-               if (gettext().isValid() && gettext().containsNow(1)) {
+               if (gettext().isValid()) {
                   getChanges();
                   copt.rpaint(gr);
                } else {

@@ -386,7 +386,7 @@ final class MoveGroup extends Rgroup {
    }
 
    private void findchar(boolean [] arg, FvContext fvc, boolean dotmode) throws
-         ExitException {
+         InputException {
       if (!dotmode) {
          char tmp = EventQueue.nextKey(fvc.vi);
          if (tmp == 27) // esc

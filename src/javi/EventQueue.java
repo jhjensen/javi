@@ -68,7 +68,7 @@ public final class EventQueue {
    private static int timeout = 500;
 
    public abstract static class IEvent {
-      public abstract void execute() throws ExitException;
+      public abstract void execute() throws InputException;
    }
 
    public interface Idler {
@@ -163,7 +163,7 @@ public final class EventQueue {
       }
    }
 
-   static JeyEvent nextEvent(CursorControl vi) throws ExitException {
+   static JeyEvent nextEvent(CursorControl vi) throws InputException {
       while (true) {
          Object ev = inextEvent(vi);
          if (ev instanceof IEvent) {
@@ -173,12 +173,12 @@ public final class EventQueue {
       }
    }
 
-   static char nextKey(CursorControl vi) throws ExitException {
+   static char nextKey(CursorControl vi) throws InputException {
       return nextKeye(vi).getKeyChar();
    }
 
    static synchronized JeyEvent nextKeye(CursorControl vi) throws
-         ExitException {
+         InputException {
       while (true) {
          Object e = nextEvent(vi);
          if (e instanceof JeyEvent)

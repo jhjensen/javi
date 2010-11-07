@@ -246,12 +246,13 @@ public class IoConverter<OType> implements Runnable, Serializable {
                ioarray = new EditCache<OType>();
                ioarray.add(prop.conv.fromString(""));
             }
-
          }
 
          preRun();
          //trace("before dorun ioarray size =" +ioarray.size() + " " + this);
+         //trace("before dorun mainarray size =" +mainArray.size() + " " + this);
          dorun();
+         //trace("after dorun mainarray size =" +mainArray.size() + " " + this);
          //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
       } catch (Throwable e) {
          UI.popError("IoConverter caught ", e);
