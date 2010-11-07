@@ -57,7 +57,6 @@ import javi.ExitException;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
-import javi.InsertBuffer;
 import javi.MiscCommands;
 import javi.Rgroup;
 import javi.StringIoc;

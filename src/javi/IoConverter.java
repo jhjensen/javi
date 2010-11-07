@@ -61,11 +61,6 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    }
 
-   final KeyHandler getKeyHandler() {
-      //trace("ioc getKeyHandler");
-      return null;
-   }
-
    public final String toString() {
       return prop.fdes.shortName;
    }

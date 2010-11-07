@@ -40,21 +40,6 @@ abstract class Vt100 extends TextEdit<String> {
       writer = new OutputStreamWriter(ostri);
    }
 
-   private class Keyhandle extends KeyHandler {
-
-      boolean dispatchKeyEvent(JeyEvent ev) {
-         return handleKey(ev);
-      }
-      void startDispatch(FvContext fvc) {
-         startHandle(fvc);
-      }
-   }
-
-   KeyHandler getKeyHandler() {
-      //trace("vt100 return keyHandle");
-      return new Keyhandle();
-   }
-
    public void startHandle(FvContext fvc) {
       //trace("startHandle " + fvc);
       if (fvc != null) {

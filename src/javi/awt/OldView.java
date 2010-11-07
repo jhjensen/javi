@@ -28,9 +28,10 @@ import javi.PosEvent;
 import javi.Position;
 import javi.UI;
 import javi.View;
+import javi.ChangeOpt;
 import javi.ScrollEvent;
 
-import static javi.View.Opcode.*;
+import static javi.ChangeOpt.Opcode.*;
 import static history.Tools.trace;
 
 //import java.awt.RenderingHints;
@@ -797,7 +798,7 @@ class OldView extends AwtView {
          return false;
       }
    }
-   class Ch extends ChangeOpt {
+   class Ch extends COpt {
       public void rpaint(Graphics2D gr) {
          Opcode currop = resetOp();
          if (currop != NOOP) {

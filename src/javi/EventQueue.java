@@ -82,7 +82,13 @@ public final class EventQueue {
       iList.add(inst);
    }
 
-   private static Object inextEvent(View vi) {
+   abstract static class CursorControl {
+      abstract void cursoron();
+      abstract void cursoroff();
+      abstract void blinkcursor();
+   }
+
+   private static Object inextEvent(CursorControl vi) {
       Object ev = null;
       biglock2.unlock();
       //trace("Init time trace: getting event");
@@ -157,7 +163,7 @@ public final class EventQueue {
       }
    }
 
-   static JeyEvent nextEvent(View vi) throws ExitException {
+   static JeyEvent nextEvent(CursorControl vi) throws ExitException {
       while (true) {
          Object ev = inextEvent(vi);
          if (ev instanceof IEvent) {
@@ -167,11 +173,12 @@ public final class EventQueue {
       }
    }
 
-   static char nextKey(View vi) throws ExitException {
+   static char nextKey(CursorControl vi) throws ExitException {
       return nextKeye(vi).getKeyChar();
    }
 
-   static synchronized JeyEvent nextKeye(View vi) throws ExitException {
+   static synchronized JeyEvent nextKeye(CursorControl vi) throws
+         ExitException {
       while (true) {
          Object e = nextEvent(vi);
          if (e instanceof JeyEvent)

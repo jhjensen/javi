@@ -9,7 +9,7 @@ src\javi\vt100parser.java,8
 src\javi\fileproperties.java,3
 src\javi\dirlist.java,1
 src\history\persistantstack.java,6
-src\javi\awt\awtinterface.java,3
+src\javi\awt\awtinterface.java,2
 src\history\tools.java,1
 src\javi\filelist.java,1
 src\javi\keybinding.java,3
@@ -17,12 +17,12 @@ src\javi\positionioc.java,2
 src\javi\tools.java,1
 src\javi\fvcontext.java,3
 src\javi\jeyevent.java,27
-src\javi\editcontainer.java,5
+src\javi\editcontainer.java,3
 src\javi\insertbuffer.java,2
 src\history\pstest.java,5
 src\javi\position.java,4
 src\javi\awt\awtview.java,1
-src\javi\undohistory.java,19
+src\javi\undohistory.java,16
 src\javi\javacompiler.java,1
 src\javi\view.java,1
 src\javi\js.java,2

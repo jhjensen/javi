@@ -146,7 +146,6 @@ public final class FvContext<OType> implements Serializable {
    private int fileposy = 1;     // the position of the cursor in the file
    private int fileposx = 0;     // the position of the cursor in the file
    private boolean vis;
-   private transient KeyHandler preDispatch;
 
    static void dump() {
       fvmap.dump();
@@ -172,7 +171,19 @@ public final class FvContext<OType> implements Serializable {
       os.writeObject(fvmap);
    }
 
+   private static class FmListener extends EditContainer.MarkListener {
+
+      void invalidateBack(UndoHistory.EhMark ehm) {
+         for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
+            FvContext fvc = fit.next();
+            if (fvc.vis)
+               fvc.vi.checkValid(ehm);
+         }
+      }
+   }
    static {
+
+      EditContainer.init(new FmListener());
 
       StringIoc str = new StringIoc("FvContext.defaultText",
          "deleted buffer without viewing a different one");
@@ -259,23 +270,6 @@ public final class FvContext<OType> implements Serializable {
          + (vis ? "vis" : "") + edvec + vi;
    }
 
-   boolean dispatchKeyEvent(JeyEvent ev) {
-      if (preDispatch == null)
-         return  false;
-      else if (!preDispatch.dispatchKeyEvent(ev)) {
-         preDispatch.startDispatch(null);
-         preDispatch = null;
-      }
-      return true;
-   }
-
-   void addKeyEventDispatcher() {
-      preDispatch = edvec.getKeyHandler();
-      //trace("preDispatch = " + preDispatch + " " + edvec.canonname());
-      if (preDispatch != null)
-         preDispatch.startDispatch(this);
-   }
-
    private FvContext(View vii, TextEdit<OType>  ei) {
       vi = vii;
       edvec = ei;
@@ -294,15 +288,6 @@ public final class FvContext<OType> implements Serializable {
             && po.x == fileposx && po.y == fileposy;
       }
       return false;
-   }
-
-   static void invalidateBack(UndoHistory.EhMark ehm) {
-
-      for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
-         FvContext fvc = fit.next();
-         if (fvc.vis)
-            fvc.vi.checkValid(ehm);
-      }
    }
 
    private static void fixCursor(TextEdit  ed) {

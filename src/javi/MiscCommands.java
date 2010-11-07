@@ -136,7 +136,6 @@ public class MiscCommands extends Rgroup  {
             lastshell = host;
          shellfile = Vt100.Telnet.make(host);
          FvContext newfvc = FvContext.connectFv(shellfile, fvc.vi);
-         newfvc.addKeyEventDispatcher();
       }
 
    }
@@ -178,7 +177,6 @@ public class MiscCommands extends Rgroup  {
          EditContainer.registerListener(fli);
          commCon = Vt100.CommReader.make(portname, baudrate);
          FvContext newfvc = FvContext.connectFv(commCon, fvc.vi);
-         newfvc.addKeyEventDispatcher();
       } else
          FvContext.connectFv(commCon, fvc.vi);
    }

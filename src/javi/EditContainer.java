@@ -63,27 +63,27 @@ public class EditContainer<OType> implements
       return prop.fdes;
    }
 
-   KeyHandler getKeyHandler() {
-      return ioc.getKeyHandler();
+   private static MarkListener mlisten;
+
+   abstract static class MarkListener {
+      abstract void invalidateBack(UndoHistory.EhMark ehm);
    }
 
    final void reload() { // ??? should go a way with inherited extext
-      reload(true);
+      reinitBack();
+      ecache.clear(1);
       ioc.reload();
    }
 
    final void clearUndo() {
       trace("clearUndo " + this);
-      backup.ereset();
+      mlisten.invalidateBack(backup.ereset());
       backup.baseRecord();
    }
 
-   final void reload(boolean cleararray) {
-      //trace("cleararray = " + cleararray);
+   private void reinitBack() {
       backupMade = false;
-      backup.ereset();
-      if (cleararray)
-         ecache.clear(1);
+      mlisten.invalidateBack(backup.ereset());
       finishedread = false;
    }
 
@@ -150,7 +150,8 @@ public class EditContainer<OType> implements
    private static HashMap<FileDescriptor, EditContainer> filehash =
       new HashMap<FileDescriptor, EditContainer>();
 
-   static {
+   static void init(MarkListener ml) {
+      mlisten = ml;
       EventQueue.registerIdle(new IdleHandler());
    }
 
@@ -431,7 +432,7 @@ public class EditContainer<OType> implements
    }
 
    private static class IdleHandler implements EventQueue.Idler {
-      public void idle() throws IOException {
+      public void idle() {
 
          //trace("idle handler ");
          EventQueue.biglock2.assertOwned();
@@ -442,7 +443,7 @@ public class EditContainer<OType> implements
                   ev.backup.idleSave();
                } catch (Throwable e) {
                   UI.popError("Problem with backup File starting over" , e);
-                  ev.reload(false);
+                  ev.reinitBack();
                }
       }
    }
@@ -476,7 +477,7 @@ public class EditContainer<OType> implements
       void notify(EditCache ec) {
          //trace("ArrayChange notified");
          ecache = ec;
-         reload(false);
+         reinitBack();
       }
 
       BackupStatus getBackupStatus() {
@@ -497,7 +498,7 @@ public class EditContainer<OType> implements
                                false, false, seterror);
                   } catch (Throwable e) {
                      trace("backup failed exception = " + e);
-                     backup.ereset();
+                     mlisten.invalidateBack(backup.ereset());
                      e.printStackTrace();
                      return new BackupStatus(false, false, e);
                   }
@@ -608,6 +609,7 @@ public class EditContainer<OType> implements
          throw new IOException("not allowed to make this writable");
       readonly = flag;
    }
+
    /** checks the read only flag of this editvec.  This may or may not match
        the read only status of an underlying file. */
    final boolean getReadOnly() {
@@ -1135,11 +1137,11 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
-      boolean redocr(View.ChangeOpt vi) {
+      boolean redocr(ChangeOpt vi) {
          return vi.insert(cindex, obj.length);
       }
 
-      boolean undocr(View.ChangeOpt vi) {
+      boolean undocr(ChangeOpt vi) {
          return vi.delete(cindex, obj.length);
       }
    }
@@ -1240,11 +1242,11 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
-      boolean redocr(View.ChangeOpt vi) {
+      boolean redocr(ChangeOpt vi) {
          return vi.insert(cindex, obj.length);
       }
 
-      boolean undocr(View.ChangeOpt vi) {
+      boolean undocr(ChangeOpt vi) {
          return vi.delete(cindex, obj.length);
       }
    }
@@ -1305,11 +1307,11 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
-      boolean redocr(View.ChangeOpt vi) {
+      boolean redocr(ChangeOpt vi) {
          return vi.delete(cindex, obj.length);
       }
 
-      boolean undocr(View.ChangeOpt vi) {
+      boolean undocr(ChangeOpt vi) {
          return vi.insert(cindex, obj.length);
       }
    }
@@ -1373,11 +1375,11 @@ public class EditContainer<OType> implements
          ecache.set(cindex, oldobj);
          return cindex;
       }
-      boolean redocr(View.ChangeOpt vi) {
+      boolean redocr(ChangeOpt vi) {
          return vi.lineChanged(cindex);
       }
 
-      boolean undocr(View.ChangeOpt vi) {
+      boolean undocr(ChangeOpt vi) {
          return vi.lineChanged(cindex);
       }
    }

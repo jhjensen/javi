@@ -44,11 +44,6 @@ public abstract class InsertBuffer extends View.Inserter {
       instance = this;
    }
 
-   static void setInsertMode(FvContext fvc, boolean overwrite) throws
-         InputException, IOException {
-      insertMode(false, 1, fvc, overwrite, true);
-   }
-
    static final void insertMode(boolean dotmode, int count, FvContext fvc,
          boolean overwritei, boolean singlelinei) throws
          IOException, InputException {
@@ -63,7 +58,7 @@ public abstract class InsertBuffer extends View.Inserter {
             ev.insertOne(prompt, ev.finish());
          }
          commFvc.cursorabs(prompt.length(), ev.finish() - 1);
-         setInsertMode(commFvc, false);
+         insertMode(false, 1, commFvc, false, true);
 
       } catch (InputException e) {
          UI.reportMessage(e.toString());
@@ -147,9 +142,6 @@ public abstract class InsertBuffer extends View.Inserter {
                itext(1, fvc);
                overwrite = !overwrite;
                if (overwrite) {
-                  trace("entering terminal mode");
-                  fvc.addKeyEventDispatcher();
-                  trace("exit insertmode?");
                   return this;
                }
                break;

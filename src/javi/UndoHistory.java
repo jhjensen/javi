@@ -51,12 +51,12 @@ public final class UndoHistory<OType> extends PersistantStack {
       currmark.close();
    }
 
-   void ereset() {
+   EhMark ereset() {
       //trace("should clear cache of " + prop);
       reset();
       currmark = new UndoHistory.EhMark();
-      FvContext.invalidateBack(currmark); //circular reference ???
       current = null;
+      return currmark;
    }
 
    void idleSave() throws IOException {
@@ -337,7 +337,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          return getIndex() == savewrite;
       }
 
-      public void getChanges(View.ChangeOpt vi) {
+      public void getChanges(ChangeOpt vi) {
          //trace("changemark " + this + " currmark = " + currmark);
          //trace("current " + current );
          if (!isValid()) {
@@ -389,8 +389,8 @@ public final class UndoHistory<OType> extends PersistantStack {
       abstract ChangeRecord newOne();
       abstract int redocr();
       abstract int undocr();
-      abstract boolean redocr(View.ChangeOpt vi);
-      abstract boolean undocr(View.ChangeOpt vi);
+      abstract boolean redocr(ChangeOpt vi);
+      abstract boolean undocr(ChangeOpt vi);
 
 
       void readExternal(ByteInput dis, ClassConverter<OType> conv) {
@@ -471,11 +471,11 @@ public final class UndoHistory<OType> extends PersistantStack {
             return cindex;
          }
 
-         boolean redocr(View.ChangeOpt vi) {
+         boolean redocr(ChangeOpt vi) {
             return false;
          }
 
-         boolean undocr(View.ChangeOpt vi) {
+         boolean undocr(ChangeOpt vi) {
             return false;
          }
 

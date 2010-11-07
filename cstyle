@@ -72,6 +72,9 @@ if ($size != 0) {
       if ($filelist{$key} > $db{$key} ) {
          print("$key(0,1)-cstyle new count $filelist{$key}greater than before:$db{$key}:\n");
          $errcnt ++;
+      } elsif ($filelist{$key} < $db{$key} ) {
+         print("$key(0,1)-cstyle new count $filelist{$key}less than before:$db{$key}:\n");
+         $errcnt ++;
       }
    }
    if ($errcnt) {

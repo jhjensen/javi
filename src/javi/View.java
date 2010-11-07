@@ -1,9 +1,10 @@
 package javi;
 
-import static javi.View.Opcode.*;
+import static javi.ChangeOpt.Opcode.*;
 import static history.Tools.trace;
 
-public abstract class View  implements java.io.Serializable {
+public abstract class View  extends
+      EventQueue.CursorControl implements java.io.Serializable {
 
    public abstract void cursorChanged(int newX, int newY);
    public abstract int yCursorChanged(int newY);
@@ -69,11 +70,7 @@ public abstract class View  implements java.io.Serializable {
       return traverse;
    }
 
-   public enum Opcode { NOOP, INSERT, CHANGE,
-      DELETE, REDRAW , MSCREEN, BLINKCURSOR
-   }
-
-   public abstract class ChangeOpt {
+   public abstract class COpt extends ChangeOpt {
 
       private  Opcode currop = NOOP;
       private  int saveAmount;
@@ -133,7 +130,7 @@ public abstract class View  implements java.io.Serializable {
          changedpro(fileY, fileY - yChange);
       }
 
-      private boolean changedpro(int index1, int index2) {
+      final boolean changedpro(int index1, int index2) {
          //trace("changedpro currop " + currop + "(" + index1 + "," + index2 + ")" );
 
          if (index2 < index1) {
@@ -351,15 +348,13 @@ public abstract class View  implements java.io.Serializable {
                Thread.sleep(200);
                if (newReadin > readin || text.donereading()) {
                   readin = newReadin;
-                  op.currop = REDRAW;
-                  repaint();
+                  op.redraw();
                }
             } while (!text.donereading() && newReadin <= needed);
          } catch (InterruptedException e) {
             trace("ignoring InterruptedException");
          }
-         op.currop = REDRAW;
-         repaint();
+         op.redraw();
          delayerflag = false;
       }
    }
