@@ -74,10 +74,13 @@ final class Ctag {
    Ctag(String tagfilename) throws IOException {
       ctfilename = tagfilename;
       RandomAccessFile ctfile = new RandomAccessFile(ctfilename , "r");
-      carray.add(new TagEntry("" + (Character.MIN_VALUE), 0, 0));
-      carray.add(new TagEntry(""
-         + (Character.MAX_VALUE), ctfile.length(), ctfile.length()));
-      ctfile.close();
+      try {
+         carray.add(new TagEntry(String.valueOf(Character.MIN_VALUE), 0, 0));
+         carray.add(new TagEntry(String.valueOf(Character.MAX_VALUE),
+            ctfile.length(), ctfile.length()));
+      } finally {
+         ctfile.close();
+      }
    }
 
    Position[] taglookup(String name) throws IOException {

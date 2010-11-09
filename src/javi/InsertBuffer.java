@@ -11,7 +11,7 @@ import static javi.JeyEvent.CTRL_MASK;
 public abstract class InsertBuffer extends View.Inserter {
    static final String copyright = "Copyright 1996 James Jensen";
 
-   private StringBuilder buffer = new StringBuilder();
+   private StringBuilder buffer = new StringBuilder(40);
    private boolean overwrite;
 
    final String getString() {

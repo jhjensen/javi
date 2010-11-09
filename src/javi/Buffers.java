@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public final class Buffers {
 
    private Buffers() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("attempt to new singleton");
    }
 
    private static HashMap<Integer, Object> buflist

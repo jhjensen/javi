@@ -5,7 +5,7 @@ public final class DeTabber {
    private static String[] tabstrings;
 
    private DeTabber() {
-      throw new RuntimeException();
+      throw new RuntimeException("attempt to new singleton");
    }
 
    static String mktabstr(int tab) {

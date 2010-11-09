@@ -33,7 +33,7 @@ final class MakeCmd extends Rgroup {
    }
 
    private static String l2String(ArrayList<EditContainer> efs, String alt) {
-      StringBuilder newstr = new StringBuilder();
+      StringBuilder newstr = new StringBuilder(efs.size() * 20);
 
       for (EditContainer ef : efs)
          if (!ef.getName().endsWith("h")) {

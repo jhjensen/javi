@@ -29,7 +29,7 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
       return null;
 
    }
-
+/*
    protected final String getLine2() {
       try {
          if (input == null)
@@ -56,8 +56,7 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
       input = null;
       return null;
    }
-
-   static final String copyright = "Copyright 1996 James Jensen";
+*/
 
    BufInIoc(FileProperties fp, boolean initThread, BufferedReader inputi) {
       super(fp, initThread);

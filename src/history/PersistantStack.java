@@ -58,13 +58,13 @@ public abstract class PersistantStack {
       }
 
       public final void set(Object obj) {
-         throw new UnsupportedOperationException();
+         throw new UnsupportedOperationException("setting unsupported");
       }
       public final int nextIndex() { return recordIndex + 1; }
       public final int previousIndex() { return recordIndex - 1; }
 
       public final void add(Object obj) {
-         throw new UnsupportedOperationException();
+         throw new UnsupportedOperationException("add unsupported");
       }
 
       public final void decrement() {
@@ -76,7 +76,7 @@ public abstract class PersistantStack {
       }
 
       public final void remove() {
-         throw new UnsupportedOperationException();
+         throw new UnsupportedOperationException("remove unsupported");
       }
 
       public final boolean hasNext() {
@@ -89,7 +89,7 @@ public abstract class PersistantStack {
          //trace("next pieceIndex = " + recordIndex + " size " + size );
          if (++recordIndex >= size) {
             recordIndex--;
-            throw new NoSuchElementException();
+            throw new NoSuchElementException("next past end of list");
          }
          return curr();
       }

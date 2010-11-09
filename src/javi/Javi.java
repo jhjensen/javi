@@ -107,7 +107,7 @@ public final class Javi {
       //new Thread(new Preloader(), "preloader").start();
       Thread curr = Thread.currentThread();
       curr.setPriority(curr.getPriority() - 1);
-      StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder(args.length * 10);
       String command = null;
       boolean cflag = false;
       boolean pflag = false;

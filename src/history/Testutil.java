@@ -6,7 +6,7 @@ class Testutil {
       return dumphex(b, 0, b.length);
    }
    static String dumphex(byte[] b, int offset, int length) {
-      StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder(2 * length);
       if (offset + length > b.length) {
          sb.append("Error in dumphex length to great:\n");
          sb.append("offset = " + offset + " length = " + length
