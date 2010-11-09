@@ -118,7 +118,7 @@ public class EditContainer<OType> implements
       os.writeInt(ecache.size());
       Iterator<OType> eve = iterator();
       while (eve.hasNext()) {
-         OType te = (OType) eve.next();
+         OType te = eve.next();
          os.writeObject(te);
       }
    }

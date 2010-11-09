@@ -20,10 +20,6 @@ public abstract class View  extends
    protected abstract void startInsertion(Inserter ins);
    protected abstract void endInsertion(Inserter ins);
 
-   /* Copyright 1996 James Jensen all rights reserved */
-   private static final String copyright = "Copyright 1996 James Jensen";
-
-
    private transient boolean cursoron = false;
 
    protected final boolean getCursorOn() {

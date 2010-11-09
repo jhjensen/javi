@@ -56,8 +56,6 @@ public abstract class Rgroup {
       new HashMap<String, KeyBinding>(100);
    private HashMap<String, Object> glist = new HashMap<String, Object>();
 
-   private static final String copyright = "Copyright 1996 James Jensen";
-
    static KeyBinding bindingLookup(String name) {
       //trace("bindingLookup " + name + " ret " + cmhash.get(name));
       return cmhash.get(name);

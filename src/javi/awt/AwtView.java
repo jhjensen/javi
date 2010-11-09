@@ -15,7 +15,6 @@ public abstract class AwtView  extends View {
 //   abstract void ssetFont(Font font);
 
    /* Copyright 1996 James Jensen all rights reserved */
-   private static final String copyright = "Copyright 1996 James Jensen";
 
    abstract static class Inserter {
       abstract String getString();

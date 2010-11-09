@@ -319,10 +319,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          return fsize;
       }
 
-      public void setSize(int width, int height) {
-         //trace("!!!!!!!!! frame setSize ("+ width + "," + height +")");
-         super.setSize(width, height);
-      }
+//      public void setSize(int width, int height) {
+//         //trace("!!!!!!!!! frame setSize ("+ width + "," + height +")");
+//         super.setSize(width, height);
+//      }
 
       public void setCompSize(int width, int height) {
          //trace("frame setCompsize ("+ width + "," + height +")");
@@ -419,10 +419,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             OldView atv = (OldView) tfc.vi;
             Component cmdComp = atv.getComponent();
             frm.remove(cmdComp);
-            tfc.dispose(atv);
+            FvContext.dispose(atv);
             tfc = null;
             try {
-               tfc.dispose(tfc.edvec, null);
+               FvContext.dispose(tfc.edvec, null);
             } catch (Exception ex) {
                UI.popError("error in flush", ex);
             }
@@ -1014,9 +1014,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          setLayout(lay);
       }
 
-      public void dispose() {
-         super.dispose();
-      }
+//      public void dispose() {
+//         super.dispose();
+//      }
 
       public void actionPerformed(ActionEvent e) {
          resb = (NButton) e.getSource();

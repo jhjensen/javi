@@ -26,9 +26,6 @@ abstract class Vt100 extends TextEdit<String> {
    private MovePos vtcursor = new MovePos(0, 1);
    private boolean insertmode = false;
    private int rows;
-   private String oldfont;
-//   private Float oldsize;
-
    private final Vt100Parser parser;
 
    Vt100(OutputStream ostri, BufferedInputStream istr,

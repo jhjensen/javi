@@ -108,7 +108,6 @@ public final class Javi {
       Thread curr = Thread.currentThread();
       curr.setPriority(curr.getPriority() - 1);
       StringBuilder sb = new StringBuilder();
-      int i;
       String command = null;
       boolean cflag = false;
       boolean pflag = false;

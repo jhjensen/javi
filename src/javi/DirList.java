@@ -162,7 +162,6 @@ final class DirList extends TextEdit<DirEntry> {
 
    private static class GrepReader extends PositionIoc {
 
-      private String searchterm;
       private transient Matcher matcher;
       private ArrayList<DirEntry> dirlist;
       private transient boolean invert = false;
@@ -183,7 +182,6 @@ final class DirList extends TextEdit<DirEntry> {
       GrepReader(String spec, ArrayList<DirEntry> dirlisti, boolean inverti) {
          super("grep " + spec, null);
          dirlist = dirlisti;
-         searchterm = spec;
          matcher = Pattern.compile("(^.*(" + spec
             + ").*$)|(^(.*)$)", Pattern.MULTILINE).matcher("");
          //,RE.REG_MULTILINE);

@@ -39,8 +39,6 @@ import static history.Tools.trace;
 class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
-   private static final String copyright = "Copyright 1996 James Jensen";
-
    private int screenSize = 24;
    private int minColumns;
    private int pixelWidth;

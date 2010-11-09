@@ -43,7 +43,7 @@ public class PositionIoc extends BufInIoc<Position> {
          } else if (!"".equals(line))
             try {
                return converter.fromString(line);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                //trace("line len " + line.length());
                //trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);
             }

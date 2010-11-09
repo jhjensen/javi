@@ -96,36 +96,11 @@ class MakeCmd extends Rgroup {
 
    private static class GccInst extends PositionIoc {
 
-      private boolean asmflag = false;
 
-      static Position asmparse(String line) {
-         trace("parsing line + " + line);
-         String file;
-         String comment;
-         int y;
-         int pos = line.indexOf('(', 3); // three skips over any drive desc
-         if (pos == -1) {
-            return null;
-         } else {
-            try {
-               file = line.substring(0, pos);
-               line = line.substring(pos + 1, line.length());
-               pos = line.indexOf(')');
-               y = Integer.parseInt(line.substring(0, pos));
-               comment = line.substring(pos + 3, line.length());
-               //trace("comment = " + comment);
-               return new Position(0, y, file, comment);
-            } catch (Throwable e) {
-               return null;
-            }
-         }
-      }
-
-      GccInst(String filesi, String comstringi, boolean asmflagi) throws
+       GccInst(String filesi, String comstringi, boolean asmflagi) throws
             IOException {
          super("gcc " +  comstringi + filesi,
             Tools.runcmd(comstringi + filesi));
-         asmflag = asmflagi;
          String comstring = comstringi + filesi;
          trace(comstring);
       }

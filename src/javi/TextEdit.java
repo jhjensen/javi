@@ -16,9 +16,6 @@ import java.util.regex.Matcher;
 import static javi.FileDescriptor.LocalFile.make;
 
 public class TextEdit<OType> extends EditContainer<OType> {
-   /* Copyright 1996 James Jensen all rights reserved */
-   private static final String copyright = "Copyright 1996 James Jensen";
-
    private static TextEdit<String> root;
    static TextEdit getRoot() {
       return root;
@@ -1300,7 +1297,7 @@ final class EditTester1 {
       try {
          ex.disposeFvc();
          myassert(false, ex);
-      } catch (IOException e) {
+      } catch (final IOException e) {
       }
 
       ex = newTe("extest15");
