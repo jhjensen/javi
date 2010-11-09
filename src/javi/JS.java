@@ -32,7 +32,7 @@ final class JS {
    static {
       jsClear();
    }
-   static class JSObj {
+   static final class JSObj {
       public void myprint(String s)  {
          //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
          JSR.jsoutput.insertOne(s, JSR.jsoutput.finish());
@@ -41,7 +41,7 @@ final class JS {
 
 
    /* Copyright 1996 James Jensen all rights reserved */
-   public static class JSR extends Rgroup {
+   public static final class JSR extends Rgroup {
       JSR() {
          final String[] rnames = {
             "",
@@ -56,7 +56,7 @@ final class JS {
       static final StringIoc sio = new StringIoc("jsoutput", "start");
       static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
 
-      public static class JSgroup extends Rgroup {
+      public static final class JSgroup extends Rgroup {
          private final Function func;
 
          public JSgroup(String funcname) throws Exception {
@@ -71,7 +71,7 @@ final class JS {
             func = funci;
          }
 
-         public final Object doroutine(int rnum, Object arg, int count,
+         public Object doroutine(int rnum, Object arg, int count,
                int rcount, FvContext fvc , boolean dotmode) throws
                IOException {
             Object[] fargs = {rnum, arg, count, rcount, fvc, dotmode};
@@ -84,7 +84,7 @@ final class JS {
          return new JSgroup(str);
       }
 
-      public final Object doroutine(int rnum, Object arg, int count, int rcount,
+      public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc , boolean dotmode) throws IOException {
          //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
 
@@ -139,10 +139,9 @@ final class JS {
 
       }
 
-      static boolean myassert(boolean flag, Object dump) {
+      static void myassert(boolean flag, Object dump) {
          if (!flag)
             throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
-         return flag;
       }
 
       public static void main(String[] args) {

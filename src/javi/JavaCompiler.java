@@ -10,7 +10,7 @@ import javax.tools.StandardJavaFileManager;
 import java.util.Arrays;
 import java.util.ArrayList;
 
-class JavaCompiler extends Rgroup {
+final class JavaCompiler extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
@@ -76,7 +76,7 @@ class JavaCompiler extends Rgroup {
          PosListList.Cmd.setErrors(new JavaCompilerInst(dlist));
    }
 
-   private static class JavaCompilerInst extends PositionIoc implements
+   private static final class JavaCompilerInst extends PositionIoc implements
       DiagnosticListener<JavaFileObject>  {
 
       private final ArrayList<FileDescriptor.LocalFile> flist;

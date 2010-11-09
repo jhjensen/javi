@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import static history.Tools.trace;
 
-class EditGroup extends Rgroup {
+final class EditGroup extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 

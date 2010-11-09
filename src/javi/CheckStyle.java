@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-class CheckStyle extends Rgroup {
+final class CheckStyle extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
@@ -92,7 +92,7 @@ class CheckStyle extends Rgroup {
       }
    }
 
-   private static class CheckStyleInst extends PositionIoc {
+   private static final class CheckStyleInst extends PositionIoc {
 
       CheckStyleInst(List<String> filename) throws IOException {
          super("checkstyle", Tools.runcmd(filename));

@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.Date;
 import static history.Tools.trace;
 
-public class MiscCommands extends Rgroup  {
+public final class MiscCommands extends Rgroup  {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
    MiscCommands() {
@@ -35,7 +35,7 @@ public class MiscCommands extends Rgroup  {
    private static int defwidth = 80;
    private static int defheight = 80;
 
-   public final Object doroutine(int rnum, Object arg, int count, int rcount,
+   public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
       //trace("rnum = " + rnum );
       switch (rnum) {
@@ -90,7 +90,7 @@ public class MiscCommands extends Rgroup  {
       return defwidth;
    }
 
-   private static class MyFl implements EditContainer.FileStatusListener {
+   private static final class MyFl implements EditContainer.FileStatusListener {
       public void fileAdded(EditContainer ev)  { }
       public void fileWritten(EditContainer ev) { }
       public boolean fileDisposed(EditContainer ev) {

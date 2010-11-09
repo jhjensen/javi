@@ -102,6 +102,7 @@ final class JarResources {
      * Dumps a zip entry into a string.
      * @param ze a ZipEntry
      */
+/*
    private String dumpZipEntry(ZipEntry ze) {
       StringBuilder sb = new StringBuilder(ze.isDirectory() ? "d " : "f ");
 
@@ -115,6 +116,7 @@ final class JarResources {
 
       return (sb.toString());
    }
+*/
 
    /**
      * Is a test driver. Given a jar file and a resource name, it trys to

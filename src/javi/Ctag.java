@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
    allows line numbers
 */
 
-class Ctag {
+final class Ctag {
    private static final class TagEntry {
 
       private String name;

@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 public final class FileList extends TextEdit<TextEdit<String>> {
-   static class FileConverter extends ClassConverter<TextEdit<String>> {
+   static final class FileConverter extends ClassConverter<TextEdit<String>> {
       public TextEdit<String> fromString(String str) {
          //trace("S = "  + S);
          if (str.length() == 0)

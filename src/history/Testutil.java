@@ -42,10 +42,9 @@ class Testutil {
       return true;
    }
 
-   static boolean myassert(boolean flag, Object dump) {
+   static void myassert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
-      return flag;
    }
 
 }

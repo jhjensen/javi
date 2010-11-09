@@ -70,7 +70,7 @@ final class MoveGroup extends Rgroup {
       EditContainer.registerChangeListen(new FCH());
    }
 
-   class FCH extends EditContainer.FileChangeListener  {
+   private final class FCH extends EditContainer.FileChangeListener  {
       void addedLines(FileDescriptor fd, int count, int index) {
          for (Map.Entry<Integer, Position> me : markpos.entrySet()) {
             Position pos = me.getValue();

@@ -3,7 +3,7 @@ package javi;
 import java.io.IOException;
 import java.util.ArrayList;
 
-class MakeCmd extends Rgroup {
+final class MakeCmd extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
@@ -94,10 +94,10 @@ class MakeCmd extends Rgroup {
       }
    }
 
-   private static class GccInst extends PositionIoc {
+   private static final class GccInst extends PositionIoc {
 
 
-       GccInst(String filesi, String comstringi, boolean asmflagi) throws
+      GccInst(String filesi, String comstringi, boolean asmflagi) throws
             IOException {
          super("gcc " +  comstringi + filesi,
             Tools.runcmd(comstringi + filesi));

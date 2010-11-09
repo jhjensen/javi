@@ -40,10 +40,9 @@ public final class Tools {
          return tr[2].getMethodName();
       }
    }
-   static boolean Assert(boolean flag, Object dump) {
+   static void Assert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
-      return flag;
    }
 
    private static final ProcessBuilder pb = new ProcessBuilder();
@@ -55,8 +54,7 @@ public final class Tools {
          new InputStreamReader(proc.getInputStream()));
       ArrayList<String> output = new ArrayList<String>();
       try {
-         String str;
-         while (null != (str = in.readLine()))
+         for (String str; null != (str = in.readLine());)
             output.add(str);
          proc.waitFor();
       } catch (InterruptedException e) {

@@ -28,7 +28,7 @@ public final class PosListList extends TextList<Position> {
       EditContainer.registerChangeListen(new FCH());
    }
 
-   class FCH extends EditContainer.FileChangeListener  {
+   private class FCH extends EditContainer.FileChangeListener  {
 
       void addedLines(FileDescriptor fd, int count, int index) {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
@@ -471,10 +471,9 @@ public final class PosListList extends TextList<Position> {
          return taglist;
       }
 
-      static boolean myassert(boolean flag, Object dump) {
+      static void myassert(boolean flag, Object dump) {
          if (!flag)
             throw new RuntimeException("ASSERTION FAILURE " + dump.toString());
-         return flag;
       }
 
    }

@@ -75,7 +75,7 @@ public abstract class InsertBuffer extends View.Inserter {
       }
    }
 
-   private class Cmd extends Rgroup {
+   private final class Cmd extends Rgroup {
 
       Cmd() {
          final String[] rnames = {

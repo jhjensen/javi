@@ -7,7 +7,7 @@ import java.io.IOException;
     for an editvec to do IO
 */
 
-abstract class BufInIoc<OType>  extends IoConverter<OType>  {
+class BufInIoc<OType>  extends IoConverter<OType>  {
    private transient BufferedReader  input;
 
    protected final String getLine() {

@@ -1,7 +1,8 @@
 package javi;
 
 import java.io.Serializable;
-public class FileProperties<OType> implements Serializable {
+
+public final class FileProperties<OType> implements Serializable {
    private static String staticLine = System.getProperty("line.separator");
    final FileDescriptor fdes;
    final ClassConverter<OType> conv;
@@ -16,11 +17,11 @@ public class FileProperties<OType> implements Serializable {
       return fdes.toString();
    }
 
-   final String getSeperator() {
+   String getSeperator() {
       return lsep;
    }
 
-   final void setSeperator(String sep) {
+   void setSeperator(String sep) {
       //e! resets this if (lsep != staticLine)
       //   throw new RuntimeException("attempt to reset line seperator");
       lsep = sep;

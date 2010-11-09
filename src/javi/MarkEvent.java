@@ -1,6 +1,6 @@
 package javi;
 
-public class MarkEvent extends EventQueue.IEvent {
+public final class MarkEvent extends EventQueue.IEvent {
 
    private Position pos;
 
@@ -8,7 +8,7 @@ public class MarkEvent extends EventQueue.IEvent {
       pos = posi;
    }
 
-   public final void execute() {
+   public void execute() {
       FvContext fvc = FvContext.getCurrFvc();
       Position oldPos = fvc.getPosition("");
       fvc.cursorabs(pos);

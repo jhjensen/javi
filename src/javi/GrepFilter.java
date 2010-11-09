@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
 
-class GrepFilter implements FilenameFilter {
+final class GrepFilter implements FilenameFilter {
    private Matcher regex;
    private boolean invert;
 

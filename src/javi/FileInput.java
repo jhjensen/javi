@@ -3,7 +3,7 @@ package javi;
 import java.io.IOException;
 import org.mozilla.universalchardet.UniversalDetector;
 
-class FileInput extends BufInIoc<String> {
+final class FileInput extends BufInIoc<String> {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
    private static final long serialVersionUID = 1;

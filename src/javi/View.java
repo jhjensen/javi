@@ -321,7 +321,7 @@ public abstract class View  extends
 
       if (ehm.sameBack(chmark))
          if (chmark.getIndex() > ehm.getIndex())
-            chmark.setInvalid();
+            chmark.invalidate();
    }
 
    class Delayer implements Runnable {

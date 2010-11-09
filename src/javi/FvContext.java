@@ -19,7 +19,7 @@ public final class FvContext<OType> implements Serializable {
    static final String copyright = "Copyright 1996 James Jensen";
    private static final long serialVersionUID = 1;
 
-   private static class FvMap implements Serializable {
+   private static final class FvMap implements Serializable {
       private LinkedHashMap<View, HashMap<TextEdit, FvContext>> viewhash =
          new LinkedHashMap<View, HashMap<TextEdit, FvContext>>(1);
 

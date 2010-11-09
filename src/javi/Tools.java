@@ -37,10 +37,9 @@ public final class Tools {
          return tr[2].getMethodName();
       }
    }
-   static boolean Assert(boolean flag, Object dump) {
+   static void Assert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
-      return flag;
    }
 
    private static final ProcessBuilder pb = new ProcessBuilder();

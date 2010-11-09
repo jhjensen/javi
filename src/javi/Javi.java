@@ -27,7 +27,7 @@ public final class Javi {
 //static String persistName = "testpersist";
    private static String persistName = null;
 
-   static class Jcmds extends Rgroup  {
+   static final class Jcmds extends Rgroup  {
       private final String[] rnames = {
          "",
          "persistfile" ,

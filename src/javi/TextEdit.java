@@ -775,7 +775,7 @@ final class EditTester1 {
       }
    }
 
-   static boolean myassert(boolean flag, Object dump) {
+   static void myassert(boolean flag, Object dump) {
       //String dstring = (" ASSERTION FAILURE: \n" + dump.toString());
       if (dump instanceof Throwable)
 //      dstring = dstring + ((Throwable) dump).printStackTrace();
@@ -784,7 +784,6 @@ final class EditTester1 {
       if (!flag)
          throw new RuntimeException(
             " ASSERTION FAILURE: \n" + dump.toString());
-      return flag;
    }
 
    static void starttest() {

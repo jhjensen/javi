@@ -12,7 +12,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
 
-class JDebugger extends IoConverter<String> {
+final class JDebugger extends IoConverter<String> {
 
    private static final long serialVersionUID = 1;
    public String getnext() {
@@ -158,7 +158,7 @@ class JDebugger extends IoConverter<String> {
 
    }
 
-   private class StreamVreader implements Runnable {
+   private final class StreamVreader implements Runnable {
       private BufferedReader inStream;
       private boolean running = true;
       StreamVreader(InputStream instr) {

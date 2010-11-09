@@ -74,8 +74,7 @@ public final class Command extends Rgroup {
          return;
       BufferedReader ini = ifile.getBufferedReader();
       try {
-         String line;
-         while (null != (line = ini.readLine()))
+         for (String line; null != (line = ini.readLine());)
             cmdlist.add(line);
       } finally {
          ini.close();

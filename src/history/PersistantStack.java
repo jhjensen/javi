@@ -37,7 +37,7 @@ public abstract class PersistantStack {
          recordIndex = it.recordIndex;
       }
 
-      public final void setInvalid() {
+      public final void invalidate() {
          recordIndex = -Integer.MAX_VALUE;
       }
       public final boolean isValid() {
