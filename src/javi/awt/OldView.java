@@ -36,7 +36,7 @@ import static history.Tools.trace;
 
 //import java.awt.RenderingHints;
 
-class OldView extends AwtView {
+final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
    private int screenSize = 24;
@@ -63,11 +63,11 @@ class OldView extends AwtView {
       return canvas;
    }
 
-   public final boolean isVisible() {
+   public boolean isVisible() {
       return canvas.isVisible();
    }
 
-   public final void repaint() {
+   public void repaint() {
       canvas.repaint();
    }
 

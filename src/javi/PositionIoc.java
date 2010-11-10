@@ -2,13 +2,12 @@ package javi;
 
 import java.io.BufferedReader;
 
-
 public class PositionIoc extends BufInIoc<Position> {
 
-   static class PositionConverter extends ClassConverter<Position> {
+   static final class PositionConverter extends ClassConverter<Position> {
       public Position fromString(String s) {
          //trace(s);
-         if ("".equals(s)) {
+         if (s.length() == 0) {
             return defpos;
          }
          int posx = s.indexOf('(');
@@ -40,7 +39,7 @@ public class PositionIoc extends BufInIoc<Position> {
          //trace("line = " + line);
          if ("done".equals(line)) {
             trace("should exit immediatly");
-         } else if (!"".equals(line))
+         } else if (line.length() != 0)
             try {
                return converter.fromString(line);
             } catch (final Exception e) {

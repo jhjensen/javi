@@ -1,7 +1,6 @@
 package javi;
 
-public class ExitException extends InputException {
-   private static final long serialVersionUID = 1;
+public final class ExitException extends InputException {
    public ExitException() {
       super("exiting java");
    }

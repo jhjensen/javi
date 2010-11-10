@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-class XrefReader extends PositionIoc {
+final class XrefReader extends PositionIoc {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 

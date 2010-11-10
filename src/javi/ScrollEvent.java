@@ -1,6 +1,6 @@
 package javi;
 
-public class ScrollEvent extends EventQueue.IEvent {
+public final class ScrollEvent extends EventQueue.IEvent {
 
    private int amount;
 
@@ -8,7 +8,7 @@ public class ScrollEvent extends EventQueue.IEvent {
       amount = amt;
    }
 
-   public final void execute() {
+   public void execute() {
       FvContext fvc = FvContext.getCurrFvc();
       fvc.cursory(amount);
    }

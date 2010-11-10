@@ -235,8 +235,6 @@ public abstract class View  extends
       op.cursorChange(xChange, yChange);
    }
 
-   protected static final transient int inset = 2;
-
    private transient boolean delayerflag;
 
    private TextEdit text;

@@ -91,7 +91,7 @@ public final class Command extends Rgroup {
 
    static void doneInit() {
       if (cmdlist.size() != 0) {
-         StringBuffer bf = new StringBuffer(
+         StringBuilder bf = new StringBuilder(
             "command list has unexecuted commands:\n");
          Iterator<String> cit = cmdlist.iterator();
          while (cit.hasNext()) {
@@ -163,7 +163,7 @@ public final class Command extends Rgroup {
          if (line.indexOf(' ') != -1) {
             command = line.substring(0, line.indexOf(' '));
             String l2 = line.substring(command.length(), line.length()).trim();
-            args = "".equals(l2)  ? null : l2;
+            args = l2.length() == 0  ? null : l2;
          } else {
             command = line;
          }

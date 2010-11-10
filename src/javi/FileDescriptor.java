@@ -136,7 +136,7 @@ public class FileDescriptor implements Serializable {
       return fileManager.getJavaFileObjectsFromFiles(new Fiter(flist));
    }
 
-   public static class InternalFd extends FileDescriptor {
+   public final static class InternalFd extends FileDescriptor {
       private static long uniqCtr;
 
       public static InternalFd make(String fname) {
@@ -147,7 +147,7 @@ public class FileDescriptor implements Serializable {
       }
    }
 
-   static class LocalDir extends LocalFile {
+   static final class LocalDir extends LocalFile {
 
       static LocalDir make(String fname) {
          LocalFile fh = LocalFile.make(fname);

@@ -1,6 +1,6 @@
 package javi;
 
-public class PosEvent extends EventQueue.IEvent {
+public final class PosEvent extends EventQueue.IEvent {
 
    private FvContext fvc;
    private Position pos;
@@ -10,7 +10,7 @@ public class PosEvent extends EventQueue.IEvent {
       pos = posi;
    }
 
-   public final void execute() {
+   public void execute() {
       if (fvc != FvContext.getCurrFvc()) {
          UI.setTitle(fvc.edvec.toString());
          fvc.setCurrView();

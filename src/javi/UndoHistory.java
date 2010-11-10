@@ -280,10 +280,6 @@ public final class UndoHistory<OType> extends PersistantStack {
    final class EhMark extends
          PersistantStack.PSIterator implements Cloneable {
 
-      EhMark() {
-         super();
-      }
-
       public Object clone() {
          try {
             return super.clone();

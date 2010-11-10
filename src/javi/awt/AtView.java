@@ -11,7 +11,7 @@ import java.awt.Color;
 import javi.DeTabber;
 import history.Tools;
 
-class AtView implements
+final class AtView implements
       AttributedCharacterIterator, Cloneable, java.io.Serializable {
 
    private HashMap<Attribute, Object> by;

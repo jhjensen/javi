@@ -1,7 +1,7 @@
 package javi;
 
 public final class StringIoc extends IoConverter<String> {
-   private static class StringConverter extends ClassConverter<String> {
+   private static final class StringConverter extends ClassConverter<String> {
 
       public String fromString(String str) {
          return str;

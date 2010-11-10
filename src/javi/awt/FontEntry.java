@@ -13,7 +13,7 @@ import javi.FvExecute;
 
 
 
-class FontEntry implements FvExecute, java.io.Serializable {
+final class FontEntry implements FvExecute, java.io.Serializable {
    private static final long serialVersionUID = 1;
    private static Matcher nameReg;
    private static Matcher styleReg;
@@ -71,7 +71,7 @@ class FontEntry implements FvExecute, java.io.Serializable {
    }
 
    FontEntry(String str) {
-      if ("".equals(str))
+      if (str.length() == 0)
          makedefault();
       else {
 

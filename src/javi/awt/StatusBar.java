@@ -12,7 +12,7 @@ import javi.FvContext;
 import javi.UI;
 import history.Tools;
 
-class StatusBar extends Canvas {
+final class StatusBar extends Canvas {
    private static final long serialVersionUID = 1;
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
@@ -26,7 +26,6 @@ class StatusBar extends Canvas {
    private boolean sizeChanged;
 
    StatusBar() {
-      super();
       setBackground(AtView.foreground);
    }
 

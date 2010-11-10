@@ -28,7 +28,7 @@ public final class PosListList extends TextList<Position> {
       EditContainer.registerChangeListen(new FCH());
    }
 
-   private class FCH extends EditContainer.FileChangeListener  {
+   private final class FCH extends EditContainer.FileChangeListener  {
 
       void addedLines(FileDescriptor fd, int count, int index) {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
@@ -162,11 +162,8 @@ public final class PosListList extends TextList<Position> {
             throw new RuntimeException("vic.gotonextpos unexpected object");
       }
    }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 
-   public static class Cmd extends Rgroup {
+   public static final class Cmd extends Rgroup {
       /* Copyright 1996 James Jensen all rights reserved */
       static final String copyright = "Copyright 1996 James Jensen";
 
@@ -211,7 +208,7 @@ public final class PosListList extends TextList<Position> {
          flush();
       }
 
-      public final Object doroutine(int rnum, Object arg, int count, int rcount,
+      public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws
             IOException, InputException {
          //trace("rnum = " + rnum );

@@ -1,7 +1,7 @@
 package javi;
 import java.io.BufferedInputStream;
 
-class Vt100Parser extends EventQueue.IEvent implements Runnable {
+final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    private int state = NORM;
    private static final int NORM = 0;

@@ -146,11 +146,7 @@ final class DirList extends TextEdit<DirEntry> {
       return null;
    }
 
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
-
-   private static class DirConverter extends ClassConverter<DirEntry> {
+   private static final class DirConverter extends ClassConverter<DirEntry> {
 
       public DirEntry fromString(String st) {
          return new DirEntry(st);
@@ -159,7 +155,7 @@ final class DirList extends TextEdit<DirEntry> {
       private static DirConverter dirConverter = new DirConverter();
    }
 
-   private static class GrepReader extends PositionIoc {
+   private static final class GrepReader extends PositionIoc {
 
       private transient Matcher matcher;
       private ArrayList<DirEntry> dirlist;

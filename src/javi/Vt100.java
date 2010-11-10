@@ -11,12 +11,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
 
-abstract class Vt100 extends TextEdit<String> {
+class Vt100 extends TextEdit<String> {
 
 
    /* Copyright 1996 James Jensen all rights reserved */
-
-   static final String copyright = "Copyright 1996 James Jensen";
 
    private final OutputStreamWriter writer;
 //   private final OutputStream str;
@@ -109,7 +107,7 @@ abstract class Vt100 extends TextEdit<String> {
       }
    }
 
-   private class ECScreen extends VScreen {
+   private final class ECScreen extends VScreen {
       void incX(int amount, StringBuffer sb) {
          insertString(sb);
          vtcursor.x += amount;

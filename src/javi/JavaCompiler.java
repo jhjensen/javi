@@ -163,7 +163,7 @@ final class JavaCompiler extends Rgroup {
          } catch (IOException e) {
             UI.reportError("JavaCompiler caught " + e);
          } catch (IllegalArgumentException e) {
-            UI.reportError("" + e.getMessage());
+            UI.reportError(e.getMessage());
          }
       }
    }

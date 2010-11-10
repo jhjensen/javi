@@ -139,10 +139,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          return result;
       }
 
-      SyncAwt() {
-         super();
-      }
-
       SyncAwt<OType> postWait() {
          synchronized (this) {
             int holdCount = EventQueue.biglock2.getHoldCount();
@@ -232,7 +228,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    // command context ??? could use FvContext.tfc
    private transient FvContext tfc;
 
-   public static class ForceIdle extends EventQueue.IEvent {
+   public static final class ForceIdle extends EventQueue.IEvent {
       public void execute() throws ExitException {
       }
    }

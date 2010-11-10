@@ -5,14 +5,14 @@ import java.io.IOException;
 import java.io.Reader;
 import static history.Tools.trace;
 
-public class StreamInterface extends UI {
+public final class StreamInterface extends UI {
 
-   public final void isetStream(Reader inreader) {
+   public void isetStream(Reader inreader) {
       inStr = inreader;
    }
    private Reader inStr = new InputStreamReader(System.in);
 
-   public final Buttons ireportDiff(String filename, int linenum,
+   public Buttons ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,
                     BackupStatus status, String backupname) {
 
@@ -73,33 +73,33 @@ public class StreamInterface extends UI {
 
    public void irepaint() { /* unimplemented */ }
    public void idispose() { /* unimplemented */ }
-   public final String igetFile() { return "filename"; }
-   public final boolean iisVisible() { return true; }
+   public String igetFile() { return "filename"; }
+   public boolean iisVisible() { return true; }
    public void iremove(View vi) { /* unimplemented */ }
    public void ishow() { /* unimplemented */ }
    public void ishowmenu(int x, int y) { /* unimplemented */ }
    public void itoFront() { /* unimplemented */ }
    public void itransferFocus() { /* unimplemented */ }
-   public final Buttons ichooseWriteable(java.lang.String str) {
+   public Buttons ichooseWriteable(java.lang.String str) {
       throw new RuntimeException("unimplemented");
    }
-   public final boolean ipopstring(java.lang.String str) { return false; }
+   public boolean ipopstring(java.lang.String str) { return false; }
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
    public void isetTitle(String str) { }
-   public final View iaddview(boolean newview, FvContext fvc) { return null; }
+   public View iaddview(boolean newview, FvContext fvc) { return null; }
 
-   public final void istatusaddline(String s) {
+   public void istatusaddline(String s) {
       trace(s);
    }
    public void istatusSetline(String s) { /*unimplemented*/ }
    public void iclearStatus() { /* unimplemented */ }
-   public final void ishowCommand() {
+   public void ishowCommand() {
       throw new RuntimeException("unimplemented");
    }
 
    public void ihideCommand() { }
-   public final Object doroutine(int rnum, Object arg, int count, int rcount,
+   public Object doroutine(int rnum, Object arg, int count, int rcount,
                            FvContext fvc, boolean dotmode) {
 
       throw new RuntimeException("doroutine called with " + rnum);
@@ -108,7 +108,7 @@ public class StreamInterface extends UI {
    public void inextView(FvContext fvc) {
    }
 
-   public final Result ireportModVal(String caption, String units,
+   public Result ireportModVal(String caption, String units,
                         String []buttonVals, long limit) {
 
       return null;
@@ -120,7 +120,7 @@ public class StreamInterface extends UI {
    }
    public void iSaveState(java.io.ObjectOutputStream os) {
    }
-   public final InsertBuffer igetInsertBuffer() {
+   public InsertBuffer igetInsertBuffer() {
       return null;
    }
 }

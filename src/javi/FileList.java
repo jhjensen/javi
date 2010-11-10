@@ -65,7 +65,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    }
 
-   private class Commands extends Rgroup {
+   private final class Commands extends Rgroup {
       Commands() {
          final String[] rnames = {
             "",
@@ -150,14 +150,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    static final String copyright = "Copyright 1996 James Jensen";
 
-   public static class FileListEvent extends EventQueue.IEvent {
+   public static final class FileListEvent extends EventQueue.IEvent {
       private List mlist;
 
       public FileListEvent(List lst) {
          mlist = lst;
       }
 
-      public final void execute() {
+      public void execute() {
          try {
             Iterator eve = mlist.iterator();
             while (eve.hasNext())

@@ -10,7 +10,7 @@ import javi.PositionIoc;
 import javi.Plugin;
 import static history.Tools.trace;
 
-public class FindBugs extends Rgroup implements Plugin {
+public final class FindBugs extends Rgroup implements Plugin {
 
    /* Copyright 1996 James Jensen all rights reserved */
 
@@ -30,7 +30,7 @@ public class FindBugs extends Rgroup implements Plugin {
    }
 
 
-   public final Object doroutine(int rnum, Object arg, int count, int rcount,
+   public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException {
       trace("rnum = " + rnum);
       switch (rnum) {
@@ -61,7 +61,7 @@ public class FindBugs extends Rgroup implements Plugin {
       trace("findbug exits");
    }
 
-   static class FindBugRunner extends PositionIoc {
+   static final class FindBugRunner extends PositionIoc {
 
       FindBugRunner(String filename) throws IOException {
 //     Process proc = Runtime.getRuntime().exec(cstring);

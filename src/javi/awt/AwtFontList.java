@@ -32,7 +32,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       os.writeObject(inst.at(1));
    }
 
-   private static class Commands extends Rgroup {
+   private static final class Commands extends Rgroup {
       Commands() {
          final String[] rnames = {
             "",
@@ -117,7 +117,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       new Commands();
    }
 
-   private static class FontConverter extends ClassConverter<FontEntry> {
+   private static final class FontConverter extends ClassConverter<FontEntry> {
       public FontEntry fromString(String str) {
          return new FontEntry(str);
       }
@@ -125,7 +125,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
 
    private static FontConverter converter = new FontConverter();
 
-   private static class FontParser extends IoConverter<FontEntry> {
+   private static final class FontParser extends IoConverter<FontEntry> {
 
       private static final long serialVersionUID = 1;
       public void dispose() throws IOException {

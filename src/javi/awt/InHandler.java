@@ -9,13 +9,9 @@ import java.text.AttributedCharacterIterator;
 import javi.EventQueue;
 import static history.Tools.trace;
 
-class InHandler extends javi.InsertBuffer implements InputMethodListener {
+final class InHandler extends javi.InsertBuffer implements InputMethodListener {
 
    private int commited;
-
-   InHandler() {
-      super();
-   }
 
    public AttributedCharacterIterator cancelLatestCommittedText(
       AttributedCharacterIterator.Attribute[] attributes)  {
@@ -60,7 +56,7 @@ class InHandler extends javi.InsertBuffer implements InputMethodListener {
          EventQueue.insert(new TextChanged(event));
    }
 
-   class TextChanged extends EventQueue.IEvent {
+   final class TextChanged extends EventQueue.IEvent {
       private InputMethodEvent ev;
 
       TextChanged(InputMethodEvent evi) {
