@@ -41,7 +41,7 @@ final class JS {
 
 
    /* Copyright 1996 James Jensen all rights reserved */
-   public static final class JSR extends Rgroup {
+   static final class JSR extends Rgroup {
       JSR() {
          final String[] rnames = {
             "",
@@ -56,7 +56,7 @@ final class JS {
       static final StringIoc sio = new StringIoc("jsoutput", "start");
       static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
 
-      public static final class JSgroup extends Rgroup {
+      static final class JSgroup extends Rgroup {
          private final Function func;
 
          public JSgroup(String funcname) throws Exception {

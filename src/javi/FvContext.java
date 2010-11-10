@@ -171,7 +171,7 @@ public final class FvContext<OType> implements Serializable {
       os.writeObject(fvmap);
    }
 
-   private static class FmListener extends EditContainer.MarkListener {
+   private static final class FmListener extends EditContainer.MarkListener {
 
       void invalidateBack(UndoHistory.EhMark ehm) {
          for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)  {
@@ -194,7 +194,7 @@ public final class FvContext<OType> implements Serializable {
 
    }
 
-   private static class Idler implements EventQueue.Idler {
+   private static final class Idler implements EventQueue.Idler {
       public void idle() {
          for (View vi : fvmap.viewCollection())
             vi.repaint();
@@ -302,9 +302,7 @@ public final class FvContext<OType> implements Serializable {
       fixCursor(edvec);
    }
 
-
-
-   private static class QuitClass implements Runnable {
+   private static final class QuitClass implements Runnable {
       public void run() {
 
          try {

@@ -322,7 +322,7 @@ public abstract class View  extends
             chmark.invalidate();
    }
 
-   class Delayer implements Runnable {
+   private final class Delayer implements Runnable {
       private int readin;
       private int needed;
 

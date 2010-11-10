@@ -171,7 +171,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   class Commands extends Rgroup   {
+   private final class Commands extends Rgroup   {
       private final String[] rnames = {
          "",
          "togglestatus" ,
@@ -233,7 +233,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   class TestFrame extends  Frame {
+   private final class TestFrame extends  Frame {
 
       private final String name;
 
@@ -465,7 +465,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 //      EventQueue.insert(event);
 //   }
 
-   class Flusher extends RunAwt {
+   private final class Flusher extends RunAwt {
       private boolean total;
       Flusher(boolean totali) {
          super();

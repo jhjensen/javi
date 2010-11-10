@@ -15,7 +15,7 @@ final class Ctag {
 
       private String name;
       private Position[] positions;
-      private static Position[] narray = new Position[0];
+      private static final Position[] narray = new Position[0];
       private long filestart;
       private long fileend;
 

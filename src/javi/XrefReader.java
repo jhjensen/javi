@@ -13,9 +13,9 @@ final class XrefReader extends PositionIoc {
    public static void main(String[] args) {
       try {
          XrefReader gr = new XrefReader("dilOpen");
-         Position p;
-         while (null != (p = gr.getnext()))
-            trace(" pos = " + p);
+         Position pos;
+         while (null != (pos = gr.getnext()))
+            trace(" pos = " + pos);
       } catch (Exception e) {
          trace(" caught exception " + e);
       }

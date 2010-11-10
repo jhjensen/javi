@@ -31,7 +31,7 @@ final class JarResources {
      * into an internal hashtable, keyed by resource names.
      * @param jarFileName a jar or zip file
      */
-   public JarResources(String jarFileNamei)  throws IOException {
+   JarResources(String jarFileNamei)  throws IOException {
       jarFileName = jarFileNamei;
       init();
    }
@@ -158,7 +158,7 @@ abstract class MultiClassLoader extends ClassLoader {
    private HashMap<String, Class> classes = new HashMap<String, Class>();
    private char      classNameReplacementChar;
 
-   public MultiClassLoader() {
+   MultiClassLoader() {
    }
 //---------- Superclass Overrides ------------------------
    /**
@@ -243,7 +243,7 @@ abstract class MultiClassLoader extends ClassLoader {
 } // End class
 
 public interface Plugin {
-   public static final class Loader {
+   static final class Loader {
       private Loader() { }
       static void load(final String jarFile) throws
          IOException, ClassNotFoundException,
@@ -266,9 +266,9 @@ public interface Plugin {
 
                         //c.toString();
 
-                        java.lang.reflect.Field m =
+                        java.lang.reflect.Field rf =
                            c.getDeclaredField("pluginInfo");
-                        trace("plugin info " + m.get(null));
+                        trace("plugin info " + rf.get(null));
                      } else {
                         trace("unable to run class " + c);
                      }
@@ -285,9 +285,9 @@ public interface Plugin {
    }   // End of nested Class Test.
 }
 
-class JarLoader extends MultiClassLoader {
+final class JarLoader extends MultiClassLoader {
    private JarResources    jarResources;
-   public JarLoader(String jarName) throws IOException {
+   JarLoader(String jarName) throws IOException {
       // Create the JarResource and suck in the jar file.
       jarResources = new JarResources(jarName);
    }

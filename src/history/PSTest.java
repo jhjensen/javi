@@ -193,7 +193,7 @@ final class PSTest extends Testutil {
       new PSTest();
    }
 
-   public PSTest() throws IOException {
+   PSTest() throws IOException {
 //?? need a test were the length of record saved is >128 <256
       for (int i = 0; i < b3.length; i++)
          b3[i] = (byte) i;
@@ -268,7 +268,7 @@ final class PSTest extends Testutil {
    */
 }
 
-class TestPS extends PersistantStack {
+final class TestPS extends PersistantStack {
 
    byte index;
 //   byte cbdata =0;
@@ -309,7 +309,7 @@ class TestPS extends PersistantStack {
    }
 
 
-   class TestIterator extends PersistantStack.PSIterator {
+   final class TestIterator extends PersistantStack.PSIterator {
 
       protected boolean isOutLine(Object ob) {
          return ob instanceof Oline;

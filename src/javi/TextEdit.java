@@ -204,6 +204,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
             }
             str.next();
             c = 't';
+            // intentional fallthrough
          case 't':
          case 'm':
             lineto = str.getline(ypos);

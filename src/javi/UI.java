@@ -241,7 +241,7 @@ public abstract class UI {
       instance.iclearStatus();
    }
 
-   public static class Result {
+   public static final class Result {
       public final int newValue;
       public final String choice;
 

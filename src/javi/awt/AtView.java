@@ -141,13 +141,13 @@ final class AtView implements
       return text.length();
    }
 
-   static final Color background = new Color(0, 0, 0);
+   static final Color background = Color.black;
 //new Color(0,0,50);// 32 turns black (0,0,96); (0,0,64); (0,0,77);
    static final Color paraBackground = new Color(0, 50, 0);
-   static final Color foreground = new Color(0, 255, 0);
+   static final Color foreground = Color.green;
 //static final Color foreground = new Color(255,255,255);
 //new Color(255,255,160);
-   static final Color cursorColor  = new Color(255, 255, 255);
+   static final Color cursorColor  = Color.white;
    static final Color noFile  = new Color(0, 0, 60);
    static final Color unFinished = new Color(75, 15, 15);
    static final Color insertCursor = Color.pink;

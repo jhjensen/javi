@@ -8,18 +8,13 @@ import javi.View;
 
 //import static history.Tools.trace;
 
-public abstract class AwtView  extends View {
+abstract class AwtView  extends View {
 
 //   abstract Position mousepos(MouseEvent event);
    abstract Shape updateCursorShape(Shape sh);
 //   abstract void ssetFont(Font font);
 
    /* Copyright 1996 James Jensen all rights reserved */
-
-   abstract static class Inserter {
-      abstract String getString();
-      abstract boolean getOverwrite();
-   }
 
    protected static final transient int inset = 2;
    private transient Color cursorcolor =  AtView.cursorColor;

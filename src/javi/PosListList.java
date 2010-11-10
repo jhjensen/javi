@@ -147,8 +147,8 @@ public final class PosListList extends TextList<Position> {
          Object obj = listfvc.at();
          //trace("obj class = " + obj.getClass());
          if (obj instanceof Position) {
-            Position p = (Position) obj;
-            FileList.gotoposition(p, true, fvc.vi);
+            Position pos = (Position) obj;
+            FileList.gotoposition(pos, true, fvc.vi);
          } else if (obj instanceof TextEdit) {
             TextEdit ex = (TextEdit) obj;
             if (ex.at(0) instanceof Position)

@@ -51,9 +51,9 @@ public final class FindBugs extends Rgroup implements Plugin {
             ? new FindBugRunner(".")
             : new FindBugRunner(args[0]);
 
-         Position p;
-         while (null != (p = gr.getnext()))
-            trace(" pos = " + p);
+         Position pos;
+         while (null != (pos = gr.getnext()))
+            trace(" pos = " + pos);
       } catch (Exception e) {
          trace(" caught exception " + e);
          e.printStackTrace();
