@@ -10,25 +10,14 @@ final class XrefReader extends PositionIoc {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
 
-   public static void main(String[] args) {
-      try {
-         XrefReader gr = new XrefReader("dilOpen");
-         Position pos;
-         while (null != (pos = gr.getnext()))
-            trace(" pos = " + pos);
-      } catch (Exception e) {
-         trace(" caught exception " + e);
-      }
-   }
-
    public Position parsefile() {
       //trace("line = " + line);
-      String line;
-      while (null != (line = getLine())) {
+
+      for (String line; null != (line = getLine());) {
          if (!"done".equals(line)) {
             try {
                Position retval = parseline(line);
-               if (retval != null)
+               if (null != retval)
                   return retval;
 
             } catch (Exception e) {
@@ -65,17 +54,16 @@ final class XrefReader extends PositionIoc {
         //command[2] = s;
 
    static final String[] commandline = {"lid", "-R", "grep", null};
-   //static final String[] commandline = {"bash ", "-c",  null};
-         //{"ssh", "speedy","cd sidewinder/src ;lid -R grep " + s + "| tr -d \r"};
-         //"ssh nowind3 cd sidewinder/src ;lid -R grep " + s + "| tr -d \\\\r";
+      //static final String[] commandline = {"bash ", "-c",  null};
+      //{"ssh", "speedy","cd sidewinder/src ;lid -R grep " + s + "| tr -d \r"};
+      //"ssh nowind3 cd sidewinder/src ;lid -R grep " + s + "| tr -d \\\\r";
+      //commandline[2] = "lid -R grep " + str  | perl.exe -p -e \" s/\\/usr\\/include\\/c:\\/cygwin\\/usr\\/include\\//; print; ne\n';\"";
 
    private static BufferedReader getIn(String str) throws IOException {
       commandline[3] = str;
-      //commandline[2] = "lid -R grep " + str  | perl.exe -p -e \" s/\\/usr\\/include\\/c:\\/cygwin\\/usr\\/include\\//; print; ne\n';\"";
       trace("running command:" + commandline[2]);
       return Tools.runcmd(commandline);
    }
-
 
    XrefReader(String s) throws IOException {
       super(s, getIn(s));
@@ -83,17 +71,19 @@ final class XrefReader extends PositionIoc {
 
    private boolean failflag;
 
-   private static Matcher linepat = Pattern.compile(
+   private static final Matcher linepat = Pattern.compile(
       "(^(\\w:)?[~\\w.\\/\\\\]+):([0-9]+): *(.*)").matcher("");
+
+   private static final int maxLine = 200;
    private Position parseline(String line) {
       //trace("parsing line len =  " + line.length() + " line "  + line);
-      linepat.reset(line);
-      if (linepat.matches()) {
+
+      if (linepat.reset(line).matches()) {
          int y = Integer.parseInt(linepat.group(3));
          String fname = linepat.group(1);
          return new Position(0, y, fname, linepat.group(4));
       }
-      if (line.length() == 0)
+      if (0 == line.length())
          return null;
       try {
          int pos = line.indexOf(':', 3); // three skips over any drive desc
@@ -102,20 +92,19 @@ final class XrefReader extends PositionIoc {
          pos = line.indexOf(':');
          int y = Integer.parseInt(line.substring(0, pos));
          String comment = line.substring(pos + 1, line.length());
-         if (comment.length() > 200)
-            comment = comment.substring(0, 200);
+         if (comment.length() > maxLine)
+            comment = comment.substring(0, maxLine);
          int x = 0;
          failflag = false;
          Position retval = new Position(x, y, file, comment);
          trace("xref reader returning " + retval);
          return retval;
       } catch (Exception e) {
-         trace("for line:" + line + ":\ncaught exception " + e);
-         trace("this " + this);
-         e.printStackTrace();
+         trace("caught exception " + e);
+         trace("for line:" + line);
          if (!failflag) {
-            if (line.length() > 200)
-               line = line.substring(0, 200);
+            if (line.length() > maxLine)
+               line = line.substring(0, maxLine);
             trace("greader.parsline FAILED ");
             trace("parsing line len =  " + line.length() + " line "  + line);
          }

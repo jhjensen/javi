@@ -211,7 +211,7 @@ public final class MapEvent {
 
    }
 
-   private static Matcher findfile =
+   private static final Matcher findfile =
       Pattern.compile("(.*[\\\\/])([^\\/]*)$").matcher("");
 
    static void makeWriteable(EditContainer edv, String filename) throws

@@ -1,7 +1,7 @@
 package javi;
 
-import static javi.ChangeOpt.Opcode.*;
 import static history.Tools.trace;
+import static javi.ChangeOpt.Opcode.*;
 
 public abstract class View  extends
       EventQueue.CursorControl implements java.io.Serializable {
@@ -31,21 +31,21 @@ public abstract class View  extends
 
    public abstract static class Inserter {
       abstract String getString();
-      abstract boolean getOverwrite();
+      abstract boolean isOverwrite();
    }
 
    protected final String getInsertString() {
       //trace("getInsertString " + inserter);
-      if (inserter == null)
+      if (null == inserter)
          return null;
       //trace("getInsertString " + inserter.getString());
       return inserter.getString();
    }
 
-   protected final boolean getOverwrite() {
-      if (inserter == null)
+   protected final boolean isOverwrite() {
+      if (null == inserter)
          return false;
-      return inserter.getOverwrite();
+      return inserter.isOverwrite();
    }
 
    final void setInsert(Inserter ins)  {
@@ -70,10 +70,12 @@ public abstract class View  extends
 
       private  Opcode currop = NOOP;
       private  int saveAmount;
+      private int saveStart;
+
       protected final int getSaveAmount() {
          return saveAmount;
       }
-      private int saveStart;
+
       protected final int getSaveStart() {
          return saveStart;
       }
@@ -403,7 +405,7 @@ public abstract class View  extends
       }
 
       void markChange(int x, int y) {
-         if (markpos == null) {
+         if (null == markpos) {
             sy1 = 0;
             sx1 = 0;
             sy2 = 0;
@@ -438,21 +440,21 @@ public abstract class View  extends
       }
 
       public int endh(int tline) {
-         return  (tline >= sy1 &&  tline <= sy2)
+         return  ((tline >= sy1) &&  (tline <= sy2))
             ? (tline == sy2)
-                   ? sx2
-                   : Integer.MAX_VALUE
-             : 0;
+               ? sx2
+               : Integer.MAX_VALUE
+            : 0;
       }
 
       public int starth(int tline) {
-         return (tline >= sy1 &&  tline <= sy2 && tline == sy1)
+         return ((tline >= sy1) &&  (tline <= sy2) && (tline == sy1))
             ? sx1
             : 0;
       }
 
       public MovePos getMark() {
-         return  markpos == null
+         return  null == markpos
             ? null
             : new MovePos(markpos);
       }
@@ -473,17 +475,15 @@ public abstract class View  extends
       }
 
       void setMark(Position markposi, int fileX, int fileY) {
-         if (markposi == null)
+         if (null == markposi)
             markpos = null;
-         else if (markpos == null)
+         else if (null == markpos)
             markpos = new MovePos(markposi);
          else
             markpos.set(markposi);
          markChange(fileX, fileY);
       }
    }
-
-   @SuppressWarnings("fallthrough")
 
    final void cursoroff() {
       //trace("cursoroff cursoractive " + cursoractive + " cursoron " + cursoron +"");
@@ -501,7 +501,6 @@ public abstract class View  extends
 
    final int placeline(int lineno, float amount) {
       int row = getRows(amount);
-      screenFirstLine();
       row =  lineno - screenFirstLine() - row;
       return screeny(row);
    }

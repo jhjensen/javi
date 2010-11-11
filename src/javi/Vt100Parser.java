@@ -1,5 +1,6 @@
 package javi;
 import java.io.BufferedInputStream;
+import static history.Tools.trace;
 
 final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
@@ -23,13 +24,14 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    private char oscmode;
    private final StringBuffer oscstring = new StringBuffer();
    private final BufferedInputStream input;
-   private int recbyte;
+   private char recbyte;
    private Thread rthread = new Thread(this, "vt100 parser thread");
 //   private CharFifo fifo=new CharFifo();
 
    Vt100Parser(VScreen win, BufferedInputStream ins) {
-      window = win;
+      if (ins == null) throw new NullPointerException();
       input = ins;
+      window = win;
       rthread.start();
    }
 
@@ -40,7 +42,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       try {
          while (true) {
             synchronized (this) {
-               recbyte = input.read();
+               recbyte = (char) input.read();
                if (recbyte == -1)  {
                   Thread.sleep(200);
                   trace("recbyte = " + recbyte);
@@ -57,18 +59,18 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       }
    }
 
-   private void caseCR(int inc) {
+   private void caseCR(char inc) {
       sb.setLength(sb.length() - 1);
       sb.append((char) inc);
       state = NORM;
-      if (inc == '\n')
+      if ('\n' == inc)
          return;
       else
          window.setX(1, sb);
       caseNORM(inc);
    }
 
-   private void caseNORM(int inc) {
+   private void caseNORM(char inc) {
       switch (inc) {
             //case '\t':
             //   sbprocess();
@@ -370,7 +372,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       state = OSCMODE2;
    }
 
-   private void doChar(int inc) throws InputException {
+   private void doChar(char inc) throws InputException {
       //trace("state " + state + " received byte " + (char)inc + " decimal "  + inc+ " 0x" + Integer.toHexString(inc));
       if (inc == -1)
          trace("received -1 on Vt100");
@@ -410,9 +412,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
       //trace("ParseInput executing on recbyte " + recbyte);
       try {
-         doChar(recbyte);
+         doChar((char) recbyte);
          while (input.available() != -0)   {
-            doChar(input.read());
+            doChar((char) input.read());
          }
          if (state == CR) {
             sb.setLength(sb.length() - 1);
@@ -428,11 +430,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       }
    }
 
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
-
    private static final boolean traceflag = false;
+
    private static void trace1(String str) {
       if (traceflag)
          Tools.trace(str, 2);

@@ -765,7 +765,7 @@ final class OldView extends AwtView {
                atIt.emphasize(true);
                String iString = getInsertString();
                if (iString != null)
-                  atIt.addOlineText(iString, getfileX(), getOverwrite());
+                  atIt.addOlineText(iString, getfileX(), isOverwrite());
             }
 
             if (atIt.length() != 0) {

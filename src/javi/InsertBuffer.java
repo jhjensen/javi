@@ -18,7 +18,7 @@ public abstract class InsertBuffer extends View.Inserter {
       return buffer.toString();
    }
 
-   final boolean getOverwrite() {
+   final boolean isOverwrite() {
       return overwrite;
    }
 

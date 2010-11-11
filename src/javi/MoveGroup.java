@@ -567,13 +567,14 @@ final class MoveGroup extends Rgroup {
       fvc.cursorabs(xindex, yindex);
    }
 
-   private static Matcher endpat = Pattern.compile(
+   private static final Matcher endpat = Pattern.compile(
       "([^ \ta-zA-Z_0-9](\\w|$))|(\\S(\\s|$))|(\\w(\\W|$))").matcher("");
    private static void endword(int count, FvContext fvc)  {
       endPat(count, fvc, endpat);
    }
 
-   private static Matcher endpatW = Pattern.compile("\\S(\\s|$)").matcher("");
+   private static final Matcher endpatW =
+      Pattern.compile("\\S(\\s|$)").matcher("");
    private void endWord(int count, FvContext fvc)  {
       endPat(count, fvc, endpatW);
    }
@@ -623,13 +624,13 @@ final class MoveGroup extends Rgroup {
       fvc.cursorabs(xindex, yindex);
    }
 
-   private static Matcher wordpat = Pattern.compile(
+   private static final Matcher wordpat = Pattern.compile(
       "(\\w[^ \ta-zA-Z_0-9])|(\\s\\S)|(\\W\\w)").matcher("");
    private void backwardword(int count, FvContext fvc)  {
       backwardPattern(count, fvc, wordpat);
    }
 
-   private static Matcher wordPat = Pattern.compile(
+   private static final Matcher wordPat = Pattern.compile(
       "\\s\\S").matcher("");
    private void backwardWord(int count, FvContext fvc)  {
       backwardPattern(count, fvc, wordPat);

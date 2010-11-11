@@ -136,7 +136,7 @@ public class FileDescriptor implements Serializable {
       return fileManager.getJavaFileObjectsFromFiles(new Fiter(flist));
    }
 
-   public final static class InternalFd extends FileDescriptor {
+   public static final class InternalFd extends FileDescriptor {
       private static long uniqCtr;
 
       public static InternalFd make(String fname) {
@@ -173,7 +173,7 @@ public class FileDescriptor implements Serializable {
       private static File cwd;
       private static String cwdCanon;
       private static String[] canonArray;
-      private static Matcher bslash =  Pattern.compile("\\\\").matcher("");
+      private static final Matcher bslash =  Pattern.compile("\\\\").matcher("");
 
       final File fh; // temp change, do not check in
 
