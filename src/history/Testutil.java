@@ -2,11 +2,12 @@ package history;
 
 class Testutil {
 
-   static String dumphex(byte[] b) {
+   static final String dumphex(byte[] b) {
       return dumphex(b, 0, b.length);
    }
-   static String dumphex(byte[] b, int offset, int length) {
-      StringBuilder sb = new StringBuilder(2 * length);
+
+   static final String dumphex(byte[] b, int offset, int length) {
+      StringBuilder sb = new StringBuilder(3 * length);
       if (offset + length > b.length) {
          sb.append("Error in dumphex length to great:\n");
          sb.append("offset = " + offset + " length = " + length
@@ -15,34 +16,34 @@ class Testutil {
          length = b.length;
 
       }
-      for (int i = offset, count = 0; count < length; count++, i++)  {
+      for (int ii = offset, count = 0; count < length; count++, ii++)  {
          sb.append(' ');
-         sb.append(Byte.toString(b[i]));
+         sb.append(Byte.toString(b[ii]));
          if (count > 20)
             break;
       }
       return sb.toString();
    }
 
-   static boolean arraycmp(byte[] b1, int offset1, int length,
+   static final boolean arraycmp(byte[] b1, int offset1, int length,
          byte[] b2, int offset2) {
       if (b1 == b2)
          return true;
-      if (b1 == null)
+      if (null == b1)
          return false;
-      if (b2 == null)
+      if (null == b2)
          return false;
       if (b1.length < offset1 + length)
          return false;
       if (b2.length < offset2 + length)
          return false;
-      for (int i = 0; i < length; i++)
-         if (b1[i + offset1] != b2[offset2 + i])
+      for (int ii = 0; ii < length; ii++)
+         if (b1[ii + offset1] != b2[offset2 + ii])
             return false;
       return true;
    }
 
-   static void myassert(boolean flag, Object dump) {
+   static final void myassert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
    }

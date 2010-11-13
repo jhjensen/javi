@@ -246,10 +246,6 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("com = " + command + " args:" + args + ":");
       switch (command) {
          case 'd':
-            //if (args.length()!=0) {
-            //   trace("");
-            //   return -1;
-            //}
             ArrayList<String>  delvec = new ArrayList<String>(100);
             for (int i = linestart; i <= linefinish;) {
                if (rangePattern == null
@@ -786,7 +782,6 @@ final class EditTester1 {
    }
 
    static void starttest() {
-      //Tools.trace("",1);
       trace("***************starting " + Tools.caller() + " ****************");
    }
 
@@ -813,7 +808,7 @@ final class EditTester1 {
       ex.idleSave();
       myassert(ex.finish() == 2, ex.finish());
       ex.undo();
-      myassert(ex.at(1).equals(""), ex.at(1));
+      myassert(ex.at(1).length() == 0, ex.at(1));
       myassert(!ex.isModified(), ex);
       myassert(ex.finish() == 2, ex.finish());
       ex.redo();
@@ -824,7 +819,7 @@ final class EditTester1 {
       ex = newTe("extest1");
       myassert(ex.at(1).equals("aaa"), ex);
       ex.undo();
-      myassert(ex.at(1).equals(""), ex.at(1));
+      myassert(ex.at(1).length() == 0, ex.at(1));
       ex.redo();
       myassert(ex.at(1).equals("aaa"), ex.at(1));
       ex.undo();
@@ -865,7 +860,7 @@ final class EditTester1 {
       TextEdit<String> ex2 = newTe("extest2");
       myassert(ex2.at(1).equals("xxx"), ex2);
       ex2.undo();
-      myassert(ex2.at(1).equals(""), ex2);
+      myassert(ex2.at(1).length() == 0, ex2);
       ex2.redo();
       myassert(ex2.at(1).equals("xxx"), ex2);
       ex2.undo();
@@ -878,7 +873,7 @@ final class EditTester1 {
       copyFile("extest2", "extest3");
       copyFile("extest2.dmp2", "extest3.dmp2");
       TextEdit<String> ex3 = newTe("extest3");
-      myassert(ex3.at(1).equals(""), ex3);
+      myassert(ex3.at(1).length() == 0, ex3);
       ex3.redo();
       myassert(ex3.at(1).equals("xxx"), ex3);
       ex3.undo();
@@ -1021,7 +1016,7 @@ final class EditTester1 {
       ex = newTe("extest8");
       myassert(ex.at(1).equals("aaa"), ex.at(1));
       ex.undo();
-      myassert(ex.at(1).equals(""), ex);
+      myassert(ex.at(1).length() == 0, ex);
       ex.disposeFvc();
    }
 
@@ -1045,7 +1040,7 @@ final class EditTester1 {
       ex.undo();
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).equals(""), ex);
+      myassert(ex.at(1).length() == 0, ex);
       ex.redo();
       ex.redo();
       myassert(ex.at(1).equals("ba"), ex);
@@ -1057,14 +1052,14 @@ final class EditTester1 {
       myassert(ex.at(1).equals("ba"), ex);
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).equals(""), ex);
+      myassert(ex.at(1).length() == 0, ex);
       myassert(ex.finish() == 2, ex.finish());
       ex.disposeFvc();
 
 // */extext
 
       ex = newTe("extest9");
-      myassert(ex.at(1).equals(""), ex.at(1));
+      myassert(ex.at(1).length() == 0, ex.at(1));
       ex.redo();
       ex.redo();
       ex.redo();
@@ -1074,7 +1069,7 @@ final class EditTester1 {
       ex.undo();
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).equals(""), ex.at(1));
+      myassert(ex.at(1).length() == 0, ex.at(1));
       ex.disposeFvc();
    }
 
@@ -1496,61 +1491,61 @@ final class EditTester1 {
 
 
       sarr = TextEdit.stringtoarray("1\n\n");
-      Tools.Assert(sarr.size() == 3, sarr.size() + "");
+      Tools.Assert(sarr.size() == 3, sarr.size());
       Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals(""), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals(""), sarr.get(2));
+      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
+      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n2\n");
       Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
       Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals(""), sarr.get(2));
-      Tools.Assert(sarr.size() == 3, sarr.size() + "");
+      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
+      Tools.Assert(sarr.size() == 3, sarr.size());
 
       sarr = TextEdit.stringtoarray("\n1\n2\n");
-      Tools.Assert(sarr.size() == 4, sarr.size() + "");
+      Tools.Assert(sarr.size() == 4, sarr.size());
 
-      Tools.Assert(sarr.get(0).equals(""), sarr.get(0));
+      Tools.Assert(0  == sarr.get(0).length(), sarr.get(0));
       Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
       Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
-      Tools.Assert(sarr.get(3).equals(""), sarr.get(3));
+      Tools.Assert(0 == sarr.get(3).length(), sarr.get(3));
 
       sarr = TextEdit.stringtoarray("\n1\n");
-      Tools.Assert(sarr.size() == 3, sarr.size() + "");
-      Tools.Assert(sarr.get(0).equals(""), sarr.get(0));
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
       Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals(""), sarr.get(2));
+      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n");
-      Tools.Assert(sarr.size() == 2, sarr.size() + "");
+      Tools.Assert(2 == sarr.size(), sarr.size());
       Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals(""), sarr.get(1));
+      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n");
-      Tools.Assert(sarr.size() == 2, sarr.size() + "");
-      Tools.Assert(sarr.get(0).equals(""), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals(""), sarr.get(1));
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
+      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n1");
-      Tools.Assert(sarr.size() == 2, sarr.size() + "");
-      Tools.Assert(sarr.get(0).equals(""), sarr.get(0));
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
       Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("1\n2");
-      Tools.Assert(sarr.size() == 2, sarr.size() + "");
+      Tools.Assert(sarr.size() == 2, sarr.size());
       Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
       Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n1\n2");
-      Tools.Assert(sarr.size() == 3, sarr.size() + "");
-      Tools.Assert(sarr.get(0).equals(""), sarr.get(0));
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
       Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
       Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n2\n");
-      Tools.Assert(sarr.size() == 3, sarr.size() + "");
+      Tools.Assert(3 == sarr.size(), sarr.size());
       Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
       Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals(""), sarr.get(2));
+      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
    }
 }

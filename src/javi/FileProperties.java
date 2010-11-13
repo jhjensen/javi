@@ -3,7 +3,7 @@ package javi;
 import java.io.Serializable;
 
 public final class FileProperties<OType> implements Serializable {
-   private static String staticLine = System.getProperty("line.separator");
+   static final String staticLine = System.getProperty("line.separator");
    final FileDescriptor fdes;
    final ClassConverter<OType> conv;
    private String lsep = staticLine; //??? final
