@@ -1248,7 +1248,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          //trace("filebut" + filebut);
          //trace("diffbut" + diffbut);
 
-         trace("getres" + getRes());
+         //trace("getres" + getRes());
          return getRes() == null
                ? UI.Buttons.IOERROR
             : getRes() == okbut

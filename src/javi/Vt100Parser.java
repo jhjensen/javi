@@ -16,20 +16,19 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    // private final static int GETTITLE =8;
    private static final int CR = 9;
    private final VScreen window;
-   private final StringBuffer sb = new StringBuffer();
+   private final StringBuilder sb = new StringBuilder(200);
    private int[] numacc = null;
    private int currnumacc;
    private int highestSet;
    private int modenumber;
    private char oscmode;
-   private final StringBuffer oscstring = new StringBuffer();
+   private final StringBuilder oscstring = new StringBuilder(80);
    private final BufferedInputStream input;
    private char recbyte;
    private Thread rthread = new Thread(this, "vt100 parser thread");
-//   private CharFifo fifo=new CharFifo();
 
    Vt100Parser(VScreen win, BufferedInputStream ins) {
-      if (ins == null) throw new NullPointerException();
+      if (null == ins) throw new NullPointerException("invalid initialisation");
       input = ins;
       window = win;
       rthread.start();
@@ -38,6 +37,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    void stop() {
       rthread.interrupt();
    }
+
    public void run() {
       try {
          while (true) {
@@ -61,7 +61,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    private void caseCR(char inc) {
       sb.setLength(sb.length() - 1);
-      sb.append((char) inc);
+      sb.append(inc);
       state = NORM;
       if ('\n' == inc)
          return;
@@ -93,7 +93,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             //trace("!!!! flush");
             //sbprocess();
             //window.setX(1);
-            sb.append((char) inc);
+            sb.append(inc);
             state = CR;
             break;
          case 15:
@@ -103,7 +103,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          case 11:
          case 10:
          case 9:
-            sb.append((char) inc);
+            sb.append(inc);
             break;
          default:
             if (inc < 20)
@@ -114,7 +114,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             //fvc.cursoryabs(ev.readIn()-1);
             //fvc.cursorxabs(Integer.MAX_VALUE);
             //editgroup.deleteChars('\0',fvc,false,true,1);
-            sb.append((char) inc);
+            sb.append(inc);
       }
    }
 
@@ -222,14 +222,14 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                newstate = ESC;
                break;
             case '@':
-               for (int i = 0; i <= numacc[currnumacc]; i++)
+               for (int ii = 0; ii <= numacc[currnumacc]; ii++)
                   sb.append(' ');
                break;
             case 'h': //set mode xterm
             case 'l': //reset mode xterm
 
-               boolean val = inc == 'h';
-               for (int i = 0; i <= currnumacc; i++)
+               boolean val = 'h' == inc;
+               for (int ii = 0; ii <= currnumacc; ii++)
                   switch (numacc[currnumacc]) {
                      case 4:
                         window.setInsertMode(val, sb);
@@ -257,11 +257,12 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          state = newstate;
       }
    }
+
    private void caseMODE(int inc) {
       if (inc >= '0' && inc <= '9')
          modenumber = modenumber * 10 + inc - '0';
       else {
-         int val = inc == 'h' ? 1 : 0;
+         int val = 'h' == inc ? 1 : 0;
 
          switch (modenumber) {
             case 1:
@@ -287,8 +288,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          state = NORM;
       }
    }
+
    private void caseOSCMODE3(int inc) {
-      if (inc == 7) {
+      if (7 == inc) {
          state = NORM;
          oscstring.setLength(0);
          switch (oscmode) {
@@ -362,7 +364,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    }
 
    private void caseOSCMODE2(int inc) {
-      if (inc != ';')
+      if (';' != inc)
          trace("unexpected OSCMODE2 character");
       state = OSCMODE3;
    }
@@ -372,7 +374,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       state = OSCMODE2;
    }
 
-   private void doChar(char inc) throws InputException {
+   private void doChar(char inc) {
       //trace("state " + state + " received byte " + (char)inc + " decimal "  + inc+ " 0x" + Integer.toHexString(inc));
       if (inc == -1)
          trace("received -1 on Vt100");
@@ -412,7 +414,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
       //trace("ParseInput executing on recbyte " + recbyte);
       try {
-         doChar((char) recbyte);
+         doChar(recbyte);
          while (input.available() != -0)   {
             doChar((char) input.read());
          }
@@ -423,8 +425,6 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          }
          window.updateScreen(sb);
          notify();
-      } catch (InputException e) {
-         UI.reportError("failure in VT100 io " + e.toString());
       } catch (Throwable e) {
          UI.popError("failure in VT100 io", e);
       }

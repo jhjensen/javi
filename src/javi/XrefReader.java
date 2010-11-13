@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 final class XrefReader extends PositionIoc {
    /* Copyright 1996 James Jensen all rights reserved */
    static final String copyright = "Copyright 1996 James Jensen";
+   private boolean failflag;
+   private static final int maxLine = 200;
 
    public Position parsefile() {
       //trace("line = " + line);
@@ -69,12 +71,10 @@ final class XrefReader extends PositionIoc {
       super(s, getIn(s));
    }
 
-   private boolean failflag;
-
    private static final Matcher linepat = Pattern.compile(
       "(^(\\w:)?[~\\w.\\/\\\\]+):([0-9]+): *(.*)").matcher("");
 
-   private static final int maxLine = 200;
+
    private Position parseline(String line) {
       //trace("parsing line len =  " + line.length() + " line "  + line);
 

@@ -1,11 +1,12 @@
 package javi;
 
-import history.PersistantStack;
-import history.ByteInput;
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Date;
+
+import history.PersistantStack;
+import history.ByteInput;
+//import static history.Tools.trace;
 
 public final class UndoHistory<OType> extends PersistantStack {
    static final String copyright = "Copyright 1996 James Jensen";
@@ -28,8 +29,8 @@ public final class UndoHistory<OType> extends PersistantStack {
       prototypes[1] = new ChangeRecord.BaseRecord();
       prototypes[2] = new ChangeRecord.CheckRecord();
       prototypes[3] = new WriteRecord();
-      for (int i = 4; i < prototypesi.length + 4; i++)
-         prototypes[i] = prototypesi[i - 4].newOne();
+      for (int ii = 4; ii < prototypesi.length + 4; ii++)
+         prototypes[ii] = prototypesi[ii - 4].newOne();
       currmark = new UndoHistory.EhMark();
    }
 
@@ -64,16 +65,16 @@ public final class UndoHistory<OType> extends PersistantStack {
    }
 
    void addState(StringBuilder sb) {
-      //trace("current " + current +  " + currmark " + currmark);
-      //trace("current " + current +  " + curr = " + currmark.curr());
+      //trace("current " + current + " + currmark " + currmark);
+      //trace("current " + current + " + curr = " + currmark.curr());
       //trace("savewrite " + savewrite);
       //trace("sb " + sb);
       if (currmark.isWritten())
          sb.append(" unchanged");
       else {
          String st = current.getDate();
-         sb.append(st != null
-              ?  " " + st
+         sb.append(null != st
+              ? " " + st
               : " modified");
       }
    }
@@ -87,16 +88,17 @@ public final class UndoHistory<OType> extends PersistantStack {
    }
 
    void push(ChangeRecord cr) {
-      //trace("push record  type " + cr.getType()   +" :"+ cr);
+      //trace("push record type " + cr.getType() +" :"+ cr);
       //Thread.dumpStack();
       currmark.push(current = cr);
    }
 
    void checkRecord() {
 
-      //trace("current =  " + current);
+      //trace("current = " + current);
       if (current instanceof ChangeRecord.CheckRecord)
          return;
+
       if (savewrite >= currmark.getIndex()) {
          savewrite = -1;
          currmark.push(current = new WriteRecord(-1));
@@ -122,7 +124,7 @@ public final class UndoHistory<OType> extends PersistantStack {
 
    void writeRecord() {
 
-      //trace("currmark.index = " + currmark.getIndex()  );
+      //trace("currmark.index = " + currmark.getIndex());
       //trace("currmark.hasnext = " + currmark.hasNext());
       //trace("current = " + current );
       //trace("dump = " + dump() );
@@ -133,7 +135,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          currmark.push(new WriteRecord(currmark.getIndex() + 1));
 
       savewrite = currmark.getIndex();
-      //trace("currmark.index = " + currmark.getIndex()  );
+      //trace("currmark.index = " + currmark.getIndex());
       //trace("currmark.hasnext = " + currmark.hasNext());
       //trace("current = " + current );
       //trace("dump = " + dump() );
@@ -145,9 +147,9 @@ public final class UndoHistory<OType> extends PersistantStack {
       return (EhMark) currmark.clone();
    }
 
-   // undo changes until a checked undo is found.  If the undo is to be used
-   //    uncheckpoint() must be called
-   int undo() throws IOException {
+   // undo changes until a checked undo is found. If the undo is to be used
+   // uncheckpoint() must be called
+   int undo() {
       //trace("undo current=" + current);
       int chindex = -1;
 
@@ -156,7 +158,7 @@ public final class UndoHistory<OType> extends PersistantStack {
             return chindex;
          current = (ChangeRecord) currmark.previous();
          //trace(" " +currmark.getIndex() + " " + current );
-      } while (current  instanceof ChangeRecord.CheckRecord);
+      } while (current instanceof ChangeRecord.CheckRecord);
 
       do {
          chindex = current.undocr();
@@ -168,26 +170,26 @@ public final class UndoHistory<OType> extends PersistantStack {
    }
 
    // redoes undone changes up to the next undo check
-   int redo() throws IOException {
+   int redo() {
       //trace(currmark.getIndex() + " " + current + dump());
       int chindex = -1;
       while (currmark.hasNext()) {
          //trace(currmark.getIndex() +" " + current );
          current = (ChangeRecord) currmark.next();
-         //trace(currmark.getIndex() +" " +  current);
+         //trace(currmark.getIndex() +" " + current);
          if (current instanceof ChangeRecord.CheckRecord)
             break;
          chindex = current.redocr();
       }
       while (currmark.hasNext()) {
          current = (ChangeRecord) currmark.next();
-         //trace(currmark.getIndex() +" "  + current);
+         //trace(currmark.getIndex() +" " + current);
          if (!(current instanceof ChangeRecord.CheckRecord)) {
             current = (ChangeRecord) currmark.previous();
             break;
          }
       }
-      //trace( currmark.getIndex()  + " " + current);
+      //trace( currmark.getIndex() + " " + current);
       return chindex;
    }
 
@@ -202,7 +204,7 @@ public final class UndoHistory<OType> extends PersistantStack {
             current.redocr();
          }
       else if (savewrite != -1)  // try for last saved version
-         while (currmark.getIndex() < savewrite && currmark.hasNext()) {
+         while ((currmark.getIndex() < savewrite) && currmark.hasNext()) {
             current = (ChangeRecord) currmark.next();
             //trace("1 " +currmark.getIndex() + current);
             current.redocr();
@@ -231,6 +233,7 @@ public final class UndoHistory<OType> extends PersistantStack {
    void terminate() {
       terminateWEP();
    }
+
    // undo changes made to a particular element */
    /*
    void undoElement(editvec ev,int index) throws readOnlyException {
@@ -300,7 +303,6 @@ public final class UndoHistory<OType> extends PersistantStack {
                 && ch.getType() == ChangeRecord.BASE;
       }
 
-
       public Object readExternal(ByteInput dis) {
          //      trace("type = " + breader.type);
          ChangeRecord rec = prototypes[dis.readByte()];
@@ -322,24 +324,26 @@ public final class UndoHistory<OType> extends PersistantStack {
 
       protected boolean isOutLine(Object obj) {
          //trace("isOutline " +obj + " retval =  " + (obj instanceof WriteRecord)) ;
-         return (obj instanceof WriteRecord);
+         return obj instanceof WriteRecord;
       }
 
-      void terminate()  {
+      void terminate() {
          //terminateWEP();
       }
+
       boolean isWritten() {
          //trace("index = " + getIndex() + " savewrite = " + savewrite);
          return getIndex() == savewrite;
       }
 
-      public void getChanges(ChangeOpt vi) {
+      public void applyChanges(ChangeOpt vi) {
          //trace("changemark " + this + " currmark = " + currmark);
          //trace("current " + current );
          if (!isValid()) {
             setEqual(currmark);
             vi.redraw();
          }
+
          if (getIndex() < currmark.getIndex())
             while (getIndex() < currmark.getIndex()) {
                //trace("1 " + curr());
@@ -354,7 +358,7 @@ public final class UndoHistory<OType> extends PersistantStack {
                   setEqual(currmark);
                   break;
                }
-         //assert(getIndex() ==  currmark.getIndex());
+         //assert(getIndex() == currmark.getIndex());
       }
 
    }
@@ -374,25 +378,25 @@ public final class UndoHistory<OType> extends PersistantStack {
          return null;
       }
 
-      ChangeRecord() {
+      protected ChangeRecord() {
       }
 
-      ChangeRecord(int indexi) {
+      protected ChangeRecord(int indexi) {
          cindex = indexi;
       }
 
       abstract byte getType();
       abstract ChangeRecord newOne();
       abstract int redocr();
-      abstract int undocr();
       abstract boolean redocr(ChangeOpt vi);
+      abstract int undocr();
       abstract boolean undocr(ChangeOpt vi);
-
 
       void readExternal(ByteInput dis, ClassConverter<OType> conv) {
          cindex = dis.readInt();
          //trace("ChangeRecord.readExternal type = " + getType() + " cindex = " + cindex);
       }
+
       void writeExternal(DataOutputStream dos, ClassConverter conv) {
          //trace("ChangeRecord.writeExternal type = " + getType() + " cindex = " + cindex);
          try {
@@ -411,6 +415,7 @@ public final class UndoHistory<OType> extends PersistantStack {
             obj[ocount] = conv.newExternal(dis);
          return obj;
       }
+
       void writeObjs(DataOutputStream dos, ClassConverter conv, OType [] obj) {
          try {
             int ocount = obj.length;
@@ -423,11 +428,12 @@ public final class UndoHistory<OType> extends PersistantStack {
          }
       }
 
-      private static class BaseRecord extends WriteRecord {
+      private static final class BaseRecord extends WriteRecord {
 
          public String toString() {
-            return  "base "  + super.toString();
+            return "base " + super.toString();
          }
+
          byte getType() {
             return BASE;
          }
@@ -437,9 +443,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          }
 
          private BaseRecord() { }
-         //private BaseRecord(boolean unused) {
-         //    super( 0);
-         //}
+
          BaseRecord(int index) {
             super(index);
          }
@@ -448,7 +452,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       static class CheckRecord extends ChangeRecord {
 
          public String toString() {
-            return "c" + cindex  + ":";
+            return "c" + cindex + ":";
          }
 
          byte getType() {
@@ -463,32 +467,39 @@ public final class UndoHistory<OType> extends PersistantStack {
             return cindex;
          }
 
+         final boolean redocr(ChangeOpt vi) {
+            return false;
+         }
+
          int undocr() {
             return cindex;
          }
 
-         boolean redocr(ChangeOpt vi) {
-            return false;
-         }
-
-         boolean undocr(ChangeOpt vi) {
+         final boolean undocr(ChangeOpt vi) {
             return false;
          }
 
          CheckRecord() {
          }
+
          CheckRecord(boolean unused) {
             super(0);
          }
       }
 
    }
+
    private static class WriteRecord extends
       UndoHistory.ChangeRecord.CheckRecord {
       private String writeDate;
-      public String toString() {
-         return "w" + cindex  + ":" + writeDate;
+
+      WriteRecord() {
       }
+
+      public String toString() {
+         return "w" + cindex + ":" + writeDate;
+      }
+
       byte getType() {
          return WRITE;
       }
@@ -512,7 +523,6 @@ public final class UndoHistory<OType> extends PersistantStack {
                "ehsistory.WriteRecord.writeExternal failed", e);
          }
       }
-      WriteRecord() { }
 
       WriteRecord(int index) {
          super(true);
@@ -520,11 +530,9 @@ public final class UndoHistory<OType> extends PersistantStack {
          writeDate = new Date().toString();
          cindex = index;
       }
-      String getDate() {
+
+      final String getDate() {
          return writeDate;
       }
-   }
-   static void trace(String str) {
-      Tools.trace(str, 1);
    }
 }

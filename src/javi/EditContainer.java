@@ -1372,6 +1372,7 @@ public class EditContainer<OType> implements
          ecache.set(cindex, oldobj);
          return cindex;
       }
+
       boolean redocr(ChangeOpt vi) {
          return vi.lineChanged(cindex);
       }

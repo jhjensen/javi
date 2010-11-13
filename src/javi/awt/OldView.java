@@ -722,7 +722,7 @@ final class OldView extends AwtView {
          } else
             try {
                if (gettext().isValid()) {
-                  getChanges();
+                  applyChanges();
                   copt.rpaint(gr);
                } else {
                   trace("repaint because of invalid or empty");
@@ -804,7 +804,7 @@ final class OldView extends AwtView {
             //trace("rpaint currop = " + currop + " this " + this);
 
             // cursor must be off before other drawing is done, or it messes up XOR
-            if (currop == BLINKCURSOR || getCursorOn()) {
+            if (currop == BLINKCURSOR || isCursorOn()) {
                bcursor(gr);
             }
 

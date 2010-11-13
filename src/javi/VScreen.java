@@ -1,18 +1,18 @@
 package javi;
 
 abstract class VScreen {
-   abstract void incX(int amount, StringBuffer sb);
-   abstract void incY(int amount, StringBuffer sb);
-   abstract void setX(int val, StringBuffer sb);
-   abstract void setY(int val, StringBuffer sb);
-   abstract void setXY(int xval, int yval, StringBuffer sb);
-   abstract void eraseScreen(StringBuffer sb);
-   abstract void eraseToEnd(StringBuffer sb);
-   abstract void eraseLine(StringBuffer sb);
-   abstract void eraseChars(int count, StringBuffer sb);
-   abstract void insertLines(int count, StringBuffer sb);
-   abstract void setInsertMode(boolean val, StringBuffer sb);
-   abstract void updateScreen(StringBuffer sb);
-   abstract void saveCursor(StringBuffer sb);
-   abstract void restoreCursor(StringBuffer sb);
+   abstract void incX(int amount, StringBuilder sb);
+   abstract void incY(int amount, StringBuilder sb);
+   abstract void setX(int val, StringBuilder sb);
+   abstract void setY(int val, StringBuilder sb);
+   abstract void setXY(int xval, int yval, StringBuilder sb);
+   abstract void eraseScreen(StringBuilder sb);
+   abstract void eraseToEnd(StringBuilder sb);
+   abstract void eraseLine(StringBuilder sb);
+   abstract void eraseChars(int count, StringBuilder sb);
+   abstract void insertLines(int count, StringBuilder sb);
+   abstract void setInsertMode(boolean val, StringBuilder sb);
+   abstract void updateScreen(StringBuilder sb);
+   abstract void saveCursor(StringBuilder sb);
+   abstract void restoreCursor(StringBuilder sb);
 }

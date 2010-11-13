@@ -1,14 +1,14 @@
 package javi;
 
 import java.io.IOException;
-import gnu.io.CommPortIdentifier;
-import gnu.io.SerialPort;
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.UnsupportedCommOperationException;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import gnu.io.CommPortIdentifier;
+import gnu.io.NoSuchPortException;
+import gnu.io.PortInUseException;
+import gnu.io.SerialPort;
+import gnu.io.UnsupportedCommOperationException;
 
 
 class Vt100 extends TextEdit<String> {
@@ -20,7 +20,6 @@ class Vt100 extends TextEdit<String> {
 //   private final OutputStream str;
 
    private FvContext currfvc = null;
-   private MovePos savecursor = new MovePos(0, 1);
    private MovePos vtcursor = new MovePos(0, 1);
    private boolean insertmode = false;
    private int rows;
@@ -35,14 +34,14 @@ class Vt100 extends TextEdit<String> {
       writer = new OutputStreamWriter(ostri);
    }
 
-   public void startHandle(FvContext fvc) {
+   public final void startHandle(FvContext fvc) {
       //trace("startHandle " + fvc);
-      if (fvc != null) {
+      if (null != fvc) {
 //         oldfont = FontList.setFontName("Courier New" , fvc.vi);
 //        oldfont = FontList.setFontName("Vrinda" ,fvc.vi);
 //        oldsize =  FontList.setFontSize(new Float(15.0) ,fvc.vi);
          //trace("oldfont = " + oldfont);
-         rows = fvc.vi.getRows((float) 1.0);
+         rows = fvc.vi.getRows(1.0f);
          int neededRows = rows - readIn() + 1;
          //trace("rows " + rows + " readIn " + ev.readIn() + " neededRows " + neededRows);
          while (--neededRows > -1)  {
@@ -55,19 +54,16 @@ class Vt100 extends TextEdit<String> {
       //trace("leave setfvc readIn = " + ev.readIn());
    }
 
-   public String fromString(String str) {
+   public final String fromString(String str) {
       return str;
    }
 
-   public boolean handleKey(JeyEvent kev) {
+   public final boolean handleKey(JeyEvent kev) {
       //trace("dispatchKeyEvent" + kev);
       char ch = kev.getKeyChar();
       try {
          if (ch == JeyEvent.CHAR_UNDEFINED) {
             switch (kev.getKeyCode()) {
-               default:
-                  trace("unhandle KeyCode " + kev.getKeyCode());
-                  return true;
                case JeyEvent.VK_LEFT:
                   //writer.write("\33D");
                   writer.write("\33[D");
@@ -86,11 +82,14 @@ class Vt100 extends TextEdit<String> {
                   break;
                case JeyEvent.VK_INSERT:
                   return false;
+               default:
+                  trace("unhandle KeyCode " + kev.getKeyCode());
+                  return true;
             }
             writer.flush();
             return true;
          } else {
-            if (ch == '\r' && kev.getKeyCode() == '\r') // this was really a cr
+            if ('\r' == ch && '\r' == kev.getKeyCode()) // this was really a cr
                ch = '\n';
             //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
             //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
@@ -108,32 +107,33 @@ class Vt100 extends TextEdit<String> {
    }
 
    private final class ECScreen extends VScreen {
-      void incX(int amount, StringBuffer sb) {
+      private MovePos savecursor = new MovePos(0, 1);
+      void incX(int amount, StringBuilder sb) {
          insertString(sb);
          vtcursor.x += amount;
          if (vtcursor.x < 0)
             vtcursor.x = 0;
       }
 
-      void incY(int amount, StringBuffer sb)  {
+      void incY(int amount, StringBuilder sb)  {
          updateScreen(sb);
          vtcursor.y += amount;
          if (vtcursor.y < readIn() - rows)
             vtcursor.y = readIn() - rows;
       }
 
-      void setX(int val, StringBuffer sb) {
+      void setX(int val, StringBuilder sb) {
          setXmy(val, sb);
       }
 
-      void setY(int val, StringBuffer sb) {
+      void setY(int val, StringBuilder sb) {
          //trace("setY " + val);
          updateScreen(sb);
          vtcursor.y = readIn() - 1 - rows + val;
          //trace("after setY vtcursor" + vtcursor + " ev.readIn = " + ev.readIn() + " rows " + rows + " val " + val);
       }
 
-      void setXY(int xval, int yval, StringBuffer sb) {
+      void setXY(int xval, int yval, StringBuilder sb) {
          //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
 
          updateScreen(sb);
@@ -145,20 +145,20 @@ class Vt100 extends TextEdit<String> {
          //trace("setXY " + xval + "," + yval  + " readIn " + ev.readIn()  + " vtcursor = " + vtcursor);
       }
 
-      void eraseScreen(StringBuffer sb) {
+      void eraseScreen(StringBuilder sb) {
          updateScreen(sb);
          int end = readIn();
          int start = end - rows - 1;
          if (start < 1)
             start = 1;
-         for (int i = start; i < end; i++)
-            changeElementAt("", i);
+         for (int ii = start; ii < end; ii++)
+            changeElementAt("", ii);
 
          //???vtcursor.x=0;
          //???vtcursor.y=ev.readIn()-1;
       }
 
-      void eraseToEnd(StringBuffer sb) {
+      void eraseToEnd(StringBuilder sb) {
          updateScreen(sb);
          if (vtcursor.y < readIn()) {
             int lend = at(vtcursor.y).length();
@@ -166,12 +166,12 @@ class Vt100 extends TextEdit<String> {
          }
       }
 
-      void eraseLine(StringBuffer sb) {
+      void eraseLine(StringBuilder sb) {
          insertString(sb);
          changeElementAt("", vtcursor.y);
       }
 
-      void eraseChars(int count, StringBuffer sb) {
+      void eraseChars(int count, StringBuilder sb) {
          insertString(sb);
          int delto = vtcursor.x + count;
          int strlen =  at(vtcursor.y).length();
@@ -180,10 +180,10 @@ class Vt100 extends TextEdit<String> {
             trace("attempt to delete more character that possible delto "
                + delto + " strlen " + strlen);
          }
-         deletetext(false, vtcursor.x, vtcursor.y, delto , vtcursor.y);
+         deletetext(false, vtcursor.x, vtcursor.y, delto, vtcursor.y);
       }
 
-      void insertLines(int count, StringBuffer sb) {
+      void insertLines(int count, StringBuilder sb) {
          trace("insertLines count " + count);
          insertString(sb);
          remove(readIn() - count, count);
@@ -192,36 +192,37 @@ class Vt100 extends TextEdit<String> {
          trace("leave insertLines readIn = " + readIn());
       }
 
-      void setInsertMode(boolean val, StringBuffer sb) {
+      void setInsertMode(boolean val, StringBuilder sb) {
          insertString(sb);
          insertmode = val;
       }
 
-      void updateScreen(StringBuffer sb) {
+      void updateScreen(StringBuilder sb) {
          insertString(sb);
          fixline();
          //rows = currfvc.vi.getRows((float).99999);
-         if (currfvc != null) {
+         if (null != currfvc) {
             currfvc.cursorabs(vtcursor.x, vtcursor.y);
-            currfvc.placeline(readIn() - 1, (float) .99999);
+            currfvc.placeline(readIn() - 1, .99999f);
          }
          //trace("leaving update screen vtcursor = " + vtcursor + " readIn  " + ev.readIn());
 
       }
 
-      void saveCursor(StringBuffer sb) {
+      void saveCursor(StringBuilder sb) {
          insertString(sb);
          savecursor.x = vtcursor.x;
          savecursor.y = readIn() - vtcursor.y;
       }
 
-      void restoreCursor(StringBuffer sb) {
+      void restoreCursor(StringBuilder sb) {
          insertString(sb);
          vtcursor.y = readIn() - savecursor.y;
          vtcursor.x = savecursor.x;
       }
 
    }
+
    private String fixline() {
       String eline = at(vtcursor.y);
       if (vtcursor.x > eline.length()) {
@@ -234,30 +235,30 @@ class Vt100 extends TextEdit<String> {
       return eline;
    }
 
-   private void setXmy(int val, StringBuffer sb) {
+   private void setXmy(int val, StringBuilder sb) {
       insertString(sb);
       vtcursor.x = val - 1;
    }
 
-   private void insertString(StringBuffer sb) {
+   private void insertString(StringBuilder sb) {
       if (vtcursor.y > readIn() - 1) {
          trace("shouldn't get here unless some one deleted lines " + readIn());
          insertOne("", readIn());
          if (currfvc != null) {
             trace("in terminal mode inserting line at" + readIn());
-            int neededRows = currfvc.vi.getRows((float) 1.0) - readIn() + 1;
-            while (--neededRows > -1)
+            int neededRows = currfvc.vi.getRows(1.0f) - readIn() + 1;
+            while (-1 <= --neededRows)
                insertOne("", readIn());
          }
          vtcursor.y = readIn() - 1;
          vtcursor.x = 0;
       }
       fixline();
-      if (sb.length() == 0)
+      if (0 == sb.length())
          return;
 
       boolean setxflag = false;
-      if (sb.charAt(sb.length() - 1) == '\r') {
+      if ('\r' == sb.charAt(sb.length() - 1)) {
          sb.setLength(sb.length() - 1);
          setxflag = true;
       }
@@ -329,7 +330,7 @@ class Vt100 extends TextEdit<String> {
       //trace("insertString exit vtcursor " + vtcursor + " readIn = " + ev.readIn());
    }
 
-   public String getnext() {
+   public final String getnext() {
       return null;
    }
 
@@ -337,6 +338,7 @@ class Vt100 extends TextEdit<String> {
       parser.stop();
       super.disposeFvc();
    }
+
    static final class Telnet extends Vt100 {
 
       private Process proc;
@@ -360,11 +362,11 @@ class Vt100 extends TextEdit<String> {
 
       static Vt100 make(String host) throws IOException {
 
-         String[] cmd = host == null
+         String[] cmd = null == host
                         ? execstring1
                         : execstring2;
 
-         if (host != null)
+         if (null != host)
             cmd[3] = host;
 
          Vt100 vt = new Vt100.Telnet(cmd[0], Tools.iocmd(cmd));
@@ -381,14 +383,14 @@ class Vt100 extends TextEdit<String> {
 
       public void disposeFvc() throws IOException {
          super.disposeFvc();
-         if (proc != null) {
+         if (null != proc) {
             proc.destroy();
             proc = null;
          }
       }
    }
 
-   static class CommReader extends Vt100 {
+   static final class CommReader extends Vt100 {
 
       private static final long serialVersionUID = 1;
       private transient SerialPort port;
@@ -413,9 +415,9 @@ class Vt100 extends TextEdit<String> {
                throw new IOException("serial port: " + e.getMessage(), e);
             }
          } catch (NoSuchPortException e) {
-            throw new InputException("invalid serial port name" , e);
+            throw new InputException("invalid serial port name", e);
          } catch (PortInUseException e) {
-            throw new InputException("serial port in use" , e);
+            throw new InputException("serial port in use", e);
          }
       }
 
@@ -431,7 +433,7 @@ class Vt100 extends TextEdit<String> {
 
       public void disposeFvc() throws IOException {
          super.disposeFvc();
-         if (port != null) {
+         if (null != port) {
             port.close();
             port = null;
          }

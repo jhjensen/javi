@@ -23,9 +23,9 @@ public abstract class PersistantStack {
    public abstract class PSIterator implements ListIterator {
       protected abstract void writeExternal(DataOutputStream dosi, Object obj)
          throws IOException;
-      protected abstract Object readExternal(ByteInput dis)throws IOException;
-      protected abstract Object newExternal(ByteInput dis)throws IOException;
-      protected abstract boolean isOutLine(Object ob)throws IOException;
+      protected abstract Object readExternal(ByteInput dis) throws IOException;
+      protected abstract Object newExternal(ByteInput dis) throws IOException;
+      protected abstract boolean isOutLine(Object ob) throws IOException;
       protected abstract boolean matches(Object ob, Object ob2);
       private int recordIndex;
 

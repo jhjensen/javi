@@ -20,9 +20,23 @@ public abstract class View  extends
    protected abstract void startInsertion(Inserter ins);
    protected abstract void endInsertion(Inserter ins);
 
-   private transient boolean cursoron = false;
+   public static final int updateCursor = 0x1;  // cursor needs updating
+   public static final int doBlink = 0x2;            // cursor needs blinking
+   public static final int insertFlag = 0x4;            // in insert mode
+   public static final int onFlag = 0x8;              // cursor is turning on
 
-   protected final boolean getCursorOn() {
+   private transient boolean cursoron = false;
+   private transient Inserter inserter;
+   private final boolean traverse;
+   private transient boolean delayerflag;
+   private TextEdit text;
+   private transient int fileX = 0;
+   private transient int fileY = 1;
+   private transient UndoHistory.EhMark chmark;
+   private transient MarkInfo pmark = new MarkInfo();
+   private final ChangeOpt op;
+
+   protected final boolean isCursorOn() {
       return cursoron;
    }
 
@@ -57,10 +71,6 @@ public abstract class View  extends
       endInsertion(inserter);
       inserter = null;
    }
-
-   private transient Inserter inserter;
-
-   private final boolean traverse;
 
    final boolean isTraverseable() {
       return traverse;
@@ -189,13 +199,7 @@ public abstract class View  extends
          }
          repaint();
       }
-
    };
-
-   public static final int updateCursor = 0x1;  // cursor needs updating
-   public static final int doBlink = 0x2;            // cursor needs blinking
-   public static final int insertFlag = 0x4;            // in insert mode
-   public static final int onFlag = 0x8;              // cursor is turning on
 
    public final int needBlink() {
 
@@ -237,19 +241,13 @@ public abstract class View  extends
       op.cursorChange(xChange, yChange);
    }
 
-   private transient boolean delayerflag;
-
-   private TextEdit text;
    protected final TextEdit gettext() {
       return text;
    }
 
-   private transient int fileX = 0;
    protected final int getfileX() {
       return fileX;
    }
-
-   private transient int fileY = 1;
 
    protected final int getfileY() {
       return fileY;
@@ -260,13 +258,10 @@ public abstract class View  extends
       fileY = fy;
    }
 
-   private transient UndoHistory.EhMark chmark;
-
-   public final void getChanges() {
-      chmark.getChanges(op);
+   public final void applyChanges() {
+      chmark.applyChanges(op);
    }
 
-   private transient MarkInfo pmark = new MarkInfo();
    protected final MarkInfo getPmark() {
       return pmark;
    }
@@ -282,7 +277,6 @@ public abstract class View  extends
       return false;
    }
 
-   private final ChangeOpt op;
    protected abstract ChangeOpt getChangeOpt();
 
    public View(boolean traversei) {
@@ -325,6 +319,7 @@ public abstract class View  extends
    }
 
    private final class Delayer implements Runnable {
+
       private int readin;
       private int needed;
 
@@ -370,7 +365,7 @@ public abstract class View  extends
    final void setMark(Position markposi) {
       //trace("setMark");
       MovePos pos = pmark.getMark();
-      if (pos != null) {
+      if (null != pos) {
          if (markposi.equals(pos))
             return;
          pmark.clearMark(fileX, fileY);
@@ -383,7 +378,7 @@ public abstract class View  extends
       //trace("clearMark");
       MovePos pos = pmark.getMark();
       pmark.clearMark(fileX, fileY);
-      if (pos != null)
+      if (null != pos)
          op.changedpro(pos.y, fileY);
    }
 
