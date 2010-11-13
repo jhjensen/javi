@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 
 import static javi.FileDescriptor.LocalFile.make;
+import static history.Tools.trace;
 
 public class TextEdit<OType> extends EditContainer<OType> {
    private static TextEdit<String> root;
@@ -752,9 +753,6 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
 final class EditTester1 {
    private EditTester1() { }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 
    static void copyFile(String from, String to) throws IOException {
       FileInputStream input = new FileInputStream(from);

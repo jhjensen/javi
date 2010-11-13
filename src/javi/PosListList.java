@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static history.Tools.trace;
 
 class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
 

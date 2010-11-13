@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import javi.EventQueue;
 import javi.FvContext;
 import javi.UI;
-import history.Tools;
 
 final class StatusBar extends Canvas {
    private static final long serialVersionUID = 1;
@@ -167,7 +166,4 @@ final class StatusBar extends Canvas {
       trace("(" +x+ "," + y + ") " + this);
    }
    */
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }

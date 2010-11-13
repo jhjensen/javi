@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
+import static history.Tools.trace;
 
 final class DirList extends TextEdit<DirEntry> {
    private static final long serialVersionUID = 1;

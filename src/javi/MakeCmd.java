@@ -2,6 +2,7 @@ package javi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import static history.Tools.trace;
 
 final class MakeCmd extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */

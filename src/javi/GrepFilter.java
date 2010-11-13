@@ -22,7 +22,4 @@ final class GrepFilter implements FilenameFilter {
       regex.reset(name);
       return  invert ^ regex.find();
    }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }

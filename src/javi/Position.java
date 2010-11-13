@@ -52,8 +52,5 @@ public final class Position {
       return filename.hashCode() + x * y;
    }
 
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }
 

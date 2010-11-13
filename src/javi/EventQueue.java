@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
+import static history.Tools.trace;
 
 public final class EventQueue {
    private EventQueue() { }
@@ -206,10 +207,6 @@ public final class EventQueue {
       //trace("inserting " + e);
       queue.addLast(e);
       EventQueue.class.notifyAll();
-   }
-
-   static void trace(String str) {
-      Tools.trace(str, 1);
    }
 
 }

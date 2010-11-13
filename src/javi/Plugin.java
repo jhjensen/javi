@@ -8,6 +8,8 @@ import java.util.Enumeration;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import static history.Tools.trace;
+
 /**
  * JarResources: JarResources maps all resources included in a
  * Zip or Jar file. Additionaly, it provides a method to extract one
@@ -20,9 +22,6 @@ final class JarResources {
    private HashMap<String, byte[]> htJarContents =
       new HashMap<String, byte[]>();
 
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
    // a jar file
    private String jarFileName;
 
@@ -169,9 +168,6 @@ abstract class MultiClassLoader extends ClassLoader {
    public Class loadClass(String className) throws ClassNotFoundException {
       return (loadClass(className, true));
    }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 //---------- Abstract Implementation ---------------------
    public synchronized Class loadClass(String className,
          boolean resolveIt) throws ClassNotFoundException {
@@ -278,9 +274,6 @@ public interface Plugin {
                   return null;
                }
             });
-      }
-      static void trace(String str) {
-         Tools.trace(str, 1);
       }
    }   // End of nested Class Test.
 }

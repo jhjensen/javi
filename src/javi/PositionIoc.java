@@ -1,6 +1,7 @@
 package javi;
 
 import java.io.BufferedReader;
+import static history.Tools.trace;
 
 public class PositionIoc extends BufInIoc<Position> {
 

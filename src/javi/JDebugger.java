@@ -12,6 +12,8 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
 
+import static history.Tools.trace;
+
 final class JDebugger extends IoConverter<String> {
 
    private static final long serialVersionUID = 1;

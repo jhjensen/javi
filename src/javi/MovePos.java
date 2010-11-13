@@ -56,7 +56,4 @@ public final class MovePos {
 //   return filename.hashCode()+
       return (x & 0xff) + ((y >> 8) & 0xff);
    }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }

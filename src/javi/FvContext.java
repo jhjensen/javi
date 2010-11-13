@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
+import static history.Tools.trace;
 
 
 public final class FvContext<OType> implements Serializable {
@@ -583,10 +584,6 @@ public final class FvContext<OType> implements Serializable {
    void setMark(Position pos) {
       vi.setMark(pos);
       cursorabs(pos);
-   }
-
-   static void trace(String str) {
-      Tools.trace(str, 1);
    }
 
    private static FvContext tfc;

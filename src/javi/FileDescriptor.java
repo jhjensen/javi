@@ -439,11 +439,6 @@ public class FileDescriptor implements Serializable {
          return canonName.hashCode();
       }
 
-
-      static void trace(String str) {
-         Tools.trace(str, 1);
-      }
-
       byte[] readFile() throws IOException {
 
          if (!exists())

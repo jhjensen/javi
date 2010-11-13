@@ -15,7 +15,4 @@ public abstract class ClassConverter<OType>  implements Serializable {
    final void saveExternal(Object ob, DataOutputStream dos) throws IOException {
       dos.writeUTF(ob.toString());
    }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }

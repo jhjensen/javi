@@ -14,6 +14,8 @@ import history.ByteInput;
 import java.io.DataOutputStream;
 import java.io.Serializable;
 
+import static history.Tools.trace;
+
 /** This class is the basic storage for an editor written in java.
 
    It implements a vector that fills itself automaticly from
@@ -914,10 +916,6 @@ public class EditContainer<OType> implements
       sb.append(Integer.toString(readIn() - 1));
       sb.append(')');
       sb.append(fdes().shortName);
-   }
-
-   static void trace(String str) {
-      Tools.trace(str, 1);
    }
 
    final boolean searchForward(Matcher reg, int charoff, int lineno) {

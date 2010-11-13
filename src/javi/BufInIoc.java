@@ -2,6 +2,7 @@ package javi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import static history.Tools.trace;
 
 /** this is an abstract class which defines the necessary methods
     for an editvec to do IO

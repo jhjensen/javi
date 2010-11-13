@@ -9,6 +9,7 @@ import javax.tools.ToolProvider;
 import javax.tools.StandardJavaFileManager;
 import java.util.Arrays;
 import java.util.ArrayList;
+import static history.Tools.trace;
 
 final class JavaCompiler extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */

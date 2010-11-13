@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-import static javi.Tools.trace;
+import static history.Tools.trace;
 
 final class Server implements Runnable, EditContainer.FileStatusListener {
 

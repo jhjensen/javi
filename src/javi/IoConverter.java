@@ -3,6 +3,7 @@ package javi;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import static history.Tools.trace;
 
 /** this is an abstract class which defines the necessary methods
     for an editvec to to IO
@@ -213,7 +214,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
          rthread.interrupt();
    }
 
-   final private boolean handleDiff(OType fileObj, OType backObj, int index) {
+   private boolean handleDiff(OType fileObj, OType backObj, int index) {
       //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
       try {
          FileDescriptor.LocalFile tfile =
@@ -296,7 +297,4 @@ public class IoConverter<OType> implements Runnable, Serializable {
       //trace("run exit reached " + this);
    }
 
-   static final void trace(String str) {
-      Tools.trace(str, 1);
-   }
 }

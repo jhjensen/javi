@@ -9,6 +9,7 @@ import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
 import gnu.io.SerialPort;
 import gnu.io.UnsupportedCommOperationException;
+import static history.Tools.trace;
 
 
 class Vt100 extends TextEdit<String> {

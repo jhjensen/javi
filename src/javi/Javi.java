@@ -2,7 +2,7 @@ package javi;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
-import static javi.Tools.trace;
+import static history.Tools.trace;
 
 public final class Javi {
 

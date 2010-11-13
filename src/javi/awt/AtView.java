@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.Color;
 
 import javi.DeTabber;
-import history.Tools;
 
 final class AtView implements
       AttributedCharacterIterator, Cloneable, java.io.Serializable {
@@ -308,8 +307,5 @@ final class AtView implements
       throw new RuntimeException("getRunStart unimplemented");
    }
    public int getRunStart(Set attributes) { throw new RuntimeException(); }
-   static void trace(String str) {
-      Tools.trace(str, 1);
-   }
 
 }

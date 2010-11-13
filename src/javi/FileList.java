@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import static history.Tools.trace;
 
 public final class FileList extends TextEdit<TextEdit<String>> {
    static final class FileConverter extends ClassConverter<TextEdit<String>> {
