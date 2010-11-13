@@ -4,8 +4,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Date;
 
-import history.PersistantStack;
 import history.ByteInput;
+import history.PersistantStack;
 //import static history.Tools.trace;
 
 public final class UndoHistory<OType> extends PersistantStack {
@@ -83,6 +83,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       //trace("isWritten " + currmark.isWritten() + " index " + currmark.getIndex());
       return currmark.isWritten();
    }
+
    void forceWritten() {
       savewrite = currmark.getIndex();
    }
@@ -291,7 +292,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          }
       }
 
-      public boolean sameBack(EhMark ehm) {
+      public boolean hasSameBack(EhMark ehm) {
          //throw new RuntimeException ("fix this");
          return UndoHistory.this.prop.fdes == prop.fdes;
       }
@@ -404,7 +405,7 @@ public final class UndoHistory<OType> extends PersistantStack {
             dos.writeInt(cindex);
          } catch (IOException e) {
             throw new RuntimeException(
-               "ChangeRecord.writeExternal unexpected " , e);
+               "ChangeRecord.writeExternal unexpected ", e);
          }
       }
 
@@ -424,7 +425,7 @@ public final class UndoHistory<OType> extends PersistantStack {
                conv.saveExternal(obj[ocount], dos);
          } catch (IOException e) {
             throw new RuntimeException(
-               "InsertRecord.writeExternal unexpected " , e);
+               "InsertRecord.writeExternal unexpected ", e);
          }
       }
 
@@ -496,6 +497,13 @@ public final class UndoHistory<OType> extends PersistantStack {
       WriteRecord() {
       }
 
+      WriteRecord(int index) {
+         super(true);
+         //trace("WriteRecord index = " + index);
+         writeDate = new Date().toString();
+         cindex = index;
+      }
+
       public String toString() {
          return "w" + cindex + ":" + writeDate;
       }
@@ -522,13 +530,6 @@ public final class UndoHistory<OType> extends PersistantStack {
             throw new RuntimeException(
                "ehsistory.WriteRecord.writeExternal failed", e);
          }
-      }
-
-      WriteRecord(int index) {
-         super(true);
-         //trace("WriteRecord index = " + index);
-         writeDate = new Date().toString();
-         cindex = index;
       }
 
       final String getDate() {

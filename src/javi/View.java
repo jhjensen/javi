@@ -313,7 +313,7 @@ public abstract class View  extends
       //trace("invalidateBack fvc " + fvc);
       //trace("invalidateBack chmark " + fvc.chmark);
 
-      if (ehm.sameBack(chmark))
+      if (ehm.hasSameBack(chmark))
          if (chmark.getIndex() > ehm.getIndex())
             chmark.invalidate();
    }
