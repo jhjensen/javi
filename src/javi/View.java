@@ -212,7 +212,7 @@ public abstract class View  extends
             checkCursor = false;
          cursoron = !cursoron;
          return  doBlink
-            | (inserter == null ? 0 : insertFlag)
+            | (null == inserter ? 0 : insertFlag)
             | (cursoron ? onFlag :  0)
             | (update ? updateCursor : 0);
 
@@ -279,7 +279,7 @@ public abstract class View  extends
 
    protected abstract ChangeOpt getChangeOpt();
 
-   public View(boolean traversei) {
+   protected View(boolean traversei) {
       op = getChangeOpt();
       //trace("op " + op + " this " + this);
       traverse = traversei;
@@ -455,7 +455,7 @@ public abstract class View  extends
       }
 
       void resetMark(EditContainer ev, int fileX, int fileY) {
-         if (markpos != null) {
+         if (null != markpos) {
             if (!ev.containsNow(markpos.y))
                markpos.y = ev.readIn() - 1;
             if (markpos.x > ev.at(markpos.y).toString().length())
@@ -480,14 +480,14 @@ public abstract class View  extends
       }
    }
 
-   final void cursoroff() {
+   final void setCursorOff() {
       //trace("cursoroff cursoractive " + cursoractive + " cursoron " + cursoron +"");
       cursoractive = false;
       if (cursoron)
          blinkcursor();
    }
 
-   final void cursoron() {
+   final void setCursorOn() {
       //trace("cursoron cursoractive " + cursoractive + " cursoron " + cursoron +"");
       checkCursor = true;
       cursoractive = true;

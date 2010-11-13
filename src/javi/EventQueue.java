@@ -83,8 +83,8 @@ public final class EventQueue {
    }
 
    abstract static class CursorControl {
-      abstract void cursoron();
-      abstract void cursoroff();
+      abstract void setCursorOn();
+      abstract void setCursorOff();
       abstract void blinkcursor();
    }
 
@@ -116,7 +116,7 @@ public final class EventQueue {
             e.printStackTrace();
          }
 
-      vi.cursoron();
+      vi.setCursorOn();
       int gccount = 60 * 1000 / timeout; // gc after about a minute of idle
 
       while (ev == null) {
@@ -143,7 +143,7 @@ public final class EventQueue {
          biglock2.unlock();
       }
 
-      vi.cursoroff();
+      vi.setCursorOff();
       //trace("eventqueue.java returning " + ev);
       biglock2.lock();
       return ev;
