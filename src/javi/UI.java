@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.ObjectOutputStream;
+
 import static history.Tools.trace;
 
 public abstract class UI {
@@ -13,15 +15,15 @@ public abstract class UI {
       USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN
    };
 
-   private static UI instance = null;
+   private static UI instance;
 
-   public UI() {
-      if (instance != null)
+   protected UI() {
+      if (null != instance)
          throw new RuntimeException("attempt to create two Awt singletons");
       instance = this;
    }
 
-   protected static UI getInstance() {
+   protected static final UI getInstance() {
       return instance;
    }
 
@@ -51,6 +53,7 @@ public abstract class UI {
 
    public abstract void iRestoreState(java.io.ObjectInputStream is) throws
       ClassNotFoundException, IOException;
+
    public abstract void iSaveState(java.io.ObjectOutputStream os) throws
       IOException;
 
@@ -59,14 +62,14 @@ public abstract class UI {
 
    public abstract void isizeChange();
 
-   static void saveState(java.io.ObjectOutputStream os) throws IOException {
+   static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
       os.writeObject(instance);
       instance.iSaveState(os);
    }
 
-   static void restoreState(java.io.ObjectInputStream is) throws
+   static final void restoreState(java.io.ObjectInputStream is) throws
          IOException, ClassNotFoundException {
 //      instance = (Boolean) is.readObject()
 //         ? (UI)new AwtInterface()
@@ -77,23 +80,18 @@ public abstract class UI {
       toFront();
    }
 
-   static void setStream(Reader inreader) {
+   static final void setStream(Reader inreader) {
       instance.isetStream(inreader);
    }
 
    @SuppressWarnings("fallthrough")
-   static boolean reportDiff(String filename, int linenum, Object filevers,
-         Object backupvers, BackupStatus status,
-         String backupname) throws IOException {
-      //trace(
-      //   " filename = " + filename
-      //   + " linenum = " + linenum
-      //   + " filevers = " + filevers
-      //   + " backupvers = " + backupvers
-      //   + " status = " + status
-      //);
+   static final boolean reportDiff(String filename, int linenum,
+         Object filevers, Object backupvers,
+         BackupStatus status, String backupname) throws IOException {
+      //trace( " filename = " + filename + " linenum = " + linenum + " filevers = " + filevers
+      //   + " backupvers = " + backupvers + " status = " + status );
       while (true)  {
-         while (instance == null)
+         while (null == instance)
             try {
                Thread.sleep(200);
             } catch (InterruptedException e) {
@@ -107,7 +105,7 @@ public abstract class UI {
 
             case OK:
                //trace("got ok backupvers = " + backupvers + " filevers " + filevers);
-               if (backupvers == null && filevers == null)
+               if (null == backupvers && null == filevers)
                   return false;
                break;
 
@@ -118,8 +116,7 @@ public abstract class UI {
                return true;
 
             case IOERROR:
-               trace("got error in reportDiff");
-               throw new IOException();
+               throw new IOException("unexpected io error");
 
             default:
                trace("Thread " + Thread.currentThread() + " filename "
@@ -136,56 +133,56 @@ public abstract class UI {
       }
    }
 
-   static void showCommand() {
+   static final void showCommand() {
       instance.ishowCommand();
    }
 
-   static void hideCommand() {
+   static final void hideCommand() {
       instance.ihideCommand();
    }
 
-   static void repaint() {
+   static final void repaint() {
       instance.irepaint();
    }
 
-   static void dispose() {
-      if (instance != null)
+   static final void dispose() {
+      if (null != instance)
          instance.idispose();
       instance = null;
    }
-   static String getFile() {
+
+   static final String getFile() {
       return instance.igetFile();
    }
 
-   static boolean isVisible() {
+   static final boolean isVisible() {
       return instance.iisVisible();
    }
 
-
-   static void show() {
+   static final void show() {
       instance.ishow();
    }
 
-   public static void showmenu(int x, int y) {
+   public static final void showmenu(int x, int y) {
       instance.ishowmenu(x, y);
    }
-   static void toFront() {
+
+   static final void toFront() {
       instance.itoFront();
    }
 
-   static void hide() {
+   static final void hide() {
       instance.itransferFocus();
    }
 
-
-   static Buttons chooseWriteable(String filename) {
+   static final Buttons chooseWriteable(String filename) {
       return instance.ichooseWriteable(filename);
    }
 
-   public static void popError(String errs, Throwable ex) {
-      trace("poperror exception trace " + (errs == null ? "" : errs) + ex);
+   public static final void popError(String errs, Throwable ex) {
+      trace("poperror exception trace " + (null == errs ? "" : errs) + ex);
 
-      StackTraceElement[] st = ex == null
+      StackTraceElement[] st = null == ex
                                ? Thread.currentThread().getStackTrace()
                                : ex.getStackTrace();
 
@@ -193,7 +190,7 @@ public abstract class UI {
       PrintWriter wr = new PrintWriter(sw);
 
       wr.println(errs);
-      if (ex != null) {
+      if (null != ex) {
          ex.printStackTrace();
          wr.println(ex);
       } else {
@@ -204,28 +201,28 @@ public abstract class UI {
          //trace("   " + ste.toString());
          wr.println(ste);
       }
-
-      if (instance != null)
+      wr.close();
+      if (null != instance)
          if (instance.ipopstring(sw.toString()))
             throw new RuntimeException("rethrow ", ex);
 
       return;
    }
 
-   static void setTitle(String str) {
+   static final void setTitle(String str) {
       instance.isetTitle(str);
    }
 
-   static void flush() {
+   static final void flush() {
       instance.iflush(false);
    }
 
-   public static void reportError(String s) {
+   public static final void reportError(String s) {
       instance.istatusaddline(s);
    }
 
-   static void reportMessage(String s) {
-      if (instance != null)
+   static final void reportMessage(String s) {
+      if (null != instance)
          instance.istatusaddline(s);
       else {
          Thread.dumpStack();
@@ -233,11 +230,11 @@ public abstract class UI {
       }
    }
 
-   static void setline(String s) {
+   static final void setline(String s) {
       instance.istatusSetline(s);
    }
 
-   static void clearStatus() {
+   static final void clearStatus() {
       instance.iclearStatus();
    }
 
@@ -251,13 +248,13 @@ public abstract class UI {
       }
    }
 
-   static Result reportModVal(String caption, String units,
+   static final Result reportModVal(String caption, String units,
                               String []buttonVals, long limit) {
 
       return instance.ireportModVal(caption, units, buttonVals, limit);
    }
 
-   static void sizeChange() {
+   static final void sizeChange() {
       instance.isizeChange();
    }
 }

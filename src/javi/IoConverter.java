@@ -213,7 +213,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
          rthread.interrupt();
    }
 
-   final boolean handleDiff(OType fileObj, OType backObj, int index) {
+   final private boolean handleDiff(OType fileObj, OType backObj, int index) {
       //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
       try {
          FileDescriptor.LocalFile tfile =
@@ -281,8 +281,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
          }
       }
       boolean tmpswp = (fileObj != null || backObj != null)
-                       ? handleDiff(fileObj, backObj, compIndex)
-                       : false;
+         ? handleDiff(fileObj, backObj, compIndex)
+         : false;
 
       synchronized (this) {
          swapArray = tmpswp;
