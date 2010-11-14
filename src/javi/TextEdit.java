@@ -1,5 +1,7 @@
 package javi;
 
+import java.io.BufferedReader;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,17 +10,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Matcher;
 
-import static javi.FileDescriptor.LocalFile.make;
 import static history.Tools.trace;
+import static javi.FileDescriptor.LocalFile.make;
 
 public class TextEdit<OType> extends EditContainer<OType> {
    private static TextEdit<String> root;
-   static TextEdit getRoot() {
+
+   static final TextEdit getRoot() {
       return root;
    }
 
@@ -61,12 +63,12 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("adding text:"+iStr);
       //trace("xstart = " + xstart + " ystart = " +ystart);
 
-      if (iStr == null || iStr.length() == 0)
+      if (null == iStr || 0 == iStr.length())
          return new Position(xstart, ystart, fdes(), "inserttext");
 
       if (ystart >= readIn()) {
          ArrayList<String>  sar = stringtoarray(iStr);
-         insertStrings(sar , readIn());
+         insertStrings(sar, readIn());
          return new Position(sar.get(sar.size() - 1).length(), readIn() - 1,
                              fdes(), "inserttext");
       }
@@ -94,19 +96,18 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
    final void substitute(int lineno, Matcher matchPattern, String subpattern,
                    boolean globflag) {
-      int i;
-      char c;
+
       boolean slash = false;
-      StringBuilder replace = new StringBuilder();
       String line =  at(lineno).toString();
+      StringBuilder replace = new StringBuilder(line.length());
       do {
          //trace("substitute doing line number " + lineno);
          matchPattern.reset(line);
          if (!matchPattern.find())
             break;
          replace.setLength(0);
-         for (i = 0; i < subpattern.length(); i++) {
-            c =  subpattern.charAt(i);
+         for (int i = 0; i < subpattern.length(); i++) {
+            char c =  subpattern.charAt(i);
             if (slash) {
                slash = false;
                if ((c >= '0' && c <= '9'))
@@ -145,26 +146,25 @@ public class TextEdit<OType> extends EditContainer<OType> {
       Matcher rangePattern = null;
       Matcher matchPattern = null;
       boolean inverse = false;
-      char c, c2;
       String subpattern = null;
       boolean globflag = false;
       boolean defaultflag = false;
 
       // get line range
 
-      c = str.peek();
-      if (c == '%') {
+      char c = str.peek();
+      if ('%' == c) {
          linestart = 1;
          linefinish = finish() - 1;
          str.next();
       } else {
-         if (!str.isnum(c))
+         if (!str.isNum(c))
             defaultflag = true;
          linestart = str.getline(ypos);
          linefinish = linestart;
          c = str.peek();
-         if (c == ',' || c == ';') {
-            if (c == ';')
+         if (',' == c || ';' == c) {
+            if (';' == c)
                ypos = linestart;
             str.next();
             linefinish = str.getline(ypos);
@@ -172,14 +172,14 @@ public class TextEdit<OType> extends EditContainer<OType> {
          }
       }
       c = str.peek();
-      if (c == 'g') {
+      if ('g' == c) {
          str.next();
          if (linestart == linefinish && linestart == ypos) {
             linestart = 1;
             linefinish = finish() - 1;
          }
          c = str.peek();
-         if  (c == '!') {
+         if  ('!' == c) {
             inverse = true;
             str.next();
          }
@@ -190,26 +190,26 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("command proc com = " + c + " str:" +str);
       switch (c) {
          case 's':
-            c2 = str.peek();
+            char c2 = str.peek();
             matchPattern = str.getpattern();
             //trace("matchPattern " + matchPattern);
             subpattern = str.getsubstitute(c2);
-            if (str.next() == 'g')
+            if ('g' == str.next())
                globflag = true;
             break;
          case 'c':
             c = str.peek();
-            if (c != 'o') {
+            if ('o' != c) {
                //trace("processCommand returns false");
                return -1;
             }
             str.next();
             c = 't';
-            // intentional fallthrough
+            //intentional fallthrough
          case 't':
          case 'm':
             lineto = str.getline(ypos);
-            if (str.next() != 0) {
+            if (0 != str.next()) {
                //trace("processCommand returns false");
                return -1;
             }
@@ -221,7 +221,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                linestart = 1;
                linefinish = finish() - 1;
             }
-            if (str.peek() == 0 && linestart == 1
+            if (0 == str.peek() && 1 == linestart
                   && !containsNow(linefinish + 1)) {
                printout();
                return ypos;
@@ -247,13 +247,13 @@ public class TextEdit<OType> extends EditContainer<OType> {
       switch (command) {
          case 'd':
             ArrayList<String>  delvec = new ArrayList<String>(100);
-            for (int i = linestart; i <= linefinish;) {
-               if (rangePattern == null
-                     || (inverse ^ (searchForward(rangePattern, 0, i))))  {
-                  delvec.add(remove(i, 1).get(0));
+            for (int ii = linestart; ii <= linefinish;) {
+               if (null == rangePattern
+                     || (inverse ^ (searchForward(rangePattern, 0, ii))))  {
+                  delvec.add(remove(ii, 1).get(0));
                   linefinish--;
                } else
-                  i++;
+                  ii++;
             }
             Buffers.deleted('0', delvec);
             checkpoint();
@@ -266,21 +266,21 @@ public class TextEdit<OType> extends EditContainer<OType> {
             PrintWriter os = new PrintWriter(new FileWriter(file));
             try {
 
-               for (int i = linestart; i <= linefinish; i++)
-                  if (rangePattern == null
-                        || (inverse ^ (searchForward(rangePattern, 0, i))))
-                     os.println(at(i));
+               for (int ii = linestart; ii <= linefinish; ii++)
+                  if (null == rangePattern
+                        || (inverse ^ (searchForward(rangePattern, 0, ii))))
+                     os.println(at(ii));
             } finally {
                os.close();
             }
             return linestart;
          case 's':
-            if (matchPattern == null)
+            if (null == matchPattern)
                throw new InputException("no pattern to match");
-            for (int i = linestart; i <= linefinish; i++)
-               if (rangePattern == null
-                     || (inverse ^ (searchForward(rangePattern, 0, i))))
-                  substitute(i, matchPattern, subpattern, globflag);
+            for (int ii = linestart; ii <= linefinish; ii++)
+               if (null == rangePattern
+                     || (inverse ^ (searchForward(rangePattern, 0, ii))))
+                  substitute(ii, matchPattern, subpattern, globflag);
             checkpoint();
             return linestart;
       }
@@ -292,32 +292,32 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       lineto++;
 
-      for (int i = linestart; i <= linefinish;)
-         if (rangePattern == null
-               || (inverse ^ (searchForward(rangePattern, 0, i)))) {
+      for (int ii = linestart; ii <= linefinish;)
+         if (null == rangePattern
+               || (inverse ^ (searchForward(rangePattern, 0, ii)))) {
             switch(command) {
                case 'm':
                   if (before)
-                     moveLine(i++, lineto++);
+                     moveLine(ii++, lineto++);
                   else {
-                     moveLine(i, lineto - 1);
+                     moveLine(ii, lineto - 1);
                      linefinish--;
                   }
                   break;
                case 't':
-                  copyLine(i, lineto++);
+                  copyLine(ii, lineto++);
                   if (before) {
-                     i += 2;
+                     ii += 2;
                      linefinish++;
                   } else {
-                     i++;
+                     ii++;
                   }
                   break;
                default:
-                  throw new RuntimeException();
+                  throw new RuntimeException("unexpected command char");
             }
          } else
-            i++;
+            ii++;
       switch (command) {
          case 'c':
          case 't':
@@ -336,14 +336,15 @@ public class TextEdit<OType> extends EditContainer<OType> {
                      int yend)  {
       //trace("deletetext start("+xstart + "," + ystart + ") end (" + xend  +","  + yend +")");
 
-      StringBuilder delline = new StringBuilder();
       String delline2 = "";
       String line = at(ystart).toString();
+      StringBuilder delline = new StringBuilder(
+         line.length() * (yend - ystart + 1));
 
-//  take care of firstline
+      //  take care of firstline
       if (yend == ystart) {
          if (xstart > xend)
-            throw new RuntimeException();
+            throw new RuntimeException("start before end");
          if (xstart == xend)
             return null;
          delline.append(line.substring(xstart, xend));
@@ -353,9 +354,9 @@ public class TextEdit<OType> extends EditContainer<OType> {
             changeElementAtStr(line, yend);
       } else {
          if (ystart > yend) {
-            throw new RuntimeException();
+            throw new RuntimeException("start before end");
          }
-         if (xstart != 0) { // we have the tail of a line to remove
+         if (0 != xstart) { // we have the tail of a line to remove
             delline.append(line.substring(xstart, line.length()));
             delline.append('\n');
             line = line.substring(0, xstart);
@@ -392,21 +393,19 @@ public class TextEdit<OType> extends EditContainer<OType> {
       return delline.toString();
    }
 
-   private int findnonwhite(String line) {
+   private static int findnonwhite(String line) {
       int i;
       for (i = 0; (i < line.length()); i++)
-         if  (line.charAt(i) != ' ')
+         if  (' ' != line.charAt(i))
             break;
       return i;
    }
 
    private int findalign(int lineno, boolean dir) {
 
-      int i;
-      int spcount = 0;
       int linepos = findnonwhite(at(lineno).toString());
-      for (i = lineno - 1; i >= 1; i--) {
-         spcount = findnonwhite(at(i).toString());
+      for (int i = lineno - 1; i >= 1; i--) {
+         int spcount = findnonwhite(at(i).toString());
          if (dir ? spcount < linepos : spcount > linepos)
             if (spcount != at(i).toString().length())
                return dir ? linepos - spcount : spcount - linepos;
@@ -418,14 +417,14 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("amount = " + amount + " start = " +
       //  start + " lineamount= " + lineamount);
       int amount =  findalign(start, false);
-      if (amount != 0) {
-         StringBuilder sb = new StringBuilder();
+      if (0 != amount) {
+         StringBuilder sb = new StringBuilder(amount);
 
-         for (int i = 0; i < amount; i++)
+         for (int ii = 0; ii < amount; ii++)
             sb.append(' ');
-         for (int i = start; i < start + lineamount; i++) {
-            String line = at(i).toString();
-            changeElementAtStr(sb + line, i);
+         for (int ii = start; ii < start + lineamount; ii++) {
+            String line = at(ii).toString();
+            changeElementAtStr(sb + line, ii);
          }
       }
       return amount;
@@ -437,22 +436,22 @@ public class TextEdit<OType> extends EditContainer<OType> {
 //   tabConverter tb = (tabConverter)getConverter();
       int amount =  findalign(start, true);
       int retval = -amount;
-      if (amount != 0) {
+      if (0 != amount) {
 
-         for (int i = start; i < start + lineamount; i++) {
-            String line = at(i).toString();
+         for (int ii = start; ii < start + lineamount; ii++) {
+            String line = at(ii).toString();
             int delamount = amount;
             if (delamount > line.length())
                delamount = line.length();
-            for (int j = 0; j < delamount; j++)
-               if (line.charAt(j) != ' ') {
-                  delamount = j;
+            for (int jj = 0; jj < delamount; jj++)
+               if (' ' != line.charAt(jj)) {
+                  delamount = jj;
                   break;
                }
             if (delamount > 0) {
                line = line.substring(delamount, line.length());
-               changeElementAtStr(line, i);
-               if (i == start)
+               changeElementAtStr(line, ii);
+               if (ii == start)
                   retval = -delamount;
             }
          }
@@ -463,7 +462,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
    final void changecase(int xstart, int ystart, int xend, int yend) {
 
       int amount = yend - ystart + 1;
-      if (amount == 1) { // one line
+      if (1 == amount) { // one line
          String line = at(ystart).toString();
          line = ccase(line, xstart, xend);
          changeElementAtStr(line, ystart);
@@ -474,33 +473,33 @@ public class TextEdit<OType> extends EditContainer<OType> {
          line = at(ystart + amount - 1).toString();
          line = ccase(line, 0, xend);
          changeElementAtStr(line, ystart + amount - 1);
-         for (int i = ystart + 1; i < ystart + amount - 1; i++) {
-            line = at(i).toString();
+         for (int ii = ystart + 1; ii < ystart + amount - 1; ii++) {
+            line = at(ii).toString();
             line = ccase(line, 0, line.length());
-            changeElementAtStr(line, i);
+            changeElementAtStr(line, ii);
          }
       }
    }
-   private static String ccase(String in, int startoffset, int finishoffset) {
+
+   private static String ccase(String in,
+         int startoffset, int finishoffset) {
 
       char [] sb = in.toCharArray();
-      char c;
       if (finishoffset > sb.length)
          finishoffset = sb.length;
-      for (int i = startoffset; i < finishoffset; i++) {
-         c = sb[i];
+      for (int ii = startoffset; ii < finishoffset; ii++) {
+         char c = sb[ii];
          if (c >= 'a' && c <= 'z')
             c = (char) (c - 32); // lower case;
          else if (c >= 'A' && c <= 'Z')
             c = (char) (c + 32); // lower case;
-         sb[i] = c;
+         sb[ii] = c;
       }
       return new String(sb);
    }
 
    final int joinlines(int count, int start) {
-      int i;
-      if (count == 1)
+      if (1 == count)
          count = 2;
       StringBuilder line = new StringBuilder(at(start).toString());
 
@@ -513,15 +512,15 @@ public class TextEdit<OType> extends EditContainer<OType> {
          if (!containsNow(start + 1))
             break;
 
-         if (line.length() > 0 && line.charAt(line.length() - 1) != ' ')
+         if (0 >= line.length() && ' ' != line.charAt(line.length() - 1))
             line.append(' ');
 
          retval = line.length();
 
          String line2 = at(start + 1).toString();
-
-         for (i = 0; i < line2.length(); i++)
-            if (line2.charAt(i) != ' ')
+         int i = 0;
+         for (; i < line2.length(); i++)
+            if (' ' != line2.charAt(i))
                break;
          line2 = line2.substring(i, line2.length());
 
@@ -529,23 +528,25 @@ public class TextEdit<OType> extends EditContainer<OType> {
          remove(start + 1, 1);
       }
       changeElementAtStr(line.toString(), start);
-      return (retval);
+      return retval;
    }
 
+   private static final int[] zarray = new int[0];
+
    final void tabfix(int tabstop) throws InputException {
-      if (tabstop == 0)
+      if (0 == tabstop)
          throw new InputException("tabstop of 0 illegal");
       for (int lineno = 1; lineno < finish(); lineno++) {
          String line = at(lineno).toString();
          int tabOffset = line.indexOf('\t');
          if (tabOffset != -1)
             changeElementAtStr(DeTabber.deTab(line, tabOffset, tabstop,
-                                              new int[0]), lineno);
+               zarray), lineno);
       }
       checkpoint();
    }
 
-   private static class StringIndex {
+   private static final class StringIndex {
 
       private String str;
       private int index;
@@ -568,7 +569,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
             index = str.length();
             return 0;
          }
-         return (str.charAt(index++));
+         return str.charAt(index++);
       }
 
       char peek() {
@@ -582,23 +583,23 @@ public class TextEdit<OType> extends EditContainer<OType> {
       }
 
       static final String nchars = "1234567890+-./?$";
-      boolean isnum(char c) {
-         return (nchars.indexOf(c) != -1);
+
+      private static boolean isNum(char c) {
+         return nchars.indexOf(c) != -1;
       }
+
       int getline(int curr) throws InputException {
 
-         int lineno;
          int save = 0;
-         char c2;
          boolean mflag = false;
          char c = peek();
-         if (!isnum(c)) {
+         if (!isNum(c)) {
             //trace("returning " + curr);
             return curr;
          }
-         if (c == '+' || c == '-')
-            lineno = curr;
-         else lineno = 0;
+         int lineno = '+'  == c || '-' == c
+            ? curr
+            : 0;
          while (true) {
             c = next();
             if (c >= '0' && c <= '9') {
@@ -606,23 +607,23 @@ public class TextEdit<OType> extends EditContainer<OType> {
                do {
                   lineno = lineno * 10 + c - 0x30;
                   c =  next();
-               } while (c >= '0' && c <= '9');
+               } while ('0' < c && '9' > c);
                if (c != 0)
                   push();
             } else
                switch (c) {
                   case '+':
                   case '-':
-                     c2 = peek();
-                     if (!isnum(c2)  || (c2 == '+' || c2 == '-')) {
-                        if (c == '+')
+                     char c2 = peek();
+                     if (!isNum(c2)  || ('+' == c2 || '-' == c2)) {
+                        if ('+' == c)
                            lineno++;
                         else
                            lineno--;
                         continue;
                      }
                      save = lineno;
-                     mflag = c == '-';
+                     mflag = '-' == c;
                      continue;
                   case '/':
                   case '?':
@@ -636,7 +637,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                      lineno = curr;
                      break;
                   default :
-                     if (c != 0)
+                     if (0 != c)
                         push();
                      //trace("returning " + lineno
                      //  + " next char = " + peek());
@@ -646,7 +647,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                lineno = save - lineno;
                mflag = false;
             } else
-               lineno = save + lineno;
+               lineno += save;
          }
       }
 
@@ -654,9 +655,9 @@ public class TextEdit<OType> extends EditContainer<OType> {
       int searchreg(int curr) throws InputException {
          boolean reverse;
          int i = curr;
-         if (peek() == '/')
+         if ('/' == peek())
             reverse = false;
-         else if (peek() == '?')
+         else if ('?' == peek())
             reverse = true;
          else
             throw new InputException("invalid search expression");
@@ -675,20 +676,20 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       private Matcher getpattern() {
          char stopc = next();
-         if (stopc == 0)
+         if (0 == stopc)
             return GState.getRegex();
          int start = index;
          String cstring = null;
-         while (cstring == null) {
+         while (null == cstring) {
             char c = next();
             if (c ==  stopc)
                cstring = str.substring(start, index - 1);
-            else if (c == 0)
+            else if (0 == c)
                cstring = str.substring(start, index);
-            else if (c == '\\')
+            else if ('\\' == c)
                next();
          }
-         if (cstring.length() == 0)
+         if (0 == cstring.length())
             return GState.getRegex();
 
          GState.setRegex(cstring, 0);
@@ -698,14 +699,12 @@ public class TextEdit<OType> extends EditContainer<OType> {
       String getsubstitute(char delimit) {
          char c;
          int start = index;
-         int end;
          while ((c = next()) !=  delimit)
-            if (c == 0)
+            if (0 == c)
                break;
-         if (c == 0)
-            end = index;
-         else
-            end = index - 1;
+         int end = 0 == c
+            ? index
+            : index - 1;
          if (start > end)
             end = start;
          return str.substring(start, end);
@@ -713,25 +712,25 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       String remainder() {
          //trace("remainder index " + index);
-         while ((next()) == ' ') { /* skip spaces */ }
+         while (' ' == (next())) { /* skip spaces */ }
          return str.substring(index - 1, str.length());
       }
 
 
    }
 
-   static ArrayList<String> stringtoarray(String s) {
+   static final ArrayList<String> stringtoarray(String s) {
 
       int count = 0;
       int lastindex = 0;
-      while ((lastindex = 1 + s.indexOf('\n', lastindex)) != 0)
+      while (0 != (lastindex = 1 + s.indexOf('\n', lastindex)))
          count++;
 
       count++;
       //trace("stringtoarray count " + count);
       ArrayList<String> sarr = new ArrayList<String>(count);
       lastindex = 0;
-      for (int i = 0; i < count; i++) {
+      for (int ii = 0; ii < count; ii++) {
          int nline = s.indexOf('\n', lastindex);
          if (nline == -1) {
             sarr.add(s.substring(lastindex, s.length()));
@@ -751,7 +750,8 @@ final class EditTester1 {
    private EditTester1() { }
 
    static void copyFile(String from, String to) throws IOException {
-      FileInputStream input = new FileInputStream(from);
+      BufferedInputStream input =
+         new BufferedInputStream(new FileInputStream(from));
       try {
          int length = (int) (new File(from)).length();
          byte[] iarray = new byte[length];
@@ -801,16 +801,16 @@ final class EditTester1 {
       make("extest1").delete();
       make("extest1.dmp2").delete();
       TextEdit<String> ex = newTe("extest1");
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.inserttext("aaa", 0, 1);
       ex.checkpoint();
       myassert(ex.at(1).equals("aaa"), ex);
       ex.idleSave();
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       myassert(!ex.isModified(), ex);
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.redo();
       ex.printout();
       ex.disposeFvc();
@@ -819,7 +819,7 @@ final class EditTester1 {
       ex = newTe("extest1");
       myassert(ex.at(1).equals("aaa"), ex);
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       ex.redo();
       myassert(ex.at(1).equals("aaa"), ex.at(1));
       ex.undo();
@@ -827,17 +827,18 @@ final class EditTester1 {
       ex.checkpoint();
       ex.disposeFvc();
    }
+
    static void test18() throws IOException {
       UI.setStream(new StringReader("o"));
       starttest();
       make("extest18").delete();
       make("extest18.dmp2").delete();
       TextEdit<String> ex = newTe("extest18");
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.inserttext("aaa", 0, 1);
       ex.checkpoint();
       ex.idleSave();
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.undo();
       ex.printout();
       ex.disposeFvc();
@@ -860,7 +861,7 @@ final class EditTester1 {
       TextEdit<String> ex2 = newTe("extest2");
       myassert(ex2.at(1).equals("xxx"), ex2);
       ex2.undo();
-      myassert(ex2.at(1).length() == 0, ex2);
+      myassert(0 == ex2.at(1).length(), ex2);
       ex2.redo();
       myassert(ex2.at(1).equals("xxx"), ex2);
       ex2.undo();
@@ -873,7 +874,7 @@ final class EditTester1 {
       copyFile("extest2", "extest3");
       copyFile("extest2.dmp2", "extest3.dmp2");
       TextEdit<String> ex3 = newTe("extest3");
-      myassert(ex3.at(1).length() == 0, ex3);
+      myassert(0 == ex3.at(1).length(), ex3);
       ex3.redo();
       myassert(ex3.at(1).equals("xxx"), ex3);
       ex3.undo();
@@ -943,7 +944,7 @@ final class EditTester1 {
       //ex.idleSave(); ex.printout();System.exit(0);
       myassert(ex.at(1).equals("bbb"), ex.at(1));
       myassert(ex.at(2).equals("aaa"), ex);
-      myassert(ex.finish() == 3, ex.finish());
+      myassert(3 == ex.finish(), ex.finish());
       myassert(ex.isModified(), ex);
       ex.undo();
       myassert(!ex.isModified(), ex);
@@ -952,7 +953,7 @@ final class EditTester1 {
       ex.disposeFvc();
 //*/   extext
       ex = newTe("extest5");
-      myassert(ex.finish() == 3, ex.finish());
+      myassert(3 == ex.finish(), ex.finish());
       myassert(ex.at(1).equals("bbb"), ex);
       myassert(ex.at(2).equals("aaa"), ex.at(2));
       myassert(!ex.isModified(), ex);
@@ -963,7 +964,7 @@ final class EditTester1 {
       ex.disposeFvc();
 
       ex = newTe("extest5");
-      myassert(ex.finish() == 3, ex.finish());
+      myassert(3 == ex.finish(), ex.finish());
       myassert(ex.at(1).equals("bbb"), ex);
       myassert(ex.at(2).equals("aaa"), ex);
       ex.printout();
@@ -984,13 +985,13 @@ final class EditTester1 {
       ex.checkpoint();
       myassert(ex.at(1).equals("bbb"), ex.at(1));
       myassert(ex.at(2).equals("aaa"), ex);
-      myassert(ex.finish() == 3, ex.finish());
+      myassert(3 == ex.finish(), ex.finish());
       myassert(ex.isModified(), ex);
       ex.undo();
       myassert(!ex.isModified(), ex);
       ex.disposeFvc();
       ex = newTe("extest7");
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       myassert(ex.at(1).equals("aaa"), ex.at(1));
       myassert(!ex.isModified(), ex);
       ex.redo();
@@ -1009,14 +1010,14 @@ final class EditTester1 {
       ex.inserttext("aaa", 0, 1);
       ex.checkpoint();
       myassert(ex.at(1).equals("aaa"), ex);
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.disposeFvc();
 
 //System.exit(0);
       ex = newTe("extest8");
       myassert(ex.at(1).equals("aaa"), ex.at(1));
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex);
+      myassert(0 == ex.at(1).length(), ex);
       ex.disposeFvc();
    }
 
@@ -1040,7 +1041,7 @@ final class EditTester1 {
       ex.undo();
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex);
+      myassert(0 == ex.at(1).length(), ex);
       ex.redo();
       ex.redo();
       myassert(ex.at(1).equals("ba"), ex);
@@ -1052,14 +1053,14 @@ final class EditTester1 {
       myassert(ex.at(1).equals("ba"), ex);
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex);
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(0 == ex.at(1).length(), ex);
+      myassert(2 == ex.finish(), ex.finish());
       ex.disposeFvc();
 
 // */extext
 
       ex = newTe("extest9");
-      myassert(ex.at(1).length() == 0, ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       ex.redo();
       ex.redo();
       ex.redo();
@@ -1069,7 +1070,7 @@ final class EditTester1 {
       ex.undo();
       ex.undo();
       ex.undo();
-      myassert(ex.at(1).length() == 0, ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       ex.disposeFvc();
    }
 
@@ -1088,14 +1089,14 @@ final class EditTester1 {
          make("perftest.dmp2").delete();
          FileWriter fs = new FileWriter("perftest");
          try {
-            for (int i = 0; i < tot; i++)
-               fs.write("xxline " + i + '\n');
+            for (int ii = 0; ii < tot; ii++)
+               fs.write("xxline " + ii + '\n');
          } finally {
             fs.close();
          }
       }
       Tools.doGC();
-      long elapsed = 0;
+      long elapsed;
       {
          trace("start memory " + (Runtime.getRuntime().totalMemory()
              - Runtime.getRuntime().freeMemory()));
@@ -1220,7 +1221,7 @@ final class EditTester1 {
       ex.inserttext("dmp", 0, 1);
       ex.disposeFvc();
       ex = newTe("extest13");
-      myassert("".equals(ex.at(1)), ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       ex.disposeFvc();
    }
 
@@ -1257,8 +1258,8 @@ final class EditTester1 {
       myassert("c".equals(ex.at(6)), ex.at(6));
       ex.undo();
       ex.undo();
-      myassert("".equals(ex.at(1)), ex.at(1));
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(0 == ex.at(1).length(), ex.at(1));
+      myassert(2 == ex.finish(), ex.finish());
       ex.redo();
       ex.redo();
       myassert("a".equals(ex.at(1)), ex.at(1));
@@ -1308,7 +1309,7 @@ final class EditTester1 {
       makeFile("extest16.dmp2", "asdfafd");
 
       TextEdit<String> ex = newTe("extest16");
-      myassert("".equals(ex.at(1)), ex.at(1));
+      myassert(0 == ex.at(1).length(), ex.at(1));
       myassert(2 == ex.finish(), ex.finish());
       ex.disposeFvc();
 
@@ -1339,7 +1340,7 @@ final class EditTester1 {
       makeFile("extest17", "asdfasf\n");
       ex.reload();
       myassert("asdfasf".equals(ex.at(1)), ex.at(1));
-      myassert(ex.finish() == 2, ex.finish());
+      myassert(2 == ex.finish(), ex.finish());
       ex.disposeFvc();
    }
 
@@ -1397,6 +1398,107 @@ final class EditTester1 {
       ex.disposeFvc();
    }
 
+   private static void insertStreamTest() throws IOException, InputException {
+      starttest();
+
+      UI.setStream(new StringReader(""));
+      make("exinsertStream.dmp2").delete();
+      make("exinsertStream").delete();
+
+      //'makeFile("exinsertStream","");
+      TextEdit<String> ex = newTe("exinsertStream");
+      ex.inserttext("a\nb\nc\n", 0, 1);
+      myassert(ex.at(1).equals("a"), ex.at(1));
+      myassert(ex.at(2).equals("b"), ex.at(2));
+      myassert(ex.at(3).equals("c"), ex.at(3));
+
+      ex.insertStream(new BufferedReader(new StringReader("z\ny\n")), 2);
+      myassert(ex.at(1).equals("a"), ex.at(1));
+      myassert(ex.at(2).equals("z"), ex.at(2));
+      myassert(ex.at(3).equals("y"), ex.at(3));
+      myassert(ex.at(4).equals("b"), ex.at(4));
+      myassert(ex.at(5).equals("c"), ex.at(5));
+      ex.checkpoint();
+      ex.idleSave();
+      ex.printout();
+      ex.disposeFvc();
+
+//System.exit(0);
+      ex = newTe("exinsertStream");
+      myassert(ex.at(1).equals("a"), ex.at(1));
+      myassert(ex.at(2).equals("z"), ex.at(2));
+      myassert(ex.at(3).equals("y"), ex.at(3));
+      myassert(ex.at(4).equals("b"), ex.at(4));
+      myassert(ex.at(5).equals("c"), ex.at(5));
+      myassert(!ex.isModified(), ex);
+      ex.idleSave();
+      ex.terminate();
+
+   }
+
+   private static void stringarrtest() {
+
+      starttest();
+      ArrayList<String> sarr = TextEdit.stringtoarray("1\n\n");
+
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
+      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+
+      sarr = TextEdit.stringtoarray("1\n2\n");
+      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
+      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+      Tools.Assert(3 == sarr.size(), sarr.size());
+
+      sarr = TextEdit.stringtoarray("\n1\n2\n");
+      Tools.Assert(4 == sarr.size(), sarr.size());
+
+      Tools.Assert(0  == sarr.get(0).length(), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
+      Tools.Assert(0 == sarr.get(3).length(), sarr.get(3));
+
+      sarr = TextEdit.stringtoarray("\n1\n");
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+
+      sarr = TextEdit.stringtoarray("1\n");
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
+
+      sarr = TextEdit.stringtoarray("\n");
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
+
+      sarr = TextEdit.stringtoarray("\n1");
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
+
+      sarr = TextEdit.stringtoarray("1\n2");
+      Tools.Assert(2 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
+
+      sarr = TextEdit.stringtoarray("\n1\n2");
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
+
+      sarr = TextEdit.stringtoarray("1\n2\n");
+      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
+      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+   }
+
    public static void main(String[] args) {
       try { // forces static initialization that makes debugging more confusing
          new StreamInterface();
@@ -1442,110 +1544,5 @@ final class EditTester1 {
          trace("main caught exception " + e);
          e.printStackTrace();
       }
-      System.exit(0);
-
-   }
-
-   private static void insertStreamTest() throws IOException, InputException {
-      starttest();
-
-      UI.setStream(new StringReader(""));
-      make("exinsertStream.dmp2").delete();
-      make("exinsertStream").delete();
-
-      //'makeFile("exinsertStream","");
-      TextEdit<String> ex = newTe("exinsertStream");
-      ex.inserttext("a\nb\nc\n", 0, 1);
-      myassert(ex.at(1).equals("a"), ex.at(1));
-      myassert(ex.at(2).equals("b"), ex.at(2));
-      myassert(ex.at(3).equals("c"), ex.at(3));
-
-      ex.insertStream(new BufferedReader(new StringReader("z\ny\n")), 2);
-      myassert(ex.at(1).equals("a"), ex.at(1));
-      myassert(ex.at(2).equals("z"), ex.at(2));
-      myassert(ex.at(3).equals("y"), ex.at(3));
-      myassert(ex.at(4).equals("b"), ex.at(4));
-      myassert(ex.at(5).equals("c"), ex.at(5));
-      ex.checkpoint();
-      ex.idleSave();
-      ex.printout();
-      ex.disposeFvc();
-
-//System.exit(0);
-      ex = newTe("exinsertStream");
-      myassert(ex.at(1).equals("a"), ex.at(1));
-      myassert(ex.at(2).equals("z"), ex.at(2));
-      myassert(ex.at(3).equals("y"), ex.at(3));
-      myassert(ex.at(4).equals("b"), ex.at(4));
-      myassert(ex.at(5).equals("c"), ex.at(5));
-      myassert(!ex.isModified(), ex);
-      ex.idleSave();
-      ex.terminate();
-
-   }
-
-   private static void stringarrtest() {
-
-      starttest();
-      ArrayList<String> sarr = TextEdit.stringtoarray("1\n\n");
-
-
-      sarr = TextEdit.stringtoarray("1\n\n");
-      Tools.Assert(sarr.size() == 3, sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
-      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
-
-      sarr = TextEdit.stringtoarray("1\n2\n");
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
-      Tools.Assert(sarr.size() == 3, sarr.size());
-
-      sarr = TextEdit.stringtoarray("\n1\n2\n");
-      Tools.Assert(sarr.size() == 4, sarr.size());
-
-      Tools.Assert(0  == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
-      Tools.Assert(0 == sarr.get(3).length(), sarr.get(3));
-
-      sarr = TextEdit.stringtoarray("\n1\n");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
-
-      sarr = TextEdit.stringtoarray("1\n");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
-
-      sarr = TextEdit.stringtoarray("\n");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
-      Tools.Assert(sarr.get(1).length() == 0, sarr.get(1));
-
-      sarr = TextEdit.stringtoarray("\n1");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-
-      sarr = TextEdit.stringtoarray("1\n2");
-      Tools.Assert(sarr.size() == 2, sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-
-      sarr = TextEdit.stringtoarray("\n1\n2");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).length() == 0, sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
-
-      sarr = TextEdit.stringtoarray("1\n2\n");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(sarr.get(2).length() == 0, sarr.get(2));
    }
 }

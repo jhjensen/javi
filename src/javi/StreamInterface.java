@@ -94,32 +94,30 @@ public final class StreamInterface extends UI {
    }
    public void istatusSetline(String s) { /*unimplemented*/ }
    public void iclearStatus() { /* unimplemented */ }
+
    public void ishowCommand() {
       throw new RuntimeException("unimplemented");
    }
 
    public void ihideCommand() { }
-   public Object doroutine(int rnum, Object arg, int count, int rcount,
-                           FvContext fvc, boolean dotmode) {
-
-      throw new RuntimeException("doroutine called with " + rnum);
-   }
 
    public void inextView(FvContext fvc) {
    }
 
    public Result ireportModVal(String caption, String units,
                         String []buttonVals, long limit) {
-
       return null;
    }
+
    public void isizeChange() {
    }
 
    public void iRestoreState(java.io.ObjectInputStream is) {
    }
+
    public void iSaveState(java.io.ObjectOutputStream os) {
    }
+
    public InsertBuffer igetInsertBuffer() {
       return null;
    }

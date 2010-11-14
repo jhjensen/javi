@@ -300,15 +300,6 @@ public abstract class View  extends
       return text;
    }
 
-/*
-   public void setFont(Font font) {
-
-      //trace("setting View font " + font + " "  + this);
-      ssetFont(font);
-      super.setFont(font);
-   }
-*/
-
    final void checkValid(UndoHistory.EhMark ehm) {
       //trace("invalidateBack fvc " + fvc);
       //trace("invalidateBack chmark " + fvc.chmark);

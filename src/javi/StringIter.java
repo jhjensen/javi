@@ -4,6 +4,7 @@ import java.util.Iterator;
 final class StringIter implements Iterator<String> {
 
    private final Iterator baseIter;
+
    StringIter(Iterator it) {
       baseIter = it;
    }
@@ -17,6 +18,6 @@ final class StringIter implements Iterator<String> {
    }
 
    public void remove() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("String iter can't remove");
    }
 }

@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class Tools {
-   private Tools() { }
    private static long lastTime = System.nanoTime();
+
+   private Tools() { }
+
    public static void trace(String str, int offset) {
       try {
 
@@ -20,7 +22,7 @@ public final class Tools {
          lastTime = newTime;
          StackTraceElement[] tr = e.getStackTrace();
          StackTraceElement el = tr[1 + offset];
-         if (str.length() == 0)
+         if (0 == str.length())
             str = el.getMethodName() + "." + el.getClassName();
          System.err.println(timediff / 1000000 + " "
             + el.getFileName() + ":"
@@ -28,6 +30,7 @@ public final class Tools {
          //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
       }
    }
+
    public static void trace(String str) {
       Tools.trace(str, 1);
    }
@@ -40,6 +43,7 @@ public final class Tools {
          return tr[2].getMethodName();
       }
    }
+
    static void Assert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
@@ -58,7 +62,8 @@ public final class Tools {
             output.add(str);
          proc.waitFor();
       } catch (InterruptedException e) {
-         trace("!!!! interupted executing " + command);
+         trace("!!!! interupted executing "
+            + java.util.Arrays.toString(command));
       } finally {
          in.close();
       }
@@ -76,24 +81,17 @@ public final class Tools {
    }
 
    static synchronized Process iocmd(List<String>  str) throws IOException {
-      pb.redirectErrorStream(true);
-      pb.command(str);
-      return pb.start();
+      return pb.redirectErrorStream(true).command(str).start();
    }
 
    static synchronized Process iocmd(String ...  str) throws IOException {
-      pb.redirectErrorStream(true);
-      pb.command(str);
-      return pb.start();
+      return pb.redirectErrorStream(true).command(str).start();
    }
 
    static void doGC() {
-      System.gc();
-      System.runFinalization();
-      System.gc();
-      System.runFinalization();
-      System.gc();
-      System.runFinalization();
-      System.gc();
+      for (int ii = 0; ii  < 3; ii++) {
+         System.gc();
+         System.runFinalization();
+      }
    }
 }
