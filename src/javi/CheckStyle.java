@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import history.Tools;
 
 final class CheckStyle extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */

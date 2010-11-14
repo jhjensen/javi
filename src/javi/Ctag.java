@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
+import static history.Tools.trace;
 
 /*
    this could be improved by allowing other excmds.  It currently only
@@ -221,7 +222,7 @@ final class Ctag {
          ct.taglookup("ALButton");
          ct.taglookup("zprocess");
       } catch (Throwable t) {
-         Tools.trace("main caught " + t);
+         trace("main caught " + t);
          t.printStackTrace();
       }
    }

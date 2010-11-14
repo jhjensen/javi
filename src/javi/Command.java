@@ -6,6 +6,8 @@ import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import history.Tools;
+
 public final class Command extends Rgroup {
 
    static final String copyright = "Copyright 1996 James Jensen";
@@ -174,7 +176,7 @@ public final class Command extends Rgroup {
          //trace("command kb = " + kb);
          boolean comdone = false;
          if (kb != null) {
-            if (kb.match(instance)) {
+            if (kb.matches(instance)) {
                kb.dobind(args, 0, 0, fvc, false);
                comdone = true;
             }

@@ -1,5 +1,7 @@
 package javi;
 
+import history.Tools;
+
 public final class DeTabber {
    private static int mytabs = 0;
    private static String[] tabstrings;

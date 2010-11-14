@@ -14,6 +14,7 @@ import history.ByteInput;
 import java.io.DataOutputStream;
 import java.io.Serializable;
 
+import history.Tools;
 import static history.Tools.trace;
 
 /** This class is the basic storage for an editor written in java.

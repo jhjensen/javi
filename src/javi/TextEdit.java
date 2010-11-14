@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Matcher;
 
+import history.Tools;
 import static history.Tools.trace;
 import static javi.FileDescriptor.LocalFile.make;
 

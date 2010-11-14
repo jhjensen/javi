@@ -2,6 +2,8 @@ package javi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import history.Tools;
 import static history.Tools.trace;
 
 final class MakeCmd extends Rgroup {

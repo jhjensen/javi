@@ -1,5 +1,6 @@
 package javi;
 
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -7,10 +8,14 @@ import static history.Tools.trace;
 
 public final class StreamInterface extends UI {
 
-   public void isetStream(Reader inreader) {
+   public void isetStream(Reader inreader) throws IOException {
+      if (null != inStr)
+         inStr.close();
       inStr = inreader;
    }
-   private Reader inStr = new InputStreamReader(System.in);
+
+   private Reader inStr = new BufferedReader(
+      new InputStreamReader(System.in));
 
    public Buttons ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,
@@ -19,21 +24,23 @@ public final class StreamInterface extends UI {
       StringBuilder sb = new StringBuilder("problem found in file ");
       sb.append(filename);
       sb.append('\n');
-      if (filevers == null && backupvers == null) {
+      if (null == filevers && null == backupvers) {
          sb.append("the written versions of the file are consistent\n");
-      } else   if (filevers == null) {
+      } else   if (null == filevers) {
          sb.append("backup version has extra lines at end\n");
          sb.append(backupvers.toString());
-      } else if (backupvers == null) {
+      } else if (null == backupvers) {
          sb.append("file version has extra lines at end\n");
          sb.append(filevers.toString());
       } else  {
-         sb.append("versions differ at line " + linenum + " :\n");
+         sb.append("versions differ at line ");
+         sb.append(String.valueOf(linenum));
+         sb.append(" :\n");
          sb.append(filevers.toString());
          sb.append('\n');
          sb.append(backupvers.toString());
       }
-      if (status.error != null) {
+      if (null != status.error) {
          sb.append("\ncorrupt backup file read in as far as possible. ");
          sb.append(status.error);
       } else {
@@ -46,7 +53,7 @@ public final class StreamInterface extends UI {
       try {
          while (true) {
             if (!inStr.ready())
-               Tools.trace(sb.toString());
+               trace(sb.toString());
             int ch = inStr.read();
             //trace("read in " + (char)ch);
             switch (ch) {
@@ -87,12 +94,15 @@ public final class StreamInterface extends UI {
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
    public void isetTitle(String str) { }
+
    public View iaddview(boolean newview, FvContext fvc) { return null; }
 
    public void istatusaddline(String s) {
       trace(s);
    }
+
    public void istatusSetline(String s) { /*unimplemented*/ }
+
    public void iclearStatus() { /* unimplemented */ }
 
    public void ishowCommand() {

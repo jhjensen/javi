@@ -44,7 +44,7 @@ public final class Tools {
       }
    }
 
-   static void Assert(boolean flag, Object dump) {
+   public static void Assert(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
    }
@@ -70,25 +70,25 @@ public final class Tools {
       return output;
    }
 
-   static BufferedReader runcmd(List<String>  str) throws IOException {
+   public static BufferedReader runcmd(List<String>  str) throws IOException {
       return new BufferedReader(
          new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
-   static BufferedReader runcmd(String ... str) throws IOException {
+   public static BufferedReader runcmd(String ... str) throws IOException {
       return new BufferedReader(
          new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
-   static synchronized Process iocmd(List<String>  str) throws IOException {
+   public static synchronized Process iocmd(List<String>  str) throws IOException {
       return pb.redirectErrorStream(true).command(str).start();
    }
 
-   static synchronized Process iocmd(String ...  str) throws IOException {
+   public static synchronized Process iocmd(String ...  str) throws IOException {
       return pb.redirectErrorStream(true).command(str).start();
    }
 
-   static void doGC() {
+   public static void doGC() {
       for (int ii = 0; ii  < 3; ii++) {
          System.gc();
          System.runFinalization();

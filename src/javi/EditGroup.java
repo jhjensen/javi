@@ -336,7 +336,7 @@ final class EditGroup extends Rgroup {
                   case 29:
                      line = fvc.edvec.gettext(startx, starty, donex, doney);
                      try {
-                        Rgroup.doroutine("gototag", line, 1, 1, fvc, false);
+                        Rgroup.doCommand("gototag", line, 1, 1, fvc, false);
                      } catch (IOException e) {
                         throw new RuntimeException(
                            "editgroup.markmode got unexpected " , e);

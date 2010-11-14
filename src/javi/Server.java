@@ -1,9 +1,9 @@
 package javi;
 
-import java.io.IOException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -13,7 +13,8 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
    private HashMap<EditContainer, BufferedOutputStream> shash =
-      new HashMap<EditContainer, BufferedOutputStream>();
+      new HashMap<EditContainer, BufferedOutputStream>(10);
+
    private ServerSocket lsock;
 
    Server(int port) throws IOException {
@@ -23,53 +24,49 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
    }
 
    public void run() {
-      Socket sock = null;
-      while (true)
+      while (true) {
+         Socket sock = null;
+         BufferedOutputStream outstream = null;
+         BufferedReader instream = null;
          try {
             sock = lsock.accept();
-            BufferedOutputStream outstream =
+            outstream =
                new BufferedOutputStream(sock.getOutputStream());
 
-            BufferedReader instream = new BufferedReader(
+            instream = new BufferedReader(
                new InputStreamReader(sock.getInputStream(), "UTF-8"));
 
             if (1 != instream.read())  {
                throw new InputException("invalid byte from remote");
             }
-            /*
-                     StringBuilder sb = new StringBuilder();
-                     while(true) {
-                       String fname = DataInputStream.readUTF(instream);
-                       trace("Server read in name " + fname);
-                       if (fname.length()==0)
-                          break;
-                       sb.append(DataInputStream.readUTF(instream));
-                       sb.append("\n");
-                     }
-                     trace("editing line:" + sb + ":");
-            */
             EditContainer ed = FileList.openFileList(instream, null);
-            if (ed != null) {
+            if (null != ed) {
                shash.put(ed, outstream);
                UI.toFront();
             }
          } catch (Throwable e) {
-            try {
-               if (sock != null)
-                  sock.close();
-            } catch (IOException e1) {
-               trace("unexpected exception " + e1);
-            }
             trace("server.run caught exception " + e);
             e.printStackTrace();
+         } finally {
+            try {
+               if (null != sock)
+                  sock.close();
+               if (null != instream)
+                  instream.close();
+               if (null != outstream)
+                  outstream.close();
+            } catch (IOException e) {
+               trace("caught exception while trying to close" + e);
+               e.printStackTrace();
+            }
          }
+      }
    }
-
 
    void donefile(EditContainer ev) {
       //trace("server.donefile entered " + ev);
       BufferedOutputStream outstream = shash.get(ev);
-      if (outstream == null)
+      if (null == outstream)
          return;
       try {
          outstream.write(1);
@@ -81,13 +78,16 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
       }
 
    }
+
    public boolean fileDisposed(EditContainer ev) {
       donefile(ev);
       return false;
    }
+
    public void fileWritten(EditContainer ev) {
       donefile(ev);
    }
+
    public void fileAdded(EditContainer ev) { /* don't care */ }
 
 }

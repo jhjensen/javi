@@ -14,7 +14,7 @@ public final class MarkEvent extends EventQueue.IEvent {
       fvc.cursorabs(pos);
       fvc.vi.setMark(oldPos);
       try {
-         Rgroup.doroutine("markmode", 0, 1, 1, fvc, false);
+         Rgroup.doCommand("markmode", 0, 1, 1, fvc, false);
       } catch (InterruptedException ex) {
          UI.popError("unexpected Interruption ", ex);
       } catch (java.io.IOException ex) {

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+
+import history.Tools;
 import static history.Tools.trace;
 
 public final class FileList extends TextEdit<TextEdit<String>> {
@@ -162,7 +164,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          try {
             Iterator eve = mlist.iterator();
             while (eve.hasNext())
-               Rgroup.doroutine("vi", eve.next().toString(), 1,
+               Rgroup.doCommand("vi", eve.next().toString(), 1,
                                 1, FvContext.getCurrFvc(), false);
          } catch (InterruptedException e) {
             UI.reportError("Unexpected InterruptedException " + e);

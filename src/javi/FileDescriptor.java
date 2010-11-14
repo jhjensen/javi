@@ -19,6 +19,8 @@ import java.util.Iterator;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
+import history.Tools;
+
 public class FileDescriptor implements Serializable {
 
    final String canonName;

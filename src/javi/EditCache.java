@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import static history.Tools.trace;
+
 final class EditCache<OType> implements Iterable {
 
    private ArrayList<OType> varray = new ArrayList<OType>(1024);
@@ -13,7 +15,7 @@ final class EditCache<OType> implements Iterable {
    }
 
    void addSome(EditCache<OType> nlist, int offset) {
-      Tools.trace("nlist.size " + nlist.size() + " offset " + offset);
+      trace("nlist.size " + nlist.size() + " offset " + offset);
       addAll(1, nlist.varray.subList(offset, nlist.size()));
    }
 
@@ -116,9 +118,9 @@ final class EditCache<OType> implements Iterable {
    }
 
    void dump() {
-      Tools.trace("dumping ecache");
+      trace("dumping ecache");
       for (int i = 0; i < size(); i++)
-         Tools.trace("  [" + i + " ] :" + varray.get(i));
+         trace("  [" + i + " ] :" + varray.get(i));
 
    }
 

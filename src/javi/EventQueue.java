@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
+import history.Tools;
 import static history.Tools.trace;
 
 public final class EventQueue {
@@ -26,8 +27,8 @@ public final class EventQueue {
             } catch (InterruptedException e) {
                trace("caught " + e);
             }
-            Tools.trace("failed to get lock", 1);
-            Tools.trace("owning thread: " + getOwner(), 1);
+            trace("failed to get lock", 1);
+            trace("owning thread: " + getOwner(), 1);
             Thread.dumpStack();
          }
       }
@@ -50,8 +51,8 @@ public final class EventQueue {
             InterruptedException {
          //Tools.trace("locking " + this,1);
          if (!super.tryLock(time, TimeUnit.SECONDS)) {
-            Tools.trace("failed to get lock continueing .", 1);
-            Tools.trace("owning thread: " + getOwner(), 1);
+            trace("failed to get lock continueing .", 1);
+            trace("owning thread: " + getOwner(), 1);
             return false;
          }
          return true;

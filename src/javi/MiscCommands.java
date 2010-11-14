@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Date;
+
+import history.Tools;
 import static history.Tools.trace;
 
 public final class MiscCommands extends Rgroup  {

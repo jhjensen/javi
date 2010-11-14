@@ -2,45 +2,44 @@ package javi;
 
 /* Copyright 1996 James Jensen all rights reserved */
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Iterator;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import static history.Tools.trace;
 
 public abstract class Rgroup {
 
    final class KeyBinding {
-   /* Copyright 1996 James Jensen all rights reserved */
-      static final String copyright = "Copyright 1996 James Jensen";
       private final Object arg;
       private final int index;
-      KeyBinding(Object argi , int indexi) {
+
+      KeyBinding(Object argi, int indexi) {
          arg = argi;
          index = indexi;
       }
+
       public String toString() {
-         return (Rgroup.this + "|" + arg + "|" + index);
+         return Rgroup.this + "|" + arg + "|" + index;
       }
 
       Object dobind(int count,
-         int rcount, FvContext fvc , boolean dotmode) throws
+         int rcount, FvContext fvc, boolean dotmode) throws
             IOException, InterruptedException, InputException {
          return doroutine(index, arg, count, rcount, fvc, dotmode);
       }
 
       Object dobind(Object arg2, int count,
-         int rcount, FvContext fvc , boolean dotmode) throws
+         int rcount, FvContext fvc, boolean dotmode) throws
             IOException, InterruptedException, InputException {
 
-         return doroutine(index, arg2 == null
+         return doroutine(index, null == arg2
                ? arg
                : arg2
             , count, rcount, fvc, dotmode);
       }
 
-
-      boolean match(Rgroup rg) {
+      boolean matches(Rgroup rg) {
          return rg == Rgroup.this;
       }
 
@@ -53,38 +52,38 @@ public abstract class Rgroup {
    }
 
    private static HashMap<String, KeyBinding> cmhash =
-      new HashMap<String, KeyBinding>(100);
-   private HashMap<String, Object> glist = new HashMap<String, Object>();
+      new HashMap<String, KeyBinding>(200);
+   private HashMap<String, Object> glist = new HashMap<String, Object>(100);
 
-   static KeyBinding bindingLookup(String name) {
+   static final KeyBinding bindingLookup(String name) {
       //trace("bindingLookup " + name + " ret " + cmhash.get(name));
       return cmhash.get(name);
    }
 
-   public abstract Object doroutine(int rnum, Object arg, int count,
-      int rcount, FvContext fvc , boolean dotmode) throws
+   protected abstract Object doroutine(int rnum, Object arg, int count,
+      int rcount, FvContext fvc, boolean dotmode) throws
       IOException, InterruptedException, InputException;
 
-   static Object doroutine(String command, Object arg, int count, int rcount,
-         FvContext fvc, boolean dotmode) throws
+   static final Object doCommand(String command, Object arg, int count,
+         int rcount, FvContext fvc, boolean dotmode) throws
          InterruptedException, InputException, IOException {
       KeyBinding cm = cmhash.get(command);
-      if (cm == null)
+      if (null == cm)
          throw new InputException("unkown command:" + command);
 
-      if (arg == null)
+      if (null == arg)
          arg = cm.arg;
 
       return cm.dobind(arg, count, rcount, fvc, dotmode);
    }
 
    public final void register(String[] commands) {
-      for (int i = 1; i < commands.length; i++) {
-         //trace("registering " + commands[i]);
-         if (cmhash.containsKey(commands[i]))
-            throw new RuntimeException("duplicate command:" + commands[i]);
+      for (int ii = 1; ii < commands.length; ii++) {
+         //trace("registering " + commands[ii]);
+         if (cmhash.containsKey(commands[ii]))
+            throw new RuntimeException("duplicate command:" + commands[ii]);
          else
-            cmhash.put(commands[i], new KeyBinding(null, i));
+            cmhash.put(commands[ii], new KeyBinding(null, ii));
 
       }
    }
@@ -99,7 +98,6 @@ public abstract class Rgroup {
    }
 */
 
-
    public final void unregister()  {
       trace("unregister " + this);
       for (Iterator<Map.Entry<String, KeyBinding>> eve =
@@ -107,7 +105,7 @@ public abstract class Rgroup {
          Map.Entry<String, KeyBinding> me = eve.next();
          trace("examine unregistering cmd " + me.getKey() + " rg "
             + me.getValue());
-         if (me.getValue().match(this)) {
+         if (me.getValue().matches(this)) {
             trace("unregistering cmd " + me.getKey());
             eve.remove();
          }
@@ -132,18 +130,18 @@ public abstract class Rgroup {
       }
    }
 
-   public final Float oBToFloat(Object str) throws InputException {
-      if (str == null)
-         throw new InputException("command needs decimal number");
+   public static final Float oBToFloat(Object str) throws InputException {
+      if (null == str)
+         throw new InputException("command needs float number");
       try {
          return Float.valueOf(str.toString().trim());
       } catch (NumberFormatException e) {
-         throw new InputException("command needs decimal number", e);
+         throw new InputException("command needs float number", e);
       }
    }
 
-   public final int oBToInt(Object str) throws InputException {
-      if (str == null)
+   public static final int oBToInt(Object str) throws InputException {
+      if (null == str)
          throw new InputException("command needs decimal number");
       try {
          return Integer.parseInt(str.toString().trim());

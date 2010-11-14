@@ -47,25 +47,24 @@ final class StatusBar extends Canvas {
       //trace("fontm = " + fontm);
    }
 
-   public Dimension getPreferredSize() {
-      if (charheight == 0)
+   public synchronized Dimension getPreferredSize() {
+      if (0 == charheight)
          setmet();
 
-      if (messeges.size() == 0)
+      if (0 == messeges.size())
          return new Dimension(getSize().width,  charheight);
+
       int col = getSize().width / charwidth;
       Dimension d;
-      int over = 0;
       if (col < 1)
          d = new Dimension(getSize().width,
                            (messeges.size()) * charheight);
       else  {
-         synchronized (this) {
-            for (String str : messeges)
-               over += str.length() / col;
-            d = new Dimension(getSize().width,
-               (1 + over + messeges.size()) * charheight);
-         }
+         int over = 0;
+         for (String str : messeges)
+            over += str.length() / col;
+         d = new Dimension(getSize().width,
+            (1 + over + messeges.size()) * charheight);
       }
       return d;
    }
@@ -82,16 +81,14 @@ final class StatusBar extends Canvas {
       }
    }
 
-   boolean clearlines() {
+   void clearlines() {
       //trace("clearlines");
       synchronized (this) {
-         if (messeges.size() != 0) {
+         if (0 != messeges.size()) {
             messeges.clear();
             sizeChanged = true;
             repaint();
-            return true;
          }
-         return false;
       }
    }
 

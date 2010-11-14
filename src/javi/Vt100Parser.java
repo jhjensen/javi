@@ -1,6 +1,7 @@
 package javi;
 import java.io.BufferedInputStream;
 import static history.Tools.trace;
+import history.Tools;
 
 final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 

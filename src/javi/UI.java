@@ -28,7 +28,7 @@ public abstract class UI {
    }
 
    public abstract void itoggleStatus();
-   public abstract void isetStream(Reader inreader);
+   public abstract void isetStream(Reader inreader) throws IOException;
    public abstract Buttons ireportDiff(String filename, int linenum,
       Object filevers, Object backupvers, BackupStatus status,
       String backupName);
@@ -80,7 +80,7 @@ public abstract class UI {
       toFront();
    }
 
-   static final void setStream(Reader inreader) {
+   static final void setStream(Reader inreader)  throws IOException {
       instance.isetStream(inreader);
    }
 

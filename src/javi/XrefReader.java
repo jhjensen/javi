@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import history.Tools;
 import static history.Tools.trace;
 
 final class XrefReader extends PositionIoc {

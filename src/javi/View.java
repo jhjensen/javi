@@ -35,13 +35,12 @@ public abstract class View  extends
    private transient UndoHistory.EhMark chmark;
    private transient MarkInfo pmark = new MarkInfo();
    private final ChangeOpt op;
+   private transient boolean cursoractive = false;
+   private boolean checkCursor = true;
 
    protected final boolean isCursorOn() {
       return cursoron;
    }
-
-   private transient boolean cursoractive = false;
-   private boolean checkCursor = true;
 
    public abstract static class Inserter {
       abstract String getString();
