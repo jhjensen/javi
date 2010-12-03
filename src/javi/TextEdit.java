@@ -513,7 +513,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
          if (!containsNow(start + 1))
             break;
 
-         if (0 >= line.length() && ' ' != line.charAt(line.length() - 1))
+         if (0 != line.length() && ' ' != line.charAt(line.length() - 1))
             line.append(' ');
 
          retval = line.length();
@@ -608,7 +608,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                do {
                   lineno = lineno * 10 + c - 0x30;
                   c =  next();
-               } while ('0' < c && '9' > c);
+               } while ('0' <= c && '9' >= c);
                if (c != 0)
                   push();
             } else
@@ -1075,13 +1075,27 @@ final class EditTester1 {
       ex.disposeFvc();
    }
 
-//*/   extext
+   public static final class TestCircBuffer extends Buffers.CircBuffer {
+
+      private static TestCircBuffer cbuf;
+      static void initCmd() {
+         if (cbuf == null)
+            cbuf = new TestCircBuffer();
+         Buffers.init(cbuf);
+      }
+
+      public void setclip() {
+      }
+   }
+
    static void perftest() throws IOException, InputException {
 
+      starttest();
+      TestCircBuffer.initCmd();
       int tot = 20000;
       int after = 13123;
-      long targettime = 2300;
-      long targetmem = 2300000; // should be 3100000 in old version
+      long targettime = 500;
+      long targetmem = 1100000; // should be 3100000 in old version
       //int tot = 100;
       //int after = 82;
       //int tot = 10;
@@ -1501,6 +1515,7 @@ final class EditTester1 {
    }
 
    public static void main(String[] args) {
+      EventQueue.biglock2.lock();
       try { // forces static initialization that makes debugging more confusing
          new StreamInterface();
          TextEdit<String> dummy = newTe("dummy");
@@ -1509,6 +1524,7 @@ final class EditTester1 {
          myassert(false, e);
       }
       try {
+
          test1();
          test2();
          test3();
@@ -1544,6 +1560,8 @@ final class EditTester1 {
       } catch (Throwable e) {
          trace("main caught exception " + e);
          e.printStackTrace();
+      } finally {
+         EventQueue.biglock2.unlock();
       }
    }
 }

@@ -215,7 +215,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
    private boolean handleDiff(OType fileObj, OType backObj, int index) {
-      //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
+      //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj + " index " + index);
       try {
          FileDescriptor.LocalFile tfile =
             FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
@@ -250,8 +250,6 @@ public class IoConverter<OType> implements Runnable, Serializable {
          }
 
          preRun();
-         //trace("before dorun ioarray size =" +ioarray.size() + " " + this);
-         //trace("before dorun mainarray size =" +mainArray.size() + " " + this);
          dorun();
          //trace("after dorun mainarray size =" +mainArray.size() + " " + this);
          //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
@@ -274,18 +272,27 @@ public class IoConverter<OType> implements Runnable, Serializable {
                   break;
                }
             }
-            if (fileObj.equals(backObj))
-               fileObj = backObj = null;
-
-            if (ioarray.size() > mainArray.size())
-               fileObj = ioarray.get(mainArray.size());
+            if (maxcomp == compIndex) {
+               if (ioarray.size() > mainArray.size()) {
+                  fileObj = ioarray.get(compIndex);
+               } else if (ioarray.size() < mainArray.size()) {
+                  backObj = mainArray.get(compIndex);
+               } else if (backupstatus.cleanQuit && backupstatus.isQuitAtEnd) {
+                  //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
+                  backupstatus = null;
+               }
+            }
          }
       }
-      boolean tmpswp = (fileObj != null || backObj != null)
-         ? handleDiff(fileObj, backObj, compIndex)
-         : false;
+
+      //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
+
+      boolean tmpswp = null == backupstatus
+         ? false
+         : handleDiff(fileObj, backObj, compIndex);
 
       synchronized (this) {
+         //trace("swap array");
          swapArray = tmpswp;
          backupstatus = null;
          rthread = null;

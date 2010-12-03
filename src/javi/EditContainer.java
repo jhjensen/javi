@@ -78,14 +78,19 @@ public class EditContainer<OType> implements
    }
 
    final void clearUndo() {
-      trace("clearUndo " + this);
-      mlisten.invalidateBack(backup.ereset());
+      //trace("clearUndo " + this);
+      UndoHistory.EhMark mrk  = backup.ereset();
+      if (null != mlisten)
+         mlisten.invalidateBack(mrk);
       backup.baseRecord();
    }
 
    private void reinitBack() {
       backupMade = false;
-      mlisten.invalidateBack(backup.ereset());
+      //trace("mlisten " + mlisten);
+      UndoHistory.EhMark mrk  = backup.ereset();
+      if (null != mlisten)
+         mlisten.invalidateBack(mrk);
       finishedread = false;
    }
 
@@ -158,7 +163,7 @@ public class EditContainer<OType> implements
    }
 
    static void dumpStatic() {
-      Thread.dumpStack();
+      //Thread.dumpStack();
       trace("dump listeners");
       for (Object obj : listeners)
          System.err.println("      listener : " + obj);
@@ -500,7 +505,7 @@ public class EditContainer<OType> implements
                                false, false, seterror);
                   } catch (Throwable e) {
                      trace("backup failed exception = " + e);
-                     mlisten.invalidateBack(backup.ereset());
+                     reinitBack();
                      e.printStackTrace();
                      return new BackupStatus(false, false, e);
                   }

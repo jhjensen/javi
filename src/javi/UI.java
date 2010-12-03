@@ -99,6 +99,9 @@ public abstract class UI {
             }
          Buttons diaflag = instance.ireportDiff(filename, linenum,
             filevers, backupvers, status, backupname);
+
+         //trace("got button " + diaflag);
+
          switch (diaflag) {
             case WINDOWCLOSE:
                break;

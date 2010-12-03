@@ -80,11 +80,13 @@ public final class Tools {
          new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
-   public static synchronized Process iocmd(List<String>  str) throws IOException {
+   public static synchronized Process iocmd(List<String>  str) throws
+         IOException {
       return pb.redirectErrorStream(true).command(str).start();
    }
 
-   public static synchronized Process iocmd(String ...  str) throws IOException {
+   public static synchronized Process iocmd(String ...  str) throws
+         IOException {
       return pb.redirectErrorStream(true).command(str).start();
    }
 
