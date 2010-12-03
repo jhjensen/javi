@@ -1,10 +1,9 @@
 package javi;
 
-import java.io.Serializable;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-public abstract class ClassConverter<OType>  implements Serializable {
+public abstract class ClassConverter<OType> {
 
    public abstract OType fromString(String s);
 

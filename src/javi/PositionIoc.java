@@ -5,10 +5,13 @@ import static history.Tools.trace;
 
 public class PositionIoc extends BufInIoc<Position> {
 
+   private static final PositionConverter converter = new PositionConverter();
+   private int errcount = 0;
+
    static final class PositionConverter extends ClassConverter<Position> {
       public Position fromString(String s) {
          //trace(s);
-         if (s.length() == 0) {
+         if (0 == s.length()) {
             return defpos;
          }
          int posx = s.indexOf('(');
@@ -30,8 +33,6 @@ public class PositionIoc extends BufInIoc<Position> {
       }
       private static final Position defpos = new Position(0, 0, "", null);
    }
-
-   private static final PositionConverter converter = new PositionConverter();
 
    public Position parsefile() {
       //trace("parsefile this " + this.getClass());
@@ -63,14 +64,13 @@ public class PositionIoc extends BufInIoc<Position> {
          converter), true, inputi);
    }
 
-   private int errcount = 0;
    public final Position getnext() {
       //trace("getnext input " + input + " this "+ this );
 
       Position pos = parsefile();
       //trace("get next got pos " + pos);
-      if (pos == null) {
-         if (toString().length() != 0)
+      if (null == pos) {
+         if (0 != toString().length())
             UI.reportMessage(this + "complete " + errcount + " results");
       } else {
          errcount++;

@@ -16,25 +16,26 @@ public final class Position {
       filename = FileDescriptor.make(filenamei);
       comment = commenti;
    }
+
    public Position(int xi, int yi, FileDescriptor filenamei, String commenti) {
-      if (filenamei == null)
-         throw new NullPointerException();
+      if (null == filenamei)
+         throw new NullPointerException("null filename");
       x = xi;
       y = yi;
       filename = filenamei;
       comment = commenti;
    }
+
    public String toString() {
-      return x == 0
+      return 0 == x
              ? (filename.shortName + "("  + y + ")-" + comment)
              : (filename.shortName + "(" + x + "," + y + ")" + "-" + comment);
    }
 
    public static final Position badpos = new Position(0, 0, "", null);
 
-
    public boolean equals(Object ob) {
-      if (ob == null)
+      if (null == ob)
          return  false;
 
       if (ob == this)
