@@ -22,7 +22,7 @@ public final class StringIoc extends IoConverter<String> {
       String retval = null;
       if (input != null) {
          int nindex = input.indexOf('\n');
-         if (0 >= nindex) {
+         if (0 > nindex) {
             retval = input;
             input = null;
          } else {

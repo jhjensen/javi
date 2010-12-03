@@ -250,7 +250,7 @@ class Vt100 extends TextEdit<String> {
          if (currfvc != null) {
             trace("in terminal mode inserting line at" + readIn());
             int neededRows = currfvc.vi.getRows(1.0f) - readIn() + 1;
-            while (-1 <= --neededRows)
+            while (-1 < --neededRows)
                insertOne("", readIn());
          }
          vtcursor.y = readIn() - 1;
