@@ -1546,7 +1546,6 @@ final class EditTester1 {
          stringarrtest();
          insertStreamTest();
          perftest();
-         trace("test executed successfully");
          Tools.doGC();
          trace("memory before clear " + (Runtime.getRuntime().totalMemory()
                                          - Runtime.getRuntime().freeMemory()));
@@ -1556,6 +1555,7 @@ final class EditTester1 {
          Tools.doGC();
          trace("memory after clear " + (Runtime.getRuntime().totalMemory()
                                         - Runtime.getRuntime().freeMemory()));
+         trace("test executed successfully");
          //Thread.sleep(10000000);
       } catch (Throwable e) {
          trace("main caught exception " + e);
