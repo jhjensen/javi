@@ -1,25 +1,18 @@
 package javi;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
-
-class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
-
-   TextList(IoConverter<TextEdit<TOType>> e,
-         FileProperties<TextEdit<TOType>> fp) {
-      super(e, fp);
-   }
-}
 
 public final class PosListList extends TextList<Position> {
 
    private static final long serialVersionUID = 1;
    private transient TextEdit lastlist = null;
    private transient TextEdit lastlist2 = null;
+   private static final PllConverter converter = new PllConverter();
 
    PosListList(IoConverter ioc) {
 
@@ -33,6 +26,7 @@ public final class PosListList extends TextList<Position> {
 
       void addedLines(FileDescriptor fd, int count, int index) {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
+         // fix up the line numbers
          EditContainer<Position> errlist = at(1);
          for (int ii = 1; ii < errlist.readIn(); ii++) {
             Position pos = errlist.at(ii);
@@ -51,7 +45,7 @@ public final class PosListList extends TextList<Position> {
 
    private void setLastList(TextEdit list) {
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)));
-      if (list == null)
+      if (null == list)
          return;
       lastlist2 = lastlist;
       lastlist = list;
@@ -60,9 +54,9 @@ public final class PosListList extends TextList<Position> {
 
    private void gotoList(FvContext fvc, TextEdit list)throws InputException  {
       //trace(((list==null) ? "null list " : list + " " + !list.contains(1)) + ui.isGotoOk(fvc));
-      if (list == null)
+      if (null == list)
          list = lastlist;
-      if ((list == null) || (!list.containsNow(1)) || !fvc.isGotoOk())
+      if ((null == list) || (!list.containsNow(1)) || !fvc.isGotoOk())
          return;
       lastlist2 = null;
       lastlist = list;
@@ -82,7 +76,7 @@ public final class PosListList extends TextList<Position> {
       //trace("olderrlist " + oldList);
       //trace("oldList.readIn() = " + oldList.readIn());
 
-      if (newIo != null) {
+      if (null != newIo) {
          //trace("add new ioc " + newIo);
          TextEdit<Position> newList =
             new TextEdit<Position>(newIo, this, newIo.prop);
@@ -97,7 +91,7 @@ public final class PosListList extends TextList<Position> {
          try {
             FvContext.dispose(oldList, newList);
          } catch (Exception e) {
-            UI.popError("attempting to dispose of list" , e);
+            UI.popError("attempting to dispose of list", e);
          }
       } else {
          oldList.remove(1, oldList.readIn());
@@ -115,10 +109,10 @@ public final class PosListList extends TextList<Position> {
       base.reload();
       //trace("finish = " + plist.finish());
       try {
-         for (int i = 1; i < finish(); i++)
-            FvContext.dispose(at(i), this);
+         for (int ii = 1; ii < finish(); ii++)
+            FvContext.dispose(at(ii), this);
       } catch (Exception e) {
-         UI.popError("attempting to dispose of list" , e);
+         UI.popError("attempting to dispose of list", e);
       }
       //trace("finish = " + plist.finish());
       //reload(true);
@@ -133,12 +127,12 @@ public final class PosListList extends TextList<Position> {
       if (fvc.edvec instanceof FileList)
          FvContext.connectFv((TextEdit) fvc.at(), fvc.vi);
       else  {
-         if ((lastlist == null)) {
+         if ((null == lastlist)) {
             lastlist = lastlist2;
             lastlist2 = null;
             //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
          }
-         if (lastlist == null)
+         if (null == lastlist)
             return;
 
          if ((wait && !lastlist.contains(1)) || (!lastlist.containsNow(1)))
@@ -170,17 +164,19 @@ public final class PosListList extends TextList<Position> {
 
       private static ArrayList<Position> tagstack = new ArrayList<Position>();
       private static PosListList inst;
+
       static {
          IoConverter io = new IoConverter(new FileProperties(
             FileDescriptor.InternalFd.make("position list list"), converter),
             true);
          inst = new PosListList(io);
       }
+
       private static final Matcher filereg = Pattern.compile(
             "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
       private static Ctag ctags;
       private static HashMap<String, TextEdit> tahash =
-         new HashMap<String, TextEdit>();
+         new HashMap<String, TextEdit>(100);
 
       public static void gotoList(FvContext fvc, TextEdit list) throws
             InputException  {
@@ -198,7 +194,7 @@ public final class PosListList extends TextList<Position> {
             "te",
             "gotopllist",
             "dummy1",
-            "nextpos" ,
+            "nextpos",
             "gotopositionlist", //10
             "dummypll",
             "gotodirlist",
@@ -215,7 +211,7 @@ public final class PosListList extends TextList<Position> {
          //trace("rnum = " + rnum );
          switch (rnum) {
             case 1:
-               if (arg != null)
+               if (null != arg)
                   gototag(arg.toString().trim(), fvc);
                return null;
             case 2:
@@ -228,7 +224,7 @@ public final class PosListList extends TextList<Position> {
                flush();
                return null;
             case 5:
-               if (arg != null)
+               if (null != arg)
                   inst.addList(DirList.getDefault().globalgrep(
                      arg.toString()));
                return null;
@@ -267,6 +263,7 @@ public final class PosListList extends TextList<Position> {
          //trace("inst" + inst);
          inst.setFirst(newerrs);
       }
+
       static void flush() {
          tagstack.clear();
          tahash.clear();
@@ -278,23 +275,22 @@ public final class PosListList extends TextList<Position> {
          }
       }
 
-      private void poptag(View vi) throws InputException {
+      private static void poptag(View vi) throws InputException {
          //trace("entered popstack size = " +tagstack.size() );
          int size = tagstack.size();
-         if (size != 0) {
+         if (0 != size) {
             //trace("pop to " + tagstack.get(size-1));
             FileList.gotoposition(tagstack.get(size - 1), false, vi);
             tagstack.remove(size - 1);
          }
       }
 
-      private String getLastSym(String str, int startid) {
+      private static String getLastSym(String str, int startid) {
          //trace(":" + str + " startid = " + startid);
-         char ch;
          int endid = startid;
          for (; endid < str.length(); endid++) {
-            ch =  str.charAt(endid);
-            if (!Character.isJavaIdentifierPart(ch) && ch != '.')
+            char ch =  str.charAt(endid);
+            if (!Character.isJavaIdentifierPart(ch) && '.' != ch)
                break;
          }
          //trace("endid" + endid + " startid = " + startid);
@@ -305,13 +301,13 @@ public final class PosListList extends TextList<Position> {
             InputException, IOException {
          Position porig = fvc.getPosition(null);
 
-         String fstr = str == null
+         String fstr = null == str
                        ? fvc.at().toString()
                        : str;
 
          //trace("gototag " + fstr);
-         filereg.reset(fstr);
-         if (filereg.find()) {
+
+         if (filereg.reset(fstr).find()) {
             //trace("filreg matched " + filereg.group(0) + "filename = " + filereg.group(1));
             //Position pos = new Position(0,Integer.parseInt(filereg.group(4)),filereg.group(1),"taglookup");
             //if (FileList.gotoposition(pos,false,fvc.vi))
@@ -326,48 +322,22 @@ public final class PosListList extends TextList<Position> {
             }
          }
 
-         if (str == null) {
+         if (null == str) {
             str = fvc.at().toString();
             str = getLastSym(str, fvc.insertx());
          }
          TextEdit templist = taglookup(str, fvc.vi);
-         if (templist != null) {
+         if (null != templist) {
             inst.setLastList(templist);
             //trace("add stack porig = "  + porig);
             tagstack.add(porig);
          }
       }
 
-      public static void main(String[] args) {
-
-         try {
-            //final Matcher filereg = Pattern.compile(
-            //"(\b([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
-            // "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
-            filereg.reset("UI.java:1118 java.xxx.event.");
-            myassert(filereg.find(), "UI");
-            filereg.reset("smtp_hfilter.c:254 ");
-            myassert(filereg.find(), "");
-            filereg.reset("smtp_hfilter.c:254");
-            myassert(filereg.find(), "");
-
-            filereg.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
-               + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
-               + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
-            myassert(filereg.find(), "");
-            myassert(filereg.group(4).equals("254"), filereg.group(4));
-            myassert(filereg.group(1).equals("smtp_hfilter.c"),
-               filereg.group(1));
-            trace("test executed successfully");
-         } catch (Throwable e) {
-            trace("main caught exception " + e);
-            e.printStackTrace();
-         }
-      }
       private TextEdit<Position> createtags(String sym) throws IOException {
          //trace("create tags ctags" + ctags);
          Position[] parray = null;
-         if (ctags != null) {
+         if (null != ctags) {
             //trace("do lookup");
             parray = ctags.taglookup(sym);
             if ((parray != null))
@@ -392,13 +362,13 @@ public final class PosListList extends TextList<Position> {
          //trace("taglookup " + str);
          String []symlist = spl.split(str);
 
-         if (symlist.length == 0)
+         if (0 == symlist.length)
             return null;
 
          String sym = symlist[symlist.length - 1];
          TextEdit<Position> taglist = tahash.get(sym);
          try {
-            if (taglist == null)
+            if (null == taglist)
                taglist = createtags(sym);
 
             int tagcount = 1;
@@ -410,55 +380,51 @@ public final class PosListList extends TextList<Position> {
 
             if (tagcount > 1) {
                int [] scores = new int[tagcount];
-               for (int i = 1; i < tagcount; i++)
-                  scores[i] = 0;
+               for (int ii = 1; ii < tagcount; ii++)
+                  scores[ii] = 0;
                int maxscore = 0;
 
-               for (int symindex = symlist.length - 2;
-                     symindex >= 0;
-                     symindex--) {
-                  String currsym = symlist[symindex];
+               for (int symIndex = symlist.length - 2;
+                     symIndex >= 0;
+                     symIndex--) {
+                  String currsym = symlist[symIndex];
 
-                  boolean findflag = true;
-                  for (int i = 1; i < tagcount && findflag; i++) {
-                     Position pos = taglist.at(i);
-                     classmatcher.reset(pos.comment);
-                     if (classmatcher.find()) {
+                  for (int ii = 1; ii < tagcount; ii++) {
+                     Position pos = taglist.at(ii);
+
+                     if (classmatcher.reset(pos.comment).find()) {
                         String clss =  classmatcher.group(1);
                         //trace("classmatcher class = " + clss + " currsym = " + currsym);
                         if (str.indexOf(clss) != -1) {
-                           scores[i] += clss.length();
-                           findflag = true;
+                           scores[ii] += clss.length();
                         }
 
                         if (clss.equals(currsym)) {
-                           scores[i] += 2;
-                           findflag = true;
+                           scores[ii] += 2;
                         }
                      }
-                     filematcher.reset(pos.filename.shortName);
-                     if (filematcher.find()
-                           && filematcher.group(1).equals(currsym)) {
-                        scores[i] += 1;
-                        findflag = true;
-                     }
-                     if (scores[i] > maxscore)
-                        maxscore = scores[i];
-                     else if (scores[i] < maxscore)
-                        scores[i] = Integer.MIN_VALUE;
-                  }
 
+                     if (filematcher.reset(pos.filename.shortName).find()
+                           && filematcher.group(1).equals(currsym)) {
+                        scores[ii] += 1;
+                     }
+                     if (scores[ii] > maxscore)
+                        maxscore = scores[ii];
+                     else if (scores[ii] < maxscore)
+                        scores[ii] = Integer.MIN_VALUE;
+                  }
                }
                //for (int i=1;i<tagcount;i++)
                //   trace("symlist[i] " + symlist[i] + " tagscore[" + i + "] = " + scores[i]);
-               for (int i = 1; i < tagcount; i++) {
+               for (int ii = 1; ii < tagcount; ii++) {
 
-                  if (scores[i] == maxscore) {
-                     FileList.gotoposition(taglist.at(i), false, vi);
-                     FvContext tagfvc =  FvContext.getcontext(vi, taglist);
-                     tagfvc.edvec.contains(i);
-                     tagfvc.cursoryabs(i);
-                     break;
+                  if (scores[ii] == maxscore) {
+                     if (FileList.gotoposition(taglist.at(ii), false, vi)) {
+                        FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+                        if (tagfvc.edvec.contains(ii))
+                           tagfvc.cursoryabs(ii);
+                        break;
+                     }
                   }
                }
             }
@@ -474,9 +440,36 @@ public final class PosListList extends TextList<Position> {
             throw new RuntimeException("ASSERTION FAILURE " + dump.toString());
       }
 
+      public static void main(String[] args) {
+
+         try {
+            //final Matcher filereg = Pattern.compile(
+            //"(\b([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
+            // "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
+            filereg.reset("UI.java:1118 java.xxx.event.");
+            myassert(filereg.find(), "UI");
+
+            myassert(filereg.reset("smtp_hfilter.c:254 ").find(), "");
+            myassert(filereg.reset("smtp_hfilter.c:254").find(), "");
+
+            filereg.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
+               + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
+               + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
+            myassert(filereg.find(), "");
+            myassert(filereg.group(4).equals("254"), filereg.group(4));
+            myassert(filereg.group(1).equals("smtp_hfilter.c"),
+               filereg.group(1));
+            trace("test executed successfully");
+         } catch (Throwable e) {
+            trace("main caught exception " + e);
+            e.printStackTrace();
+         }
+      }
+
+
    }
 
-   private static class PllConverter extends
+   private static final class PllConverter extends
          ClassConverter<TextEdit<Position>> {
 
       public TextEdit<Position> fromString(String str) {
@@ -484,5 +477,12 @@ public final class PosListList extends TextList<Position> {
          return new TextEdit<Position>(ioc, ioc.prop); // an unusable editvec
       }
    }
-   private static final PllConverter converter = new PllConverter();
+}
+
+class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
+
+   TextList(IoConverter<TextEdit<TOType>> e,
+         FileProperties<TextEdit<TOType>> fp) {
+      super(e, fp);
+   }
 }
