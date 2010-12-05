@@ -1,6 +1,8 @@
 package javi.awt;
 /* Copyright 1996 James Jensen all rights reserved */
 
+import static history.Tools.trace;
+
 import java.awt.AWTEvent;
 import java.awt.Canvas;
 import java.awt.Cursor;
@@ -19,6 +21,7 @@ import java.awt.Shape;
 
 import java.util.concurrent.TimeUnit;
 
+import static javi.ChangeOpt.Opcode.*;
 import javi.DeTabber;
 import javi.EventQueue;
 import javi.FileList;
@@ -31,8 +34,6 @@ import javi.View;
 import javi.ChangeOpt;
 import javi.ScrollEvent;
 
-import static javi.ChangeOpt.Opcode.*;
-import static history.Tools.trace;
 
 //import java.awt.RenderingHints;
 
@@ -115,7 +116,6 @@ final class OldView extends AwtView {
       return (int) (screenSize * scramount);
    }
 
-
    public void insertedElementsdraw(Graphics gr, int start, int amount) {
 
       int screenstart = start - getfileY() + screenposy;
@@ -135,7 +135,7 @@ final class OldView extends AwtView {
    }
 
    public void changeddraw(Graphics gr, int index, int index2) {
-      index = index - screenFirstLine();
+      index -= screenFirstLine();
       index2 = index2 - screenFirstLine() + 1;
       if (index < 0)
          index = 0;
@@ -211,7 +211,7 @@ final class OldView extends AwtView {
 
       int nXchange;
       int charoff;
-      if (tabStop != 0) {
+      if (0 != tabStop) {
          int tabOffset = nline.indexOf('\t');
          if (tabOffset != -1)  {
             int[] tvals = new int[1];
@@ -234,7 +234,7 @@ final class OldView extends AwtView {
          nXchange = charoff - getfileX();
          //trace("nXchange = " + nXchange);
       }
-      int newx = charoff == 0
+      int newx = 0 == charoff
          ? 0
          : fontm.stringWidth(nline.substring(0, charoff));
 
@@ -246,19 +246,18 @@ final class OldView extends AwtView {
 
    public void cursorChanged(int newX, int newY) {
 
-
       //trace(" newX " + newX + " newY " + newY);
       int yChange = newY - getfileY();
       screenposy += yChange;
 
       int newx = 0;
 
-      if (newX != 0) {
+      if (0 != newX) {
          int charoff = newX;
          String oline = gettext().at(newY).toString();
          String nline = oline;
 
-         if (tabStop != 0) {
+         if (0 != tabStop) {
             int tabOffset = oline.indexOf('\t');
             if (tabOffset != -1) {
                int[] tvals = new int[1];
@@ -267,7 +266,7 @@ final class OldView extends AwtView {
                charoff = tvals[0];
             }
          }
-         if (charoff != 0)
+         if (0 != charoff)
             newx = fontm.stringWidth(nline.substring(0, charoff));
       }
 
@@ -284,7 +283,7 @@ final class OldView extends AwtView {
       gr.setClip(null);
       gr.setColor(AtView.interFrame);
       gr.fillRect(0, 0, inset, screenSize * charheight);
-      gr.fillRect(pixelWidth - inset, 0, inset , screenSize * charheight);
+      gr.fillRect(pixelWidth - inset, 0, inset, screenSize * charheight);
       gr.setClip(cliprect);
       canvas.paintLines(gr, 0, screenSize);
       //trace(" done REDRAW " + this);
@@ -311,7 +310,7 @@ final class OldView extends AwtView {
       if (start + screenFirstLine() < 1) {
          start = 1 - screenFirstLine();
          gr.setColor(AtView.noFile);
-         gr.fillRect(0, 0, pixelWidth , start * charheight);
+         gr.fillRect(0, 0, pixelWidth, start * charheight);
       }
       return start;
    }
@@ -330,7 +329,7 @@ final class OldView extends AwtView {
             } else
                gr.setColor(AtView.noFile);
             gr.fillRect(0, end * charheight,
-                             pixelWidth , (screenSize - end) * charheight);
+               pixelWidth, (screenSize - end) * charheight);
          }
       }
       return end;
@@ -360,14 +359,13 @@ final class OldView extends AwtView {
          pend = -amount;
       }
       copyLines(gr, cstart, cend, -amount);
-      canvas.paintLines(gr, pstart , pend);
+      canvas.paintLines(gr, pstart, pend);
    }
-
 
    Shape updateCursorShape(Shape sh) {
       int   cx = screenposx;
       String iString = getInsertString();
-      if (iString != null) {
+      if (null != iString) {
          int tabOffset = iString.indexOf('\t');
          if  (-1 != tabOffset)
             iString = DeTabber.deTab(iString, tabOffset, tabStop, new int[1]);
@@ -426,7 +424,7 @@ final class OldView extends AwtView {
    }
 
    private int tcharOffset(String line, int xpos) {
-      if (tabStop != 0) {
+      if (0 != tabStop) {
          int tabOff = line.indexOf('\t');
          if (tabOff != -1) {
             String nline = DeTabber.deTab(line, tabOff, tabStop, new int[1]);
@@ -459,18 +457,21 @@ final class OldView extends AwtView {
    public int screeny(int amount)  {
       //trace("screeny " + amount);
       //move the screen and if necessary the cursor
+
       if (screenFirstLine() + amount <= -screenSize + 1)
          if (screenFirstLine() <= 1)
             amount = 0;
          else
             amount =  -screenFirstLine();
-      else if (!gettext().containsNow(screenFirstLine() + amount))
-         if (gettext().containsNow(screenFirstLine() + screenSize))
-            amount = gettext().readIn() - 1 - screenFirstLine();
-         else
-            amount = 0;
+      else {
+         if (!gettext().containsNow(screenFirstLine() + amount))
+            if (gettext().containsNow(screenFirstLine() + screenSize))
+               amount = gettext().readIn() - 1 - screenFirstLine();
+            else
+               amount = 0;
+      }
 
-      if (amount != 0) {
+      if (0 != amount) {
          moveScreen(amount);
          if ((screenposy >= screenSize)
                || (screenposy < 0))
@@ -501,7 +502,8 @@ final class OldView extends AwtView {
       canvas.enableInputMethods(false);
       canvas.removeInputMethodListener((InHandler) ins);
    }
-   class MyCanvas extends Canvas {
+
+   final class MyCanvas extends Canvas {
 
       private int mousePressed = 0;
       private transient Graphics oldgr;
@@ -584,20 +586,20 @@ final class OldView extends AwtView {
       private void mousepress(MouseEvent event) {
          //trace("modifiers = " +Integer.toHexString( event.getModifiers()));
 
-         Position p = mousepos(event);
+         Position pos = mousepos(event);
 
-         //trace("Position " + p + " event vi " + vi);
+         //trace("Position " + pos + " event vi " + vi);
          FvContext newfvc = FvContext.getcontext(OldView.this, getCurrFile());
 
          //trace("fvc " + fvc  + " newfvc " + newfvc);
          switch (event.getButton()) {
             case MouseEvent.BUTTON1:
-               EventQueue.insert(new PosEvent(newfvc, p));
+               EventQueue.insert(new PosEvent(newfvc, pos));
                break;
 
             case MouseEvent.BUTTON2:
-               if (newfvc.edvec.containsNow(p.y)) {
-                  Object line = newfvc.edvec.at(p.y);
+               if (newfvc.edvec.containsNow(pos.y)) {
+                  Object line = newfvc.edvec.at(pos.y);
                   if (line instanceof Position) {
                      View nextView = newfvc.findNextView();
                      try {
@@ -620,20 +622,20 @@ final class OldView extends AwtView {
          }
       }
 
-      final void mouserelease(MouseEvent event) {
+      void mouserelease(MouseEvent event) {
 
          //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
-         Position p = mousepos(event);
          FvContext fvc = FvContext.getCurrFvc();
-         //trace("Position " + p + " event vi " + vi);
+         //trace("Position " + pos + " event vi " + vi);
          if (fvc != FvContext.getcontext(OldView.this, getCurrFile()))
             return;
 
          if (event.getButton()  == MouseEvent.BUTTON1) {
             //trace("setting markmode ");
-            //fvc.cursorabs(p);
-            if (fvc.inserty() != p.y || fvc.insertx() != p.x)  {
-               EventQueue.insert(new MarkEvent(p));
+            //fvc.cursorabs(pos);
+            Position pos = mousepos(event);
+            if (fvc.inserty() != pos.y || fvc.insertx() != pos.x)  {
+               EventQueue.insert(new MarkEvent(pos));
             }
          }
       }
@@ -664,9 +666,8 @@ final class OldView extends AwtView {
                return;
 
             case MouseEvent.MOUSE_DRAGGED:
-               MouseEvent mev = (MouseEvent) ev;
-               if (mousePressed == 1)
-                  updateTempMarkPos(mousepos(mev));
+               if (1 == mousePressed)
+                  updateTempMarkPos(mousepos((MouseEvent) ev));
                break;
             case MouseEvent.MOUSE_MOVED:
             case MouseEvent.MOUSE_ENTERED:
@@ -704,14 +705,14 @@ final class OldView extends AwtView {
 
       private void npaint(Graphics2D gr) throws InterruptedException {
          //trace("npaint");
-         if (gettext() == null)
+         if (null == gettext())
             return;
 
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
             //trace("imageg " + imageg);
-            if (imageg == null)
+            if (null == imageg)
                throw new RuntimeException("imageg null!!");
             oldgr = gr;
          }
@@ -734,6 +735,7 @@ final class OldView extends AwtView {
                EventQueue.biglock2.unlock();
             }
       }
+
       public void setFont(Font font) {
 
          //trace("setting View font " + font + " "  + this);
@@ -757,25 +759,25 @@ final class OldView extends AwtView {
                  index < end;
                  index++, tindex++) {
             imageg.setColor(AtView.background);
-            imageg.fillRect(0, 0, pixelWidth , charheight);
+            imageg.fillRect(0, 0, pixelWidth, charheight);
             //trace("setting text " + gettext().at(tindex).toString());
             atIt.setText(gettext().at(tindex).toString());
 
             if ((index == screenposy))  {
                atIt.emphasize(true);
                String iString = getInsertString();
-               if (iString != null)
+               if (null != iString)
                   atIt.addOlineText(iString, getfileX(), isOverwrite());
             }
 
-            if (atIt.length() != 0) {
+            if (0 != atIt.length()) {
                MarkInfo mpmark = getPmark();
-               if (mpmark.getMark() != null) {
+               if (null != mpmark.getMark()) {
                   //trace("highlight tindex = " + tindex + " pmark " + pmark);
                   //trace("hilight " + pmark.starth(tindex) + "," + pmark.endh(tindex));
                   atIt.setHighlight(mpmark.starth(tindex), mpmark.endh(tindex));
                }
-               if (tabStop != 0)
+               if (0 != tabStop)
                   atIt.deTab(tabStop);
                imageg.drawString(atIt, xoffset, charascent);
             }
@@ -792,11 +794,12 @@ final class OldView extends AwtView {
 
       }
 
-      public final boolean isFocusable() {
+      public boolean isFocusable() {
          return false;
       }
    }
-   class Ch extends COpt {
+
+   final class Ch extends COpt {
       public void rpaint(Graphics2D gr) {
          Opcode currop = resetOp();
          if (currop != NOOP) {
@@ -839,9 +842,11 @@ final class OldView extends AwtView {
          }
       }
    }
+
    private Ch copt;
+
    protected ChangeOpt getChangeOpt() {
-      if (copt == null)
+      if (null == copt)
          copt = new Ch();
       return copt;
    }

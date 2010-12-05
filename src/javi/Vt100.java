@@ -63,8 +63,8 @@ class Vt100 extends TextEdit<String> {
 
    public final boolean handleKey(JeyEvent kev) {
       //trace("dispatchKeyEvent" + kev);
-      char ch = kev.getKeyChar();
       try {
+         char ch = kev.getKeyChar();
          if (ch == JeyEvent.CHAR_UNDEFINED) {
             switch (kev.getKeyCode()) {
                case JeyEvent.VK_LEFT:

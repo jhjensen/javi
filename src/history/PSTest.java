@@ -1,6 +1,5 @@
 package history;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -23,17 +22,20 @@ final class PSTest extends Testutil {
       myassert(bx.length == b2.length, b2);
       myassert(arraycmp(bx, 0, bx.length, b2, 0), b2);
    }
+
    static void    testr3(byte[] bx)  {
       myassert(bx.length == r3.length, r3);
       myassert(arraycmp(bx, 0, bx.length, r3, 0), r3);
    }
+
    static void testb3(ByteInput dis) {
       byte[] bx = new byte[dis.available()];
       myassert(bx.length == b3.length, dumphex(bx));
       dis.readFully(bx);
       myassert(arraycmp(bx, 0, bx.length, b3, 0), b3);
    }
-   void deletetest() throws IOException {
+
+   static void deletetest() throws IOException {
       File hf = new File("delete.test");
       boolean exceptionFlag = false;
       TestPS ran = new TestPS();
@@ -46,7 +48,7 @@ final class PSTest extends Testutil {
       iter.decrement();
 
       iter.idleSave();
-      hf.delete();
+      myassert(hf.delete(), hf);
       try {
          iter.push(b2); // deletes record b3
          iter.idleSave();
@@ -81,7 +83,7 @@ final class PSTest extends Testutil {
 
    }
 
-   void killtest() throws IOException {
+   static void killtest() throws IOException {
       File hf = new File("kill.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
@@ -99,7 +101,8 @@ final class PSTest extends Testutil {
       myassert(!hf.isFile(), hf);
 
    }
-   void quittest() throws IOException {
+
+   static void quittest() throws IOException {
       File hf = new File("quit.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
@@ -117,7 +120,7 @@ final class PSTest extends Testutil {
       ran.terminateWEP();
 
       TestPS ran2 = new TestPS();
-      ran2.setFile(hf);
+      myassert(null == ran2.setFile(hf), hf);
       PersistantStack.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
 
@@ -130,7 +133,7 @@ final class PSTest extends Testutil {
       iter2.close();
    }
 
-   void bigtest() throws IOException  {
+   static void bigtest() throws IOException  {
       File hf = new File("random2.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
@@ -146,7 +149,7 @@ final class PSTest extends Testutil {
       iter.close();
 
       TestPS ran2 = new TestPS();
-      ran2.setFile(hf);
+      myassert(null == ran2.setFile(hf), ran2);
       myassert(ran2.cleanClose(), ran);
       ran2.checkQuit(1);
       PersistantStack.PSIterator iter2 = ran2.createIterator();
@@ -161,8 +164,8 @@ final class PSTest extends Testutil {
    }
 
    void callbacktest(File hf) throws IOException  {
-      if (hf != null)
-         hf.delete();
+      if (null != hf)
+         myassert(hf.delete(), hf);
 
       TestPS ran =  new TestPS();
       if (hf != null)
@@ -177,10 +180,9 @@ final class PSTest extends Testutil {
       iter.decrement();
       if (hf != null) {
          iter.close();
-         ran = new TestPS();
-         ran.index = (byte) 255;
+         ran = new TestPS((byte) 255);
          iter = ran.createIterator();
-         ran.setFile(hf);
+         myassert(null == ran.setFile(hf), ran);
          iter.resetCache();
          myassert(ran.cleanClose(), ran);
          myassert(ran.cbOK, this);
@@ -241,14 +243,14 @@ final class PSTest extends Testutil {
       testb2((byte []) iter2.previous());
       testb1((byte []) iter2.previous());
       iter2.decrement();
-      myassert(ran2.size() == 3, ran2);
+      myassert(3 == ran2.size(), ran2);
 
       iter2.push(b2);
-      if (hf != null)
+      if (null != hf)
          iter2.close();
 
-      TestPS ran3 = (hf == null) ? ran2 : new TestPS();
-      if (hf != null)
+      TestPS ran3 = (null == hf) ? ran2 : new TestPS();
+      if (null != hf)
          ran3.setFile(hf);
       myassert(ran3.cleanClose(), ran3);
       PersistantStack.PSIterator iter3 = ran3.createIterator();
@@ -270,11 +272,12 @@ final class PSTest extends Testutil {
 
 final class TestPS extends PersistantStack {
 
-   byte index;
-//   byte cbdata =0;
+   final byte index;
    boolean cbOK = false;
    boolean dcb = false;
-   TestPS() { /* doesn't need to do anything*/ }
+
+   TestPS() { index = 0; }
+
    TestPS(byte in) {
       index = in;
    }
@@ -283,7 +286,7 @@ final class TestPS extends PersistantStack {
       return new TestIterator();
    }
 
-   public void usercb(ByteInput dis) throws EOFException {
+   public void usercb(ByteInput dis) {
       byte bi = dis.readByte();
       Testutil.myassert(!cbOK, this);
       Testutil.myassert(bi == -1, Byte.valueOf(bi));
@@ -308,7 +311,6 @@ final class TestPS extends PersistantStack {
       dcb = true;
    }
 
-
    final class TestIterator extends PersistantStack.PSIterator {
 
       protected boolean isOutLine(Object ob) {
@@ -331,19 +333,22 @@ final class TestPS extends PersistantStack {
          return false;
       }
 
-      public Object readExternal(ByteInput dis) throws IOException {
+      public Object readExternal(ByteInput dis) {
          byte[] b = new byte[dis.readInt()];
          dis.readFully(b);
          return b;
       }
+
       public Object newExternal(ByteInput dis) throws IOException {
          return readExternal(dis);
       }
 
    }
 }
-class Oline {
-   int index;
+
+final class Oline {
+   final int index;
+
    Oline(byte indexi) {
       index = indexi;
    }

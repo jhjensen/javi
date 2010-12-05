@@ -43,10 +43,8 @@ public final class MovePos {
          return false;
       if (ob instanceof MovePos) {
          MovePos po = (MovePos) ob;
-         return po == null
-                ? false
-                          //      : filename.equals(po.filename) && po.x == x && po.y == y;
-                :  po.x == x && po.y == y;
+                 //      : filename.equals(po.filename) && po.x == x && po.y == y;
+         return po.x == x && po.y == y;
       }
       return false;
    }
