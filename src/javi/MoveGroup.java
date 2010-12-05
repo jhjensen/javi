@@ -2,14 +2,13 @@ package javi;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
 
 final class MoveGroup extends Rgroup {
    /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    private static final MoveGroup inst = new MoveGroup();
 
    static void init() { /* forces static inst filed to be newed */
@@ -26,7 +25,7 @@ final class MoveGroup extends Rgroup {
    private Position lastmark;
    private Position lastmark2;
    private HashMap<Integer, Position> markpos =
-      new HashMap<Integer, Position>();
+      new HashMap<Integer, Position>(5);
    private Matcher[] brega;
    private Matcher breg;
    private int dotcommand;
@@ -86,9 +85,10 @@ final class MoveGroup extends Rgroup {
          }
       }
    }
+
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws InputException, IOException {
-      if (!dotmode && (rnum != 24)) {
+      if (!dotmode && (24 != rnum)) {
          dotcommand = rnum;
          dotcount = count;
          dotrcount = rcount;
@@ -179,8 +179,8 @@ final class MoveGroup extends Rgroup {
             rsearch((Matcher) arg, true, count, fvc);
             return null;
          case 24:
-            if (dotcommand != 0) {
-               if (rcount == 0)
+            if (0 != dotcommand) {
+               if (0 == rcount)
                   count = dotcount;
                dotcount = count;
                dotrev = ((Boolean)  arg).booleanValue();
@@ -195,30 +195,31 @@ final class MoveGroup extends Rgroup {
          case 26:
             return null;  //movehalfscreen(arg,count,fvc.vi); return null;
          case 27:
-            fvc.screeny((((Integer) arg).intValue() == 1)
+            fvc.screeny(1 == (((Integer) arg).intValue())
                ? count
                : -count);
             return null;
          default:
-            throw new RuntimeException();
+            throw new RuntimeException("invalid Rgroup number");
       }
    }
 
-   private void linepos(Object arg, int rcount, FvContext fvc) {
-      if (arg == null)
+   private static void linepos(Object arg, int rcount, FvContext fvc) {
+      if (null == arg)
          fvc.cursorx(rcount - fvc.insertx());
       else {
          int pos = ((Integer) arg).intValue();
-         if (pos == 0)
+         if (0 == pos)
             fvc.cursorx(rcount - fvc.insertx() + rcount);
          else
             fvc.cursorx(pos - fvc.insertx() + rcount);
       }
    }
 
-   private void gotoline(int count, int rcount, FvContext fvc, Object arg) {
-      if (rcount == 0) {
-         if (arg == null)
+   private static void gotoline(int count, int rcount,
+         FvContext fvc, Object arg) {
+      if (0 == rcount) {
+         if (null == arg)
             fvc.cursorabs(Integer.MAX_VALUE, fvc.edvec.finish());
          else
             fvc.cursorabs(0, ((Integer) arg).intValue());
@@ -228,7 +229,7 @@ final class MoveGroup extends Rgroup {
 
    private void mark(FvContext fvc, char bufid) {
       //trace("lastmark = " + lastmark + "lastmark2= " + lastmark2);
-      if (bufid == 27)
+      if (27 == bufid)
          return;
 
       Integer idObj = Integer.valueOf(bufid);
@@ -244,15 +245,16 @@ final class MoveGroup extends Rgroup {
    private void findmark(FvContext fvc, char c) throws InputException {
       //trace("lastmark = " + lastmark + " lastmark2= " + lastmark2);
 
-      if (c == 27)
+      if (27 == c)
          return;
-      if (c == '\'') {
+      if ('\'' == c) {
          if (fvc.equals(lastmark)) {
             Position temp = lastmark;
             lastmark = lastmark2;
             lastmark2 = temp;
          }
       } else {
+
          if (fvc.equals(lastmark2)) {
             lastmark = lastmark2;
          }
@@ -261,12 +263,12 @@ final class MoveGroup extends Rgroup {
 
          lastmark = markpos.get(Integer.valueOf(c));
       }
-      if (lastmark != null)
+      if (null != lastmark)
          FileList.gotoposition(lastmark, false, fvc.vi);
    }
 
-   private static boolean iswhite(char c) {
-      return (c == ' ' || c == 9 || c == '\n' || c == '\r');
+   private static boolean isWhite(char c) {
+      return ' ' == c || 9 == c || '\n' == c || '\r' == c;
    }
 
    private void rsearch(Matcher exp, boolean dir, int count, FvContext fvc) {
@@ -325,7 +327,7 @@ final class MoveGroup extends Rgroup {
       else {
          String line  = InsertBuffer.getcomline(!direction ? "/" : "?");
          line = line.substring(1, line.length());
-         if ("".equals(line))
+         if (0 == line.length())
             regsearch(false, count, fvc);
          else {
             searchOffset = 0;
@@ -335,7 +337,7 @@ final class MoveGroup extends Rgroup {
             int slashIndex = line.lastIndexOf('/');
             if (slashIndex != -1) {
                boolean minusFlag = false;
-               if (slashIndex > 0 && line.charAt(slashIndex - 1) != '\\')
+               if (0 < slashIndex && line.charAt(slashIndex - 1) != '\\')
                   for (int lindex = slashIndex; ++lindex < line.length();)
                      switch (line.charAt(lindex)) {
                         case 'i':
@@ -389,7 +391,7 @@ final class MoveGroup extends Rgroup {
          InputException {
       if (!dotmode) {
          char tmp = EventQueue.nextKey(fvc.vi);
-         if (tmp == 27) // esc
+         if (27 == tmp) // esc
             return;
          lastfindchar = tmp;
       }
@@ -397,14 +399,6 @@ final class MoveGroup extends Rgroup {
       lstat = arg[1];
       findchar(lastfindchar, arg[0], arg[1], fvc);
    }
-
-   private void repeatfind(boolean[] samedir, FvContext fvc) {
-      if (samedir[0])
-         findchar(lastfindchar, lstforward, lstat, fvc);
-      else
-         findchar(lastfindchar, !lstforward, lstat, fvc);
-   }
-
 
    private void findchar(char fchar, boolean forward, boolean atchar,
          FvContext fvc) {
@@ -422,46 +416,49 @@ final class MoveGroup extends Rgroup {
          findcharT(fchar, fvc);
    }
 
+   private void repeatfind(boolean[] samedir, FvContext fvc) {
+      if (samedir[0])
+         findchar(lastfindchar, lstforward, lstat, fvc);
+      else
+         findchar(lastfindchar, !lstforward, lstat, fvc);
+   }
 
-   private void findcharf(char findchar, FvContext fvc) {
-      int xindex;
+   private static void findcharf(char findchar, FvContext fvc) {
       String line = fvc.at().toString();
-      for (xindex = fvc.insertx() + 1; xindex < line.length(); xindex++)
+      for (int xindex = fvc.insertx() + 1; xindex < line.length(); xindex++)
          if (line.charAt(xindex) == findchar) {
             fvc.cursorx(xindex - fvc.insertx());
             return;
          }
    }
 
-   private void findcharF(char findchar, FvContext fvc) {
-      int xindex;
+   private static void findcharF(char findchar, FvContext fvc) {
       String line = fvc.at().toString();
-      for (xindex = fvc.insertx() - 1; xindex >= 0; xindex--)
+      for (int xindex = fvc.insertx() - 1; xindex >= 0; xindex--)
          if (line.charAt(xindex) == findchar) {
             fvc.cursorx(xindex - fvc.insertx());
             return;
          }
    }
 
-   private void findchart(char findchar, FvContext fvc) {
-      int xindex;
+   private static void findchart(char findchar, FvContext fvc) {
       String line = fvc.at().toString();
-      for (xindex = fvc.insertx() + 2; xindex < line.length(); xindex++)
+      for (int xindex = fvc.insertx() + 2; xindex < line.length(); xindex++)
          if (line.charAt(xindex) == findchar) {
             fvc.cursorx(xindex - fvc.insertx() - 1);
             return;
          }
    }
 
-   private void findcharT(char findchar, FvContext fvc) {
-      int xindex;
+   private static void findcharT(char findchar, FvContext fvc) {
       String line = fvc.at().toString();
-      for (xindex = fvc.insertx() - 2; xindex >= 0; xindex--)
+      for (int xindex = fvc.insertx() - 2; xindex >= 0; xindex--)
          if (line.charAt(xindex) == findchar) {
             fvc.cursorx(xindex - fvc.insertx() + 1);
             return;
          }
    }
+
    private void screenmoveabs(Object arg, int rcount, FvContext fvc) {
       float amount = ((Float) arg).floatValue();
       fvc.cursoryabs(fvc.vi.screenFirstLine()
@@ -474,8 +471,9 @@ final class MoveGroup extends Rgroup {
       fvc.cursory((int) Math.floor((float) (
                                      fvc.vi.getRows(amount) - 1) + count));
    }
-   private void movelinestart(Object arg, int count, FvContext fvc) {
-      if (((Integer) arg).intValue() == 1)
+
+   private static void movelinestart(Object arg, int count, FvContext fvc) {
+      if (1 == ((Integer) arg).intValue())
          fvc.cursory(count);
       else
          fvc.cursory(-count);
@@ -489,7 +487,7 @@ final class MoveGroup extends Rgroup {
          fvc.cursorx(-count);
    }
 
-   private void moveline(boolean reverse , int count, FvContext fvc) {
+   private void moveline(boolean reverse, int count, FvContext fvc) {
       if (reverse ^ dotrev)
          fvc.cursory(count);
       else
@@ -510,7 +508,7 @@ final class MoveGroup extends Rgroup {
       int i = 0;
       String line = fvc.at().toString();
 
-      while ((i < line.length()) && iswhite(line.charAt(i)))
+      while ((i < line.length()) && isWhite(line.charAt(i)))
          i++;
       fvc.cursorxabs(i);
    }
@@ -529,7 +527,7 @@ final class MoveGroup extends Rgroup {
          } else if (fvc.edvec.containsNow(yindex + 1)) {
             xindex = 0;
             line = fvc.at(++yindex).toString();
-            if (line.length() == 0 || !iswhite(line.charAt(0)))
+            if (0 == line.length() || !isWhite(line.charAt(0)))
                count--;
             else
                pat.reset(line);
@@ -542,6 +540,7 @@ final class MoveGroup extends Rgroup {
    private void forwardword(int count, FvContext fvc)  {
       forwardPat(count, fvc, wordpat);
    }
+
    private void forwardWord(int count, FvContext fvc)  {
       forwardPat(count, fvc, wordPat);
    }
@@ -569,23 +568,25 @@ final class MoveGroup extends Rgroup {
 
    private static final Matcher endpat = Pattern.compile(
       "([^ \ta-zA-Z_0-9](\\w|$))|(\\S(\\s|$))|(\\w(\\W|$))").matcher("");
+
    private static void endword(int count, FvContext fvc)  {
       endPat(count, fvc, endpat);
    }
 
    private static final Matcher endpatW =
       Pattern.compile("\\S(\\s|$)").matcher("");
-   private void endWord(int count, FvContext fvc)  {
+
+   private static void endWord(int count, FvContext fvc)  {
       endPat(count, fvc, endpatW);
    }
 
-   int searchBackward2(Matcher reg, String str, int start, int offset) {
+   private static int searchBackward2(Matcher reg,
+         String str, int start, int offset) {
       //trace("searchBackward start = " + start  + " offset = " +offset + "line:" + str);
 
-      reg.reset(str);
       int lastfound = -1;
 
-      if (!reg.find())
+      if (!reg.reset(str).find())
          return -1;
 
       do {
@@ -599,7 +600,6 @@ final class MoveGroup extends Rgroup {
          : lastfound + offset;
    }
 
-
    private void backwardPattern(int count, FvContext fvc, Matcher pat)  {
       int yindex = fvc.inserty();
       int xindex = fvc.insertx();
@@ -609,9 +609,9 @@ final class MoveGroup extends Rgroup {
          if (offset != -1) {
             xindex = offset;
             count--;
-         } else if (xindex != 0
-                           && line.length() > 0
-                           && !iswhite(line.charAt(0))) {
+         } else if (0 != xindex
+                           && 0 < line.length()
+                           && !isWhite(line.charAt(0))) {
             xindex = 0;
             count--;
          } else if (yindex > 1) {
@@ -626,12 +626,14 @@ final class MoveGroup extends Rgroup {
 
    private static final Matcher wordpat = Pattern.compile(
       "(\\w[^ \ta-zA-Z_0-9])|(\\s\\S)|(\\W\\w)").matcher("");
+
    private void backwardword(int count, FvContext fvc)  {
       backwardPattern(count, fvc, wordpat);
    }
 
    private static final Matcher wordPat = Pattern.compile(
       "\\s\\S").matcher("");
+
    private void backwardWord(int count, FvContext fvc)  {
       backwardPattern(count, fvc, wordPat);
    }
@@ -647,13 +649,14 @@ final class MoveGroup extends Rgroup {
       "(^[ \\t]*ifdef)|(^[ \\t]*ifndef)|(^[ \\t]*ifeq)|"
          + "(^[ \\t]*ifneq)|(^[ \\t]*endif)|(^[ \\t]*else)"
    };
+
    private void initbalance() {
       brega = new Matcher[bchars1.length];
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < bchars1.length; i++) {
-         sb.append(bchars1[i]);
+      StringBuilder sb = new StringBuilder(200);
+      for (int ii = 0; ii < bchars1.length; ii++) {
+         sb.append(bchars1[ii]);
          sb.append('|');
-         brega[i] = Pattern.compile(bchars1[i]).matcher("");
+         brega[ii] = Pattern.compile(bchars1[ii]).matcher("");
       }
 
       sb.setLength(sb.length() - 1);
@@ -661,21 +664,20 @@ final class MoveGroup extends Rgroup {
    }
 
 //??? could use editvec searchBackward
-   private boolean searchBackward(Matcher matcher, String str, int start) {
+   private static boolean searchBackward(Matcher matcher,
+         String str, int start) {
 
       //trace("searchBackward: start = " + start  + " " + str);
       str = str.substring(0, start);
-      matcher.reset(str);
       int temp = -1;
 
-      while (matcher.find())
+      for (matcher.reset(str); matcher.find();)
          temp = matcher.start(0);
 
       if (temp == -1)
          return false;
 
-      matcher.reset();
-      while (matcher.find())
+      for (matcher.reset(); matcher.find();)
          if (temp == matcher.start(0))
             return true;
       throw new RuntimeException("Regexp.java reverse search logic error");
@@ -724,15 +726,9 @@ final class MoveGroup extends Rgroup {
    }
 
    private void balancechar(FvContext fvc) {
-      if (brega == null)
-         try {
-            initbalance();
+      if (null == brega)
+         initbalance();
 
-         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(
-               " unexpected exception in balancechar", e);
-         }
       String line = fvc.at().toString();
 
       //trace("line:" + line);
@@ -757,18 +753,18 @@ final class MoveGroup extends Rgroup {
 
       boolean forward;
 
-      if (bindex == 22)
+      if (22 == bindex)
          throw new RuntimeException("movegroup.balancechar: bad reg index");
 
       else if (bindex >= 15) { // if case is special
-         forward = bindex != 19;
+         forward = 19 != bindex;
          bindex = 6;
 
-      } else if (bindex >= 10) { // ifdef case is special
-         forward = bindex != 12;
+      } else if (0 <= bindex) { // ifdef case is special
+         forward = 12 != bindex;
          bindex = 5;
       } else {
-         forward = ((bindex % 2) == 0);
+         forward = (0 == (bindex % 2));
          bindex /= 2;
       }
 
@@ -784,9 +780,9 @@ final class MoveGroup extends Rgroup {
          do  {
             //trace("x = " + x + " searching: " + line.substring(x+1,line.length())); trace("forward result = "  + reg.searchForward(line,x+1));
             if ((++xindex > line.length()) || (!reg.find(xindex)))
-               if (!fvc.edvec.containsNow(++yindex))
+               if (!fvc.edvec.containsNow(++yindex)) {
                   return;
-               else {
+               } else {
                   line = fvc.at(yindex).toString();
                   reg.reset(line);
                   //trace("y  = " + y + " line = " + line);
@@ -797,17 +793,17 @@ final class MoveGroup extends Rgroup {
             xindex = reg.start();
             //trace("got x =" + x + " char = " + line.charAt(x));
             int inc =  calcinc(bindex, reg);
-            ccount += inc == 0 && ccount == 1
+            ccount += 0 == inc && 1 == ccount
                       ? -1
                       : inc;
-         } while (ccount != 0);
+         } while (0 != ccount);
       } else {
          do {
             //if(x >=0) { trace("searching: " + line.substring(0,x)); trace(" backward res = "  + (result = reg.searchBackward(line,x-1))); }
             if ((xindex < 0) || (!searchBackward(reg, line, xindex)))
-               if ((--yindex) == 0)
+               if (0 == --yindex) {
                   return;
-               else {
+               } else {
                   line = fvc.at(yindex).toString();
                   reg.reset(line);
                   xindex = line.length();
@@ -818,8 +814,7 @@ final class MoveGroup extends Rgroup {
             ccount += calcinc(bindex, reg);
 
             //trace("ccount " +ccount + " y " + y);
-         } while (ccount != 0);
-
+         } while (0 != ccount);
 
       }
       fvc.cursorabs(xindex, yindex);

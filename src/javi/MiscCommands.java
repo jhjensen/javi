@@ -1,7 +1,7 @@
 package javi;
 
-import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 
@@ -10,7 +10,6 @@ import static history.Tools.trace;
 
 public final class MiscCommands extends Rgroup  {
    /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    MiscCommands() {
       final String[] rnames = {
          "",
@@ -93,8 +92,11 @@ public final class MiscCommands extends Rgroup  {
    }
 
    private static final class MyFl implements EditContainer.FileStatusListener {
+
       public void fileAdded(EditContainer ev)  { }
+
       public void fileWritten(EditContainer ev) { }
+
       public boolean fileDisposed(EditContainer ev) {
          if (ev == cmdfile)
             cmdfile = null;
@@ -112,13 +114,14 @@ public final class MiscCommands extends Rgroup  {
 
    private static MyFl fli = new MyFl();
 
-   private void undo(FvContext fvc) throws IOException {
+   private static void undo(FvContext fvc) throws IOException {
       int index = fvc.edvec.undo();
       if (index != -1)
          fvc.cursoryabs(index);
       fvc.fixCursor();
    }
-   private void redo(FvContext fvc)  throws IOException {
+
+   private static void redo(FvContext fvc)  throws IOException {
       int index = fvc.edvec.redo();
       if (index != -1)
          fvc.cursoryabs(index);
@@ -128,11 +131,11 @@ public final class MiscCommands extends Rgroup  {
    private void startshell(FvContext fvc, String host) throws
          IOException, InputException {
       trace("reached startshell " + host);
-      if (shellfile != null && host != null) {
+      if (null != shellfile && null != host) {
          FvContext.connectFv(shellfile, fvc.vi);
       } else {
          EditContainer.registerListener(fli);
-         if (host == null)
+         if (null == host)
             host = lastshell;
          else
             lastshell = host;
@@ -141,22 +144,7 @@ public final class MiscCommands extends Rgroup  {
       }
 
    }
-   /*
-   private static TextEdit picCon;
-   void startPicCon(FvContext fvc) throws IOException,InputException {
-      //trace("reached startPicCon");
-      if (picCon ==null) {
-         picCon=new TextEdit<String>(Vt100.PicConsole.make(),
-            EditContainer.root);
-         FvContext newfvc = UI.connectfv(picCon,fvc.vi);
-         newfvc.addKeyEventDispatcher();
-         EditContainer.registerListener(this);
-      } else
-         UI.connectfv(picCon,fvc.vi);
 
-   }
-
-   */
    private  static TextEdit commCon;
    private  static String portname = "COM1";
    private  static int baudrate = 38400;
@@ -164,11 +152,11 @@ public final class MiscCommands extends Rgroup  {
    private static void startcom(String arg, FvContext fvc) throws
          IOException, InputException {
       //trace("reached startcommCon");
-      if (commCon == null) {
-         if (arg != null)
+      if (null == commCon) {
+         if (null != arg)
             try {
                String [] args = arg.split(" +");
-               if (args.length != 2)
+               if (2 != args.length)
                   throw new InputException("invalid arguments to comm command:"
                      + arg);
                baudrate = Integer.parseInt(args[1]);
@@ -185,9 +173,9 @@ public final class MiscCommands extends Rgroup  {
 
    private static void startDebug(String cname, FvContext fvc) {
       try {
-         if (debugfile == null) {
+         if (null == debugfile) {
             //??? make this workjavac.compcommand(null,true);
-            if (cname == null)
+            if (null == cname)
                cname = lastdebug;
             else
                lastdebug = cname;
@@ -198,11 +186,11 @@ public final class MiscCommands extends Rgroup  {
          FvContext.connectFv(debugfile, fvc.vi);
       } catch (Throwable e) {
          UI.reportError("startDebug failed:" + e);
-         e.printStackTrace();
       }
    }
 
    static final class ProcIo extends BufInIoc<String> {
+
       private static final long serialVersionUID = 1;
       private transient Process proc;
 
@@ -215,7 +203,7 @@ public final class MiscCommands extends Rgroup  {
       }
 
       private ProcIo(String namei, Process proci,
-            BufferedReader inp, String ...cmd) throws IOException {
+            BufferedReader inp, String ...cmd) {
          super(new FileProperties(FileDescriptor.InternalFd.make(namei),
             StringIoc.converter), true, inp);
          proc = proci;
@@ -242,9 +230,9 @@ public final class MiscCommands extends Rgroup  {
    private static void startcmd(String cname, FvContext fvc) {
       //trace("startcmd:" + cname);
       try {
-         if (cmdfile == null) {
+         if (null == cmdfile) {
             //??? make this workjavac.compcommand(null,true);
-            if (cname != null)
+            if (null != cname)
                lastcmd[3] = cname;
 
             EditContainer.registerListener(fli);
@@ -254,13 +242,12 @@ public final class MiscCommands extends Rgroup  {
          FvContext.connectFv(cmdfile, fvc.vi);
       } catch (Throwable e) {
          UI.reportError("startDebug failed:" + e);
-         e.printStackTrace();
       }
    }
 
    private void zprocess(int rcount, FvContext fvc) throws InputException {
       int scchange = 0;
-      float scrpos = (float) 0.;
+      float scrpos = 0.f;
 
    outloop:
       while (true) {
@@ -269,12 +256,12 @@ public final class MiscCommands extends Rgroup  {
             scchange = scchange * 10 + (key & 0x0f);
          else  {
             //trace("scchange " + scchange);
-            if (scchange != 0) {
+            if (0 != scchange) {
                defheight = scchange;
                fvc.vi.setSizebyChar(-1, scchange);
                UI.sizeChange();
             }
-            if (rcount != 0)
+            if (0 != rcount)
                fvc.cursoryabs(rcount);
             switch (key) {
                case 10: // return ^m
@@ -282,10 +269,10 @@ public final class MiscCommands extends Rgroup  {
                   break outloop;
                case '.':
                case ',':
-                  scrpos = (float) .5;
+                  scrpos = .5f;
                   break outloop;
                case '-':
-                  scrpos = (float) .99999;
+                  scrpos = .99999f;
                   break outloop;
                default:
                   return;
@@ -297,6 +284,7 @@ public final class MiscCommands extends Rgroup  {
    }
 
    private static Date lastredraw = new Date();
+
    static void redraw(boolean flushFlag) {
       //trace("redraw flushFlag " + flushFlag + " currFvc " + FvContext.getCurrFvc());
       UI.repaint();

@@ -17,16 +17,16 @@ public final class MovePos {
       y = xo.y;
    }
 
+   public MovePos(Position p) {
+      set(p);
+   }
+
    public String toString() {
-      return x == 0
+      return 0 == x
              ?  "("  + y + ")"
              : ("(" + x + "," + y + ")");
 //    ? (filename.getShortName() + "("  + y + ")-" + comment)
 //    : (filename.getShortName() + "(" + x + "," + y + ")" + "-" + comment);
-   }
-
-   public MovePos(Position p) {
-      set(p);
    }
 
    public void set(Position p) {
@@ -37,9 +37,9 @@ public final class MovePos {
    }
 
    public boolean equals(Object ob) {
-      if (ob == this)
+      if (this == ob)
          return true;
-      if (ob == null)
+      if (null == ob)
          return false;
       if (ob instanceof MovePos) {
          MovePos po = (MovePos) ob;
