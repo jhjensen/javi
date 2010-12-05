@@ -41,6 +41,9 @@ findbugs
 static import.
 
 done :
+   EditTester1 fails
+   Join doensn't put in space
+   :200 doesn't goto line
    Circular MovePos/Position
    editing file doesn't fixup positions.
    something funny going on with mouse and V mode
