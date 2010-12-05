@@ -1,4 +1,5 @@
 package history;
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -281,8 +282,11 @@ public abstract class PersistantStack {
          //    + " filesize " + filesize );
          if (rfile.length() != filesize)
             throw new IOException("inconsistant filesize");
-         FileOutputStream fs = new FileOutputStream(rfile.toString(), true);
-         DataOutputStream ds = new DataOutputStream(fs);
+
+         DataOutputStream ds =
+            new DataOutputStream(
+               new BufferedOutputStream(
+                  new FileOutputStream(rfile.toString(), true)));
          try {
             for (int ii = size - unwritten; ii < size; ii++) {
                Object ob = cache.get(ii - (size - cache.size()));
@@ -387,8 +391,11 @@ public abstract class PersistantStack {
    private void writePop(int index) throws IOException {
       if (rfile.length() != filesize)
          throw new IOException("inconsistant filesize");
-      FileOutputStream fs = new FileOutputStream(rfile.toString(), true);
-      DataOutputStream ds = new DataOutputStream(fs);
+
+      DataOutputStream ds =
+         new DataOutputStream(
+            new BufferedOutputStream(
+               new FileOutputStream(rfile.toString(), true)));
       try {
          ds.write(0);  // mark as special record
          ds.write(POP);  // mark as pop
@@ -398,7 +405,6 @@ public abstract class PersistantStack {
          filesize += ds.size();
       } finally {
          ds.close();
-         fs.close();
       }
    }
 
