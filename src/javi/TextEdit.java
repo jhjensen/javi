@@ -1096,6 +1096,14 @@ final class EditTester1 {
       int after = 13123;
       long targettime = 500;
       long targetmem = 1100000; // should be 3100000 in old version
+
+      // this is fairly wierd, but It seems like the gc doesn't really collect
+      //   all the memory even though I call it three times.  It makes memory
+      //   usage more consistant If we use the following command:
+      //   java  -Xms6m -cp build\;lib/juniversalchardet-1.0.3.jar javi.EditTester1
+      //   Also on my laptop the test takex 3X as long if it is run while
+      //   unplugged !!!!!
+
       //int tot = 100;
       //int after = 82;
       //int tot = 10;

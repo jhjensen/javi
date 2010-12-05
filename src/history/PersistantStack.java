@@ -227,11 +227,10 @@ public abstract class PersistantStack {
       }
 
       public final void close() throws IOException {
-         //trace("rfile = " +rfile + " recordIndex = " + recordIndex + " size = " + size + dump());
+         //trace("closing rfile = " +rfile + " recordIndex = " + recordIndex + " size = " + size + dump());
          if (recordIndex >= size)
             throw new IOException("Illegal quitmark recordIndex = "
                + recordIndex + " size = " + size);
-
          flush();
 
          if (rfile != null) {
@@ -239,6 +238,7 @@ public abstract class PersistantStack {
             //trace("writing file");
             if (rfile.length() != filesize) {
                invalidate();
+               invalidateFile();
                throw new IOException("inconsistant filesize");
             }
             FileOutputStream fs = new FileOutputStream(rfile, true);
@@ -254,6 +254,7 @@ public abstract class PersistantStack {
                ds.close();
             }
          }
+         invalidateFile();
          invalidate();
       }
 
@@ -463,7 +464,7 @@ public abstract class PersistantStack {
    }
 
    public final Exception setFile(File filei) {
-      //trace("file =  " + filei);
+      //trace("set file file =  " + filei);
       if (filei.equals(rfile))
          return null;
       //FileChannel fc = new FileInputStream("regtest").getChannel();
@@ -580,12 +581,12 @@ public abstract class PersistantStack {
       // trace("deleteing " + rfile);
       if (!rfile.delete())
          throw new IOException("unable to delete " + rfile);
-      invalidate();
+      invalidateFile();
    }
 
    public final void  terminateWEP() {
       // test entry to simulate sudden death of system.
-      invalidate();
+      invalidateFile();
       rfile = null;
    }
 
@@ -645,18 +646,20 @@ public abstract class PersistantStack {
       rfile = null;
       cache.clear();
       offsets = null;
+
       size = 0;
       writtenCount = 0;
       filesize = 0;
    }
 
-   private void invalidate() {
+   private void invalidateFile() {
       reset();
       bwr = null;
       writebuffer = null;
       size = -1;
       bufoff = -1;
       writtenCount = -1;
+//      cache=null;
       try {
          if (dos != null) {
             dos.close();

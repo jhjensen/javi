@@ -21,6 +21,7 @@ public final class IntArray {
          throw new IndexOutOfBoundsException(String.valueOf(index));
       return store[index];
    }
+
    public void set(int index, int val) {
       if (index >= len) {
          int [] temp =  new int[(index > len * 2)
@@ -35,13 +36,16 @@ public final class IntArray {
 
 
    public void removeRange(int from, int to) {
-      //trace("from = " + from + " to = " + to);
+      //trace("int array clearing from = " + from + " to = " + to);
       if ((from > to) || (to > len))
          throw new IndexOutOfBoundsException("from > to");
       System.arraycopy(store, from, store, to, store.length - to);
       len -=  to - from;
    }
+
    void clear() {
+      //trace("clearing int array");
+      store = new int[1];
       len = 0;
    }
 
