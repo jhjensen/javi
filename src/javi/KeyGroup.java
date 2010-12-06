@@ -3,10 +3,8 @@ import java.util.HashMap;
 //import static history.Tools.trace;
 
 final class KeyGroup {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    private HashMap<JeyEvent, Rgroup.KeyBinding> map =
-      new HashMap<JeyEvent, Rgroup.KeyBinding>();
+      new HashMap<JeyEvent, Rgroup.KeyBinding>(200);
 
    private static Rgroup.KeyBinding getkb(String name, Object arg) {
       //trace("looking up " + name);

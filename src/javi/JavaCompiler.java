@@ -1,19 +1,17 @@
 package javi;
 
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import javax.tools.DiagnosticListener;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import javax.tools.StandardJavaFileManager;
-import java.util.Arrays;
-import java.util.ArrayList;
 import static history.Tools.trace;
 
 final class JavaCompiler extends Rgroup {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    JavaCompiler() {
       final String[] rnames = {
@@ -23,7 +21,6 @@ final class JavaCompiler extends Rgroup {
       };
       register(rnames);
    }
-
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
       FvContext fvc, boolean dotmode) throws IOException, InputException {
@@ -40,7 +37,7 @@ final class JavaCompiler extends Rgroup {
       }
    }
 
-   static void compcommand(FvContext fvc)  throws IOException {
+   private static void compcommand(FvContext fvc)  throws IOException {
 
       try {
          ArrayList<EditContainer> efs =
@@ -48,7 +45,7 @@ final class JavaCompiler extends Rgroup {
 
          int count = efs.size();
 
-         if (count == 0 && fvc != null)  {
+         if (0 == count && null != fvc)  {
             ArrayList<FileDescriptor.LocalFile> flist =
                new ArrayList<FileDescriptor.LocalFile>(1);
             flist.add((FileDescriptor.LocalFile) fvc.edvec.fdes());
@@ -66,12 +63,13 @@ final class JavaCompiler extends Rgroup {
          throw new RuntimeException("cccommand has bad spec", e);
       }
    }
-   private void compacommand() throws IOException, InputException {
+
+   private static void compacommand() throws IOException, InputException {
       FileList.writeModifiedFiles(".*\\.java"); // write out java files
       ArrayList<FileDescriptor.LocalFile> dlist = DirList.getDefault().fileList(
          new GrepFilter(".*\\.java$", false));
 
-      if (dlist.size() == 0)
+      if (0 == dlist.size())
          UI.reportMessage("no files to compile");
       else
          PosListList.Cmd.setErrors(new JavaCompilerInst(dlist));
@@ -86,7 +84,7 @@ final class JavaCompiler extends Rgroup {
 
       private static String shortString(
             ArrayList<FileDescriptor.LocalFile>  flisti) {
-         StringBuffer sb = new StringBuffer("javac ");
+         StringBuilder sb = new StringBuilder("javac ");
          for (FileDescriptor.LocalFile fd : flisti) {
             sb.append(fd.shortName);
             sb.append(' ');

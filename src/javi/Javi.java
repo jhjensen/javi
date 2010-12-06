@@ -1,7 +1,9 @@
 package javi;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import static history.Tools.trace;
 
 public final class Javi {
@@ -21,22 +23,21 @@ public final class Javi {
    }
 */
 
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
-
 //static String persistName = "testpersist";
    private static String persistName = null;
 
    static final class Jcmds extends Rgroup  {
       private final String[] rnames = {
          "",
-         "persistfile" ,
+         "persistfile",
       };
+
       Jcmds() {
          register(rnames);
       }
+
       public Object doroutine(int rnum, Object arg, int count, int rcount,
-            FvContext fvc, boolean dotmode) throws InputException {
+            FvContext fvc, boolean dotmode) {
          switch (rnum) {
             case 1:
                persistName = arg.toString();
@@ -70,7 +71,7 @@ public final class Javi {
       //trace("");
    }
 
-   public static void initPostUi() throws Exception {
+   public static void initPostUi() {
       new EditGroup();
       Command.init();
       new PosListList.Cmd();
@@ -87,7 +88,11 @@ public final class Javi {
       //new v8();
       //new msvc();
       new MakeCmd();
-      Plugin.Loader.load("plugin/plugin.jar"); //new FindBugs();
+      try {
+         Plugin.Loader.load("plugin/plugin.jar"); //new FindBugs();
+       } catch (Throwable e) {
+          UI.reportError("error trying to load plugins " + e);
+       }
       //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
@@ -128,42 +133,45 @@ public final class Javi {
             sb.append('\n');
          }
       }
-      FileDescriptor pfile = persistName == null
+      FileDescriptor pfile = null == persistName
                              ? null
                              : FileDescriptor.LocalFile.make(persistName);
 
       boolean normalInit = true;
-      if (pfile != null) {
-         ObjectInputStream pis;
+      if (null != pfile) {
+         ObjectInputStream pis = null;
          try {
-            pis = new ObjectInputStream(pfile.getInputStream());
+            pis = new ObjectInputStream(new BufferedInputStream(pfile.getInputStream()));
+            //UI.trace("!!!!!!!!!!!!!!!! start restore ");
+            TextEdit.restoreState(pis);
+            FileList.restoreState(pis);
+            FvContext.restoreState(pis);
+            UI.restoreState(pis);
+            //UI.trace("!!!!!!!!!!!!!!!! end restore ");
+            //FvContext fvc = FvContext.getCurrFvc();
+            //fvc.vi.requestFocus();
+
+            normalInit = false;
          } catch (IOException e) {
             trace("Exception while restoring state " + e);
             e.printStackTrace();
             pis = null;
-         }
-         if (pis != null) {
-            try {
-               //UI.trace("!!!!!!!!!!!!!!!! start restore ");
-               TextEdit.restoreState(pis);
-               FileList.restoreState(pis);
-               FvContext.restoreState(pis);
-               UI.restoreState(pis);
-               //UI.trace("!!!!!!!!!!!!!!!! end restore ");
-               //FvContext fvc = FvContext.getCurrFvc();
-               //fvc.vi.requestFocus();
-
-               normalInit = false;
-            } catch (ClassNotFoundException e) {
-               trace("Exception while restoring state " + e);
-               e.printStackTrace();
-               System.exit(0);
-            } catch (Throwable e) {
-               trace("Exception while restoring state " + e);
-               e.printStackTrace();
-               System.exit(0);
-               trace("");
-            }
+         } catch (ClassNotFoundException e) {
+            trace("Exception while restoring state " + e);
+            e.printStackTrace();
+            System.exit(0);
+         } catch (Throwable e) {
+            trace("Exception while restoring state " + e);
+            e.printStackTrace();
+            System.exit(0);
+            trace("");
+         } finally {
+            if (pis != null)
+               try {
+                  pis.close();
+               } catch (IOException e) {
+                  trace("caught exception try to close input stream!");
+               }
          }
       }
       DirList.getDefault(); // force initialization of dirlist
@@ -174,12 +182,13 @@ public final class Javi {
          }
 
          initPostUi();
-         if (command != null) {
+         if (null != command) {
             //UI.trace("doing command " + command);
             Command.command(command, null, null);
          }
          Command.doneInit();
          MapEvent.run();
+      } catch (ExitException e) {
       } catch (Throwable e) {
          if (!(e instanceof ExitException)) {
             trace("main caught vic exception "  + e);
@@ -188,22 +197,27 @@ public final class Javi {
          }
       }
 
-      if (pfile != null)  {
+      if (null != pfile)  {
          //DebuggingObjectOutputStream pout = null;
-         ObjectOutputStream pout;
          try {
-            pout = new ObjectOutputStream(pfile.getOutputStream());
-            //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
-            TextEdit.saveState(pout);
-            FileList.saveState(pout);
-            FvContext.saveState(pout);
-            UI.saveState(pout);
-            //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
-
-         } catch (Throwable  e) {
-            UI.popError("Serialization error " , e);
+            ObjectOutputStream pout = 
+               new ObjectOutputStream(
+                  new BufferedOutputStream(pfile.getOutputStream()));
+            try {
+               //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
+               TextEdit.saveState(pout);
+               FileList.saveState(pout);
+               FvContext.saveState(pout);
+               UI.saveState(pout);
+               //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
+   
+            } catch (Throwable  e) {
+               UI.popError("Serialization error ", e);
+            } finally {
+               pout.close();
+            }
+         } catch (IOException e) {
          }
-
       }
 
       EventQueue.biglock2.unlock();
@@ -213,4 +227,3 @@ public final class Javi {
       System.exit(0);
    }
 }
-

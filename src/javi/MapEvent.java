@@ -3,19 +3,19 @@ package javi;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import static javi.JeyEvent.SHIFT_MASK;
-import static javi.JeyEvent.CTRL_MASK;
+
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static javi.JeyEvent.SHIFT_MASK;
+import static javi.JeyEvent.CTRL_MASK;
 
 import static history.Tools.trace;
 
 public final class MapEvent {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    private static KeyGroup skeys = new KeyGroup();
    private static KeyGroup mkeys = new KeyGroup();
@@ -49,8 +49,8 @@ public final class MapEvent {
       mkeys.keybind((char) 21, "movescreen", mhalf, CTRL_MASK);
       mkeys.keybind((char) 25, "movescreenline", mone, CTRL_MASK);
       mkeys.keybind((char) 5, "movescreenline", one, CTRL_MASK);
-      mkeys.keyactionbind(JeyEvent.VK_PAGE_UP, "movescreen", mf1 , 0);
-      mkeys.keyactionbind(JeyEvent.VK_PAGE_DOWN, "movescreen", f1 , 0);
+      mkeys.keyactionbind(JeyEvent.VK_PAGE_UP, "movescreen", mf1, 0);
+      mkeys.keyactionbind(JeyEvent.VK_PAGE_DOWN, "movescreen", f1, 0);
 
       skeys.keybind('z', "zprocess", null);
       skeys.keybind((char) 12, "redraw", null, CTRL_MASK);
@@ -92,11 +92,11 @@ public final class MapEvent {
       mkeys.keybind('k', "moveline", FALSE);
       mkeys.keybind('j', "moveline", TRUE);
       mkeys.keyactionbind(JeyEvent.VK_UP, "moveline", FALSE, 0);
-      mkeys.keyactionbind(JeyEvent.VK_UP, "shiftmoveline", FALSE , SHIFT_MASK);
-      mkeys.keyactionbind(JeyEvent.VK_UP, "movescreenline", mone , CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_UP, "shiftmoveline", FALSE, SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_UP, "movescreenline", mone, CTRL_MASK);
       mkeys.keyactionbind(JeyEvent.VK_DOWN, "moveline", TRUE, 0);
-      mkeys.keyactionbind(JeyEvent.VK_DOWN, "shiftmoveline", TRUE , SHIFT_MASK);
-      mkeys.keyactionbind(JeyEvent.VK_DOWN, "movescreenline", one , CTRL_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_DOWN, "shiftmoveline", TRUE, SHIFT_MASK);
+      mkeys.keyactionbind(JeyEvent.VK_DOWN, "movescreenline", one, CTRL_MASK);
       mkeys.keyactionbind(JeyEvent.VK_END, "linepos", MAX_VALUE, 0);
       mkeys.keyactionbind(JeyEvent.VK_END, "gotoline", MAX_VALUE, SHIFT_MASK);
       mkeys.keyactionbind(JeyEvent.VK_HOME, "linepos", zero, 0);
@@ -192,7 +192,7 @@ public final class MapEvent {
       //trace("domovement fvc = " + fvc);
       //trace("domovement ev = " + ein);
       Rgroup.KeyBinding binding = mkeys.get(ein);
-      if (binding != null) {
+      if (null != binding) {
          //trace("binding rg = " + binding.rg + " event " + ein);
          binding.dobind(fiteratei, riteratei, fvc, dotmode);
          return true;
@@ -203,7 +203,7 @@ public final class MapEvent {
    private static boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
       Rgroup.KeyBinding binding = skeys.get(e1);
-      if (binding == null)
+      if (null == binding)
          return false;
       //trace("binding  = " + binding);
       binding.dobind(fiterate, riterate, fvc, false);
@@ -233,8 +233,7 @@ public final class MapEvent {
             edv.backup(".orig");
             break;
          case USESVN:
-            findfile.reset(filename);
-            String svnstr =  (findfile.find()
+            String svnstr =  (findfile.reset(filename).find()
                ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
                : "./.svn/text-base/" + filename
                )  + ".svn-base";
@@ -245,7 +244,7 @@ public final class MapEvent {
                int lineno = 0;
                int linemax = edv.finish();
                String line;
-               while ((line = fr.readLine()) != null) {
+               while (null != (line = fr.readLine())) {
                   if ((++lineno  >= linemax))
                      break;
                   if (!line.equals(edv.at(lineno))) {
@@ -256,7 +255,7 @@ public final class MapEvent {
                      return;
                   }
                }
-               if (line == null && lineno + 1 == linemax)
+               if (null == line && lineno + 1 == linemax)
                   edv.setReadOnly(false);
                else
                   UI.reportMessage("svn base file not equal to current file");
@@ -312,22 +311,22 @@ public final class MapEvent {
    }
 
    static void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
-         InterruptedException , IOException {
+         InterruptedException, IOException {
       //trace("hevent" + jEv);
 
       char ch = jEv.getKeyChar();
-      if (((ch != '0') || (aiterate != 0))
-            && (ch >= '0' && ch <= '9')) {
+      if ((('0' != ch) || (0 != aiterate))
+            && ('0' <= ch && '9' <= ch)) {
          aiterate = aiterate * 10 + (ch & 0x0f);
          return;
-      } else if (jEv.getKeyChar() == 27) {
+      } else if (27 == jEv.getKeyChar()) {
          aiterate = 0;
          return;
       }
 
       riterate = aiterate;   // iterations for command that use 0
       fiterate = aiterate;  // number of iterations forced to 1
-      if (fiterate == 0)
+      if (0 == fiterate)
          fiterate = 1;
       if (domovement(jEv, fiterate, riterate, false, fvc)
             || screenmovement(jEv, fvc)) {
