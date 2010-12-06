@@ -7,8 +7,6 @@ import history.Tools;
 import static history.Tools.trace;
 
 final class MakeCmd extends Rgroup {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    MakeCmd() {
       final String[] rnames = {
@@ -43,7 +41,7 @@ final class MakeCmd extends Rgroup {
             newstr.append(' ');
             newstr.append(ef.getName());
          }
-      if (newstr.length() == 0)  {
+      if (0 == newstr.length())  {
          newstr.append(' ');
          newstr.append(alt);
       }
@@ -65,7 +63,7 @@ final class MakeCmd extends Rgroup {
       }
    }
 
-   void mkcommand(FvContext fvc)  throws IOException {
+   static void mkcommand(FvContext fvc)  throws IOException {
 
       try {
          FileList.writeModifiedFiles(".*");
@@ -76,7 +74,7 @@ final class MakeCmd extends Rgroup {
 //               String cmd =System.getProperties().getProperty("java.javi.makecmd",perl make.pl"
 //                   "C:\\Progra~1\\SourceGear\\DiffMerge\\DiffMerge.exe ");
 //       String[] cmd = {"c:\\cygwin\\bin\\perl","make.pl" , files};
-         String[] cmd = {"perl", "make.pl" , files};
+         String[] cmd = {"perl", "make.pl", files};
 
          PosListList.Cmd.setErrors(new PositionIoc(
             "mk " + files, Tools.runcmd(cmd)));
@@ -85,6 +83,7 @@ final class MakeCmd extends Rgroup {
          throw new RuntimeException("cccommand has bad spec", e);
       }
    }
+
    void asmcommand(FvContext fvc)  throws IOException {
 
       try {
