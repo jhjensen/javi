@@ -760,7 +760,7 @@ final class MoveGroup extends Rgroup {
          forward = 19 != bindex;
          bindex = 6;
 
-      } else if (0 <= bindex) { // ifdef case is special
+      } else if (bindex >= 10) { // ifdef case is special
          forward = 12 != bindex;
          bindex = 5;
       } else {
