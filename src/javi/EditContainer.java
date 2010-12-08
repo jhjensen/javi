@@ -481,7 +481,7 @@ public class EditContainer<OType> implements
    }
 
    class ArrayChange extends IoConverter.BuildCB {
-      void notify(EditCache ec) {
+      void notifyDone(EditCache ec) {
          //trace("ArrayChange notified");
          ecache = ec;
          reinitBack();

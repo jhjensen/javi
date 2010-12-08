@@ -23,7 +23,6 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    private enum ThreadState { INIT, INITSTART, STARTED, FINISHED };
 
-
    public IoConverter(FileProperties<OType> fpi, boolean quickThread) {
       tstate = quickThread
                ? ThreadState.INITSTART
@@ -44,12 +43,12 @@ public class IoConverter<OType> implements Runnable, Serializable {
    public synchronized void dispose() throws IOException {
       //trace("rthread = " + rthread);
       try {
-         if (rthread != null) {
+         if (null != rthread) {
             rthread.interrupt();
             //trace ("waiting for thread to die " +this);
             wait(1000);
-            if (rthread != null)
-               UI.popError("thread didn't die " + this , null);
+            if (null != rthread)
+               UI.popError("thread didn't die " + this, null);
          }
       } catch (InterruptedException e) {
          UI.popError("IoConverter caught ", e);
@@ -84,14 +83,13 @@ public class IoConverter<OType> implements Runnable, Serializable {
    This should only be called from editvec.
    */
 
-   final EditCache<OType> convertStream() throws
-         IOException {
+   final EditCache<OType> convertStream() {
       //trace("index = " + index + " " + fdes + "class " + this.getClass());
 
       EditCache<OType> ret = new EditCache<OType>();
       //trace("retval " + retval);
-      OType ob;
-      while ((ob = getnext()) != null)
+
+      for (OType ob; null != (ob = getnext());)
          ret.add(ob);
 
       return ret;
@@ -123,7 +121,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
    abstract static class BuildCB {
-      abstract void notify(EditCache ed);
+      abstract void notifyDone(EditCache ed);
       abstract BackupStatus getBackupStatus();
    }
 
@@ -172,7 +170,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
             case FINISHED:
                if (swapArray) {
                   mainArray = ioarray;
-                  aNotify.notify(mainArray);
+                  aNotify.notifyDone(mainArray);
                } else {
                   ioarray = mainArray;
                }

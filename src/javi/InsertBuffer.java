@@ -9,23 +9,13 @@ import static javi.JeyEvent.CTRL_MASK;
 /* Copyright 1996 James Jensen all rights reserved */
 
 public abstract class InsertBuffer extends View.Inserter {
-   static final String copyright = "Copyright 1996 James Jensen";
-
-   private StringBuilder buffer = new StringBuilder(40);
-   private boolean overwrite;
-
-   final String getString() {
-      return buffer.toString();
-   }
-
-   final boolean isOverwrite() {
-      return overwrite;
-   }
 
    private static InsertBuffer instance;
 
    public abstract void  insertReset();
 
+   private StringBuilder buffer = new StringBuilder(40);
+   private boolean overwrite;
    private String dotbuffer;
    private KeyGroup ikeys = new KeyGroup();
    private KeyGroup commandikeys = new KeyGroup();
@@ -39,9 +29,17 @@ public abstract class InsertBuffer extends View.Inserter {
 
    static final boolean [] ff = {false, false};
 
-   public InsertBuffer() {
+   protected InsertBuffer() {
       new Cmd();
       instance = this;
+   }
+
+   final String getString() {
+      return buffer.toString();
+   }
+
+   final boolean isOverwrite() {
+      return overwrite;
    }
 
    static final void insertMode(boolean dotmode, int count, FvContext fvc,
@@ -50,7 +48,7 @@ public abstract class InsertBuffer extends View.Inserter {
       instance.insertmode(dotmode, count, fvc, overwritei, singlelinei);
    }
 
-   static String getcomline(String prompt) {
+   static final String getcomline(String prompt) {
       FvContext<String> commFvc =  FvContext.startComLine();
       EditContainer ev = commFvc.edvec;
       try {
@@ -95,11 +93,11 @@ public abstract class InsertBuffer extends View.Inserter {
          register(rnames);
          ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
          ikeys.keybind('\t', "imode.tabinsert", null);
-         ikeys.keybind((char) 8, "imode.backspace", null);
-         ikeys.keybind((char) 127, "imode.delete", null);
-         ikeys.keybind((char) 27, "imode.complete", null);
-         ikeys.keybind((char) 91, "imode.complete", null, CTRL_MASK);
-         ikeys.keybind((char) 22, "imode.setverbatim", null);
+         ikeys.keybind('\b', "imode.backspace", null);
+         ikeys.keybind('\u007f', "imode.delete", null);
+         ikeys.keybind('\u001b', "imode.complete", null);
+         ikeys.keybind(']', "imode.complete", null, CTRL_MASK);
+         ikeys.keybind('\u0016', "imode.setverbatim", null);
          ikeys.keybind((char) 22, "imode.setverbatim", null, CTRL_MASK);
          ikeys.keybind('\r', "imode.insertnewline", null);
          ikeys.keybind('\r', "imode.insertnewline", null, CTRL_MASK);
@@ -126,15 +124,14 @@ public abstract class InsertBuffer extends View.Inserter {
          commandikeys.keyactionbind(JeyEvent.VK_DOWN,
             "imode.nextline", null, 0);
          commandikeys.keyactionbind(JeyEvent.VK_UP, "imode.prevline", null, 0);
-         commandikeys.keybind((char) 16, "imode.putbuf", null);
-         commandikeys.keybind((char) 16,
-            "imode.putbuf", null, CTRL_MASK);
+         commandikeys.keybind('\u0010', "imode.putbuf", null);
+         commandikeys.keybind('\u0010', "imode.putbuf", null, CTRL_MASK);
 //         commandikeys.keybind((char) 6, "imode.find", ff, CTRL_MASK);
-         commandikeys.keybind((char) 12, "redraw", null, CTRL_MASK);
+         commandikeys.keybind('\f', "redraw", null, CTRL_MASK);
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
-            FvContext fvc, boolean dotmode) throws InputException {
+            FvContext fvc, boolean dotmode) {
          //trace("rnum = " + rnum);
 
          switch (rnum) {
@@ -149,9 +146,8 @@ public abstract class InsertBuffer extends View.Inserter {
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
                int linepos = fvc.insertx() + buffer.length();
-               int spcount = findspacebound(fvc, linepos);
 
-               while (--spcount >= 0)
+               for (int cnt = findspacebound(fvc, linepos); --cnt >= 0;)
                   buffer.append(' ');
                fvc.vi.lineChanged(fvc.inserty());
                break;
@@ -173,7 +169,7 @@ public abstract class InsertBuffer extends View.Inserter {
                   if (overwrite)
                      fvc.deleteChars('0', false, true,
                         (count - 1) * dotbuffer.length());
-                  for (int i = 1; i < count; i++)
+                  for (int ii = 1; ii < count; ii++)
                      fvc.cursorabs(fvc.inserttext(dotbuffer));
                }
                return this;
@@ -237,7 +233,7 @@ public abstract class InsertBuffer extends View.Inserter {
    private void itext(int count, FvContext fvc) {
       //trace("fvc = " + fvc  + fvc.vi);
       //trace("buffer = " + buffer );
-      if (buffer.length() != 0) {
+      if (0 != buffer.length()) {
          String temps = buffer.toString();
 
          if (overwrite)
@@ -246,7 +242,7 @@ public abstract class InsertBuffer extends View.Inserter {
 
          //for (char chr :temps) trace("inserting " + (int)chr);
 
-         if (temps.length() != 0)
+         if (0 != temps.length())
             fvc.cursorabs(fvc.inserttext(temps));
 
          if (!singleline)
@@ -263,11 +259,10 @@ public abstract class InsertBuffer extends View.Inserter {
       //trace("insertmode");
       myfvc  = fvc;
 
-      int key;
       if (dotmode) {
          if (overwrite)
             fvc.deleteChars('0', false, true, count * dotbuffer.length());
-         for (int i = 0; i < count; i++)
+         for (int ii = 0; ii < count; ii++)
             fvc.cursorabs(fvc.inserttext(dotbuffer));
       } else {
          try {
@@ -286,18 +281,18 @@ public abstract class InsertBuffer extends View.Inserter {
                JeyEvent ke = EventQueue.nextEvent(viewer);
                //trace("event = " + e);
                Rgroup.KeyBinding binding;
-               if (!verbatim && (binding = activekeys.get(ke)) != null) {
+               if (!verbatim && null != (binding = activekeys.get(ke))) {
                   if (null != binding.dobind(count, 0, fvc, false))
                      break;
                } else {
-                  key = ke.getKeyChar();
+                  char key = ke.getKeyChar();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
                      MapEvent.hevent(ke, fvc);
                   } else if (verbatim && (key >= '0' && key <= '9')) {
                      verbatimCount++;
                      verbatimAcc = verbatimAcc * 10 + (key - '0');
-                     if (verbatimCount == 3) {
+                     if (3 == verbatimCount) {
                         buffer.append((char) verbatimAcc);
                         viewer.lineChanged(fvc.inserty());
                         verbatim = false;
@@ -306,7 +301,7 @@ public abstract class InsertBuffer extends View.Inserter {
                      }
 
                   } else {
-                     if (verbatimCount != 0)
+                     if (0 != verbatimCount)
                         buffer.append((char) verbatimAcc);
                      verbatim = false;
                      verbatimAcc = 0;
@@ -325,28 +320,27 @@ public abstract class InsertBuffer extends View.Inserter {
       }
    }
 
-   static int findspacebound(FvContext fvc, int linepos) {
-      int j;
-      int lineno;
-
-      for (lineno = fvc.inserty() - 1; lineno > 0; lineno--) {
+   static final int findspacebound(FvContext fvc, int linepos) {
+      for (int lineno = fvc.inserty() - 1; lineno > 0; lineno--) {
          String line =  fvc.at(lineno).toString();
          // skip non spaces
-         for (j = linepos; j < line.length(); j++)
-            if (line.charAt(j) == ' ')
+         int tspace;
+         for (tspace = linepos; tspace < line.length(); tspace++)
+            if (' ' == line.charAt(tspace))
                break;
          // skip spaces
-         for (; j < line.length(); j++)
-            if (line.charAt(j) != ' ')
+         for (; tspace < line.length(); tspace++)
+            if (' ' != line.charAt(tspace))
                break;
-         if (j < line.length()) { // found good line
-            return j - linepos;
+         if (tspace < line.length()) { // found good line
+            return tspace - linepos;
          }
       }
       return 0;
    }
+
    public final boolean isActive() {
-      return myfvc != null;
+      return null != myfvc;
    }
 
    final void cleanup(FvContext fvc) {
@@ -357,7 +351,7 @@ public abstract class InsertBuffer extends View.Inserter {
    }
 
    public final void insertChars(CharacterIterator charit, int trunc) {
-      if (charit != null) {
+      if (null != charit) {
          //trace("iterate " + (int)charit.next());
          for (char c = charit.first();
                  c != CharacterIterator.DONE;
