@@ -206,7 +206,7 @@ final class JDebugger extends IoConverter<String> {
          }
       }
       synchronized (inarray) {
-         while (inarray.size() != 0)
+         while (0 != inarray.size())
             addElement(inarray.remove(0));
       }
    }
@@ -214,7 +214,6 @@ final class JDebugger extends IoConverter<String> {
    public String fromString(String s) {
       return s;
    }
-
 
    public static void main(String[] args) {
       try {
