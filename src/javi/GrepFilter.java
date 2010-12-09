@@ -1,12 +1,13 @@
 package javi;
 
-import java.io.FilenameFilter;
 import java.io.File;
-import java.util.regex.Pattern;
+import java.io.FilenameFilter;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 final class GrepFilter implements FilenameFilter {
+
    private Matcher regex;
    private boolean invert;
 
@@ -17,9 +18,7 @@ final class GrepFilter implements FilenameFilter {
    }
 
    public boolean accept(File dir, String name) {
-
       //trace("filename = " + name);
-      regex.reset(name);
-      return  invert ^ regex.find();
+      return  invert ^ regex.reset(name).find();
    }
 }

@@ -5,19 +5,18 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static history.Tools.trace;
 
 
 public final class FvContext<OType> implements Serializable {
    /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    private static final long serialVersionUID = 1;
 
    private static final class FvMap implements Serializable {
@@ -29,8 +28,11 @@ public final class FvContext<OType> implements Serializable {
       }
 
       private final class FS implements EditContainer.FileStatusListener {
+
          public void fileAdded(EditContainer ev) { }
+
          public void fileWritten(EditContainer ev) { }
+
          public boolean fileDisposed(EditContainer ev) {
             if (ev instanceof TextEdit)
                remove((TextEdit) ev);
@@ -54,7 +56,7 @@ public final class FvContext<OType> implements Serializable {
 
       FvContext get(View vi, TextEdit edvec) {
          HashMap<TextEdit, FvContext> ehash = viewhash.get(vi);
-         if (ehash == null) {
+         if (null == ehash) {
             // this only happens when we get a new view
             ehash = new HashMap<TextEdit, FvContext>(viewhash.size());
             viewhash.put(vi, ehash);
@@ -66,7 +68,7 @@ public final class FvContext<OType> implements Serializable {
       void put(FvContext fvc) {
          //trace("putting a new fvcontext " + fvc);
          HashMap<TextEdit, FvContext> ehash = viewhash.get(fvc.vi);
-         if (ehash == null) {
+         if (null == ehash) {
             // this only happens when we get a new view
             ehash = new HashMap<TextEdit, FvContext>(viewhash.size());
             viewhash.put(fvc.vi, ehash);
@@ -128,10 +130,12 @@ public final class FvContext<OType> implements Serializable {
                if (fvit.hasNext())
                   return fvit.next();
             }
-            throw new java.util.NoSuchElementException();
+            throw new java.util.NoSuchElementException("no next");
          }
+
          public void remove() {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException(
+               "remove unsupported by FvIterator");
          }
       }
    }
@@ -182,6 +186,7 @@ public final class FvContext<OType> implements Serializable {
          }
       }
    }
+
    static {
 
       EditContainer.init(new FmListener());
@@ -204,16 +209,17 @@ public final class FvContext<OType> implements Serializable {
 
    static Object getcurobj(TextEdit list) {
       //trace("getcurobj = " + (fvcontext.getcontext(currfvc.vi,list).getCurrentObject()));
-      return (getcontext(currfvc.vi, list).at());
+      return getcontext(currfvc.vi, list).at();
    }
 
    public void setCurrView() {
       activate();
       currfvc = this;
    }
+
    private void activate() {
       //trace("activate " + this);
-      if (currfvc != null) {
+      if (null != currfvc) {
          if (currfvc.vi == vi) // the usual case
             currfvc.vis = false;
          else
@@ -279,7 +285,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public boolean equals(Object ob) {
-      if (ob == null)
+      if (null == ob)
          return false;
       if (ob == this)
          return true;
@@ -323,7 +329,7 @@ public final class FvContext<OType> implements Serializable {
       if (!ignoreLock)
          EventQueue.biglock2.assertOwned();
 
-      Set<TextEdit> allEdits = new HashSet<TextEdit>();
+      Set<TextEdit> allEdits = new HashSet<TextEdit>(100);
 
       for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)
          allEdits.add(fit.next().edvec);
@@ -354,7 +360,7 @@ public final class FvContext<OType> implements Serializable {
    public static FvContext connectFv(TextEdit file, View vi) throws
          InputException {
 
-      if (tfc != null && vi == tfc.vi)
+      if (null != tfc && vi == tfc.vi)
          throw new InputException(
             "can't change command window to display other data");
       UI.setTitle(file.toString());
@@ -363,8 +369,7 @@ public final class FvContext<OType> implements Serializable {
       return fvc;
    }
 
-   static void reconnect(TextEdit  ed, TextEdit next) throws
-         InputException, IOException {
+   static void reconnect(TextEdit  ed, TextEdit next) throws InputException {
 
       //trace("reconnecting oldfile " + ed + " next  " + next);
       if (currfvc.edvec == ed)
@@ -393,7 +398,7 @@ public final class FvContext<OType> implements Serializable {
 
    private void wrapInc(int val) {
       int ypos = (fileposy + val) % edvec.readIn();
-      if (ypos == 0)
+      if (0 == ypos)
          ypos = (val > 0)
                 ? 1
                 : edvec.readIn() - 1;
@@ -403,7 +408,7 @@ public final class FvContext<OType> implements Serializable {
 
    FvContext switchContext(TextEdit  ev, int incval) {
       FvContext newcontext = fvmap.get(vi, ev);
-      if (newcontext == null) {
+      if (null == newcontext) {
          newcontext = new FvContext(vi, ev);
          fvmap.put(newcontext);
       } else {
@@ -418,12 +423,12 @@ public final class FvContext<OType> implements Serializable {
       //trace("fvcontext.getcontext " + e + " and " + viloc);
 
       FvContext context = fvmap.get(viloc, te);
-      if (defaultFvc == null) {
+      if (null == defaultFvc) {
          defaultFvc = new FvContext(viloc, defaultText);
          fvmap.put(defaultFvc);
       }
 
-      if (context == null) {
+      if (null == context) {
          context = new FvContext(viloc, te);
          fvmap.put(context);
       }
@@ -451,7 +456,6 @@ public final class FvContext<OType> implements Serializable {
          ? fileposy
          :  edvec.readIn() - 1);
    }
-
 
    public Object at(int index) {
       //trace("fvcontext.getcurrentObject fvc = " + toString() );
@@ -531,7 +535,7 @@ public final class FvContext<OType> implements Serializable {
          fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
          if (fileposx != newx)
             UI.popError("cursor wrong permission fileposx "
-               + fileposx + " newx " + newx , null);
+               + fileposx + " newx " + newx, null);
       }
    }
 
@@ -563,6 +567,7 @@ public final class FvContext<OType> implements Serializable {
    public void changeElement(OType obj) {
       edvec.changeElementAt(obj, fileposy);
    }
+
    public void changeElementStr(String obj) {
       edvec.changeElementAtStr(obj, fileposy);
    }
@@ -607,11 +612,11 @@ public final class FvContext<OType> implements Serializable {
    boolean isGotoOk() {
       return this != tfc;
    }
+
    void deleteChars(char bufid, boolean reversable,
          boolean forward, int count) {
       String line = at().toString();
       String deleted = null;
-
 
       //Thread.dumpStack();
 

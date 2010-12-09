@@ -1,13 +1,14 @@
 package javi.awt;
 
-import java.awt.event.InputMethodListener;
+import static history.Tools.trace;
+
 import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
 import java.awt.font.TextHitInfo;
 import java.awt.Rectangle;
 import java.text.AttributedCharacterIterator;
 
 import javi.EventQueue;
-import static history.Tools.trace;
 
 final class InHandler extends javi.InsertBuffer implements InputMethodListener {
 
@@ -18,33 +19,40 @@ final class InHandler extends javi.InsertBuffer implements InputMethodListener {
       trace("unexpected");
       return null;
    }
+
    public AttributedCharacterIterator getCommittedText(int beginIndex,
          int endIndex, AttributedCharacterIterator.Attribute[] attributes)  {
       trace("unexpected getCommittedText");
       return null;
    }
+
    public int getCommittedTextLength()  {
       trace("unexpected getCommittedTextLength");
       return 0;
    }
+
    public int getInsertPositionOffset()  {
       trace("");
       return 200;
    }
+
    public  TextHitInfo getLocationOffset(int x, int y) {
       trace("getLocationOffset (" + x + "," + y + ")");
       return TextHitInfo.afterOffset(0);
    }
+
    public AttributedCharacterIterator getSelectedText(
          AttributedCharacterIterator.Attribute[] attributes) {
       trace("getSelectedText");
       return null;
    }
+
    public Rectangle getTextLocation(TextHitInfo offset) {
       trace("getTextLocation" + offset);
       return new Rectangle(50, 50);
 //   return null;
    }
+
    public void caretPositionChanged(InputMethodEvent event) {
       trace(event.toString());
    }
@@ -62,6 +70,7 @@ final class InHandler extends javi.InsertBuffer implements InputMethodListener {
       TextChanged(InputMethodEvent evi) {
          ev = evi;
       }
+
       public void execute() {
          trace(ev.toString());
          //trace("commited = " + committed + " buffer = " + buffer);
@@ -82,6 +91,7 @@ final class InHandler extends javi.InsertBuffer implements InputMethodListener {
       }
 
    }
+
    public void insertReset() {
       commited = 0;
    }

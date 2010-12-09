@@ -8,8 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javi.FvContext;
-import javi.View;
 import javi.FvExecute;
+import javi.View;
 
 
 
@@ -38,7 +38,7 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    private static Float deffontposture = TextAttribute.POSTURE_REGULAR;
 
    private void makedefault()  {
-      atmap = new HashMap<TextAttribute, Object>();
+      atmap = new HashMap<TextAttribute, Object>(4);
       atmap.put(TextAttribute.WEIGHT, deffontweight);
       atmap.put(TextAttribute.SIZE, deffontsize);
       atmap.put(TextAttribute.FAMILY, deffontname);
@@ -61,67 +61,58 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    @SuppressWarnings("unchecked")
    FontEntry(Font fonti) {
       font = fonti;
-      atmap = (Map<TextAttribute, Object>) font.getAttributes();
+      atmap = (HashMap<TextAttribute, Object>) font.getAttributes();
    }
 
    @SuppressWarnings("unchecked")
    FontEntry(Font fonti, Float fontsize) {
-      atmap = (Map<TextAttribute, Object>) fonti.getAttributes();
+      atmap = (HashMap<TextAttribute, Object>) fonti.getAttributes();
       atmap.put(TextAttribute.SIZE, fontsize);
    }
 
    FontEntry(String str) {
-      if (str.length() == 0)
+      if (0 == str.length())
          makedefault();
       else {
 
-         atmap = new HashMap<TextAttribute, Object>();
+         atmap = new HashMap<TextAttribute, Object>(4);
 
-         nameReg.reset(str);
-         atmap.put(TextAttribute.FAMILY,  nameReg.find()
+         atmap.put(TextAttribute.FAMILY,  nameReg.reset(str).find()
             ? nameReg.group(1)
             : deffontname);
 
-         styleReg.reset(str);
-         sizeReg.reset(str);
-
-         atmap.put(TextAttribute.SIZE,  sizeReg.find()
+         atmap.put(TextAttribute.SIZE,  sizeReg.reset(str).find()
             ? Float.valueOf(sizeReg.group(1))
             : deffontsize);
 
-         if (styleReg.find())
+         if (styleReg.reset(str).find())
             setFontType(styleReg.group(1));
          else {
 
-            weightReg.reset(str);
-            postureReg.reset(str);
-
-            atmap.put(TextAttribute.WEIGHT, weightReg.find()
+            atmap.put(TextAttribute.WEIGHT, weightReg.reset(str).find()
                ? Float.valueOf(weightReg.group(1))
                : deffontweight);
 
-            atmap.put(TextAttribute.POSTURE,  postureReg.find()
+            atmap.put(TextAttribute.POSTURE,  postureReg.reset(str).find()
                ? Float.valueOf(postureReg.group(1))
                : deffontposture);
 
          }
       }
-
-      //trace("returning " + this);
    }
 
    Font getFont() {
-      if (font == null) {
+      if (null == font) {
          font = new Font(atmap);
       }
       return font;
    }
 
-   String setName(String fname) {
+   void setName(String fname) {
       String retval = (String) atmap.get(TextAttribute.FAMILY);
       atmap.put(TextAttribute.FAMILY, fname); //??? does put do anything?
       font = null;
-      return retval;
+      //return retval;
    }
 
    void setFontType(String type) {
@@ -135,7 +126,7 @@ final class FontEntry implements FvExecute, java.io.Serializable {
          ? TextAttribute.WEIGHT_BOLD
          : atmap.get(TextAttribute.WEIGHT);
 
-      if (weight != null)
+      if (null != weight)
          atmap.put(TextAttribute.WEIGHT, weight);
 
       atmap.put(TextAttribute.POSTURE,
@@ -145,17 +136,17 @@ final class FontEntry implements FvExecute, java.io.Serializable {
       font = null;
    }
 
-   Float setSize(Float size) {
+   void setSize(Float size) {
       Float retval = (Float) atmap.get(TextAttribute.SIZE);
       atmap.put(TextAttribute.SIZE, size);
       font = null;
-      return retval;
    }
 
    void setWeight(Float size) {
       atmap.put(TextAttribute.WEIGHT, size);
       font = null;
    }
+
    static {
       nameReg  = Pattern.compile(
          " *(?:name\\=)?([^,\\]]+)[,\\] $]").matcher("");
