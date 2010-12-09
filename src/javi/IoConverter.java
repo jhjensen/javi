@@ -275,9 +275,12 @@ public class IoConverter<OType> implements Runnable, Serializable {
                   fileObj = ioarray.get(compIndex);
                } else if (ioarray.size() < mainArray.size()) {
                   backObj = mainArray.get(compIndex);
-               } else if (backupstatus.cleanQuit && backupstatus.isQuitAtEnd) {
+               } else {
+                  fileObj = null;
+                  backObj = null;
+                  if (backupstatus.cleanQuit && backupstatus.isQuitAtEnd)
+                     backupstatus = null;
                   //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
-                  backupstatus = null;
                }
             }
          }
