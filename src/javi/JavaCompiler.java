@@ -39,28 +39,22 @@ final class JavaCompiler extends Rgroup {
 
    private static void compcommand(FvContext fvc)  throws IOException {
 
-      try {
-         ArrayList<EditContainer> efs =
-            FileList.writeModifiedFiles(".*\\.java");
+      ArrayList<EditContainer> efs = FileList.writeModifiedFiles(".*\\.java");
 
-         int count = efs.size();
+      int count = efs.size();
 
-         if (0 == count && null != fvc)  {
-            ArrayList<FileDescriptor.LocalFile> flist =
-               new ArrayList<FileDescriptor.LocalFile>(1);
-            flist.add((FileDescriptor.LocalFile) fvc.edvec.fdes());
-            PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
+      if (0 == count && null != fvc)  {
+         ArrayList<FileDescriptor.LocalFile> flist =
+            new ArrayList<FileDescriptor.LocalFile>(1);
+         flist.add((FileDescriptor.LocalFile) fvc.edvec.fdes());
+         PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
 
-         } else {
-            ArrayList<FileDescriptor.LocalFile> flist =
-               new ArrayList<FileDescriptor.LocalFile>(count);
-            for (EditContainer ef : efs)
-               flist.add((FileDescriptor.LocalFile) ef.fdes());
-            PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
-         }
-
-      } catch (InputException e) {
-         throw new RuntimeException("cccommand has bad spec", e);
+      } else {
+         ArrayList<FileDescriptor.LocalFile> flist =
+            new ArrayList<FileDescriptor.LocalFile>(count);
+         for (EditContainer ef : efs)
+            flist.add((FileDescriptor.LocalFile) ef.fdes());
+         PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
       }
    }
 

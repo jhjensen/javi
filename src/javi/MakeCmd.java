@@ -50,50 +50,38 @@ final class MakeCmd extends Rgroup {
 
    void cccommand(FvContext fvc)  throws IOException {
 
-      try {
-         ArrayList<EditContainer> efs =
-            FileList.writeModifiedFiles(".*\\.((cpp)|[hc]|(as))");
-         String files2 = l2String(efs, fvc.edvec.getName());
-         PosListList.Cmd.setErrors(new GccInst("",
-            "d:\\cygwin\\bin\\bash -c  \"gcc -Wall -S "
-            + " -DUSESPINE -DETI_ADDED -DSTANDARD_OVERHEAD "
-            + files2 + "\" ", false));
-      } catch (InputException e) {
-         throw new RuntimeException("cccommand has bad spec", e);
-      }
+      ArrayList<EditContainer> efs =
+         FileList.writeModifiedFiles(".*\\.((cpp)|[hc]|(as))");
+      String files2 = l2String(efs, fvc.edvec.getName());
+      PosListList.Cmd.setErrors(new GccInst("",
+         "d:\\cygwin\\bin\\bash -c  \"gcc -Wall -S "
+         + " -DUSESPINE -DETI_ADDED -DSTANDARD_OVERHEAD "
+         + files2 + "\" ", false));
    }
 
    static void mkcommand(FvContext fvc)  throws IOException {
 
-      try {
-         FileList.writeModifiedFiles(".*");
-         String files = fvc.edvec.getName().replace('\\', '/');
-         //String[]  cmd = {"ssh", "jjensen@nowind3",
+      FileList.writeModifiedFiles(".*");
+      String files = fvc.edvec.getName().replace('\\', '/');
+      //String[]  cmd = {"ssh", "jjensen@nowind3",
 //                 " . .profile ; cd sidewinder/I6/src ;perl make.pl " + files};
 //                 " . .profile ; cd sidewinder/src ;perl make.pl " + files};
 //               String cmd =System.getProperties().getProperty("java.javi.makecmd",perl make.pl"
 //                   "C:\\Progra~1\\SourceGear\\DiffMerge\\DiffMerge.exe ");
 //       String[] cmd = {"c:\\cygwin\\bin\\perl","make.pl" , files};
-         String[] cmd = {"perl", "make.pl", files};
+      String[] cmd = {"perl", "make.pl", files};
 
-         PosListList.Cmd.setErrors(new PositionIoc(
-            "mk " + files, Tools.runcmd(cmd)));
+      PosListList.Cmd.setErrors(new PositionIoc(
+         "mk " + files, Tools.runcmd(cmd)));
 
-      } catch (InputException e) {
-         throw new RuntimeException("cccommand has bad spec", e);
-      }
    }
 
    void asmcommand(FvContext fvc)  throws IOException {
 
-      try {
-         ArrayList<EditContainer> efs = FileList.writeModifiedFiles(
-            ".*\\.((as)|(asm))");
-         PosListList.Cmd.setErrors(new GccInst(l2String(efs,
-            fvc.edvec.getName()), "c:\\v8\\v8asm.exe ", true));
-      } catch (InputException e) {
-         throw new RuntimeException("cccommand has bad spec", e);
-      }
+      ArrayList<EditContainer> efs = FileList.writeModifiedFiles(
+         ".*\\.((as)|(asm))");
+      PosListList.Cmd.setErrors(new GccInst(l2String(efs,
+         fvc.edvec.getName()), "c:\\v8\\v8asm.exe ", true));
    }
 
    private static final class GccInst extends PositionIoc {

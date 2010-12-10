@@ -1,14 +1,16 @@
 package javi.plugin;
 
+import static history.Tools.trace;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import javi.Rgroup;
+import java.io.FileNotFoundException;
 import javi.FvContext;
+import javi.Plugin;
 import javi.Position;
 import javi.PositionIoc;
-import javi.Plugin;
-import static history.Tools.trace;
+import javi.Rgroup;
 
 public final class FindBugs extends Rgroup implements Plugin {
 
@@ -16,6 +18,7 @@ public final class FindBugs extends Rgroup implements Plugin {
 
    static final String copyright = "Copyright 1996 James Jensen";
    public static final String pluginInfo = "findbug command";
+
    static {
       //trace("reached static initializer of findbugs");
       new FindBugs();
@@ -28,7 +31,6 @@ public final class FindBugs extends Rgroup implements Plugin {
       };
       register(rnames);
    }
-
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException {
@@ -43,27 +45,9 @@ public final class FindBugs extends Rgroup implements Plugin {
       }
    }
 
-   public static void main(String[] args) {
-      try {
-         new javi.StreamInterface();
-
-         FindBugRunner gr = (args.length == 0)
-            ? new FindBugRunner(".")
-            : new FindBugRunner(args[0]);
-
-         Position pos;
-         while (null != (pos = gr.getnext()))
-            trace(" pos = " + pos);
-      } catch (Exception e) {
-         trace(" caught exception " + e);
-         e.printStackTrace();
-      }
-      trace("findbug exits");
-   }
-
    static final class FindBugRunner extends PositionIoc {
 
-      FindBugRunner(String filename) throws IOException {
+      FindBugRunner(String filename) throws FileNotFoundException {
 //     Process proc = Runtime.getRuntime().exec(cstring);
 //     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));
          super("findbug", new BufferedReader(new FileReader("findout")));
@@ -75,7 +59,7 @@ public final class FindBugs extends Rgroup implements Plugin {
 //filename:1:something
 //Position parsefile(String line) throws IOException {
       public Position parsefile(String line) {
-         if (line.length() == 0)
+         if (0 == line.length())
             return Position.badpos;
          trace("parsing len =  " + line.length() + " line: "  + line);
 
@@ -104,5 +88,21 @@ public final class FindBugs extends Rgroup implements Plugin {
          String comment = line.substring(pos + 1, line.length());
          return new Position(0, lineno, file, comment);
       }
+   }
+   public static void main(String[] args) {
+      try {
+         new javi.StreamInterface();
+
+         FindBugRunner gr = (0 == args.length)
+            ? new FindBugRunner(".")
+            : new FindBugRunner(args[0]);
+
+         for (Position pos; null != (pos = gr.getnext());)
+            trace(" pos = " + pos);
+      } catch (Exception e) {
+         trace(" caught exception " + e);
+         e.printStackTrace();
+      }
+      trace("findbug exits");
    }
 }

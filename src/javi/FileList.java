@@ -2,11 +2,10 @@ package javi;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Iterator;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -15,9 +14,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    static final class FileConverter extends ClassConverter<TextEdit<String>> {
       public TextEdit<String> fromString(String str) {
          //trace("S = "  + S);
-         if (str.length() == 0)
+         if (0 == str.length())
             return findfileopen("dummy" + dummycount++, true);
-
 
          int sindex = str.indexOf(' ');
          if (sindex != -1)
@@ -25,19 +23,20 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
          FileDescriptor.LocalFile fh = FileDescriptor.LocalFile.make(str);
 
-         if (EditContainer.findfile(fh) != null)
+         if (null != EditContainer.findfile(fh))
             return findfileopen("dup file" + str + dummycount++, true);
 
          TextEdit<String> retval = findfileopen(fh, true);
-         return retval == null
+         return null == retval
                 ? findfileopen(str + "___bad filename" + dummycount++, true)
                 : retval;
       }
 
       private static FileConverter fileConverter = new FileConverter();
-      private static int dummycount;
+      private static int dummycount = 0;
+
       private static TextEdit<String> findfileopen(
-         FileDescriptor.LocalFile fh, boolean createok) {
+            FileDescriptor.LocalFile fh, boolean createok) {
          //trace("fh = " +fh);
          if (!fh.canRead() && fh.isFile()) {
             trace("returning null, !canRead" + fh);
@@ -52,7 +51,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
          FileProperties<String>  fp =
             new FileProperties<String>(fh, StringIoc.converter);
-         TextEdit<String> ev = FileList.instance == null
+         TextEdit<String> ev = null == FileList.instance
             ? new TextEdit<String>(new FileInput(fp), fp)
             : new TextEdit<String>(new FileInput(fp), FileList.instance, fp);
 
@@ -61,6 +60,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             ev.setReadOnly(true);
          return ev;
       }
+
       private static TextEdit<String> findfileopen(String filename,
             boolean createok) {
          return findfileopen(FileDescriptor.LocalFile.make(filename), createok);
@@ -145,14 +145,6 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private static FileList instance = null;
 
-   /*
-   static Vector<TextEdit<String>> getFileArray() {
-      return instance.varray;
-   }
-   */
-
-   static final String copyright = "Copyright 1996 James Jensen";
-
    public static final class FileListEvent extends EventQueue.IEvent {
       private List mlist;
 
@@ -162,10 +154,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
       public void execute() {
          try {
-            Iterator eve = mlist.iterator();
-            while (eve.hasNext())
-               Rgroup.doCommand("vi", eve.next().toString(), 1,
-                                1, FvContext.getCurrFvc(), false);
+            //Iterator eve = mlist.iterator();
+            //while (eve.hasNext())
+            //while (eve.hasNext())
+            //   Rgroup.doCommand("vi", eve.next().toString(), 1,
+            //                    1, FvContext.getCurrFvc(), false);
+            for (Object ob : mlist)
+               Rgroup.doCommand("vi", ob.toString(), 1,
+                  1, FvContext.getCurrFvc(), false);
          } catch (InterruptedException e) {
             UI.reportError("Unexpected InterruptedException " + e);
          } catch (InputException e) {
@@ -178,9 +174,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    static void make(String fnames) { // takes \n seperated now
       //trace("FileList.make entered fnames" + fnames);
-      if (instance == null) {
+      if (null == instance) {
          FileProperties prop = new FileProperties(
-            FileDescriptor.InternalFd.make("filelist") ,
+            FileDescriptor.InternalFd.make("filelist"),
             FileConverter.fileConverter);
 
          FileParser fp =  new FileParser(prop, fnames);
@@ -190,7 +186,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          //instance.openFile(fnames, null);
          try {
             Object nobj = instance.openFileListp(fnames, null);
-            if (nobj == null) {
+            if (null == nobj) {
                // should only happen when the given files are already open
                int nindex = fnames.indexOf('\n');
                if (nindex != -1)
@@ -198,9 +194,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             }
 
          } catch (IOException e) {
-            UI.popError("error opening command line file " , e);
+            UI.popError("error opening command line file ", e);
          } catch (Exception e) {
-            UI.popError("error opening command line file " , e);
+            UI.popError("error opening command line file ", e);
          }
       }
    }
@@ -220,10 +216,10 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private int findModifiedi() {
 
-      for (int i = 1; i < finish(); i++) {
-         EditContainer ef = at(i);
+      for (int ii = 1; ii < finish(); ii++) {
+         EditContainer ef = at(ii);
          if (ef.isModified())
-            return i;
+            return ii;
       }
       return 0;
    }
@@ -238,8 +234,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          //trace("looking at ef" + ef.canonname());
          if (ef.isModified()) {
             //trace("ef is modified" + ef);
-            regex.reset(ef.toString());
-            if (regex.matches())
+
+            if (regex.reset(ef.toString()).matches())
                svec.add(ef);
          }
       }
@@ -249,9 +245,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private static boolean isReadyQuit(FvContext fvc) {
       int fileIndex = instance.findModifiedi();
-      if (fileIndex != 0) {
+      if (0 != fileIndex) {
          FvContext.getcontext(fvc.vi, instance).cursoryabs(fileIndex);
-         TextEdit mfile = (TextEdit) instance.at(fileIndex);
+         TextEdit mfile = instance.at(fileIndex);
          UI.reportMessage(mfile + " is modified");
          //trace(mfile + " is modified");
          //trace("quit fvc " + fvc);
@@ -266,7 +262,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    }
 
    static ArrayList<EditContainer> writeModifiedFiles(String spec) throws
-         IOException, InputException {
+         IOException {
       return instance.writeModifiedFilesi(spec);
    }
 
@@ -281,28 +277,23 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    public static boolean gotoposition(Position p,
       boolean setstatus, View vi) throws InputException {
       //trace("gotoposition p " + p);
-      if (p == null)
+      if (null == p)
          return false;
-      try {
-         //trace("goto position " + p);
-         boolean retval = instance.openFile(p, vi);
-         if (retval && setstatus && (p.comment != null))
-            UI.setline(p.comment);
-         return retval;
-      } catch (IOException e) {
-         trace("gotoposition caught " + e + " position = " + p);
-         return  false;
-      }
+      //trace("goto position " + p);
+      boolean retval = instance.openFile(p, vi);
+      if (retval && setstatus && (null != p.comment))
+         UI.setline(p.comment);
+      return retval;
    }
 
    private boolean openFile(Position pos, View vi) throws
-      IOException, InputException {
+      InputException {
 
       FileDescriptor fh = pos.filename;
       TextEdit ec = (TextEdit) EditContainer.findfile(fh);
 
       //trace("openFile fh " + fh + " ec " + ec + "  fh.isFile() "   + fh.isFile());
-      if (ec == null && fh instanceof FileDescriptor.LocalFile) {
+      if (null == ec && fh instanceof FileDescriptor.LocalFile) {
          FileDescriptor.LocalFile fhl = (FileDescriptor.LocalFile) fh;
          if (fhl.canRead() && fhl.isFile()) {
             FileProperties fp = new FileProperties(fh, StringIoc.converter);
@@ -326,7 +317,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          fv2.edvec.contains(pos.y);
          fv2.cursorabs(pos);
       }
-      return ec != null;
+      return null != ec;
    }
 
    static FvContext openFileName(String fname, View vi) throws
@@ -343,7 +334,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       while (null != (fh = dlist.findNextFile())) {
          TextEdit<String> te = (TextEdit<String>) EditContainer.findfile(fh);
          //trace("returning te " + te);
-         if (te != null)
+         if (null != te)
             return te;
       }
       return null;
@@ -361,7 +352,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private TextEdit<String> openFileListp(BufferedReader flist, View vi) throws
          IOException, InputException {
-      int index = vi == null
+      int index = null == vi
                   ? 1
                   : FvContext.getcontext(vi, this).getCurrentIndex() + 1;
       TextEdit<String> text = insertStream(flist, index);
@@ -375,9 +366,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       //trace("ed " + ed);
       if (null != ed) {
          int index = indexOf(ed);
-         if (vi == null)
+         if (null == vi)
             vi = FvContext.getCurrFvc().vi;
-         if (vi != null) {
+         if (null != vi) {
             FvContext.getcontext(vi, this).cursoryabs(index);
             return FvContext.connectFv(ed, vi);
          }
@@ -388,9 +379,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    private FvContext open1File(String fname, View vi) throws
          IOException, InputException {
       //trace("openFile fname " + fname);
-      if (fname == null) {
+      if (null == fname) {
          fname =  UI.getFile();
-         if (fname == null)
+         if (null == fname)
             return null;
       }
 
@@ -398,11 +389,11 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       //trace("fname:" + fname + ":");
       //trace("openFile fh " + fh + " text " + text + "  fh.isFile() "   + fh.isFile());
       //trace("text " + text);
-      if (text == null)
+      if (null == text)
          text = (TextEdit<String>) EditContainer.grepfile(fname);
 
       //trace("openFile text " + text);
-      if (text == null) {
+      if (null == text) {
          text = openFileListp(fname, vi);
 //         text = FileConverter.findfileopen(fname, true);
 //         int index = FvContext.getcontext(
@@ -412,14 +403,12 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return showEdit(text, vi);
    }
 
-
-   private static class FileParser extends BufInIoc<TextEdit<String>> {
+   private static final class FileParser extends BufInIoc<TextEdit<String>> {
       private int stage = 1;
       private static final long serialVersionUID = 1;
       private transient String searchName;
       private transient boolean dupflag = false;
       private transient boolean foundf = false;
-
 
       FileParser(FileProperties fp, String fnames)  {
          super(fp, true, new BufferedReader(new StringReader(fnames)));
@@ -440,7 +429,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
                      searchName = getLine();
                         //trace("searching for file " + searchName);
-                     if (searchName == null)
+                     if (null == searchName)
                         break oloop;
 
                      foundf = false;
@@ -453,12 +442,12 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                                         FileDescriptor.LocalDir) fh);
                            continue oloop;
                         } else {
-                           if (EditContainer.findfile(fh) != null)
+                           if (null != EditContainer.findfile(fh))
                               dupflag = true;
                            else if (fh instanceof FileDescriptor.LocalFile) {
                               edv = FileConverter.findfileopen((
                                  FileDescriptor.LocalFile) fh, true);
-                              if (edv != null)
+                              if (null != edv)
                                  break oloop;
                            }
                         }
@@ -508,21 +497,22 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                            foundf |= DirList.getDefault().addSearchDir((
                                         FileDescriptor.LocalDir) fha);
                         } else {
-                           if (EditContainer.findfile(fha) != null)
+                           if (null != EditContainer.findfile(fha))
                               dupflag = true;
                            else  {
-                              if (EditContainer.findfile(fha) != null)
+                              if (null != EditContainer.findfile(fha))
                                  dupflag = true;
                               else if (fha
                                     instanceof FileDescriptor.LocalFile) {
                                  edv = FileConverter.findfileopen((
                                     FileDescriptor.LocalFile) fha, false);
-                                 if (edv != null)
+                                 if (null != edv)
                                     break oloop;
                               }
                            }
                         }
                      }
+                     //intentional fallthrough
                   case 4:
                      //trace("stage 4  if all else fails create file" + searchName + " edv = " + edv);
                      //trace("foundf = " + foundf);
@@ -533,12 +523,12 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                            foundf |= DirList.getDefault().addSearchDir((
                                         FileDescriptor.LocalDir) fh);
                         } else {
-                           if (EditContainer.findfile(fh) != null)
+                           if (null != EditContainer.findfile(fh))
                               dupflag = true;
                            else if (fh instanceof FileDescriptor.LocalFile) {
                               edv = FileConverter.findfileopen((
                                  FileDescriptor.LocalFile) fh, true);
-                              if (edv != null)
+                              if (null != edv)
                                  break oloop;
                            }
                         }
@@ -548,7 +538,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      break;
                }
 
-            if (edv != null) {
+            if (null != edv) {
                //trace("end of getnext " + edv.canonname());
                foundf = true;
             }
@@ -568,7 +558,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    static void quit(boolean save, FvContext fvc) {
       //trace("vic.quit reached");
-      if (save && fvc != null) {
+      if (save && null != fvc) {
          try {
             //trace("fvc.quit going to fvc =  " +  fvc);
             if (isReadyQuit(fvc))
@@ -585,7 +575,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    private static void processZ(FvContext fvc) throws
          InputException {
       View currview = fvc.vi;
-      if (EventQueue.nextKey(currview) == 'Z') {
+      if ('Z' == EventQueue.nextKey(currview)) {
          try {
             TextEdit ev =  fvc.edvec;
             int fileIndex = instance.indexOf(ev);
@@ -609,7 +599,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
                if (ev.isModified())
                   ev.printout();
-               if (instance.finish() == 2) { // on last file
+               if (2 == instance.finish()) { // on last file
                   quit(true, fvc);
                } else {
                   instance.remove(fileIndex, 1);
@@ -641,14 +631,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          //trace("instance[1] " + instance.at(1));
          //trace("instance[2] " + instance.at(2));
 //     trace("instance[3] " + instance.at(3));
-         Tools.Assert((instance.at(1)).finish() == 2,
+         Tools.Assert((2 == instance.at(1).finish()),
                       Integer.valueOf((instance.at(1)).finish()));
-         Tools.Assert((instance.at(2)).finish() == 2,
+         Tools.Assert((2 == instance.at(2).finish()),
                       Integer.valueOf((instance.at(1)).finish()));
          instance.remove(1, 1);
          instance.checkpoint();
          //trace("instance[1] " + instance.at(1));
-         Tools.Assert(instance.finish() == 2, instance.finish());
+         Tools.Assert(2 == instance.finish(), instance.finish());
          instance.undo();
 
          //Tools.Assert(instance.finish()== 3, instance.finish());
@@ -659,7 +649,5 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          trace("main caught exception " + e);
          e.printStackTrace();
       }
-      System.exit(0);
-
    }
 }
