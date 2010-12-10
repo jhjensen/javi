@@ -1,21 +1,23 @@
 package javi;
 
 import java.io.BufferedReader;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
-import java.io.BufferedOutputStream;
-import java.io.OutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
@@ -85,25 +87,18 @@ public class FileDescriptor implements Serializable {
       throw new IOException("unable to create an output stream");
    }
 
-   static BufferedReader getBufferedReader(String fname) throws IOException {
+   static final BufferedReader getBufferedReader(String fname) throws
+         UnsupportedEncodingException, FileNotFoundException {
       return new BufferedReader(
                 new InputStreamReader(
                    new FileInputStream(fname), "UTF-8"));
    }
 
-   static boolean isSpecial(String file) {
+   static final boolean isSpecial(String file) {
       return file.startsWith(separator2) || file.startsWith(separator)
          || (file.length() > 1 && file.charAt(1) == ':'
             && Character.isLetter(file.charAt(0)));
    }
-
-   /*
-      static FileDescriptor make(FileDescriptor directory ,String fileName) {
-         String nfile = directory.shortName + separator + fileName;
-         return LocalFile.make(nfile);
-      }
-
-   */
 
    private static final class Fiter implements Iterable<File> {
 
@@ -117,10 +112,12 @@ public class FileDescriptor implements Serializable {
          public boolean hasNext() {
             return input.hasNext();
          }
+
          public File next() {
             File retval = input.next().fh;
             return retval;
          }
+
          public void remove() {
             input.remove();
          }
@@ -132,8 +129,8 @@ public class FileDescriptor implements Serializable {
 
    }
 
-   static Iterable<? extends JavaFileObject> getFileObjs(
-         StandardJavaFileManager fileManager  ,
+   static final Iterable<? extends JavaFileObject> getFileObjs(
+         StandardJavaFileManager fileManager,
          Iterable<FileDescriptor.LocalFile> flist) {
       return fileManager.getJavaFileObjectsFromFiles(new Fiter(flist));
    }
@@ -144,8 +141,9 @@ public class FileDescriptor implements Serializable {
       public static InternalFd make(String fname) {
          return new InternalFd(fname);
       }
+
       public InternalFd(String fname) {
-         super(fname , fname + " " + ++uniqCtr);
+         super(fname, fname + " " + ++uniqCtr);
       }
    }
 
@@ -162,6 +160,7 @@ public class FileDescriptor implements Serializable {
       FileDescriptor getPersistantFd() {
          return null;
       }
+
       LocalFile createFile(String fileName) {
          return LocalFile.make(shortName + separator + fileName);
       }
@@ -175,8 +174,8 @@ public class FileDescriptor implements Serializable {
       private static File cwd;
       private static String cwdCanon;
       private static String[] canonArray;
-      private static final Matcher bslash =  Pattern.compile("\\\\").matcher("");
-
+      private static final Matcher bslash =
+         Pattern.compile("\\\\").matcher("");
       final File fh; // temp change, do not check in
 
 //boolean isPersistant() {
@@ -188,16 +187,15 @@ public class FileDescriptor implements Serializable {
       }
 
       private static void setCwd(File curDir) throws IOException {
-         bslash.reset(curDir.getCanonicalPath());
-         cwd = curDir;
-         cwdCanon  = bslash.replaceAll("/") + '/';
 
-         int index = 0;
+         cwd = curDir;
+         cwdCanon  = bslash.reset(
+            curDir.getCanonicalPath()).replaceAll("/") + '/';
+
          int count = 0;
-         while (-1 != (index = cwdCanon.indexOf('/', index))) {
+         for (int index = 0;
+                -1 != (index = cwdCanon.indexOf('/', index)); index++)
             count++;
-            index++;
-         }
 
          StringBuilder sb = new StringBuilder(3 * count);
 
@@ -209,7 +207,7 @@ public class FileDescriptor implements Serializable {
          canonArray = new String[1 + cwdCanon.length()];
          for (int ii = 0; ii < cwdCanon.length(); ii++) {
             canonArray[ii] = canonRep.substring(count * 3);
-            if (cwdCanon.charAt(ii) == '/')
+            if ('/' == cwdCanon.charAt(ii))
                count++;
          }
          canonArray[cwdCanon.length()] = "";
@@ -221,7 +219,7 @@ public class FileDescriptor implements Serializable {
             setCwd(new File("."));
          } catch (IOException e) {
             throw new RuntimeException(
-               "FileDescriptor unable to resolve canonical path of cwd" , e);
+               "FileDescriptor unable to resolve canonical path of cwd", e);
          }
       }
 
@@ -237,7 +235,7 @@ public class FileDescriptor implements Serializable {
          //trace("ca cl = " + canonArray[commonLen]);
          //trace("ca len = " + canonArray.length);
 
-         if (commonLen == 0)
+         if (0 == commonLen)
             return filename;
 
          //trace("canonArray[commonLen] " + canonArray[commonLen]);
@@ -255,36 +253,35 @@ public class FileDescriptor implements Serializable {
                 : cname;
       }
 
-      static String[] cwdlist(FilenameFilter fl) {
-         return (cwd.list(fl));
+      static final String[] cwdlist(FilenameFilter fl) {
+         return cwd.list(fl);
       }
 
-      static String[] cwdlist() {
-         return (cwd.list());
+      static final String[] cwdlist() {
+         return cwd.list();
       }
 
-      String[] list() {
-         return (fh.list());
+      final String[] list() {
+         return fh.list();
       }
 
-      String[] list(FilenameFilter fl) {
-         return (fh.list(fl));
+      final String[] list(FilenameFilter fl) {
+         return fh.list(fl);
       }
 
-      ArrayList<FileDescriptor.LocalFile>  listDes(FilenameFilter fl) {
+      final ArrayList<FileDescriptor.LocalFile>  listDes(FilenameFilter fl) {
          File[] flist = fh.listFiles(fl);
          ArrayList<FileDescriptor.LocalFile> dlist =
             new ArrayList<FileDescriptor.LocalFile>(flist.length);
          for (File file : flist)
             dlist.add(LocalFile.make(file));
-         return (dlist);
+         return dlist;
       }
 
-      void renameTo(LocalFile target) throws IOException {
+      final void renameTo(LocalFile target) throws IOException {
          if (!fh.renameTo(target.fh))
             throw new IOException("unable to rename file");
       }
-
 
       private static int findCommon(String str1, String str2) {
          //trace("findcommon");
@@ -301,7 +298,7 @@ public class FileDescriptor implements Serializable {
 
          //trace("xx1 ii " + ii + "\nstr1 " + str1 + "\nstr2 " + str2 + "\ncomn " + str1.substring(0,ii));
          while (ii > 0) {
-            if (str1.charAt(--ii) == '/')
+            if ('/' == str1.charAt(--ii))
                break;
          }
          //trace("xx2 ii " + ii + "\nstr1 " + str1 + "\nstr2 " + str2 + "\ncomn " + str1.substring(0,ii));
@@ -310,8 +307,7 @@ public class FileDescriptor implements Serializable {
 
       private static String makecname(File fh) {
          try {
-            bslash.reset(fh.getCanonicalPath());
-            String cname = bslash.replaceAll("/");
+            String cname = bslash.reset(fh.getCanonicalPath()).replaceAll("/");
             if (fh.isDirectory())
                cname += '/';
             return cname;
@@ -320,18 +316,17 @@ public class FileDescriptor implements Serializable {
          }
       }
 
-
       static LocalFile make(String fname) {
          //trace("make " + fname);
          File fh = new File(fname);
          if (!fh.exists()) {
             // fix up cygwin names
-            String fname2 = fname.length()  == 0
+            String fname2 = 0 == fname.length()
                ? fname
-               : fname.charAt(0) == '/'
+               : '/' == fname.charAt(0)
                   ? separator.equals("/")
                      ? fname
-                     : fname.indexOf("cygdrive") == 1
+                     : 1 == fname.indexOf("cygdrive")
                         ? fname.charAt(10) + ":" + fname.substring(11)
                         : "c:/cygwin" + fname
                   : fname;
@@ -350,7 +345,7 @@ public class FileDescriptor implements Serializable {
                 : new LocalFile(normName, cname, fh);
       }
 
-      static LocalFile make(File fh) {
+      static final LocalFile make(File fh) {
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fh.getName(), cname);
          //trace("cname " + cname  + " normName " + normName);
@@ -359,7 +354,7 @@ public class FileDescriptor implements Serializable {
                 : new LocalFile(normName, cname, fh);
       }
 
-      static LocalFile createTempFile(String name, String ext) throws
+      static final LocalFile createTempFile(String name, String ext) throws
             IOException {
          File tmp = File.createTempFile(name, ext);
          String shortName = tmp.getPath();
@@ -372,33 +367,31 @@ public class FileDescriptor implements Serializable {
          fh = fhi;
       }
 
-
-      boolean isFile() {
+      final boolean isFile() {
          return fh.isFile();
       }
 
-      boolean exists() {
+      final boolean exists() {
          return fh.exists();
       }
 
-      boolean isDirectory() {
+      final boolean isDirectory() {
          return fh.isDirectory();
       }
 
-      boolean canRead() {
+      final boolean canRead() {
          return fh.canRead();
       }
 
-      boolean canWrite() {
+      final boolean canWrite() {
          return fh.canWrite();
       }
 
-
-      void deleteOnExit() {
+      final void deleteOnExit() {
          fh.deleteOnExit();
       }
 
-      void movefile(String newName) throws IOException {
+      final void movefile(String newName) throws IOException {
          File file = new File(newName);
          // check that file already exists
          if ((file.isFile()) && (!file.delete()))
@@ -407,25 +400,28 @@ public class FileDescriptor implements Serializable {
             throw new IOException("unable to rename " + fh + " to " + file);
       }
 
-      BufferedReader getBufferedReader() throws IOException {
+      final BufferedReader getBufferedReader() throws
+            UnsupportedEncodingException, FileNotFoundException {
          return new BufferedReader(
             new InputStreamReader(
                new FileInputStream(fh), "UTF-8"));
       }
-      OutputStream getOutputStream() throws IOException {
+
+      final OutputStream getOutputStream() throws FileNotFoundException {
          return new FileOutputStream(fh);
       }
-      InputStream getInputStream() throws IOException {
+
+      final InputStream getInputStream() throws FileNotFoundException {
          return new FileInputStream(fh);
       }
 
-      void delete() throws IOException {
+      final void delete() throws IOException {
          if (fh.exists() && !fh.delete()) {
             throw new IOException("unable to delete " + fh);
          }
       }
 
-      public boolean equals(Object de) {
+      public final boolean equals(Object de) {
          return de == this
             ? true
             : de instanceof FileDescriptor
@@ -433,25 +429,25 @@ public class FileDescriptor implements Serializable {
                 : false;
       }
 
-      public String toString()  {
+      public final String toString()  {
          return shortName  + " " + canonName;
       }
 
-      public int hashCode() {
+      public final int hashCode() {
          return canonName.hashCode();
       }
 
-      byte[] readFile() throws IOException {
+      private static final byte[] zBytes = new byte[0];
+      final byte[] readFile() throws IOException {
 
          if (!exists())
-            return new byte[0];
+            return zBytes;
 
          FileInputStream localInput = new FileInputStream(fh);
          try {
             int length = (int) fh.length();
             byte[] iarray = new byte[length];
-            int ilen;
-            ilen = localInput.read(iarray, 0, length);
+            int ilen = localInput.read(iarray, 0, length);
             if (ilen != length)
                throw new RuntimeException(
                   "filereader.getFile: read in length doesnt match");
@@ -466,16 +462,18 @@ public class FileDescriptor implements Serializable {
          }
       }
 
-      long length() {
+      final long length() {
          return fh.length();
       }
 
    }
+
    //String curdir = x.getAbsolutePath();
-   static void ntest(String iname, String shortname) {
-      FileDescriptor t = LocalFile.make(iname);
-      Tools.Assert(t.shortName.equals(shortname), t.shortName);
+   static final void ntest(String iname, String shortname) {
+      FileDescriptor tf = LocalFile.make(iname);
+      Tools.Assert(tf.shortName.equals(shortname), tf.shortName);
    }
+
    public static void main(String[] args) {
       try {
          //LocalFile.setCwd(new File("C:/cygwin/home/jjensen/javt/javi"));
@@ -506,6 +504,5 @@ public class FileDescriptor implements Serializable {
          Tools.trace("main caught exception " + e);
          e.printStackTrace();
       }
-      System.exit(0);
    }
 }

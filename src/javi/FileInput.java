@@ -5,7 +5,6 @@ import org.mozilla.universalchardet.UniversalDetector;
 
 final class FileInput extends BufInIoc<String> {
    /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    private static final long serialVersionUID = 1;
 
 //private FileDescriptor file;
@@ -13,14 +12,10 @@ final class FileInput extends BufInIoc<String> {
    public String fromString(String s) {
       return s;
    }
+
    String newExternal(history.ByteInput dis) {
       return dis.readUTF();
    }
-
-//public IoConverter copy() {
-//  FileInput ip= new FileInput(new FileDescriptor(fdes.getShortName() + ".copy"));
-//  return ip;
-//}
 
    protected void truncIo() {
       npos = Integer.MAX_VALUE;
@@ -42,7 +37,7 @@ final class FileInput extends BufInIoc<String> {
       //trace("fileread getnext");
       //trace("fileread getnext returning " + retval);
       String retval = getLine();
-      if (retval != null)
+      if (null != retval)
          return retval;
 
       String nextstring;
@@ -98,11 +93,10 @@ final class FileInput extends BufInIoc<String> {
       }
    }
 
-
    FileInput(FileProperties fp) {
       super(fp, false, null);
       //trace("new FileInput prop = " + fp);
-      if (fp == null)
+      if (null == fp)
          throw new RuntimeException("file input with no File");
 
       //???FileDescriptor.LocalFile.make(fdes.shortName+".dmp2");
@@ -124,7 +118,7 @@ final class FileInput extends BufInIoc<String> {
             detector.handleData(filebyte, 0, filebyte.length);
             detector.dataEnd();
             String encoding = detector.getDetectedCharset();
-            if (encoding == null) {
+            if (null == encoding) {
                filestring  = new String(filebyte);
             } else {
                //trace("Detected encoding = " + encoding);
