@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import static history.Tools.trace;
 
 final class EditGroup extends Rgroup {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    private int dotcommand;
    private char dotbufid;
@@ -52,7 +50,7 @@ final class EditGroup extends Rgroup {
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
-         FvContext  fvc , boolean dotmode) throws
+         FvContext  fvc, boolean dotmode) throws
          InterruptedException, IOException, InputException {
       //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
       if (!dotmode && !(rnum >= 20 && rnum <= 22)) {
@@ -144,8 +142,8 @@ final class EditGroup extends Rgroup {
             Buffers.deleted('0', bufs);
             break;
          case 22:
-            if (dotcommand != 0) {
-               if (rcount == 0)
+            if (0 != dotcommand) {
+               if (0 == rcount)
                   count = dotcount;
                dotcount = count;
                return doroutine(dotcommand, dotarg, dotcount,
@@ -154,7 +152,7 @@ final class EditGroup extends Rgroup {
             return null;
          case 23:
             markmode('0', dotmode, count, rcount, fvc,
-               ((Integer) arg).intValue() == 1);
+               1 == ((Integer) arg).intValue());
             break;
          case 24:
          case 25:
@@ -168,14 +166,14 @@ final class EditGroup extends Rgroup {
             fvc.edvec.tabfix(fvc.vi.getTabStop());
             break;
          default:
-            throw new RuntimeException();
+            throw new RuntimeException("invalid doroutine index");
       }
       fvc.edvec.checkpoint();
       fvc.fixCursor();
       return null;
    }
 
-   private void shiftmode(int direction, int count , FvContext fvc,
+   private void shiftmode(int direction, int count, FvContext fvc,
          boolean dotmode, int rcount) throws
             InterruptedException, IOException, InputException {
       if (!dotmode)
@@ -203,7 +201,7 @@ final class EditGroup extends Rgroup {
                starty = fvc.inserty();
                amount = yold - starty + 1;
             }
-            if (direction != 1)
+            if (1 != direction)
                fvc.cursorx(fvc.edvec.shiftleft(starty, amount));
             else
                fvc.cursorx(fvc.edvec.shiftright(starty, amount));
@@ -212,6 +210,7 @@ final class EditGroup extends Rgroup {
    }
 
    private int donex, markamount;
+
    private void markmode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc, boolean vMode) throws
          InputException, IOException, InterruptedException {
@@ -271,8 +270,8 @@ final class EditGroup extends Rgroup {
                   donex = Integer.MAX_VALUE;
                   startx = 0;
                } else {
-                  if (markamount == 1)
-                     donex = startx + donex;
+                  if (1 == markamount)
+                     donex += startx;
                   startx = fvc.insertx();
                }
             }
@@ -328,7 +327,7 @@ final class EditGroup extends Rgroup {
                      fvc.cursorabs(startx, starty);
                      String line = fvc.edvec.gettext(startx,
                         starty, donex, doney);
-                     MoveGroup.dosearch(key == 'S', 1, fvc, line);
+                     MoveGroup.dosearch('S' == key, 1, fvc, line);
                      break out;
                   case 12:
                      MiscCommands.redraw(true);
@@ -339,9 +338,9 @@ final class EditGroup extends Rgroup {
                         Rgroup.doCommand("gototag", line, 1, 1, fvc, false);
                      } catch (IOException e) {
                         throw new RuntimeException(
-                           "editgroup.markmode got unexpected " , e);
+                           "editgroup.markmode got unexpected ", e);
                      } catch (InterruptedException e) {
-                        UI.popError("caught int" , e);
+                        UI.popError("caught int", e);
                      }
 
                      break out;
@@ -357,6 +356,7 @@ final class EditGroup extends Rgroup {
          fvc.vi.clearMark();
       }
    }
+
    private void qmode(int count, int rcount,
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
@@ -443,11 +443,11 @@ final class EditGroup extends Rgroup {
       }
    }
 
-   private void putbuffer(char id, boolean after, FvContext fvc)  {
+   private static void putbuffer(char id, boolean after, FvContext fvc)  {
 
       Object buf = Buffers.getbuf(id);
       //trace("putbuffer id " + id  + " buf " + buf);
-      if (buf == null)
+      if (null == buf)
          return;
 
       if (buf instanceof String) {
@@ -461,19 +461,17 @@ final class EditGroup extends Rgroup {
       }
    }
 
-   private void substitute(boolean dotmode, int count, FvContext fvc) throws
-         InputException , IOException {
+   private static void substitute(boolean dotmode,
+         int count, FvContext fvc) throws InputException, IOException {
       fvc.deleteChars('0', true, true, count);
-      count = 1;
-      InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+      InsertBuffer.insertMode(dotmode, 1, fvc, false, false);
    }
 
    private void ucSubstitute(boolean dotmode, int count, FvContext fvc) throws
          InputException, IOException {
       MoveGroup.starttext(fvc);
       deletetoend('0', count, fvc);
-      count = 1;
-      InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+      InsertBuffer.insertMode(dotmode, 1, fvc, false, false);
       fvc.edvec.checkpoint();
       fvc.fixCursor();
    }
@@ -498,15 +496,13 @@ final class EditGroup extends Rgroup {
        InterruptedException, IOException, InputException {
 //trace("count = " + count + " rcount = " + rcount
 //    +  " fvc = " + fvc);
-      JeyEvent event;
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
-      if (!dotmode) {
-         event = EventQueue.nextKeye(fvc.vi);
-         dotevent3 = event;
-      } else
-         event = dotevent3;
+      if (!dotmode)
+         dotevent3 = EventQueue.nextKeye(fvc.vi);
+
+      JeyEvent event = dotevent3;
 
       switch(event.getKeyChar()) {
 
@@ -532,23 +528,21 @@ final class EditGroup extends Rgroup {
             }
             return;
       }
-
    }
+
    private void yankmode(char bufid, boolean dotmode, int count,
       int rcount, FvContext fvc) throws
       InterruptedException, IOException, InputException {
 //trace("count = " + count + " rcount = " + rcount);
-      JeyEvent event;
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
-      if (!dotmode) {
-         event = EventQueue.nextKeye(fvc.vi);
-         dotevent3 = event;
-      } else
-         event = dotevent3;
+      if (!dotmode)
+         dotevent3 = EventQueue.nextKeye(fvc.vi);
 
-      if (event.getKeyChar() == 'y') {
+      JeyEvent event =  dotevent3;
+
+      if ('y' == event.getKeyChar()) {
          if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
             count = fvc.edvec.finish() - 1;
          Buffers.deleted(bufid, fvc.getElementsAt(count));
@@ -574,11 +568,9 @@ final class EditGroup extends Rgroup {
          int rcount, FvContext fvc) throws
          InterruptedException, InputException, IOException {
 
-      JeyEvent event;
-      if (!dotmode)
-         event = EventQueue.nextKeye(fvc.vi);
-      else
-         event = dotevent3;
+      JeyEvent event = dotmode
+         ? dotevent3
+         : EventQueue.nextKeye(fvc.vi);
 
       switch (event.getKeyChar())  {
          case 'c':
@@ -605,7 +597,7 @@ final class EditGroup extends Rgroup {
          do
             dotchar = EventQueue.nextKey(fvc.vi);
          while (dotchar  == JeyEvent.CHAR_UNDEFINED);
-      if (dotchar == 27)
+      if (27 == dotchar)
          return;
       String line = fvc.at().toString();
       //trace("count " + count + " line.length() " + line.length() + " insertx " + fvc.insertx());

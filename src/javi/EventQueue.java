@@ -1,20 +1,15 @@
 package javi;
-import java.util.LinkedList;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.ArrayList;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import history.Tools;
 import static history.Tools.trace;
 
 public final class EventQueue {
-   private EventQueue() { }
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
-//static {
-//       Thread.dumpStack();
-//}
+   private EventQueue() { }
 
    public static final class DebugLock extends ReentrantLock {
       public   void lock() {
@@ -33,20 +28,23 @@ public final class EventQueue {
          }
       }
 
-      public   void unlock() {
-         //Tools.trace("unlocking " + this,1);
-         super.unlock();
-      }
+      //public   void unlock() {
+      //   //Tools.trace("unlocking " + this,1);
+      //   super.unlock();
+      //}
+
       void assertOwned() {
          if (!isHeldByCurrentThread())
             throw new RuntimeException(
                "lock not held " + Thread.currentThread());
       }
+
       public void assertUnOwned() {
          if (isHeldByCurrentThread())
             throw new RuntimeException(
                "lock held " + Thread.currentThread());
       }
+
       public boolean tryLock(long time, TimeUnit tu) throws
             InterruptedException {
          //Tools.trace("locking " + this,1);
@@ -63,9 +61,6 @@ public final class EventQueue {
    public static final DebugLock biglock2 = new DebugLock();
 
    private static LinkedList<Object> queue = new LinkedList<Object>();
-//private PrintWriter capstream;
-//private BufferedReader sourceStream;
-
 
    private static int timeout = 500;
 
@@ -95,11 +90,11 @@ public final class EventQueue {
       biglock2.unlock();
       //trace("Init time trace: getting event");
       synchronized (EventQueue.class) {
-         if (queue.size() != 0)
+         if (0 != queue.size())
             ev = queue.removeFirst();
       }
 
-      if (ev != null) {
+      if (null != ev) {
          biglock2.lock();
          return ev;
       }
@@ -115,18 +110,17 @@ public final class EventQueue {
             break;
          } catch (IOException e) {
             UI.popError("exception caught in idle loop", e);
-            e.printStackTrace();
          }
 
       vi.setCursorOn();
       int gccount = 60 * 1000 / timeout; // gc after about a minute of idle
 
-      while (ev == null) {
+      while (null == ev) {
          synchronized (EventQueue.class) {
-            if (queue.size() != 0) {
+            if (0 != queue.size()) {
                ev = queue.removeFirst();
                break;
-            } else if (gccount-- == 0)  { // after idle awhile gc once
+            } else if (0 == gccount--)  { // after idle awhile gc once
                // after 5 hours do another gc
                gccount = 5 * 60 * 60 * 1000 / timeout;
                Tools.doGC();
@@ -135,7 +129,7 @@ public final class EventQueue {
                try {
                   EventQueue.class.wait(timeout);
                } catch (InterruptedException e) {
-                  UI.popError("unexpected interrupt " , e);
+                  UI.popError("unexpected interrupt ", e);
                }
             }
          }
@@ -188,7 +182,7 @@ public final class EventQueue {
          else {
             //trace("nextKeye returning esc ");
             pushback(e);
-            return new JeyEvent(0, 27, (char) 27);
+            return new JeyEvent(0, 27,  '\u001b');
          }
       }
    }

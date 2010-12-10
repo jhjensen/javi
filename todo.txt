@@ -1,5 +1,5 @@
-don't search .dll.
-^l^l in filelist messes up everythin.
+when rebuilding kill the old build if it is still running?
+sometimes it seems like files that are read in still leave a red background
 configuration for javac for ml2i/F7
 get rid of getnext
 findbug cmd not working
