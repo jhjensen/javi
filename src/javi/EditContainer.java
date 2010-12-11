@@ -1,18 +1,18 @@
 package javi;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import history.ByteInput;
-import java.io.DataOutputStream;
-import java.io.Serializable;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -45,11 +45,6 @@ import static history.Tools.trace;
    can get different cannonical names for the same file.  this can
    cause registeruniq to register the same file twice.</p>
 */
-
-interface ReAnimator {  // private for now might be public later
-   void disposeFvc() throws IOException;
-   void reAnimate();
-};
 
 public class EditContainer<OType> implements
    Serializable, ReAnimator, Iterable<OType> {
@@ -107,14 +102,16 @@ public class EditContainer<OType> implements
    private transient boolean finishedread = false;
    private transient boolean ioError = false;
    private transient boolean backupMade;
+
+   /* This may or may not match the read only status of an underlying file. */
    private transient boolean readonly = false;
    private transient UndoHistory.ChangeRecord []prototypes;
 
    private void writeObject(java.io.ObjectOutputStream os) throws IOException {
       os.defaultWriteObject();
-      trace("saving state for " + this);
-      Thread.dumpStack();
+      //trace("saving state for " + this);
    }
+
    private void readObject(java.io.ObjectInputStream is) throws
          IOException, ClassNotFoundException {
       is.defaultReadObject();
@@ -122,19 +119,17 @@ public class EditContainer<OType> implements
    }
 
    final void saveList(java.io.ObjectOutputStream os) throws IOException {
+
       os.writeInt(ecache.size());
-      Iterator<OType> eve = iterator();
-      while (eve.hasNext()) {
-         OType te = eve.next();
+      for (OType te : this)
          os.writeObject(te);
-      }
    }
 
    final void restoreList(java.io.ObjectInputStream is) throws
-      IOException , ClassNotFoundException {
+      IOException, ClassNotFoundException {
       int count = is.readInt();
       for (int ii = 1; ii < count; ii++) {
-         OType te = (OType) is.readObject();
+         OType te =  (OType) is.readObject();
          ecache.add(te);
       }
       //trace("at end of restore dump list " + this); dump();
@@ -155,14 +150,14 @@ public class EditContainer<OType> implements
 
 // hash table of files edited, used to keep files unique
    private static HashMap<FileDescriptor, EditContainer> filehash =
-      new HashMap<FileDescriptor, EditContainer>();
+      new HashMap<FileDescriptor, EditContainer>(50);
 
-   static void init(MarkListener ml) {
+   static final void init(MarkListener ml) {
       mlisten = ml;
       EventQueue.registerIdle(new IdleHandler());
    }
 
-   static void dumpStatic() {
+   static final void dumpStatic() {
       //Thread.dumpStack();
       trace("dump listeners");
       for (Object obj : listeners)
@@ -201,7 +196,7 @@ public class EditContainer<OType> implements
          ioc.dispose();
       } finally {
          try {
-            if (backup != null)
+            if (null != backup)
                backup.close();
          } finally {
             backup = null;
@@ -210,10 +205,10 @@ public class EditContainer<OType> implements
    }
 
    public final boolean isValid() {
-      return ecache != null;
+      return null != ecache;
    }
 
-   static void disposeAll() throws IOException {
+   static final void disposeAll() {
       Iterator<Map.Entry<FileDescriptor, EditContainer>> eve;
       for (eve = filehash.entrySet().iterator(); eve.hasNext();)
          try {
@@ -229,11 +224,11 @@ public class EditContainer<OType> implements
 
    private void common(OType[] inarr) {
       //trace("common " + this);
-      if (backup != null)
+      if (null != backup)
          return;
-      if (ioc == null)
+      if (null == ioc)
          throw new RuntimeException("editvec must have ioc");
-      if (parent == null)
+      if (null == parent)
          if (!("root EditContainer 1".equals(prop.fdes.canonName)))
             throw new RuntimeException("editvec must have parent except root");
       //trace("creating editvec type =" + prop.conv.getClass());
@@ -253,7 +248,7 @@ public class EditContainer<OType> implements
       backup = new UndoHistory(prop, prototypes);
       ecache.add(ob);
 
-      if (inarr != null) {
+      if (null != inarr) {
          if (prop.conv.fromString("").getClass() != inarr[0].getClass())
             throw new RuntimeException(
                "editvec called with invalid type inarr[0] class:"
@@ -273,6 +268,7 @@ public class EditContainer<OType> implements
    public final void reAnimate() {
       common(null);
    }
+
    /**
    @param ioci iocontroller for this edit vec.
    the
@@ -281,7 +277,6 @@ public class EditContainer<OType> implements
    is a useful
    iocontroller for editvecs that just have strings in them.
    */
-
    EditContainer(IoConverter<OType> ioci, OType[] inarr,
          EditContainer parenti, FileProperties<OType> propi) {
       ioc = ioci;
@@ -307,9 +302,8 @@ public class EditContainer<OType> implements
       common(null);
    }
 
-
    /** editvec will notify object of evlistener events */
-   static void registerListener(FileStatusListener evl) {
+   static final void registerListener(FileStatusListener evl) {
       synchronized  (listeners) {
          //trace("listeners add");
          //Thread.dumpStack();
@@ -318,7 +312,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   static void unRegisterListener(FileStatusListener evl) {
+   static final void unRegisterListener(FileStatusListener evl) {
       synchronized  (listeners) {
          //trace("unRegisterListener");
          //Thread.dumpStack();
@@ -327,7 +321,7 @@ public class EditContainer<OType> implements
    }
 
    /** find an editvec given the registered cannonical name */
-   static EditContainer findfile(FileDescriptor fh)  {
+   static final EditContainer findfile(FileDescriptor fh)  {
       EventQueue.biglock2.assertOwned();
       //trace("looking for " + fh);
       //trace("returning " + filehash.get(fh));
@@ -337,14 +331,13 @@ public class EditContainer<OType> implements
 //static Matcher normalize1 =  Pattern.compile("(\\\\|/)").matcher("");
 //static Matcher normalize2 =  Pattern.compile("\\.").matcher("");
 
-   static EditContainer grepfile(String spec) {
+   static final EditContainer grepfile(String spec) {
       // jdk1.5 change to LITERAL
 //   normalize1.reset(spec);
 //   spec = normalize1.replaceAll("(\\\\\\\\|/)");
 //   normalize2.reset(spec);
 //   spec = normalize2.replaceAll("\\\\.");
-      spec = Pattern.quote(spec);
-      spec = spec + '$';
+      spec = Pattern.quote(spec) + '$';
       //trace("grepfile " + spec);
       try {
          Matcher regex =  Pattern.compile(spec,
@@ -354,8 +347,8 @@ public class EditContainer<OType> implements
          for (Map.Entry<FileDescriptor, EditContainer> me : filehash.entrySet())  {
             String cname = me.getKey().shortName;
             //trace("matching against " + cname);
-            regex.reset(cname);
-            if (regex.find()) {
+
+            if (regex.reset(cname).find()) {
                EditContainer retval = me.getValue();
 
                //trace("matched against " + cname);
@@ -381,10 +374,7 @@ public class EditContainer<OType> implements
       //     finish line.  This seems unimportant currently.
 
       //trace("regsearch direction " + direction + " start " + start + " finish " + finish);
-      int lptr;
-      lptr = start.y;
-      if (exp == null)
-         throw new RuntimeException();
+      int lptr = start.y;
       if (!direction) {
          if (!searchForward(exp, start.x + 1, lptr))
             for (lptr++; true; lptr++) {
@@ -395,11 +385,11 @@ public class EditContainer<OType> implements
                if (lptr == finish.y)
                   return null;
             }
-      } else if ((start.x <= 0) || !searchBackward(exp, start.x - 1, lptr)) {
+      } else if ((0 <= start.x) || !searchBackward(exp, start.x - 1, lptr)) {
          for (lptr--; true; lptr--) {
             if (lptr == 0)
                lptr = finish() - 1; // wrap
-            if (searchBackward(exp, -1 , lptr))
+            if (searchBackward(exp, -1, lptr))
                break;
             if (lptr == finish.y)
                return null;
@@ -429,7 +419,7 @@ public class EditContainer<OType> implements
    private void registeruniq() {
       EventQueue.biglock2.assertOwned();
       //trace("register uniq:" + prop.fdes.canonName);
-      if (filehash.put(fdes(), this) != null)
+      if (null != filehash.put(fdes(), this))
          throw new RuntimeException("non unique file added " + fdes() + this);
 
       synchronized  (listeners) {
@@ -438,18 +428,18 @@ public class EditContainer<OType> implements
       }
    }
 
-   private static class IdleHandler implements EventQueue.Idler {
+   private static final class IdleHandler implements EventQueue.Idler {
       public void idle() {
 
          //trace("idle handler ");
          EventQueue.biglock2.assertOwned();
          for (EditContainer ev : filehash.values())
-            if (ev.backup != null)
+            if (null != ev.backup)
                try {
                   //trace("backing up " + ev);
                   ev.backup.idleSave();
                } catch (Throwable e) {
-                  UI.popError("Problem with backup File starting over" , e);
+                  UI.popError("Problem with backup File starting over", e);
                   ev.reinitBack();
                }
       }
@@ -480,7 +470,7 @@ public class EditContainer<OType> implements
       //trace("exit " + this);
    }
 
-   class ArrayChange extends IoConverter.BuildCB {
+   private final class ArrayChange extends IoConverter.BuildCB {
       void notifyDone(EditCache ec) {
          //trace("ArrayChange notified");
          ecache = ec;
@@ -489,7 +479,7 @@ public class EditContainer<OType> implements
 
       BackupStatus getBackupStatus() {
          FileDescriptor fd = prop.fdes.getPersistantFd();
-         if (fd != null) {
+         if (null != fd) {
             if  (fd.exists()) {
                if (fd.canWrite()) {
                   try {
@@ -499,7 +489,7 @@ public class EditContainer<OType> implements
                      BackupStatus readError = backup.readToQuit();
                      backupMade = true;
 
-                     return seterror == null
+                     return null == seterror
                             ? readError
                             : new BackupStatus(
                                false, false, seterror);
@@ -596,14 +586,15 @@ public class EditContainer<OType> implements
    */
    final int indexOf(OType ob) {
 
-      for (int i = 1;; i++) {
-         if (i >= ecache.size())
+      for (int ii = 1;; ii++) {
+         if (ii >= ecache.size()) {
             if (finishedread)
                return -1;
             else
-               myexpand(i + 1);
-         if (ecache.get(i) == ob)
-            return i;
+               myexpand(ii + 1);
+         }
+         if (ecache.get(ii) == ob)
+            return ii;
       }
    }
 
@@ -615,13 +606,7 @@ public class EditContainer<OType> implements
       readonly = flag;
    }
 
-   /** checks the read only flag of this editvec.  This may or may not match
-       the read only status of an underlying file. */
-   final boolean getReadOnly() {
-      return readonly;
-   }
-
-   public String toString() {
+   public final String toString() {
       return (ioError
               ? "!!! IOError reading in file "
               : "")
@@ -629,18 +614,18 @@ public class EditContainer<OType> implements
              + (isModified()
                 ? " MODIFIED "
                 : " ")
-             + (ecache == null
+             + (null == ecache
                 ? "!!!! disposed"
                 : "")
 
              + prop.fdes.canonName;
    }
+
    /** this registers a position as fixed.  if a element is deleted before this
        position in the file the position is modified to point at the new element
        number. huge numbers of fixed position should be avoided because
        it will affect insert and delete performance.
    */
-
 
    final OType insertStream(BufferedReader input, int index) throws
          InputException, IOException {
@@ -660,23 +645,23 @@ public class EditContainer<OType> implements
    }
 
    public final UndoHistory.EhMark copyCurr() {
-      if (backup == null)
+      if (null == backup)
          return null;
       return backup.copyCurr();
    }
 
-   final synchronized int undo() throws IOException {
+   final synchronized int undo() {
       finish();
-      if (getReadOnly())
+      if (readonly)
          throw new ReadOnlyException(this, fdes().shortName);
 
       return backup.undo();
    }
 
-   final synchronized int redo() throws IOException {
+   final synchronized int redo() {
       finish();
       //??? nice to have (currmark.hasNext()))
-      if (getReadOnly())
+      if (readonly)
          throw new ReadOnlyException(this, fdes().shortName);
       return backup.redo();
    }
@@ -714,7 +699,6 @@ public class EditContainer<OType> implements
          throw new RuntimeException(
             "remove called with invalid number of lines");
 
-
       ArrayList<String> olist = ecache.rangeAsStrings(start, number + start);
 
       mkback(start + number - 1);
@@ -744,7 +728,6 @@ public class EditContainer<OType> implements
       mkback((from > to ? from : to) - 1);
       insertRecord(arr, to);
    }
-
 
    /** cover routine for insert() that takes a single object. */
    final void insertOne(OType ob, int index) {
@@ -821,7 +804,7 @@ public class EditContainer<OType> implements
    final synchronized boolean isModified() {
       //trace("isModified " + prop.fdes.shortName  + " finishedread " + finishedread + " backup " + backup);
       return  finishedread
-              ? backup == null
+              ? null == backup
               ?  false
               : (!backup.isWritten())
               : false; // currently finish reading before we allow modification.
@@ -834,15 +817,16 @@ public class EditContainer<OType> implements
    private void mkback(int index) {
       //trace("mkback");
       finish();
-      if (index != 0 && !containsNow(index))
+      if (0 != index && !containsNow(index))
          throw new ArrayIndexOutOfBoundsException(index);
       if (readonly)
          throw new ReadOnlyException(this, fdes().shortName);
 
       if (!backupMade) {
          FileDescriptor bfd = prop.fdes.getPersistantFd();
-         if (bfd != null) {
-            if ((ecache.size() > 2) || !"".equals(ecache.get(1).toString())) {
+         if (null != bfd) {
+            if ((ecache.size() > 2)
+                  || 0 != (ecache.get(1).toString().length())) {
                //trace("adding insert and base record");
                Iterator it = ecache.iterator();
                it.next();
@@ -865,10 +849,10 @@ public class EditContainer<OType> implements
    private static FileChangeListener[] changeListeners =
       new FileChangeListener[2];
 
-   static void registerChangeListen(FileChangeListener fl) {
-      if (changeListeners[0] == null)
+   static final void registerChangeListen(FileChangeListener fl) {
+      if (null == changeListeners[0])
          changeListeners[0] = fl;
-      else if (changeListeners[1] == null)
+      else if (null == changeListeners[1])
          changeListeners[1] = fl;
       else
          throw new RuntimeException("register to many changeListenerss");
@@ -878,10 +862,9 @@ public class EditContainer<OType> implements
    final void addObjects(int cindex, OType [] objs) {
       //trace("cindex = " + cindex + " currsize = " + ecache.size() + " objtype = " + objs[0].getClass() );
       if (objs[0] instanceof ReAnimator)
-         for (int i = 0; i < objs.length; i++)
-            ((ReAnimator) objs[i]).reAnimate();
+         for (int ii = 0; ii < objs.length; ii++)
+            ((ReAnimator) objs[ii]).reAnimate();
       ecache.addAll(cindex, objs);
-
 
       for (FileChangeListener changeListener : changeListeners)
          if (null != changeListener)
@@ -896,10 +879,10 @@ public class EditContainer<OType> implements
       ecache.clear(cindex, number);
 
       if (objs[0] instanceof ReAnimator)
-         for (int i = 0; i < objs.length; i++)
+         for (int ii = 0; ii < objs.length; ii++)
             try {
-               //trace("disposeFVC about to be called on " + objs[i]);
-               ((ReAnimator) objs[i]).disposeFvc();
+               //trace("disposeFVC about to be called on " + objs[ii]);
+               ((ReAnimator) objs[ii]).disposeFvc();
             } catch (IOException e) {
                UI.popError("unable to dispose obj", e);
             }
@@ -913,7 +896,7 @@ public class EditContainer<OType> implements
       if (!donereading())
          sb.append(" still reading file");
 
-      if (backup != null) // should never happen, but it does.
+      if (null != backup) // should never happen, but it does.
          backup.addState(sb);
       else
          sb.append(" dead file!!!!");
@@ -929,8 +912,8 @@ public class EditContainer<OType> implements
       String line = at(lineno).toString();
       if (charoff > line.length())
          return false;
-      reg.reset(at(lineno).toString());
-      return reg.find(charoff);
+
+      return reg.reset(line).find(charoff);
    }
 
    final boolean searchBackward(Matcher reg, int charoff, int lineno) {
@@ -940,17 +923,15 @@ public class EditContainer<OType> implements
       if (charoff != -1)
          str = str.substring(0, charoff);
 
-      reg.reset(str);
       int lastfound = -1;
 
-      while (reg.find())
+      for (reg.reset(str); reg.find();)
          lastfound = reg.start();
 
       if (lastfound == -1)
          return false;
 
-      reg.reset();
-      while (reg.find())
+      for (reg.reset(); reg.find();)
          if (lastfound == reg.start())
             return true;
 
@@ -959,6 +940,7 @@ public class EditContainer<OType> implements
 
    private final class EIter implements Iterator<OType> {
       private int index;
+
       public boolean hasNext() {
          if (ecache.size() > index)
             return true;
@@ -971,7 +953,7 @@ public class EditContainer<OType> implements
             //trace("next returning " + ret);
             return ret;
          }
-         throw new NoSuchElementException();
+         throw new NoSuchElementException("no next element in EIter");
       }
 
       public void remove() {
@@ -979,25 +961,6 @@ public class EditContainer<OType> implements
          index--;
       }
    }
-
-   /*
-   class StringIter implements Iterator<String> {
-
-         Iterator baseIter = iterator();
-
-         public boolean hasNext() {
-            return baseIter.hasNext();
-         }
-
-         public String next() {
-            return baseIter.next().toString();
-         }
-
-         public void remove() {
-            throw new UnsupportedOperationException();
-         }
-   }
-   */
 
    final Iterator<String> getStringIter() {
       return new StringIter(iterator());
@@ -1050,19 +1013,24 @@ public class EditContainer<OType> implements
    private void insertRecord(OType[] obarray, int indexi) {
       backup.push(new InsertRecord(obarray, indexi));
    }
+
    private void insertRecord(String[] obarray, int indexi) {
       backup.push(new InsertStringRecord(obarray, indexi));
    }
+
    private void insertRecord(Iterator it, int indexi, int count) {
       backup.push(new InsertRecord(it, indexi, count, true));
    }
+
    private void insertRecordDone(Iterator it, int indexi, int count) {
       backup.push(new InsertRecord(it, indexi, count, false));
    }
+
    private void modRecord(OType ob, int index) {
       //trace("ModRecord ob " + ob);
       backup.push(new ModRecord(ob, index));
    }
+
    private void deleteRecord(int start, int number) {
       //trace("DeleteRecord");
       backup.push(new DeleteRecord(start, number));
@@ -1072,7 +1040,7 @@ public class EditContainer<OType> implements
       return this == ev.parent;
    }
 
-   private class InsertRecord extends UndoHistory.ChangeRecord<OType> {
+   private final class InsertRecord extends UndoHistory.ChangeRecord<OType> {
       private OType[] obj;
 
       void readExternal(ByteInput dis, ClassConverter conv) {
@@ -1103,7 +1071,9 @@ public class EditContainer<OType> implements
          }
          return str.toString();
       }
+
       InsertRecord() { }
+
       InsertRecord(OType[] obarray, int indexi) {
          super(indexi);
          //trace("InsertRecord ob type = " + obarray[0].getClass());
@@ -1117,9 +1087,9 @@ public class EditContainer<OType> implements
       InsertRecord(Iterator<OType> it, int indexi, int count, boolean redo) {
          super(indexi);
          obj = (OType []) new Object[count];
-         for (int i = 0; i < count; i++) {
-            obj[i] = it.next();
-            //trace("InsertRecord(it): inserted " + obj[i]);
+         for (int ii = 0; ii < count; ii++) {
+            obj[ii] = it.next();
+            //trace("InsertRecord(it): inserted " + obj[ii]);
          }
          if (redo)
             redocr();
@@ -1138,6 +1108,7 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
+
       boolean redocr(ChangeOpt vi) {
          return vi.insert(cindex, obj.length);
       }
@@ -1147,7 +1118,8 @@ public class EditContainer<OType> implements
       }
    }
 
-   private class InsertStringRecord extends UndoHistory.ChangeRecord<OType> {
+   private final class InsertStringRecord extends
+         UndoHistory.ChangeRecord<OType> {
       private String[] obj;
 
       void readExternal(ByteInput dis, ClassConverter conv) {
@@ -1161,14 +1133,15 @@ public class EditContainer<OType> implements
          writeStrs(dos, obj);
       }
 
-      String[] readStrs(ByteInput dis) {
+      private String[] readStrs(ByteInput dis) {
          int ocount = dis.readInt();
          String []xobj = new String[ocount];
          while (--ocount >= 0)
             xobj[ocount] = dis.readUTF();
          return xobj;
       }
-      void writeStrs(DataOutputStream dos, String [] xobj) {
+
+      private void writeStrs(DataOutputStream dos, String [] xobj) {
          try {
             int ocount = xobj.length;
             dos.writeInt(ocount);
@@ -1176,7 +1149,7 @@ public class EditContainer<OType> implements
                dos.writeUTF(xobj[ocount]);
          } catch (IOException e) {
             throw new RuntimeException(
-               "InsertStringRecord.writeExternal unexpected " , e);
+               "InsertStringRecord.writeExternal unexpected ", e);
          }
       }
 
@@ -1223,13 +1196,13 @@ public class EditContainer<OType> implements
 */
       OType[] mkobj() {
          OType[] ob2 = (OType []) new Object[obj.length];
-         for (int i = 0; i < obj.length; i++) {
-            //trace("ar = " + objs + " i = " + i);
-            OType nobj = prop.conv.fromString(obj[i]);
-            if (nobj == null)
+         for (int ii = 0; ii < obj.length; ii++) {
+            //trace("ar = " + objs + " ii = " + ii);
+            OType nobj = prop.conv.fromString(obj[ii]);
+            if (null == nobj)
                throw new RuntimeException(
-                  "inserting null made from object from " + obj[i]);
-            ob2[i] = nobj;
+                  "inserting null made from object from " + obj[ii]);
+            ob2[ii] = nobj;
          }
          return ob2;
       }
@@ -1243,6 +1216,7 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
+
       boolean redocr(ChangeOpt vi) {
          return vi.insert(cindex, obj.length);
       }
@@ -1252,7 +1226,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   private class DeleteRecord extends UndoHistory.ChangeRecord<OType> {
+   private final class DeleteRecord extends UndoHistory.ChangeRecord<OType> {
 
       private OType[] obj;
 
@@ -1290,8 +1264,8 @@ public class EditContainer<OType> implements
       DeleteRecord(int indexi, int number) {
          super(indexi);
          obj = (OType []) new Object[number];
-         for (int i = 0; i < number; i++) {
-            obj[i] = at(cindex + i);
+         for (int ii = 0; ii < number; ii++) {
+            obj[ii] = at(cindex + ii);
          }
          redocr();
          //trace(this + " curr = "  + ev.curr + " ev = " + ev );
@@ -1308,6 +1282,7 @@ public class EditContainer<OType> implements
          deleteObjects(cindex, obj);
          return cindex;
       }
+
       boolean redocr(ChangeOpt vi) {
          return vi.delete(cindex, obj.length);
       }
@@ -1317,7 +1292,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   private class ModRecord extends UndoHistory.ChangeRecord<OType> {
+   private final class ModRecord extends UndoHistory.ChangeRecord<OType> {
       private OType oldobj;
       private OType newobj;
 
@@ -1341,7 +1316,7 @@ public class EditContainer<OType> implements
             conv.saveExternal(newobj, dos);
          } catch (IOException e) {
             throw new RuntimeException(
-               "ModRecord.writeExternal unexpected " , e);
+               "ModRecord.writeExternal unexpected ", e);
          }
       }
 
@@ -1392,13 +1367,11 @@ public class EditContainer<OType> implements
       boolean fileDisposed(EditContainer ev);
    }
 
-   static class ReadOnlyException extends UnsupportedOperationException {
-   /* Copyright 1996 James Jensen all rights reserved */
-
-      static final String copyright = "Copyright 1996 James Jensen";
+   static final class ReadOnlyException extends UnsupportedOperationException {
 
       private final EditContainer ev;
-      final EditContainer getEv() {
+
+      EditContainer getEv() {
          return ev;
       }
 
@@ -1408,3 +1381,7 @@ public class EditContainer<OType> implements
       }
    }
 }
+interface ReAnimator {  // private for now might be public later
+   void disposeFvc() throws IOException;
+   void reAnimate();
+};
