@@ -61,12 +61,12 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    @SuppressWarnings("unchecked")
    FontEntry(Font fonti) {
       font = fonti;
-      atmap = (HashMap<TextAttribute, Object>) font.getAttributes();
+      atmap = (Map<TextAttribute, Object>) font.getAttributes();
    }
 
    @SuppressWarnings("unchecked")
    FontEntry(Font fonti, Float fontsize) {
-      atmap = (HashMap<TextAttribute, Object>) fonti.getAttributes();
+      atmap = (Map<TextAttribute, Object>) fonti.getAttributes();
       atmap.put(TextAttribute.SIZE, fontsize);
    }
 
