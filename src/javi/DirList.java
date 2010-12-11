@@ -1,11 +1,10 @@
 package javi;
 
-import java.io.IOException;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
-
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import static history.Tools.trace;
 
@@ -36,8 +35,8 @@ final class DirList extends TextEdit<DirEntry> {
       int size = readIn();
       ArrayList<FileDescriptor.LocalFile> flist =
          new ArrayList<FileDescriptor.LocalFile>(100 * size);
-      for (int i = 1; i < size; i++) {
-         for (FileDescriptor.LocalFile str : at(i).fh.listDes(fl))  {
+      for (int ii = 1; ii < size; ii++) {
+         for (FileDescriptor.LocalFile str : at(ii).fh.listDes(fl))  {
             flist.add(str);
          }
       }
@@ -47,9 +46,9 @@ final class DirList extends TextEdit<DirEntry> {
    TextEdit<Position> globalgrep(String searchstr) {
       int size = readIn();
       ArrayList<DirEntry> dlist = new ArrayList<DirEntry>(size);
-      for (int i = 1; i < size; i++) {
-         //trace("adding directory " + at(i));
-         dlist.add(at(i));
+      for (int ii = 1; ii < size; ii++) {
+         //trace("adding directory " + at(ii));
+         dlist.add(at(ii));
       }
       GrepReader conv = new GrepReader(searchstr, dlist, true);
       return new TextEdit<Position>(conv, conv.prop);
@@ -66,8 +65,8 @@ final class DirList extends TextEdit<DirEntry> {
       int numEntrys = readIn();
       //trace("numEntrys " + numEntrys + " de " + de);
 
-      for (int i = 1; i < numEntrys; i++) {
-         if (de.equals(at(i)))
+      for (int ii = 1; ii < numEntrys; ii++) {
+         if (de.equals(at(ii)))
             return false;
       }
 
@@ -95,8 +94,8 @@ final class DirList extends TextEdit<DirEntry> {
       findex = -1;
       maxIndex = readIn();
       try {
-         regex =  Pattern.compile(searchName
-                                  , Pattern.CASE_INSENSITIVE).matcher("");
+         regex =  Pattern.compile(searchName,
+            Pattern.CASE_INSENSITIVE).matcher("");
          //trace("match regex = " + regex);
       } catch (PatternSyntaxException e) {
          return false;
@@ -109,7 +108,7 @@ final class DirList extends TextEdit<DirEntry> {
       while (++dindex < maxIndex) {
          DirEntry de = at(dindex);
          //trace("dindex = " + dindex + " de " + de);
-         FileDescriptor.LocalFile fh =  dindex == 1
+         FileDescriptor.LocalFile fh =  1 == dindex
             ? FileDescriptor.LocalFile.make(searchName)
             : de.fh.createFile(searchName);
          //trace("new fh " + fh + " isFile " + fh.isFile());
@@ -125,15 +124,15 @@ final class DirList extends TextEdit<DirEntry> {
          //trace("dindex = " + dindex + " de " + de);
          String [] flist = de.getCache();
 
-         if (flist != null)
+         if (null != flist)
             while (++findex < flist.length)  {
 
                //trace(flist[findex]);
-               if (regex == null)
+               if (null == regex)
                   throw new RuntimeException("regex not initialized");
-               regex.reset(flist[findex]);
-               if (regex.matches()) {
-                  FileDescriptor.LocalFile fh =  dindex == 1
+
+               if (regex.reset(flist[findex]).matches()) {
+                  FileDescriptor.LocalFile fh = 1 == dindex
                      ? FileDescriptor.LocalFile.make(flist[findex])
                      : de.fh.createFile(flist[findex]);
                   if (fh.isFile() || fh.isDirectory())
@@ -190,8 +189,8 @@ final class DirList extends TextEdit<DirEntry> {
             for (String filename : dir.getCache()) {
                //trace("Grepreader checking file " + filename);
                //trace("Grepreader Matcher " + fileMatcher.pattern());
-               fileMatcher.reset(filename);
-               if (invert ^ fileMatcher.find()) {
+
+               if (invert ^ fileMatcher.reset(filename).find()) {
                   FileDescriptor.LocalFile fd = dir.fh.createFile(filename);
                   if (!fd.isDirectory()) {
                      if (fd.length() > sizeLimit * 1000000) {
@@ -201,7 +200,7 @@ final class DirList extends TextEdit<DirEntry> {
                         UI.Result res = UI.reportModVal(
                            fd.shortName + " length " + (fd.length() / 1000000)
                            + " Mb is over grep size limit", "MB",
-                           choices , sizeLimit);
+                           choices, sizeLimit);
 
                         sizeLimit = res.newValue;
                         if ("skip".equals(res.choice))
@@ -212,7 +211,7 @@ final class DirList extends TextEdit<DirEntry> {
                            try {
                               fd.delete();
                            }  catch (IOException e) {
-                              UI.popError("removing file failed" + fd , e);
+                              UI.popError("removing file failed" + fd, e);
                            }
                            continue;
                         }
@@ -242,12 +241,13 @@ final class DirList extends TextEdit<DirEntry> {
    }
 }
 
-class DirEntry {
+final class DirEntry {
+
    final FileDescriptor.LocalDir fh;
    private String []fcache;
 
    DirEntry(FileDescriptor.LocalDir fhi) {
-      this.fh = fhi;
+      fh = fhi;
    }
 
    DirEntry(String filename) {
@@ -255,7 +255,7 @@ class DirEntry {
       if (sindex != -1)
          filename = filename.substring(0, sindex);
 
-      if (filename.length() == 0)
+      if (0 == filename.length())
          filename = ".";
 
       fh = FileDescriptor.LocalDir.make(filename);
@@ -276,12 +276,13 @@ class DirEntry {
    public int hashCode() {
       return fh.hashCode();
    }
+
    void flushCache() {
       fcache = null;
    }
 
    String [] getCache() {
-      if (fcache == null) {
+      if (null == fcache) {
          fcache = fh.list();
          //for (int i = 0;i<flist.length;i++)
          //trace("flist added " + flist[i]);

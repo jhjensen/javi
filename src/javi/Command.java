@@ -208,7 +208,6 @@ public final class Command extends Rgroup {
             }
          }
       } catch (InputException e) {
-         e.printStackTrace();
          UI.reportMessage(e.toString());
       } catch (IOException e) {
          UI.reportMessage(e.toString());

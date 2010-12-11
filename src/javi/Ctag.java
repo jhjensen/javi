@@ -26,9 +26,10 @@ final class Ctag {
          fileend = fileendi;
          //trace(toString());
       }
+
       Position [] getPositions(String tagfile) throws IOException {
-         if (positions == null) {
-            RandomAccessFile ctfile = new RandomAccessFile(tagfile , "r");
+         if (null == positions) {
+            RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r");
             ctfile.seek(filestart);
             ArrayList<Position> tempvec = new ArrayList<Position>();
             do {
@@ -43,11 +44,12 @@ final class Ctag {
 
       public String toString() {
          return name + " "
-            + (positions == null ? -1 : positions.length)
+            + (null == positions ? -1 : positions.length)
             + " " +  filestart  + " " + fileend + " ";
       }
 
-      private Position getnextpos(RandomAccessFile ctfile) throws IOException {
+      private static Position getnextpos(RandomAccessFile ctfile) throws
+            IOException {
          //trace("getnextpos");
          String line;
          do {
@@ -55,7 +57,7 @@ final class Ctag {
             if (null == line)
                return null;
             //trace("tagline:" + line);
-         } while (line.charAt(0) == '!');
+         } while ('!' == line.charAt(0));
          String [] spl = tabpat.split(line, 3);
          String comment = "tag:" + spl[0];
          String file = new String(spl[1].toCharArray());
@@ -66,15 +68,13 @@ final class Ctag {
          return new Position(0, y, file, comment);
       }
    }
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    private String ctfilename;
    private ArrayList<TagEntry> carray = new ArrayList<TagEntry>();
 
    Ctag(String tagfilename) throws IOException {
       ctfilename = tagfilename;
-      RandomAccessFile ctfile = new RandomAccessFile(ctfilename , "r");
+      RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r");
       try {
          carray.add(new TagEntry(String.valueOf(Character.MIN_VALUE), 0, 0));
          carray.add(new TagEntry(String.valueOf(Character.MAX_VALUE),
@@ -87,19 +87,18 @@ final class Ctag {
    Position[] taglookup(String name) throws IOException {
       int hirange = carray.size() - 1;
       int lowrange = 0;
-      int guess = hirange / 2;
-      TagEntry te;
-      te = carray.get(guess);
+      int guess = hirange >> 1;
+      TagEntry te = carray.get(guess);
       while (true) {
          if (lowrange == hirange - 1) {
             te = filelookup(name, lowrange);
-            return te == null
+            return null == te
                    ? null
                    : te.getPositions(ctfilename);
          }
 
          int compare = te.name.compareTo(name);
-         if (compare == 0) {
+         if (0 == compare) {
             return te.getPositions(ctfilename);
          } else {
             if (compare < 0) {
@@ -107,7 +106,7 @@ final class Ctag {
                   throw new RuntimeException("ctag.taglookup lowrange");
                else {
                   lowrange = guess;
-                  guess = guess + (hirange - guess) / 2;
+                  guess += (hirange - guess) >> 1;
                   te = carray.get(guess);
                   if (te.name.equals(name))
                      return te.getPositions(ctfilename);
@@ -117,7 +116,7 @@ final class Ctag {
                   throw new RuntimeException("ctag.taglookup hirange");
                else {
                   hirange = guess;
-                  guess = guess - (guess - lowrange) / 2;
+                  guess -= (guess - lowrange) >> 1;
                   te = carray.get(guess);
                   if (te.name.equals(name))
                      return te.getPositions(ctfilename);
@@ -130,44 +129,45 @@ final class Ctag {
    private TagEntry filelookup(String name, int guess) throws IOException {
       //trace("filelookup guess = " + guess);
       RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r");
-      TagEntry te1;
-      while (true) {
-         te1 = carray.get(guess);
-         TagEntry te2 = carray.get(guess + 1);
-         //trace("findfile te1 " + te1 + " te2 " + te2);
-         te1 = filefind(ctfile, te1.fileend, te2.filestart);
-         if (te1 == null)
-            break;
-         carray.add(guess + 1, te1);
+      try {
+         while (true) {
+            TagEntry te1 = carray.get(guess);
+            TagEntry te2 = carray.get(guess + 1);
+            //trace("findfile te1 " + te1 + " te2 " + te2);
+            te1 = filefind(ctfile, te1.fileend, te2.filestart);
+            if (null == te1)
+               return te1;
+            carray.add(guess + 1, te1);
 
-         int compare = te1.name.compareTo(name);
-         //trace ("compare = " + compare);
-         if (compare < 0)
-            guess++;
-         else  if (compare == 0)
-            break;
+            int compare = te1.name.compareTo(name);
+            //trace ("compare = " + compare);
+            if (0 > compare)
+               guess++;
+            else  if (compare == 0)
+               return te1;
+         }
+      } finally {
+         ctfile.close();
       }
-      ctfile.close();
-
-      return te1;
    }
+
    private static Pattern tabpat = Pattern.compile("\\t");
 
    static String getTagName(Position p) {
-      if (p != null && p.comment != null && p.comment.startsWith("tag:")) {
+      if (null != p && null != p.comment && p.comment.startsWith("tag:")) {
          String[] spl = tabpat.split(p.comment, 2);
          return spl[0].substring(4, spl[0].length());
       } else
          return "";
    }
 
-   private TagEntry filefind(RandomAccessFile ctfile,
+   private static TagEntry filefind(RandomAccessFile ctfile,
       long start, long end) throws IOException {
       //trace("filefind start " + start + " end " + end);
       if (start == end)
          return null;
 
-      ctfile.seek((start + end) / 2);
+      ctfile.seek((start + end) >> 1);
       ctfile.readLine(); // skip to next line
       long backmark = ctfile.getFilePointer(); // where to start again backwards
       String line = ctfile.readLine();
@@ -188,7 +188,7 @@ final class Ctag {
       // look for all possible tag entries with same tag
       while (ctfile.getFilePointer() < end) {
          line = ctfile.readLine();
-         if  (line == null || !line.startsWith(curtag))
+         if  (null == line || !line.startsWith(curtag))
             break;
          endmark = ctfile.getFilePointer();
       }
@@ -198,7 +198,7 @@ final class Ctag {
       for (long offset = backmark - 200;; offset -= 200) {
          ctfile.seek(offset);
          line = ctfile.readLine(); // line up to next new line
-         if  (line == null || !line.startsWith(curtag))
+         if  (null == line || !line.startsWith(curtag))
             break;
          offset -= line.length();
       }
@@ -206,7 +206,7 @@ final class Ctag {
       do {
          backmark = ctfile.getFilePointer();
          line = ctfile.readLine(); // line up to next new line
-      } while  (line != null && !line.startsWith(curtag));
+      } while  (null != line && !line.startsWith(curtag));
 
       return backmark == endmark
              ? null

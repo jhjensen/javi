@@ -65,7 +65,7 @@ final class XrefReader extends PositionIoc {
 
    private static BufferedReader getIn(String str) throws IOException {
       commandline[3] = str;
-      trace("running command:" + commandline[2]);
+      //trace("running command:" + commandline[2]);
       return Tools.runcmd(commandline);
    }
 
