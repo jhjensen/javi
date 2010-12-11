@@ -1,7 +1,9 @@
 package javi.awt;
 
-import java.awt.AWTKeyStroke;
+import history.Tools;
+
 import java.awt.AWTEvent;
+import java.awt.AWTKeyStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -37,6 +39,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -44,27 +47,25 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.util.Arrays;
-import java.util.List;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.awt.event.KeyEvent;
+import java.util.List;
 
+import javi.BackupStatus;
 import javi.CommandEvent;
 import javi.EventQueue;
-import javi.JeyEvent;
 import javi.ExitEvent;
 import javi.ExitException;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
+import javi.JeyEvent;
 import javi.MiscCommands;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
-import javi.BackupStatus;
 import javi.View;
-import history.Tools;
 
 import static history.Tools.trace;
 
@@ -80,7 +81,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private void readObject(java.io.ObjectInputStream is) throws
          ClassNotFoundException, IOException {
       is.defaultReadObject();
-      if (fullFrame != null) {
+      if (null != fullFrame) {
          GraphicsDevice[] devs = java.awt.GraphicsEnvironment
             .getLocalGraphicsEnvironment().getScreenDevices();
 
@@ -118,31 +119,33 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("this = " + this + " fr = " + fr);
    }
 
-
    private static java.awt.EventQueue eventQueue =
       java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue();
 
    abstract class RunAwt extends AWTEvent implements Runnable {
       public static final int eventId = AWTEvent.RESERVED_ID_MAX + 1;
 
-      RunAwt() {
+      protected RunAwt() {
          super(frm, eventId);
       }
-      void post() {
+
+      final void post() {
          eventQueue.postEvent(this);
       }
    }
 
    abstract class SyncAwt<OType> extends RunAwt {
+
       private OType result;
-      OType getResult() {
+
+      final OType getResult() {
          return result;
       }
 
-      SyncAwt<OType> postWait() {
+      final SyncAwt<OType> postWait() {
          synchronized (this) {
             int holdCount = EventQueue.biglock2.getHoldCount();
-            for (int i = 0; i < holdCount; i++)
+            for (int ii = 0; ii < holdCount; ii++)
                EventQueue.biglock2.unlock();
 
             EventQueue.biglock2.assertUnOwned();
@@ -152,7 +155,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             } catch (InterruptedException e) {
                trace("ignoring InterruptedException");
             }
-            for (int i = 0; i < holdCount; i++)
+            for (int ii = 0; ii < holdCount; ii++)
                EventQueue.biglock2.lock();
          }
          return this;
@@ -160,7 +163,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       abstract OType doAwt();
 
-      public void run() {
+      public final void run() {
          //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
          result = doAwt();
@@ -174,7 +177,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private final class Commands extends Rgroup   {
       private final String[] rnames = {
          "",
-         "togglestatus" ,
+         "togglestatus",
          "va",
          "van",
          "vd",
@@ -204,8 +207,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                inextView(fvc);
                return null;
             case 6:
-               fullScreen();
-               return null;
+               new FScreen();
 
             default:
                throw new RuntimeException("doroutine called with " + rnum);
@@ -229,24 +231,13 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private transient FvContext tfc;
 
    public static final class ForceIdle extends EventQueue.IEvent {
-      public void execute() throws ExitException {
+      public void execute() {
       }
    }
 
    private final class TestFrame extends  Frame {
 
       private final String name;
-
-/*
-      void paintViews() {
-         int ccount = getComponentCount();
-         for (int i = 0; i < ccount; i++) {
-            Component cp = getComponent(i);
-            if (cp instanceof View)
-               ((View) cp).repaint();
-         }
-      }
-*/
 
       TestFrame(String str, String namei) {
          super(str);
@@ -258,7 +249,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          for (Iterator it = keyset.iterator(); it.hasNext();) {
             AWTKeyStroke key = (AWTKeyStroke) (it.next());
             if (key.getKeyCode() == KeyEvent.VK_TAB
-                  && key.getModifiers() == 0)
+                  && 0 == key.getModifiers())
                it.remove();
          }
 
@@ -282,7 +273,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
          Toolkit kit = Toolkit.getDefaultToolkit();
          Insets inset = getInsets();
-         if (inset.top == 0)
+         if (0 == inset.top)
             inset =   kit.getScreenInsets(getGraphicsConfiguration());
 
          Dimension fsize = new Dimension(inset.right + inset.left,
@@ -296,8 +287,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          int viewheight = 0;
          int ccount = getComponentCount();
-         for (int i = 0; i < ccount; i++) {
-            Component cp = getComponent(i);
+         for (int ii = 0; ii < ccount; ii++) {
+            Component cp = getComponent(ii);
             //trace("component " + cp);
             if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
                Dimension cpsize = cp.getPreferredSize();
@@ -315,11 +306,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          return fsize;
       }
 
-//      public void setSize(int width, int height) {
-//         //trace("!!!!!!!!! frame setSize ("+ width + "," + height +")");
-//         super.setSize(width, height);
-//      }
-
       public void setCompSize(int width, int height) {
          //trace("frame setCompsize ("+ width + "," + height +")");
          //trace("tfc " + tfc);
@@ -327,7 +313,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          //trace("statusBar isVisible" + statusBar.isVisible());
          Insets inset = getInsets();
          int viewHeight = height - inset.top - inset.bottom;
-
 
          OldView atv = (OldView) tfc.vi;
          Component cmdComp = atv.getComponent();
@@ -341,8 +326,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             (width - inset.left - inset.right) / viewCount, viewHeight);
 
          int ccount = getComponentCount();
-         for (int i = 0; i < ccount; i++) {
-            Component cp = getComponent(i);
+         for (int ii = 0; ii < ccount; ii++) {
+            Component cp = getComponent(ii);
             //trace("component " + cp);
             if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
                if (!cp.getSize().equals(viewSize)) {
@@ -411,7 +396,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    private void flusher(boolean total) {
       if (total) {
-         if (tfc != null) {
+         if (null != tfc) {
             OldView atv = (OldView) tfc.vi;
             Component cmdComp = atv.getComponent();
             frm.remove(cmdComp);
@@ -423,33 +408,33 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                UI.popError("error in flush", ex);
             }
          }
-         if (statusBar != null) {
+         if (null != statusBar) {
             frm.remove(statusBar);
             statusBar =  null;
          }
       }
       AwtCircBuffer.initCmd();
-      if (fdialog != null) {
+      if (null != fdialog) {
          fdialog.dispose();
          frm.remove(fdialog);
          fdialog = null;
       }
-      if (popmenu != null) {
+      if (null != popmenu) {
          frm.remove(popmenu);
          popmenu = null;
       }
-      if (psinst != null) {
+      if (null != psinst) {
          frm.remove(psinst);
          psinst.dispose();
          psinst = null;
       }
-      if (chinst != null) {
+      if (null != chinst) {
          frm.remove(chinst);
          chinst.dispose();
          chinst = null;
       }
 
-      if (rdinst != null) {
+      if (null != rdinst) {
          frm.remove(rdinst);
          rdinst.dispose();
          rdinst = null;
@@ -461,12 +446,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       EventQueue.insert(new CommandEvent(event.getActionCommand()));
    }
 
-//   public void itemStateChanged(ItemEvent event) {
-//      EventQueue.insert(event);
-//   }
-
    private final class Flusher extends RunAwt {
+
       private boolean total;
+
       Flusher(boolean totali) {
          super();
          total = totali;
@@ -497,16 +480,19 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       new Flusher(total);
    }
 
-   private static class Dropper extends DropTarget {
+   private static final class Dropper extends DropTarget {
       private static final long serialVersionUID = 1;
+
       Dropper(Component c) {
          super(c, DnDConstants.ACTION_LINK, null, true);
       }
 
       public void dragEnter(DropTargetDragEvent dtde)  { /* don't care */
       }
+
       public void dragExit(DropTargetEvent dte) { /* don't care */
       }
+
       public void dragOver(DropTargetDragEvent dtde)  { /* don't care */
       }
 
@@ -551,6 +537,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
          dtde.dropComplete(false);
       }
+
       public  void dropActionChanged(DropTargetDragEvent dtde)  {
          /* don't care */
       }
@@ -572,8 +559,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return lFrm;
    }
 
-
-
    static void mvcomp(Container from, Container to) {
       for (Component comp : from.getComponents()) {
          //trace("moving comp " + comp);
@@ -582,11 +567,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       from.removeAll();
    }
 
-   class FScreen extends RunAwt {
+   final class FScreen extends RunAwt {
       FScreen() {
          super();
          post();
       }
+
       public void run() {
          //trace("full Screen " + frm);
          EventQueue.biglock2.lock();
@@ -602,7 +588,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             } else {
                frm.setVisible(false);
                //trace("!!!!!!enter fullscreen");
-               if (fullFrame == null) {
+               if (null == fullFrame) {
                   fullFrame = initfrm("fullFrame");
                   fullFrame.setFont(frm.getFont());
                   fullFrame.setUndecorated(true);
@@ -639,11 +625,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
       }
    }
-   void fullScreen() {
-      new FScreen();
-   }
 
-   class Initer extends SyncAwt {
+   final class Initer extends SyncAwt {
        // makeing this run sychronously makes the window become visible about 20-30
        // ms quicker, but ready for events quit 90 ms slower
 
@@ -703,7 +686,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return ta;
    }
 
-   private View mkview(boolean newview) throws InputException {
+   private View mkview(boolean newview) {
       //view ta = newview ? (view) new TabbedTextLayout() : new oldview();
       //trace("mkview");
       OldView ta = new OldView(true);
@@ -729,7 +712,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          frm.remove(cmdComp);
 
          FvContext newfvc = FvContext.dispose(fvc.vi);
-         if (newfvc != null)
+         if (null != newfvc)
             isetTitle(newfvc.edvec.toString());
          frm.validate();
       }
@@ -740,13 +723,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       isetTitle(newfvc.edvec.toString());
    }
 
-
    public void isetStream(Reader inreader) { /* unimplemented */ }
 
    public void irepaint() {
       int ccount = frm.getComponentCount();
-      for (int i = 0; i < ccount; i++) {
-         Component cp = frm.getComponent(i);
+      for (int ii = 0; ii < ccount; ii++) {
+         Component cp = frm.getComponent(ii);
          if (cp.isVisible())
             cp.repaint();
       }
@@ -763,7 +745,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    public boolean iisVisible() {
       return frm.isVisible();
    }
-
 
    public void isetTitle(java.lang.String title) {
       frm.setTitle(title);
@@ -790,10 +771,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("comline:"+ tfc.at().toString());
    }
 
-
-   class IdleEvent extends RunAwt {
+   final class IdleEvent extends RunAwt {
       IdleEvent() {
-         super();
          post();
       }
 
@@ -813,11 +792,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       new IdleEvent();
    }
 
-   class Validate extends RunAwt {
+   final class Validate extends RunAwt {
+
       Validate() {
-         super();
          post();
       }
+
       public void run() {
          frm.validate();
       }
@@ -854,9 +834,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    private static Buttons diaflag;
+
    public Buttons ichooseWriteable(String filename) {
 
-      if (chinst == null)
+      if (null == chinst)
          chinst = new ChoseWrt(this);
       chinst.chosefile(filename);
       return diaflag;
@@ -872,7 +853,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       new Validate();
    }
 
-   class SetFont extends RunAwt {
+   final class SetFont extends RunAwt {
+
       private final Font font;
       private final View vi;
 
@@ -906,13 +888,13 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   class AFontChanger extends FontEntry.FontChanger {
+   static final class AFontChanger extends FontEntry.FontChanger {
       void setFont(Font font, View vi) {
          ((AwtInterface) getInstance()).new SetFont(font, vi);
       }
    }
 
-   private static class MyMenuItem extends MenuItem {
+   private static final class MyMenuItem extends MenuItem {
 
       private static final long serialVersionUID = 1;
 
@@ -927,7 +909,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void ishowmenu(int x, int y) {
-      if (popmenu == null) {
+      if (null == popmenu) {
 
          popmenu = new PopupMenu();
 
@@ -938,8 +920,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          popmenu.add(filem);
 
          Menu sizem = new Menu("Size");
-         for (int i = 4; i < 20; i++)
-            new MyMenuItem(Integer.toString(i), "fontsize " + i,
+         for (int ii = 4; ii < 20; ii++)
+            new MyMenuItem(Integer.toString(ii), "fontsize " + ii,
                sizem, this);
          popmenu.add(sizem);
 
@@ -966,10 +948,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return psinst.pop(str);
    }
 
-   class Popper extends SyncAwt<Boolean> {
+   final class Popper extends SyncAwt<Boolean> {
+
       private String str;
+
       Popper(String stri) {
-         super();
          str = stri;
          trace("str " + str);
          postWait();
@@ -999,8 +982,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    static class NDialog extends Dialog implements ActionListener {
+
       private static final long serialVersionUID = 1;
       private NButton resb = null;
+
       final NButton getRes() {
          return resb;
       }
@@ -1010,10 +995,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          setLayout(lay);
       }
 
-//      public void dispose() {
-//         super.dispose();
-//      }
-
       public void actionPerformed(ActionEvent e) {
          resb = (NButton) e.getSource();
          //trace("set resb to " + resb + " lable = " + resb.getLabel());
@@ -1021,8 +1002,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          setVisible(false);
       }
 
-      static class NText extends TextField {
+      static final class NText extends TextField {
          private static final long serialVersionUID = 1;
+
          NText(String s, NDialog nd) {
             super(s);
             nd.add(this);
@@ -1030,7 +1012,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
       }
 
-      static class NButton extends java.awt.Button  {
+      static final class NButton extends java.awt.Button  {
          private static final long serialVersionUID = 1;
 
          NButton(String s, NDialog nd) {
@@ -1041,7 +1023,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
 
       public void windowClosing(WindowEvent e) {
-         trace("" + e);
+         trace(e.toString());
          setVisible(false);
       }
 
@@ -1053,7 +1035,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   private static class PopString extends NDialog {
+   private static final class PopString extends NDialog {
       private static final long serialVersionUID = 1;
       private TextArea ta = new TextArea("", 30, 80);
       private NButton rThrow = new NButton("reThrow", this);
@@ -1076,7 +1058,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   static class ModVal extends NDialog {
+   static final class ModVal extends NDialog {
       private static final long serialVersionUID = 1;
 
       private NText tf;
@@ -1109,7 +1091,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          b1.tf.getText()), b1.getRes().getLabel());
    }
 
-   private static class ChoseWrt extends NDialog {
+   private static final class ChoseWrt extends NDialog {
       private static final long serialVersionUID = 1;
 
       private Label writelabel = new Label();;
@@ -1121,7 +1103,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       private NButton forceWriteable =
          new NButton("force writeable", this);
-      private NButton nothing =   new NButton("do nothing", this);
+      private NButton nothing = new NButton("do nothing", this);
 
       ChoseWrt(AwtInterface jwin) {
 
@@ -1142,7 +1124,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          this.setSize(d.width, d.height * 7);
          setVisible(true);
          diaflag =
-            getRes() == null
+            null == getRes()
                ? UI.Buttons.IOERROR
             : getRes() == svnb
                ? UI.Buttons.USESVN
@@ -1159,7 +1141,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    }
 
-   class HandleDiff extends SyncAwt<Buttons> {
+   final class HandleDiff extends SyncAwt<Buttons> {
 
       private final String filename;
       private final String backupname;
@@ -1171,7 +1153,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       HandleDiff(String filenamei, int linenumi, Object fileversi,
             Object backupversi, BackupStatus statusi,
             String backupnamei) {
-         super();
          synchronized (this) {
             filename = filenamei;
             backupname = backupnamei;
@@ -1186,7 +1167,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       public Buttons doAwt() {
          //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj);
 
-         if (rdinst == null)
+         if (null == rdinst)
             rdinst = new Diff(frm);
          while (true) {
             rdinst.pop(filename, linenum, filevers, backupvers, status);
@@ -1224,7 +1205,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          status, backupName).postWait().getResult();
    }
 
-   private static class Diff extends NDialog {
+   private static final class Diff extends NDialog {
       private static final long serialVersionUID = 1;
       private Label replab1 = new Label();
       private Label replab2 = new Label();
@@ -1237,6 +1218,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       private NButton diffbut = new NButton("launch diff", this);
 
       private String l1, s1, s2;
+
 //   public void setVisible(boolean vf) {
 //      if (!vf)
 //         Thread.dumpStack();
@@ -1249,7 +1231,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          //trace("diffbut" + diffbut);
 
          //trace("getres" + getRes());
-         return getRes() == null
+         return null == getRes()
                ? UI.Buttons.IOERROR
             : getRes() == okbut
                ? UI.Buttons.OK
@@ -1298,7 +1280,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 //     try {Thread.sleep(150);} catch (Exception e) {} // work around focus problem ???
          this.setTitle("discrepency in backup file:" + filename);
          setinvis();
-         if (status.error != null) {
+         if (null != status.error) {
             replab1.setText(
                "corrupt backup file read in as far as possible. "
                + status.error);
@@ -1318,7 +1300,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             replab1.setVisible(true);
             replab1.setForeground(Color.black);
          }
-         if (filevers == null && backupvers == null) {
+         if (null == filevers && null == backupvers) {
             replab2.setText(
                "the written versions of the file are consistent");
 
@@ -1326,10 +1308,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             okbut.setVisible(true);
          } else {
             l1 = s1 = s2 = "";
-            if (filevers == null) {
+            if (null == filevers) {
                l1 = "backup version has extra lines at end";
                s2 = backupvers.toString();
-            } else if (backupvers == null) {
+            } else if (null == backupvers) {
                l1 = "file version has extra lines at end";
                s1 = filevers.toString();
             } else  {
@@ -1379,23 +1361,28 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    public void windowClosed(java.awt.event.WindowEvent e) {
       /*trace("" + e); /* dont care */
    }
+
    public void windowOpened(WindowEvent e) {
       /*trace("" + e);/* dont care */
    } //
+
    public void windowActivated(WindowEvent e)  {
       /*trace("" + e);/* dont care */
    }   //
+
    public void windowDeactivated(WindowEvent e) {
       /*trace("" + e); /* dont care */
    } //
+
    public void windowDeiconified(WindowEvent e) {
       /*trace("" + e); /* dont care */
    } //
+
    public void windowIconified(WindowEvent e) {
       /*trace("" + e); /* dont care */
    } //
 
-   private class Layout implements LayoutManager, java.io.Serializable {
+   private final class Layout implements LayoutManager, java.io.Serializable {
 
       public void addLayoutComponent(String s, Component cont) {
          //trace("" + cont);
@@ -1445,7 +1432,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
 
          // what is the point of layout out before we get our insets?
-         if (frm  == normalFrame && inset.top == 0)
+         if (frm  == normalFrame && 0 == inset.top)
             return;
 
          Dimension startSize = frm.getSize();
@@ -1478,8 +1465,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          Component cmdComp = ta.getComponent();
          fullwidth(cmdComp, yleft, xsize, inset); // status
          int left = inset.left;
-         for (int i = 0; i < ccount; i++) { // views
-            Component cp = frm.getComponent(i);
+         for (int ii = 0; ii < ccount; ii++) { // views
+            Component cp = frm.getComponent(ii);
             //trace("processing component " + cp);
             if (cp.isVisible()) {
                if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
@@ -1504,12 +1491,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("focusGained " +e);
    }
 
-
-   class GetFile extends SyncAwt<String> {
+   final class GetFile extends SyncAwt<String> {
 
       String doAwt()  {
 
-         if (fdialog == null)
+         if (null == fdialog)
             fdialog = new FileDialog(frm, "open new vifile",
                FileDialog.LOAD);
          fdialog.setVisible(true);

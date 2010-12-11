@@ -10,9 +10,7 @@ import javi.View;
 
 abstract class AwtView  extends View {
 
-//   abstract Position mousepos(MouseEvent event);
    abstract Shape updateCursorShape(Shape sh);
-//   abstract void ssetFont(Font font);
 
    /* Copyright 1996 James Jensen all rights reserved */
 
@@ -20,7 +18,7 @@ abstract class AwtView  extends View {
    private transient Color cursorcolor =  AtView.cursorColor;
    private transient Shape cursorshape;
 
-   AwtView(boolean traversei) {
+   protected AwtView(boolean traversei) {
       super(traversei);
       //trace("created view " + this);
    }
