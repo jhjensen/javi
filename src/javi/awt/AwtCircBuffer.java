@@ -1,23 +1,25 @@
 package javi.awt;
 
+import static history.Tools.trace;
+
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 
+import javi.Buffers;
 import javi.FvContext;
 import javi.Rgroup;
-import javi.Buffers;
 import javi.Buffers.CircBuffer;
-import static history.Tools.trace;
 
 public final class AwtCircBuffer extends CircBuffer implements
       Transferable, ClipboardOwner {
 
    private static AwtCircBuffer cbuf;
+
    static void initCmd() {
-      if (cbuf == null)
+      if (null == cbuf)
          cbuf = new AwtCircBuffer();
       Buffers.init(cbuf);
    }
@@ -35,7 +37,6 @@ public final class AwtCircBuffer extends CircBuffer implements
       return temp;
    }
 
-
    public void lostOwnership(Clipboard clip, Transferable cont) {
       trace("lost clipBoard ownership");
    }
@@ -50,6 +51,7 @@ public final class AwtCircBuffer extends CircBuffer implements
          //trace("registern paste command");
          register(rnames);
       }
+
       public Object doroutine(int rnum, Object arg, int count,
             int rcount, FvContext fvc, boolean dotmode) {
          switch (rnum) {
@@ -58,7 +60,7 @@ public final class AwtCircBuffer extends CircBuffer implements
                return null;
             default:
                trace("doroutine called with " + rnum);
-               throw new RuntimeException();
+               throw new RuntimeException("invalid circ buffer command");
          }
       }
    }
@@ -90,6 +92,7 @@ public final class AwtCircBuffer extends CircBuffer implements
          //trace("disable clipboard");
       }
    }
+
    public Object getTransferData(DataFlavor flavor) throws
          UnsupportedFlavorException {
       ////trace("got getTransferData" + flavor);
@@ -98,20 +101,19 @@ public final class AwtCircBuffer extends CircBuffer implements
          throw new UnsupportedFlavorException(flavor);
 
       Object ret = get(0);
-      return ret == null
+      return null == ret
              ? ""
              : myToString(ret);
    }
 
    public void setclip() {
       //trace("reached setclip");
-      if (systemclip == null)
+      if (null == systemclip)
          return;
       //trace("reached setclip2");
 
       systemclip.setContents(this, this);
       //trace("exiting setclip");
-
 
 //        StringSelection temp = new StringSelection(myToString(get(0)));
 //        systemclip.setContents(temp,temp);
@@ -119,7 +121,7 @@ public final class AwtCircBuffer extends CircBuffer implements
    }
 
    void  getclip() {
-      if (systemclip == null)
+      if (null == systemclip)
          return;
       try {
          Transferable tr = systemclip.getContents(this);

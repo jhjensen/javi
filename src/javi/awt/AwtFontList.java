@@ -5,16 +5,16 @@ import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 
 import javi.ClassConverter;
+import javi.Command;
 import javi.FileDescriptor;
 import javi.FileProperties;
 import javi.FvContext;
 import javi.InputException;
 import javi.IoConverter;
+import javi.PosListList;
 import javi.Rgroup;
 import javi.TextEdit;
 import javi.View;
-import javi.PosListList;
-import javi.Command;
 
 //import static history.Tools.trace;
 
@@ -49,11 +49,11 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             FvContext fvc, boolean dotmode) throws
             InputException {
 
-         View vi = fvc == null
+         View vi = null == fvc
             ? null
             : fvc.vi;
 
-         FontEntry fe = (FontEntry) (vi == null
+         FontEntry fe = (FontEntry) (null == vi
             ? inst.at(1)
             : (FvContext.getcontext(vi, inst).at()));
 
@@ -64,25 +64,25 @@ public final class AwtFontList extends TextEdit<FontEntry> {
 
             case 1:
                fe.setSize(oBToFloat(arg));
-               if (vi != null)
+               if (null != vi)
                   fe.execute(fvc);
                return null;
 
             case 2:
                fe.setFontType(arg.toString());
-               if (vi != null)
+               if (null != vi)
                   fe.execute(fvc);
                return null;
 
             case 3:
                fe.setName(arg.toString());
-               if (vi != null)
+               if (null != vi)
                   fe.execute(fvc);
                return null;
 
             case 4:
                fe.setWeight(oBToFloat(arg));
-               if (vi != null)
+               if (null != vi)
                   fe.execute(fvc);
                return null;
 
@@ -128,6 +128,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    private static final class FontParser extends IoConverter<FontEntry> {
 
       private static final long serialVersionUID = 1;
+
       public void dispose() throws IOException {
          super.dispose();
          fontArr = null;
@@ -137,12 +138,12 @@ public final class AwtFontList extends TextEdit<FontEntry> {
          super(new FileProperties<FontEntry>(
             FileDescriptor.InternalFd.make("Font List"), converter), false);
       }
-      private transient Font [] fontArr;
 
+      private transient Font [] fontArr;
       private transient int index;
 
       public FontEntry getnext() { // for 1.5 can return FontList
-         if (fontArr == null) {
+         if (null == fontArr) {
             fontArr = GraphicsEnvironment
                .getLocalGraphicsEnvironment().getAllFonts();
             index = 0;
@@ -154,7 +155,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    }
 
    public static Font getCurr(View vi) {
-      if (vi == null) {
+      if (null == vi) {
          //trace("font.getCurr default " + inst.at(1));
          return inst.at(1).getFont();
       }

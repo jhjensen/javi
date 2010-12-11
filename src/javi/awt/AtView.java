@@ -1,12 +1,12 @@
 package javi.awt;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.font.TextAttribute;
+import java.text.AttributedCharacterIterator;
 import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
-import java.text.AttributedCharacterIterator;
-import java.awt.font.TextAttribute;
-import java.awt.Font;
-import java.awt.Color;
 
 import javi.DeTabber;
 
@@ -47,8 +47,13 @@ final class AtView implements
       if (line2start != Integer.MAX_VALUE)
          sb.append(String.valueOf(line2start));
 
-      if (olineStart != -1)
-         sb.append(" outofline (" + olineStart + "," + olineEnd + ")");
+      if (olineStart != -1) {
+         sb.append(" outofline (");
+         sb.append(olineStart);
+         sb.append(",");
+         sb.append(olineEnd);
+         sb.append(")");
+      }
       return sb.toString();
    }
 
@@ -74,11 +79,9 @@ final class AtView implements
 //   aciOffset = offset;
 //   aciEnd = offset + aci.getEndIndex();
 //}
-
 //private boolean inAci() {
 //   return pos >= aciOffset && pos <= aciEnd;
 //}
-
    void addOlineText(String str, int offset, boolean overwrite) {
       olineStart = offset;
       int slen = str.length();
@@ -155,9 +158,10 @@ final class AtView implements
 //static final Color cursorColor  = Color.cyan;
 
    private static final Color lightBlue = new Color(0, 0, 128);
+
    AtView(Font font) {
       //trace("this = " + this + " font = " + font);
-      by = new HashMap<Attribute, Object>();
+      by = new HashMap<Attribute, Object>(3);
       by.put(TextAttribute.FONT, font);
 //   temp.put(TextAttribute.CHAR_REPLACEMENT,new ShapeGraphicAttribute(
 //     new Rectangle(5,5),ShapeGraphicAttribute.CENTER_BASELINE,true));
@@ -180,7 +184,11 @@ final class AtView implements
       text = "";
 
    }
-   public Object clone() { throw new RuntimeException(); }
+
+   public Object clone() {
+      throw new RuntimeException("clone unimplemented");
+   }
+
    public char current() {
       if (pos >= text.length())
          return DONE;
@@ -210,9 +218,9 @@ final class AtView implements
       return pos;
    }
 
-//  Returns the end index of the text.
-//  Sets the position to getEndIndex()-1 (getEndIndex() if the text is empty) and returns the character at that position.
-   public char last() {  throw new RuntimeException();  }
+   public char last() {
+      throw new RuntimeException("last unimplemented");
+   }
 
    public char next() {
       if (++pos >= text.length()) {
@@ -223,10 +231,9 @@ final class AtView implements
       return text.charAt(pos);
    }
 
-//  Increments the iterator's index by one and returns the character at the new index.
-   public char previous() {  throw new RuntimeException();  }
-
-//  Decrements the iterator's index by one and returns the character at the new index.
+   public char previous() {
+      throw new RuntimeException("previous unimplemented");
+   }
 
    public char setIndex(int position) {
       pos = position;
@@ -297,7 +304,9 @@ final class AtView implements
          return text.length();
    }
 
-   public int getRunLimit(Set attributes) { throw new RuntimeException(); }
+   public int getRunLimit(Set attributes) {
+      throw new RuntimeException("getRunStart unimplemented");
+   }
 
    public int getRunStart() {
       throw new RuntimeException("getRunStart unimplemented");
@@ -306,6 +315,9 @@ final class AtView implements
    public int getRunStart(AttributedCharacterIterator.Attribute attribute) {
       throw new RuntimeException("getRunStart unimplemented");
    }
-   public int getRunStart(Set attributes) { throw new RuntimeException(); }
+
+   public int getRunStart(Set attributes) {
+      throw new RuntimeException("getRunStart unimplemented");
+   }
 
 }
