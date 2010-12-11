@@ -1,8 +1,8 @@
 package javi;
 /* Copyright 1996 James Jensen all rights reserved */
-import java.util.HashMap;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.HashMap;
 //import static javi.Tools.trace;
 
 public final class Buffers {
@@ -11,8 +11,9 @@ public final class Buffers {
       throw new UnsupportedOperationException("attempt to new singleton");
    }
 
+   // I don't usually use that many buffers
    private static HashMap<Integer, Object> buflist
-      = new HashMap<Integer, Object>();
+      = new HashMap<Integer, Object>(10);
    private static final int circSize = 10; // addressable by single digit int.
    private static CircBuffer delbuffer;
 
@@ -22,17 +23,17 @@ public final class Buffers {
    }
 
    static void deleted(char bufid, String buffer) {
-      if (buffer == null)
+      if (null == buffer)
          return;
 
-      if (bufid == '0') {
+      if ('0' == bufid) {
          delbuffer.add(buffer);
       } else {
          Object bufo;
          if (bufid >= 'A' && bufid <= 'Z') {
             bufid = (char) (bufid + ('a' - 'A'));
             bufo =  buflist.get(Integer.valueOf(bufid));
-            if (bufo == null)
+            if (null == bufo)
                bufo = buffer;
             else
                if (bufo instanceof ArrayList)
@@ -50,21 +51,17 @@ public final class Buffers {
 
    static void deleted(char bufid, ArrayList<String> buffer) {
 
-      if (buffer == null)
+      if (null == buffer)
          return;
 
-      if (bufid == '0') {
-         ArrayList bufarr = (ArrayList) buffer;
-         ArrayList<String> strs = new ArrayList<String>(bufarr.size());
-         for (Object obj : bufarr)
-            strs.add(obj.toString());
-         delbuffer.add(strs);
+      if ('0' == bufid) {
+         delbuffer.add(buffer);
       } else {
          Object bufo;
          if (bufid >= 'A' && bufid <= 'Z') {
             bufid = (char) (bufid + ('a' - 'A'));
             bufo =  buflist.get(Integer.valueOf(bufid));
-            if (bufo == null) {
+            if (null == bufo) {
                bufo = buffer;
             } else {
                if (bufo instanceof ArrayList) {
@@ -101,11 +98,12 @@ public final class Buffers {
       private Object[] buf;
       private int index;
 
+      public abstract void setclip();
+
       final void flush() {
          Arrays.fill(buf, null);
       }
 
-      public abstract void setclip();
       public CircBuffer() {
          buf = new Object[circSize];
       }
@@ -138,9 +136,9 @@ public final class Buffers {
       //   //trace("lost ownership");
       //}
 
-      public static String myToString(Object obj) {
+      public static final String myToString(Object obj) {
          //trace("reached myToString" + obj.getClass());
-         String s = "";
+         String s;
          if (obj instanceof String) {
             s = (String) obj;
 
@@ -166,9 +164,9 @@ public final class Buffers {
 
    }
 
-   static void appendCurrBuf(StringBuilder sb , boolean singleline) {
+   static void appendCurrBuf(StringBuilder sb, boolean singleline) {
       Object obj = Buffers.getbuf('0');
-      if (obj != null)  {
+      if (null != obj)  {
          if (obj instanceof ArrayList) {
             for (Object obj1 : (ArrayList) obj)  {
                sb.append(obj1.toString());

@@ -12,11 +12,11 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
    private transient BufferedReader  input;
 
    protected final String getLine() {
-      if (input == null)
+      if (null == input)
          return null;
       try {
          String retval = input.readLine();
-         if (retval != null)
+         if (null != retval)
             return retval;
       } catch (IOException e) {
          trace("getLine caught " + e);
@@ -30,6 +30,7 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
       return null;
 
    }
+
 /*
    protected final String getLine2() {
       try {
@@ -66,11 +67,11 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
 
    public void dispose() throws IOException {
       super.dispose();
-      if (input != null)
+      if (null != input)
          input.close();
    }
 
-   EditCache<OType> convertStream(BufferedReader inputi) throws
+   final EditCache<OType> convertStream(BufferedReader inputi) throws
          IOException {
       //trace("index = " + index + " " + " input = " + inputi);
       input = inputi;

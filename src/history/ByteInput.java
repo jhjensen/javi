@@ -10,6 +10,7 @@ public final class ByteInput implements DataInput {
    int getOffset() {
       return offset;
    }
+
    ByteInput(byte [] b) {
       buf = b;
       offset = 0;
@@ -75,6 +76,7 @@ public final class ByteInput implements DataInput {
         offset +=ck.length;
       }
    */
+
    public void readFully(byte[] b) {
       if (limit - offset  < b.length)
          throw new ArrayIndexOutOfBoundsException(offset + b.length);
@@ -93,11 +95,12 @@ public final class ByteInput implements DataInput {
       offset += n;
       return n;
    }
+
    public boolean readBoolean() {
       if (offset >= limit)
          throw new ArrayIndexOutOfBoundsException(offset);
 
-      return (buf[offset++] == 0);
+      return 0 == buf[offset++];
    }
 
    public byte readByte()  {
@@ -126,7 +129,7 @@ public final class ByteInput implements DataInput {
 
       if (offset + 1 >= limit)
          throw new ArrayIndexOutOfBoundsException(offset + 1);
-      return (((buf[offset++] & 0xff) << 8) | (buf[offset++] & 0xff));
+      return ((buf[offset++] & 0xff) << 8) | (buf[offset++] & 0xff);
    }
 
    public char readChar() {
@@ -142,25 +145,24 @@ public final class ByteInput implements DataInput {
 //trace("readInt returns "  +
 //(((buf[offset] & 0xff) << 24) | ((buf[offset+1] & 0xff) << 16) |
 //         ((buf[offset+2] & 0xff) << 8) | (buf[offset+3] & 0xff)));
-      return  (((buf[offset++] & 0xff) << 24)
+      return  ((buf[offset++] & 0xff) << 24)
          | ((buf[offset++] & 0xff) << 16)
          | ((buf[offset++] & 0xff) << 8)
-         | (buf[offset++] & 0xff));
+         | (buf[offset++] & 0xff);
    }
-
 
    public long readLong() {
 
       if (offset + 7 >= limit)
          throw new ArrayIndexOutOfBoundsException(offset + 7);
-      return (((long) (buf[offset++] & 0xff) << 56)
+      return ((long) (buf[offset++] & 0xff) << 56)
          | ((long) (buf[offset++] & 0xff) << 48)
          | ((long) (buf[offset++] & 0xff) << 40)
          | ((long) (buf[offset++] & 0xff) << 32)
          | ((long) (buf[offset++] & 0xff) << 24)
          | ((long) (buf[offset++] & 0xff) << 16)
          | ((long) (buf[offset++] & 0xff) <<  8)
-         | ((buf[offset++] & 0xff)));
+         | ((buf[offset++] & 0xff));
    }
 
    public float readFloat() {
@@ -174,7 +176,7 @@ public final class ByteInput implements DataInput {
    public String readLine() {
       if (offset >= buf.length)
          return null;
-      StringBuilder sb = new StringBuilder();
+      StringBuilder sb = new StringBuilder(buf.length - offset);
 
       while (offset < buf.length)
          sb.append(readChar());

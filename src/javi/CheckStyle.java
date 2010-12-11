@@ -7,8 +7,6 @@ import java.util.List;
 import history.Tools;
 
 final class CheckStyle extends Rgroup {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
 
    CheckStyle() {
       final String[] rnames = {
@@ -43,7 +41,7 @@ final class CheckStyle extends Rgroup {
       int count = efs.size();
       LinkedList<String> flist = new LinkedList<String>();
 
-      if (count == 0 && fvc != null)  {
+      if (0 == count && fvc != null)  {
          flist.add(fvc.edvec.getName());
       } else {
          for (EditContainer ef : efs)
@@ -74,9 +72,8 @@ final class CheckStyle extends Rgroup {
          DirList.getDefault().fileList(
             new GrepFilter(".*\\.java$", false));
 
-
       //trace("dlist = " + dlist);
-      if (fdlist.size() == 0)
+      if (0 == fdlist.size())
          UI.reportMessage("no files to compile");
       else  {
          ArrayList<String> dlist = new ArrayList<String>(fdlist.size());
