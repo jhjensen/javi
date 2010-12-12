@@ -109,10 +109,8 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    }
 
    void setName(String fname) {
-      String retval = (String) atmap.get(TextAttribute.FAMILY);
       atmap.put(TextAttribute.FAMILY, fname); //??? does put do anything?
       font = null;
-      //return retval;
    }
 
    void setFontType(String type) {
@@ -137,9 +135,7 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    }
 
    void setSize(Float size) {
-      Float retval = (Float) atmap.get(TextAttribute.SIZE);
       atmap.put(TextAttribute.SIZE, size);
-      font = null;
    }
 
    void setWeight(Float size) {

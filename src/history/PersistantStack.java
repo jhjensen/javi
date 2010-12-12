@@ -134,7 +134,6 @@ public abstract class PersistantStack {
          //    + " offsets = "  + offsets
          //    + " size = "  + size + " cache.size = " + cache.size());
 
-         Object retval;
          if (recordIndex < size - cache.size())
             try {
                binp.seek(offsets.get(recordIndex));
@@ -149,8 +148,6 @@ public abstract class PersistantStack {
             }
          else
             return cache.get(recordIndex - (size - cache.size()));
-         //trace("returning " + retval + dump());
-
       }
 
       public final boolean remove(Object obi) { //??? needs test
