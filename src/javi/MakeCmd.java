@@ -1,6 +1,8 @@
 package javi;
 
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import history.Tools;
@@ -59,6 +61,33 @@ final class MakeCmd extends Rgroup {
          + files2 + "\" ", false));
    }
 
+
+   static final class PositionCmd extends PositionIoc {
+
+      private Process proc;
+
+      static PositionCmd make(String name, String ... cmd) throws IOException {
+         Process proc = Tools.iocmd(cmd);
+         BufferedReader buf = new BufferedReader(
+            new InputStreamReader(proc.getInputStream(), "UTF-8"));
+         return new PositionCmd(name, proc, buf);
+      }
+
+      private PositionCmd(String name, Process proci, BufferedReader buf) throws
+            IOException {
+         super(name, buf);
+         proc = proci;
+      }
+
+      void stopIo() {
+         if (proc != null) {
+            proc.destroy();
+            proc = null;
+         }
+         super.stopIo();
+      }
+   }
+
    static void mkcommand(FvContext fvc)  throws IOException {
 
       FileList.writeModifiedFiles(".*");
@@ -71,8 +100,7 @@ final class MakeCmd extends Rgroup {
 //       String[] cmd = {"c:\\cygwin\\bin\\perl","make.pl" , files};
       String[] cmd = {"perl", "make.pl", files};
 
-      PosListList.Cmd.setErrors(new PositionIoc(
-         "mk " + files, Tools.runcmd(cmd)));
+      PosListList.Cmd.setErrors(PositionCmd.make("mk " + files, cmd));
 
    }
 

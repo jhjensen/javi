@@ -4,7 +4,7 @@ src\javi\command.java,1
 src\javi\ui.java,2
 src\javi\movepos.java,2
 src\javi\mapevent.java,1
-src\javi\ioconverter.java,7
+src\javi\ioconverter.java,8
 src\javi\filedescriptor.java,6
 src\javi\vt100parser.java,8
 src\javi\fileproperties.java,2

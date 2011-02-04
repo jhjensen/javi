@@ -22,9 +22,9 @@ public final class EventQueue {
             } catch (InterruptedException e) {
                trace("caught " + e);
             }
-            trace("failed to get lock", 1);
-            trace("owning thread: " + getOwner(), 1);
-            Thread.dumpStack();
+            //trace("failed to get lock", 1);
+            //trace("owning thread: " + getOwner(), 1);
+            //Thread.dumpStack();
          }
       }
 

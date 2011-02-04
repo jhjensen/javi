@@ -99,11 +99,11 @@ final class XrefReader extends PositionIoc {
          int x = 0;
          failflag = false;
          Position retval = new Position(x, y, file, comment);
-         trace("xref reader returning " + retval);
+         //trace("xref reader returning " + retval);
          return retval;
       } catch (Exception e) {
          trace("caught exception " + e);
-         trace("for line:" + line);
+         //trace("for line:" + line);
          if (!failflag) {
             if (line.length() > maxLine)
                line = line.substring(0, maxLine);

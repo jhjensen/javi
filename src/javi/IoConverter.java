@@ -40,25 +40,29 @@ public class IoConverter<OType> implements Runnable, Serializable {
       return null;
    }
 
+   void stopIo() {
+      rthread.interrupt();
+   }
+
    public synchronized void dispose() throws IOException {
       //trace("rthread = " + rthread);
-      try {
-         if (null != rthread) {
-            rthread.interrupt();
-            //trace ("waiting for thread to die " +this);
+
+      while (null != rthread) {
+         trace("stopIo rthread "  + toString() + " thread " + rthread);
+         if (UI.stopConverter(toString()))
+            stopIo();
+         try {
             wait(1000);
-            if (null != rthread)
-               UI.popError("thread didn't die " + this, null);
+            trace("stopIo rthread "  + toString() + " thread " + rthread);
+            //trace ("waiting for thread to die " +this);
+         } catch (InterruptedException e) {
+            UI.popError("IoConverter caught ", e);
          }
-      } catch (InterruptedException e) {
-         UI.popError("IoConverter caught ", e);
       }
       truncIo();
       aNotify = null;
       ioarray = null;
       mainArray = null;
-
-
    }
 
    public final String toString() {

@@ -225,6 +225,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private transient PopupMenu popmenu; // the menubar
    private transient PopString psinst;
    private transient ChoseWrt chinst;
+   private transient StopProc stpinst;
    private transient Diff rdinst;
    private transient StatusBar statusBar;
    // command context ??? could use FvContext.tfc
@@ -1507,4 +1508,49 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return new GetFile().postWait().getResult();
    }
 
+   private static final class StopProc extends NDialog {
+      private static final long serialVersionUID = 1;
+
+      private Label writelabel = new Label();;
+
+      private NButton killProc =   new NButton("kill process ", this);
+      private NButton waitProc =   new NButton("wait for process to die", this);
+
+      StopProc(AwtInterface jwin) {
+
+         super(jwin.frm, "Stop Process", new FlowLayout());
+         add(writelabel);
+      }
+
+      void getStopChoice(String filename) {
+         String tstring =
+            "You are disposing a running process:" + filename;
+
+         this.setTitle(tstring);
+
+         writelabel.setText(tstring
+            + " do you want to kill it, or wait for it to exit?");
+
+         this.pack();
+         Dimension d = writelabel.getPreferredSize();
+         this.setSize(d.width, d.height * 7);
+         setVisible(true);
+         diaflag =
+            null == getRes()
+               ? UI.Buttons.IOERROR
+            : getRes() == killProc
+               ? UI.Buttons.KILLPROC
+            : getRes() == waitProc
+               ? UI.Buttons.WAITPROC
+            : UI.Buttons.IOERROR;
+         trace("setting diaflag " + diaflag);
+      }
+   }
+
+   public Buttons istopConverter(String commandname) {
+      if (null == stpinst)
+         stpinst = new StopProc(this);
+      stpinst.getStopChoice(commandname);
+      return diaflag;
+   }
 }

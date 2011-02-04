@@ -1,11 +1,14 @@
 package javi.awt;
 
+//import static history.Tools.trace;
+
 import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javi.EventQueue;
 import javi.FvContext;
@@ -142,13 +145,17 @@ final class StatusBar extends Canvas {
          }
 
          String st = "status failure!!!";
-         EventQueue.biglock2.lock();
-         try {
-            st = FvContext.getCurrState();
-         } finally {
-            EventQueue.biglock2.unlock();
+         if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
+            //trace("status bar repaint because failed lock ");
+            repaint(200);
+         } else {
+            try {
+               st = FvContext.getCurrState();
+            } finally {
+               EventQueue.biglock2.unlock();
+            }
+            g.drawString(st, hoffset, charheight * voffset + charascent);
          }
-         g.drawString(st, hoffset, charheight * voffset + charascent);
       } catch (Throwable e) {
          UI.popError("StatusBar.paint caught exception", e);
       }

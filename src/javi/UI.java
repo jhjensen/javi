@@ -12,7 +12,8 @@ import static history.Tools.trace;
 public abstract class UI {
    public enum Buttons {
       CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP ,
-      USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN
+      USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN,
+      WAITPROC, KILLPROC
    };
 
    private static UI instance;
@@ -61,6 +62,8 @@ public abstract class UI {
                                  String []buttonVals, long limit);
 
    public abstract void isizeChange();
+
+   public abstract Buttons istopConverter(String commandname);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -180,6 +183,10 @@ public abstract class UI {
 
    static final Buttons chooseWriteable(String filename) {
       return instance.ichooseWriteable(filename);
+   }
+
+   static final boolean stopConverter(String commandname) {
+      return Buttons.KILLPROC == instance.istopConverter(commandname);
    }
 
    public static final void popError(String errs, Throwable ex) {

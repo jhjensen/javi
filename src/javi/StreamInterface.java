@@ -131,4 +131,8 @@ public final class StreamInterface extends UI {
    public InsertBuffer igetInsertBuffer() {
       return null;
    }
+
+   public Buttons istopConverter(String commandname) {
+      return Buttons.WAITPROC;
+   }
 }

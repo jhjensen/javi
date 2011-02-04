@@ -510,12 +510,6 @@ final class OldView extends AwtView {
       private transient Image dbuf;
       private transient Graphics2D imageg;
 
-//RenderingHints qualityHints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-//qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-////qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-//imageg.setRenderingHints(qualityHints);
-
       private void common() {
          /*
             HashSet<AWTKeyStroke> keyset =
@@ -711,6 +705,19 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
+//RenderingHints qualityHints = new RenderingHints(
+//   RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+//qualityHints.put(RenderingHints.KEY_ANTIALIASING,
+//   RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+//   RenderingHints.VALUE_ANTIALIAS_OFF);
+//qualityHints.put(RenderingHints.KEY_TEXT_ANTIALIASING,
+//   RenderingHints.VALUE__TEXT_ANTIALIAS_DEFAULT);
+//   RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+//qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+//imageg.setRenderingHints(qualityHints);
+
             //trace("imageg " + imageg);
             if (null == imageg)
                throw new RuntimeException("imageg null!!");
@@ -718,7 +725,7 @@ final class OldView extends AwtView {
          }
 
          if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
-            trace("repaint because failed lock " + gettext() + " or lock");
+//            trace("repaint because failed lock " + gettext() + " or lock");
             repaint(200);
          } else
             try {
