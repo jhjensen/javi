@@ -1,5 +1,6 @@
 package javi;
 import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ImporterTopLevel;
@@ -12,8 +13,26 @@ import java.util.NoSuchElementException;
 import history.Tools;
 import static history.Tools.trace;
 
-final class JS {
+public final class JS {
    private JS() { }
+
+   static class MyFactory extends ContextFactory {
+
+      protected boolean hasFeature(Context cx, int featureIndex) {
+         switch(featureIndex) {
+            case Context.FEATURE_STRICT_MODE :
+            case Context.FEATURE_STRICT_VARS :
+            case Context.FEATURE_WARNING_AS_ERROR :
+               return true;
+            default:
+               return super.hasFeature(cx, featureIndex);
+         }
+      }
+   }
+
+   static {
+      ContextFactory.initGlobal(new MyFactory());
+   }
    static final Class oclass = JSR.class;
    static Context ctx;
    static ScriptableObject scope;
@@ -28,12 +47,15 @@ final class JS {
       //ScriptableObject scope = ctx.initStandardObjects(new ImporterTopLevel());
       scope = iscope;
       Context.enter();
+      ctx.setOptimizationLevel(-1);
+
       scope.put("jsobj", scope, new JSObj());
    }
 
    static {
       jsClear();
    }
+
    static final class JSObj {
       public void myprint(String s)  {
          //trace("jsoutput s " + s + " jsoutput " +  jsoutput);
@@ -41,9 +63,8 @@ final class JS {
       }
    }
 
-
    /* Copyright 1996 James Jensen all rights reserved */
-   static final class JSR extends Rgroup {
+   public static final class JSR extends Rgroup {
       JSR() {
          final String[] rnames = {
             "",
@@ -58,7 +79,7 @@ final class JS {
       static final StringIoc sio = new StringIoc("jsoutput", "start");
       static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
 
-      static final class JSgroup extends Rgroup {
+      public static final class JSgroup extends Rgroup {
          private final Function func;
 
          public JSgroup(String funcname) throws Exception {
@@ -96,9 +117,9 @@ final class JS {
             case 2:
                try {
                   jsEvalIter(fvc.edvec.iterator(), fvc.edvec.getName());
-               } catch (org.mozilla.javascript.EcmaError e) {
-                  UI.reportError(e.toString());
-               } catch (org.mozilla.javascript.EvaluatorException e) {
+               } catch (Throwable e) {
+                  trace("caught exception " + e);
+                  e.printStackTrace();
                   UI.reportError(e.toString());
                }
                return null;
@@ -108,6 +129,16 @@ final class JS {
             default:
                throw new RuntimeException();
          }
+      }
+
+      public static void evalFile(String fileName) throws IOException {
+         jsEvalIter(new java.util.Scanner(new java.io.File(fileName)),
+            fileName);
+      }
+
+      static Object eval(String cmd) {
+         Object jresult = JS.ctx.evaluateString(JS.scope, cmd, "cmd", 1, null);
+         return jresult;
       }
 
       private static Object execRoutine(int rnum, Object arg, int count,
@@ -127,18 +158,10 @@ final class JS {
          return null;
       }
 
-      static String jsEvalIter(Iterator src, String lable) throws IOException {
+      static String jsEvalIter(Iterator src, String label) throws IOException {
          Object eres = JS.ctx.evaluateReader(
-            JS.scope, new IteratorReader(src), lable, 1, null);
+            JS.scope, new IteratorReader(src), label, 1, null);
          return eres.toString();
-      }
-
-      static String jsEvalString(String src) throws IOException {
-         Object eres =
-            JS.ctx.evaluateString(JS.scope, src, "cmd", 1, null);
-         // trace("" + eres);
-         return eres.toString();
-
       }
 
       static void myassert(boolean flag, Object dump) {
@@ -153,7 +176,7 @@ final class JS {
             Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
             myassert("ok".equals(obj), obj);
 
-            myassert(jsEvalString(
+            myassert(eval(
                         "function f(x){return x+1} f(7)").equals("8.0"), "8.0");
             String[] strarr = {
                "java.lang.System.out.println(300000); ",

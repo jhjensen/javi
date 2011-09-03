@@ -184,6 +184,7 @@ public final class MapEvent {
       skeys.keyactionbind(JeyEvent.VK_DELETE, "deletechars", one, 0);
       skeys.keyactionbind(JeyEvent.VK_DELETE, "deletetoend", null, SHIFT_MASK);
       skeys.keyactionbind(JeyEvent.VK_INSERT, "insert", ft, 0);
+      skeys.keybind('j', "jsevalfile", null, JeyEvent.ALT_MASK);
    }
 
    static boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
@@ -315,8 +316,8 @@ public final class MapEvent {
       //trace("hevent" + jEv);
 
       char ch = jEv.getKeyChar();
-      if (((ch != '0') || (aiterate != 0))
-            && (ch >= '0' && ch <= '9')) {
+      if ((('0' != ch) || (0 != aiterate))
+            && ('0' <= ch && '9' >= ch)) {
          aiterate = aiterate * 10 + (ch & 0x0f);
          return;
       } else if (27 == jEv.getKeyChar()) {

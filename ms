@@ -5,7 +5,7 @@ if [ $OS == Windows_NT ] ; then
    jroot="C:\Docume~1\utftbwx\Desktop\cyghome\javt"
    myprog="$jroot\lib"
 
-   commoncp="$myprog\juniversalchardet-1.0.3.jar;$myprog\rhino1_7R2\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
+   commoncp="$myprog\juniversalchardet-1.0.3.jar;$myprog\rhino1_7R3\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
 
    mycp="$jroot\buildworks;$commoncp"
    mycp="$jroot\build;$commoncp"

@@ -77,6 +77,7 @@ public final class Javi {
       new PosListList.Cmd();
 
       MoveGroup.init();
+      new JS.JSR();
       MapEvent.bindCommands();
       try {
          //trace("preserver");
@@ -97,7 +98,6 @@ public final class Javi {
       new JavaCompiler();
       new CheckStyle();
       //trace("unexpectedly slow");
-      new JS.JSR();
 
       //new vcs.cmvc();
 

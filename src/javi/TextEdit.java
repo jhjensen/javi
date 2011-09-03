@@ -1139,6 +1139,9 @@ final class EditTester1 {
          Date end = new Date();
          elapsed =  end.getTime() - start.getTime();
          ex.disposeFvc();
+         end = null;
+         ex = null;
+         start = null;
       }
 
       Tools.doGC();

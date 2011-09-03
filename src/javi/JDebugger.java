@@ -151,8 +151,9 @@ final class JDebugger extends IoConverter<String> {
          "-Dsun.io.serialization.extendedDebugInfo=true");
 
       cargs.get("options").setValue("-Xshare:off -Dxxx=yyy -cp "
-         + "./build;./lib/juniversalchardet-1.0.3.jar;./lib/rhino1_7R2/js.jar;"
+         + "./build;./lib/juniversalchardet-1.0.3.jar;./lib/rhino1_7R3/js.jar;"
          + "./lib/junit3.8.2/junit.jar;$JDK2/lib/tools.jar ");
+
       vm = con.launch(cargs);
       //trace("classes = " + vm.allClasses());
 

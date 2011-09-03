@@ -329,6 +329,11 @@ final class EditGroup extends Rgroup {
                         starty, donex, doney);
                      MoveGroup.dosearch('S' == key, 1, fvc, line);
                      break out;
+                  case '!':
+                     line = fvc.edvec.gettext(startx,
+                        starty, donex, doney);
+                     JS.JSR.eval(line);
+                     break out;
                   case 12:
                      MiscCommands.redraw(true);
                      continue;
