@@ -89,7 +89,7 @@ final class DirList extends TextEdit<DirEntry> {
    }
 
    boolean initSearchR() {
-      trace("searchName " + searchName);
+      //trace("searchName " + searchName);
       dindex = 0;
       findex = -1;
       maxIndex = readIn();
