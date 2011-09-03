@@ -208,6 +208,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                return null;
             case 6:
                new FScreen();
+               return null;
 
             default:
                throw new RuntimeException("doroutine called with " + rnum);
