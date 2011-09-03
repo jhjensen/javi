@@ -1,7 +1,5 @@
 package javi;
 
-/* Copyright 1996 James Jensen all rights reserved */
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;

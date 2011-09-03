@@ -1,5 +1,4 @@
 package javi;
-/* Copyright 1996 James Jensen all rights reserved */
 
 import java.io.IOException;
 import java.io.BufferedReader;
@@ -10,7 +9,6 @@ import history.Tools;
 
 public final class Command extends Rgroup {
 
-   static final String copyright = "Copyright 1996 James Jensen";
    private static Command instance;
 
    private static final String[] rnames = {

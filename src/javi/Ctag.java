@@ -214,7 +214,6 @@ final class Ctag {
                 0, curtag.length() - 1), backmark, endmark);
    }
 
-   /* Copyright 1996 James Jensen all rights reserved */
    public static void main(String[] args) {
       try {
          Ctag ct = new Ctag(args[0]);

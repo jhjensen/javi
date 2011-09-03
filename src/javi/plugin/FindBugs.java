@@ -14,9 +14,6 @@ import javi.Rgroup;
 
 public final class FindBugs extends Rgroup implements Plugin {
 
-   /* Copyright 1996 James Jensen all rights reserved */
-
-   static final String copyright = "Copyright 1996 James Jensen";
    public static final String pluginInfo = "findbug command";
 
    static {

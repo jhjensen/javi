@@ -49,7 +49,6 @@ import static history.Tools.trace;
 public class EditContainer<OType> implements
    Serializable, ReAnimator, Iterable<OType> {
 
-   /* Copyright 1996 James Jensen all rights reserved */
    private static final long serialVersionUID = 1;
 
    final String getName() {

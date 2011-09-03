@@ -1,5 +1,5 @@
 package javi;
-/* Copyright 1996 James Jensen all rights reserved */
+
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;

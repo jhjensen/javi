@@ -2,8 +2,6 @@ package javi;
 
 public final class MovePos {
 
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    public int x = 0;
    public int y = 0;
 

@@ -63,7 +63,6 @@ public final class JS {
       }
    }
 
-   /* Copyright 1996 James Jensen all rights reserved */
    public static final class JSR extends Rgroup {
       JSR() {
          final String[] rnames = {

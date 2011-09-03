@@ -9,8 +9,6 @@ import history.Tools;
 import static history.Tools.trace;
 
 final class XrefReader extends PositionIoc {
-   /* Copyright 1996 James Jensen all rights reserved */
-   static final String copyright = "Copyright 1996 James Jensen";
    private boolean failflag;
    private static final int maxLine = 200;
 

@@ -9,7 +9,6 @@ import history.Tools;
 import static history.Tools.trace;
 
 public final class MiscCommands extends Rgroup  {
-   /* Copyright 1996 James Jensen all rights reserved */
    MiscCommands() {
       final String[] rnames = {
          "",

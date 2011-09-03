@@ -9,7 +9,6 @@ import history.PersistantStack;
 //import static history.Tools.trace;
 
 public final class UndoHistory<OType> extends PersistantStack {
-   static final String copyright = "Copyright 1996 James Jensen";
    private EhMark currmark; // index of current position in undo
    private ChangeRecord current = null;
    private int savewrite = -1;

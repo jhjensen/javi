@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import static history.Tools.trace;
 
 final class MoveGroup extends Rgroup {
-   /* Copyright 1996 James Jensen all rights reserved */
    private static final MoveGroup inst = new MoveGroup();
 
    static void init() { /* forces static inst filed to be newed */

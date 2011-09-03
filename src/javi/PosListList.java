@@ -159,8 +159,6 @@ public final class PosListList extends TextList<Position> {
    }
 
    public static final class Cmd extends Rgroup {
-      /* Copyright 1996 James Jensen all rights reserved */
-      static final String copyright = "Copyright 1996 James Jensen";
 
       private static ArrayList<Position> tagstack = new ArrayList<Position>();
       private static PosListList inst;

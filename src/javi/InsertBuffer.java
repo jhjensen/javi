@@ -6,8 +6,6 @@ import java.text.CharacterIterator;
 import static history.Tools.trace;
 import static javi.JeyEvent.CTRL_MASK;
 
-/* Copyright 1996 James Jensen all rights reserved */
-
 public abstract class InsertBuffer extends View.Inserter {
 
    private static InsertBuffer instance;

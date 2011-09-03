@@ -1,5 +1,4 @@
 package javi.awt;
-/* Copyright 1996 James Jensen all rights reserved */
 
 import static history.Tools.trace;
 

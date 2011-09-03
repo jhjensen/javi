@@ -16,7 +16,6 @@ import static history.Tools.trace;
 
 
 public final class FvContext<OType> implements Serializable {
-   /* Copyright 1996 James Jensen all rights reserved */
    private static final long serialVersionUID = 1;
 
    private static final class FvMap implements Serializable {

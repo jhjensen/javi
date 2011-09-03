@@ -17,8 +17,6 @@ import static history.Tools.trace;
 class Vt100 extends TextEdit<String> {
 
 
-   /* Copyright 1996 James Jensen all rights reserved */
-
    private final OutputStreamWriter writer;
 //   private final OutputStream str;
 

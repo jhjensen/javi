@@ -12,8 +12,6 @@ abstract class AwtView  extends View {
 
    abstract Shape updateCursorShape(Shape sh);
 
-   /* Copyright 1996 James Jensen all rights reserved */
-
    protected static final transient int inset = 2;
    private transient Color cursorcolor =  AtView.cursorColor;
    private transient Shape cursorshape;
