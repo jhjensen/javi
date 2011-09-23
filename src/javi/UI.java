@@ -231,7 +231,7 @@ public abstract class UI {
       instance.istatusaddline(s);
    }
 
-   static final void reportMessage(String s) {
+   public static final void reportMessage(String s) {
       if (null != instance)
          instance.istatusaddline(s);
       else {

@@ -21,9 +21,6 @@ diredit
 fix cmd line.
 multiple ssh
 {[(0O;:.,Ll1| 1234 '`"um
-ni
-er
-
 
 fix warnings.
 
@@ -38,9 +35,9 @@ edit file list
 Junit testcases
 new view
 findbugs
-static import.
 
 done :
+   static import.
    EditTester1 fails
    Join doensn't put in space
    :200 doesn't goto line
