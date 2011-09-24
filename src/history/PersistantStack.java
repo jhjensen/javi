@@ -278,7 +278,7 @@ public abstract class PersistantStack {
          //     " rfile.length = " + rfile.length()
          //    + " filesize " + filesize );
          if (rfile.length() != filesize)
-            throw new IOException("inconsistant filesize");
+            throw new BadBackupFile("inconsistant filesize");
 
          DataOutputStream ds =
             new DataOutputStream(

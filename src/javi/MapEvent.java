@@ -9,6 +9,7 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import history.BadBackupFile;
 
 import static javi.JeyEvent.SHIFT_MASK;
 import static javi.JeyEvent.CTRL_MASK;

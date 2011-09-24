@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import history.ByteInput;
+import history.BadBackupFile;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -437,6 +438,16 @@ public class EditContainer<OType> implements
                try {
                   //trace("backing up " + ev);
                   ev.backup.idleSave();
+               } catch (BadBackupFile e) {
+                  if (UI.reportBadBackup(ev.getName(), e)) {
+                     ev.reload();
+                     trace("try to delete file");
+                     try {
+                        ev.fdes().getPersistantFd().delete();
+                     } catch (IOException ie) {
+                        UI.popError("unable to delete backupfile " , ie);
+                     }
+                  }
                } catch (Throwable e) {
                   UI.popError("Problem with backup File starting over", e);
                   ev.reinitBack();

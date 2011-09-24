@@ -736,7 +736,8 @@ final class OldView extends AwtView {
                   repaint(200);
                }
             } catch (Throwable e) {
-               UI.popError("npaint caught", e);
+               trace("npaint caught " +  e);
+               //UI.popError("npaint caught", e);
             } finally {
                EventQueue.biglock2.unlock();
             }

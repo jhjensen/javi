@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
+import history.BadBackupFile;
 import static history.Tools.trace;
 
 public final class StreamInterface extends UI {
@@ -76,6 +77,28 @@ public final class StreamInterface extends UI {
          return Buttons.IOERROR;
       }
 
+   }
+   public boolean ireportBadBackup(String filename, BadBackupFile e) {
+      try {
+         while (true) {
+            if (!inStr.ready())
+               trace("backup file for " + filename
+                  + "corrupted: (d)elete or (i)gnore" + e);
+            int ch = inStr.read();
+            //trace("read in " + (char)ch);
+            switch (ch) {
+               case 'd':
+                  return true;
+               case 'i':
+                  return false;
+               default:
+                  trace("stream got unexpected char = " + ch);
+            }
+         }
+      } catch (IOException err) {
+         trace("ireportDiff can not read from input Stream ");
+         return false;
+      }
    }
 
    public void irepaint() { /* unimplemented */ }

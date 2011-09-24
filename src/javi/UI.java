@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
+import history.BadBackupFile;
 
 import static history.Tools.trace;
 
@@ -64,6 +65,7 @@ public abstract class UI {
    public abstract void isizeChange();
 
    public abstract Buttons istopConverter(String commandname);
+   public abstract boolean ireportBadBackup(String filename, BadBackupFile e);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -237,6 +239,17 @@ public abstract class UI {
       else {
          Thread.dumpStack();
          trace("unhandled Messege:" + s);
+      }
+   }
+
+   public static final boolean reportBadBackup(
+         String filename, BadBackupFile e) {
+      if (null != instance)
+         return instance.ireportBadBackup(filename, e);
+      else {
+         Thread.dumpStack();
+         trace("unhandled Messege:" + e);
+         return false;
       }
    }
 

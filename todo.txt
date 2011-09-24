@@ -1,3 +1,8 @@
+It would be very good in PersistantStack.push to move the flush to close, and do it occasionally
+Also BadBackupFile should inherit from IOException
+
+split AwtInterface into separate files.
+
 when rebuilding kill the old build if it is still running?
 sometimes it seems like files that are read in still leave a red background
 configuration for javac for ml2i/F7

@@ -1317,7 +1317,7 @@ final class EditTester1 {
       try {
          ex.disposeFvc();
          myassert(false, ex);
-      } catch (final IOException e) {
+      } catch (final history.BadBackupFile e) {
       }
 
       ex = newTe("extest15");

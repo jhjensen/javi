@@ -66,6 +66,7 @@ import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
 import javi.View;
+import history.BadBackupFile;
 
 import static history.Tools.trace;
 
@@ -1205,6 +1206,58 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          String backupName) {
       return new HandleDiff(filename, linenum, filevers, backupvers,
          status, backupName).postWait().getResult();
+   }
+
+   final class BadBackupDia extends SyncAwt<Boolean> {
+
+      private String filename;
+      private String error;
+      private BadButton bad = new BadButton();
+
+      BadBackupDia(String filenamei, String errori) {
+         filename = filenamei;
+         error = errori;
+      }
+
+      private final class BadButton extends NDialog {
+         private static final long serialVersionUID = 1;
+
+         private Label writelabel = new Label();
+
+         private NButton delete =   new NButton("delete backup file ", this);
+         private NButton ignore =   new NButton("ignore ", this);
+
+         BadButton() {
+
+            super(frm, "Stop Process", new FlowLayout());
+            add(writelabel);
+         }
+
+         boolean getChoice() {
+            String tstring =
+               "corrupt backupfile for " + filename;
+
+            this.setTitle(tstring);
+
+            writelabel.setText(tstring
+               + " do you want to delete it, or ignore error?");
+
+            this.pack();
+            Dimension d = writelabel.getPreferredSize();
+            this.setSize(d.width, d.height * 7);
+            setVisible(true);
+            return getRes() == delete;
+         }
+      }
+
+      Boolean doAwt()  {
+         return bad.getChoice();
+      }
+   }
+
+   public boolean ireportBadBackup(String filename, BadBackupFile e) {
+      return new BadBackupDia(filename, e.toString())
+         .postWait().getResult();
    }
 
    private static final class Diff extends NDialog {

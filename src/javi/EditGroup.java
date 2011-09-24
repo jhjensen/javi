@@ -1,6 +1,7 @@
 package javi;
 import java.io.IOException;
 import java.util.ArrayList;
+import history.BadBackupFile;
 import static history.Tools.trace;
 
 final class EditGroup extends Rgroup {
@@ -53,123 +54,131 @@ final class EditGroup extends Rgroup {
          FvContext  fvc, boolean dotmode) throws
          InterruptedException, IOException, InputException {
       //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
-      if (!dotmode && !(rnum >= 20 && rnum <= 22)) {
-         dotcommand = rnum;
-         dotcount = count;
-         dotrcount = rcount;
-         dotarg = arg;
-         dotrcount = rcount;
+      try {
+         if (!dotmode && !(rnum >= 20 && rnum <= 22)) {
+            dotcommand = rnum;
+            dotcount = count;
+            dotrcount = rcount;
+            dotarg = arg;
+            dotrcount = rcount;
+         }
+
+         switch (rnum) {
+            case 1:
+               boolean[] a2 = (boolean[]) arg;
+               InsertBuffer.insertMode(dotmode, count, fvc, a2[0], a2[1]);
+               break;
+            case 2:
+               fvc.cursorxabs(0);
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 3:
+               fvc.cursorx(1);
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 4:
+               fvc.cursorxabs(Integer.MAX_VALUE);
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 5:
+               fvc.cursorxabs(Integer.MAX_VALUE);
+               fvc.inserttext("\n");
+               fvc.cursory(1);
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 6:
+               fvc.cursorxabs(0);
+               fvc.inserttext("\n");
+
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 7:
+               substitute(dotmode, count, fvc);
+               break;
+            case 8:
+               ucSubstitute(dotmode, count, fvc);
+               break;
+            case 9:
+               boolean[] a1 = (boolean[]) arg;
+               fvc.deleteChars('0', a1[0], a1[1], count);
+               break;
+            case 10:
+               deletetoend('0', count, fvc);
+               break;
+            case 11:
+               deletetoend('0', count, fvc);
+               InsertBuffer.insertMode(dotmode, count, fvc, false, false);
+               break;
+            case 12:
+               deletemode('0', dotmode, count, rcount, fvc);
+               break;
+            case 13:
+               fvc.cursorxabs(fvc.edvec.joinlines(count, fvc.inserty()));
+               break;
+            case 14:
+               subChar(dotmode, count, fvc);
+               break;
+            case 15:
+               fvc.edvec.changecase(fvc.insertx(), fvc.inserty(),
+                  fvc.insertx() + count, fvc.inserty());
+               fvc.cursorx(count);
+               break;
+            case 16:
+               changemode('0', dotmode, count, rcount, fvc);
+               break;
+            case 17:
+               putbuffer('0', false, fvc);
+               break;
+            case 18:
+               putbuffer('0', true, fvc);
+               break;
+            case 19:
+               qmode(count, rcount, dotmode, fvc);
+               break;
+            case 20:
+               yankmode('0', false, count, rcount, fvc);
+               break;
+            case 21:
+               ArrayList<String> bufs = fvc.getElementsAt(count);
+               //trace("yank " + count + " lines ");
+               Buffers.deleted('0', bufs);
+               break;
+            case 22:
+               if (0 != dotcommand) {
+                  if (0 == rcount)
+                     count = dotcount;
+                  dotcount = count;
+                  return doroutine(dotcommand, dotarg, dotcount,
+                     dotrcount, fvc, true);
+               }
+               return null;
+            case 23:
+               markmode('0', dotmode, count, rcount, fvc,
+                  1 == ((Integer) arg).intValue());
+               break;
+            case 24:
+            case 25:
+               return null;
+
+            case 26:
+               shiftmode(((Integer) arg).intValue(), count,
+                  fvc, dotmode, rcount);
+               break;
+
+            case 27:
+               fvc.edvec.tabfix(fvc.vi.getTabStop());
+               break;
+            default:
+               throw new RuntimeException("invalid doroutine index");
+         }
+         fvc.edvec.checkpoint();
+         fvc.fixCursor();
+      } catch (BadBackupFile e) {
+         if (UI.reportBadBackup(fvc.edvec.getName(), e)) {
+            fvc.edvec.reload();
+            fvc.edvec.fdes().getPersistantFd().delete();
+         }
       }
-
-      switch (rnum) {
-         case 1:
-            boolean[] a2 = (boolean[]) arg;
-            InsertBuffer.insertMode(dotmode, count, fvc, a2[0], a2[1]);
-            break;
-         case 2:
-            fvc.cursorxabs(0);
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 3:
-            fvc.cursorx(1);
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 4:
-            fvc.cursorxabs(Integer.MAX_VALUE);
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 5:
-            fvc.cursorxabs(Integer.MAX_VALUE);
-            fvc.inserttext("\n");
-            fvc.cursory(1);
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 6:
-            fvc.cursorxabs(0);
-            fvc.inserttext("\n");
-
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 7:
-            substitute(dotmode, count, fvc);
-            break;
-         case 8:
-            ucSubstitute(dotmode, count, fvc);
-            break;
-         case 9:
-            boolean[] a1 = (boolean[]) arg;
-            fvc.deleteChars('0', a1[0], a1[1], count);
-            break;
-         case 10:
-            deletetoend('0', count, fvc);
-            break;
-         case 11:
-            deletetoend('0', count, fvc);
-            InsertBuffer.insertMode(dotmode, count, fvc, false, false);
-            break;
-         case 12:
-            deletemode('0', dotmode, count, rcount, fvc);
-            break;
-         case 13:
-            fvc.cursorxabs(fvc.edvec.joinlines(count, fvc.inserty()));
-            break;
-         case 14:
-            subChar(dotmode, count, fvc);
-            break;
-         case 15:
-            fvc.edvec.changecase(fvc.insertx(), fvc.inserty(),
-               fvc.insertx() + count, fvc.inserty());
-            fvc.cursorx(count);
-            break;
-         case 16:
-            changemode('0', dotmode, count, rcount, fvc);
-            break;
-         case 17:
-            putbuffer('0', false, fvc);
-            break;
-         case 18:
-            putbuffer('0', true, fvc);
-            break;
-         case 19:
-            qmode(count, rcount, dotmode, fvc);
-            break;
-         case 20:
-            yankmode('0', false, count, rcount, fvc);
-            break;
-         case 21:
-            ArrayList<String> bufs = fvc.getElementsAt(count);
-            //trace("yank " + count + " lines ");
-            Buffers.deleted('0', bufs);
-            break;
-         case 22:
-            if (0 != dotcommand) {
-               if (0 == rcount)
-                  count = dotcount;
-               dotcount = count;
-               return doroutine(dotcommand, dotarg, dotcount,
-                  dotrcount, fvc, true);
-            }
-            return null;
-         case 23:
-            markmode('0', dotmode, count, rcount, fvc,
-               1 == ((Integer) arg).intValue());
-            break;
-         case 24:
-         case 25:
-            return null;
-
-         case 26:
-            shiftmode(((Integer) arg).intValue(), count, fvc, dotmode, rcount);
-            break;
-
-         case 27:
-            fvc.edvec.tabfix(fvc.vi.getTabStop());
-            break;
-         default:
-            throw new RuntimeException("invalid doroutine index");
-      }
-      fvc.edvec.checkpoint();
-      fvc.fixCursor();
       return null;
    }
 

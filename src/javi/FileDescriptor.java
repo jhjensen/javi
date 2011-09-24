@@ -100,6 +100,11 @@ public class FileDescriptor implements Serializable {
             && Character.isLetter(file.charAt(0)));
    }
 
+   void delete() throws IOException {
+      Tools.trace("delete1");
+      throw new IOException("undeletable");
+   }
+
    private static final class Fiter implements Iterable<File> {
 
       private final Iterator<FileDescriptor.LocalFile> input;
