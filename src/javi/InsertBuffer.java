@@ -129,12 +129,16 @@ public abstract class InsertBuffer extends View.Inserter {
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
-            FvContext fvc, boolean dotmode) {
+            FvContext fvc, boolean dotmode) throws InputException {
          //trace("rnum = " + rnum);
 
          switch (rnum) {
             case 1:
                itext(1, fvc);
+               if (fvc.edvec instanceof Vt100) {
+                  Vt100 v100  = (Vt100) fvc.edvec;
+                  v100.handleKeys(fvc);
+               }
                overwrite = !overwrite;
                if (overwrite) {
                   return this;

@@ -356,6 +356,14 @@ public final class PosListList extends TextList<Position> {
       private static final Matcher filematcher = Pattern.compile(
          "\\bfile:(\\S*)\\b").matcher("");
 
+      private final class FDL implements EditContainer.FileDisposeListener {
+         public void fileDisposed(EditContainer ev) {
+            trace("file disposed " + ev);
+            tahash.remove(ev.getName());
+         }
+      }
+      private FDL fdl = new FDL();
+
       private TextEdit taglookup(String str, View vi) throws InputException {
          //trace("taglookup " + str);
          String []symlist = spl.split(str);
@@ -366,8 +374,10 @@ public final class PosListList extends TextList<Position> {
          String sym = symlist[symlist.length - 1];
          TextEdit<Position> taglist = tahash.get(sym);
          try {
-            if (null == taglist)
+            if (null == taglist) {
                taglist = createtags(sym);
+               taglist.addDisposeNotify(fdl);
+            }
 
             int tagcount = 1;
             for (; taglist.readIn() > tagcount; tagcount++) {

@@ -43,11 +43,14 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       try {
          while (true) {
             synchronized (this) {
-               recbyte = (char) input.read();
-               if (recbyte == -1)  {
-                  Thread.sleep(200);
-                  trace("recbyte = " + recbyte);
+               int rec = input.read();
+               if (rec == -1)  {
+                  return;
+                  //Thread.sleep(2000);
+                  //trace("recbyte = " + recbyte);
                } else {
+                  recbyte = (char) rec;
+                  //trace("insert wakeup recbyte " + (int)recbyte);
                   EventQueue.insert(this);
                   wait(10000);
                }
@@ -106,15 +109,16 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          case 9:
             sb.append(inc);
             break;
+         case (char) 0xffff:
+            trace("received -1");
+            Thread.dumpStack();
+            break;
          default:
             if (inc < 20)
                trace1("unhandeld control character 0x"
                   + Integer.toHexString(inc));
             if (inc > 0x7f)
                trace(this + "questionable char " + Integer.toHexString(inc));
-            //fvc.cursoryabs(ev.readIn()-1);
-            //fvc.cursorxabs(Integer.MAX_VALUE);
-            //editgroup.deleteChars('\0',fvc,false,true,1);
             sb.append(inc);
       }
    }
@@ -416,7 +420,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       //trace("ParseInput executing on recbyte " + recbyte);
       try {
          doChar(recbyte);
-         while (input.available() != -0)   {
+         while (input.available() != 0)   {
+            //trace("input available" + input.available());
             doChar((char) input.read());
          }
          if (state == CR) {

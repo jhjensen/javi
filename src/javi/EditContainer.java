@@ -106,6 +106,13 @@ public class EditContainer<OType> implements
    /* This may or may not match the read only status of an underlying file. */
    private transient boolean readonly = false;
    private transient UndoHistory.ChangeRecord []prototypes;
+   private FileDisposeListener disposeListener = null;
+
+   final void addDisposeNotify(FileDisposeListener fdl) {
+      if (disposeListener != null)
+         throw new RuntimeException("only one disposeListener");
+      disposeListener = fdl;
+   }
 
    private void writeObject(java.io.ObjectOutputStream os) throws IOException {
       os.defaultWriteObject();
@@ -190,6 +197,9 @@ public class EditContainer<OType> implements
    public void disposeFvc() throws IOException {
 
       //trace("dispose " + super.toString()  + "\"" + prop.fdes.canonName+  "\" class = " + prop.conv.getClass() );
+      if (disposeListener != null)
+         disposeListener.fileDisposed(this);
+
       cleanup();
       ecache = null;
       try {
@@ -1369,6 +1379,10 @@ public class EditContainer<OType> implements
       boolean undocr(ChangeOpt vi) {
          return vi.lineChanged(cindex);
       }
+   }
+
+   interface FileDisposeListener {
+      void fileDisposed(EditContainer ev);
    }
 
    interface FileStatusListener {

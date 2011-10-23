@@ -59,51 +59,53 @@ class Vt100 extends TextEdit<String> {
       return str;
    }
 
-   public final boolean handleKey(JeyEvent kev) {
-      //trace("dispatchKeyEvent" + kev);
+   public final void handleKeys(FvContext fvc) throws InputException {
+      trace("handleKeys");
+      startHandle(fvc);
       try {
-         char ch = kev.getKeyChar();
-         if (ch == JeyEvent.CHAR_UNDEFINED) {
-            switch (kev.getKeyCode()) {
-               case JeyEvent.VK_LEFT:
-                  //writer.write("\33D");
-                  writer.write("\33[D");
-                  break;
-               case JeyEvent.VK_RIGHT:
-                  writer.write("\33[C");
-                  //writer.write("\33C");
-                  break;
-               case JeyEvent.VK_UP:
-                  writer.write("\33[A");
-                  //writer.write("\33A");
-                  break;
-               case JeyEvent.VK_DOWN:
-                  writer.write("\33[B");
-                  //writer.write("\33B");
-                  break;
-               case JeyEvent.VK_INSERT:
-                  return false;
-               default:
-                  trace("unhandle KeyCode " + kev.getKeyCode());
-                  return true;
+         while (true) {
+            JeyEvent kev = EventQueue.nextEvent(fvc.vi);
+            char ch = kev.getKeyChar();
+            if (ch == JeyEvent.CHAR_UNDEFINED) {
+               switch (kev.getKeyCode()) {
+                  case JeyEvent.VK_LEFT:
+                     //writer.write("\33D");
+                     writer.write("\33[D");
+                     break;
+                  case JeyEvent.VK_RIGHT:
+                     writer.write("\33[C");
+                     //writer.write("\33C");
+                     break;
+                  case JeyEvent.VK_UP:
+                     writer.write("\33[A");
+                     //writer.write("\33A");
+                     break;
+                  case JeyEvent.VK_DOWN:
+                     writer.write("\33[B");
+                     //writer.write("\33B");
+                     break;
+                  case JeyEvent.VK_INSERT:
+                     return;
+                  default:
+                     trace("unhandle KeyCode " + kev.getKeyCode());
+               }
+               writer.flush();
+            } else {
+               if ('\r' == ch
+                     && '\r' == kev.getKeyCode()) // this was really a cr
+                  ch = '\n';
+               //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
+               //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
+               //trace ("passing key location " + kev.getKeyLocation());
+               //trace ("passing key Text " + kev.getKeyText(kev.getKeyCode()));
+               //trace ("key modifier " + kev.getModifiersExText(kev.getModifiersEx()));
+               writer.write(ch);
+               writer.flush();
             }
-            writer.flush();
-            return true;
-         } else {
-            if ('\r' == ch && '\r' == kev.getKeyCode()) // this was really a cr
-               ch = '\n';
-            //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
-            //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
-            //trace ("passing key location " + kev.getKeyLocation());
-            //trace ("passing key Text " + kev.getKeyText(kev.getKeyCode()));
-            //trace ("key modifier " + kev.getModifiersExText(kev.getModifiersEx()));
-            writer.write(ch);
-            writer.flush();
-            return true;
          }
       } catch (IOException e) {
          trace("caught IOException " + e);
-         return false;
+         return;
       }
    }
 
@@ -242,6 +244,7 @@ class Vt100 extends TextEdit<String> {
    }
 
    private void insertString(StringBuilder sb) {
+      //trace("insertString " + this);
       if (vtcursor.y > readIn() - 1) {
          trace("shouldn't get here unless some one deleted lines " + readIn());
          insertOne("", readIn());
@@ -265,10 +268,10 @@ class Vt100 extends TextEdit<String> {
       }
       String text = sb.toString();
       sb.setLength(0);
-      //trace("insertString vtcursor = " + vtcursor + " ev.readIn" + ev.readIn() + " text:" + text);
+      //trace("insertString vtcursor = " + vtcursor + " readIn" + readIn() + " text:" + text);
       int sbused = 0;
 
-      if (!insertmode && vtcursor.y < readIn())
+      if (!insertmode && vtcursor.y < readIn()) {
          while (sbused < text.length()) {
             String eline = fixline();
             if (eline.length() < vtcursor.x)
@@ -320,6 +323,7 @@ class Vt100 extends TextEdit<String> {
                }
             }
          }
+      }
       if (sbused < text.length()) {
          String itext = text.substring(sbused);
          //trace("sbprocess insert at end text:"  + itext  );
