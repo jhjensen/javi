@@ -1,8 +1,8 @@
 #!/bin/bash
 if [ $OS == Windows_NT ] ; then
    listsep=\;
-   JDK2=c:\\Progra~1\\Java\\$JDK
-   jroot="C:\Docume~1\utftbwx\Desktop\cyghome\javt"
+   JDK2="c:\\Progra~1\\Java\\$JDK"
+   jroot="C:\Users\jensja01\Desktop\cyghome\javt"
    myprog="$jroot\lib"
 
    commoncp="$myprog\juniversalchardet-1.0.3.jar;$myprog\rhino1_7R3\js.jar;$myprog\junit3.8.2\junit.jar;$JDK2\lib\tools.jar"
@@ -13,17 +13,18 @@ if [ $OS == Windows_NT ] ; then
 
 
    export CLASSPATH=$exportcp 
-   #echo $mycp
+   echo $CLASSPATH
    DEBUGFLAGS="-Xdebug -Xrunjdwp:transport=dt_shmem,address=currjdbconn,server=y,suspend=n"
 
    #jarf=$myprog\\dist\\javi.jar
 
-   BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar;$mycp"
+   BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar;$mycp" 
+   echo BTCLASS $BTCLASS
 else
    $listsep=\:
    JDK=/usr/lib/jvm/java-6-sun-1.6.0.15
    insprog=/usr/share/java
-   myprog=/home/dad/javt
+   myprog=/home/jensja01/javt
    mycp=$myprog:$insprog/juniversalchardet-1.0.3.jar:$insprog/js.jar:/$insprog/junit3.8.2/junit.jar:$JDK/lib/tools.jar:$insprog/RXTXcomm.jar
    export CLASSPATH="$mycp" 
    #jarf=$myprog/javi/javi.jar

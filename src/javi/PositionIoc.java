@@ -34,7 +34,7 @@ public class PositionIoc extends BufInIoc<Position> {
       private static final Position defpos = new Position(0, 0, "", null);
    }
 
-   public Position parsefile() {
+   private final Position parsefile() {
       //trace("parsefile this " + this.getClass());
       String line;
       while (null != (line = getLine())) {
@@ -65,7 +65,7 @@ public class PositionIoc extends BufInIoc<Position> {
    }
 
    public final Position getnext() {
-      //trace("getnext input " + input + " this "+ this );
+      //trace("getnext input " + " this " + this);
 
       Position pos = parsefile();
       //trace("get next got pos " + pos);

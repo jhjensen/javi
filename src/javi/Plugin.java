@@ -269,7 +269,7 @@ public interface Plugin {
                         trace("unable to run class " + c);
                      }
                   } catch (Throwable e) {
-                     trace("no plugins to load");
+                     trace("no plugins to load " + e);
                   }
                   return null;
                }

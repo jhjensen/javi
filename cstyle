@@ -13,9 +13,9 @@ $_ = `cygpath -wal \"$_\"`;
 chomp;
 my $rootdir =lc;
 
-my $JDK2="c:\\Progra~1\\Java\\jdk1.6.0_20";
+my $JDK2="c:\\Progra~1\\Java\\jdk1.6.0_30";
 
-my $jroot="C:\\Docume~1\\utftbwx\\Desktop\\cyghome\\javt";
+my $jroot="C:\\Users\\jensja01\\Desktop\\cyghome\\javt";
 my $myprog="$jroot\\lib";
 my $mycp="$jroot\\build;$myprog\\juniversalchardet-1.0.3.jar;$myprog\\rhino1_7R2\\js.jar;$myprog\\junit3.8.2\\junit.jar;$JDK2\\lib\\tools.jar";
 

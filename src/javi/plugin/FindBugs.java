@@ -9,8 +9,11 @@ import java.io.FileNotFoundException;
 import javi.FvContext;
 import javi.Plugin;
 import javi.Position;
-import javi.PositionIoc;
+import javi.BufInIoc;
 import javi.Rgroup;
+import javi.ClassConverter;
+import javi.FileProperties;
+import javi.FileDescriptor;
 
 public final class FindBugs extends Rgroup implements Plugin {
 
@@ -42,50 +45,58 @@ public final class FindBugs extends Rgroup implements Plugin {
       }
    }
 
-   static final class FindBugRunner extends PositionIoc {
+   static final class FindBugRunner extends BufInIoc<Position> {
+
+      private static final FindBugConv converter = new FindBugConv();
+      static final class FindBugConv extends ClassConverter<Position> {
+         public Position fromString(String line) {
+
+            trace("parsing len =  " + line.length() + " line: "  + line);
+            if (0 == line.length()) {
+               return Position.badpos;
+            }
+
+            int pos = line.indexOf(':', 3); // three skips over any drive desc
+            if (pos == -1) {
+               trace("unexpected line:" + line);
+               return Position.badpos;
+            }
+
+            String file = "src/" + line.substring(0, pos);
+//            if (file.startsWith("javi/"))
+//               file = file.substring(5, pos);
+            line = line.substring(pos + 1, line.length());
+            pos = line.indexOf(':');
+            int lineno;
+            lineno = Integer.parseInt(line.substring(0, pos).trim());
+            if (lineno <= 0)
+               lineno = 1;
+
+            String comment = line.substring(pos + 1, line.length());
+            return new Position(0, lineno, file, comment);
+         }
+         private static final Position defpos = new Position(0, 0, "", null);
+      }
 
       FindBugRunner(String filename) throws FileNotFoundException {
-//     Process proc = Runtime.getRuntime().exec(cstring);
-//     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));
-         super("findbug", new BufferedReader(new FileReader("findout")));
-//  trace("threadstart " + threadstart);
-//  threadstart=true;
-//         lib/findbugs-1.3.9/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R2/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
+      //     Process proc = Runtime.getRuntime().exec(cstring);
+      //     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));
+      super(new FileProperties(
+         FileDescriptor.InternalFd.make("findbug"), converter),
+         true, new BufferedReader(new FileReader("findout")));
+         // lib/findbugs-2.0.0/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R2/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
       }
 
-//filename:1:something
-//Position parsefile(String line) throws IOException {
-      public Position parsefile(String line) {
-         if (0 == line.length())
-            return Position.badpos;
-         trace("parsing len =  " + line.length() + " line: "  + line);
+      public Position getnext() {
+         //trace("getnext input " + " this " + this);
 
-         int pos = line.indexOf(':', 3); // three skips over any drive desc
-         if (pos == -1) {
-            trace("unexpected line:" + line);
-            return Position.badpos;
-         }
-
-         String file = line.substring(0, pos);
-         if (file.startsWith("javi/"))
-            file = file.substring(5, pos);
-         line = line.substring(pos + 1, line.length());
-         pos = line.indexOf(':');
-         int lineno;
-//   try {
-         lineno = Integer.parseInt(line.substring(0, pos).trim());
-//   } catch (Exception e) {
-//      lineno=1;
-//      trace("gcc.parseline caught " + e);
-//      return Position.badpos;
-//   }
-         if (lineno <= 0)
-            lineno = 1;
-
-         String comment = line.substring(pos + 1, line.length());
-         return new Position(0, lineno, file, comment);
+         String line = getLine();
+         return line == null
+            ? null
+            : converter.fromString(line);
       }
    }
+
    public static void main(String[] args) {
       try {
          new javi.StreamInterface();

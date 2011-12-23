@@ -8,7 +8,7 @@ import static history.Tools.trace;
     for an editvec to do IO
 */
 
-class BufInIoc<OType>  extends IoConverter<OType>  {
+public class BufInIoc<OType>  extends IoConverter<OType>  {
    private transient BufferedReader  input;
 
    protected final String getLine() {
@@ -60,7 +60,8 @@ class BufInIoc<OType>  extends IoConverter<OType>  {
    }
 */
 
-   BufInIoc(FileProperties fp, boolean initThread, BufferedReader inputi) {
+   public BufInIoc(FileProperties fp,
+         boolean initThread, BufferedReader inputi) {
       super(fp, initThread);
       input = inputi;
    }
