@@ -136,7 +136,7 @@ final class Ctag {
             //trace("findfile te1 " + te1 + " te2 " + te2);
             te1 = filefind(ctfile, te1.fileend, te2.filestart);
             if (null == te1)
-               return te1;
+               return null;
             carray.add(guess + 1, te1);
 
             int compare = te1.name.compareTo(name);

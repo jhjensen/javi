@@ -71,7 +71,10 @@ public final class UndoHistory<OType> extends PersistantStack {
       if (currmark.isWritten())
          sb.append(" unchanged");
       else {
-         String st = current.getDate();
+         String st = current == null
+            ? "unknown date"
+            : current.getDate();
+
          sb.append(null != st
               ? " " + st
               : " modified");

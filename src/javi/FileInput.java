@@ -138,10 +138,10 @@ final class FileInput extends BufInIoc<String> {
       rpos = filestring.indexOf('\r');
 
       inputmode = rpos == -1
-                  ? FileMode.UNIX
-                  : rpos + 1 == npos
-                  ? FileMode.MS
-                  : FileMode.MIXED;
+         ? FileMode.UNIX
+         : rpos + 1 == npos
+            ? FileMode.MS
+            : FileMode.MIXED;
 
       prop.setSeperator(inputmode == FileMode.UNIX
          ? "\n"

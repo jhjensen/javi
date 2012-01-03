@@ -356,7 +356,8 @@ public final class PosListList extends TextList<Position> {
       private static final Matcher filematcher = Pattern.compile(
          "\\bfile:(\\S*)\\b").matcher("");
 
-      private final class FDL implements EditContainer.FileDisposeListener {
+      private static final class FDL
+            implements EditContainer.FileDisposeListener {
          public void fileDisposed(EditContainer ev) {
             trace("file disposed " + ev);
             tahash.remove(ev.getName());
