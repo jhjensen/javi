@@ -7,6 +7,7 @@ public class PositionIoc extends BufInIoc<Position> {
 
    private static final PositionConverter converter = new PositionConverter();
    private int errcount = 0;
+   private static final long serialVersionUID = 1;
 
    static final class PositionConverter extends ClassConverter<Position> {
       public Position fromString(String s) {
@@ -34,7 +35,7 @@ public class PositionIoc extends BufInIoc<Position> {
       private static final Position defpos = new Position(0, 0, "", null);
    }
 
-   private final Position parsefile() {
+   private Position parsefile() {
       //trace("parsefile this " + this.getClass());
       String line;
       while (null != (line = getLine())) {

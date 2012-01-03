@@ -19,6 +19,7 @@ public final class FvContext<OType> implements Serializable {
    private static final long serialVersionUID = 1;
 
    private static final class FvMap implements Serializable {
+      private static final long serialVersionUID = 1;
       private LinkedHashMap<View, HashMap<TextEdit, FvContext>> viewhash =
          new LinkedHashMap<View, HashMap<TextEdit, FvContext>>(1);
 

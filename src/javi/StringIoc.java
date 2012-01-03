@@ -1,6 +1,7 @@
 package javi;
 
 public final class StringIoc extends IoConverter<String> {
+   private static final long serialVersionUID = 1;
    private static final class StringConverter extends ClassConverter<String> {
 
       public String fromString(String str) {

@@ -92,6 +92,7 @@ final class CheckStyle extends Rgroup {
 
    private static final class CheckStyleInst extends PositionIoc {
 
+      private static final long serialVersionUID = 1;
       CheckStyleInst(List<String> filename) throws IOException {
          super("checkstyle", Tools.runcmd(filename));
       }

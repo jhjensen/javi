@@ -72,6 +72,7 @@ final class JavaCompiler extends Rgroup {
    private static final class JavaCompilerInst extends PositionIoc implements
       DiagnosticListener<JavaFileObject>  {
 
+      private static final long serialVersionUID = 1;
       private final ArrayList<FileDescriptor.LocalFile> flist;
       private int errcount = 0;
       private int warncount = 0;

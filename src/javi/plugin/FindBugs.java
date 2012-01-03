@@ -46,6 +46,7 @@ public final class FindBugs extends Rgroup implements Plugin {
    }
 
    static final class FindBugRunner extends BufInIoc<Position> {
+      private static final long serialVersionUID = 1;
 
       private static final FindBugConv converter = new FindBugConv();
       static final class FindBugConv extends ClassConverter<Position> {

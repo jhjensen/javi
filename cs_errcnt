@@ -14,7 +14,7 @@ src\javi\awt\awtinterface.java,2
 src\history\tools.java,2
 src\javi\filelist.java,1
 src\javi\keybinding.java,3
-src\javi\positionioc.java,2
+src\javi\positionioc.java,1
 src\javi\tools.java,1
 src\javi\fvcontext.java,3
 src\javi\jeyevent.java,27

@@ -25,6 +25,7 @@ import history.Tools;
 
 public class FileDescriptor implements Serializable {
 
+   private static final long serialVersionUID = 1;
    final String canonName;
    final String shortName;
 
@@ -142,6 +143,7 @@ public class FileDescriptor implements Serializable {
 
    public static final class InternalFd extends FileDescriptor {
       private static long uniqCtr;
+      private static final long serialVersionUID = 1;
 
       public static InternalFd make(String fname) {
          return new InternalFd(fname);
@@ -154,6 +156,7 @@ public class FileDescriptor implements Serializable {
 
    static final class LocalDir extends LocalFile {
 
+      private static final long serialVersionUID = 1;
       static LocalDir make(String fname) {
          LocalFile fh = LocalFile.make(fname);
 
@@ -176,6 +179,7 @@ public class FileDescriptor implements Serializable {
    }
 
    static class LocalFile extends FileDescriptor {
+      private static final long serialVersionUID = 1;
       private static File cwd;
       private static String cwdCanon;
       private static String[] canonArray;

@@ -65,6 +65,7 @@ final class MakeCmd extends Rgroup {
    static final class PositionCmd extends PositionIoc {
 
       private Process proc;
+      private static final long serialVersionUID = 1;
 
       static PositionCmd make(String name, String ... cmd) throws IOException {
          Process proc = Tools.iocmd(cmd);
@@ -114,6 +115,8 @@ final class MakeCmd extends Rgroup {
 
    private static final class GccInst extends PositionIoc {
 
+
+      private static final long serialVersionUID = 1;
 
       GccInst(String filesi, String comstringi, boolean asmflagi) throws
             IOException {

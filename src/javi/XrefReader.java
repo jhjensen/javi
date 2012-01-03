@@ -11,6 +11,7 @@ import static history.Tools.trace;
 final class XrefReader extends PositionIoc {
    private boolean failflag;
    private static final int maxLine = 200;
+   private static final long serialVersionUID = 1;
 
    public Position parsefile() {
       //trace("line = " + line);

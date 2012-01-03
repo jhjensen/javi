@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public final class FileProperties<OType> implements Serializable {
    static final String staticLine = System.getProperty("line.separator");
+   private static final long serialVersionUID = 1;
    final FileDescriptor fdes;
    final ClassConverter<OType> conv;
    private String lsep = staticLine; //??? final

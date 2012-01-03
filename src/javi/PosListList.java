@@ -490,6 +490,7 @@ public final class PosListList extends TextList<Position> {
 
 class TextList<TOType> extends TextEdit<TextEdit<TOType>> {
 
+   private static final long serialVersionUID = 1;
    TextList(IoConverter<TextEdit<TOType>> e,
          FileProperties<TextEdit<TOType>> fp) {
       super(e, fp);

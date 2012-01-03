@@ -10,6 +10,7 @@ import static history.Tools.trace;
 
 public class BufInIoc<OType>  extends IoConverter<OType>  {
    private transient BufferedReader  input;
+   private static final long serialVersionUID = 1;
 
    protected final String getLine() {
       if (null == input)

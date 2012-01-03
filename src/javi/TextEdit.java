@@ -20,6 +20,7 @@ import static javi.FileDescriptor.LocalFile.make;
 
 public class TextEdit<OType> extends EditContainer<OType> {
    private static TextEdit<String> root;
+   private static final long serialVersionUID = 1;
 
    static final TextEdit getRoot() {
       return root;

@@ -1439,6 +1439,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    private final class Layout implements LayoutManager, java.io.Serializable {
 
+      private static final long serialVersionUID = 1;
       public void addLayoutComponent(String s, Component cont) {
          //trace("" + cont);
       }

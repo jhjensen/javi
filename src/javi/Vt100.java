@@ -17,6 +17,7 @@ import static history.Tools.trace;
 class Vt100 extends TextEdit<String> {
 
 
+   private static final long serialVersionUID = 1;
    private final OutputStreamWriter writer;
 //   private final OutputStream str;
 
@@ -347,6 +348,7 @@ class Vt100 extends TextEdit<String> {
    static final class Telnet extends Vt100 {
 
       private Process proc;
+      private static final long serialVersionUID = 1;
 
       //String execstring = ("c:\\cygwin\\bin\\telnetcyg 127.0.0.1");
 

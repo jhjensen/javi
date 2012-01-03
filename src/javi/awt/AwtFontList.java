@@ -20,6 +20,7 @@ import javi.View;
 
 public final class AwtFontList extends TextEdit<FontEntry> {
 
+   private static final long serialVersionUID = 1;
    public static void restoreState(java.io.ObjectInputStream is) throws
          ClassNotFoundException, IOException {
       init();
