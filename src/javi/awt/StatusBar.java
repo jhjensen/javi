@@ -96,12 +96,12 @@ final class StatusBar extends Canvas {
       return false;
    }
 
-   public void setFont(Font f) {
+   public synchronized void setFont(Font f) {
       super.setFont(f);
       charheight = 0;
    }
 
-   public void setVisible(boolean b) {
+   public synchronized void setVisible(boolean b) {
       if (b == isVisible())
          return;
       super.setVisible(b);
@@ -110,21 +110,22 @@ final class StatusBar extends Canvas {
    }
 
    public void paint(Graphics g) {
-      if (sizeChanged) {
-         if (!getPreferredSize().equals(getSize())) {
-            setSize(getPreferredSize());
-            getParent().validate();
-         }
-      }
-      sizeChanged = false;
       try {
-         g.setColor(AtView.background);
-         int voffset = 0;
-         int col = getSize().width / charwidth;
-
-         if (col < 1)
-            return;
+         int statusVertical;
          synchronized (this) {
+            if (sizeChanged) {
+               if (!getPreferredSize().equals(getSize())) {
+                  setSize(getPreferredSize());
+                  getParent().validate();
+               }
+            }
+            sizeChanged = false;
+            g.setColor(AtView.background);
+            int voffset = 0;
+            int col = getSize().width / charwidth;
+
+            if (col < 1)
+               return;
             if (messeges.size() >= 1) {
                for (String line : messeges) {
                   for (int substr = 0; substr < line.length();) {
@@ -139,6 +140,8 @@ final class StatusBar extends Canvas {
                   }
                }
             }
+            // calc while locked
+            statusVertical = charheight * voffset + charascent;
          }
 
          String st = "status failure!!!";
@@ -151,7 +154,7 @@ final class StatusBar extends Canvas {
             } finally {
                EventQueue.biglock2.unlock();
             }
-            g.drawString(st, hoffset, charheight * voffset + charascent);
+            g.drawString(st, hoffset, statusVertical);
          }
       } catch (Throwable e) {
          UI.popError("StatusBar.paint caught exception", e);
