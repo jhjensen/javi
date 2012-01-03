@@ -1,9 +1,19 @@
 <FindBugsFilter>
 
    <Match>
+       <Bug code="Se"/>
+   </Match>
+
+   <Match>
        <Class name="javi.TextEdit"/>
        <Method name="processCommand"/>
        <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.TextEdit"/>
+       <Method name="processCommand"/>
+       <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
    </Match>
 
    <Match>
@@ -24,11 +34,16 @@
        <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
    </Match>
 
-FileList.java(439)-442 SF: Switch statement found in javi.() where one case falls through to the next case (M) 
    <Match>
-       <Class name="javi.Tools"/>
+       <Class name="history.Tools"/>
        <Method name="doGC"/>
        <Bug pattern="DM_GC"/>
+   </Match>
+
+   <Match>
+       <Class name="history.Tools"/>
+       <Method name="Assert"/>
+       <Bug pattern="NM_CLASS_NAMING_CONVENTION"/>
    </Match>
 
    <Match>

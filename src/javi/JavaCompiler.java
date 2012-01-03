@@ -130,10 +130,11 @@ final class JavaCompiler extends Rgroup {
             fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
                   Arrays.asList(
                   new File("./build"),
-                  new File("../lib/rhino1_7R2/js.jar"),
-                  new File("../lib/junit3.8.2/junit.jar"),
-                  new File("../lib/juniversalchardet-1.0.3.jar"),
-                  new File("c:/Progra~1/Java/jdk1.6.0_10/lib/tools.jar")
+                  new File("lib/rhino1_7R3/js.jar"),
+                  new File("lib/junit3.8.2/junit.jar"),
+                  new File("lib/juniversalchardet-1.0.3.jar"),
+                  new File("c:/Progra~1/Java/"
+                        + System.getenv("JDK") + "/lib/tools.jar")
                ));
             Iterable<? extends JavaFileObject> clist =
                FileDescriptor.getFileObjs(fileManager, flist);

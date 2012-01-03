@@ -404,12 +404,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             Component cmdComp = atv.getComponent();
             frm.remove(cmdComp);
             FvContext.dispose(atv);
-            tfc = null;
             try {
                FvContext.dispose(tfc.edvec, null);
             } catch (Exception ex) {
                UI.popError("error in flush", ex);
             }
+            tfc = null;
          }
          if (null != statusBar) {
             frm.remove(statusBar);
