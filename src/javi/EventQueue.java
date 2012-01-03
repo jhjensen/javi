@@ -12,6 +12,7 @@ public final class EventQueue {
    private EventQueue() { }
 
    public static final class DebugLock extends ReentrantLock {
+      private static final long serialVersionUID = 1;
       public   void lock() {
          //Tools.trace("locking " + this,1);
          //super.lock();
@@ -170,21 +171,12 @@ public final class EventQueue {
    }
 
    static char nextKey(CursorControl vi) throws InputException {
-      return nextKeye(vi).getKeyChar();
+      return nextEvent(vi).getKeyChar();
    }
 
    static synchronized JeyEvent nextKeye(CursorControl vi) throws
          InputException {
-      while (true) {
-         Object e = nextEvent(vi);
-         if (e instanceof JeyEvent)
-            return (JeyEvent) e;
-         else {
-            //trace("nextKeye returning esc ");
-            pushback(e);
-            return new JeyEvent(0, 27,  '\u001b');
-         }
-      }
+      return nextEvent(vi);
    }
 
    static synchronized void pushback(Object e) {
