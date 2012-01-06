@@ -94,7 +94,7 @@ final class CheckStyle extends Rgroup {
 
       private static final long serialVersionUID = 1;
       CheckStyleInst(List<String> filename) throws IOException {
-         super("checkstyle", Tools.runcmd(filename));
+         super("checkstyle", Tools.runcmd(filename), pconverter);
       }
    }
 }

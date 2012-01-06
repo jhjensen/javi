@@ -483,7 +483,8 @@ public final class PosListList extends TextList<Position> {
 
       private static final long serialVersionUID = 1;
       public TextEdit<Position> fromString(String str) {
-         PositionIoc ioc = new PositionIoc(str); // an unusable editvec
+         PositionIoc ioc = new PositionIoc(
+            str, null, PositionIoc.pconverter); // an unusable editvec
          return new TextEdit<Position>(ioc, ioc.prop); // an unusable editvec
       }
    }

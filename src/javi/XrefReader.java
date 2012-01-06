@@ -9,28 +9,8 @@ import history.Tools;
 import static history.Tools.trace;
 
 final class XrefReader extends PositionIoc {
-   private boolean failflag;
    private static final int maxLine = 200;
    private static final long serialVersionUID = 1;
-
-   public Position parsefile() {
-      //trace("line = " + line);
-
-      for (String line; null != (line = getLine());) {
-         if (!"done".equals(line)) {
-            try {
-               Position retval = parseline(line);
-               if (null != retval)
-                  return retval;
-
-            } catch (Exception e) {
-               trace("XrefReader failed line = " + line);
-               trace("exception = " + e);
-            }
-         }
-      }
-      return null;
-   }
 
       //trace("greader");
         //static final String[] commandline =  {
@@ -69,48 +49,53 @@ final class XrefReader extends PositionIoc {
    }
 
    XrefReader(String s) throws IOException {
-      super(s, getIn(s));
+      super(s, getIn(s),xconverter);
    }
 
    private static final Matcher linepat = Pattern.compile(
       "(^(\\w:)?[~\\w.\\/\\\\]+):([0-9]+): *(.*)").matcher("");
 
 
-   private Position parseline(String line) {
-      //trace("parsing line len =  " + line.length() + " line "  + line);
+   private static final XrefConv xconverter = new XrefConv();
+   static final class XrefConv extends ClassConverter<Position> {
+      private boolean failflag;
+      public Position fromString(String line) {
 
-      if (linepat.reset(line).matches()) {
-         int y = Integer.parseInt(linepat.group(3));
-         String fname = linepat.group(1);
-         return new Position(0, y, fname, linepat.group(4));
-      }
-      if (0 == line.length())
-         return null;
-      try {
-         int pos = line.indexOf(':', 3); // three skips over any drive desc
-         String file = line.substring(0, pos);
-         line = line.substring(pos + 1, line.length());
-         pos = line.indexOf(':');
-         int y = Integer.parseInt(line.substring(0, pos));
-         String comment = line.substring(pos + 1, line.length());
-         if (comment.length() > maxLine)
-            comment = comment.substring(0, maxLine);
-         int x = 0;
-         failflag = false;
-         Position retval = new Position(x, y, file, comment);
-         //trace("xref reader returning " + retval);
-         return retval;
-      } catch (Exception e) {
-         trace("caught exception " + e);
-         //trace("for line:" + line);
-         if (!failflag) {
-            if (line.length() > maxLine)
-               line = line.substring(0, maxLine);
-            trace("greader.parsline FAILED ");
-            trace("parsing line len =  " + line.length() + " line "  + line);
+         //trace("parsing line len =  " + line.length() + " line "  + line);
+
+         if (linepat.reset(line).matches()) {
+            int y = Integer.parseInt(linepat.group(3));
+            String fname = linepat.group(1);
+            return new Position(0, y, fname, linepat.group(4));
          }
-         failflag = true;
-         return null;
+         if (0 == line.length())
+            return defpos;
+         try {
+            int pos = line.indexOf(':', 3); // three skips over any drive desc
+            String file = line.substring(0, pos);
+            line = line.substring(pos + 1, line.length());
+            pos = line.indexOf(':');
+            int y = Integer.parseInt(line.substring(0, pos));
+            String comment = line.substring(pos + 1, line.length());
+            if (comment.length() > maxLine)
+               comment = comment.substring(0, maxLine);
+            int x = 0;
+            failflag = false;
+            Position retval = new Position(x, y, file, comment);
+            //trace("xref reader returning " + retval);
+            return retval;
+         } catch (Exception e) {
+            trace("caught exception " + e);
+            //trace("for line:" + line);
+            if (!failflag) {
+               if (line.length() > maxLine)
+                  line = line.substring(0, maxLine);
+               trace("greader.parsline FAILED ");
+               trace("parsing line len =  " + line.length() + " line "  + line);
+            }
+            failflag = true;
+            return defpos;
+         }
       }
    }
 }

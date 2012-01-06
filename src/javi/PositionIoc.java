@@ -5,7 +5,8 @@ import static history.Tools.trace;
 
 public class PositionIoc extends BufInIoc<Position> {
 
-   private static final PositionConverter converter = new PositionConverter();
+   static final PositionConverter pconverter = new PositionConverter();
+   static final Position defpos = new Position(0, 0, "", null);
    private int errcount = 0;
    private static final long serialVersionUID = 1;
 
@@ -32,19 +33,18 @@ public class PositionIoc extends BufInIoc<Position> {
          String comment = s.substring(poscom + 1, s.length());
          return new Position(x, y, filename, comment);
       }
-      private static final Position defpos = new Position(0, 0, "", null);
    }
 
    private Position parsefile() {
       //trace("parsefile this " + this.getClass());
-      String line;
-      while (null != (line = getLine())) {
+
+      for (String line; null != (line = getLine());) {
          //trace("line = " + line);
          if ("done".equals(line)) {
             trace("should exit immediatly");
          } else if (line.length() != 0)
             try {
-               return converter.fromString(line);
+               return prop.conv.fromString(line);
             } catch (final Exception e) {
                //trace("line len " + line.length());
                //trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);
@@ -53,16 +53,17 @@ public class PositionIoc extends BufInIoc<Position> {
       return null;
    }
 
-   PositionIoc(String name) { //??? should make private
+   private PositionIoc(String name) { //??? should make private
       super(new FileProperties(
-         FileDescriptor.InternalFd.make(name), converter), true, null);
+         FileDescriptor.InternalFd.make(name), pconverter), true, null);
       //trace(label);
    }
 
-   public PositionIoc(String name, BufferedReader inputi) {
+   public PositionIoc(String name, BufferedReader inputi,
+      ClassConverter converteri) {
 
       super(new FileProperties(FileDescriptor.InternalFd.make(name),
-         converter), true, inputi);
+         converteri), true, inputi);
    }
 
    public final Position getnext() {

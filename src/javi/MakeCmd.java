@@ -76,7 +76,7 @@ final class MakeCmd extends Rgroup {
 
       private PositionCmd(String name, Process proci, BufferedReader buf) throws
             IOException {
-         super(name, buf);
+         super(name, buf, pconverter);
          proc = proci;
       }
 
@@ -121,7 +121,7 @@ final class MakeCmd extends Rgroup {
       GccInst(String filesi, String comstringi, boolean asmflagi) throws
             IOException {
          super("gcc " +  comstringi + filesi,
-            Tools.runcmd(comstringi + filesi));
+            Tools.runcmd(comstringi + filesi), pconverter);
          String comstring = comstringi + filesi;
          trace(comstring);
       }

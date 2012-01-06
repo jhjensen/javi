@@ -88,7 +88,7 @@ final class JavaCompiler extends Rgroup {
       }
 
       JavaCompilerInst(ArrayList<FileDescriptor.LocalFile>  flisti) {
-         super(shortString(flisti), null);
+         super(shortString(flisti), null, pconverter);
          flist = flisti;
       }
 

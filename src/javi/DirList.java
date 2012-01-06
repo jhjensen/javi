@@ -175,7 +175,7 @@ final class DirList extends TextEdit<DirEntry> {
       private static long sizeLimit = 1;
 
       GrepReader(String spec, ArrayList<DirEntry> dirlisti, boolean inverti) {
-         super("grep " + spec, null);
+         super("grep " + spec, null, pconverter);
          dirlist = dirlisti;
          matcher = Pattern.compile("(^.*(" + spec
             + ").*$)|(^(.*)$)", Pattern.MULTILINE).matcher("");
