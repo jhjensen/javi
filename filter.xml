@@ -11,6 +11,12 @@
    </Match>
 
    <Match>
+       <Class name="javi.FileList$FileParser"/>
+       <Method name="getnext"/>
+       <Bug pattern="SF_SWITCH_FALLTHROUGH"/>
+   </Match>
+
+   <Match>
        <Class name="javi.TextEdit"/>
        <Method name="processCommand"/>
        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
