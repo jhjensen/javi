@@ -105,8 +105,11 @@ public final class EventQueue {
             for (Idler id : iList) {
                //trace("executing Idler " + id);
                biglock2.lock();
-               id.idle();
-               biglock2.unlock();
+               try {
+                  id.idle();
+               } finally {
+                  biglock2.unlock();
+               }
             }
             break;
          } catch (IOException e) {

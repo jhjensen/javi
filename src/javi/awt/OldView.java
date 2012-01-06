@@ -582,7 +582,13 @@ final class OldView extends AwtView {
          Position pos = mousepos(event);
 
          //trace("Position " + pos + " event vi " + vi);
-         FvContext newfvc = FvContext.getcontext(OldView.this, getCurrFile());
+         FvContext newfvc;
+         EventQueue.biglock2.lock();
+         try {
+            newfvc = FvContext.getcontext(OldView.this, getCurrFile());
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
 
          //trace("fvc " + fvc  + " newfvc " + newfvc);
          switch (event.getButton()) {
@@ -617,19 +623,25 @@ final class OldView extends AwtView {
 
       void mouserelease(MouseEvent event) {
 
-         //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
-         FvContext fvc = FvContext.getCurrFvc();
-         //trace("Position " + pos + " event vi " + vi);
-         if (fvc != FvContext.getcontext(OldView.this, getCurrFile()))
-            return;
+         EventQueue.biglock2.lock();
+         try {
 
-         if (event.getButton()  == MouseEvent.BUTTON1) {
-            //trace("setting markmode ");
-            //fvc.cursorabs(pos);
-            Position pos = mousepos(event);
-            if (fvc.inserty() != pos.y || fvc.insertx() != pos.x)  {
-               EventQueue.insert(new MarkEvent(pos));
+            //trace(" clickcount " + event.getClickCount() + " has focus" + fvc.vi.hasFocus());
+            FvContext fvc = FvContext.getCurrFvc();
+            //trace("Position " + pos + " event vi " + vi);
+            if (fvc != FvContext.getcontext(OldView.this, getCurrFile()))
+               return;
+
+            if (event.getButton()  == MouseEvent.BUTTON1) {
+               //trace("setting markmode ");
+               //fvc.cursorabs(pos);
+               Position pos = mousepos(event);
+               if (fvc.inserty() != pos.y || fvc.insertx() != pos.x)  {
+                  EventQueue.insert(new MarkEvent(pos));
+               }
             }
+         } finally {
+            EventQueue.biglock2.unlock();
          }
       }
 
