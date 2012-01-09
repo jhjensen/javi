@@ -85,6 +85,7 @@ final class Ctag {
    }
 
    Position[] taglookup(String name) throws IOException {
+      //trace("looking up " + name);
       int hirange = carray.size() - 1;
       int lowrange = 0;
       int guess = hirange >> 1;
@@ -195,8 +196,10 @@ final class Ctag {
 
       //scan backwards to find non matching of label
       //trace("backmark " + backmark);
-      for (long offset = backmark - 200;; offset -= 200) {
+      for (long offset = backmark - 300;; offset -= 300) {
+         //trace("back tracking offset " + offset);
          ctfile.seek(offset);
+         line = ctfile.readLine(); // find beginning of line
          line = ctfile.readLine(); // line up to next new line
          if  (null == line || !line.startsWith(curtag))
             break;
@@ -215,10 +218,13 @@ final class Ctag {
    }
 
    public static void main(String[] args) {
+      trace("");
       try {
          Ctag ct = new Ctag(args[0]);
-//       ct.taglookup("stderr");
-         ct.taglookup("ALButton");
+         Position[] parr = ct.taglookup("main");
+
+         for (Position p : parr)
+            trace("pos " + p);
          ct.taglookup("zprocess");
       } catch (Throwable t) {
          trace("main caught " + t);
