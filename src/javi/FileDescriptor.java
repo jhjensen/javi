@@ -16,12 +16,17 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.lang.ref.WeakReference;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
 import history.Tools;
+//import static history.Tools.trace;
 
 public class FileDescriptor implements Serializable {
 
@@ -325,6 +330,9 @@ public class FileDescriptor implements Serializable {
          }
       }
 
+      private static Map<String, WeakReference<LocalFile>> map
+         = new WeakHashMap();
+
       static LocalFile make(String fname) {
          //trace("make " + fname);
          File fh = new File(fname);
@@ -347,11 +355,22 @@ public class FileDescriptor implements Serializable {
          }
          String cname = LocalFile.makecname(fh);
          String normName = LocalFile.normalize(fname, cname);
-         //trace("exists " + fh.exists() + " cname " + cname  + " normName " + normName);
+         //trace("exists " + fh.exists() + " cname " + cname  + " normName " + normName + " map " + map);
 
-         return fh.isDirectory()
+         WeakReference<LocalFile> ref = map.get(cname);
+
+         LocalFile fd = ref != null
+            ? ref.get()
+            : null;
+
+         if (fd != null)
+            return fd;
+
+         fd = fh.isDirectory()
                 ? new LocalDir(normName, cname, fh)
                 : new LocalFile(normName, cname, fh);
+         map.put(cname, new WeakReference(fd));
+         return fd;
       }
 
       static final LocalFile make(File fh) {

@@ -14,11 +14,11 @@ import static history.Tools.trace;
 final class Ctag {
    private static final class TagEntry {
 
-      private String name;
+      private final String name;
       private Position[] positions;
       private static final Position[] narray = new Position[0];
-      private long filestart;
-      private long fileend;
+      private final long filestart;
+      private final long fileend;
 
       TagEntry(String namei, long filestarti, long fileendi) {
          name = namei;
