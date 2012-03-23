@@ -109,7 +109,7 @@ public final class MapEvent {
       mkeys.keybind((char) 10, "moveline", TRUE, CTRL_MASK);
       mkeys.keybind((char) 10, "movelinestart", one, 0);
       mkeys.keybind('-', "movelinestart", mone);
-      mkeys.keybind('H', "screenmove", 0);
+      mkeys.keybind('H', "screenmove", 0.f);
       mkeys.keybind('M', "screenmove", .5f);
       mkeys.keybind('L', "screenmove", .999999f);
       mkeys.keybind('f', "findchar", tt);
