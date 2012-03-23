@@ -190,7 +190,7 @@ public final class Command extends Rgroup {
                      //trace("doing routine " +kb);
                      kb.dobind(args, 0, 0, fvc, false);
                   } else
-                     UI.reportMessage("Unknown Command:" + line);
+                      throw new InputException("Unknown Command:" + line);
                } else {
                   //???fvc.fixCursor();
                   fvc.cursoryabs(newpos);
@@ -200,7 +200,7 @@ public final class Command extends Rgroup {
                   //trace("doing routine " +kb);
                   kb.dobind(args, 0, 0, null, false);
                } else {
-                  UI.reportMessage("Unknown Command:" + line);
+                  throw new InputException("Unknown Command:" + line);
                }
 
             }
