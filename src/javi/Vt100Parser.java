@@ -44,11 +44,14 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          while (true) {
             synchronized (this) {
                int rec = input.read();
+               //trace("rec = " + (int)rec);
+
                if (rec == -1)  {
-                  return;
-                  //Thread.sleep(2000);
-                  //trace("recbyte = " + recbyte);
+                  //trace("recevied EOF exiting input loop");
+                  //return;
+                  Thread.sleep(200);
                } else {
+                  //trace("rec " + rec);
                   recbyte = (char) rec;
                   //trace("insert wakeup recbyte " + (int)recbyte);
                   EventQueue.insert(this);
@@ -417,7 +420,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    public synchronized void execute() {
 
-      //trace("ParseInput executing on recbyte " + recbyte);
+      //trace("ParseInput executing on recbyte " + (int)recbyte);
       try {
          doChar(recbyte);
          while (input.available() != 0)   {
