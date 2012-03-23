@@ -41,6 +41,7 @@ public final class FvContext<OType> implements Serializable {
       }
 
       Collection<View> viewCollection() {
+         EventQueue.biglock2.assertOwned();
          return viewhash.keySet();
       }
 
@@ -49,12 +50,14 @@ public final class FvContext<OType> implements Serializable {
       }
 
       void dump() {
+         EventQueue.biglock2.assertOwned();
          for (HashMap<TextEdit, FvContext> ehash : viewhash.values())
             for (FvContext fvc : ehash.values())
                trace("view hash contains " + fvc);
       }
 
       FvContext get(View vi, TextEdit edvec) {
+         EventQueue.biglock2.assertOwned();
          HashMap<TextEdit, FvContext> ehash = viewhash.get(vi);
          if (null == ehash) {
             // this only happens when we get a new view
@@ -77,23 +80,28 @@ public final class FvContext<OType> implements Serializable {
       }
 
       Iterator<FvContext> iterator() {
+         EventQueue.biglock2.assertOwned();
          return new FvIterator();
       }
 
       Collection<HashMap<TextEdit, FvContext>> tmap() {
+         EventQueue.biglock2.assertOwned();
          return viewhash.values();
       }
 
       void clear() {
+         EventQueue.biglock2.assertOwned();
          viewhash.clear();
       }
 
       void remove(TextEdit ed) {
+         EventQueue.biglock2.assertOwned();
          for (HashMap<TextEdit, FvContext> ehash : viewhash.values())
             ehash.remove(ed);
       }
 
       void remove(View vi) {
+         EventQueue.biglock2.assertOwned();
          Object ehash = viewhash.remove(vi);
          if (null == ehash)
             throw new RuntimeException("fvcontext.dispose: didnt find " + vi);
@@ -106,12 +114,14 @@ public final class FvContext<OType> implements Serializable {
          private Iterator<FvContext> fvit;
 
          FvIterator() {
+            EventQueue.biglock2.assertOwned();
             fvit = viit.hasNext()
                ? viit.next().values().iterator()
                : new ArrayList<FvContext>().iterator();
          }
 
          public boolean hasNext() {
+            EventQueue.biglock2.assertOwned();
             if (fvit.hasNext())
                return true;
             while (viit.hasNext())  {
@@ -123,6 +133,7 @@ public final class FvContext<OType> implements Serializable {
          }
 
          public FvContext next() {
+            EventQueue.biglock2.assertOwned();
             if (fvit.hasNext())
                return fvit.next();
             while (viit.hasNext())  {

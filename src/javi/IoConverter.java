@@ -241,8 +241,11 @@ public class IoConverter<OType> implements Runnable, Serializable {
       try {
          //trace("start of run " + this);
          Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+         EventQueue.biglock2.lock();
+         BackupStatus temp = aNotify.getBackupStatus();
+         EventQueue.biglock2.unlock();
          synchronized (this) {
-            backupstatus = aNotify.getBackupStatus();
+            backupstatus = temp;
             //trace("backupstatus " + backupstatus);
             if (backupstatus != null) {
                //trace("changeing ioarray to ecache");
@@ -257,6 +260,10 @@ public class IoConverter<OType> implements Runnable, Serializable {
          //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
       } catch (Throwable e) {
          UI.popError("IoConverter caught ", e);
+      } finally {
+         if (EventQueue.biglock2.isHeldByCurrentThread()) {
+            EventQueue.biglock2.unlock();
+         }
       }
       OType backObj = null;
       OType fileObj = null;

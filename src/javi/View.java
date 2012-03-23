@@ -321,19 +321,24 @@ public abstract class View  extends
       public void run() {
          delayerflag = true;
          try {
-            int newReadin;
             do {
-               newReadin = text.readIn();
                //trace("needed " + needed + " newReadin" + newReadin + " readin " + readin);
                trace("sleeping 200");
                Thread.sleep(200);
+               EventQueue.biglock2.lock();
+               int newReadin = text.readIn();
+
                if (newReadin > readin || text.donereading()) {
                   readin = newReadin;
                   op.redraw();
                }
-            } while (!text.donereading() && newReadin <= needed);
+               EventQueue.biglock2.unlock();
+            } while (!text.donereading() && readin <= needed);
          } catch (InterruptedException e) {
             trace("ignoring InterruptedException");
+         } finally {
+            if (EventQueue.biglock2.isHeldByCurrentThread())
+               EventQueue.biglock2.unlock();
          }
          op.redraw();
          delayerflag = false;

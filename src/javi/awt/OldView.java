@@ -579,11 +579,11 @@ final class OldView extends AwtView {
       private void mousepress(MouseEvent event) {
          //trace("modifiers = " +Integer.toHexString( event.getModifiers()));
 
+         EventQueue.biglock2.lock();
          Position pos = mousepos(event);
 
          //trace("Position " + pos + " event vi " + vi);
          FvContext newfvc;
-         EventQueue.biglock2.lock();
          try {
             newfvc = FvContext.getcontext(OldView.this, getCurrFile());
          } finally {
@@ -671,8 +671,11 @@ final class OldView extends AwtView {
                return;
 
             case MouseEvent.MOUSE_DRAGGED:
-               if (1 == mousePressed)
+               if (1 == mousePressed) {
+                  EventQueue.biglock2.lock();
                   updateTempMarkPos(mousepos((MouseEvent) ev));
+                  EventQueue.biglock2.unlock();
+               }
                break;
             case MouseEvent.MOUSE_MOVED:
             case MouseEvent.MOUSE_ENTERED:
