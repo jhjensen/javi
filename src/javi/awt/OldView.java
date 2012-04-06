@@ -580,11 +580,12 @@ final class OldView extends AwtView {
          //trace("modifiers = " +Integer.toHexString( event.getModifiers()));
 
          EventQueue.biglock2.lock();
-         Position pos = mousepos(event);
 
          //trace("Position " + pos + " event vi " + vi);
          FvContext newfvc;
+         Position pos;
          try {
+            pos = mousepos(event);
             newfvc = FvContext.getcontext(OldView.this, getCurrFile());
          } finally {
             EventQueue.biglock2.unlock();
