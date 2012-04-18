@@ -34,7 +34,6 @@ final class FileInput extends BufInIoc<String> {
 
    public String getnext() {
       //trace("fileread getnext");
-      //trace("fileread getnext returning " + retval);
       String retval = getLine();
       if (null != retval)
          return retval;
