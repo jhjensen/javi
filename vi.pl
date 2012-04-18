@@ -36,30 +36,38 @@ use Encode qw(encode decode);
             next;
          }
          my $rp;
-         if ( $^O eq "Windows" ) {
+         if ( $^O eq "Windows" || $^O eq "cygwin" || $^O eq "MSWin32" ) {
+            print STDERR ("windows \n");
             if  ($tf =~ /.*\\.*/) {
             $rp = encode("utf8",$filename);
-            print "filea :$rp:\n";
+            print STDERR "filea :$rp:\n";
             } else {
                $rp =  `cygpath -w -a -C UTF8 $filename`;
                chop $rp;
             }
          } else {
+            print STDERR ("NOT windows $^O\n");
             $rp = encode("utf8",$filename);
          }
-         print "filex :$rp:\n";
+         print STDERR  "filex :$rp:\n";
+      print STDERR ("writeing to socket \n");
          print SOCK "$rp\n";
+	print SOCK "\n"
       }
-      shutdown(SOCK,1);
+#      shutdown(SOCK,SHUT_WR);
+	
+	
+      print STDERR ("waiting for line\n");
       $line = <SOCK>;
+      print STDERR ("received $line\n");
       close (SOCK)  || die "exiting 5 $!";
-      printf("exiting %d %d\n",5,0); 
+      printf STDERR ("exiting %d %d\n",5,0); 
    } else {
-      print ("^O: $^O");
+      print  STDERR ("^O: $^O");
       if ( $^O eq "cygwin" ) {
 
 print("3\n");
-         my $JDK="jdk1.6.0_19";
+         my $JDK="jdk1.6.0_31";
          my $JDK1="/cygdrive/c/Progra~1/Java/$JDK";
          my $JDK2="c:\\Progra~1\\Java\\$JDK";
          my $myprog="C:\\Users\\dad\\Desktop\\cyghome\\javt";
