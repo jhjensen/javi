@@ -584,6 +584,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
             if (frm != normalFrame) {
                //trace("changing fullscreen to normal fullFrame " + fullFrame + " normalFrame " + normalFrame);
+               frm.setVisible(false);
                currdev.setFullScreenWindow(null);
                mvcomp(fullFrame, normalFrame);
                frm = normalFrame;
@@ -829,11 +830,20 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void itoFront() {
+      trace("toFront");
+      java.awt.EventQueue.invokeLater(new Runnable() {
 
-      frm.setVisible(false);
-      frm.setVisible(true);
-      frm.toFront();
-      frm.requestFocus();
+         public void run() {
+            frm.toFront();
+            frm.setExtendedState(frm.getExtendedState() & ~Frame.ICONIFIED);
+            frm.setAlwaysOnTop(true);
+            frm.toFront();
+            frm.requestFocus();
+            frm.setAlwaysOnTop(false);
+            frm.repaint();
+            frm.setVisible(true);
+         }
+      });
    }
 
    private static Buttons diaflag;
