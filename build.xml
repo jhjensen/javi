@@ -10,7 +10,7 @@
 
     <path id="classpath">
         <fileset dir="${lib.dir}" includes="**/*.jar"/>
-        <pathelement location="c:\\Progra~1\\Java\\jdk1.6.0_31\\lib\\tools.jar"/>
+        <pathelement location="c:\\Progra~1\\Java\\jdk1.7.0_11\\lib\\tools.jar"/>
         <pathelement location="${env.JAVA_HOME}/lib/tools.jar"/>
     </path>
 
