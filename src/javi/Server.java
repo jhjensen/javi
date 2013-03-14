@@ -12,8 +12,8 @@ import static history.Tools.trace;
 final class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
-   private HashMap<EditContainer, BufferedOutputStream> shash =
-      new HashMap<EditContainer, BufferedOutputStream>(10);
+   private HashMap<EditContainer, Socket> shash =
+      new HashMap<EditContainer, Socket>(10);
 
    private ServerSocket lsock;
 
@@ -26,12 +26,9 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
    public void run() {
       while (true) {
          Socket sock = null;
-         BufferedOutputStream outstream = null;
          BufferedReader instream = null;
          try {
             sock = lsock.accept();
-            outstream =
-               new BufferedOutputStream(sock.getOutputStream());
 
             instream = new BufferedReader(
                new InputStreamReader(sock.getInputStream(), "UTF-8"));
@@ -39,44 +36,68 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
             if (1 != instream.read())  {
                throw new InputException("invalid byte from remote");
             }
+
+            EventQueue.biglock2.lock();
             EditContainer ed = FileList.openFileList(instream, null);
             if (null != ed) {
-               shash.put(ed, outstream);
+               trace("save socket");
+               shash.put(ed, sock);
                UI.toFront();
             }
          } catch (Throwable e) {
             trace("server.run caught exception " + e);
             e.printStackTrace();
-         } finally {
             try {
+               //trace("closing socket");
                if (null != sock)
                   sock.close();
-               if (null != instream)
-                  instream.close();
-               if (null != outstream)
-                  outstream.close();
-            } catch (IOException e) {
-               trace("caught exception while trying to close" + e);
-               e.printStackTrace();
+            } catch (IOException e1) {
+               trace("caught exception while trying to close" + e1);
+               e1.printStackTrace();
             }
+         } finally {
+            if (EventQueue.biglock2.isHeldByCurrentThread())
+               EventQueue.biglock2.unlock();
+///!!!!!!!!!!!!!!!!!!!!!!!!!!
+// for some reason closing the inputstream seems to close the entire socket
+// hope this doesn't cause any leaks.  It used to work.
+//            try {
+//      trace("closing instream");
+//               if (null != instream)
+//                  instream.close();
+//            } catch (IOException e) {
+//               trace("caught exception while trying to close" + e);
+//               e.printStackTrace();
+//            }
          }
       }
    }
 
    void donefile(EditContainer ev) {
       //trace("server.donefile entered " + ev);
-      BufferedOutputStream outstream = shash.get(ev);
-      if (null == outstream)
+      Socket outsock = shash.get(ev);
+      if (null == outsock)
          return;
+      BufferedOutputStream outstream = null;
       try {
-         outstream.write(1);
-         outstream.close();
+         outstream = new BufferedOutputStream(outsock.getOutputStream());
+         outstream.write('a');
+         outstream.write('\r');
+         outstream.write('\n');
+         outstream.flush();
          shash.remove(ev);
          UI.hide();
       } catch (IOException e) {
          trace("server.donefile caught exception " + e);
+      } finally {
+         try {
+            outsock.close();
+            if (outstream != null)
+               outstream.close();
+         } catch (IOException e) {
+            trace("server.donefile caught exception " + e);
+         }
       }
-
    }
 
    public boolean fileDisposed(EditContainer ev) {
