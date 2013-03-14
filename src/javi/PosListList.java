@@ -333,19 +333,25 @@ public final class PosListList extends TextList<Position> {
       }
 
       private TextEdit<Position> createtags(String sym) throws IOException {
-         //trace("create tags ctags" + ctags);
          Position[] parray = null;
-         if (null != ctags) {
-            //trace("do lookup");
-            parray = ctags.taglookup(sym);
-            if ((parray != null))
-               if (parray.length == 0)
-                  parray = null;
+
+         PositionIoc xf;
+         if (true) {
+            trace("create tags ctags" + ctags);
+            if (null != ctags) {
+               //trace("do lookup");
+               parray = ctags.taglookup(sym);
+               if ((parray != null))
+                  if (parray.length == 0)
+                     parray = null;
+            }
+            xf = new XrefReader(sym);
+         } else {
+            xf = new GlobalReader(sym);
          }
-//      FileProperties fp = new FileProperties(FileDescriptor.InternalFd.make(sym),PositionIoc.converter);
-         XrefReader xf = new XrefReader(sym);
-         TextEdit<Position> taglist = new TextEdit<Position>(xf, parray, inst,
-            xf.prop);
+	
+         TextEdit<Position> taglist = new TextEdit<Position>(xf, parray, inst, xf.prop);
+         taglist.contains(2);
          tahash.put(sym, taglist);
          inst.insertOne(taglist, inst.finish());
          return taglist;
@@ -435,6 +441,12 @@ public final class PosListList extends TextList<Position> {
                         break;
                      }
                   }
+               }
+            } else {
+               if (FileList.gotoposition(taglist.at(1), false, vi)) {
+                  FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+                  if (tagfvc.edvec.contains(1))
+                     tagfvc.cursoryabs(1);
                }
             }
          } catch (IOException e) {
