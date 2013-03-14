@@ -87,6 +87,8 @@ public final class Tools {
 
    public static synchronized Process iocmd(String ...  str) throws
          IOException {
+      //for (String stri : str) 
+      //  trace("iocmd " + stri);
       return pb.redirectErrorStream(true).command(str).start();
    }
 

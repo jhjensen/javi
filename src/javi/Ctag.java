@@ -24,7 +24,7 @@ final class Ctag {
          name = namei;
          filestart = filestarti;
          fileend = fileendi;
-         //trace(toString());
+         //trace(this);
       }
 
       Position [] getPositions(String tagfile) throws IOException {

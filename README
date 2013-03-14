@@ -1,0 +1,4 @@
+install ant rhino juniversalchardet rxtx cygwin mkid
+
+optional checkstyle findbugs
+ms is a sample script for setting up environment.
