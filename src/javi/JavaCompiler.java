@@ -93,12 +93,14 @@ final class JavaCompiler extends Rgroup {
       }
 
       public void report(Diagnostic diagnostic) {
-         trace("diagnostic.getSource() " + diagnostic.getSource());
-         //trace("diagnostic.getClass() " + diagnostic.getClass());
+         //trace("diagnostic.getSource() " + diagnostic.getSource() +  " class " + diagnostic.getSource().getClass().toString());
          Object source = diagnostic.getSource();
+
          String mess = diagnostic.getMessage(null);
          String src = source == null
             ? mess.split(":")[0]
+          : source instanceof javax.tools.FileObject
+	    ? ((javax.tools.FileObject) source).getName()
             : diagnostic.getSource().toString();
 
          switch(diagnostic.getKind()) {
