@@ -429,8 +429,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      dupflag = false;
 
                      searchName = getLine();
-                        //trace("searching for file " + searchName);
-                     if (null == searchName)
+                     //trace("searching for file " + searchName);
+                     if (null == searchName || searchName.length() == 0)
                         break oloop;
 
                      foundf = false;
