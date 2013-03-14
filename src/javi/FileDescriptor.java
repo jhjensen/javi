@@ -204,8 +204,10 @@ public class FileDescriptor implements Serializable {
 
          cwd = curDir;
          cwdCanon  = bslash.reset(
-            curDir.getCanonicalPath()).replaceAll("/") + '/';
+            curDir.getCanonicalPath()).replaceAll("/");
 
+         if (cwdCanon.charAt(cwdCanon.length() - 1) != '/')
+            cwdCanon += '/';
          int count = 0;
          for (int index = 0;
                 -1 != (index = cwdCanon.indexOf('/', index)); index++)
@@ -213,7 +215,6 @@ public class FileDescriptor implements Serializable {
 
          StringBuilder sb = new StringBuilder(3 * count);
 
-//         sb.append("../");
          while (--count > 0)
             sb.append("../");
 
@@ -321,9 +322,11 @@ public class FileDescriptor implements Serializable {
 
       private static String makecname(File fh) {
          try {
+            //trace("cpath " + fh.getCanonicalPath());
             String cname = bslash.reset(fh.getCanonicalPath()).replaceAll("/");
-            if (fh.isDirectory())
+            if (cname.charAt(cname.length() - 1) != '/' && fh.isDirectory())
                cname += '/';
+            //trace("cname " + cname);
             return cname;
          } catch (Throwable e) {
             return "BAD file:" + fh.getName() + ":" + e;
