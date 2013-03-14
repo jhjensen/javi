@@ -90,18 +90,16 @@ final class MakeCmd extends Rgroup {
    }
 
    static void mkcommand(FvContext fvc)  throws IOException {
-
       FileList.writeModifiedFiles(".*");
-      String files = fvc.edvec.getName().replace('\\', '/');
+      String file = fvc.edvec.getName().replace('\\', '/');
       //String[]  cmd = {"ssh", "jjensen@nowind3",
 //                 " . .profile ; cd sidewinder/I6/src ;perl make.pl " + files};
 //                 " . .profile ; cd sidewinder/src ;perl make.pl " + files};
 //               String cmd =System.getProperties().getProperty("java.javi.makecmd",perl make.pl"
 //                   "C:\\Progra~1\\SourceGear\\DiffMerge\\DiffMerge.exe ");
-//       String[] cmd = {"c:\\cygwin\\bin\\perl","make.pl" , files};
-      String[] cmd = {"perl", "make.pl", files};
+      String[] cmd = {"c:\\cygwin\\bin\\perl", "make.pl" , file};
 
-      PosListList.Cmd.setErrors(PositionCmd.make("mk " + files, cmd));
+      PosListList.Cmd.setErrors(PositionCmd.make("mk " + file, cmd));
 
    }
 
