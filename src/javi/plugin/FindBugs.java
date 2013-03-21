@@ -85,7 +85,7 @@ public final class FindBugs extends Rgroup implements Plugin {
       super(new FileProperties(
          FileDescriptor.InternalFd.make("findbug"), converter),
          true, new BufferedReader(new FileReader("findout")));
-         // lib/findbugs-2.0.0/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R3/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
+         // lib/findbugs-2.0.2/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R3/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
       }
 
       public Position getnext() {

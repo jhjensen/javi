@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.nio.charset.Charset;
 
 public final class Tools {
    private static long lastTime = System.nanoTime();
@@ -51,11 +52,15 @@ public final class Tools {
 
    private static final ProcessBuilder pb = new ProcessBuilder();
 
-   public static ArrayList<String> execute(
+   public static ArrayList<String> execute(Charset charSet,
          String ... command) throws IOException {
       Process proc = iocmd(command);
+
+      if (charSet == null) 
+         charSet = Charset.defaultCharset();
+
       BufferedReader in =  new BufferedReader(
-         new InputStreamReader(proc.getInputStream()));
+         new InputStreamReader(proc.getInputStream(),charSet));
       ArrayList<String> output = new ArrayList<String>();
       try {
          for (String str; null != (str = in.readLine());)

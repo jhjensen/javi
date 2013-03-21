@@ -2,6 +2,7 @@ package javi;
 
 import java.io.IOException;
 import org.mozilla.universalchardet.UniversalDetector;
+import java.nio.charset.Charset;
 
 final class FileInput extends BufInIoc<String> {
    private static final long serialVersionUID = 1;
@@ -116,17 +117,16 @@ final class FileInput extends BufInIoc<String> {
             detector.handleData(filebyte, 0, filebyte.length);
             detector.dataEnd();
             String encoding = detector.getDetectedCharset();
-            if (null == encoding) {
-               filestring  = new String(filebyte);
-            } else {
-               //trace("Detected encoding = " + encoding);
-               filestring  = new String(filebyte, encoding);
-            }
+
+            Charset charSet = encoding == null
+               ? Charset.defaultCharset()
+               : Charset.forName(encoding);
+            filestring  = new String(filebyte,charSet);
 
             // (5)
             detector.reset();
-         } catch (java.io.UnsupportedEncodingException e) {
-            filestring = new String(filebyte);
+         } catch (Exception e) {
+            filestring = new String(filebyte,Charset.defaultCharset());
          }
       }
       fileend = filestring.length();

@@ -452,6 +452,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private final class Flusher extends RunAwt {
 
       private boolean total;
+      private boolean flushed = false;
 
       Flusher(boolean totali) {
          super();
@@ -460,7 +461,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             post();
             EventQueue.biglock2.assertUnOwned();
             try {
-               wait();
+               while (!flushed)
+                  wait();
             } catch (InterruptedException e) {
                trace("ignoring interruptedException");
             }
@@ -473,6 +475,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          synchronized (this) {
             //trace("instance " + instance + " flag " + diaflag);
             flusher(total);
+            flushed = true;
             notify();
             //trace("instance " + instance + " flag " + diaflag);
          }
@@ -1199,7 +1202,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                   String [] lstr =  {cmd, "/command:diff"
                      ,  "/path:" + filename
                      , "/path2:" +  backupname};
-                  Tools.execute(lstr);
+                  Tools.execute(null,lstr);
                } catch (IllegalArgumentException e) {
                   trace("ui.reportDiff caught exception " + e);
                   e.printStackTrace();

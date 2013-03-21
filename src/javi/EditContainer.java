@@ -622,7 +622,7 @@ public class EditContainer<OType> implements
        attempt to write the file may still fail if the
        file permissions do not allow writing and renameing.
    */
-   public final void setReadOnly(boolean flag) {
+   public final synchronized void setReadOnly(boolean flag) {
       readonly = flag;
    }
 
@@ -1022,7 +1022,7 @@ public class EditContainer<OType> implements
 
       if (!prop.fdes.canWrite()
             && "Microsoft Corp.".equals(System.getProperty("java.vendor")))
-         Tools.execute("d:\\cygwin\\bin\\chmod +w " + prop.fdes.canonName);
+         Tools.execute(null,"d:\\cygwin\\bin\\chmod +w " + prop.fdes.canonName);
 
       prop.fdes.renameTo(file2);
 
