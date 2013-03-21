@@ -218,23 +218,28 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    private boolean handleDiff(OType fileObj, OType backObj, int index) {
       //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj + " index " + index);
+      FileDescriptor.LocalFile tfile;
       try {
-         FileDescriptor.LocalFile tfile =
-            FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
-         tfile.deleteOnExit();
-         tfile.writeAll(new StringIter(
-            mainArray.iterator()), prop.getSeperator());
+         synchronized(this) {
+            if (null == backupstatus)
+               return  false;
+
+            tfile = FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
+            tfile.deleteOnExit();
+            tfile.writeAll(new StringIter(
+               mainArray.iterator()), prop.getSeperator());
+         }
 
          return (UI.reportDiff(prop.fdes.shortName, index, fileObj,
             backObj, backupstatus, tfile.shortName));
 
          //trace("setting backupstatus to null mainArray == ioarray");
          //trace("ioarray " + ioarray + " mainArray " + mainArray);
-      } catch (IOException e) {
-         UI.popError(
-            "difference in files detected , error trying to display", e);
-      }
-      return false;
+         } catch (IOException e) {
+            UI.popError(
+               "difference in files detected , error trying to display", e);
+            return false;
+         }
    }
 
    public final void run() {
@@ -299,9 +304,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
       //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
 
-      boolean tmpswp = null == backupstatus
-         ? false
-         : handleDiff(fileObj, backObj, compIndex);
+      boolean tmpswp = handleDiff(fileObj, backObj, compIndex);
 
       synchronized (this) {
          //trace("swap array");
