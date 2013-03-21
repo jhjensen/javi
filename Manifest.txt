@@ -1,0 +1,2 @@
+MAIN-Class: javi.Javi
+Class-Path: juniversalchardet-1.0.3.jar  RXTXcomm.jar js.jar

@@ -54,8 +54,8 @@
     <mkdir dir="${dist}/lib"/>
 
     <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-    <jar jarfile="${dist}/lib/javi-${DSTAMP}.jar" basedir="${build}"/>
-    <jar jarfile="${dist}/javi.jar" basedir="${build}"/>
+    <jar manifest="Manifest.txt" jarfile="${dist}/lib/javi-${DSTAMP}.jar" basedir="${build}"/>
+    <jar manifest="Manifest.txt" jarfile="${dist}/javi.jar" basedir="${build}"/>
   </target>
 
   <target name="clean"

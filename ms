@@ -16,7 +16,7 @@ if [ $OS == Windows_NT ] ; then
    echo $CLASSPATH
    DEBUGFLAGS="-Xdebug -Xrunjdwp:transport=dt_shmem,address=currjdbconn,server=y,suspend=n"
 
-   #jarf=$myprog\\dist\\javi.jar
+   jarf="-jar $myprog\dist\javi.jar"
 
    BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar;$mycp" 
    echo BTCLASS $BTCLASS
@@ -29,4 +29,4 @@ else
    export CLASSPATH="$mycp" 
    #jarf=$myprog/javi/javi.jar
 fi
-   java $BTCLASS  -Xmx64m javi.Javi todo.txt src javi history javi/plugin awt
+   java $BTCLASS  -Xmx64m $jarf javi.Javi todo.txt src javi history javi/plugin awt
