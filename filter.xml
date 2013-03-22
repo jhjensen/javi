@@ -59,28 +59,22 @@
    </Match>
 
    <Match>
-       <Class name="javi.FvContext"/>
-       <Method name="setCurrView"/>
-       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
-   </Match>
-
-   <Match>
-       <Class name="javi.XrefReader.XrefConv"/>
-       <Method name="setCurrView"/>
-       <Bug pattern="DM_STRING_CTOR"/>
-   </Match>
-
-   <Match>
-       <Class name="javi.GlobalReader.GlobalConv"/>
-       <Method name="setCurrView"/>
-       <Bug pattern="DM_STRING_CTOR"/>
-   </Match>
-
-
-   <Match>
        <Class name="javi.MiscCommands"/>
        <Method name="doroutine"/>
        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
    </Match>
+
+   <Match>
+       <Class name="javi.XrefReader$XrefConv"/>
+       <Method name="fromString"/>
+       <Bug pattern="DM_STRING_CTOR"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.GlobalReader$GlobalConv"/>
+       <Method name="fromString"/>
+       <Bug pattern="DM_STRING_CTOR"/>
+   </Match>
+
 
 </FindBugsFilter>

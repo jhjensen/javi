@@ -227,6 +227,8 @@ public abstract class InsertBuffer extends View.Inserter {
 //               MoveGroup.searchcommand(((boolean []) arg)[0] ,
 //                  count, fvc, dotmode);
 //               break;
+            default:
+               throw new RuntimeException("unexpected command");
          }
          return null;
       }

@@ -21,16 +21,10 @@ import static javi.FileDescriptor.LocalFile.make;
 public class TextEdit<OType> extends EditContainer<OType> {
    private static TextEdit<String> root;
    private static final long serialVersionUID = 1;
+   private static final int[] zarray = new int[0];
 
    static final TextEdit getRoot() {
       return root;
-   }
-
-   static {
-      StringIoc strio = new StringIoc("root EditContainer",
-                                      "should never see root container");
-      root = new TextEdit<String>(strio, strio.prop);
-      root.setReadOnly(true);
    }
 
    static void saveState(java.io.ObjectOutputStream os) throws IOException {
@@ -533,7 +527,6 @@ public class TextEdit<OType> extends EditContainer<OType> {
       return retval;
    }
 
-   private static final int[] zarray = new int[0];
 
    final void tabfix(int tabstop) throws InputException {
       if (0 == tabstop)
@@ -745,6 +738,13 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //for (int i=0;i<sarr.size();i++)  trace("stringtoarray sarr[" + i + "].length" + sarr[i].length());
       return sarr;
 
+   }
+
+   static {
+      StringIoc strio = new StringIoc("root EditContainer",
+                                      "should never see root container");
+      root = new TextEdit<String>(strio, strio.prop);
+      root.setReadOnly(true);
    }
 }
 
