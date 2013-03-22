@@ -67,7 +67,7 @@ final class GlobalReader extends PositionIoc {
    */
 
    private static final GlobalConv xconverter = new GlobalConv();
-   static final class GlobalConv extends ClassConverter<Position> {
+   private static final class GlobalConv extends ClassConverter<Position> {
       private boolean failflag;
       public Position fromString(String line) {
 

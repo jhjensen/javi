@@ -49,7 +49,7 @@ public final class FindBugs extends Rgroup implements Plugin {
       private static final long serialVersionUID = 1;
 
       private static final FindBugConv converter = new FindBugConv();
-      static final class FindBugConv extends ClassConverter<Position> {
+      private static final class FindBugConv extends ClassConverter<Position> {
          public Position fromString(String line) {
 
             trace("parsing len =  " + line.length() + " line: "  + line);

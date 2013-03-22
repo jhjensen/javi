@@ -91,7 +91,7 @@ final class XrefReader extends PositionIoc {
    */
 
    private static final XrefConv xconverter = new XrefConv();
-   static final class XrefConv extends ClassConverter<Position> {
+   private static final class XrefConv extends ClassConverter<Position> {
       private boolean failflag;
       public Position fromString(String line) {
 
