@@ -90,7 +90,7 @@ public abstract class InsertBuffer extends View.Inserter {
          };
          register(rnames);
          ikeys.keyactionbind(JeyEvent.VK_INSERT, "imode.toggleinsert", null, 0);
-         //ikeys.keybind('\t', "imode.tabinsert", null);
+         ikeys.keybind('\t', "imode.tabinsert", null);
          ikeys.keybind('\b', "imode.backspace", null);
          ikeys.keybind('\u007f', "imode.delete", null);
          ikeys.keybind('\u001b', "imode.complete", null);
