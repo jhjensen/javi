@@ -6,8 +6,8 @@ import java.nio.charset.Charset;
 
 final class FileInput extends BufInIoc<String> {
    private static final long serialVersionUID = 1;
-
-//private FileDescriptor file;
+   private FileInfo   propxxx;
+   private transient FileMode inputmode;
 
    public String fromString(String s) {
       return s;
@@ -107,28 +107,10 @@ final class FileInput extends BufInIoc<String> {
    private transient int filestart;
    private transient int npos;
    private transient int rpos;
-   private transient FileMode inputmode;
 
    protected void preRun() throws IOException {
-      if (prop.fdes instanceof FileDescriptor.LocalFile) {
-         byte [] filebyte = ((FileDescriptor.LocalFile) prop.fdes).readFile();
-         try {
-            UniversalDetector detector = new UniversalDetector(null);
-            detector.handleData(filebyte, 0, filebyte.length);
-            detector.dataEnd();
-            String encoding = detector.getDetectedCharset();
-
-            Charset charSet = encoding == null
-               ? Charset.defaultCharset()
-               : Charset.forName(encoding);
-            filestring  = new String(filebyte,charSet);
-
-            // (5)
-            detector.reset();
-         } catch (Exception e) {
-            filestring = new String(filebyte,Charset.defaultCharset());
-         }
-      }
+      propxxx = new FileInfo(prop.fdes,prop.conv);
+      filestring = propxxx.initFile();
       fileend = filestring.length();
       filestart = 0;
 
@@ -141,12 +123,6 @@ final class FileInput extends BufInIoc<String> {
          : rpos + 1 == npos
             ? FileMode.MS
             : FileMode.MIXED;
-
-      prop.setSeperator(inputmode == FileMode.UNIX
-         ? "\n"
-         : inputmode == FileMode.MS
-            ? "\r\n"
-            : System.getProperty("line.separator"));
 
       if (npos == -1) npos = Integer.MAX_VALUE;
       if (rpos == -1) rpos = Integer.MAX_VALUE;
