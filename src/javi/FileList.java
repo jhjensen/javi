@@ -12,7 +12,8 @@ import static history.Tools.trace;
 
 public final class FileList extends TextEdit<TextEdit<String>> {
    private static final long serialVersionUID = 1;
-   private static final class FileConverter extends ClassConverter<TextEdit<String>> {
+   private static final class FileConverter
+         extends ClassConverter<TextEdit<String>> {
       public TextEdit<String> fromString(String str) {
          //trace("S = "  + S);
          if (0 == str.length())

@@ -9,7 +9,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import javax.tools.StandardJavaFileManager;
-import static history.Tools.trace;
+//import static history.Tools.trace;
 
 final class JavaCompiler extends Rgroup {
 
@@ -99,9 +99,9 @@ final class JavaCompiler extends Rgroup {
          String mess = diagnostic.getMessage(null);
          String src = source == null
             ? mess.split(":")[0]
-          : source instanceof javax.tools.FileObject
-	    ? ((javax.tools.FileObject) source).getName()
-            : diagnostic.getSource().toString();
+            : source instanceof javax.tools.FileObject
+               ? ((javax.tools.FileObject) source).getName()
+               : diagnostic.getSource().toString();
 
          switch(diagnostic.getKind()) {
             case ERROR:

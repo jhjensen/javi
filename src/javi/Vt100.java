@@ -28,12 +28,12 @@ class Vt100 extends TextEdit<String> {
    private final Vt100Parser parser;
 
    Vt100(OutputStream ostri, BufferedInputStream istr,
-         IoConverter<String> ioc) {
+         IoConverter<String> ioc) throws java.io.UnsupportedEncodingException {
       //StringIoc ioc = new StringIoc("vt100 start",null);
       super(ioc, ioc.prop);
       //str = ostri;
       parser = new Vt100Parser(new ECScreen(), istr);
-      writer = new OutputStreamWriter(ostri);
+      writer = new OutputStreamWriter(ostri, "UTF-8");
    }
 
    public final void startHandle(FvContext fvc) {
@@ -380,7 +380,8 @@ class Vt100 extends TextEdit<String> {
          return  vt;
       }
 
-      private Telnet(String execstringi, Process proci) {
+      private Telnet(String execstringi, Process proci) throws
+            java.io.UnsupportedEncodingException {
          super(proci.getOutputStream(),
                new BufferedInputStream(proci.getInputStream()),
                new StringIoc("vt100 start", null)

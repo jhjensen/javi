@@ -218,7 +218,7 @@ final class DirList extends TextEdit<DirEntry> {
                      }
                      try {
                         int linecount = 1;
-                        matcher.reset(new String(fd.readFile()));
+                        matcher.reset(fd.getString());
                         while (matcher.find()) {
                            if (matcher.start(2) != -1)  {
                               //trace("matcher found " + matcher.group(0));

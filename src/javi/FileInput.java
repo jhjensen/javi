@@ -1,12 +1,9 @@
 package javi;
 
 import java.io.IOException;
-import org.mozilla.universalchardet.UniversalDetector;
-import java.nio.charset.Charset;
 
 final class FileInput extends BufInIoc<String> {
    private static final long serialVersionUID = 1;
-   private FileInfo   propxxx;
    private transient FileMode inputmode;
 
    public String fromString(String s) {
@@ -109,8 +106,7 @@ final class FileInput extends BufInIoc<String> {
    private transient int rpos;
 
    protected void preRun() throws IOException {
-      propxxx = new FileInfo(prop.fdes,prop.conv);
-      filestring = propxxx.initFile();
+      filestring = prop.initFile();
       fileend = filestring.length();
       filestart = 0;
 

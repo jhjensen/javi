@@ -10,7 +10,8 @@ public class PositionIoc extends BufInIoc<Position> {
    private int errcount = 0;
    private static final long serialVersionUID = 1;
 
-   private static final class PositionConverter extends ClassConverter<Position> {
+   private static final class PositionConverter
+           extends ClassConverter<Position> {
       public Position fromString(String s) {
          //trace(s);
          if (0 == s.length()) {

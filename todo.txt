@@ -1,3 +1,10 @@
+in vt100 should really detect our current charset from the terminal
+JS.java should add charset detection?
+revisit all uses of string "UTF-8";
+
+when writing file need to copy permissions
+add safeWrite to fdes?
+
 It would be very good in PersistantStack.push to move the flush to close, and do it occasionally
 Also BadBackupFile should inherit from IOException
 

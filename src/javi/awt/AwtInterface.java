@@ -1202,7 +1202,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                   String [] lstr =  {cmd, "/command:diff"
                      ,  "/path:" + filename
                      , "/path2:" +  backupname};
-                  Tools.execute(null,lstr);
+                  Tools.execute(null, lstr);
                } catch (IllegalArgumentException e) {
                   trace("ui.reportDiff caught exception " + e);
                   e.printStackTrace();

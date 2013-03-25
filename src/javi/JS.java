@@ -131,7 +131,7 @@ public final class JS {
       }
 
       public static void evalFile(String fileName) throws IOException {
-         jsEvalIter(new java.util.Scanner(new java.io.File(fileName)),
+         jsEvalIter(new java.util.Scanner(new java.io.File(fileName), "UTF-8"),
             fileName);
       }
 

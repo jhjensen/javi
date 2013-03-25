@@ -111,9 +111,11 @@ public final class Command extends Rgroup {
          // Executer ex = new Executer("bash -c " + fname.substring(1,fname.length()));
          String [] cmd = {"bash", "-c", fname.substring(1, fname.length())};
          fvc.edvec.insertStream(Tools.runcmd(cmd), fvc.inserty());
-      } else
-         fvc.edvec.insertStream(FileDescriptor.getBufferedReader(
-            arg.toString()), fvc.inserty());
+      } else {
+         FileDescriptor.LocalFile ifile =
+            FileDescriptor.LocalFile.make(arg.toString());
+         fvc.edvec.insertStream(ifile.getBufferedReader(), fvc.inserty());
+      }
       return null;
    }
 

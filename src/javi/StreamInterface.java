@@ -15,8 +15,12 @@ public final class StreamInterface extends UI {
       inStr = inreader;
    }
 
-   private Reader inStr = new BufferedReader(
-      new InputStreamReader(System.in));
+   private Reader inStr;
+
+   public StreamInterface() throws IOException {
+      inStr = new BufferedReader(
+         new InputStreamReader(System.in, "UTF-8"));
+   }
 
    public Buttons ireportDiff(String filename, int linenum,
                     Object filevers, Object backupvers,

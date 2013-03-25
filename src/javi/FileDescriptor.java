@@ -1,7 +1,7 @@
 package javi;
 
 import java.io.BufferedReader;
-import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,9 +11,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -24,6 +22,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
+
+import org.mozilla.universalchardet.UniversalDetector;
+import java.nio.charset.Charset;
 
 import history.Tools;
 //import static history.Tools.trace;
@@ -58,23 +59,6 @@ public class FileDescriptor implements Serializable {
       return null;
    }
 
-   void writeAll(Iterator<String> sitr, String lsep)  throws IOException {
-
-      OutputStreamWriter ow =
-         new OutputStreamWriter(new BufferedOutputStream(getOutputStream()));
-
-      try {
-         while (sitr.hasNext()) {
-            String line = sitr.next();
-            //trace("writing:" + line);
-            ow.write(line, 0, line.length());
-            ow.write(lsep, 0, lsep.length());
-         }
-         ow.flush();
-      } finally {
-         ow.close();
-      }
-   }
 
    static FileDescriptor make(String fname) {
       // for now only do local files.  later parse fname for uri
@@ -89,15 +73,8 @@ public class FileDescriptor implements Serializable {
       throw new IOException("unable to create an output stream");
    }
 
-   InputStream getInputStream() throws IOException {
-      throw new IOException("unable to create an output stream");
-   }
-
-   static final BufferedReader getBufferedReader(String fname) throws
-         UnsupportedEncodingException, FileNotFoundException {
-      return new BufferedReader(
-                new InputStreamReader(
-                   new FileInputStream(fname), "UTF-8"));
+   String getString() throws IOException {
+      throw new IOException("unable to open file");
    }
 
    static final boolean isSpecial(String file) {
@@ -431,20 +408,40 @@ public class FileDescriptor implements Serializable {
             throw new IOException("unable to rename " + fh + " to " + file);
       }
 
-      final BufferedReader getBufferedReader() throws
-            UnsupportedEncodingException, FileNotFoundException {
-         return new BufferedReader(
-            new InputStreamReader(
-               new FileInputStream(fh), "UTF-8"));
+      final BufferedReader getBufferedReader() throws IOException {
+         byte [] filebyte = readFile();
+         UniversalDetector detector = new UniversalDetector(null);
+         detector.handleData(filebyte, 0, filebyte.length);
+         detector.dataEnd();
+         String encoding = detector.getDetectedCharset();
+         detector.reset();
+
+         Charset charSet = encoding == null
+            ? Charset.defaultCharset()
+            : Charset.forName(encoding);
+         return new BufferedReader(new InputStreamReader(
+            new ByteArrayInputStream(filebyte), charSet));
+      }
+
+      final String getString() throws IOException {
+         byte [] filebyte = readFile();
+         UniversalDetector detector = new UniversalDetector(null);
+         detector.handleData(filebyte, 0, filebyte.length);
+         detector.dataEnd();
+         String encoding = detector.getDetectedCharset();
+         detector.reset();
+
+         Charset charSet = encoding == null
+            ? Charset.defaultCharset()
+            : Charset.forName(encoding);
+         return new String(filebyte, charSet);
+
       }
 
       final OutputStream getOutputStream() throws FileNotFoundException {
          return new FileOutputStream(fh);
       }
 
-      final InputStream getInputStream() throws FileNotFoundException {
-         return new FileInputStream(fh);
-      }
 
       final void delete() throws IOException {
          if (fh.exists() && !fh.delete()) {

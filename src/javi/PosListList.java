@@ -349,8 +349,9 @@ public final class PosListList extends TextList<Position> {
          } else {
             xf = new GlobalReader(sym);
          }
-	
-         TextEdit<Position> taglist = new TextEdit<Position>(xf, parray, inst, xf.prop);
+
+         TextEdit<Position> taglist = new TextEdit<Position>(
+            xf, parray, inst, xf.prop);
          taglist.contains(2);
          tahash.put(sym, taglist);
          inst.insertOne(taglist, inst.finish());

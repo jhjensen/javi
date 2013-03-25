@@ -2,6 +2,9 @@ package javi;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import static history.Tools.trace;
@@ -133,16 +136,16 @@ public final class Javi {
             sb.append('\n');
          }
       }
-      FileDescriptor pfile = null == persistName
+      File pfile = null == persistName
                              ? null
-                             : FileDescriptor.LocalFile.make(persistName);
+                             : new File(persistName);
 
       boolean normalInit = true;
       if (null != pfile) {
          ObjectInputStream pis = null;
          try {
             pis = new ObjectInputStream(
-               new BufferedInputStream(pfile.getInputStream()));
+               new BufferedInputStream(new FileInputStream(pfile)));
             //UI.trace("!!!!!!!!!!!!!!!! start restore ");
             TextEdit.restoreState(pis);
             FileList.restoreState(pis);
@@ -203,7 +206,7 @@ public final class Javi {
          try {
             ObjectOutputStream pout =
                new ObjectOutputStream(
-                  new BufferedOutputStream(pfile.getOutputStream()));
+                  new BufferedOutputStream(new FileOutputStream(pfile)));
             try {
                //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
                TextEdit.saveState(pout);

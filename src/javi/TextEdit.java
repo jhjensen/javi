@@ -5,8 +5,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
@@ -259,7 +259,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
             if (file.exists() && !file.canWrite())
                throw new EditContainer.ReadOnlyException(
                   this, file.getCanonicalPath());
-            PrintWriter os = new PrintWriter(new FileWriter(file));
+            PrintWriter os = new PrintWriter(file, "UTF-8");
             try {
 
                for (int ii = linestart; ii <= linefinish; ii++)
@@ -885,7 +885,8 @@ final class EditTester1 {
 
    static void makeFile(String filename, String contents) throws IOException {
       make(filename).delete();
-      FileWriter fs = new FileWriter(filename);
+      OutputStreamWriter fs = new OutputStreamWriter(
+         new FileOutputStream(filename), "UTF-8");
       try {
          fs.write(contents);
       } finally {
@@ -896,7 +897,9 @@ final class EditTester1 {
    static void checkFile(String filename, String contents) throws IOException {
       File f = new File(filename);
       char [] fchar = new char[(int) f.length() + 20];
-      FileReader fs = new FileReader(filename);
+      //FileReader fs = new FileReader(filename,"UTF-8");
+      InputStreamReader fs = new InputStreamReader(
+         new FileInputStream(filename), "UTF-8");
       try {
          int len = fs.read(fchar, 0, fchar.length);
          if (len != contents.length())
@@ -1111,7 +1114,8 @@ final class EditTester1 {
       //int after = 10;
       {
          make("perftest.dmp2").delete();
-         FileWriter fs = new FileWriter("perftest");
+         OutputStreamWriter fs = new OutputStreamWriter(
+            new FileOutputStream("perftest"), "UTF-8");
          try {
             for (int ii = 0; ii < tot; ii++)
                fs.write("xxline " + ii + '\n');

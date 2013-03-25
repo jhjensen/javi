@@ -56,11 +56,11 @@ public final class Tools {
          String ... command) throws IOException {
       Process proc = iocmd(command);
 
-      if (charSet == null) 
+      if (charSet == null)
          charSet = Charset.defaultCharset();
 
       BufferedReader in =  new BufferedReader(
-         new InputStreamReader(proc.getInputStream(),charSet));
+         new InputStreamReader(proc.getInputStream(), charSet));
       ArrayList<String> output = new ArrayList<String>();
       try {
          for (String str; null != (str = in.readLine());)

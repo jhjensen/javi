@@ -77,4 +77,10 @@
    </Match>
 
 
+   <Match>
+       <Class name="javi.plugin.FindBugs$FindBugRunner"/>
+       <Method name="FindBugRunner"/>
+       <Bug pattern="DM_DEFAULT_ENCODING"/>
+   </Match>
+
 </FindBugsFilter>

@@ -1,30 +1,76 @@
 package javi;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.util.Iterator;
+import java.nio.charset.Charset;
+
+//import history.Tools;
 
 public final class FileProperties<OType> implements Serializable {
+
+   private enum FileMode { UNIX, MS , MIXED };
    static final String staticLine = System.getProperty("line.separator");
    private static final long serialVersionUID = 1;
-   final FileDescriptor fdes;
-   final ClassConverter<OType> conv;
-   private String lsep = staticLine; //??? final
+   public final FileDescriptor fdes;
+   public final ClassConverter<OType> conv;
+   private transient Charset charSet;
+   private transient String fileString;
 
-   public FileProperties(FileDescriptor fd, ClassConverter<OType> convi) {
-      fdes = fd;
-      conv = convi;
-   }
+   private String lsep = staticLine; //??? final
 
    public String toString() {
       return fdes.toString();
    }
 
-   String getSeperator() {
-      return lsep;
+   void writeAll(Iterator<String> sitr)  throws IOException {
+
+      OutputStreamWriter ow = new OutputStreamWriter(
+         new BufferedOutputStream(fdes.getOutputStream()), charSet);
+
+      try {
+         while (sitr.hasNext()) {
+            String line = sitr.next();
+            //trace("writing:" + line);
+            ow.write(line, 0, line.length());
+            ow.write(lsep, 0, lsep.length());
+         }
+         ow.flush();
+      } finally {
+         ow.close();
+      }
    }
 
-   void setSeperator(String sep) {
-      //e! resets this if (lsep != staticLine)
-      //   throw new RuntimeException("attempt to reset line seperator");
-      lsep = sep;
+   public FileProperties(FileDescriptor fd, ClassConverter<OType> convi) {
+      fdes = fd;
+      conv = convi;
+      charSet = Charset.defaultCharset();
+      fileString = "";
+   }
+
+   // create properties that will have the same format as a prototype
+   public FileProperties(FileProperties proto, FileDescriptor fd) {
+      fdes = fd;
+      conv = proto.conv;
+      charSet = proto.charSet;
+      fileString = "";
+      lsep = proto.lsep;
+   }
+
+   public String initFile() throws IOException {
+      fileString = fdes.getString();
+      //trace("fileString:" + fileString);
+      int npos = fileString.indexOf('\n');
+      int rpos = fileString.indexOf('\r');
+
+      lsep = rpos == -1
+         ? "\n"
+         : rpos + 1 == npos
+            ? "\r\n"
+            : System.getProperty("line.separator");
+
+      return fileString;
    }
 }

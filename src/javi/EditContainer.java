@@ -999,9 +999,10 @@ public class EditContainer<OType> implements
       mkback(0);
       FileDescriptor.LocalFile tempFile =
          FileDescriptor.LocalFile.make(prop.fdes.canonName + ".new");
+      FileProperties nProp = new FileProperties(prop, tempFile);
 
       try {
-         tempFile.writeAll(getStringIter(), prop.getSeperator());
+         nProp.writeAll(getStringIter());
 
       } catch (IOException e) {
          tempFile.delete();
@@ -1022,11 +1023,12 @@ public class EditContainer<OType> implements
 
       if (!prop.fdes.canWrite()
             && "Microsoft Corp.".equals(System.getProperty("java.vendor")))
-         Tools.execute(null,"d:\\cygwin\\bin\\chmod +w " + prop.fdes.canonName);
+         Tools.execute(null, "d:\\cygwin\\bin\\chmod +w "
+            + prop.fdes.canonName);
 
       prop.fdes.renameTo(file2);
 
-      prop.fdes.writeAll(getStringIter(), prop.getSeperator());
+      prop.writeAll(getStringIter());
       setReadOnly(false);
    }
 

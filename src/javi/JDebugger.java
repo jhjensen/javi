@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.ArrayList;
+import java.nio.charset.Charset;
 
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -161,11 +162,12 @@ final class JDebugger extends IoConverter<String> {
 
    }
 
+   private static final Charset ut8 = Charset.forName("UTF-8");
    private final class StreamVreader implements Runnable {
       private BufferedReader inStream;
       private boolean running = true;
       StreamVreader(InputStream instr) {
-         inStream = new BufferedReader(new InputStreamReader(instr));
+         inStream = new BufferedReader(new InputStreamReader(instr, ut8));
          new Thread(this, "jdebugger thread").start();
       }
 

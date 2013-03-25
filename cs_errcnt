@@ -19,7 +19,7 @@ src\javi\tools.java,1
 src\javi\fvcontext.java,3
 src\javi\jeyevent.java,27
 src\javi\editcontainer.java,2
-src\javi\insertbuffer.java,2
+src\javi\insertbuffer.java,1
 src\history\pstest.java,5
 src\javi\position.java,4
 src\javi\awt\awtview.java,1

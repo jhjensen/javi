@@ -220,14 +220,14 @@ public class IoConverter<OType> implements Runnable, Serializable {
       //trace("handleDiff fileObj " +fileObj + " backObj "  + backObj + " index " + index);
       FileDescriptor.LocalFile tfile;
       try {
-         synchronized(this) {
+         synchronized (this) {
             if (null == backupstatus)
                return  false;
 
             tfile = FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
             tfile.deleteOnExit();
-            tfile.writeAll(new StringIter(
-               mainArray.iterator()), prop.getSeperator());
+            FileProperties nProp = new FileProperties(prop, tfile);
+            nProp.writeAll(new StringIter(mainArray.iterator()));
          }
 
          return (UI.reportDiff(prop.fdes.shortName, index, fileObj,
@@ -235,11 +235,11 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
          //trace("setting backupstatus to null mainArray == ioarray");
          //trace("ioarray " + ioarray + " mainArray " + mainArray);
-         } catch (IOException e) {
-            UI.popError(
-               "difference in files detected , error trying to display", e);
-            return false;
-         }
+      } catch (IOException e) {
+         UI.popError(
+            "difference in files detected , error trying to display", e);
+         return false;
+      }
    }
 
    public final void run() {

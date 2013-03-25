@@ -1,7 +1,5 @@
 package javi;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 
 import static java.lang.Boolean.FALSE;
@@ -9,7 +7,6 @@ import static java.lang.Boolean.TRUE;
 import static java.lang.Integer.MAX_VALUE;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import history.BadBackupFile;
 
 import static javi.JeyEvent.SHIFT_MASK;
 import static javi.JeyEvent.CTRL_MASK;
@@ -235,13 +232,15 @@ public final class MapEvent {
             edv.backup(".orig");
             break;
          case USESVN:
+/*  its been a long time since this was tested
             String svnstr =  (findfile.reset(filename).find()
                ? findfile.group(1) + ".svn/text-base/" + findfile.group(2)
                : "./.svn/text-base/" + filename
                )  + ".svn-base";
 
             //trace("svnstr "  + svnstr);
-            BufferedReader fr = new BufferedReader(new FileReader(svnstr));
+            BufferedReader fr = new BufferedReader(
+               new FileReader(svnstr),??? encoding???);
             try {
                int lineno = 0;
                int linemax = edv.finish();
@@ -265,6 +264,7 @@ public final class MapEvent {
                fr.close();
             }
             break;
+*/
          default:
 
             throw new RuntimeException("bad diaflag = " + diaflag);
