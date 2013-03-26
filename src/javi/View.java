@@ -361,7 +361,7 @@ public abstract class View  extends
       //trace("setMark");
       MovePos pos = pmark.getMark();
       if (null != pos) {
-         if (markposi.equals(pos))
+         if (markposi.equiv(pos))
             return;
          pmark.clearMark(fileX, fileY);
       }

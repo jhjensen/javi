@@ -34,22 +34,4 @@ public final class MovePos {
       //comment = p.comment;
    }
 
-   public boolean equals(Object ob) {
-      if (this == ob)
-         return true;
-      if (null == ob)
-         return false;
-      if (ob instanceof MovePos) {
-         MovePos po = (MovePos) ob;
-                 //      : filename.equals(po.filename) && po.x == x && po.y == y;
-         return po.x == x && po.y == y;
-      }
-      return false;
-   }
-
-   public int hashCode() {
-      //return filename.hashCode()+x*y;
-//   return filename.hashCode()+
-      return (x & 0xff) + ((y >> 8) & 0xff);
-   }
 }

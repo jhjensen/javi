@@ -235,7 +235,7 @@ final class MoveGroup extends Rgroup {
       Position pos = fvc.getPosition("mark " + bufid);
       markpos.put(idObj, pos);
 
-      if (!fvc.equals(lastmark2))
+      if (!fvc.equiv(lastmark2))
          lastmark2 = pos;
 
       //trace("exiting lastmark = " + lastmark + " lastmark2 " + lastmark2);
@@ -247,14 +247,14 @@ final class MoveGroup extends Rgroup {
       if (27 == c)
          return;
       if ('\'' == c) {
-         if (fvc.equals(lastmark)) {
+         if (fvc.equiv(lastmark)) {
             Position temp = lastmark;
             lastmark = lastmark2;
             lastmark2 = temp;
          }
       } else {
 
-         if (fvc.equals(lastmark2)) {
+         if (fvc.equiv(lastmark2)) {
             lastmark = lastmark2;
          }
 

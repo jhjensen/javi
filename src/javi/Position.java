@@ -51,5 +51,14 @@ public final class Position {
       return filename.hashCode() + x * y;
    }
 
+   public boolean equiv(MovePos po) {
+      if (null == po)
+         return  false;
+
+      return
+         x == po.x
+         && y == po.y;
+
+   }
 }
 

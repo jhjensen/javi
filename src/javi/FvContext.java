@@ -295,17 +295,11 @@ public final class FvContext<OType> implements Serializable {
       //trace("created new fvc " + this);
    }
 
-   public boolean equals(Object ob) {
-      if (null == ob)
+   public boolean equiv(Position po) {
+      if (null == po)
          return false;
-      if (ob == this)
-         return true;
-      if (ob instanceof Position) {
-         Position po = (Position) ob;
-         return  edvec.fdes().equals(po.filename)
-            && po.x == fileposx && po.y == fileposy;
-      }
-      return false;
+      return  edvec.fdes().equals(po.filename)
+         && po.x == fileposx && po.y == fileposy;
    }
 
    private static void fixCursor(TextEdit  ed) {
