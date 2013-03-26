@@ -3,7 +3,8 @@ package javi.plugin;
 import static history.Tools.trace;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import javi.FvContext;
@@ -79,13 +80,18 @@ public final class FindBugs extends Rgroup implements Plugin {
          private static final Position defpos = new Position(0, 0, "", null);
       }
 
-      FindBugRunner(String filename) throws FileNotFoundException {
+      FindBugRunner(String filename) throws
+            FileNotFoundException, java.io.UnsupportedEncodingException {
       //     Process proc = Runtime.getRuntime().exec(cstring);
       //     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));
-      super(new FileProperties(
-         FileDescriptor.InternalFd.make("findbug"), converter),
-         true, new BufferedReader(new FileReader("findout")));
+      super(
+         new FileProperties(
+            FileDescriptor.InternalFd.make("findbug"), converter),
+            true,
+            new BufferedReader(
+               new InputStreamReader(new FileInputStream("findout"), "UTF-8")));
          // lib/findbugs-2.0.2/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R3/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
+
       }
 
       public Position getnext() {

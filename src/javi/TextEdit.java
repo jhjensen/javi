@@ -320,6 +320,8 @@ public class TextEdit<OType> extends EditContainer<OType> {
          case 'm':
             checkpoint();
             break;
+         default:
+            throw new RuntimeException("unexpected character");
       }
       return linestart;
    }

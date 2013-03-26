@@ -138,6 +138,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    abstract class SyncAwt<OType> extends RunAwt {
 
       private OType result;
+      private boolean finished = false;
 
       final OType getResult() {
          return result;
@@ -152,7 +153,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             EventQueue.biglock2.assertUnOwned();
             post();
             try {
-               wait();
+               while (!finished)
+                  wait();
             } catch (InterruptedException e) {
                trace("ignoring InterruptedException");
             }
@@ -169,6 +171,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          result = doAwt();
          synchronized (this) {
+            finished = true;
             notify();
             //trace("instance " + instance + " flag " + diaflag);
          }

@@ -76,11 +76,22 @@
        <Bug pattern="DM_STRING_CTOR"/>
    </Match>
 
+   <Match>
+       <Class name="javi.TextEdit"/>
+       <Bug pattern="SI_INSTANCE_BEFORE_FINALS_ASSIGNED"/>
+   </Match>
 
    <Match>
-       <Class name="javi.plugin.FindBugs$FindBugRunner"/>
-       <Method name="FindBugRunner"/>
-       <Bug pattern="DM_DEFAULT_ENCODING"/>
+       <Class name="javi.TextEdit"/>
+       <Bug pattern="SI_INSTANCE_BEFORE_FINALS_ASSIGNED"/>
    </Match>
+
+   <Match>
+
+       <Class name="javi.InsertBuffer"/>
+       <Method name="InsertBuffer"/>
+       <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+   </Match>
+
 
 </FindBugsFilter>

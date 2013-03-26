@@ -197,7 +197,7 @@ public final class MiscCommands extends Rgroup  {
             IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader input = new BufferedReader(new InputStreamReader(
-            proc.getInputStream()));
+            proc.getInputStream(), "UTF-8"));
          return new ProcIo(namei, proc, input, cmd);
       }
 
