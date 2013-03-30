@@ -92,6 +92,7 @@ final class XrefReader extends PositionIoc {
 
    private static final XrefConv xconverter = new XrefConv();
    private static final class XrefConv extends ClassConverter<Position> {
+      private static final long serialVersionUID = 1;
       private boolean failflag;
       public Position fromString(String line) {
 

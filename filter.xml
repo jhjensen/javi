@@ -82,10 +82,20 @@
    </Match>
 
    <Match>
-
        <Class name="javi.InsertBuffer"/>
        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
    </Match>
 
+   <Match>
+       <Class name="javi.IoConverter"/>
+       <Bug pattern="IS2_INCONSISTENT_SYNC"/>
+       <Field name = "aNotify"/>
+   </Match>
+
+   <Match>
+       <Class name="javi.IoConverter"/>
+       <Bug pattern="IS2_INCONSISTENT_SYNC"/>
+       <Field name = "backupstatus"/>
+   </Match>
 
 </FindBugsFilter>

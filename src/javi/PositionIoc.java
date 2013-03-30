@@ -12,6 +12,7 @@ public class PositionIoc extends BufInIoc<Position> {
 
    private static final class PositionConverter
            extends ClassConverter<Position> {
+      private static final long serialVersionUID = 1;
       public Position fromString(String s) {
          //trace(s);
          if (0 == s.length()) {
@@ -54,7 +55,7 @@ public class PositionIoc extends BufInIoc<Position> {
       return null;
    }
 
-   private PositionIoc(String name) { //??? should make private
+   private PositionIoc(String name) {
       super(new FileProperties(
          FileDescriptor.InternalFd.make(name), pconverter), true, null);
       //trace(label);

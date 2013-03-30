@@ -148,6 +148,7 @@ final class DirList extends TextEdit<DirEntry> {
 
    private static final class DirConverter extends ClassConverter<DirEntry> {
 
+      private static final long serialVersionUID = 1;
       public DirEntry fromString(String st) {
          return new DirEntry(st);
       }

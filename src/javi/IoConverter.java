@@ -71,11 +71,11 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
    final synchronized void init1(EditCache<OType> evi, BuildCB arr) {
       //trace("init1 tstate " + tstate + this);
-      if (tstate == ThreadState.INITSTART)
-         startThread();
       ioarray = evi;
       mainArray = ioarray;
       aNotify = arr;
+      if (tstate == ThreadState.INITSTART)
+         startThread();
       //trace("IoConverter.java init1 "  + fdes.canonName);
    }
 

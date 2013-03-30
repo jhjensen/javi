@@ -119,6 +119,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    }
 
    private static final class FontConverter extends ClassConverter<FontEntry> {
+      private static final long serialVersionUID = 1;
       public FontEntry fromString(String str) {
          return new FontEntry(str);
       }
