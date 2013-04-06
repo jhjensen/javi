@@ -1,4 +1,4 @@
-#!/bin/perl 
+#!/usr/bin/perl 
 
 use strict;
 use integer;
@@ -9,23 +9,24 @@ my %filelist;
 
 system("printenv | sort >penv") && die;
 $_ = getcwd();
-$_ = `cygpath -wal \"$_\"`;
-chomp;
-my $rootdir =lc;
+#$_ = `cygpath -wal \"$_\"`;
+#chomp;
+#my $rootdir =lc;
+my $rootdir =$_;
 
-#my $JDK2="c:\\Progra~1\\Java\\jdk1.6.0_30";
-my $JDK2=`cygpath -w $ENV{'JAVA_HOME'}`;
-chop $JDK2;
-print "JDK2 $JDK2\n";
-#my $jroot="C:\\Users\\jensja01\\Desktop\\cyghome\\javt";
-my $whome = `cygpath -w $ENV{'HOME'}`;
-chop $whome;
-my $jroot="$whome\\javt";
-my $myprog="$jroot\\lib";
-my $mycp="$jroot\\build;$myprog\\juniversalchardet-1.0.3.jar;$myprog\\rhino1_7R2\\js.jar;$myprog\\junit3.8.2\\junit.jar;$JDK2\\lib\\tools.jar";
+# is this necessary, certainly not if cp is setup ?
+#my $JDK2=`cygpath -w $ENV{'JAVA_HOME'}`;
+#chop $JDK2;
+#print "JDK2 $JDK2\n";
+#my $whome = `cygpath -w $ENV{'HOME'}`;
+#chop $whome;
+#my $jroot="$whome\\javt";
+#my $myprog="$jroot\\lib";
+#my $mycp="$jroot\\build;$myprog\\juniversalchardet-1.0.3.jar;$myprog\\rhino1_7R2\\js.jar;$myprog\\junit3.8.2\\junit.jar;$JDK2\\lib\\tools.jar";
+#my $cmd ="java  -cp \"$mycp;lib/checkstyle-5.6/checkstyle-5.6-all.jar\" com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
 
-my $cmd ="java  -cp \"$mycp;lib/checkstyle-5.6/checkstyle-5.6-all.jar\" com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
-
+$ENV{'CLASSPATH'} = "$ENV{'HOME'}/javt/build:$ENV{'CLASSPATH'}:$ENV{'HOME'}/javt/lib/checkstyle-5.6/checkstyle-5.6-all.jar";
+my $cmd ="java  com.puppycrawl.tools.checkstyle.Main -c checkstyle.xml @ARGV ";
 print "running $cmd\n";
 
 open(CST, "$cmd 2>&1|") || die ("$cmd failed $!");
@@ -68,7 +69,9 @@ if ($size != 0) {
    while (<ERRLST>) {
       chomp;
       (my $fname,my $cnt) = split(/,/);
+      $fname =~ s/\\/\//g;
       $db{$fname} = $cnt;
+      print "read $fname $cnt\n";
    }
 
    my $errcnt = 0;
@@ -99,7 +102,7 @@ exit 0;
 sub mkerror {
     my($filename,$linenumber,$charnumber,$messege) = @_;
     #print "mkerr filename = $filename\n";
-    $filename = lc(`cygpath -wal \"$filename\"`);
+    #$filename = lc(`cygpath -wal \"$filename\"`);
     chomp $filename;
     my $ind = index($filename,$rootdir);
      if ($ind==0) {
