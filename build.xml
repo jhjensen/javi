@@ -8,10 +8,15 @@
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
   <property name="lib.dir"  location="${env.HOME}/javt/lib"/>
+  <property name="jdk.dir"  location="/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/Contents/Home/lib/"/>
     <path id="classpath">
         <fileset dir="${lib.dir}">
             <include name ="*.jar"/>
             <include name ="**/*.jar"/>
+            <include name ="tools.jar"/>
+        </fileset>
+        <fileset dir="${jdk.dir}">
+            <include name ="tools.jar"/>
         </fileset>
     </path>
 

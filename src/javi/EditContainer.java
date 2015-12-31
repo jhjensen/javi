@@ -67,6 +67,7 @@ public class EditContainer<OType> implements
    }
 
    final void reload() { // ??? should go a way with inherited extext
+      trace("reloading file " + this);
       reinitBack();
       ecache.clear(1);
       ioc.reload();
@@ -448,6 +449,11 @@ public class EditContainer<OType> implements
                try {
                   //trace("backing up " + ev);
                   ev.backup.idleSave();
+                  // !!!!! in order to enable must
+                  //      update modified time on printout
+                  //      add gui to confirm that we want to reload
+                  //if (ev.prop.checkModified())
+                  //   ev.reload();
                } catch (BadBackupFile e) {
                   if (UI.reportBadBackup(ev.getName(), e)) {
                      ev.reload();
@@ -675,6 +681,7 @@ public class EditContainer<OType> implements
       if (readonly)
          throw new ReadOnlyException(this, fdes().shortName);
 
+      trace("about to backup.undo");
       return backup.undo();
    }
 
@@ -994,7 +1001,7 @@ public class EditContainer<OType> implements
    }
 
    final void printout() throws IOException {
-      //trace("editvec.printout " + this);
+      trace("editvec.printout " + this);
 
       mkback(0);
       FileDescriptor.LocalFile tempFile =
@@ -1023,7 +1030,8 @@ public class EditContainer<OType> implements
 
       if (!prop.fdes.canWrite()
             && "Microsoft Corp.".equals(System.getProperty("java.vendor")))
-         Tools.execute(null, "d:\\cygwin\\bin\\chmod +w "
+         //Tools.execute(null, "d:\\cygwin\\bin\\chmod +w "
+         Tools.execute(null, "chmod +w "
             + prop.fdes.canonName);
 
       prop.fdes.renameTo(file2);
@@ -1068,7 +1076,11 @@ public class EditContainer<OType> implements
       void readExternal(ByteInput dis, ClassConverter conv) {
          //trace("InsertRecord.readExternal");
          super.readExternal(dis, conv);
-         obj = super.readObjs(dis, conv);
+         Object[]  o1 =  super.readObjs(dis, conv);
+         obj = (OType []) (new Object [o1.length]);
+         for (int ii = 0; ii < o1.length; ii++) {
+            obj[ii] = (OType) o1[ii];
+         }
       }
 
       void writeExternal(DataOutputStream dos, ClassConverter conv) {
@@ -1272,7 +1284,11 @@ public class EditContainer<OType> implements
 
       void readExternal(ByteInput dis, ClassConverter conv) {
          super.readExternal(dis, conv);
-         obj = super.readObjs(dis, conv);
+         Object[]  o1 =  super.readObjs(dis, conv);
+         obj = (OType []) (new Object [o1.length]);
+         for (int ii = 0; ii < o1.length; ii++) {
+            obj[ii] = (OType) o1[ii];
+         }
 //             trace("readExternal " + this);
       }
 

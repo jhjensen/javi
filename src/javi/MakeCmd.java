@@ -56,7 +56,8 @@ final class MakeCmd extends Rgroup {
          FileList.writeModifiedFiles(".*\\.((cpp)|[hc]|(as))");
       String files2 = l2String(efs, fvc.edvec.getName());
       PosListList.Cmd.setErrors(new GccInst("",
-         "d:\\cygwin\\bin\\bash -c  \"gcc -Wall -S "
+         //"d:\\cygwin\\bin\\bash -c  \"gcc -Wall -S "
+         "bash -c  \"gcc -Wall -S "
          + " -DUSESPINE -DETI_ADDED -DSTANDARD_OVERHEAD "
          + files2 + "\" ", false));
    }
@@ -97,7 +98,8 @@ final class MakeCmd extends Rgroup {
 //                 " . .profile ; cd sidewinder/src ;perl make.pl " + files};
 //               String cmd =System.getProperties().getProperty("java.javi.makecmd",perl make.pl"
 //                   "C:\\Progra~1\\SourceGear\\DiffMerge\\DiffMerge.exe ");
-      String[] cmd = {"c:\\cygwin\\bin\\perl", "make.pl" , file};
+//      String[] cmd = {"c:\\cygwin\\bin\\perl", "make.pl" , file};
+      String[] cmd = {"perl", "make.pl" , file};
 
       PosListList.Cmd.setErrors(PositionCmd.make("mk " + file, cmd));
 

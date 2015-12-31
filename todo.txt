@@ -26,7 +26,8 @@ improve local/remote mkid
 improve vt100
 
 redo PersitantStack->RanFileArray
-
+:re
+some how got back to main:288 with big lock unheld
 jython
 
 diredit

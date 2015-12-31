@@ -1194,17 +1194,19 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                try {
                   String cmd = System.getProperties().getProperty(
                      "java.javi.diffcmd",
+                     "kdiff3"
                      //"C:\\Progra~2\\SourceGear\\DiffMerge\\DiffMerge.exe ");
                      //"C:\\Progra~1\\Beyond~1\\BC2.exe ";
                      //"C:\\Progra~1\\Beyond~1\\Bcomp.exe ");
-                     "C:\\Program Files\\TortoiseSVN\\bin\\Tortoiseproc.exe");
+                     //"C:\\Program Files\\TortoiseSVN\\bin\\Tortoiseproc.exe" ???? "/command:diff" ,  "/path:" + filename , "/path2:" +  backupname};
+
+                  );
                   //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname
                   //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
-                  //"kdiff3 "
                   //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
-                  String [] lstr =  {cmd, "/command:diff"
-                     ,  "/path:" + filename
-                     , "/path2:" +  backupname};
+                  String [] lstr =  {cmd
+                     ,  filename
+                     , backupname};
                   Tools.execute(null, lstr);
                } catch (IllegalArgumentException e) {
                   trace("ui.reportDiff caught exception " + e);

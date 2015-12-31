@@ -13,6 +13,8 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
 
+//import com.sun.jdi.connect.Connector.Argument;
+
 import static history.Tools.trace;
 
 final class JDebugger extends IoConverter<String> {
@@ -140,9 +142,8 @@ final class JDebugger extends IoConverter<String> {
 
       Map<String, com.sun.jdi.connect.Connector.Argument> cargs =
          con.defaultArguments();
-      //for (Iterator cx = cargs.values().iterator() ; cx.hasNext() ;)  {
-      //   Connector.Argument ar = (Connector.Argument)cx.next();
-      //trace(ar + ar.description());
+      //for (Argument ar : cargs.values())  {
+      //   trace(ar + ar.description());
       //}
       cargs.get("main").setValue(cname);
 //   ((Connector.Argument)cargs.get("options")).setValue("-Xbootclasspath/a:d:/j2sdk1.4.1/lib/tools.jar -verbose:class");
@@ -152,8 +153,8 @@ final class JDebugger extends IoConverter<String> {
          "-Dsun.io.serialization.extendedDebugInfo=true");
 
       cargs.get("options").setValue("-Xshare:off -Dxxx=yyy -cp "
-         + "./build;./lib/juniversalchardet-1.0.3.jar;./lib/rhino1_7R3/js.jar;"
-         + "./lib/junit3.8.2/junit.jar;$JDK2/lib/tools.jar ");
+         + "./build:./lib/juniversalchardet-1.0.3.jar:./lib/rhino1_7R3/js.jar:"
+         + "./lib/junit3.8.2/junit.jar:$JDK2/lib/tools.jar ");
 
       vm = con.launch(cargs);
       //trace("classes = " + vm.allClasses());

@@ -1,4 +1,9 @@
-install ant rhino juniversalchardet rxtx cygwin idutils
+install ant rhino juniversalchardet rxtx 
+
+on windows:
+cygwin  idutils
+
+idutils
 
 optional checkstyle findbugs
 ms is a sample script for setting up environment.
