@@ -6,7 +6,7 @@ import java.util.Date;
 
 import history.ByteInput;
 import history.PersistantStack;
-//import static history.Tools.trace;
+import static history.Tools.trace;
 
 public final class UndoHistory<OType> extends PersistantStack {
    private EhMark currmark; // index of current position in undo
@@ -153,22 +153,22 @@ public final class UndoHistory<OType> extends PersistantStack {
    // undo changes until a checked undo is found. If the undo is to be used
    // uncheckpoint() must be called
    int undo() {
-      //trace("undo current=" + current);
+      trace("undo current=" + current);
       int chindex = -1;
 
       do {
          if (current instanceof ChangeRecord.BaseRecord)
             return chindex;
          current = (ChangeRecord) currmark.previous();
-         //trace(" " +currmark.getIndex() + " " + current );
+         trace(" " + currmark.getIndex() + " " + current);
       } while (current instanceof ChangeRecord.CheckRecord);
 
       do {
          chindex = current.undocr();
-         //trace(" " +currmark.getIndex() + " " + current);
+         trace(" " + currmark.getIndex() + " " + current);
       } while (!((current = (ChangeRecord) currmark.previous())
                  instanceof ChangeRecord.CheckRecord));
-      //trace(" " +currmark.getIndex() + " " + current);
+      trace(" " + currmark.getIndex() + " " + current);
       return chindex;
    }
 

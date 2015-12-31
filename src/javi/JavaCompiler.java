@@ -1,6 +1,5 @@
 package javi;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,7 +8,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import javax.tools.StandardJavaFileManager;
-//import static history.Tools.trace;
+import static history.Tools.trace;
 
 final class JavaCompiler extends Rgroup {
 
@@ -120,7 +119,7 @@ final class JavaCompiler extends Rgroup {
       }
 
       protected void preRun() {
-         //trace(" array = " + array);
+         trace("");
          try {
             javax.tools.JavaCompiler compiler =
                ToolProvider.getSystemJavaCompiler();
@@ -128,16 +127,18 @@ final class JavaCompiler extends Rgroup {
             StandardJavaFileManager fileManager =
                compiler.getStandardFileManager(null, null, null);
 
-            //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
-            fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
-                  Arrays.asList(
-                  new File("./build"),
-                  new File("lib/rhino1_7R3/js.jar"),
-                  new File("lib/junit3.8.2/junit.jar"),
-                  new File("lib/juniversalchardet-1.0.3.jar"),
-                  new File("c:/Progra~1/Java/"
-                        + System.getenv("JDK") + "/lib/tools.jar")
-               ));
+//            trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
+//            fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
+//                  Arrays.asList(
+//                  new File("./build"),
+//                  new File("lib/rhino1_7R3/js.jar"),
+//                  new File("lib/junit3.8.2/junit.jar"),
+//                  new File("lib/juniversalchardet-1.0.3.jar"),
+//                  new File(System.getenv("JDK_HOME") + "/lib/tools.jar")
+//                  //new File("c:/Progra~1/Java/"
+//                  //      + System.getenv("JDK") + "/lib/tools.jar")
+//               ));
+//            trace("loc "+fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
             Iterable<? extends JavaFileObject> clist =
                FileDescriptor.getFileObjs(fileManager, flist);
 
@@ -149,18 +150,16 @@ final class JavaCompiler extends Rgroup {
 
             boolean success = compiler.getTask(null, fileManager,
                this, Arrays.asList(options), null, clist).call();
-
             UI.reportError("done compiling " + (success
                ? "successfully"
                : (" with " + errcount + " errors and "
-                  + warncount + " warnings")
-               ));
-
+                     + warncount + " warnings")
+                  ));
             fileManager.close();
-         } catch (IOException e) {
-            UI.reportError("JavaCompiler caught " + e);
          } catch (IllegalArgumentException e) {
             UI.reportError(e.getMessage());
+         } catch (Throwable e) {
+            UI.reportError("JavaCompiler caught " + e);
          }
       }
    }

@@ -41,7 +41,7 @@ public class PositionIoc extends BufInIoc<Position> {
       //trace("parsefile this " + this.getClass());
 
       for (String line; null != (line = getLine());) {
-         //trace("line = " + line);
+         trace("line = " + line);
          if ("done".equals(line)) {
             trace("should exit immediatly");
          } else if (line.length() != 0)
@@ -58,7 +58,6 @@ public class PositionIoc extends BufInIoc<Position> {
    private PositionIoc(String name) {
       super(new FileProperties(
          FileDescriptor.InternalFd.make(name), pconverter), true, null);
-      //trace(label);
    }
 
    public PositionIoc(String name, BufferedReader inputi,

@@ -1,6 +1,7 @@
 package javi;
 
 import java.io.IOException;
+import static history.Tools.trace;
 
 final class FileInput extends BufInIoc<String> {
    private static final long serialVersionUID = 1;
@@ -106,6 +107,7 @@ final class FileInput extends BufInIoc<String> {
    private transient int rpos;
 
    protected void preRun() throws IOException {
+      trace("about to init file");
       filestring = prop.initFile();
       fileend = filestring.length();
       filestart = 0;

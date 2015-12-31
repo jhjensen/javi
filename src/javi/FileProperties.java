@@ -20,6 +20,7 @@ public final class FileProperties<OType> implements Serializable {
    private transient Charset charSet;
    private transient String fileString;
    private transient boolean readonly = false;
+   private long lastMod;
 
    private String lsep = staticLine; //??? final
 
@@ -83,6 +84,12 @@ public final class FileProperties<OType> implements Serializable {
       fileString = "";
    }
 
+   boolean checkModified() {
+      //if (fdes.lastModified() != lastMod) trace("checkModified " + this  + " saved " + lastMod + " " + fdes.lastModified());
+      return fdes.lastModified() != lastMod;
+   }
+
+
    // create properties that will have the same format as a prototype
    public FileProperties(FileProperties proto, FileDescriptor fd) {
       fdes = fd;
@@ -94,6 +101,7 @@ public final class FileProperties<OType> implements Serializable {
 
    public String initFile() throws IOException {
       fileString = fdes.getString();
+
       //trace("fileString:" + fileString);
       int npos = fileString.indexOf('\n');
       int rpos = fileString.indexOf('\r');
@@ -104,6 +112,7 @@ public final class FileProperties<OType> implements Serializable {
             ? "\r\n"
             : System.getProperty("line.separator");
 
+      lastMod = fdes.lastModified();
       return fileString;
    }
 }

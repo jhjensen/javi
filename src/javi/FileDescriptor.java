@@ -52,6 +52,11 @@ public class FileDescriptor implements Serializable {
    java.nio.file.Path toPath() throws IOException {
       throw new IOException("no path");
    }
+
+   long lastModified() {
+      return 0;
+   }
+
    private FileDescriptor(String shortNamei, String cnamei) {
       canonName = cnamei;
       shortName = shortNamei;
@@ -169,7 +174,7 @@ public class FileDescriptor implements Serializable {
       private static String[] canonArray;
       private static final Matcher bslash =
          Pattern.compile("\\\\").matcher("");
-      final File fh; // temp change, do not check in
+      final File fh; // ??? temp change, do not check in
 
 //boolean isPersistant() {
 //   return true;
@@ -415,6 +420,18 @@ public class FileDescriptor implements Serializable {
 
       final void deleteOnExit() {
          fh.deleteOnExit();
+
+      long lastModified() {
+         return fh.lastModified();
+      }
+
+      final void movefile(String newName) throws IOException {
+         File file = new File(newName);
+         // check that file already exists
+         if ((file.isFile()) && (!file.delete()))
+            throw new IOException("unable to delete");
+         if (!fh.renameTo(file))
+            throw new IOException("unable to rename " + fh + " to " + file);
       }
 
       final BufferedReader getBufferedReader() throws IOException {
