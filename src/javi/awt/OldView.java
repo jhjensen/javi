@@ -668,7 +668,7 @@ final class OldView extends AwtView {
                      ? getRows(1.f)
                      : mwv.getScrollAmount();
                EventQueue.insert(new ScrollEvent(mvAmt
-                  * mwv.getWheelRotation()));
+                  * mwv.getWheelRotation(), mwv.isShiftDown()));
                return;
 
             case MouseEvent.MOUSE_DRAGGED:
