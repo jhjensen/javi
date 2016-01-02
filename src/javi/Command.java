@@ -67,7 +67,7 @@ public final class Command extends Rgroup {
       return null;
    }
 
-   public static final ArrayList<String> cmdlist = new ArrayList<String>();
+   private static final ArrayList<String> cmdlist = new ArrayList<String>();
    static void readini() throws IOException {
       FileDescriptor.LocalFile ifile = FileDescriptor.LocalFile.make(".javini");
       if (!ifile.isFile())

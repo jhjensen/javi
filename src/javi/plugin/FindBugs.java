@@ -91,7 +91,7 @@ public final class FindBugs extends Rgroup implements Plugin {
             true,
             new BufferedReader(
                new InputStreamReader(new FileInputStream("findout"), "UTF-8")));
-         // lib/findbugs-2.0.2/bin/findbugs -emacs -medium -textui -auxclasspath "..;$JDK2\lib\tools.jar;$JDK2\jre\lib\ext\RXTXcomm.jar;lib/rhino1_7R3/js.jar;lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
+          //lib/findbugs-3.0.1/bin/findbugs -emacs -medium -textui -auxclasspath "..:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/jre/lib/ext/RXTXcomm.jar:lib/rhino1_7R3/js.jar:lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
 
       }
 

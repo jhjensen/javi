@@ -262,6 +262,8 @@ public class FileDescriptor implements Serializable {
 
       final ArrayList<FileDescriptor.LocalFile>  listDes(FilenameFilter fl) {
          File[] flist = fh.listFiles(fl);
+         if (flist == null)
+            return null;
          ArrayList<FileDescriptor.LocalFile> dlist =
             new ArrayList<FileDescriptor.LocalFile>(flist.length);
          for (File file : flist)
