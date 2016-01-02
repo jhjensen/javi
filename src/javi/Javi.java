@@ -112,6 +112,9 @@ public final class Javi {
       //trace("prop : \n" + System.getProperties());
       EventQueue.biglock2.lock();
       trace("enter Javi Main");
+      if (System.getProperty("os.name").startsWith("Mac OS X")) {
+         System.setProperty("apple.awt.graphics.UseQuartz", "true");
+      }
       //new Thread(new Preloader(), "preloader").start();
       Thread curr = Thread.currentThread();
       curr.setPriority(curr.getPriority() - 1);

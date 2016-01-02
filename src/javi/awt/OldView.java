@@ -34,7 +34,7 @@ import javi.ChangeOpt;
 import javi.ScrollEvent;
 
 
-//import java.awt.RenderingHints;
+import java.awt.RenderingHints;
 
 final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
@@ -720,18 +720,20 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
-//RenderingHints qualityHints = new RenderingHints(
-//   RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-//qualityHints.put(RenderingHints.KEY_ANTIALIASING,
-//   RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-//   RenderingHints.VALUE_ANTIALIAS_OFF);
-//qualityHints.put(RenderingHints.KEY_TEXT_ANTIALIASING,
-//   RenderingHints.VALUE__TEXT_ANTIALIAS_DEFAULT);
-//   RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-//qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-//qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-//imageg.setRenderingHints(qualityHints);
+            RenderingHints qualityHints = new RenderingHints(
+               RenderingHints.KEY_RENDERING,
+               RenderingHints.VALUE_RENDER_QUALITY);
+            qualityHints.put(RenderingHints.KEY_ANTIALIASING,
+            //   RenderingHints.VALUE_ANTIALIAS_ON);
+               RenderingHints.VALUE_ANTIALIAS_OFF);
+            qualityHints.put(RenderingHints.KEY_TEXT_ANTIALIASING,
+            //   RenderingHints.VALUE__TEXT_ANTIALIAS_DEFAULT);
+               RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            //qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+            qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
+               RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            //qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+            imageg.setRenderingHints(qualityHints);
 
             //trace("imageg " + imageg);
             if (null == imageg)
