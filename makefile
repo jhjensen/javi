@@ -13,6 +13,17 @@ LINK=ld
 
 all: ID javi.jar
 
+automake: runner
+
+runner: build
+	java javi.Javi
+
+build: dist/javi.jar
+FORCE: 
+
+dist/javi.jar: FORCE
+	ant -e
+
 install : javi.jar
 	cp javi.jar vi.pl /usr/share/java
 	chmod +x javi.jar vi.pl /usr/share/java/vi.pl /usr/share/java/javi.jar

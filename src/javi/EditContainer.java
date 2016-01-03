@@ -516,9 +516,8 @@ public class EditContainer<OType> implements
                      backupMade = true;
 
                      return null == seterror
-                            ? readError
-                            : new BackupStatus(
-                               false, false, seterror);
+                        ? readError
+                        : new BackupStatus(false, false, seterror);
                   } catch (Throwable e) {
                      trace("backup failed exception = " + e);
                      reinitBack();

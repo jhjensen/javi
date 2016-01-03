@@ -623,7 +623,10 @@ public abstract class PersistantStack {
       }
 
       public void flush() throws IOException {
-         throw new IOException("unsupported flush");
+         if (bufoff > 0)
+             throw new IOException("unsupported flush " + bufoff);
+      }
+      public void close() {
       }
 
    }
@@ -669,6 +672,7 @@ public abstract class PersistantStack {
          }
       } catch (IOException e) {
          trace("caught IOException closing dos " + e);
+         e.printStackTrace();
       } finally {
          dos = null;
       }

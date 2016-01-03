@@ -81,6 +81,7 @@ public final class Javi {
 
       MoveGroup.init();
       new JS.JSR();
+      new MakeCmd();
       MapEvent.bindCommands();
       try {
          //trace("preserver");
@@ -91,7 +92,6 @@ public final class Javi {
 
       //new v8();
       //new msvc();
-      new MakeCmd();
       try {
          Plugin.Loader.load("plugin/plugin.jar"); //new FindBugs();
       } catch (Throwable e) {

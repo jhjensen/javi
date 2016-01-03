@@ -63,7 +63,7 @@ public final class MapEvent {
       skeys.keyactionbind(JeyEvent.VK_F4, "gotofontlist", null, 0);
       skeys.keyactionbind(JeyEvent.VK_F5, "gotopositionlist", null, 0);
       skeys.keyactionbind(JeyEvent.VK_F6, "gotopllist", null, 0);
-      skeys.keyactionbind(JeyEvent.VK_F7, "jdebug", null, 0);
+      skeys.keyactionbind(JeyEvent.VK_F7, "mk", null, 0);
       skeys.keyactionbind(JeyEvent.VK_F8, "vt", null, 0);
       //skeys.keyactionbind(JeyEvent.VK_F9,"startcon",null,0);
       skeys.keyactionbind(JeyEvent.VK_F10, "comm", null, 0);

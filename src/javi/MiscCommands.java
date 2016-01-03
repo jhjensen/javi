@@ -12,7 +12,7 @@ public final class MiscCommands extends Rgroup  {
    MiscCommands() {
       final String[] rnames = {
          "",
-         "jdebug",
+         "xxxunused",
          "zprocess",
          "redraw",
          "undo",
@@ -40,7 +40,7 @@ public final class MiscCommands extends Rgroup  {
       //trace("rnum = " + rnum );
       switch (rnum) {
          case 1:
-            startDebug((String) arg, fvc);
+            //free
             return null;
          case 2:
             zprocess(rcount, fvc);
@@ -170,24 +170,6 @@ public final class MiscCommands extends Rgroup  {
          FvContext.connectFv(commCon, fvc.vi);
    }
 
-   private static void startDebug(String cname, FvContext fvc) {
-      try {
-         if (null == debugfile) {
-            //??? make this workjavac.compcommand(null,true);
-            if (null == cname)
-               cname = lastdebug;
-            else
-               lastdebug = cname;
-            EditContainer.registerListener(fli);
-            JDebugger jd = new JDebugger(cname);
-            debugfile = new TextEdit<String>(jd, jd.prop);
-         }
-         FvContext.connectFv(debugfile, fvc.vi);
-      } catch (Throwable e) {
-         UI.reportError("startDebug failed:" + e);
-      }
-   }
-
    static final class ProcIo extends BufInIoc<String> {
 
       private static final long serialVersionUID = 1;
@@ -240,7 +222,7 @@ public final class MiscCommands extends Rgroup  {
          }
          FvContext.connectFv(cmdfile, fvc.vi);
       } catch (Throwable e) {
-         UI.reportError("startDebug failed:" + e);
+         UI.reportError("startCmd failed:" + e);
       }
    }
 

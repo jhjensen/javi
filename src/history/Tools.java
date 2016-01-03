@@ -25,10 +25,11 @@ public final class Tools {
          StackTraceElement el = tr[1 + offset];
          if (0 == str.length())
             str = el.getMethodName() + "." + el.getClassName();
-         System.err.println(timediff / 1000000 + " "
-            + el.getFileName() + ":"
-            + el.getLineNumber() + " " + str);
-         //System.err.println(tr[1+offset].getFileName() + ":" + tr[1+offset].getLineNumber() + " " + str);
+         //System.err.println(timediff / 1000000 + " "
+         //   + el.getFileName() + ":"
+         //   + el.getLineNumber() + " " + str);
+         System.err.println(tr[1 + offset].getFileName()
+             + ":" + tr[1 + offset].getLineNumber() + " " + str);
       }
    }
 

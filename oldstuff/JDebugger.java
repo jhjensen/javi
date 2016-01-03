@@ -13,7 +13,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.LaunchingConnector;
 import com.sun.jdi.connect.VMStartException;
 
-//import com.sun.jdi.connect.Connector.Argument;
+import com.sun.jdi.connect.Connector.Argument;
 
 import static history.Tools.trace;
 
@@ -36,7 +36,7 @@ final class JDebugger extends IoConverter<String> {
       }
       Object doroutine(int rnum,Object arg,int count,int rcount,fvcontext fvc,
         eventqueue eventq,boolean dotmode) {
-         //trace("rnum = " + rnum);
+         trace("rnum = " + rnum);
 
          switch (rnum) {
             case 1:
@@ -135,6 +135,7 @@ final class JDebugger extends IoConverter<String> {
       IOException , IllegalConnectorArgumentsException, VMStartException {
       super(new FileProperties(FileDescriptor.InternalFd.make(
          "JDebugger" + cname), StringIoc.converter), true);
+trace("");
       LaunchingConnector con =
          com.sun.jdi.Bootstrap.virtualMachineManager().defaultConnector();
 //   if (comd == null)
@@ -142,10 +143,11 @@ final class JDebugger extends IoConverter<String> {
 
       Map<String, com.sun.jdi.connect.Connector.Argument> cargs =
          con.defaultArguments();
-      //for (Argument ar : cargs.values())  {
-      //   trace(ar + ar.description());
-      //}
+      for (Argument ar : cargs.values())  {
+         trace(ar + ar.description());
+      }
       cargs.get("main").setValue(cname);
+      //cargs.put("server","true");
 //   ((Connector.Argument)cargs.get("options")).setValue("-Xbootclasspath/a:d:/j2sdk1.4.1/lib/tools.jar -verbose:class");
 //   cargs.get("options").setValue("-Xbootclasspath/a:d:/j2sdk1.4.1/lib/tools.jar");
 //   cargs.get("options").setValue("-Xprof -Xshare:off -Dxxx=yyy");
@@ -154,8 +156,11 @@ final class JDebugger extends IoConverter<String> {
 
       cargs.get("options").setValue("-Xshare:off -Dxxx=yyy -cp "
          + "./build:./lib/juniversalchardet-1.0.3.jar:./lib/rhino1_7R3/js.jar:"
-         + "./lib/junit3.8.2/junit.jar:$JDK2/lib/tools.jar ");
+         + "./lib/junit3.8.2/junit.jar:$JAVA_HOME/lib/tools.jar ");
 
+      for (Argument ar : cargs.values())  {
+         trace(ar + ar.description());
+      }
       vm = con.launch(cargs);
       //trace("classes = " + vm.allClasses());
 

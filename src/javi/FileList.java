@@ -609,10 +609,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                   fvc.fixCursor();
                   FvContext.reconnect(ev, nextFile);
                }
-            } else if (instance.isParent(ev)
+            } else if (instance.isParent(ev) || (ev instanceof Vt100)) {
                   // This could be cleaned up with a misc file list
-                  || (ev instanceof Vt100)
-                  || (ev.fdes().canonName.startsWith("JDebugger"))) {
                FvContext.dispose(ev, nextFile);
             } else {
                FvContext.reconnect(ev, nextFile);
