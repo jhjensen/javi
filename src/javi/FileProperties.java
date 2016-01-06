@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 //import history.Tools;
 
@@ -23,6 +24,29 @@ public final class FileProperties<OType> implements Serializable {
 
    public String toString() {
       return fdes.toString();
+   }
+
+   void safeWrite(Iterator<String> strIter) throws IOException {
+      if (fdes instanceof  FileDescriptor.LocalFile) {
+         FileDescriptor.LocalFile fd2 = (FileDescriptor.LocalFile) fdes;
+
+         FileDescriptor.LocalFile tempFile =
+            FileDescriptor.LocalFile.make(fd2.canonName + ".new");
+
+         try {
+            new FileProperties(this, tempFile).writeAll(strIter);
+
+         } catch (IOException e) {
+            tempFile.delete();
+            throw e;
+         }
+
+         Files.setPosixFilePermissions(tempFile.toPath(),
+             Files.getPosixFilePermissions(fdes.toPath()));
+         tempFile.renameTo(fd2, false);
+      } else {
+         writeAll(strIter);
+      }
    }
 
    void writeAll(Iterator<String> sitr)  throws IOException {

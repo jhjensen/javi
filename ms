@@ -20,15 +20,11 @@
 #   BTCLASS="-Xbootclasspath/a:$JDK2\lib\tools.jar;$mycp" 
 #   echo BTCLASS $BTCLASS
 #else
-#   JDK=/usr/lib/jvm/java-6-sun-1.6.0.15
-#echo $JDK
    jroot=/Users/jjensen/javt
-   insprog=/usr/share/java
    myprog=$jroot/lib
    commoncp=$myprog:$myprog/juniversalchardet-1.0.3.jar:$myprog/rhino1_7R3/js.jar:$myprog/junit3.8.2/junit.jar:$JAVA_HOME/lib/tools.jar:$myprog/RXTXcomm.jar
-   mycp="$jroot/build:$commoncp"
-   exportcp="$jroot/build:$commoncp;$JAVA_HOME/lib/tools.jar"
-   BTCLASS="-Xbootclasspath/a:$JAVA_HOME/lib/tools.jar;$mycp" 
+   exportcp="$jroot/build:$commoncp"
+   BTCLASS="-Xbootclasspath/a:$JAVA_HOME/lib/tools.jar;$exportcp" 
 
 
    export CLASSPATH=$exportcp 

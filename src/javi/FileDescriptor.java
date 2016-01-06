@@ -49,6 +49,9 @@ public class FileDescriptor implements Serializable {
       return false;
    }
 
+   java.nio.file.Path toPath() throws IOException {
+      throw new IOException("no path");
+   }
    private FileDescriptor(String shortNamei, String cnamei) {
       canonName = cnamei;
       shortName = shortNamei;
@@ -64,7 +67,7 @@ public class FileDescriptor implements Serializable {
       return LocalFile.make(fname);
    }
 
-   void renameTo(LocalFile target) throws IOException {
+   void renameTo(LocalFile target, boolean overWrite) throws IOException {
       throw new IOException("not a renameable file");
    }
 
@@ -271,9 +274,17 @@ public class FileDescriptor implements Serializable {
          return dlist;
       }
 
-      final void renameTo(LocalFile target) throws IOException {
+      final void renameTo(LocalFile target, boolean overWrite) throws
+            IOException {
+
+         if (target.isFile() && overWrite) {
+            // check that file already exists
+            if  (!target.fh.delete()) {
+               throw new IOException("unable to delete");
+            }
+         }
          if (!fh.renameTo(target.fh))
-            throw new IOException("unable to rename file");
+            throw new IOException("unable to rename " + fh + " to " + target);
       }
 
       private static int findCommon(String str1, String str2) {
@@ -396,17 +407,12 @@ public class FileDescriptor implements Serializable {
          return fh.canWrite();
       }
 
-      final void deleteOnExit() {
-         fh.deleteOnExit();
+      final java.nio.file.Path toPath() {
+         return fh.toPath();
       }
 
-      final void movefile(String newName) throws IOException {
-         File file = new File(newName);
-         // check that file already exists
-         if ((file.isFile()) && (!file.delete()))
-            throw new IOException("unable to delete");
-         if (!fh.renameTo(file))
-            throw new IOException("unable to rename " + fh + " to " + file);
+      final void deleteOnExit() {
+         fh.deleteOnExit();
       }
 
       final BufferedReader getBufferedReader() throws IOException {

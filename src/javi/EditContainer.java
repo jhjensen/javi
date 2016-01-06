@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import history.ByteInput;
 import history.BadBackupFile;
 
-import history.Tools;
+//import history.Tools;
 import static history.Tools.trace;
 
 /** This class is the basic storage for an editor written in java.
@@ -1003,18 +1003,8 @@ public class EditContainer<OType> implements
       trace("editvec.printout " + this);
 
       mkback(0);
-      FileDescriptor.LocalFile tempFile =
-         FileDescriptor.LocalFile.make(prop.fdes.canonName + ".new");
-      FileProperties nProp = new FileProperties(prop, tempFile);
 
-      try {
-         nProp.writeAll(getStringIter());
-
-      } catch (IOException e) {
-         tempFile.delete();
-         throw e;
-      }
-      tempFile.movefile(prop.fdes.canonName);
+      prop.safeWrite(getStringIter());
       backup.writeRecord();
       synchronized  (listeners) {
          for (FileStatusListener evl : listeners)
@@ -1023,17 +1013,11 @@ public class EditContainer<OType> implements
    }
 
    public final void backup(String extension) throws IOException {
-
+      // used to make a read only file writeable, keeping the original file for backup
       FileDescriptor.LocalFile file2 =
          FileDescriptor.LocalFile.make(prop.fdes.shortName + extension);
 
-      if (!prop.fdes.canWrite()
-            && "Microsoft Corp.".equals(System.getProperty("java.vendor")))
-         //Tools.execute(null, "d:\\cygwin\\bin\\chmod +w "
-         Tools.execute(null, "chmod +w "
-            + prop.fdes.canonName);
-
-      prop.fdes.renameTo(file2);
+      prop.fdes.renameTo(file2, true);
 
       prop.writeAll(getStringIter());
       setReadOnly(false);
