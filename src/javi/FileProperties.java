@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 
-//import history.Tools;
+//import static history.Tools.trace;
 
 public final class FileProperties<OType> implements Serializable {
 
@@ -27,7 +27,7 @@ public final class FileProperties<OType> implements Serializable {
    }
 
    void safeWrite(Iterator<String> strIter) throws IOException {
-      if (fdes instanceof  FileDescriptor.LocalFile) {
+      if (fdes.exists() && fdes instanceof  FileDescriptor.LocalFile) {
          FileDescriptor.LocalFile fd2 = (FileDescriptor.LocalFile) fdes;
 
          FileDescriptor.LocalFile tempFile =

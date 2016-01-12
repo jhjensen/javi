@@ -350,6 +350,8 @@ public class FileDescriptor implements Serializable {
          //trace("exists " + fh.exists() + " cname " + cname  + " normName " + normName + " map " + map);
 
          WeakReference<LocalFile> ref = map.get(cname);
+         fh = new File(normName);
+         fname = normName;
 
          LocalFile fd = ref != null
             ? ref.get()
@@ -359,8 +361,8 @@ public class FileDescriptor implements Serializable {
             return fd;
 
          fd = fh.isDirectory()
-                ? new LocalDir(normName, cname, fh)
-                : new LocalFile(normName, cname, fh);
+                ? new LocalDir(fname, cname, fh)
+                : new LocalFile(fname, cname, fh);
          map.put(cname, new WeakReference(fd));
          return fd;
       }
