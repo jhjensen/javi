@@ -291,7 +291,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       for (int ii = linestart; ii <= linefinish;)
          if (null == rangePattern
                || (inverse ^ (searchForward(rangePattern, 0, ii)))) {
-            switch(command) {
+            switch (command) {
                case 'm':
                   if (before)
                      moveLine(ii++, lineto++);
@@ -482,7 +482,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
    private static String ccase(String in,
          int startoffset, int finishoffset) {
 
-      char [] sb = in.toCharArray();
+      char[] sb = in.toCharArray();
       if (finishoffset > sb.length)
          finishoffset = sb.length;
       for (int ii = startoffset; ii < finishoffset; ii++) {
@@ -898,7 +898,7 @@ final class EditTester1 {
 
    static void checkFile(String filename, String contents) throws IOException {
       File f = new File(filename);
-      char [] fchar = new char[(int) f.length() + 20];
+      char[] fchar = new char[(int) f.length() + 20];
       //FileReader fs = new FileReader(filename,"UTF-8");
       InputStreamReader fs = new InputStreamReader(
          new FileInputStream(filename), "UTF-8");

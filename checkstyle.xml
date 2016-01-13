@@ -72,6 +72,7 @@
         <module name="Indentation">
            <property name="basicOffset" value="3"/>
            <property name="caseIndent" value="3"/>
+           <property name="lineWrappingIndentation" value="3"/>
         </module>
 
 
@@ -133,7 +134,10 @@
         <module name="GenericWhitespace"/>
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceAfter"/>
-        <module name="NoWhitespaceBefore"/>
+        <module name="NoWhitespaceBefore">
+           <property name="allowLineBreaks" value="true"/>
+       </module>
+        
         <module name="OperatorWrap"/>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
@@ -166,7 +170,6 @@
         <module name="InnerAssignment"/>
         <!--module name="MagicNumber"/> -->
         <module name="MissingSwitchDefault"/>
-        <module name="RedundantThrows"/>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
 

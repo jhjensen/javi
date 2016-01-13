@@ -21,7 +21,7 @@ final class CheckStyle extends Rgroup {
           FvContext fvc, boolean dotmode) throws
           IOException, InputException {
       //trace("vigroup doroutine rnum = " + rnum );
-      switch(rnum) {
+      switch (rnum) {
          case 1:
             cstyle(fvc);
             return null;

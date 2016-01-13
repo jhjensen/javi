@@ -3,7 +3,7 @@ package javi;
 public abstract class ChangeOpt {
 
    public enum Opcode { NOOP, INSERT, CHANGE,
-      DELETE, REDRAW , MSCREEN, BLINKCURSOR
+      DELETE, REDRAW, MSCREEN, BLINKCURSOR
    }
 
    protected abstract int getSaveAmount();

@@ -122,7 +122,7 @@ final class DirList extends TextEdit<DirEntry> {
       while (dindex < maxIndex) {
          DirEntry de = at(dindex);
          //trace("dindex = " + dindex + " de " + de);
-         String [] flist = de.getCache();
+         String[] flist = de.getCache();
 
          if (null != flist)
             while (++findex < flist.length)  {
@@ -245,7 +245,7 @@ final class DirList extends TextEdit<DirEntry> {
 final class DirEntry {
 
    final FileDescriptor.LocalDir fh;
-   private String []fcache;
+   private String[]fcache;
 
    DirEntry(FileDescriptor.LocalDir fhi) {
       fh = fhi;
@@ -282,7 +282,7 @@ final class DirEntry {
       fcache = null;
    }
 
-   String [] getCache() {
+   String[] getCache() {
       if (null == fcache) {
          fcache = fh.list();
          //for (int i = 0;i<flist.length;i++)

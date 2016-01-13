@@ -388,7 +388,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          trace("received -1 on Vt100");
       //throw new InputException("end of input for Vt100");
       else
-         switch(state)  {
+         switch (state)  {
             case CR:
                caseCR(inc);
                break;

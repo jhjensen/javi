@@ -148,10 +148,10 @@ final class MoveGroup extends Rgroup {
             screenmoveabs(arg, rcount, fvc);
             return null;
          case 14:
-            findchar((boolean []) arg, fvc, dotmode);
+            findchar((boolean[]) arg, fvc, dotmode);
             return null;
          case 15:
-            repeatfind((boolean []) arg, fvc);
+            repeatfind((boolean[]) arg, fvc);
             return null;
          case 16:
             regsearch(((Boolean) arg).booleanValue(), count, fvc);
@@ -386,7 +386,7 @@ final class MoveGroup extends Rgroup {
       return;
    }
 
-   private void findchar(boolean [] arg, FvContext fvc, boolean dotmode) throws
+   private void findchar(boolean[] arg, FvContext fvc, boolean dotmode) throws
          InputException {
       if (!dotmode) {
          char tmp = EventQueue.nextKey(fvc.vi);

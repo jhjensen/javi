@@ -11,7 +11,7 @@ public final class ByteInput implements DataInput {
       return offset;
    }
 
-   ByteInput(byte [] b) {
+   ByteInput(byte[] b) {
       buf = b;
       offset = 0;
       limit = b.length;

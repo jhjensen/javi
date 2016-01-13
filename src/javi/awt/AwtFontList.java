@@ -99,14 +99,14 @@ public final class AwtFontList extends TextEdit<FontEntry> {
 
    private static AwtFontList inst;
 
-   static final String [] typest = {"plain", "bold", "italic", "bold+italic"};
+   static final String[] typest = {"plain", "bold", "italic", "bold+italic"};
 
    public static void init() {
       inst = new AwtFontList(new FontParser());
       Command.execCmdList(); // pickup font commands
    }
 
-   private static FontEntry [] getdefarray() {
+   private static FontEntry[] getdefarray() {
       FontEntry[] retval = new FontEntry[1];
       retval[0] = new FontEntry();
       return retval;
@@ -141,7 +141,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             FileDescriptor.InternalFd.make("Font List"), converter), false);
       }
 
-      private transient Font [] fontArr;
+      private transient Font[] fontArr;
       private transient int index;
 
       public FontEntry getnext() { // for 1.5 can return FontList

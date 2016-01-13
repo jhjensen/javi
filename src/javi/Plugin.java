@@ -239,7 +239,7 @@ abstract class MultiClassLoader extends ClassLoader {
 } // End class
 
 public interface Plugin {
-   static final class Loader {
+   final class Loader {
       private Loader() { }
       static void load(final String jarFile) throws
          IOException, ClassNotFoundException,

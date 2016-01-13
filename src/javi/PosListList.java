@@ -121,7 +121,7 @@ public final class PosListList extends TextList<Position> {
       finish();
    }
 
-   private void gotoNextPos(FvContext fvc, boolean [] reverse,
+   private void gotoNextPos(FvContext fvc, boolean[] reverse,
          boolean wait) throws InputException {
       //trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
@@ -197,7 +197,7 @@ public final class PosListList extends TextList<Position> {
             "dummypll",
             "gotodirlist",
             "gotoroot",
-            "nextposwait" ,
+            "nextposwait",
          };
          register(rnames);
          flush();
@@ -234,7 +234,7 @@ public final class PosListList extends TextList<Position> {
             case 8:
                return null; //jlintcommand();return null;
             case 9:
-               inst.gotoNextPos(fvc, (boolean []) arg, false);
+               inst.gotoNextPos(fvc, (boolean[]) arg, false);
                return null;
             case 10:
                inst.gotoList(fvc, null);
@@ -249,7 +249,7 @@ public final class PosListList extends TextList<Position> {
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
             case 14:
-               inst.gotoNextPos(fvc, (boolean []) arg, true);
+               inst.gotoNextPos(fvc, (boolean[]) arg, true);
                return null;
             default:
                throw new RuntimeException("vigroup:default");
@@ -374,7 +374,7 @@ public final class PosListList extends TextList<Position> {
 
       private TextEdit taglookup(String str, View vi) throws InputException {
          //trace("taglookup " + str);
-         String []symlist = spl.split(str);
+         String[]symlist = spl.split(str);
 
          if (0 == symlist.length)
             return null;
@@ -395,7 +395,7 @@ public final class PosListList extends TextList<Position> {
             }
 
             if (tagcount > 1) {
-               int [] scores = new int[tagcount];
+               int[] scores = new int[tagcount];
                for (int ii = 1; ii < tagcount; ii++)
                   scores[ii] = 0;
                int maxscore = 0;

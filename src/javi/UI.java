@@ -12,8 +12,8 @@ import static history.Tools.trace;
 
 public abstract class UI {
    public enum Buttons {
-      CHECKOUT , MAKEWRITEABLE , DONOTHING , MAKEBACKUP ,
-      USEFILE , USEBACKUP , USEDIFF , OK , WINDOWCLOSE , IOERROR , USESVN,
+      CHECKOUT, MAKEWRITEABLE, DONOTHING, MAKEBACKUP,
+      USEFILE, USEBACKUP, USEDIFF, OK, WINDOWCLOSE, IOERROR, USESVN,
       WAITPROC, KILLPROC
    };
 
@@ -60,7 +60,7 @@ public abstract class UI {
       IOException;
 
    public abstract Result ireportModVal(String caption, String units,
-                                 String []buttonVals, long limit);
+                                 String[]buttonVals, long limit);
 
    public abstract void isizeChange();
 
@@ -272,7 +272,7 @@ public abstract class UI {
    }
 
    static final Result reportModVal(String caption, String units,
-                              String []buttonVals, long limit) {
+                              String[] buttonVals, long limit) {
 
       return instance.ireportModVal(caption, units, buttonVals, limit);
    }

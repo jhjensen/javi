@@ -28,7 +28,7 @@ final class FileInput extends BufInIoc<String> {
       truncIo();
    }
 
-   private enum FileMode { UNIX, MS , MIXED };
+   private enum FileMode { UNIX, MS, MIXED };
 
    public String getnext() {
       //trace("fileread getnext");

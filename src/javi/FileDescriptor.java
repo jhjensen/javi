@@ -418,7 +418,7 @@ public class FileDescriptor implements Serializable {
       }
 
       final BufferedReader getBufferedReader() throws IOException {
-         byte [] filebyte = readFile();
+         byte[] filebyte = readFile();
          UniversalDetector detector = new UniversalDetector(null);
          detector.handleData(filebyte, 0, filebyte.length);
          detector.dataEnd();
@@ -433,7 +433,7 @@ public class FileDescriptor implements Serializable {
       }
 
       final String getString() throws IOException {
-         byte [] filebyte = readFile();
+         byte[] filebyte = readFile();
          UniversalDetector detector = new UniversalDetector(null);
          detector.handleData(filebyte, 0, filebyte.length);
          detector.dataEnd();

@@ -12,7 +12,7 @@ import java.nio.file.Files;
 
 public final class FileProperties<OType> implements Serializable {
 
-   private enum FileMode { UNIX, MS , MIXED };
+   private enum FileMode { UNIX, MS, MIXED };
    static final String staticLine = System.getProperty("line.separator");
    private static final long serialVersionUID = 1;
    public final FileDescriptor fdes;

@@ -441,15 +441,15 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      if (FileDescriptor.isSpecial(searchName))  {
                         FileDescriptor fh = FileDescriptor.make(searchName);
                         if (fh instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir((
-                                        FileDescriptor.LocalDir) fh);
+                           foundf |= DirList.getDefault().addSearchDir(
+                              (FileDescriptor.LocalDir) fh);
                            continue oloop;
                         } else {
                            if (null != EditContainer.findfile(fh))
                               dupflag = true;
                            else if (fh instanceof FileDescriptor.LocalFile) {
-                              edv = FileConverter.findfileopen((
-                                 FileDescriptor.LocalFile) fh, true);
+                              edv = FileConverter.findfileopen(
+                                 (FileDescriptor.LocalFile) fh, true);
                               if (null != edv)
                                  break oloop;
                            }
@@ -466,8 +466,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         //trace("dlist fh " + fh);
                         if (fh != null) {
                            if (fh instanceof FileDescriptor.LocalDir) {
-                              foundf |= DirList.getDefault().addSearchDir((
-                                           FileDescriptor.LocalDir) fh);
+                              foundf |= DirList.getDefault().addSearchDir(
+                                  (FileDescriptor.LocalDir) fh);
                            } else {
                               if (EditContainer.findfile(fh) != null) {
                                  dupflag = true;
@@ -497,8 +497,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      FileDescriptor fha;
                      while (null != (fha = dlist.findNextFileR())) {
                         if (fha instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir((
-                                        FileDescriptor.LocalDir) fha);
+                           foundf |= DirList.getDefault().addSearchDir(
+                              (FileDescriptor.LocalDir) fha);
                         } else {
                            if (null != EditContainer.findfile(fha))
                               dupflag = true;
@@ -507,8 +507,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                                  dupflag = true;
                               else if (fha
                                     instanceof FileDescriptor.LocalFile) {
-                                 edv = FileConverter.findfileopen((
-                                    FileDescriptor.LocalFile) fha, false);
+                                 edv = FileConverter.findfileopen(
+                                    (FileDescriptor.LocalFile) fha, false);
                                  if (null != edv)
                                     break oloop;
                               }
@@ -523,14 +523,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         //trace("last chance create file");
                         FileDescriptor fh = FileDescriptor.make(searchName);
                         if (fh instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir((
-                                        FileDescriptor.LocalDir) fh);
+                           foundf |= DirList.getDefault().addSearchDir(
+                              (FileDescriptor.LocalDir) fh);
                         } else {
                            if (null != EditContainer.findfile(fh))
                               dupflag = true;
                            else if (fh instanceof FileDescriptor.LocalFile) {
-                              edv = FileConverter.findfileopen((
-                                 FileDescriptor.LocalFile) fh, true);
+                              edv = FileConverter.findfileopen(
+                                 (FileDescriptor.LocalFile) fh, true);
                               if (null != edv)
                                  break oloop;
                            }

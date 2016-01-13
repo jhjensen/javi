@@ -95,16 +95,17 @@ public final class DeTabber {
          Tools.Assert(1 == tabFind("\tat ", 0, 8, 8), null);
          Tools.Assert(3 == tabFind("\tat ", 0, 8, 10), null);
          Tools.Assert(0 == tabFind(
-            "123456789012345678\t01234567\t901234567 "
-            , 18 , 8, 0), null);
+            "123456789012345678\t01234567\t901234567 ", 18, 8, 0), null);
          Tools.Assert(4 == tabFind("1234\t1234", 4, 4, 5), null);
          //trace ("" + tabFind("123456789012345678\t01234567\t901234567 ",18,8,37) );
          Tools.Assert(27 == tabFind(
             "123456789012345678\t01234567\t901234567 ",
             18, 8, 37), null);
-         Tools.Assert(0 == tabFind(
-            "\tat history.PersistantStack.set\tFile(PersistantStack.java:518"
-            , 0 , 8, 0), null);
+         Tools.Assert(
+            0 == tabFind(
+               "\tat history.PersistantStack.set\tFile(PersistantStack.java:518"
+               , 0, 8, 0)
+            , null);
          Tools.Assert(4 == tabFind("1234\t1234", 4, 4, 4), null);
       } catch (Throwable e) {
          Tools.trace("main caught exception " + e);

@@ -417,7 +417,7 @@ public abstract class PersistantStack {
       return popPoint;
    }
 
-   private byte [] readFile() throws IOException {
+   private byte[] readFile() throws IOException {
       FileInputStream input = new FileInputStream(rfile);
       try {
          int length = (int) rfile.length();
@@ -483,7 +483,7 @@ public abstract class PersistantStack {
 
       rfile = filei;
       int lastgood = 0;
-      byte [] iarray = null;
+      byte[] iarray = null;
       try {
          iarray = readFile();
          offsets = new IntArray(iarray.length / 20 + 1); // guessing at size
@@ -683,7 +683,7 @@ public abstract class PersistantStack {
    private int size = 0;
    private ByteWriter bwr = new ByteWriter();
    private DataOutputStream dos = new DataOutputStream(bwr);
-   private byte [] writebuffer = new byte[16];
+   private byte[] writebuffer = new byte[16];
    private int bufoff;
 //   private byteInput brd = new byteInput(new byte[0]);
    private int lastquit = -1;

@@ -92,8 +92,8 @@ final class AtView implements
             ? text.length() < offset + slen
                ? text.length() // gives empty string
                : offset + slen
-            : offset)
-         , text.length());
+            : offset
+         ), text.length());
    }
 
    void deTab(int tabstop) {
@@ -104,7 +104,7 @@ final class AtView implements
          if (line2start != Integer.MAX_VALUE)
             throw new RuntimeException(
                "detabing and multiline display not supported");
-         int [] tvals = {highStart, highFinish, olineStart, olineEnd};
+         int[] tvals = {highStart, highFinish, olineStart, olineEnd};
 
          text = DeTabber.deTab(text, tabOffset, tabstop, tvals);
          highStart = tvals[0];

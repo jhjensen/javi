@@ -19,7 +19,7 @@ public final class JS {
    static class MyFactory extends ContextFactory {
 
       protected boolean hasFeature(Context cx, int featureIndex) {
-         switch(featureIndex) {
+         switch (featureIndex) {
             case Context.FEATURE_STRICT_MODE :
             case Context.FEATURE_STRICT_VARS :
             case Context.FEATURE_WARNING_AS_ERROR :
@@ -94,7 +94,7 @@ public final class JS {
          }
 
          public Object doroutine(int rnum, Object arg, int count,
-               int rcount, FvContext fvc , boolean dotmode) throws
+               int rcount, FvContext fvc, boolean dotmode) throws
                IOException {
             Object[] fargs = {rnum, arg, count, rcount, fvc, dotmode};
             return func.call(JS.ctx, JS.scope, JS.scope, fargs);
@@ -107,7 +107,7 @@ public final class JS {
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
-            FvContext fvc , boolean dotmode) throws IOException {
+            FvContext fvc, boolean dotmode) throws IOException {
          //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
 
          switch (rnum) {
@@ -141,12 +141,12 @@ public final class JS {
       }
 
       private static Object execRoutine(int rnum, Object arg, int count,
-            int rcount, FvContext fvc , boolean dotmode) {
+            int rcount, FvContext fvc, boolean dotmode) {
          try {
             if (arg != null) {
                Object jresult = JS.ctx.evaluateString(
                   JS.scope, arg.toString(), "cmd", 1, null);
-               Object result = Context.jsToJava(jresult , JS.oclass);
+               Object result = Context.jsToJava(jresult, JS.oclass);
                return result;
             }
          } catch (org.mozilla.javascript.EcmaError e) {
@@ -172,7 +172,7 @@ public final class JS {
          try {
 
             new StreamInterface();
-            Object obj =  execRoutine(5, "ok ", 7 , 8 , null , false);
+            Object obj =  execRoutine(5, "ok ", 7, 8, null, false);
             myassert("ok".equals(obj), obj);
 
             myassert(eval(
@@ -222,7 +222,7 @@ final class IteratorReader extends java.io.Reader {
       }
    }
 
-   public int read(char [] cbuf, int off, int len) {
+   public int read(char[] cbuf, int off, int len) {
       //Tools.trace("off " +off + " len " + len);
       int index = 0;
       try {

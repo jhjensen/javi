@@ -27,7 +27,7 @@ final class Ctag {
          //trace(this);
       }
 
-      Position [] getPositions(String tagfile) throws IOException {
+      Position[] getPositions(String tagfile) throws IOException {
          if (null == positions) {
             RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r");
             ctfile.seek(filestart);
@@ -58,7 +58,7 @@ final class Ctag {
                return null;
             //trace("tagline:" + line);
          } while ('!' == line.charAt(0));
-         String [] spl = tabpat.split(line, 3);
+         String[] spl = tabpat.split(line, 3);
          String comment = "tag:" + spl[0];
          String file = new String(spl[1].toCharArray());
          line = spl[2];

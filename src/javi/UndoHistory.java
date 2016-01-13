@@ -20,7 +20,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       return currmark.toString();
    }
 
-   UndoHistory(FileProperties propi, ChangeRecord [] prototypesi) {
+   UndoHistory(FileProperties propi, ChangeRecord[] prototypesi) {
       conv = propi.conv;
       prop = propi;
       prototypes = new ChangeRecord[4 + prototypesi.length];
@@ -413,13 +413,13 @@ public final class UndoHistory<OType> extends PersistantStack {
 
       OType[] readObjs(ByteInput dis, ClassConverter<OType> conv) {
          int ocount = dis.readInt();
-         OType []obj = (OType []) new Object[ocount];
+         OType[] obj = (OType[]) new Object[ocount];
          while (--ocount >= 0)
             obj[ocount] = conv.newExternal(dis);
          return obj;
       }
 
-      void writeObjs(DataOutputStream dos, ClassConverter conv, OType [] obj) {
+      void writeObjs(DataOutputStream dos, ClassConverter conv, OType[] obj) {
          try {
             int ocount = obj.length;
             dos.writeInt(ocount);

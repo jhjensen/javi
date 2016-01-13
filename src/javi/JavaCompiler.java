@@ -103,7 +103,7 @@ final class JavaCompiler extends Rgroup {
                ? ((javax.tools.FileObject) source).getName()
                : diagnostic.getSource().toString();
 
-         switch(diagnostic.getKind()) {
+         switch (diagnostic.getKind()) {
             case ERROR:
             case NOTE:
             case OTHER:
@@ -143,7 +143,7 @@ final class JavaCompiler extends Rgroup {
 
             //String [] options = {"-Xlint:all"};
 
-            String [] options = {"-d", "build"};
+            String[] options = {"-d", "build"};
             //String [] options = {"-d", "gbuild/java/build", "-cp",
              //  "gbuild/java/build","-Xlint"};
 

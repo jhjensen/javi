@@ -107,7 +107,7 @@ final class MakeCmd extends Rgroup {
             arg = lastarg;
       else
          lastarg = arg.toString();
-      String[] cmd = {"perl", "../bin/make.pl" , file, arg.toString()};
+      String[] cmd = {"perl", "../bin/make.pl", file, arg.toString()};
 
       PosListList.Cmd.setErrors(PositionCmd.make("mk " + file, cmd));
 

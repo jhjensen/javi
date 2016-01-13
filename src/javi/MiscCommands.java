@@ -23,7 +23,7 @@ public final class MiscCommands extends Rgroup  {
          "comm",
          "exec",            //10
          "lines", // 5
-         "setwidth" ,
+         "setwidth",
       };
       register(rnames);
    }
@@ -154,7 +154,7 @@ public final class MiscCommands extends Rgroup  {
       if (null == commCon) {
          if (null != arg)
             try {
-               String [] args = arg.split(" +");
+               String[] args = arg.split(" +");
                if (2 != args.length)
                   throw new InputException("invalid arguments to comm command:"
                      + arg);
@@ -204,7 +204,7 @@ public final class MiscCommands extends Rgroup  {
       }
    };
 
-   private static String [] lastcmd =  {"bash", "-i", "-c",
+   private static String[] lastcmd =  {"bash", "-i", "-c",
       "(cd ../javitests; java -Xshare:off javitests.PerfTest )"
    };
 

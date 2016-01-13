@@ -189,7 +189,7 @@ final class EditGroup extends Rgroup {
          dotevent3 = EventQueue.nextKeye(fvc.vi);
       JeyEvent event = dotevent3;
 
-      switch(event.getKeyChar()) {
+      switch (event.getKeyChar()) {
          case '<':
             fvc.cursorx(fvc.edvec.shiftleft(fvc.inserty(), count));
             break;
@@ -286,7 +286,7 @@ final class EditGroup extends Rgroup {
             }
             char key = event.getKeyChar();
             try {
-               switch(key) {
+               switch (key) {
                   case 'o':
                      MovePos markpos = fvc.vi.getMark();
                      xold = fvc.insertx();
@@ -386,7 +386,7 @@ final class EditGroup extends Rgroup {
          event = dotevent2;
       }
 
-      switch(event.getKeyChar()) {
+      switch (event.getKeyChar()) {
          case 'p':
             if (dotmode && bufid >= '0' && bufid <= '8')
                bufid++;
@@ -518,7 +518,7 @@ final class EditGroup extends Rgroup {
 
       JeyEvent event = dotevent3;
 
-      switch(event.getKeyChar()) {
+      switch (event.getKeyChar()) {
 
          case 'd':
             fvc.edvec.finish();

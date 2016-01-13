@@ -25,7 +25,7 @@ public abstract class InsertBuffer extends View.Inserter {
    private boolean singleline;
    private FvContext myfvc;
 
-   static final boolean [] ff = {false, false};
+   static final boolean[] ff = {false, false};
 
    protected InsertBuffer() {
       new Cmd();

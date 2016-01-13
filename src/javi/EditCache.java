@@ -31,13 +31,13 @@ final class EditCache<OType> implements Iterable {
       varray.add(ob);
    }
 
-   public void add(OType [] objs) {
+   public void add(OType[] objs) {
       for (OType obj : objs)
          varray.add(obj);
    }
 
    // should only be called by changerecords.
-   public void addAll(int index, OType [] objs) {
+   public void addAll(int index, OType[] objs) {
       varray.addAll(index, java.util.Arrays.asList(objs));
       //Tools.trace("after addAll:"); dump();
    }
@@ -84,7 +84,7 @@ final class EditCache<OType> implements Iterable {
    }
 
    public OType[] getArr(int index, int count) {
-      OType[]  outarray = (OType []) new Object[count];
+      OType[]  outarray = (OType[]) new Object[count];
 
       for (int i = 0; i < count; i++)
          outarray[i] = varray.get(index + i);

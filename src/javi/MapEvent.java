@@ -20,10 +20,10 @@ public final class MapEvent {
 
 //private FvContext fvc=0;
 
-   private static final boolean [] tt = {true, true};
-   private static final boolean [] ff = {false, false};
-   private static final boolean [] ft = {false, true};
-   private static final boolean [] tf = {true, false};
+   private static final boolean[] tt = {true, true};
+   private static final boolean[] ff = {false, false};
+   private static final boolean[] ft = {false, true};
+   private static final boolean[] tf = {true, false};
    private static final Integer one = 1;
    private static final Integer mone = -1;
    private static final Integer zero = 0;

@@ -107,8 +107,13 @@ public final class StreamInterface extends UI {
 
    public void irepaint() { /* unimplemented */ }
    public void idispose() { /* unimplemented */ }
-   public String igetFile() { return "filename"; }
-   public boolean iisVisible() { return true; }
+   public String igetFile() {
+      return "filename";
+   }
+   public boolean iisVisible() {
+      return true;
+   }
+
    public void iremove(View vi) { /* unimplemented */ }
    public void ishow() { /* unimplemented */ }
    public void ishowmenu(int x, int y) { /* unimplemented */ }
@@ -117,12 +122,17 @@ public final class StreamInterface extends UI {
    public Buttons ichooseWriteable(java.lang.String str) {
       throw new RuntimeException("unimplemented");
    }
-   public boolean ipopstring(java.lang.String str) { return false; }
+   public boolean ipopstring(java.lang.String str) {
+      return false;
+   }
+
    public void iflush(boolean total) { /* unimplemented */ }
    public void itoggleStatus() { /* unimplemented */ }
    public void isetTitle(String str) { }
 
-   public View iaddview(boolean newview, FvContext fvc) { return null; }
+   public View iaddview(boolean newview, FvContext fvc) {
+      return null;
+   }
 
    public void istatusaddline(String s) {
       trace(s);
@@ -142,7 +152,7 @@ public final class StreamInterface extends UI {
    }
 
    public Result ireportModVal(String caption, String units,
-                        String []buttonVals, long limit) {
+                        String[]buttonVals, long limit) {
       return null;
    }
 

@@ -31,7 +31,7 @@ public final class Command extends Rgroup {
          FvContext fvc, boolean dotmode) throws InterruptedException {
       //trace("vic doroutine rnum = " + rnum);
       try  {
-         switch(rnum) {
+         switch (rnum) {
             case 0:
                return null; // noop
             case 1:
@@ -109,7 +109,7 @@ public final class Command extends Rgroup {
       String fname = arg.toString().trim();
       if (fname.charAt(0) == '<') {
          // Executer ex = new Executer("bash -c " + fname.substring(1,fname.length()));
-         String [] cmd = {"bash", "-c", fname.substring(1, fname.length())};
+         String[] cmd = {"bash", "-c", fname.substring(1, fname.length())};
          fvc.edvec.insertStream(Tools.runcmd(cmd), fvc.inserty());
       } else {
          FileDescriptor.LocalFile ifile =

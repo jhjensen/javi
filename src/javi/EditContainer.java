@@ -106,7 +106,7 @@ public class EditContainer<OType> implements
 
    /* This may or may not match the read only status of an underlying file. */
    private transient boolean readonly = false;
-   private transient UndoHistory.ChangeRecord []prototypes;
+   private transient UndoHistory.ChangeRecord[]prototypes;
    private FileDisposeListener disposeListener = null;
 
    final void addDisposeNotify(FileDisposeListener fdl) {
@@ -355,7 +355,8 @@ public class EditContainer<OType> implements
             Pattern.CASE_INSENSITIVE).matcher("");
          //trace("grepfile pattern " + regex.pattern().pattern());
          EventQueue.biglock2.assertOwned();
-         for (Map.Entry<FileDescriptor, EditContainer> me : filehash.entrySet())  {
+         for (Map.Entry<FileDescriptor, EditContainer> me
+               : filehash.entrySet())  {
             String cname = me.getKey().shortName;
             //trace("matching against " + cname);
 
@@ -375,7 +376,7 @@ public class EditContainer<OType> implements
       return null;
    }
 
-   enum SearchType { LINE , END, START };
+   enum SearchType { LINE, END, START };
 
    @SuppressWarnings("fallthrough")
    final Position regsearch(Position start, Position finish, boolean direction,
@@ -461,7 +462,7 @@ public class EditContainer<OType> implements
                      try {
                         ev.fdes().getPersistantFd().delete();
                      } catch (IOException ie) {
-                        UI.popError("unable to delete backupfile " , ie);
+                        UI.popError("unable to delete backupfile ", ie);
                      }
                   }
                } catch (Throwable e) {
@@ -486,7 +487,7 @@ public class EditContainer<OType> implements
       finishedread = true;
       if (!backupMade) {
          while (ecache.size() <= 1) {
-            OType [] obarray = (OType []) new Object[1];
+            OType[] obarray = (OType[]) new Object[1];
             obarray[0] =  prop.conv.fromString("");
             //trace("creating entry for " + this);
             insertRecord(obarray, 0);
@@ -757,7 +758,7 @@ public class EditContainer<OType> implements
 
    /** cover routine for insert() that takes a single object. */
    final void insertOne(OType ob, int index) {
-      OType[] obarray = (OType []) new Object[1];
+      OType[] obarray = (OType[]) new Object[1];
       obarray[0] = ob;
       mkback(index - 1);
       insertRecord(obarray, index);
@@ -885,7 +886,7 @@ public class EditContainer<OType> implements
    }
 
 // should only be called by changerecords.
-   final void addObjects(int cindex, OType [] objs) {
+   final void addObjects(int cindex, OType[] objs) {
       //trace("cindex = " + cindex + " currsize = " + ecache.size() + " objtype = " + objs[0].getClass() );
       if (objs[0] instanceof ReAnimator)
          for (int ii = 0; ii < objs.length; ii++)
@@ -897,7 +898,7 @@ public class EditContainer<OType> implements
             changeListener.addedLines(fdes(), objs.length, cindex);
    }
 
-   final void deleteObjects(int cindex, Object [] objs) {
+   final void deleteObjects(int cindex, Object[] objs) {
       //trace("deleteObjects");
       //trace("cindex = " + cindex + " currsize = " + ecache.size() + " objtype = " + objs[0].getClass() );
 
@@ -1060,7 +1061,7 @@ public class EditContainer<OType> implements
          //trace("InsertRecord.readExternal");
          super.readExternal(dis, conv);
          Object[]  o1 =  super.readObjs(dis, conv);
-         obj = (OType []) (new Object [o1.length]);
+         obj = (OType[]) (new Object[o1.length]);
          for (int ii = 0; ii < o1.length; ii++) {
             obj[ii] = (OType) o1[ii];
          }
@@ -1103,7 +1104,7 @@ public class EditContainer<OType> implements
 
       InsertRecord(Iterator<OType> it, int indexi, int count, boolean redo) {
          super(indexi);
-         obj = (OType []) new Object[count];
+         obj = (OType[]) new Object[count];
          for (int ii = 0; ii < count; ii++) {
             obj[ii] = it.next();
             //trace("InsertRecord(it): inserted " + obj[ii]);
@@ -1152,13 +1153,13 @@ public class EditContainer<OType> implements
 
       private String[] readStrs(ByteInput dis) {
          int ocount = dis.readInt();
-         String []xobj = new String[ocount];
+         String[]xobj = new String[ocount];
          while (--ocount >= 0)
             xobj[ocount] = dis.readUTF();
          return xobj;
       }
 
-      private void writeStrs(DataOutputStream dos, String [] xobj) {
+      private void writeStrs(DataOutputStream dos, String[] xobj) {
          try {
             int ocount = xobj.length;
             dos.writeInt(ocount);
@@ -1212,7 +1213,7 @@ public class EditContainer<OType> implements
       }
 */
       OType[] mkobj() {
-         OType[] ob2 = (OType []) new Object[obj.length];
+         OType[] ob2 = (OType[]) new Object[obj.length];
          for (int ii = 0; ii < obj.length; ii++) {
             //trace("ar = " + objs + " ii = " + ii);
             OType nobj = prop.conv.fromString(obj[ii]);
@@ -1268,7 +1269,7 @@ public class EditContainer<OType> implements
       void readExternal(ByteInput dis, ClassConverter conv) {
          super.readExternal(dis, conv);
          Object[]  o1 =  super.readObjs(dis, conv);
-         obj = (OType []) (new Object [o1.length]);
+         obj = (OType[]) (new Object[o1.length]);
          for (int ii = 0; ii < o1.length; ii++) {
             obj[ii] = (OType) o1[ii];
          }
@@ -1284,7 +1285,7 @@ public class EditContainer<OType> implements
 
       DeleteRecord(int indexi, int number) {
          super(indexi);
-         obj = (OType []) new Object[number];
+         obj = (OType[]) new Object[number];
          for (int ii = 0; ii < number; ii++) {
             obj[ii] = at(cindex + ii);
          }

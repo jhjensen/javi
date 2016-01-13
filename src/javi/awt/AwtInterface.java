@@ -1083,7 +1083,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       private NText tf;
 
       ModVal(final String caption, final String units,
-             final String []buttonVals, final long limit, Frame frame) {
+             final String[]buttonVals, final long limit, Frame frame) {
 
          super(frame, caption, new FlowLayout());
          tf = new NText(Long.toString(limit), this);
@@ -1103,7 +1103,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public Result ireportModVal(final String caption, final String units,
-         final String []buttonVals, final long limit) {
+         final String[]buttonVals, final long limit) {
 
       ModVal b1 = new ModVal(caption, units, buttonVals, limit, frm);
       return new Result(Integer.parseInt(
@@ -1204,9 +1204,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                   //"C:\\Progra~1\\Beyond~1\\BC2.exe ",  filename, backupname
                   //"cmd /c c:\\PROGRA~1\\Araxis\\ARAXIS~1.0PR\\Merge.exe /NoSplash /NoSplashDelay "
                   //"cmd /c d:\\progra~1\\araxis\\araxis~1\\merge.exe /NoSplash /NoSplashDelay ";
-                  String [] lstr =  {cmd
-                     ,  filename
-                     , backupname};
+                  String[] lstr =  {cmd, filename, backupname};
                   Tools.execute(null, lstr);
                } catch (IllegalArgumentException e) {
                   trace("ui.reportDiff caught exception " + e);

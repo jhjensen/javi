@@ -125,11 +125,11 @@ final class PSTest extends Testutil {
       iter2.resetCache();
 
       myassert(!ran2.cleanClose(), ran2);
-      testb1((byte []) iter2.next());
-      testb2((byte []) iter2.next());
+      testb1((byte[]) iter2.next());
+      testb2((byte[]) iter2.next());
 
-      testb2((byte []) iter2.curr());
-      testb1((byte []) iter2.previous());
+      testb2((byte[]) iter2.curr());
+      testb1((byte[]) iter2.previous());
       iter2.close();
    }
 
@@ -155,11 +155,11 @@ final class PSTest extends Testutil {
       PersistantStack.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
 
-      testb1((byte []) iter2.next());
-      testb2((byte []) iter2.next());
+      testb1((byte[]) iter2.next());
+      testb2((byte[]) iter2.next());
 
-      testb2((byte []) iter2.curr());
-      testb1((byte []) iter2.previous());
+      testb2((byte[]) iter2.curr());
+      testb1((byte[]) iter2.previous());
       iter2.close();
    }
 
@@ -188,7 +188,7 @@ final class PSTest extends Testutil {
          myassert(ran.cbOK, this);
          myassert(ran.dcb, this);
       }
-      testb1((byte []) iter.next());
+      testb1((byte[]) iter.next());
       ran.cbOK = false;
    }
    public static void main(String[] args) throws IOException {
@@ -235,13 +235,13 @@ final class PSTest extends Testutil {
       PersistantStack.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
       myassert(ran2.cleanClose(), ran2);
-      testb1((byte []) iter2.next());
-      testb2((byte []) iter2.next());
-      testr3((byte []) iter2.next());
+      testb1((byte[]) iter2.next());
+      testb2((byte[]) iter2.next());
+      testr3((byte[]) iter2.next());
 
-      testr3((byte []) iter2.curr());
-      testb2((byte []) iter2.previous());
-      testb1((byte []) iter2.previous());
+      testr3((byte[]) iter2.curr());
+      testb2((byte[]) iter2.previous());
+      testb1((byte[]) iter2.previous());
       iter2.decrement();
       myassert(3 == ran2.size(), ran2);
 
@@ -255,7 +255,7 @@ final class PSTest extends Testutil {
       myassert(ran3.cleanClose(), ran3);
       PersistantStack.PSIterator iter3 = ran3.createIterator();
       iter3.resetCache();
-      testb2((byte []) iter3.next());
+      testb2((byte[]) iter3.next());
       try {
          iter3.next();
          myassert(false, ran3);
@@ -276,7 +276,9 @@ final class TestPS extends PersistantStack {
    boolean cbOK = false;
    boolean dcb = false;
 
-   TestPS() { index = 0; }
+   TestPS() {
+      index = 0;
+   }
 
    TestPS(byte in) {
       index = in;
@@ -323,7 +325,7 @@ final class TestPS extends PersistantStack {
             Oline oo = (Oline) obj;
             dos.write(oo.index);
          } else {
-            byte [] b = (byte []) obj;
+            byte[] b = (byte[]) obj;
             dos.writeInt(b.length);
             dos.write(b);
          }

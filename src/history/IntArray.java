@@ -1,7 +1,7 @@
 package history;
 public final class IntArray {
 
-   private int [] store;
+   private int[] store;
    private int len;
 
    public IntArray(int initialSize) {
@@ -11,7 +11,7 @@ public final class IntArray {
    public void add(int element) {
       //trace("element = " + element +  " offset = " + len);
       if (len == store.length)  {
-         int [] temp = new int[len << 1];
+         int[] temp = new int[len << 1];
          System.arraycopy(store, 0, temp, 0, len);
          store = temp;
       }
@@ -26,7 +26,7 @@ public final class IntArray {
 
    public void set(int index, int val) {
       if (index >= len) {
-         int [] temp =  new int[index > len << 1
+         int[] temp =  new int[index > len << 1
                                                  ? index << 1
                                                  : len
                                             ];
