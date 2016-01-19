@@ -51,6 +51,14 @@ public final class Position {
       return filename.hashCode() + x * y;
    }
 
+   MovePos getMovable() {
+      return new MovePos(x, y);
+   }
+
+   void posMove(MovePos mpos)  {
+      mpos.set(x, y);
+   }
+
    public boolean equiv(MovePos po) {
       if (null == po)
          return  false;

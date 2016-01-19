@@ -290,8 +290,8 @@ class Vt100 extends TextEdit<String> {
                      delval, vtcursor.y);
                }
 
-               vtcursor.set(inserttext(text.substring(sbused),
-                  vtcursor.x, vtcursor.y));
+               inserttext(text.substring(sbused),
+                  vtcursor.x, vtcursor.y).posMove(vtcursor);
                sbused = text.length();
 
             } else if (nindex == sbused) {
@@ -314,7 +314,7 @@ class Vt100 extends TextEdit<String> {
                   deletetext(false, vtcursor.x, vtcursor.y, delval,
                      vtcursor.y);
                String newinfo = text.substring(sbused, nindex);
-               vtcursor.set(inserttext(newinfo, vtcursor.x, vtcursor.y));
+               inserttext(newinfo, vtcursor.x, vtcursor.y).posMove(vtcursor);
                vtcursor.y++;
                vtcursor.x = 0; //???
                sbused = nindex + 1;
@@ -329,7 +329,7 @@ class Vt100 extends TextEdit<String> {
          String itext = text.substring(sbused);
          //trace("sbprocess insert at end text:"  + itext  );
          //vtcursor = ((extext)ev).inserttext (itext,currlinelen,ev.readIn()-1);
-         vtcursor.set(inserttext(itext, vtcursor.x, vtcursor.y));
+         inserttext(itext, vtcursor.x, vtcursor.y).posMove(vtcursor);
       }
       if (setxflag)
          setXmy(1, sb);

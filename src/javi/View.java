@@ -468,9 +468,9 @@ public abstract class View  extends
          if (null == markposi)
             markpos = null;
          else if (null == markpos)
-            markpos = new MovePos(markposi);
+            markpos = markposi.getMovable();
          else
-            markpos.set(markposi);
+            markposi.posMove(markpos);
          markChange(fileX, fileY);
       }
    }

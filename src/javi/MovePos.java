@@ -15,10 +15,6 @@ public final class MovePos {
       y = xo.y;
    }
 
-   public MovePos(Position p) {
-      set(p);
-   }
-
    public String toString() {
       return 0 == x
              ?  "("  + y + ")"
@@ -27,9 +23,9 @@ public final class MovePos {
 //    : (filename.getShortName() + "(" + x + "," + y + ")" + "-" + comment);
    }
 
-   public void set(Position p) {
-      x = p.x;
-      y = p.y;
+   public void set(int px, int py) {
+      x = px;
+      y = py;
       //filename = p.filename;
       //comment = p.comment;
    }
