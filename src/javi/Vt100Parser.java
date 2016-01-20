@@ -443,6 +443,6 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    private static void trace1(String str) {
       if (traceflag)
-         Tools.trace(str, 2);
+         Tools.traceLev(str, 2);
    }
 }

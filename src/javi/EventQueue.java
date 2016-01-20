@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import history.Tools;
 import static history.Tools.trace;
+import static history.Tools.traceLev;
 
 public final class EventQueue {
 
@@ -50,8 +51,8 @@ public final class EventQueue {
             InterruptedException {
          //Tools.trace("locking " + this,1);
          if (!super.tryLock(time, TimeUnit.SECONDS)) {
-            trace("failed to get lock continueing .", 1);
-            trace("owning thread: " + getOwner(), 1);
+            traceLev("failed to get lock continueing .", 1);
+            traceLev("owning thread: " + getOwner(), 1);
             return false;
          }
          return true;

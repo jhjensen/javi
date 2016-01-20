@@ -12,7 +12,7 @@ public final class Tools {
 
    private Tools() { }
 
-   public static void trace(String str, int offset) {
+   public static void traceLev(String str, int offset) {
       try {
 
          throw new Exception("");
@@ -33,8 +33,16 @@ public final class Tools {
       }
    }
 
-   public static void trace(String str) {
-      Tools.trace(str, 1);
+   public static void trace(Object ... args) {
+      StringBuilder stb = new StringBuilder();
+      for (Object arg : args) {
+         stb.append(arg.toString());
+         stb.append(", ");
+      }
+      int len = stb.length();
+      if (len > 1)
+          stb.delete(len - 2, len);
+      Tools.traceLev(stb.toString(), 1);
    }
 
    public static String caller() {

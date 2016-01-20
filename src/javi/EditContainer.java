@@ -1001,7 +1001,7 @@ public class EditContainer<OType> implements
    }
 
    final void printout() throws IOException {
-      trace("editvec.printout " + this);
+      trace("editvec.printout", this.toString());
 
       mkback(0);
 

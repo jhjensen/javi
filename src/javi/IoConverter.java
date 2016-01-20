@@ -48,7 +48,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
       //trace("rthread = " + rthread);
 
       while (null != rthread) {
-         trace("stopIo rthread "  + toString() + " thread " + rthread);
+         trace("stopIo rthread", this, "thread", rthread);
          if (UI.stopConverter(toString()))
             stopIo();
          try {
