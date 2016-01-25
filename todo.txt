@@ -12,12 +12,8 @@ split AwtInterface into separate files.
 
 when rebuilding kill the old build if it is still running?
 sometimes it seems like files that are read in still leave a red background
-configuration for javac for ml2i/F7
 get rid of getnext
 findbug cmd not working
-F1 to soon fails makes me need F6
-Circular UI.
-Circular within JS.
 
 lock access to .dmp2
 list of shells

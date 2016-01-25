@@ -14,9 +14,10 @@ LINK=ld
 all: ID javi.jar
 
 test: build
-	java javi.ClangFormat
+	java javi.EditTester1
+	#java javi.ClangFormat
 
-automake: runner
+automake: test # runner
 
 runner: build
 	java javi.Javi

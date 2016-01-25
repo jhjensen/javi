@@ -168,14 +168,8 @@ public abstract class PersistantStack {
          //trace("index = " +  recordIndex
          //   + " size= " + size + " cache.size = " + cache.size()
          //   + " obj = " + obj);
-         if (delayFile != null) {
-            if (delayFile.exists())
-               if (!delayFile.delete())
-                  throw new RuntimeException(
-                     "unable to delete file " + delayFile);
-            rfile = delayFile;
-            delayFile = null;
-         }
+         makeReal();
+
          recordIndex++;
          if (recordIndex != size) {
             cache.subList(cache.size() - (size - recordIndex),
@@ -264,11 +258,7 @@ public abstract class PersistantStack {
          //trace("unwritten = " + unwritten);
          //trace("size = " + size + " writ" + writtenCount);
          //trace("delayFile = " + delayFile );
-         if (null != delayFile && delayFile.exists()) {
-            if (!delayFile.delete())
-               throw new IOException("unable to delete file " + delayFile);
-            rfile = delayFile;
-         }
+         makeReal();
 
          if (null == rfile)
             return;
@@ -334,6 +324,17 @@ public abstract class PersistantStack {
       }
    }
 
+   final void makeReal() {
+      if (delayFile != null) {
+         if (delayFile.exists())
+            if (!delayFile.delete())
+               throw new RuntimeException(
+                  "unable to delete file " + delayFile);
+         rfile = delayFile;
+         delayFile = null;
+      }
+   }
+
    protected PersistantStack() {
       //trace("constructed");
       rfile = null;
@@ -368,12 +369,7 @@ public abstract class PersistantStack {
       //    recordIndex + " size= " + size
       //    + " cache.size = " + cache.size()
       //    + " obj = " + obj);
-      if (null != delayFile) {
-         if (delayFile.exists())
-            delayFile.delete();
-         rfile = delayFile;
-         delayFile = null;
-      }
+      makeReal();
       cache.add(obj);
       size++;
       //trace("exit index = " +

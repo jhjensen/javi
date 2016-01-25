@@ -1107,8 +1107,9 @@ final class EditTester1 {
       TestCircBuffer.initCmd();
       int tot = 20000;
       int after = 13123;
-      long targettime = 500;
-      long targetmem = 1100000; // should be 3100000 in old version
+      // was 500 in jr1 1.6; much older computer, could be SSD.
+      long targettime = 120;
+      long targetmem = 2600000; // was 1100000 in jre 1.6
 
       // this is fairly wierd, but It seems like the gc doesn't really collect
       //   all the memory even though I call it three times.  It makes memory
