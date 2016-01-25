@@ -301,9 +301,7 @@ final class EditGroup extends Rgroup {
                   case 'y':
                      deletetext(bufid, fvc, true, startx, starty, donex, doney);
                      break out;
-                  case 'v':
-                  case 'V':
-                  case 27: // esc
+                  case 'v': case 'V': case 27: // esc
                      break out;
                   case 'Y':
                      Buffers.deleted(bufid,
@@ -331,8 +329,7 @@ final class EditGroup extends Rgroup {
                   case '>':
                      fvc.cursorx(fvc.edvec.shiftleft(starty, markamount));
                      break out;
-                  case 'S':
-                  case 's':
+                  case 'S': case 's':
                      fvc.cursorabs(startx, starty);
                      String line = fvc.edvec.gettext(startx,
                         starty, donex, doney);
@@ -342,6 +339,9 @@ final class EditGroup extends Rgroup {
                      line = fvc.edvec.gettext(startx,
                         starty, donex, doney);
                      JS.JSR.eval(line);
+                     break out;
+                  case 'C':
+                     ClangFormat.format(starty, doney, fvc.edvec);
                      break out;
                   case 12:
                      MiscCommands.redraw(true);

@@ -332,17 +332,17 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
    final String deletetext(boolean preserve, int xstart, int ystart, int xend,
                      int yend)  {
-      //trace("deletetext start("+xstart + "," + ystart + ") end (" + xend  +","  + yend +")");
 
+      if (xstart > xend)
+         throw new RuntimeException("start before end");
       String delline2 = "";
       String line = at(ystart).toString();
+      //trace("deletetext start("+xstart + "," + ystart + ") end (" + xend  +","  + yend +")" + "line:" + line );
       StringBuilder delline = new StringBuilder(
          line.length() * (yend - ystart + 1));
 
       //  take care of firstline
       if (yend == ystart) {
-         if (xstart > xend)
-            throw new RuntimeException("start before end");
          if (xstart == xend)
             return null;
          delline.append(line.substring(xstart, xend));
@@ -354,13 +354,13 @@ public class TextEdit<OType> extends EditContainer<OType> {
          if (ystart > yend) {
             throw new RuntimeException("start before end");
          }
-         if (0 != xstart) { // we have the tail of a line to remove
+         if (line.length() != xstart) { // we have the tail of a line to remove
+
             delline.append(line.substring(xstart, line.length()));
             delline.append('\n');
             line = line.substring(0, xstart);
             if (!preserve)
                changeElementAtStr(line, ystart);
-            ystart++;
          }
          // take care of last line
          if (xend > 0) {
@@ -374,14 +374,21 @@ public class TextEdit<OType> extends EditContainer<OType> {
                yend++;
          }
          // take care of whole lines
-         if (ystart < yend) {
+         if (ystart + 1 < yend) {
+
+            int dstart = ystart + 1;
             ArrayList<String> obarray = preserve
-                                        ? getElementsAt(ystart, yend - ystart)
-                                        : remove(ystart, yend - ystart);
+               ? getElementsAt(dstart, yend - dstart)
+               : remove(dstart, yend - dstart);
             for (Object obj : obarray) {
                delline.append(obj);
                delline.append('\n');
             }
+         }
+         if (readIn() > ystart + 1) {
+            line = at(ystart).toString() + at(ystart + 1).toString();
+            remove(ystart + 1, 1);
+            changeElementAtStr(line, ystart);
          }
       }
       //if (!contains(1)) // deleted entire file

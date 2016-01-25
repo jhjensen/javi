@@ -30,7 +30,6 @@ public final class MiscCommands extends Rgroup  {
    private static TextEdit debugfile;
    private static TextEdit shellfile;
    private static TextEdit cmdfile;
-   private static String lastdebug = "javi.Javi";
    private static String lastshell = null;
    private static int defwidth = 80;
    private static int defheight = 80;

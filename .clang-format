@@ -1,0 +1,36 @@
+Language:        Cpp
+BasedOnStyle:  LLVM
+AllowShortFunctionsOnASingleLine: Empty
+BreakConstructorInitializersBeforeComma: false
+ContinuationIndentWidth: 4
+ForEachMacros:   [ foreach_, foreach, Q_FOREACH, BOOST_FOREACH ]
+IndentCaseLabels: true
+IndentWidth:     4
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+AlignOperands: true
+Standard:        Cpp11
+TabWidth:        4
+UseTab:          Never
+BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators : NonAssignment
+PointerAlignment : Left
+AlignAfterOpenBracket : DontAlign
+
+Language:        Java
+BasedOnStyle:  LLVM
+AllowShortFunctionsOnASingleLine: Empty
+BreakConstructorInitializersBeforeComma: false
+ContinuationIndentWidth: 3
+ForEachMacros:   [ foreach_, foreach, Q_FOREACH, BOOST_FOREACH ]
+IndentCaseLabels: true
+IndentWidth:     3
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+AlignOperands: true
+TabWidth:        3
+UseTab:          Never
+BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators : NonAssignment
+PointerAlignment : Left
+AlignAfterOpenBracket : DontAlign

@@ -13,6 +13,9 @@ LINK=ld
 
 all: ID javi.jar
 
+test: build
+	java javi.ClangFormat
+
 automake: runner
 
 runner: build

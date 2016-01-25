@@ -1,7 +1,10 @@
 package history;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +21,9 @@ public final class Tools {
          throw new Exception("");
       } catch (Exception e) {
 
-         long newTime = System.nanoTime();
-         long timediff = newTime - lastTime;
-         lastTime = newTime;
+         //long newTime = System.nanoTime();
+         //long timediff = newTime - lastTime;
+         //lastTime = newTime;
          StackTraceElement[] tr = e.getStackTrace();
          StackTraceElement el = tr[1 + offset];
          if (0 == str.length())
@@ -36,8 +39,17 @@ public final class Tools {
    public static void trace(Object ... args) {
       StringBuilder stb = new StringBuilder();
       for (Object arg : args) {
-         stb.append(arg.toString());
-         stb.append(", ");
+         if (arg == null)
+             stb.append("NULL, ");
+         else {
+            if (arg instanceof Object[])
+               stb.append(java.util.Arrays.toString((Object[]) arg));
+            else if (arg instanceof int[])
+               stb.append(java.util.Arrays.toString((int[]) arg));
+            else
+               stb.append(arg.toString());
+            stb.append(", ");
+         }
       }
       int len = stb.length();
       if (len > 1)
@@ -60,6 +72,12 @@ public final class Tools {
    }
 
    private static final ProcessBuilder pb = new ProcessBuilder();
+
+   public static InputStream executeIn(String content, String... command)
+          throws IOException {
+      Process proc = iocmd(content, command);
+      return proc.getInputStream();
+   }
 
    public static ArrayList<String> execute(Charset charSet,
          String ... command) throws IOException {
@@ -97,6 +115,18 @@ public final class Tools {
    public static synchronized Process iocmd(List<String>  str) throws
          IOException {
       return pb.redirectErrorStream(true).command(str).start();
+   }
+
+   public static synchronized Process iocmd(String content, String[]  str)
+         throws IOException {
+
+      Process process = iocmd(str);
+      BufferedWriter writer = new BufferedWriter(
+         new OutputStreamWriter(process.getOutputStream()));
+      writer.write(content);
+      writer.flush();
+      writer.close();
+      return process;
    }
 
    public static synchronized Process iocmd(String ...  str) throws
