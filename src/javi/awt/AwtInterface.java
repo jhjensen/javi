@@ -1355,12 +1355,21 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          this.setTitle("discrepency in backup file:" + filename);
          setinvis();
          if (null != status.error) {
-            replab1.setText(
-               "corrupt backup file read in as far as possible. "
-               + status.error);
+            if (status.error instanceof history.FileLockException) {
+               replab1.setText("unable to Lock backup file. open "
+                   + "existing file in readonly mode");
+            } else {
+               replab1.setText(
+                  "corrupt backup file read in as far as possible. "
+                  + status.error);
+            }
 
-            replab1.setForeground(Color.cyan);
+            replab1.setForeground(Color.blue);
             replab1.setVisible(true);
+            okbut.setVisible(true);
+            backbut.setEnabled(false);
+            diffbut.setEnabled(false);
+            filebut.setEnabled(false);
          } else if (!status.cleanQuit || !status.isQuitAtEnd) {
 
             replab1.setText((

@@ -46,8 +46,13 @@ public final class StreamInterface extends UI {
          sb.append(backupvers.toString());
       }
       if (null != status.error) {
-         sb.append("\ncorrupt backup file read in as far as possible. ");
-         sb.append(status.error);
+         if (status.error instanceof history.FileLockException) {
+            sb.append(
+                "Unable to lock back up file, use file in read only mode");
+         } else {
+            sb.append("\ncorrupt backup file read in as far as possible. ");
+            sb.append(status.error);
+         }
       } else {
          if (!status.cleanQuit)
             sb.append("\nThe file was not cleanly closed");
@@ -72,12 +77,13 @@ public final class StreamInterface extends UI {
                   return Buttons.OK;
                case -1:
                   return Buttons.IOERROR;
+
                default:
                   trace("stream got unexpected char = " + ch);
             }
          }
       } catch (IOException e) {
-         trace("ireportDiff can not read from input Stream ");
+         trace("ireportDiff can not read from input Stream " + e);
          return Buttons.IOERROR;
       }
 

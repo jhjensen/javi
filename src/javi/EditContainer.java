@@ -66,14 +66,14 @@ public class EditContainer<OType> implements
       abstract void invalidateBack(UndoHistory.EhMark ehm);
    }
 
-   final void reload() { // ??? should go a way with inherited extext
-      trace("reloading file " + this);
+   final void reload() throws IOException {
+      //trace("reloading file " + this);
       reinitBack();
       ecache.clear(1);
       ioc.reload();
    }
 
-   final void clearUndo() {
+   final void clearUndo() throws IOException {
       //trace("clearUndo " + this);
       UndoHistory.EhMark mrk  = backup.ereset();
       if (null != mlisten)
@@ -81,7 +81,7 @@ public class EditContainer<OType> implements
       backup.baseRecord();
    }
 
-   private void reinitBack() {
+   private void reinitBack() throws IOException {
       backupMade = false;
       //trace("mlisten " + mlisten);
       UndoHistory.EhMark mrk  = backup.ereset();
@@ -105,7 +105,6 @@ public class EditContainer<OType> implements
    private transient boolean backupMade;
 
    /* This may or may not match the read only status of an underlying file. */
-   private transient boolean readonly = false;
    private transient UndoHistory.ChangeRecord[]prototypes;
    private FileDisposeListener disposeListener = null;
 
@@ -189,7 +188,7 @@ public class EditContainer<OType> implements
    }
 
 //for debugging only.  disposes of vector without doing backup.
-   final void terminate() {
+   final void terminate() throws IOException {
       backup.terminate();
       cleanup();
    }
@@ -457,9 +456,9 @@ public class EditContainer<OType> implements
                   //   ev.reload();
                } catch (BadBackupFile e) {
                   if (UI.reportBadBackup(ev.getName(), e)) {
-                     ev.reload();
-                     trace("try to delete file");
                      try {
+                        ev.reload();
+                        trace("try to delete file");
                         ev.fdes().getPersistantFd().delete();
                      } catch (IOException ie) {
                         UI.popError("unable to delete backupfile ", ie);
@@ -467,7 +466,11 @@ public class EditContainer<OType> implements
                   }
                } catch (Throwable e) {
                   UI.popError("Problem with backup File starting over", e);
-                  ev.reinitBack();
+                  try {
+                     ev.reinitBack();
+                  } catch (IOException ex) {
+                     UI.popError("Problem starting over ", ex);
+                  }
                }
       }
    }
@@ -501,7 +504,11 @@ public class EditContainer<OType> implements
       void notifyDone(EditCache ec) {
          //trace("ArrayChange notified");
          ecache = ec;
-         reinitBack();
+         try {
+            reinitBack();
+         } catch (IOException ex) {
+            UI.popError("failure to clear undo file", ex);
+         }
       }
 
       BackupStatus getBackupStatus() {
@@ -521,8 +528,12 @@ public class EditContainer<OType> implements
                         : new BackupStatus(false, false, seterror);
                   } catch (Throwable e) {
                      trace("backup failed exception = " + e);
-                     reinitBack();
                      e.printStackTrace();
+                     try {
+                        reinitBack();
+                     } catch (IOException e2) {
+                        trace("failed reset" + e2);
+                     }
                      return new BackupStatus(false, false, e);
                   }
                } else {
@@ -629,7 +640,7 @@ public class EditContainer<OType> implements
        file permissions do not allow writing and renameing.
    */
    public final synchronized void setReadOnly(boolean flag) {
-      readonly = flag;
+      prop.setReadOnly(flag);
    }
 
    public final String toString() {
@@ -678,17 +689,17 @@ public class EditContainer<OType> implements
 
    final synchronized int undo() {
       finish();
-      if (readonly)
+      if (!prop.isWriteable())
          throw new ReadOnlyException(this, fdes().shortName);
 
-      trace("about to backup.undo");
+      //trace("about to backup.undo");
       return backup.undo();
    }
 
    final synchronized int redo() {
       finish();
       //??? nice to have (currmark.hasNext()))
-      if (readonly)
+      if (!prop.isWriteable())
          throw new ReadOnlyException(this, fdes().shortName);
       return backup.redo();
    }
@@ -846,7 +857,7 @@ public class EditContainer<OType> implements
       finish();
       if (0 != index && !containsNow(index))
          throw new ArrayIndexOutOfBoundsException(index);
-      if (readonly)
+      if (!prop.isWriteable())
          throw new ReadOnlyException(this, fdes().shortName);
 
       if (!backupMade) {
@@ -1001,7 +1012,7 @@ public class EditContainer<OType> implements
    }
 
    final void printout() throws IOException {
-      trace("editvec.printout", this.toString());
+      //trace("editvec.printout", this.toString());
 
       mkback(0);
 
@@ -1021,7 +1032,7 @@ public class EditContainer<OType> implements
       prop.fdes.renameTo(file2, true);
 
       prop.writeAll(getStringIter());
-      setReadOnly(false);
+      prop.setReadOnly(false);
    }
 
    private void insertRecord(OType[] obarray, int indexi) {

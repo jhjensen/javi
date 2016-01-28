@@ -129,7 +129,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    }
 
-   static void iclearUndo() {
+   static void iclearUndo() throws IOException {
       instance.clearUndo();
    }
 

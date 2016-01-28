@@ -251,7 +251,6 @@ public class IoConverter<OType> implements Runnable, Serializable {
          EventQueue.biglock2.unlock();
          synchronized (this) {
             backupstatus = temp;
-            //trace("backupstatus " + backupstatus);
             if (backupstatus != null) {
                //trace("changeing ioarray to ecache");
                ioarray = new EditCache<OType>();
@@ -296,7 +295,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
                   backObj = null;
                   if (backupstatus.cleanQuit && backupstatus.isQuitAtEnd)
                      backupstatus = null;
-                  //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
+                     //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
                }
             }
          }
@@ -304,11 +303,16 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
       //trace("fileObj " + fileObj + " backObj " + backObj + " backupstatus " + backupstatus);
 
-      boolean tmpswp = handleDiff(fileObj, backObj, compIndex);
+      boolean useFile = handleDiff(fileObj, backObj, compIndex);
 
       synchronized (this) {
          //trace("swap array");
-         swapArray = tmpswp;
+         swapArray = useFile;
+         if (useFile && backupstatus != null
+               && backupstatus.error instanceof history.FileLockException) {
+            prop.setReadOnly(true);
+         }
+
          backupstatus = null;
          rthread = null;
          //trace("thread finished , notify all" + this);

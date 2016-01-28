@@ -93,9 +93,8 @@ public abstract class UI {
    static final boolean reportDiff(String filename, int linenum,
          Object filevers, Object backupvers,
          BackupStatus status, String backupname) throws IOException {
-      //trace( " filename = " + filename + " linenum = " + linenum + " filevers = " + filevers
-      //   + " backupvers = " + backupvers + " status = " + status );
-      while (true)  {
+      //trace(" filename = " + filename + " linenum = " + linenum + " filevers = " + filevers + " backupvers = " + backupvers + " status = " + status );
+      while (true) {
          while (null == instance)
             try {
                Thread.sleep(200);
@@ -112,9 +111,11 @@ public abstract class UI {
                break;
 
             case OK:
-               //trace("got ok backupvers = " + backupvers + " filevers " + filevers);
+               //trace("got ok backupvers", backupvers, "filevers", filevers, "status", status);
                if (null == backupvers && null == filevers)
                   return false;
+               if  (status.error instanceof history.FileLockException)
+                  return true;
                break;
 
             case USEBACKUP:

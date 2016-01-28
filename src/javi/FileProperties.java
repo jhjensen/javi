@@ -19,11 +19,20 @@ public final class FileProperties<OType> implements Serializable {
    public final ClassConverter<OType> conv;
    private transient Charset charSet;
    private transient String fileString;
+   private transient boolean readonly = false;
 
    private String lsep = staticLine; //??? final
 
    public String toString() {
       return fdes.toString();
+   }
+
+   public synchronized void setReadOnly(boolean flag) {
+      readonly = flag;
+   }
+
+   public synchronized boolean isWriteable() {
+      return !readonly;
    }
 
    void safeWrite(Iterator<String> strIter) throws IOException {

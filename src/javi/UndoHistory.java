@@ -51,7 +51,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       currmark.close();
    }
 
-   EhMark ereset() {
+   EhMark ereset() throws IOException {
       //trace("should clear cache of " + prop);
       reset();
       currmark = new UndoHistory.EhMark();
@@ -233,7 +233,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       return retval;
    }
 
-   void terminate() {
+   void terminate() throws IOException {
       terminateWEP();
    }
 

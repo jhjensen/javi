@@ -3,14 +3,18 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import static history.Tools.trace;
+
+import java.nio.file.StandardOpenOption;
 
 // PersistantStack is a funny sort of Stack.  If you add an element
 // in the middle the rest of the array is deleted.  The array is backed by a
@@ -168,7 +172,6 @@ public abstract class PersistantStack {
          //trace("index = " +  recordIndex
          //   + " size= " + size + " cache.size = " + cache.size()
          //   + " obj = " + obj);
-         makeReal();
 
          recordIndex++;
          if (recordIndex != size) {
@@ -258,6 +261,9 @@ public abstract class PersistantStack {
          //trace("unwritten = " + unwritten);
          //trace("size = " + size + " writ" + writtenCount);
          //trace("delayFile = " + delayFile );
+         if (delayFile != null && delayFile.exists() && !delayFile.delete())
+            throw new RuntimeException("unable to delete file " + delayFile);
+
          makeReal();
 
          if (null == rfile)
@@ -324,12 +330,16 @@ public abstract class PersistantStack {
       }
    }
 
-   final void makeReal() {
+   final void makeReal() throws IOException {
+
       if (delayFile != null) {
-         if (delayFile.exists())
-            if (!delayFile.delete())
-               throw new RuntimeException(
-                  "unable to delete file " + delayFile);
+         fc = FileChannel.open(delayFile.toPath(),
+             StandardOpenOption.CREATE,
+             StandardOpenOption.READ,
+             StandardOpenOption.WRITE);
+         lock = fc.tryLock();
+         if (lock == null)
+             throw new FileLockException("unable to obtain lock on file");
          rfile = delayFile;
          delayFile = null;
       }
@@ -369,7 +379,6 @@ public abstract class PersistantStack {
       //    recordIndex + " size= " + size
       //    + " cache.size = " + cache.size()
       //    + " obj = " + obj);
-      makeReal();
       cache.add(obj);
       size++;
       //trace("exit index = " +
@@ -414,18 +423,16 @@ public abstract class PersistantStack {
    }
 
    private byte[] readFile() throws IOException {
-      FileInputStream input = new FileInputStream(rfile);
-      try {
-         int length = (int) rfile.length();
-         byte[] iarray = new byte[length];
-         int ilen = input.read(iarray, 0, length);
-         if (ilen != length)
-            throw new RuntimeException(
-               "filereader.fopen: read in length doesnt match");
-         return iarray;
-      } finally {
-         input.close();
-      }
+      if (fc.size() > Integer.MAX_VALUE)
+          throw new IOException("file to large");
+      int length = (int) fc.size();
+
+      ByteBuffer buf = ByteBuffer.allocate(length);
+      int ilen = fc.read(buf);
+      if (ilen != length)
+         throw new RuntimeException(
+            "filereader.fopen: read in length doesnt match");
+      return buf.array();
    }
 
    final void readUserCB() throws IOException {
@@ -462,8 +469,8 @@ public abstract class PersistantStack {
       binp.skipBytes(len);
    }
 
-   public final Exception setFile(File filei) {
-      //trace("set file file =  " + filei);
+   public final Exception setFile(File filei) throws IOException {
+      //trace("set file file", filei, "len", filei.length() );
       if (filei.equals(rfile))
          return null;
       //FileChannel fc = new FileInputStream("regtest").getChannel();
@@ -477,7 +484,8 @@ public abstract class PersistantStack {
 
       reset();
 
-      rfile = filei;
+      delayFile = filei;
+      makeReal();
       int lastgood = 0;
       byte[] iarray = null;
       try {
@@ -583,7 +591,7 @@ public abstract class PersistantStack {
       invalidateFile();
    }
 
-   public final void  terminateWEP() {
+   public final void  terminateWEP() throws IOException {
       // test entry to simulate sudden death of system.
       invalidateFile();
       rfile = null;
@@ -642,19 +650,31 @@ public abstract class PersistantStack {
       super.finalize();
    }
 
-   public final void reset() { //??? needs test
+   public final void reset() throws IOException { //??? needs test
+
       quitAtEnd = false;
       delayFile = null;
       rfile = null;
+
       cache.clear();
       offsets = null;
 
       size = 0;
       writtenCount = 0;
       filesize = 0;
+      lock = null;
+
+      FileChannel tfc = fc;
+      fc = null;
+      FileLock tlock = lock;
+      lock = null;
+      if (tlock != null)
+          tlock.close();
+      if (tfc != null)
+          tfc.close();
    }
 
-   private void invalidateFile() {
+   private void invalidateFile() throws IOException {
       reset();
       bwr = null;
       writebuffer = null;
@@ -693,6 +713,8 @@ public abstract class PersistantStack {
    private IntArray offsets = null;
    private ByteInput binp = null;
    private int filesize;
+   private FileChannel fc;
+   private FileLock lock;
 
 
 }

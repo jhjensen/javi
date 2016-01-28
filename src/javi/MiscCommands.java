@@ -265,7 +265,7 @@ public final class MiscCommands extends Rgroup  {
 
    private static Date lastredraw = new Date();
 
-   static void redraw(boolean flushFlag) {
+   static void redraw(boolean flushFlag) throws IOException {
       //trace("redraw flushFlag " + flushFlag + " currFvc " + FvContext.getCurrFvc());
       UI.repaint();
       if (flushFlag) {

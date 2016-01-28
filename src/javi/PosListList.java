@@ -98,7 +98,7 @@ public final class PosListList extends TextList<Position> {
       }
    }
 
-   void flush() {
+   void flush() throws IOException {
       //trace("reached flushI");
       setFirst(null);
       lastlist = null;
@@ -181,7 +181,7 @@ public final class PosListList extends TextList<Position> {
          inst.gotoList(fvc, list);
       }
 
-      Cmd() {
+      Cmd() throws IOException {
          final String[] rnames = {
             "",
             "ta",
@@ -262,7 +262,7 @@ public final class PosListList extends TextList<Position> {
          inst.setFirst(newerrs);
       }
 
-      static void flush() {
+      static void flush() throws IOException {
          tagstack.clear();
          tahash.clear();
          inst.flush();

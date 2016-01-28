@@ -1333,6 +1333,10 @@ final class EditTester1 {
          ex.disposeFvc();
          myassert(false, ex);
       } catch (final history.BadBackupFile e) {
+         // This exception causes a PersistentStack to eventually finalize
+         // in a funny state. This GC forces the error log to come in the
+         // context of this test.
+         Tools.doGC();
       }
 
       ex = newTe("extest15");

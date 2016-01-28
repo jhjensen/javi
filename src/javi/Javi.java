@@ -74,7 +74,7 @@ public final class Javi {
       //trace("");
    }
 
-   public static void initPostUi() {
+   public static void initPostUi() throws IOException {
       new EditGroup();
       Command.init();
       new PosListList.Cmd();
