@@ -307,8 +307,8 @@ public final class UndoHistory<OType> extends PersistantStack {
       }
 
       public Object readExternal(ByteInput dis) {
-         //      trace("type = " + breader.type);
          ChangeRecord rec = prototypes[dis.readByte()];
+         //trace("rec",rec,"dis",dis);
          rec.readExternal(dis, conv);
          return rec;
       }

@@ -255,7 +255,6 @@ public abstract class PersistantStack {
       private ByteBuffer preBuf = ByteBuffer.allocate(6);
       private ByteBuffer postBuf = ByteBuffer.allocate(6);
       private void flush() throws IOException {
-
          int unwritten = size - writtenCount;
          if (unwritten == 0)
             return;
@@ -277,90 +276,51 @@ public abstract class PersistantStack {
          if (rfile.length() != filesize)
             throw new BadBackupFile("inconsistant filesize "
               + filesize + " real " + rfile.length());
-
-//         ByteWriter bwrPre = new ByteWriter();
-//         DataOutputStream dsPre = new DataOutputStream(bwrPre);
-//         ByteWriter bwrPost = new ByteWriter();
-//         DataOutputStream dsPost = new DataOutputStream(bwrPost);
+         int limsum = 0;
          for (int ii = size - unwritten; ii < size; ii++) {
             Object ob = cache.get(ii - (size - cache.size()));
             //trace("" + ob);
             writeExternal(dos, ob);
             int bufoff = bwr.size();
             if (isOutLine(ob)) {
-               //dsPre.write(0);
-               //dsPre.write(USERCALLBACK);
-               //dsPre.write(bufoff);
                preBuf.put((byte) 0);
                preBuf.put((byte) USERCALLBACK);
                preBuf.put((byte) bufoff);
-               //ds.write(bwr.getBuf(), 0, bufoff);
-               //dsPost.write(bufoff);
-               //dsPost.write( USERCALLBACK);
-               //dsPost.write(0);
                postBuf.put((byte) bufoff);
                postBuf.put(USERCALLBACK);
                postBuf.put((byte) 0);
             } else {
                if (bufoff > 255) {
-                  //dsPre.write(0);
-                  //dsPre.write(LONGRECORD);
-                  //dsPre.writeInt(bufoff);
                   preBuf.put((byte) 0);
                   preBuf.put((byte) LONGRECORD);
                   preBuf.putInt(bufoff);
                } else {
-                  //dsPre.write(bufoff);
                   preBuf.put((byte) bufoff);
                }
                //ds.write(bwr.getBuf(), 0, bufoff);
                if (bufoff > 255) {
-                  //dsPost.writeInt(bufoff);
-                  //dsPost.write(LONGRECORD);
-                  //dsPost.write(0);
                   postBuf.putInt(bufoff);
                   postBuf.put(LONGRECORD);
                   postBuf.put((byte) 0);
                } else {
-                  //dsPost.write(bufoff);
                   postBuf.put((byte) bufoff);
                }
 
             }
-            ByteBuffer[] bufs = {
-               preBuf
-               //ByteBuffer.wrap(bwrPre.getBuf(),0,bwrPre.size())
-               , bwr.getBBuf()
-               //,ByteBuffer.wrap(bwrPost.getBuf(),0,bwrPost.size())
-               , postBuf
-            };
-            int limsum = 0;
             preBuf.flip();
             postBuf.flip();
-//               bwr.getBBuf().flip();
-            for (ByteBuffer bu : bufs) {
-//                   trace("position", bu.position(), "limit", bu.limit(), "mark", bu.mark());
-               limsum += bu.limit();
-            }
-//trace("fsize prewrite", rfile.length());
-            fc.write(bufs);
-//trace("fsize postwrite", rfile.length());
-            //ds.close();System.exit(0);
-//trace("bwrPre.size()",bwrPre.size(), "preBuf.limit()", preBuf.limit());
-//trace("bwr.size()",bwr.size(), "bwr.getBBuf().limit()", bwr.getBBuf().limit());
-//trace("bwr.size()",bwr.size(), "bwr.getBBuf().position()", bwr.getBBuf().position());
-//trace("bwr.size()",bwr.size(), "bwr.getBBuf().mark()", bwr.getBBuf().mark());
-//            filesize += bwrPre.size() + bwr.size() + bwrPost.size();
-            filesize += preBuf.limit() + bwr.size() + postBuf.limit();
+            bwrAcc.write(preBuf.array(), 0, preBuf.limit());
+            bwrAcc.write(bwr);
+            bwrAcc.write(postBuf.array(), 0, postBuf.limit());
             preBuf.clear();
             postBuf.clear();
-            bwr.getBBuf().clear();
-//            trace("limsum", limsum, "filesize" , filesize );
             bwr.clear();
-//            bwrPre.clear();
-//            bwrPost.clear();
          }
-//trace("filesize", filesize);
+         ByteBuffer acc = bwrAcc.getBBuf();
+         fc.write(acc);
+         filesize += acc.limit();
+         acc.clear();
+         bwrAcc.clear();
          writtenCount = size;
          //trace("exit unwritten = " + unwritten);
       }
@@ -380,7 +340,6 @@ public abstract class PersistantStack {
          fc = FileChannel.open(delayFile.toPath(),
              StandardOpenOption.CREATE,
              StandardOpenOption.READ,
-//             StandardOpenOption.APPEND,
              StandardOpenOption.WRITE);
          lock = fc.tryLock();
          if (lock == null)
@@ -436,7 +395,6 @@ public abstract class PersistantStack {
    }
 
    private void writePop(int index) throws IOException {
-//trace("!!!!!!!!! wpop");
       if (rfile.length() != filesize)
          throw new IOException("inconsistant filesize");
 
@@ -479,7 +437,6 @@ public abstract class PersistantStack {
    final void readUserCB() throws IOException {
       int len = 0x000000ff & binp.readByte();
       offsets.add(binp.getOffset());
-      //trace("adding len = " + len + " offset = "  + binp.getOffset());
       size++;
       usercb(binp);
       if (len != (0x000000ff & binp.readByte())) {
@@ -511,7 +468,6 @@ public abstract class PersistantStack {
    }
 
    public final Exception setFile(File filei) throws IOException {
-      //trace("set file file", filei, "len", filei.length() );
       if (filei.equals(rfile))
          return null;
       //FileChannel fc = new FileInputStream("regtest").getChannel();
@@ -531,6 +487,7 @@ public abstract class PersistantStack {
       byte[] iarray = null;
       try {
          iarray = readFile();
+
          offsets = new IntArray(iarray.length / 20 + 1); // guessing at size
 
          for (binp = new ByteInput(iarray); 0 != binp.available();) {
@@ -643,6 +600,9 @@ public abstract class PersistantStack {
       private byte[] writebuffer = new byte[16];
       private int bufoff;
       private ByteBuffer wbuf;
+      public String toString() {
+         return "offset " + bufoff;
+      }
       void expandBuffer(int minsize) {
          int newsize = 2 * writebuffer.length;
          while (newsize < minsize)
@@ -664,6 +624,10 @@ public abstract class PersistantStack {
          write(b, 0, b.length);
       }
 
+      public void write(ByteWriter b2) {
+         write(b2.writebuffer, 0, b2.bufoff);
+      }
+
       public void write(byte[] b, int off, int len) {
          if (len + bufoff >= writebuffer.length)
             expandBuffer(len + bufoff);
@@ -678,18 +642,13 @@ public abstract class PersistantStack {
       public void close() {
       }
 
-//      byte[] getBuf() {
-//          return writebuffer;
-//      }
       ByteBuffer getBBuf() {
          if (wbuf == null)
             wbuf = ByteBuffer.wrap(writebuffer);
          wbuf.rewind();
          wbuf.limit(bufoff);
-//trace("wbuf", wbuf);
 
          return wbuf;
-//return ByteBuffer.wrap(writebuffer,0,bufoff);
       }
 
       void clear() {
@@ -763,7 +722,8 @@ public abstract class PersistantStack {
 
    private ByteWriter bwr = new ByteWriter();
    private DataOutputStream dos = new DataOutputStream(bwr);
-//   private byteInput brd = new byteInput(new byte[0]);
+   private ByteWriter bwrAcc = new ByteWriter();
+   private DataOutputStream dosAcc = new DataOutputStream(bwr);
    private int lastquit = -1;
    private File rfile;
    private int writtenCount;
