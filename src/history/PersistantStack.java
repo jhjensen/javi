@@ -252,8 +252,6 @@ public abstract class PersistantStack {
          invalidate();
       }
 
-      private ByteBuffer preBuf = ByteBuffer.allocate(6);
-      private ByteBuffer postBuf = ByteBuffer.allocate(6);
       private void flush() throws IOException {
          int unwritten = size - writtenCount;
          if (unwritten == 0)
@@ -283,37 +281,32 @@ public abstract class PersistantStack {
             writeExternal(dos, ob);
             int bufoff = bwr.size();
             if (isOutLine(ob)) {
-               preBuf.put((byte) 0);
-               preBuf.put((byte) USERCALLBACK);
-               preBuf.put((byte) bufoff);
-               postBuf.put((byte) bufoff);
-               postBuf.put(USERCALLBACK);
-               postBuf.put((byte) 0);
+               dosAcc.write(0);
+               dosAcc.write(USERCALLBACK);
+               dosAcc.write(bufoff);
+               dosAcc.write(bwr.getBuf(), 0, bwr.size());
+               dosAcc.write(bufoff);
+               dosAcc.write(USERCALLBACK);
+               dosAcc.write(0);
             } else {
                if (bufoff > 255) {
-                  preBuf.put((byte) 0);
-                  preBuf.put((byte) LONGRECORD);
-                  preBuf.putInt(bufoff);
+                  dosAcc.write(0);
+                  dosAcc.write(LONGRECORD);
+                  dosAcc.writeInt(bufoff);
                } else {
-                  preBuf.put((byte) bufoff);
+                  dosAcc.write(bufoff);
                }
+               dosAcc.write(bwr.getBuf(), 0, bwr.size());
                //ds.write(bwr.getBuf(), 0, bufoff);
                if (bufoff > 255) {
-                  postBuf.putInt(bufoff);
-                  postBuf.put(LONGRECORD);
-                  postBuf.put((byte) 0);
+                  dosAcc.writeInt(bufoff);
+                  dosAcc.write(LONGRECORD);
+                  dosAcc.write(0);
                } else {
-                  postBuf.put((byte) bufoff);
+                  dosAcc.write(bufoff);
                }
 
             }
-            preBuf.flip();
-            postBuf.flip();
-            bwrAcc.write(preBuf.array(), 0, preBuf.limit());
-            bwrAcc.write(bwr);
-            bwrAcc.write(postBuf.array(), 0, postBuf.limit());
-            preBuf.clear();
-            postBuf.clear();
             bwr.clear();
          }
          ByteBuffer acc = bwrAcc.getBBuf();
@@ -654,6 +647,9 @@ public abstract class PersistantStack {
       void clear() {
          bufoff = 0;
       }
+      byte[] getBuf() {
+         return writebuffer;
+      }
       int size() {
          return bufoff;
       }
@@ -723,7 +719,7 @@ public abstract class PersistantStack {
    private ByteWriter bwr = new ByteWriter();
    private DataOutputStream dos = new DataOutputStream(bwr);
    private ByteWriter bwrAcc = new ByteWriter();
-   private DataOutputStream dosAcc = new DataOutputStream(bwr);
+   private DataOutputStream dosAcc = new DataOutputStream(bwrAcc);
    private int lastquit = -1;
    private File rfile;
    private int writtenCount;
