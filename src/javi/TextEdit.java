@@ -333,8 +333,8 @@ public class TextEdit<OType> extends EditContainer<OType> {
    final String deletetext(boolean preserve, int xstart, int ystart, int xend,
                      int yend)  {
 
-      if (xstart > xend)
-         throw new RuntimeException("start before end");
+      if ((ystart == yend) && (xstart > xend))
+         throw new RuntimeException("x start before end");
       String delline2 = "";
       String line = at(ystart).toString();
       //trace("deletetext start("+xstart + "," + ystart + ") end (" + xend  +","  + yend +")" + "line:" + line );
@@ -352,7 +352,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
             changeElementAtStr(line, yend);
       } else {
          if (ystart > yend) {
-            throw new RuntimeException("start before end");
+            throw new RuntimeException("y start before end");
          }
          if (line.length() != xstart) { // we have the tail of a line to remove
 
