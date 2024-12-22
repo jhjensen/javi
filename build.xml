@@ -7,8 +7,8 @@
   <property name="src" location="src"/>
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
-  <property name="lib.dir"  location="${env.HOME}/javt/lib"/>
-  <property name="jdk.dir"  location="/Library/Java/JavaVirtualMachines/jdk1.8.0_60.jdk/Contents/Home/lib/"/>
+  <property name="lib.dir"  location="${env.HOME}/javi/lib"/>
+  <property name="jdk.dir"  location="${env.JAVA_HOME}"/>
     <path id="classpath">
         <fileset dir="${lib.dir}">
             <include name ="*.jar"/>
