@@ -21,17 +21,17 @@ import java.nio.file.StandardOpenOption;
 // disk file, and in fact may not keep any of the array in memory.
 //
 
-public abstract class PersistantStack {
+public abstract class PersistantStack<E> {
 
    protected abstract void usercb(ByteInput dis) throws EOFException;
    protected abstract void deletecb(int index);
 
-   public abstract class PSIterator implements ListIterator {
+   public abstract class PSIterator implements ListIterator<E> {
 
-      protected abstract void writeExternal(DataOutputStream dosi, Object obj)
+      protected abstract void writeExternal(DataOutputStream dosi, E obj)
          throws IOException;
-      protected abstract Object readExternal(ByteInput dis) throws IOException;
-      protected abstract Object newExternal(ByteInput dis) throws IOException;
+      protected abstract E readExternal(ByteInput dis) throws IOException;
+      protected abstract E newExternal(ByteInput dis) throws IOException;
       protected abstract boolean isOutLine(Object ob) throws IOException;
       protected abstract boolean matches(Object ob, Object ob2);
       private int recordIndex;
@@ -100,7 +100,7 @@ public abstract class PersistantStack {
          return recordIndex + 1 < size;
       }
 
-      public final Object next() {
+      public final E next() {
          //trace("next pieceIndex = " + recordIndex + " size " + size );
          if (++recordIndex >= size) {
             recordIndex--;
@@ -109,7 +109,7 @@ public abstract class PersistantStack {
          return curr();
       }
 
-      public final Object previous() {
+      public final E previous() {
          //trace("recordIndex = " + recordIndex + " cache size = " + cache.size());
          --recordIndex;
          if (recordIndex >= size - cache.size())
@@ -117,7 +117,7 @@ public abstract class PersistantStack {
          else  {
             try {
                binp.seek(offsets.get(recordIndex));
-               Object retval = newExternal(binp);
+               E retval = newExternal(binp);
                cache.add(0, retval);
                return retval;
             } catch (IOException e) {
@@ -131,7 +131,7 @@ public abstract class PersistantStack {
          }
       }
 
-      public final Object curr() {
+      public final E curr() {
          //trace(
          //     " recordIndex = "  + recordIndex
          //    + " binp  = " + binp
@@ -168,7 +168,7 @@ public abstract class PersistantStack {
          return false;
       }
 
-      public final void push(Object obj) {
+      public final void push(E obj) {
          //trace("index = " +  recordIndex
          //   + " size= " + size + " cache.size = " + cache.size()
          //   + " obj = " + obj);
@@ -282,7 +282,7 @@ public abstract class PersistantStack {
                   new FileOutputStream(rfile.toString(), true)));
          try {
             for (int ii = size - unwritten; ii < size; ii++) {
-               Object ob = cache.get(ii - (size - cache.size()));
+               E ob = cache.get(ii - (size - cache.size()));
                //trace("" + ob);
                writeExternal(dos, ob);
                if (isOutLine(ob)) {
@@ -374,7 +374,7 @@ public abstract class PersistantStack {
       return null != rfile || null != delayFile;
    }
 
-   public final void pushend(Object obj) {
+   public final void pushend(E obj) {
       //trace("index = " +
       //    recordIndex + " size= " + size
       //    + " cache.size = " + cache.size()
@@ -695,7 +695,7 @@ public abstract class PersistantStack {
    }
 
    private File delayFile;
-   private ArrayList<Object> cache = new ArrayList<Object>();
+   private ArrayList<E> cache = new ArrayList<E>();
    private int size = 0;
    private ByteWriter bwr = new ByteWriter();
    private DataOutputStream dos = new DataOutputStream(bwr);
