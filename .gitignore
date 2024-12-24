@@ -17,4 +17,5 @@ penv
 images
 cycle.xml
 reportXMLtoHTML.xsl
-plugin
+.gradle
+.vscode

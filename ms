@@ -29,6 +29,8 @@
 
    export CLASSPATH=$exportcp
    echo $CLASSPATH
-#   jarf=$myprog/javi/javi.jar
+   #jarf=$myprog/javi/javi.jar
+   jarf=$jroot/build/libs/javi-1.0.jar
 #fi
-$JAVA_HOME/bin/java $BTCLASS  -Xmx64m $jarf javi.Javi todo.txt src javi history javi/plugin awt
+echo $JAVA_HOME/bin/java $BTCLASS  -Xmx64m -jar $jarf javi.Javi todo.txt src javi history javi/plugin awt
+$JAVA_HOME/bin/java $BTCLASS  -Xmx64m -jar $jarf javi.Javi todo.txt src javi history javi/plugin awt

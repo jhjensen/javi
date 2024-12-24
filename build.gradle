@@ -1,0 +1,70 @@
+
+plugins {
+    id 'java'
+}
+
+java {
+//    sourceCompatibility = JavaVersion.VERSION_1_8
+//    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_23
+    targetCompatibility = JavaVersion.VERSION_23
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Add external JARs from the 'lib' directory
+    implementation fileTree(dir: 'lib', include: '*.jar')
+
+    // Example: Add additional dependencies from Maven Central (if needed)
+    // implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+}
+
+sourceSets {
+    // Define the main source set
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+
+    // Define the history source set
+    history {
+        java {
+            srcDirs = ['src/history/java']
+        }
+        resources {
+            srcDirs = ['src/history/resources']
+        }
+    }
+}
+
+// Make history available to main
+tasks.named('compileJava') {
+    dependsOn tasks.named('compileHistoryJava')
+    doFirst {
+        classpath += sourceSets.history.output
+    }
+}
+
+// Ensure history classes are included in the JAR
+tasks.named('jar') {
+    from sourceSets.history.output // Include history classes in the JAR
+    manifest {
+        attributes(
+            'Implementation-Title': 'javi',
+            'Implementation-Version': '1.0',
+            'Main-Class': 'javi.Javi' // Replace with your actual main class
+        )
+    }
+    archiveBaseName.set('javi')
+    archiveVersion.set('1.0')
+    destinationDirectory.set(file("$buildDir/libs"))
+}
+
