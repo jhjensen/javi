@@ -11,7 +11,7 @@ import java.util.List;
 import java.nio.charset.Charset;
 
 public final class Tools {
-   private static long lastTime = System.nanoTime();
+   //private static long lastTime = System.nanoTime();
 
    private Tools() { }
 

@@ -32,5 +32,4 @@
    #jarf=$myprog/javi/javi.jar
    jarf=$jroot/build/libs/javi-1.0.jar
 #fi
-echo $JAVA_HOME/bin/java $BTCLASS  -Xmx64m -jar $jarf javi.Javi todo.txt src javi history javi/plugin awt
-$JAVA_HOME/bin/java $BTCLASS  -Xmx64m -jar $jarf javi.Javi todo.txt src javi history javi/plugin awt
+$JAVA_HOME/bin/java $BTCLASS  -Xmx64m -jar $jarf todo.txt src main history java javi history plugin awt

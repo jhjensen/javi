@@ -41,7 +41,7 @@ final class PSTest extends Testutil {
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
       iter.push(b3);
 
@@ -88,7 +88,7 @@ final class PSTest extends Testutil {
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
       iter.push(b3);
 
@@ -107,7 +107,7 @@ final class PSTest extends Testutil {
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
 
       iter.push(b3);
@@ -121,7 +121,7 @@ final class PSTest extends Testutil {
 
       TestPS ran2 = new TestPS();
       myassert(null == ran2.setFile(hf), hf);
-      PersistantStack.PSIterator iter2 = ran2.createIterator();
+      PersistantStack<Object>.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
 
       myassert(!ran2.cleanClose(), ran2);
@@ -138,7 +138,7 @@ final class PSTest extends Testutil {
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
 
       iter.push(b3);
@@ -152,7 +152,7 @@ final class PSTest extends Testutil {
       myassert(null == ran2.setFile(hf), ran2);
       myassert(ran2.cleanClose(), ran);
       ran2.checkQuit(1);
-      PersistantStack.PSIterator iter2 = ran2.createIterator();
+      PersistantStack<Object>.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
 
       testb1((byte[]) iter2.next());
@@ -171,7 +171,7 @@ final class PSTest extends Testutil {
       if (hf != null)
          ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
       iter.push(new Oline((byte) 255));
       iter.idleSave();
@@ -220,7 +220,7 @@ final class PSTest extends Testutil {
       myassert(ran.cleanClose(), ran);
 
 
-      PersistantStack.PSIterator iter = ran.createIterator();
+      PersistantStack<Object>.PSIterator iter = ran.createIterator();
       iter.push(b1);
 
       iter.push(b2);
@@ -232,7 +232,7 @@ final class PSTest extends Testutil {
       TestPS ran2 = (hf == null) ? ran : new TestPS();
       if (hf != null)
          ran2.setFile(hf);
-      PersistantStack.PSIterator iter2 = ran2.createIterator();
+      PersistantStack<Object>.PSIterator iter2 = ran2.createIterator();
       iter2.resetCache();
       myassert(ran2.cleanClose(), ran2);
       testb1((byte[]) iter2.next());
@@ -253,7 +253,7 @@ final class PSTest extends Testutil {
       if (null != hf)
          ran3.setFile(hf);
       myassert(ran3.cleanClose(), ran3);
-      PersistantStack.PSIterator iter3 = ran3.createIterator();
+      PersistantStack<Object>.PSIterator iter3 = ran3.createIterator();
       iter3.resetCache();
       testb2((byte[]) iter3.next());
       try {
@@ -270,7 +270,7 @@ final class PSTest extends Testutil {
    */
 }
 
-final class TestPS extends PersistantStack {
+final class TestPS extends PersistantStack<Object> {
 
    final byte index;
    boolean cbOK = false;
@@ -313,7 +313,7 @@ final class TestPS extends PersistantStack {
       dcb = true;
    }
 
-   final class TestIterator extends PersistantStack.PSIterator {
+   final class TestIterator extends PersistantStack<Object> .PSIterator{
 
       protected boolean isOutLine(Object ob) {
          return ob instanceof Oline;

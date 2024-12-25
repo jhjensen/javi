@@ -13,8 +13,12 @@ LINK=ld
 
 all: ID javi.jar
 
-test: build
-	java javi.EditTester1
+
+jarf=build/libs/javi-all.jar
+
+CLASSPATH=/Users/jjensen/javi/lib:/Users/jjensen/javi/build:/Users/jjensen/javi/lib:/Users/jjensen/javi/lib/juniversalchardet-1.0.3.jar:/Users/jjensen/javi/lib/rhino-1.7.14.jar:/Users/jjensen/javi/lib/junit3.8.2/junit.jar:/Library/Java/JavaVirtualMachines/jdk-23-macports.jdk/Contents/Home/lib/tools.jar:/Users/jjensen/javi/lib/RXTXcomm.jar
+test: build 
+	java -cp $(CLASSPATH) javi.EditTester1
 	#java javi.ClangFormat
 
 automake: test # runner
@@ -36,7 +40,7 @@ FORCE:
 
 ID: FORCE
 	ctags -n -R src
-	mkid src
+	mkid -m ~/cyghome/id-lang.map src
 
 REM= Compute Task rtest rtest_Stub rtestClient
 REM_CLASS = $(addsuffix .class,$(REM)) 

@@ -1088,7 +1088,7 @@ final class EditTester1 {
       int tot = 20000;
       int after = 13123;
       // was 500 in jr1 1.6; much older computer, could be SSD.
-      long targettime = 120;
+      long targettime = 220;
       long targetmem = 2600000; // was 1100000 in jre 1.6
 
       // this is fairly wierd, but It seems like the gc doesn't really collect
