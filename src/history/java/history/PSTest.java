@@ -164,7 +164,7 @@ final class PSTest extends Testutil {
    }
 
    void callbacktest(File hf) throws IOException  {
-      if (null != hf)
+      if (null != hf && hf.exists())
          myassert(hf.delete(), hf);
 
       TestPS ran =  new TestPS();
