@@ -36,7 +36,7 @@ final class PSTest extends Testutil {
    }
 
    static void deletetest() throws IOException {
-      File hf = new File("delete.test");
+      File hf = testFile("delete.test");
       boolean exceptionFlag = false;
       TestPS ran = new TestPS();
       ran.newFile(hf);
@@ -84,7 +84,7 @@ final class PSTest extends Testutil {
    }
 
    static void killtest() throws IOException {
-      File hf = new File("kill.test");
+      File hf = testFile("kill.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
@@ -103,7 +103,7 @@ final class PSTest extends Testutil {
    }
 
    static void quittest() throws IOException {
-      File hf = new File("quit.test");
+      File hf = testFile("quit.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
@@ -134,7 +134,7 @@ final class PSTest extends Testutil {
    }
 
    static void bigtest() throws IOException  {
-      File hf = new File("random2.test");
+      File hf = testFile("random2.test");
       TestPS ran = new TestPS();
       ran.newFile(hf);
       myassert(ran.cleanClose(), ran);
@@ -199,16 +199,17 @@ final class PSTest extends Testutil {
 //?? need a test were the length of record saved is >128 <256
       for (int i = 0; i < b3.length; i++)
          b3[i] = (byte) i;
-      maintest(new File("random.test"));
+      maintest(testFile("random.test"));
       //trace("running maintest with null file");
       maintest(null);
       killtest();
       deletetest();
       quittest();
 
-      callbacktest(new File("callback.test"));
+      callbacktest(testFile("callback.test"));
       callbacktest(null);
       bigtest();
+      cleanupTestFiles();  // Only clean up if all tests passed
       trace("PersistantStack test passed");
    }
    void maintest(File hf) throws IOException {
