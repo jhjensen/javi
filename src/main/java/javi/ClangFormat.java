@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 public class ClangFormat {
 
+   @SuppressWarnings("unchecked")
    static void format(int startLine, int endLine, TextEdit ex) {
       //trace("format start", startLine, "end", endLine);
       Iterator<String> it = ex.getStringIter();

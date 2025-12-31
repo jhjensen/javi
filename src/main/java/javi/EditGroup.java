@@ -50,6 +50,7 @@ final class EditGroup extends Rgroup {
       register(rnames);
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext  fvc, boolean dotmode) throws
          InterruptedException, IOException, InputException {
@@ -182,6 +183,7 @@ final class EditGroup extends Rgroup {
       return null;
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void shiftmode(int direction, int count, FvContext fvc,
          boolean dotmode, int rcount) throws
             InterruptedException, IOException, InputException {
@@ -220,6 +222,7 @@ final class EditGroup extends Rgroup {
 
    private int donex, markamount;
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void markmode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc, boolean vMode) throws
          InputException, IOException, InterruptedException {
@@ -371,6 +374,7 @@ final class EditGroup extends Rgroup {
       }
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void qmode(int count, int rcount,
          boolean dotmode, FvContext fvc) throws
          InterruptedException, IOException, InputException {
@@ -457,6 +461,7 @@ final class EditGroup extends Rgroup {
       }
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type and ArrayList cast
    private static void putbuffer(char id, boolean after, FvContext fvc)  {
 
       Object buf = Buffers.getbuf(id);
@@ -505,6 +510,7 @@ final class EditGroup extends Rgroup {
          fvc.edvec.deletetext(preserve, xstart, ystart, xend, yend));
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void deletemode(char bufid, boolean dotmode, int count, int rcount,
        FvContext fvc) throws
        InterruptedException, IOException, InputException {
@@ -544,6 +550,7 @@ final class EditGroup extends Rgroup {
       }
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void yankmode(char bufid, boolean dotmode, int count,
       int rcount, FvContext fvc) throws
       InterruptedException, IOException, InputException {
@@ -578,6 +585,7 @@ final class EditGroup extends Rgroup {
       fvc.cursorabs(save);
    }
 
+   @SuppressWarnings("unchecked") // raw FvContext type
    private void changemode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc) throws
          InterruptedException, InputException, IOException {

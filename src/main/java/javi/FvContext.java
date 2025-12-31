@@ -411,6 +411,7 @@ public final class FvContext<OType> implements Serializable {
       cursoryabs(ypos);
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    FvContext switchContext(TextEdit  ev, int incval) {
       FvContext newcontext = fvmap.get(vi, ev);
       if (null == newcontext) {
@@ -424,6 +425,7 @@ public final class FvContext<OType> implements Serializable {
       return newcontext;
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public static FvContext getcontext(View viloc, TextEdit  te) {
       //trace("fvcontext.getcontext " + e + " and " + viloc);
 

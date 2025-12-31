@@ -55,12 +55,14 @@ public class PositionIoc extends BufInIoc<Position> {
       return null;
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    private PositionIoc(String name) {
       super(new FileProperties(
          FileDescriptor.InternalFd.make(name), pconverter), true, null);
       //trace(label);
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public PositionIoc(String name, BufferedReader inputi,
       ClassConverter converteri) {
 

@@ -14,6 +14,7 @@ public final class StringIoc extends IoConverter<String> {
    private String input;
    static final StringConverter converter = new StringConverter();
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public StringIoc(String name, String value) {
       super(new FileProperties(FileDescriptor.InternalFd.make(name),
          converter), true);

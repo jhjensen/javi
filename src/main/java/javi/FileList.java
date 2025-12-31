@@ -175,6 +175,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       }
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    static void make(String fnames) { // takes \n seperated now
       //trace("FileList.make entered fnames" + fnames);
       if (null == instance) {
@@ -204,6 +205,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       }
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    private FileList(FileParser fileParse, FileProperties prop) {
       super(fileParse, prop);
       new Commands();
@@ -289,6 +291,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return retval;
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    private boolean openFile(Position pos, View vi) throws
       InputException {
 
@@ -328,6 +331,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return instance.open1File(fname, vi);
    }
 
+   @SuppressWarnings("unchecked")
    private TextEdit<String> findOpenWithDirlist(String fname) {
 
       DirList dlist = DirList.getDefault();
@@ -379,6 +383,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return null;
    }
 
+   @SuppressWarnings("unchecked")
    private FvContext open1File(String fname, View vi) throws
          IOException, InputException {
       //trace("openFile fname " + fname);
@@ -575,6 +580,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       EventQueue.insert(new ExitEvent());
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    private static void processZ(FvContext fvc) throws
          InputException {
       View currview = fvc.vi;

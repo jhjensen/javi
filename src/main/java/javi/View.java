@@ -299,6 +299,7 @@ public abstract class View  extends
       return text;
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    final void checkValid(UndoHistory.EhMark ehm) {
       //trace("invalidateBack fvc " + fvc);
       //trace("invalidateBack chmark " + fvc.chmark);

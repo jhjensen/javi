@@ -61,6 +61,7 @@ public class BufInIoc<OType>  extends IoConverter<OType>  {
    }
 */
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public BufInIoc(FileProperties fp,
          boolean initThread, BufferedReader inputi) {
       super(fp, initThread);

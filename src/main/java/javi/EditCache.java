@@ -83,6 +83,7 @@ final class EditCache<OType> implements Iterable {
       return outarray;
    }
 
+   @SuppressWarnings("unchecked")
    public OType[] getArr(int index, int count) {
       OType[]  outarray = (OType[]) new Object[count];
 

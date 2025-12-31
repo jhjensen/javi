@@ -46,6 +46,7 @@ public abstract class InsertBuffer extends View.Inserter {
       instance.insertmode(dotmode, count, fvc, overwritei, singlelinei);
    }
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    static final String getcomline(String prompt) {
       FvContext<String> commFvc =  FvContext.startComLine();
       EditContainer ev = commFvc.edvec;
@@ -128,6 +129,7 @@ public abstract class InsertBuffer extends View.Inserter {
          commandikeys.keybind('\f', "redraw", null, CTRL_MASK);
       }
 
+      @SuppressWarnings({"unchecked", "rawtypes"})
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws InputException {
          //trace("rnum = " + rnum);

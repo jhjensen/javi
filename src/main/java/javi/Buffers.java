@@ -22,6 +22,7 @@ public final class Buffers {
       delbuffer = cbuf;
    }
 
+   @SuppressWarnings("unchecked")
    static void deleted(char bufid, String buffer) {
       if (null == buffer)
          return;
@@ -49,6 +50,7 @@ public final class Buffers {
       }
    }
 
+   @SuppressWarnings("unchecked")
    static void deleted(char bufid, ArrayList<String> buffer) {
 
       if (null == buffer)
@@ -136,6 +138,7 @@ public final class Buffers {
       //   //trace("lost ownership");
       //}
 
+      @SuppressWarnings("unchecked")
       public static final String myToString(Object obj) {
          //trace("reached myToString" + obj.getClass());
          String s;

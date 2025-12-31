@@ -182,6 +182,7 @@ public final class MiscCommands extends Rgroup  {
          return new ProcIo(namei, proc, input, cmd);
       }
 
+      @SuppressWarnings({"unchecked", "rawtypes"})
       private ProcIo(String namei, Process proci,
             BufferedReader inp, String... cmd) {
          super(new FileProperties(FileDescriptor.InternalFd.make(namei),
