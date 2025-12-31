@@ -14,6 +14,7 @@ public final class PosListList extends TextList<Position> {
    private transient TextEdit lastlist2 = null;
    private static final PllConverter converter = new PllConverter();
 
+   @SuppressWarnings({"unchecked", "rawtypes"})
    PosListList(IoConverter ioc) {
 
       super(ioc, ioc.prop);
@@ -163,11 +164,16 @@ public final class PosListList extends TextList<Position> {
       private static ArrayList<Position> tagstack = new ArrayList<Position>();
       private static PosListList inst;
 
-      static {
+      @SuppressWarnings({"unchecked", "rawtypes"})
+      private static PosListList createInst() {
          IoConverter io = new IoConverter(new FileProperties(
             FileDescriptor.InternalFd.make("position list list"), converter),
             true);
-         inst = new PosListList(io);
+         return new PosListList(io);
+      }
+
+      static {
+         inst = createInst();
       }
 
       private static final Matcher filereg = Pattern.compile(
@@ -380,6 +386,7 @@ public final class PosListList extends TextList<Position> {
             return null;
 
          String sym = symlist[symlist.length - 1];
+         @SuppressWarnings("unchecked") // raw TextEdit from HashMap
          TextEdit<Position> taglist = tahash.get(sym);
          try {
             if (null == taglist) {

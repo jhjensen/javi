@@ -80,8 +80,7 @@ public final class FindBugs extends Rgroup implements Plugin {
          }
          private static final Position defpos = new Position(0, 0, "", null);
       }
-
-      FindBugRunner(String filename) throws
+      @SuppressWarnings({"unchecked", "rawtypes"}) FindBugRunner(String filename) throws
             FileNotFoundException, java.io.UnsupportedEncodingException {
       //     Process proc = Runtime.getRuntime().exec(cstring);
       //     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));

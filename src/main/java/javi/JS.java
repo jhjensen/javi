@@ -76,7 +76,8 @@ public final class JS {
       }
 
       static final StringIoc sio = new StringIoc("jsoutput", "start");
-      static final TextEdit<String> jsoutput = new TextEdit(sio, sio.prop);
+      @SuppressWarnings("unchecked") // raw type in TextEdit constructor
+      static final TextEdit<String> jsoutput = new TextEdit<>(sio, sio.prop);
 
       public static final class JSgroup extends Rgroup {
          private final Function func;

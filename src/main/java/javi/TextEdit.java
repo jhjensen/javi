@@ -31,6 +31,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       os.writeObject(root);
    }
 
+   @SuppressWarnings("unchecked")
    static void restoreState(java.io.ObjectInputStream is) throws
          IOException, ClassNotFoundException {
       root = (TextEdit<String>) is.readObject();
@@ -788,9 +789,9 @@ final class EditTester1 {
 
    static TextEdit<String> newTe(String name) {
       FileDescriptor fd = FileDescriptor.make(testPath(name));
-      FileProperties fp = new FileProperties(fd, StringIoc.converter);
+      FileProperties<String> fp = new FileProperties<>(fd, StringIoc.converter);
       FileInput fi = new FileInput(fp);
-      TextEdit<String> retVal = new TextEdit(fi, fp);
+      TextEdit<String> retVal = new TextEdit<>(fi, fp);
       retVal.finish();
       myassert(!retVal.getError(), retVal);
       return retVal;

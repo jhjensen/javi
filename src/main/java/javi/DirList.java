@@ -19,12 +19,18 @@ final class DirList extends TextEdit<DirEntry> {
    private transient Matcher regex;
    private transient String searchName;
 
-   static {
+   @SuppressWarnings("unchecked") // raw FileProperties needed for DirEntry
+   private static DirList createDefList() {
       FileProperties fp = new FileProperties(
          FileDescriptor.InternalFd.make("dirlist"), DirConverter.dirConverter);
-      deflist = new DirList(fp);
+      return new DirList(fp);
    }
 
+   static {
+      deflist = createDefList();
+   }
+
+   @SuppressWarnings("unchecked") // raw IoConverter type
    private DirList(FileProperties<DirEntry> fp) {
       super(new IoConverter(fp, true), fp);
       //Thread.dumpStack();

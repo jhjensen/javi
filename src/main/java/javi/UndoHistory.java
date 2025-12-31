@@ -8,29 +8,32 @@ import history.ByteInput;
 import history.PersistantStack;
 //import static history.Tools.trace;
 
-public final class UndoHistory<OType> extends PersistantStack {
+@SuppressWarnings({"rawtypes", "unchecked"})
+public final class UndoHistory<OType>
+      extends PersistantStack<UndoHistory.ChangeRecord<OType>> {
    private EhMark currmark; // index of current position in undo
-   private ChangeRecord current = null;
+   private ChangeRecord<OType> current = null;
    private int savewrite = -1;
    final ClassConverter<OType> conv;
    final FileProperties<OType> prop;
-   private final ChangeRecord[] prototypes;
+   private final ChangeRecord<OType>[] prototypes;
 
    public String toString() {
       return currmark.toString();
    }
 
-   UndoHistory(FileProperties propi, ChangeRecord[] prototypesi) {
+   @SuppressWarnings("unchecked")
+   UndoHistory(FileProperties<OType> propi, ChangeRecord<OType>[] prototypesi) {
       conv = propi.conv;
       prop = propi;
-      prototypes = new ChangeRecord[4 + prototypesi.length];
+      prototypes = (ChangeRecord<OType>[]) new ChangeRecord[4 + prototypesi.length];
       prototypes[0] = null;
       prototypes[1] = new ChangeRecord.BaseRecord();
       prototypes[2] = new ChangeRecord.CheckRecord();
       prototypes[3] = new WriteRecord();
       for (int ii = 4; ii < prototypesi.length + 4; ii++)
          prototypes[ii] = prototypesi[ii - 4].newOne();
-      currmark = new UndoHistory.EhMark();
+      currmark = new UndoHistory<OType>.EhMark();
    }
 
    public void deletecb(int index) {
@@ -54,7 +57,7 @@ public final class UndoHistory<OType> extends PersistantStack {
    EhMark ereset() throws IOException {
       //trace("should clear cache of " + prop);
       reset();
-      currmark = new UndoHistory.EhMark();
+      currmark = new UndoHistory<OType>.EhMark();
       current = null;
       return currmark;
    }
@@ -90,7 +93,7 @@ public final class UndoHistory<OType> extends PersistantStack {
       savewrite = currmark.getIndex();
    }
 
-   void push(ChangeRecord cr) {
+   void push(ChangeRecord<OType> cr) {
       //trace("push record type " + cr.getType() +" :"+ cr);
       //Thread.dumpStack();
       currmark.push(current = cr);
@@ -159,14 +162,14 @@ public final class UndoHistory<OType> extends PersistantStack {
       do {
          if (current instanceof ChangeRecord.BaseRecord)
             return chindex;
-         current = (ChangeRecord) currmark.previous();
+         current = currmark.previous();
          //trace(" " +currmark.getIndex() + " " + current );
       } while (current instanceof ChangeRecord.CheckRecord);
 
       do {
          chindex = current.undocr();
          //trace(" " +currmark.getIndex() + " " + current);
-      } while (!((current = (ChangeRecord) currmark.previous())
+      } while (!((current = currmark.previous())
                  instanceof ChangeRecord.CheckRecord));
       //trace(" " +currmark.getIndex() + " " + current);
       return chindex;
@@ -178,17 +181,17 @@ public final class UndoHistory<OType> extends PersistantStack {
       int chindex = -1;
       while (currmark.hasNext()) {
          //trace(currmark.getIndex() +" " + current );
-         current = (ChangeRecord) currmark.next();
+         current = currmark.next();
          //trace(currmark.getIndex() +" " + current);
          if (current instanceof ChangeRecord.CheckRecord)
             break;
          chindex = current.redocr();
       }
       while (currmark.hasNext()) {
-         current = (ChangeRecord) currmark.next();
+         current = currmark.next();
          //trace(currmark.getIndex() +" " + current);
          if (!(current instanceof ChangeRecord.CheckRecord)) {
-            current = (ChangeRecord) currmark.previous();
+            current = currmark.previous();
             break;
          }
       }
@@ -202,20 +205,20 @@ public final class UndoHistory<OType> extends PersistantStack {
 
       if (cleanClose() && currmark.beforeQuit())  // if exited cleanly
          while (currmark.beforeQuit() && currmark.hasNext()) {
-            current = (ChangeRecord) currmark.next();
+            current = currmark.next();
             //trace("2 " +currmark.getIndex() + current);
             current.redocr();
          }
       else if (savewrite != -1)  // try for last saved version
          while ((currmark.getIndex() < savewrite) && currmark.hasNext()) {
-            current = (ChangeRecord) currmark.next();
+            current = currmark.next();
             //trace("1 " +currmark.getIndex() + current);
             current.redocr();
          }
 
       else
          while (currmark.hasNext()) {  //try for base version
-            current = (ChangeRecord) currmark.next();
+            current = currmark.next();
             //trace("3 " +currmark.getIndex() + current);
             current.redocr();
             if (current instanceof ChangeRecord.BaseRecord)
@@ -284,7 +287,7 @@ public final class UndoHistory<OType> extends PersistantStack {
    */
 
    final class EhMark extends
-         PersistantStack.PSIterator implements Cloneable {
+         PersistantStack<ChangeRecord<OType>>.PSIterator implements Cloneable {
 
       public Object clone() {
          try {
@@ -300,28 +303,28 @@ public final class UndoHistory<OType> extends PersistantStack {
       }
 
       public boolean matches(Object ob, Object ob2) {
-         ChangeRecord ch = (ChangeRecord) ob;
-         ChangeRecord ch2 = (ChangeRecord) ob2;
+         ChangeRecord<?> ch = (ChangeRecord<?>) ob;
+         ChangeRecord<?> ch2 = (ChangeRecord<?>) ob2;
          return (ch.getType() == ch2.getType())
                 && ch.getType() == ChangeRecord.BASE;
       }
 
-      public Object readExternal(ByteInput dis) {
+      public ChangeRecord<OType> readExternal(ByteInput dis) {
          //      trace("type = " + breader.type);
-         ChangeRecord rec = prototypes[dis.readByte()];
+         ChangeRecord<OType> rec = prototypes[dis.readByte()];
          rec.readExternal(dis, conv);
          return rec;
       }
 
-      public ChangeRecord newExternal(ByteInput dis) {
-         ChangeRecord rec = prototypes[dis.readByte()].newOne();
+      public ChangeRecord<OType> newExternal(ByteInput dis) {
+         ChangeRecord<OType> rec = prototypes[dis.readByte()].newOne();
          rec.readExternal(dis, conv);
          return rec;
       }
 
-      public void writeExternal(DataOutputStream dos, Object ext) {
+      public void writeExternal(DataOutputStream dos, ChangeRecord<OType> ext) {
          //trace("recordIndex = " + getIndex());
-         ((ChangeRecord) ext).writeExternal(dos, conv);
+         ext.writeExternal(dos, conv);
          //trace("done recordIndex = " + getIndex() +  " " + this );
       }
 
@@ -350,14 +353,14 @@ public final class UndoHistory<OType> extends PersistantStack {
          if (getIndex() < currmark.getIndex())
             while (getIndex() < currmark.getIndex()) {
                //trace("1 " + curr());
-               if (((ChangeRecord) next()).redocr(vi)) {
+               if (next().redocr(vi)) {
                   setEqual(currmark);
                   break;
                }
             }
          else
             while (getIndex() > currmark.getIndex())
-               if (((ChangeRecord) previous()).undocr(vi)) {
+               if (previous().undocr(vi)) {
                   setEqual(currmark);
                   break;
                }
@@ -400,7 +403,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          //trace("ChangeRecord.readExternal type = " + getType() + " cindex = " + cindex);
       }
 
-      void writeExternal(DataOutputStream dos, ClassConverter conv) {
+      void writeExternal(DataOutputStream dos, ClassConverter<OType> conv) {
          //trace("ChangeRecord.writeExternal type = " + getType() + " cindex = " + cindex);
          try {
             dos.write(getType());
@@ -419,7 +422,7 @@ public final class UndoHistory<OType> extends PersistantStack {
          return obj;
       }
 
-      void writeObjs(DataOutputStream dos, ClassConverter conv, OType[] obj) {
+      void writeObjs(DataOutputStream dos, ClassConverter<OType> conv, OType[] obj) {
          try {
             int ocount = obj.length;
             dos.writeInt(ocount);
@@ -518,12 +521,14 @@ public final class UndoHistory<OType> extends PersistantStack {
          return new WriteRecord();
       }
 
+      @SuppressWarnings({"rawtypes", "unchecked"})
       void readExternal(ByteInput dis, ClassConverter conv) {
          //trace("WriteRecord.readExternal");
          super.readExternal(dis, conv);
          writeDate = dis.readUTF();
       }
 
+      @SuppressWarnings({"rawtypes", "unchecked"})
       void writeExternal(DataOutputStream dos, ClassConverter conv) {
          super.writeExternal(dos, conv);
          try {

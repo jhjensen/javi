@@ -226,7 +226,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
             tfile = FileDescriptor.LocalFile.createTempFile("javi", ".tmp");
             tfile.deleteOnExit();
-            FileProperties nProp = new FileProperties(prop, tfile);
+            FileProperties<OType> nProp = new FileProperties<>(prop, tfile);
             nProp.writeAll(new StringIter(mainArray.iterator()));
          }
 

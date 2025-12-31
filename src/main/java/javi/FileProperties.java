@@ -43,7 +43,7 @@ public final class FileProperties<OType> implements Serializable {
             FileDescriptor.LocalFile.make(fd2.canonName + ".new");
 
          try {
-            new FileProperties(this, tempFile).writeAll(strIter);
+            new FileProperties<>(this, tempFile).writeAll(strIter);
 
          } catch (IOException e) {
             tempFile.delete();
@@ -84,6 +84,7 @@ public final class FileProperties<OType> implements Serializable {
    }
 
    // create properties that will have the same format as a prototype
+   @SuppressWarnings("unchecked")
    public FileProperties(FileProperties proto, FileDescriptor fd) {
       fdes = fd;
       conv = proto.conv;

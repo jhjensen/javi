@@ -99,13 +99,14 @@ public class EditContainer<OType> implements
    private final FileProperties<OType> prop;
    private final EditContainer parent;
 
-   private transient UndoHistory backup;
+   private transient UndoHistory<OType> backup;
    private transient boolean finishedread = false;
    private transient boolean ioError = false;
    private transient boolean backupMade;
 
    /* This may or may not match the read only status of an underlying file. */
-   private transient UndoHistory.ChangeRecord[]prototypes;
+   @SuppressWarnings("unchecked")
+   private transient UndoHistory.ChangeRecord<OType>[] prototypes;
    private FileDisposeListener disposeListener = null;
 
    final void addDisposeNotify(FileDisposeListener fdl) {
@@ -132,6 +133,7 @@ public class EditContainer<OType> implements
          os.writeObject(te);
    }
 
+   @SuppressWarnings("unchecked")
    final void restoreList(java.io.ObjectInputStream is) throws
       IOException, ClassNotFoundException {
       int count = is.readInt();
@@ -243,7 +245,8 @@ public class EditContainer<OType> implements
             throw new RuntimeException("editvec must have parent except root");
       //trace("creating editvec type =" + prop.conv.getClass());
 
-      UndoHistory.ChangeRecord[] temp = {
+      @SuppressWarnings("unchecked")
+      UndoHistory.ChangeRecord<OType>[] temp = new UndoHistory.ChangeRecord[] {
          new DeleteRecord(),
          new InsertRecord(),
          new ModRecord(),
@@ -255,7 +258,7 @@ public class EditContainer<OType> implements
       ioc.init1(ecache, new ArrayChange());
       OType ob =  prop.conv.fromString("");
 
-      backup = new UndoHistory(prop, prototypes);
+      backup = new UndoHistory<>(prop, prototypes);
       ecache.add(ob);
 
       if (null != inarr) {
@@ -490,6 +493,7 @@ public class EditContainer<OType> implements
       finishedread = true;
       if (!backupMade) {
          while (ecache.size() <= 1) {
+            @SuppressWarnings("unchecked")
             OType[] obarray = (OType[]) new Object[1];
             obarray[0] =  prop.conv.fromString("");
             //trace("creating entry for " + this);
@@ -501,6 +505,7 @@ public class EditContainer<OType> implements
    }
 
    private final class ArrayChange extends IoConverter.BuildCB {
+      @SuppressWarnings("unchecked")
       void notifyDone(EditCache ec) {
          //trace("ArrayChange notified");
          ecache = ec;
@@ -670,6 +675,7 @@ public class EditContainer<OType> implements
       //trace("input = " + input);
       finish();
       if (ioc instanceof BufInIoc) {
+         @SuppressWarnings("unchecked")
          EditCache<OType> ed = ((BufInIoc) ioc).convertStream(input);
          if (ed.size() > 0) {
             //trace("inserting stream :");
@@ -768,6 +774,7 @@ public class EditContainer<OType> implements
    }
 
    /** cover routine for insert() that takes a single object. */
+   @SuppressWarnings("unchecked")
    final void insertOne(OType ob, int index) {
       OType[] obarray = (OType[]) new Object[1];
       obarray[0] = ob;
@@ -866,7 +873,7 @@ public class EditContainer<OType> implements
             if ((ecache.size() > 2)
                   || 0 != (ecache.get(1).toString().length())) {
                //trace("adding insert and base record");
-               Iterator it = ecache.iterator();
+               Iterator<OType> it = ecache.iterator();
                it.next();
                insertRecordDone(it, 1, ecache.size() - 1);
                backup.baseRecord();
@@ -1043,11 +1050,11 @@ public class EditContainer<OType> implements
       backup.push(new InsertStringRecord(obarray, indexi));
    }
 
-   private void insertRecord(Iterator it, int indexi, int count) {
+   private void insertRecord(Iterator<OType> it, int indexi, int count) {
       backup.push(new InsertRecord(it, indexi, count, true));
    }
 
-   private void insertRecordDone(Iterator it, int indexi, int count) {
+   private void insertRecordDone(Iterator<OType> it, int indexi, int count) {
       backup.push(new InsertRecord(it, indexi, count, false));
    }
 
@@ -1068,17 +1075,18 @@ public class EditContainer<OType> implements
    private final class InsertRecord extends UndoHistory.ChangeRecord<OType> {
       private OType[] obj;
 
-      void readExternal(ByteInput dis, ClassConverter conv) {
+      @SuppressWarnings("unchecked")
+      void readExternal(ByteInput dis, ClassConverter<OType> conv) {
          //trace("InsertRecord.readExternal");
          super.readExternal(dis, conv);
-         Object[]  o1 =  super.readObjs(dis, conv);
+         OType[] o1 = super.readObjs(dis, conv);
          obj = (OType[]) (new Object[o1.length]);
          for (int ii = 0; ii < o1.length; ii++) {
-            obj[ii] = (OType) o1[ii];
+            obj[ii] = o1[ii];
          }
       }
 
-      void writeExternal(DataOutputStream dos, ClassConverter conv) {
+      void writeExternal(DataOutputStream dos, ClassConverter<OType> conv) {
          super.writeExternal(dos, conv);
          super.writeObjs(dos, conv, obj);
       }
@@ -1113,6 +1121,7 @@ public class EditContainer<OType> implements
          //trace("InsertRecord array.finish = " + ev.finish());
       }
 
+      @SuppressWarnings("unchecked")
       InsertRecord(Iterator<OType> it, int indexi, int count, boolean redo) {
          super(indexi);
          obj = (OType[]) new Object[count];
@@ -1151,13 +1160,14 @@ public class EditContainer<OType> implements
          UndoHistory.ChangeRecord<OType> {
       private String[] obj;
 
-      void readExternal(ByteInput dis, ClassConverter conv) {
+      @SuppressWarnings("unchecked")
+      void readExternal(ByteInput dis, ClassConverter<OType> conv) {
          //trace("InsertStringRecord.readExternal");
          super.readExternal(dis, conv);
          obj = readStrs(dis);
       }
 
-      void writeExternal(DataOutputStream dos, ClassConverter conv) {
+      void writeExternal(DataOutputStream dos, ClassConverter<OType> conv) {
          super.writeExternal(dos, conv);
          writeStrs(dos, obj);
       }
@@ -1223,6 +1233,7 @@ public class EditContainer<OType> implements
          //        trace("array.finish = " + ev.finish());
       }
 */
+      @SuppressWarnings("unchecked")
       OType[] mkobj() {
          OType[] ob2 = (OType[]) new Object[obj.length];
          for (int ii = 0; ii < obj.length; ii++) {
@@ -1277,23 +1288,25 @@ public class EditContainer<OType> implements
          return new DeleteRecord();
       }
 
-      void readExternal(ByteInput dis, ClassConverter conv) {
+      @SuppressWarnings("unchecked")
+      void readExternal(ByteInput dis, ClassConverter<OType> conv) {
          super.readExternal(dis, conv);
-         Object[]  o1 =  super.readObjs(dis, conv);
+         OType[] o1 = super.readObjs(dis, conv);
          obj = (OType[]) (new Object[o1.length]);
          for (int ii = 0; ii < o1.length; ii++) {
-            obj[ii] = (OType) o1[ii];
+            obj[ii] = o1[ii];
          }
 //             trace("readExternal " + this);
       }
 
-      void writeExternal(DataOutputStream dos, ClassConverter conv) {
+      void writeExternal(DataOutputStream dos, ClassConverter<OType> conv) {
          super.writeExternal(dos, conv);
          super.writeObjs(dos, conv, obj);
       }
 
       DeleteRecord() { }
 
+      @SuppressWarnings("unchecked")
       DeleteRecord(int indexi, int number) {
          super(indexi);
          obj = (OType[]) new Object[number];
@@ -1341,7 +1354,7 @@ public class EditContainer<OType> implements
          newobj = conv.newExternal(dis);
       }
 
-      public void writeExternal(DataOutputStream dos, ClassConverter conv) {
+      public void writeExternal(DataOutputStream dos, ClassConverter<OType> conv) {
          //trace("ModRecord.writeExternal");
          super.writeExternal(dos, conv);
          try {

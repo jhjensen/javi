@@ -117,7 +117,8 @@ public abstract class Rgroup {
          glist.remove(realfile);
       }
       try {
-         Class nclass = Class.forName(lclass);
+         @SuppressWarnings("unchecked")
+         Class<?> nclass = Class.forName(lclass);
          glist.put(realfile, nclass.getDeclaredConstructor().newInstance());
       } catch (IllegalAccessException e) {
          throw new RuntimeException("vigroup ", e);

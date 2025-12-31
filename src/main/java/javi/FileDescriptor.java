@@ -323,7 +323,7 @@ public class FileDescriptor implements Serializable {
       }
 
       private static Map<String, WeakReference<LocalFile>> map
-         = new WeakHashMap();
+         = new WeakHashMap<>();
 
       static LocalFile make(String fname) {
          //trace("make " + fname);
@@ -363,7 +363,7 @@ public class FileDescriptor implements Serializable {
          fd = fh.isDirectory()
                 ? new LocalDir(fname, cname, fh)
                 : new LocalFile(fname, cname, fh);
-         map.put(cname, new WeakReference(fd));
+         map.put(cname, new WeakReference<>(fd));
          return fd;
       }
 
