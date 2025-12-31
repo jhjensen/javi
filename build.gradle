@@ -1,12 +1,17 @@
 
 plugins {
     id 'java'
+    id 'jacoco'  // Code coverage
     id 'com.github.johnrengelman.shadow' version '8.1.1' // Add Shadow Plugin
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_22
     targetCompatibility = JavaVersion.VERSION_22
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 repositories {
@@ -66,5 +71,48 @@ tasks.register('distFat', Copy) {
     from shadowJar.archiveFile
     into "$projectDir/dist"
     rename { 'javi-all.jar' }
+}
+
+// Configuration for JaCoCo agent JAR
+configurations {
+    jacocoAgent
+}
+
+dependencies {
+    jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.12:runtime'
+}
+
+// Run PSTest with JaCoCo coverage
+tasks.register('pstestCoverage', JavaExec) {
+    dependsOn compileJava
+    group = 'verification'
+    description = 'Run PSTest with code coverage'
+    
+    mainClass = 'history.PSTest'
+    classpath = sourceSets.main.runtimeClasspath
+    
+    def execFile = file("${layout.buildDirectory.get()}/jacoco/pstest.exec")
+    doFirst {
+        execFile.parentFile.mkdirs()
+        def agentJar = configurations.jacocoAgent.singleFile
+        jvmArgs "-javaagent:${agentJar}=destfile=${execFile}"
+    }
+}
+
+// Run IntArrayTest with JaCoCo coverage
+tasks.register('intArrayTestCoverage', JavaExec) {
+    dependsOn compileJava
+    group = 'verification'
+    description = 'Run IntArrayTest with code coverage'
+    
+    mainClass = 'history.IntArrayTest'
+    classpath = sourceSets.main.runtimeClasspath
+    
+    def execFile = file("${layout.buildDirectory.get()}/jacoco/intarraytest.exec")
+    doFirst {
+        execFile.parentFile.mkdirs()
+        def agentJar = configurations.jacocoAgent.singleFile
+        jvmArgs "-javaagent:${agentJar}=destfile=${execFile}", '-ea'
+    }
 }
 

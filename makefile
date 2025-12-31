@@ -60,10 +60,33 @@ pstest: compile
 edittest: compile
 	java -cp $(CLASSPATH) javi.EditTester1
 
+# Run IntArrayTest (IntArray tests)
+intarraytest: compile
+	java -ea -cp $(CLASSPATH) history.IntArrayTest
+
 # Run all tests
 test: compile
 	java -cp $(CLASSPATH) javi.EditTester1
 	java -cp $(CLASSPATH) history.PSTest
+	java -ea -cp $(CLASSPATH) history.IntArrayTest
+
+# Run PSTest with coverage and generate report
+pstest-coverage:
+	./gradlew pstestCoverage
+	java -jar lib/org.jacoco.cli-0.8.12-nodeps.jar report build/jacoco/pstest.exec \
+		--classfiles build/classes/java/main \
+		--sourcefiles src/main/java --sourcefiles src/history/java \
+		--html build/reports/coverage-pstest
+	@echo "Coverage report: build/reports/coverage-pstest/index.html"
+
+# Run all tests with coverage and generate report
+test-coverage:
+	./gradlew pstestCoverage intArrayTestCoverage
+	java -jar lib/org.jacoco.cli-0.8.12-nodeps.jar report build/jacoco/pstest.exec build/jacoco/intarraytest.exec \
+		--classfiles build/classes/java/main \
+		--sourcefiles src/main/java --sourcefiles src/history/java \
+		--html build/reports/coverage
+	@echo "Coverage report: build/reports/coverage/index.html"
 
 #==============================================================================
 # Run targets

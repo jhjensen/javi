@@ -6,7 +6,7 @@ This document lists potential bugs and issues discovered during code analysis.
 
 ### T1. ArrayIndexOutOfBoundsException in Backup Reading
 **Location**: `ByteInput.java:109`, `PersistantStack.java:525`
-**Status**: CONFIRMED - occurs during EditTester1 test16
+**Status**: EXPECTED BEHAVIOR - test16 deliberately tests corrupt backup file handling
 
 ```
 java.lang.ArrayIndexOutOfBoundsException: Array index out of range: 7
@@ -16,7 +16,7 @@ java.lang.ArrayIndexOutOfBoundsException: Array index out of range: 7
 
 ### T2. Unclosed File Resource in PersistantStack
 **Location**: `PersistantStack.java:644`
-**Status**: CONFIRMED - finalize() detects unclosed file during test16
+**Status**: EXPECTED BEHAVIOR - test15 deliberately causes BadBackupFile exception
 
 ```
 PersitantStack.finalize found unclosed file
@@ -25,13 +25,24 @@ writtencount = 4 rfile = extest15.dmp2
 
 ### T3. PSTest Callback Test Failure
 **Location**: `PSTest.java:168`
-**Status**: CONFIRMED - assertion failure in callbacktest
+**Status**: FIXED - was failing because test assumed file existed on clean run
 
+The fix was to check `hf.exists()` before attempting to delete in `callbacktest()`.
+
+### T4. IntArray.removeRange() Copies Elements in Wrong Direction
+**Location**: `IntArray.java:43`
+**Status**: FIXED - System.arraycopy arguments were reversed
+
+```java
+// Bug: copied FROM 'from' TO 'to' (wrong direction)
+System.arraycopy(store, from, store, to, store.length - to);
+
+// Fix: copy FROM 'to' TO 'from' (shift elements left)
+System.arraycopy(store, to, store, from, len - to);
 ```
-java.lang.RuntimeException: ASSERTION FAILURE callback.test
-    at history.Testutil.myassert(Testutil.java:48)
-    at history.PSTest.callbacktest(PSTest.java:168)
-```
+
+The bug caused `removeRange(0, 2)` on `[10, 20, 30, 40, 50]` to produce `[10, 20, 10]` 
+instead of `[30, 40, 50]`. Test added in `IntArrayTest.java`.
 
 ## Critical Issues
 

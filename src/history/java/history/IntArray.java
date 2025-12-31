@@ -40,7 +40,7 @@ public final class IntArray {
       //trace("int array clearing from = " + from + " to = " + to);
       if ((from > to) || (to > len))
          throw new IndexOutOfBoundsException("from > to");
-      System.arraycopy(store, from, store, to, store.length - to);
+      System.arraycopy(store, to, store, from, len - to);
       len -=  to - from;
    }
 
