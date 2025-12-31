@@ -10,55 +10,151 @@ CC=g++
 #LDFLAGS += -mno-cygwin -lwsock32
 LINK=ld
 
+# Default target
+all: compile
 
-all: ID javi.jar
+# Classpath for running Java
+CLASSPATH=/Users/jjensen/javi/build/classes/java/main:/Users/jjensen/javi/lib/juniversalchardet-1.0.3.jar:/Users/jjensen/javi/lib/rhino-1.7.14.jar
 
+#==============================================================================
+# Build targets
+#==============================================================================
+
+# Compile Java sources
+compile:
+	./gradlew compileJava
+
+# Clean build artifacts
+clean:
+	./gradlew clean
+	rm -f ID tags
+
+# Build JAR file
+jar:
+	./gradlew jar
+
+# Build fat JAR with all dependencies
+fatjar:
+	./gradlew shadowJar
+
+# Copy JAR to dist directory
+dist: jar
+	./gradlew dist
+
+# Copy fat JAR to dist directory  
+dist-fat: fatjar
+	./gradlew distFat
+
+# Full build (compile + jar)
+build: compile jar
+
+#==============================================================================
+# Test targets
+#==============================================================================
+
+# Run PSTest (PersistantStack tests)
+pstest: compile
+	java -cp $(CLASSPATH) history.PSTest
+
+# Run EditTester1 (TextEdit tests)
+edittest: compile
+	java -cp $(CLASSPATH) javi.EditTester1
+
+# Run all tests
+test: compile
+	java -cp $(CLASSPATH) javi.EditTester1
+	java -cp $(CLASSPATH) history.PSTest
+
+#==============================================================================
+# Run targets
+#==============================================================================
+
+# Run the application (GUI mode)
+run: compile
+	java -cp $(CLASSPATH) javi.Javi
+
+# Run with specific file
+# Usage: make run-file FILE=myfile.txt
+run-file: compile
+	java -cp $(CLASSPATH) javi.Javi $(FILE)
+
+#==============================================================================
+# Code quality targets
+#==============================================================================
+
+# Run checkstyle on modified Java files
+cstyle:
+	perl cstyle src/main/java/javi/*.java src/history/java/history/*.java
+
+# Run checkstyle on a specific file
+# Usage: make cstyle-file FILE=src/main/java/javi/Javi.java
+cstyle-file:
+	perl cstyle $(FILE)
+
+#==============================================================================
+# Development utility targets
+#==============================================================================
+
+# Generate tags for code navigation
+tags:
+	ctags -n -R src
+
+# Generate ID database for gid/lid
+id:
+	mkid -m ~/cyghome/id-lang.map src
+
+# Update both tags and ID
+ID: tags id
+
+#==============================================================================
+# Legacy targets (kept for compatibility)
+#==============================================================================
 
 jarf=build/libs/javi-all.jar
 
-CLASSPATH=/Users/jjensen/javi/lib:/Users/jjensen/javi/build:/Users/jjensen/javi/lib:/Users/jjensen/javi/lib/juniversalchardet-1.0.3.jar:/Users/jjensen/javi/lib/rhino-1.7.14.jar:/Users/jjensen/javi/lib/junit3.8.2/junit.jar:/Library/Java/JavaVirtualMachines/jdk-23-macports.jdk/Contents/Home/lib/tools.jar:/Users/jjensen/javi/lib/RXTXcomm.jar
-test: build 
-	java -cp $(CLASSPATH) javi.EditTester1
-	#java javi.ClangFormat
+gbuild: compile
 
-automake: test # runner
+automake: test
 
-runner: build
-	java javi.Javi
-
-build: dist/javi.jar
-FORCE: 
-
-dist/javi.jar: FORCE
-	ant -e
-
-install : javi.jar
-	cp javi.jar vi.pl /usr/share/java
-	chmod +x javi.jar vi.pl /usr/share/java/vi.pl /usr/share/java/javi.jar
+runner: jar
+	java -jar build/libs/javi-1.0.jar
 
 FORCE:
 
-ID: FORCE
-	ctags -n -R src
-	mkid -m ~/cyghome/id-lang.map src
+install: jar
+	cp build/libs/javi-1.0.jar vi.pl /usr/share/java
+	chmod +x /usr/share/java/vi.pl /usr/share/java/javi-1.0.jar
 
-REM= Compute Task rtest rtest_Stub rtestClient
-REM_CLASS = $(addsuffix .class,$(REM)) 
-REM_JAR =$(addprefix javi/,$(REM_CLASS)) javi/rtestClient$$Example.class
+#==============================================================================
+# Help
+#==============================================================================
 
-remote.jar: $(REM_CLASS) makefile
-	@echo REM_CLASS $(REM_CLASS)
-	@echo REM_JAR $(REM_JAR)
-	cd ..;$(JDKPATH)/bin/jar -0cf javi/remote.jar $(REM_JAR)
-
-%.class : %.java 
-	$(JDKPATH)/bin/javac -target 1.6 -source 1.6 $<
-
-%_Stub.class : %.java 
-	cd ..;$(JDKPATH)/bin/rmic javi.$*
-
-clean:
-	rm -f *.class ID javi.jar
-
-javi.jar: *.class ../MANIFEST.MF 
-	cd ..;$(JDKBIN)jar -cfm javi/javi.jar MANIFEST.MF javi/*.class history/*.class
+help:
+	@echo "Javi Makefile Targets:"
+	@echo ""
+	@echo "Build:"
+	@echo "  make compile  - Compile Java sources (default)"
+	@echo "  make jar      - Build JAR file"
+	@echo "  make fatjar   - Build fat JAR with dependencies"
+	@echo "  make dist     - Copy JAR to dist/ directory"
+	@echo "  make dist-fat - Copy fat JAR to dist/ directory"
+	@echo "  make build    - Full build (compile + jar)"
+	@echo "  make clean    - Clean build artifacts"
+	@echo ""
+	@echo "Test:"
+	@echo "  make test     - Run all tests"
+	@echo "  make pstest   - Run PersistantStack tests"
+	@echo "  make edittest - Run EditTester1 tests"
+	@echo ""
+	@echo "Run:"
+	@echo "  make run      - Run the application"
+	@echo "  make run-file FILE=path/to/file - Run with specific file"
+	@echo ""
+	@echo "Code Quality:"
+	@echo "  make cstyle   - Run checkstyle on all Java files"
+	@echo "  make cstyle-file FILE=path - Run checkstyle on specific file"
+	@echo ""
+	@echo "Development:"
+	@echo "  make tags     - Generate ctags"
+	@echo "  make id       - Generate ID database"
+	@echo "  make help     - Show this help"

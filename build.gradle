@@ -52,3 +52,19 @@ tasks.named('jar') {
     destinationDirectory.set(file("$buildDir/libs"))
 }
 
+// Copy JAR to dist directory (like ant used to do)
+tasks.register('dist', Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into "$projectDir/dist"
+    rename { 'javi.jar' }
+}
+
+// Copy fat JAR to dist directory
+tasks.register('distFat', Copy) {
+    dependsOn shadowJar
+    from shadowJar.archiveFile
+    into "$projectDir/dist"
+    rename { 'javi-all.jar' }
+}
+
