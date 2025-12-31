@@ -101,7 +101,8 @@ public final class IntArrayTest {
          trace("  arr[" + i + "]=" + arr.get(i));
       }
 
-      assert arr.size() == 3 : "size should be 3 after removing 2 elements, got " + arr.size();
+      assert arr.size() == 3
+         : "size should be 3 after removing 2 elements, got " + arr.size();
       assert arr.get(0) == 30 : "get(0) should be 30, got " + arr.get(0);
       assert arr.get(1) == 40 : "get(1) should be 40, got " + arr.get(1);
       assert arr.get(2) == 50 : "get(2) should be 50, got " + arr.get(2);

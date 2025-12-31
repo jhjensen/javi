@@ -174,7 +174,7 @@ public final class MiscCommands extends Rgroup  {
       private static final long serialVersionUID = 1;
       private transient Process proc;
 
-      static ProcIo mkProcIo(String namei, String ...cmd) throws
+      static ProcIo mkProcIo(String namei, String... cmd) throws
             IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader input = new BufferedReader(new InputStreamReader(
@@ -183,7 +183,7 @@ public final class MiscCommands extends Rgroup  {
       }
 
       private ProcIo(String namei, Process proci,
-            BufferedReader inp, String ...cmd) {
+            BufferedReader inp, String... cmd) {
          super(new FileProperties(FileDescriptor.InternalFd.make(namei),
             StringIoc.converter), true, inp);
          proc = proci;

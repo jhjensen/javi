@@ -68,7 +68,7 @@ final class MakeCmd extends Rgroup {
       private Process proc;
       private static final long serialVersionUID = 1;
 
-      static PositionCmd make(String name, String ... cmd) throws IOException {
+      static PositionCmd make(String name, String... cmd) throws IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader buf = new BufferedReader(
             new InputStreamReader(proc.getInputStream(), "UTF-8"));
@@ -109,7 +109,7 @@ final class MakeCmd extends Rgroup {
          lastarg = arg.toString();
       String[] cmd = {"/opt/local/bin/perl", "../bin/make.pl", file, arg.toString()};
 
-       trace("cmd ", cmd);
+      trace("cmd ", cmd);
       PosListList.Cmd.setErrors(PositionCmd.make("mk " + file, cmd));
 
    }

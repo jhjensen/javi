@@ -314,7 +314,7 @@ final class TestPS extends PersistantStack<Object> {
       dcb = true;
    }
 
-   final class TestIterator extends PersistantStack<Object> .PSIterator{
+   final class TestIterator extends PersistantStack<Object> .PSIterator {
 
       protected boolean isOutLine(Object ob) {
          return ob instanceof Oline;

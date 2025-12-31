@@ -60,6 +60,7 @@
     <!-- Checks for Size Violations.                    -->
     <!-- See http://checkstyle.sf.net/config_sizes.html -->
     <module name="LineLength">
+       <property name="max" value="90"/>
        <property name="ignorePattern" value="^ *\/\/.*$"/>
     </module>
 
@@ -78,6 +79,8 @@
            <property name="basicOffset" value="3"/>
            <property name="caseIndent" value="3"/>
            <property name="lineWrappingIndentation" value="3"/>
+           <property name="throwsIndent" value="3"/>
+           <property name="arrayInitIndent" value="3"/>
         </module>
 
 
@@ -177,7 +180,8 @@
         <module name="FinalClass"/>
         <!-- module name="HideUtilityClassConstructor"/> -->
         <module name="InterfaceIsType"/>
-        <module name="VisibilityModifier"/>
+        <!-- Allow public fields for data classes like Position, MovePos -->
+        <!-- <module name="VisibilityModifier"/> -->
 
 
         <!-- Miscellaneous other checks.                   -->

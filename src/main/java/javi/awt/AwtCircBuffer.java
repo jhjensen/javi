@@ -67,9 +67,7 @@ public final class AwtCircBuffer extends CircBuffer implements
 
    public boolean isDataFlavorSupported(DataFlavor flavor) {
       trace("got isdataflavorsupported " + flavor);
-      return (flavor == DataFlavor.stringFlavor)
-         ? true
-         : false;
+      return flavor == DataFlavor.stringFlavor;
    }
 
    void enableClip(Object arg) {

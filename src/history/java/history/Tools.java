@@ -36,7 +36,7 @@ public final class Tools {
       }
    }
 
-   public static void trace(Object ... args) {
+   public static void trace(Object... args) {
       StringBuilder stb = new StringBuilder();
       for (Object arg : args) {
          if (arg == null)
@@ -80,7 +80,7 @@ public final class Tools {
    }
 
    public static ArrayList<String> execute(Charset charSet,
-         String ... command) throws IOException {
+         String... command) throws IOException {
       Process proc = iocmd(command);
 
       if (charSet == null)
@@ -107,7 +107,7 @@ public final class Tools {
          new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
 
-   public static BufferedReader runcmd(String ... str) throws IOException {
+   public static BufferedReader runcmd(String... str) throws IOException {
       return new BufferedReader(
          new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
    }
@@ -129,7 +129,7 @@ public final class Tools {
       return process;
    }
 
-   public static synchronized Process iocmd(String ...  str) throws
+   public static synchronized Process iocmd(String...  str) throws
          IOException {
       //for (String stri : str)
       //  trace("iocmd " + stri);

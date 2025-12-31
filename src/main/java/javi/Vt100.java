@@ -385,7 +385,7 @@ class Vt100 extends TextEdit<String> {
          super(proci.getOutputStream(),
                new BufferedInputStream(proci.getInputStream()),
                new StringIoc("vt100 start", null)
-              );
+         );
          proc = proci;
       }
 
