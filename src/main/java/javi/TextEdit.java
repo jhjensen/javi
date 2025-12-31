@@ -740,6 +740,16 @@ public class TextEdit<OType> extends EditContainer<OType> {
 final class EditTester1 {
    private EditTester1() { }
 
+   /** Get path to a test file in the test directory */
+   private static String testPath(String name) {
+      return history.Testutil.testFile(name).getPath();
+   }
+
+   /** Create a LocalFile in the test directory */
+   private static FileDescriptor.LocalFile make(String name) {
+      return FileDescriptor.LocalFile.make(history.Testutil.testFile(name));
+   }
+
    static void copyFile(String from, String to) throws IOException {
       BufferedInputStream input =
          new BufferedInputStream(new FileInputStream(from));
@@ -777,7 +787,7 @@ final class EditTester1 {
    }
 
    static TextEdit<String> newTe(String name) {
-      FileDescriptor fd = FileDescriptor.make(name);
+      FileDescriptor fd = FileDescriptor.make(testPath(name));
       FileProperties fp = new FileProperties(fd, StringIoc.converter);
       FileInput fi = new FileInput(fp);
       TextEdit<String> retVal = new TextEdit(fi, fp);
@@ -846,8 +856,8 @@ final class EditTester1 {
 
       UI.setStream(new StringReader("b\n"));
       starttest();
-      copyFile("extest1", "extest2");
-      copyFile("extest1.dmp2", "extest2.dmp2");
+      copyFile(testPath("extest1"), testPath("extest2"));
+      copyFile(testPath("extest1.dmp2"), testPath("extest2.dmp2"));
 
       TextEdit<String> ex2 = newTe("extest2");
       myassert(ex2.at(1).equals("xxx"), ex2);
@@ -862,8 +872,8 @@ final class EditTester1 {
    static void test3() throws IOException {
       UI.setStream(new StringReader("b\n"));
       starttest();
-      copyFile("extest2", "extest3");
-      copyFile("extest2.dmp2", "extest3.dmp2");
+      copyFile(testPath("extest2"), testPath("extest3"));
+      copyFile(testPath("extest2.dmp2"), testPath("extest3.dmp2"));
       TextEdit<String> ex3 = newTe("extest3");
       myassert(0 == ex3.at(1).length(), ex3);
       ex3.redo();
@@ -874,8 +884,9 @@ final class EditTester1 {
 
    static void makeFile(String filename, String contents) throws IOException {
       make(filename).delete();
+      String fullPath = testPath(filename);
       OutputStreamWriter fs = new OutputStreamWriter(
-         new FileOutputStream(filename), "UTF-8");
+         new FileOutputStream(fullPath), "UTF-8");
       try {
          fs.write(contents);
       } finally {
@@ -884,11 +895,12 @@ final class EditTester1 {
    }
 
    static void checkFile(String filename, String contents) throws IOException {
-      File f = new File(filename);
+      String fullPath = testPath(filename);
+      File f = new File(fullPath);
       char[] fchar = new char[(int) f.length() + 20];
       //FileReader fs = new FileReader(filename,"UTF-8");
       InputStreamReader fs = new InputStreamReader(
-         new FileInputStream(filename), "UTF-8");
+         new FileInputStream(fullPath), "UTF-8");
       try {
          int len = fs.read(fchar, 0, fchar.length);
          if (len != contents.length())
@@ -905,7 +917,7 @@ final class EditTester1 {
    static void test4() throws IOException {
       UI.setStream(new StringReader("fb\n"));
       starttest();
-      copyFile("extest1.dmp2", "extest4.dmp2");
+      copyFile(testPath("extest1.dmp2"), testPath("extest4.dmp2"));
 
       makeFile("extest4", "aaaa\n");
       TextEdit<String> ex4 = newTe("extest4");
@@ -913,7 +925,7 @@ final class EditTester1 {
       ex4.undo();
       myassert(ex4.at(1).equals("aaaa"), ex4.at(1));
       ex4.disposeFvc();
-      copyFile("extest1.dmp2", "extest4.dmp2");
+      copyFile(testPath("extest1.dmp2"), testPath("extest4.dmp2"));
 
       ex4 = newTe("extest4");
       myassert(ex4.at(1).equals("xxx"), ex4.at(1));
@@ -1105,7 +1117,7 @@ final class EditTester1 {
       {
          make("perftest.dmp2").delete();
          OutputStreamWriter fs = new OutputStreamWriter(
-            new FileOutputStream("perftest"), "UTF-8");
+            new FileOutputStream(testPath("perftest")), "UTF-8");
          try {
             for (int ii = 0; ii < tot; ii++)
                fs.write("xxline " + ii + '\n');
@@ -1155,7 +1167,7 @@ final class EditTester1 {
       starttest();
 
       makeFile("extest10", "aaaa\n\bb\n");
-      copyFile("extest1.dmp2", "extest10.dmp2");
+      copyFile(testPath("extest1.dmp2"), testPath("extest10.dmp2"));
       TextEdit<String> ex = newTe("extest10");
       ex.inserttext("aaa", 0, 1);
       ex.printout();
@@ -1358,8 +1370,8 @@ final class EditTester1 {
       starttest();
 
       UI.setStream(new StringReader("b"));
-      copyFile("extest1", "extest17");
-      copyFile("extest1.dmp2", "extest17.dmp2");
+      copyFile(testPath("extest1"), testPath("extest17"));
+      copyFile(testPath("extest1.dmp2"), testPath("extest17.dmp2"));
 
       TextEdit<String> ex = newTe("extest17");
       makeFile("extest17", "asdfasf\n");
@@ -1565,6 +1577,7 @@ final class EditTester1 {
          Tools.doGC();
          trace("memory after clear " + (Runtime.getRuntime().totalMemory()
                                         - Runtime.getRuntime().freeMemory()));
+         history.Testutil.cleanupTestFiles();  // Only clean up if all tests passed
          trace("test executed successfully");
          //Thread.sleep(10000000);
       } catch (Throwable e) {

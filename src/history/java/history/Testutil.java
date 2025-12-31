@@ -2,10 +2,10 @@ package history;
 
 import java.io.File;
 
-class Testutil {
+public class Testutil {
 
    /** Directory for test files - inside the project build directory */
-   static final File testDir;
+   public static final File testDir;
 
    static {
       // Find project root by looking for build directory
@@ -15,12 +15,12 @@ class Testutil {
    }
 
    /** Create a File object in the test directory */
-   static File testFile(String name) {
+   public static File testFile(String name) {
       return new File(testDir, name);
    }
 
    /** Clean up test files - call only on success */
-   static void cleanupTestFiles() {
+   public static void cleanupTestFiles() {
       File[] files = testDir.listFiles();
       if (files != null) {
          for (File f : files) {
