@@ -136,10 +136,11 @@ public final class Tools {
       return pb.redirectErrorStream(true).command(str).start();
    }
 
+   @SuppressWarnings("removal")
    public static void doGC() {
       for (int ii = 0; ii  < 3; ii++) {
          System.gc();
-         System.runFinalization();
+         // System.runFinalization() removed - deprecated for removal
       }
    }
 }

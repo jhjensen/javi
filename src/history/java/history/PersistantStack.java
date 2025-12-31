@@ -639,6 +639,8 @@ public abstract class PersistantStack<E> {
       return size;
    }
 
+   @SuppressWarnings("removal")
+   @Deprecated(forRemoval = true)
    protected final void finalize() throws Throwable {
       if (writtenCount != -1)
          trace(

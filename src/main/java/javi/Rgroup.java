@@ -118,12 +118,16 @@ public abstract class Rgroup {
       }
       try {
          Class nclass = Class.forName(lclass);
-         glist.put(realfile, nclass.newInstance());
+         glist.put(realfile, nclass.getDeclaredConstructor().newInstance());
       } catch (IllegalAccessException e) {
          throw new RuntimeException("vigroup ", e);
       } catch (InstantiationException e) {
          throw new RuntimeException("vigroup ", e);
       } catch (ClassNotFoundException e) {
+         throw new RuntimeException("vigroup ", e);
+      } catch (NoSuchMethodException e) {
+         throw new RuntimeException("vigroup ", e);
+      } catch (java.lang.reflect.InvocationTargetException e) {
          throw new RuntimeException("vigroup ", e);
       }
    }

@@ -245,35 +245,31 @@ public interface Plugin {
          IOException, ClassNotFoundException,
          NoSuchFieldException, IllegalAccessException {
 
-         java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction()  {
-               public Object run() {
-                  try {
-                     final JarLoader jarLoader = new JarLoader(jarFile);
+         // AccessController.doPrivileged deprecated - run directly
+         // (Security Manager is being removed from Java)
+         try {
+            final JarLoader jarLoader = new JarLoader(jarFile);
 
-                     /* Load the class from the jar file and resolve it. */
-                     Class c = jarLoader.loadClass(
-                        "javi.plugin.FindBugs", true);
-                     //trace("class loaded");
-                     if (Plugin.class.isAssignableFrom(c)) {
-                        // Yep, lets call a method  we know about.  */
-                        //java.lang.reflect.Method m = c.getDeclaredMethod("init");
-                        //m.invoke(c);
+            /* Load the class from the jar file and resolve it. */
+            Class c = jarLoader.loadClass(
+               "javi.plugin.FindBugs", true);
+            //trace("class loaded");
+            if (Plugin.class.isAssignableFrom(c)) {
+               // Yep, lets call a method  we know about.  */
+               //java.lang.reflect.Method m = c.getDeclaredMethod("init");
+               //m.invoke(c);
 
-                        //c.toString();
+               //c.toString();
 
-                        java.lang.reflect.Field rf =
-                           c.getDeclaredField("pluginInfo");
-                        trace("plugin info " + rf.get(null));
-                     } else {
-                        trace("unable to run class " + c);
-                     }
-                  } catch (Throwable e) {
-                     trace("no plugins to load " + e);
-                  }
-                  return null;
-               }
-            });
+               java.lang.reflect.Field rf =
+                  c.getDeclaredField("pluginInfo");
+               trace("plugin info " + rf.get(null));
+            } else {
+               trace("unable to run class " + c);
+            }
+         } catch (Throwable e) {
+            trace("no plugins to load " + e);
+         }
       }
    }   // End of nested Class Test.
 }
