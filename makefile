@@ -20,13 +20,9 @@ CLASSPATH=/Users/jjensen/javi/build/classes/java/main:/Users/jjensen/javi/lib/ju
 # Build targets
 #==============================================================================
 
-# Compile Java sources
+# Compile Java sources (warnings are errors by default)
 compile:
 	./gradlew compileJava
-
-# Compile with warnings as errors
-compile-strict:
-	./gradlew compileJava -Pwerror
 
 # Clean build artifacts
 clean:
@@ -160,14 +156,13 @@ help:
 	@echo "Javi Makefile Targets:"
 	@echo ""
 	@echo "Build:"
-	@echo "  make compile        - Compile Java sources (default)"
-	@echo "  make compile-strict - Compile with warnings as errors"
-	@echo "  make jar            - Build JAR file"
-	@echo "  make fatjar         - Build fat JAR with dependencies"
-	@echo "  make dist           - Copy JAR to dist/ directory"
-	@echo "  make dist-fat       - Copy fat JAR to dist/ directory"
-	@echo "  make build          - Full build (compile + jar)"
-	@echo "  make clean          - Clean build artifacts"
+	@echo "  make compile  - Compile Java sources (warnings are errors)"
+	@echo "  make jar      - Build JAR file"
+	@echo "  make fatjar   - Build fat JAR with dependencies"
+	@echo "  make dist     - Copy JAR to dist/ directory"
+	@echo "  make dist-fat - Copy fat JAR to dist/ directory"
+	@echo "  make build    - Full build (compile + jar)"
+	@echo "  make clean    - Clean build artifacts"
 	@echo ""
 	@echo "Test:"
 	@echo "  make test     - Run all tests"

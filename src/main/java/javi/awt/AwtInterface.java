@@ -363,7 +363,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      }
 //???            if (fcontext.dispatchKeyEvent(kev))
                   //???        break;
-                  EventQueue.insert(new JeyEvent(kev.getModifiers(),
+                  EventQueue.insert(new JeyEvent(
+                     JeyEvent.convertExtendedModifiers(kev.getModifiersEx()),
                      kev.getKeyCode(), kev.getKeyChar()));
                }
                break;

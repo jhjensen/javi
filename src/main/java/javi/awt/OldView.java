@@ -574,7 +574,7 @@ final class OldView extends AwtView {
          //trace("pixelwidth  = " + pixelWidth + " charwidth = " + charwidth + " screenSize " + screenSize);
       }
 
-      @SuppressWarnings("fallthrough")
+      @SuppressWarnings({"fallthrough", "deprecation"})
 
       private void mousepress(MouseEvent event) {
          //trace("modifiers = " +Integer.toHexString( event.getModifiers()));

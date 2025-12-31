@@ -40,10 +40,7 @@ sourceSets {
 }
 
 tasks.named('compileJava') {
-    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-Xmaxwarns', '500']
-    if (project.hasProperty('werror')) {
-        options.compilerArgs += ['-Werror']
-    }
+    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-Xmaxwarns', '500', '-Werror']
 }
 
 // Ensure history classes are included in the JAR

@@ -92,4 +92,18 @@ public final class JeyEvent {
    public static final int VK_DELETE = 127;
    public static final char CHAR_UNDEFINED = 65535;
 
+   /**
+    * Convert extended modifiers (from getModifiersEx()) to old-style modifiers.
+    * getModifiersEx() uses SHIFT_DOWN_MASK=64, CTRL_DOWN_MASK=128, etc.
+    * We need SHIFT_MASK=1, CTRL_MASK=2, META_MASK=4, ALT_MASK=8.
+    */
+   public static int convertExtendedModifiers(int extMods) {
+      int result = 0;
+      if ((extMods & 0x40) != 0) result |= SHIFT_MASK;   // SHIFT_DOWN_MASK
+      if ((extMods & 0x80) != 0) result |= CTRL_MASK;    // CTRL_DOWN_MASK
+      if ((extMods & 0x100) != 0) result |= META_MASK;   // META_DOWN_MASK
+      if ((extMods & 0x200) != 0) result |= ALT_MASK;    // ALT_DOWN_MASK
+      return result;
+   }
+
 }

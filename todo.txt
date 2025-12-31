@@ -3,6 +3,8 @@ way of doing tests for ui. functions.
 enhance make dist verify that everthing is checked in, built and and tests run create a versioned jar and create a tag.
 popup for changed file
 
+Work on eliminating the SuppressWarnings directives.
+
 display last line of output on statusbar after mk command.
 
 clang-format for java?
