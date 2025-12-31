@@ -1,3 +1,13 @@
+^f ^b stopped working
+way of doing tests for ui. functions.
+enhance make dist verify that everthing is checked in, built and and tests run create a versioned jar and create a tag.
+popup for changed file
+
+display last line of output on statusbar after mk command.
+
+clang-format for java?
+edit this file for clarity and priority.
+
 in vt100 should really detect our current charset from the terminal
 JS.java should add charset detection?
 revisit all uses of string "UTF-8";

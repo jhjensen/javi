@@ -53,6 +53,17 @@ make clean
 - JAR: `build/libs/javi-1.0.jar`
 - Fat JAR: `build/libs/javi-all.jar`
 
+### Temporary Files
+
+Use `tmp/` directory in the project root for temporary files during agent operations.
+This directory is gitignored and allows VS Code command approval to work smoothly
+(avoids paths outside the project that require extra approval steps).
+
+```bash
+# Example: writing analysis output
+./gradlew compileJava 2>&1 | grep "warning:" > tmp/warnings.txt
+```
+
 ## Running Tests
 
 **Always run tests via make** to ensure consistent classpath and execution:

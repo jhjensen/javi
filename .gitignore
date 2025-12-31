@@ -19,3 +19,4 @@ cycle.xml
 reportXMLtoHTML.xsl
 .gradle
 .vscode
+tmp/
