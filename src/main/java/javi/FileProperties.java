@@ -20,6 +20,7 @@ public final class FileProperties<OType> implements Serializable {
    private transient Charset charSet;
    private transient String fileString;
    private transient boolean readonly = false;
+   private transient long lastModified = 0;
 
    private String lsep = staticLine; //??? final
 
@@ -105,6 +106,33 @@ public final class FileProperties<OType> implements Serializable {
             ? "\r\n"
             : System.getProperty("line.separator");
 
+      // record modification time for later detection of external changes
+      if (fdes instanceof FileDescriptor.LocalFile) {
+         lastModified = ((FileDescriptor.LocalFile) fdes).lastModified();
+      }
+
       return fileString;
+   }
+
+   /**
+    * Check if the file has been modified externally since it was read.
+    * @return true if the file was modified externally
+    */
+   public boolean checkModified() {
+      if (lastModified == 0 || !(fdes instanceof FileDescriptor.LocalFile)) {
+         return false;
+      }
+      long currentModTime = ((FileDescriptor.LocalFile) fdes).lastModified();
+      return currentModTime != lastModified;
+   }
+
+   /**
+    * Update the stored modification time to the current file time.
+    * Call this after reloading or after a save.
+    */
+   public void updateModifiedTime() {
+      if (fdes instanceof FileDescriptor.LocalFile) {
+         lastModified = ((FileDescriptor.LocalFile) fdes).lastModified();
+      }
    }
 }

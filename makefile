@@ -11,10 +11,11 @@ CC=g++
 LINK=ld
 
 # Default target
-all: compile
+all: ctag
 
 # Classpath for running Java
-CLASSPATH=/Users/jjensen/javi/build/classes/java/main:/Users/jjensen/javi/lib/juniversalchardet-1.0.3.jar:/Users/jjensen/javi/lib/rhino-1.7.14.jar
+R=/Users/jjensen/javi
+export CLASSPATH=$R/build/classes/java/main:$R/lib/juniversalchardet-1.0.3.jar:$R/lib/rhino-1.7.14.jar
 
 #==============================================================================
 # Build targets
@@ -27,7 +28,6 @@ compile:
 # Clean build artifacts
 clean:
 	./gradlew clean
-	rm -f ID tags
 
 # Build JAR file
 jar:
@@ -64,11 +64,11 @@ edittest: compile
 intarraytest: compile
 	java -ea -cp $(CLASSPATH) history.IntArrayTest
 
+ctagtest: compile
+	java -ea -cp $(CLASSPATH) javi.Ctag
+
 # Run all tests
-test: compile
-	java -cp $(CLASSPATH) javi.EditTester1
-	java -cp $(CLASSPATH) history.PSTest
-	java -ea -cp $(CLASSPATH) history.IntArrayTest
+test: ctagtest intarraytest pstest edittest 
 
 # Run PSTest with coverage and generate report
 pstest-coverage:
@@ -123,11 +123,11 @@ tags:
 	ctags -n -R src
 
 # Generate ID database for gid/lid
-id:
+ID:
 	mkid -m ~/cyghome/id-lang.map src
 
 # Update both tags and ID
-ID: tags id
+id: tags ID
 
 #==============================================================================
 # Legacy targets (kept for compatibility)
@@ -137,10 +137,14 @@ jarf=build/libs/javi-all.jar
 
 gbuild: compile
 
-automake: test
+automake: runclass #runclass
 
 runner: jar
-	java -jar build/libs/javi-1.0.jar
+	java -cp $(CLASSPATH) -jar build/libs/javi-1.0.jar
+
+runclass:
+	echo $$CLASSPATH
+	java  -cp $(CLASSPATH) javi.Javi src history main java javi awt history
 
 FORCE:
 
@@ -179,5 +183,5 @@ help:
 	@echo ""
 	@echo "Development:"
 	@echo "  make tags     - Generate ctags"
-	@echo "  make id       - Generate ID database"
+	@echo "  make ID       - Generate ID database"
 	@echo "  make help     - Show this help"

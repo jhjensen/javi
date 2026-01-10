@@ -452,11 +452,14 @@ public class EditContainer<OType> implements
                try {
                   //trace("backing up " + ev);
                   ev.backup.idleSave();
-                  // !!!!! in order to enable must
-                  //      update modified time on printout
-                  //      add gui to confirm that we want to reload
-                  //if (ev.prop.checkModified())
-                  //   ev.reload();
+                  // check if file was modified externally
+                  if (ev.prop.checkModified()) {
+                     if (UI.confirmReload(ev.getName())) {
+                        ev.reload();
+                     }
+                     // update modified time whether reloaded or ignored
+                     ev.prop.updateModifiedTime();
+                  }
                } catch (BadBackupFile e) {
                   if (UI.reportBadBackup(ev.getName(), e)) {
                      try {
@@ -1024,6 +1027,7 @@ public class EditContainer<OType> implements
       mkback(0);
 
       prop.safeWrite(getStringIter());
+      prop.updateModifiedTime(); // update after write to avoid false detection
       backup.writeRecord();
       synchronized  (listeners) {
          for (FileStatusListener evl : listeners)

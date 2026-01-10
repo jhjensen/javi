@@ -1,49 +1,68 @@
-^f ^b stopped working
-way of doing tests for ui. functions.
-enhance make dist verify that everthing is checked in, built and and tests run create a versioned jar and create a tag.
-popup for changed file
+edit todo.txt for clarity and priority. 
+If you are unsure what is meant by some of the items as for clarification.
+Some of these items are old, and I have forgotten what the meant.
+items in todo.txt are paragraphs separated by empty lines.
+Each item will be a future prompt for you, so try to be complete.
+ignore everything  after the "done :" line.
+put the output into todo.md
+
+integrate git. Magit might be an inspiration.
+
+integrate LSP
+
+integrate copilot.
+
+I would like a popup when a currently open file is changed on the filesystem.
+I suspect it can be tied into the EventQueue idler interface.
+
+create a methodolgy for  doing tests for ui. functions.
+
+enhance make dist: verify that everthing is checked in, built and and tests run,  create a versioned jar and create a tag.
 
 Work on eliminating the SuppressWarnings directives.
 
 display last line of output on statusbar after mk command.
 
-clang-format for java?
-edit this file for clarity and priority.
+is there something like clang-format for java? If so integrate it.
 
+improve vt100
 in vt100 should really detect our current charset from the terminal
+multiple ssh
+
 JS.java should add charset detection?
+
 revisit all uses of string "UTF-8";
 
-when writing file need to copy permissions
+When writing file need to copy permissions.
+
 add safeWrite to fdes?
 
 It would be very good in PersistantStack.push to move the flush to close, and do it occasionally
 Also BadBackupFile should inherit from IOException
 
-split AwtInterface into separate files.
+refactor AwtInterface into separate files?
 
 when rebuilding kill the old build if it is still running?
-sometimes it seems like files that are read in still leave a red background
-get rid of getnext
+
+get rid of getnext?
+
 findbug cmd not working
 
 lock access to .dmp2
+
 list of shells
+
 improve remote ctag.
+
 improve local/remote mkid
-improve vt100
 
 redo PersitantStack->RanFileArray
-:re
-some how got back to main:288 with big lock unheld
-jython
 
-diredit
+jython if it ever supports python3
+
+diredit similare to vi
+
 fix cmd line.
-multiple ssh
-{[(0O;:.,Ll1| 1234 '`"um
-
-fix warnings.
 
 use Iterable<OType> in EditContainer instead of Object Array
 EditContainer Container/Iterator
@@ -53,11 +72,13 @@ IOcontroller could be Iterator<OType>?
 
 chinese
 edit file list
-Junit testcases
-new view
-findbugs
+
+convert testcases to Junit 
+
+new view from oldstuff?
 
 done :
+{[(0O;:.,Ll1| 1234 '`"um
    static import.
    EditTester1 fails
    Join doensn't put in space

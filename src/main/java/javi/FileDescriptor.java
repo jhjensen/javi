@@ -409,6 +409,10 @@ public class FileDescriptor implements Serializable {
          return fh.canWrite();
       }
 
+      final long lastModified() {
+         return fh.lastModified();
+      }
+
       final java.nio.file.Path toPath() {
          return fh.toPath();
       }

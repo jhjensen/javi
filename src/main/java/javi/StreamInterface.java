@@ -111,6 +111,29 @@ public final class StreamInterface extends UI {
       }
    }
 
+   public boolean iconfirmReload(String filename) {
+      try {
+         while (true) {
+            if (!inStr.ready())
+               trace("file changed on disk, reload file?(y/n) " + filename);
+                  
+            int ch = inStr.read();
+            //trace("read in " + (char)ch);
+            switch (ch) {
+               case 'y':
+                  return true;
+               case 'n':
+                  return false;
+               default:
+                  trace("stream got unexpected char = " + ch);
+            }
+         }
+      } catch (IOException err) {
+         trace("ireportDiff can not read from input Stream ");
+         return false;
+      }
+   }
+
    public void irepaint() { /* unimplemented */ }
    public void idispose() { /* unimplemented */ }
    public String igetFile() {

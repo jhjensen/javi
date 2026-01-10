@@ -66,6 +66,7 @@ public abstract class UI {
 
    public abstract Buttons istopConverter(String commandname);
    public abstract boolean ireportBadBackup(String filename, BadBackupFile e);
+   public abstract boolean iconfirmReload(String filename);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -250,6 +251,20 @@ public abstract class UI {
       else {
          Thread.dumpStack();
          trace("unhandled Messege:" + e);
+         return false;
+      }
+   }
+
+   /**
+    * Ask user to confirm reloading a file that was modified externally.
+    * @param filename the name of the modified file
+    * @return true if user wants to reload, false to ignore
+    */
+   public static final boolean confirmReload(String filename) {
+      if (null != instance)
+         return instance.iconfirmReload(filename);
+      else {
+         trace("confirmReload called with no UI instance");
          return false;
       }
    }
