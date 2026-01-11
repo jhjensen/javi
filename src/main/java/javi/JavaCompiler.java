@@ -131,8 +131,9 @@ final class JavaCompiler extends Rgroup {
             //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
             fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
                   Arrays.asList(
-                  new File("./build"),
-                  new File("lib/rhino1_7R3/js.jar"),
+                  new File("./build/classes/java/main"),
+                  new File("lib/rhino-1.7.14.jar"),
+                  new File("lib/rxtx-2.1.7.jar"),
                   new File("lib/junit3.8.2/junit.jar"),
                   new File("lib/juniversalchardet-1.0.3.jar"),
                   new File("c:/Progra~1/Java/"
@@ -143,7 +144,7 @@ final class JavaCompiler extends Rgroup {
 
             //String [] options = {"-Xlint:all"};
 
-            String[] options = {"-d", "build"};
+            String[] options = {"-d", "build/classes/java/main"};
             //String [] options = {"-d", "gbuild/java/build", "-cp",
              //  "gbuild/java/build","-Xlint"};
 

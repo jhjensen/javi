@@ -111,11 +111,11 @@ public final class StreamInterface extends UI {
       }
    }
 
-   public boolean iconfirmReload(String filename) {
+   public boolean iconfirmReload(String filename, boolean isModified) {
       try {
          while (true) {
             if (!inStr.ready())
-               trace("file changed on disk, reload file?(y/n) " + filename);
+               trace(filename + " changed on disk" +(isModified ? " and in editor" : "") + " , reload file?(y/n) ");
                   
             int ch = inStr.read();
             //trace("read in " + (char)ch);

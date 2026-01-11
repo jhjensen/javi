@@ -454,7 +454,7 @@ public class EditContainer<OType> implements
                   ev.backup.idleSave();
                   // check if file was modified externally
                   if (ev.prop.checkModified()) {
-                     if (UI.confirmReload(ev.getName())) {
+                     if (UI.confirmReload(ev.getName(),ev.isModified())) {
                         ev.reload();
                      }
                      // update modified time whether reloaded or ignored

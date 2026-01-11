@@ -118,12 +118,13 @@ cstyle-file:
 # Development utility targets
 #==============================================================================
 
+PORCE:
 # Generate tags for code navigation
-tags:
+tags: FORCE
 	ctags -n -R src
 
 # Generate ID database for gid/lid
-ID:
+ID: FORCE
 	mkid -m ~/cyghome/id-lang.map src
 
 # Update both tags and ID

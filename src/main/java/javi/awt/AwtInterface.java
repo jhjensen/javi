@@ -1283,10 +1283,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    final class ConfirmReloadDia extends SyncAwt<Boolean> {
 
       private String filename;
+      private boolean isModified;
       private ReloadButton dia = new ReloadButton();
 
-      ConfirmReloadDia(String filenamei) {
+      ConfirmReloadDia(String filenamei, boolean isModifiedi) {
          filename = filenamei;
+         isModified = isModifiedi;
       }
 
       private final class ReloadButton extends NDialog {
@@ -1300,15 +1302,16 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          ReloadButton() {
             super(frm, "File Changed", new FlowLayout());
             add(msglabel);
+            add(reload);
+            add(ignore);
          }
 
          boolean getChoice() {
-            String tstring = "File modified: " + filename;
-
+            String tstring = filename + " modified  externally" +   (isModified ? " and internally " : "") ;
             this.setTitle(tstring);
 
             msglabel.setText(tstring
-               + " was modified outside the editor. Reload it?");
+               + " - Reload it?");
 
             this.pack();
             Dimension d = msglabel.getPreferredSize();
@@ -1323,8 +1326,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
    }
 
-   public boolean iconfirmReload(String filename) {
-      return new ConfirmReloadDia(filename).postWait().getResult();
+   public boolean iconfirmReload(String filename, boolean isModified) {
+      return new ConfirmReloadDia(filename, isModified).postWait().getResult();
    }
 
    private static final class Diff extends NDialog {
