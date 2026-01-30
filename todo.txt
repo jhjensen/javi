@@ -140,5 +140,3 @@ I suspect it can be tied into the EventQueue idler interface.
    make all positions have a FileDescriptor
    O sometimes pukes
    ex move, copy  are wrong
- 
-

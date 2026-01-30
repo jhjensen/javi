@@ -15,26 +15,34 @@ This document consolidates items from todo.txt, BUGS.md, and IMPROVEMENTS.md int
 6. [Unclear Items](#unclear-items)
 
 ---
+## New requests
+
+the commands agents run should generally not put output to stdout or stderr.  
+The agent should examine the output in the file, rather than try to read stdout/err.
+The reduces the number of commands that the agent has to have approved.
+These output files belong in the ai directory.
+Modify Agents.md with clear instructions to this effect that copilot will understand.
+
+In PositionIoc it reports the last line read in.  
+There are subclasses that also report the last line, for instance JavaCompiler.
+refactor so that common code is used.  
+Also if there are no lines of output that should be reported.
 
 ## Feature Requests
 
 
 ### F3. Display Last Line of Output on Status Bar After `mk` Command
 **Priority**: Medium  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-F3-mk-output-statusbar.md](ai/plan-F3-mk-output-statusbar.md)
+**Difficulty**: Easy  
+**Plan**: [ai/plan-F3-mk-output-statusbar.md](ai/plan-F3-mk-output-statusbar.md)  
+**Completeness**: 100%  
+**Unclear**: No
 
 After the `mk` (make) command completes, display the last line of output on the status bar.
 
-**Challenge**: The line in `positionIOC` that displays completion:
-```java
-UI.reportMessage(this + "complete " + errcount + " results");
-```
-...has no access to the previous/last output line from the build.
+**Implementation**: Added `lastOutputLine` field to `PositionIoc` that tracks the last non-empty line read during parsing. The `formatCompletionMessage()` method constructs the status message including this line (truncated to 60 chars if needed).
 
-**Approach**: May need to capture and store the last line from the build output stream before reporting completion.
-
-**Files involved**: `IoConverter.java`, `PositionMark.java` or related, `UI.java`
+**Files modified**: `src/main/java/javi/PositionIoc.java`
 
 ---
 
