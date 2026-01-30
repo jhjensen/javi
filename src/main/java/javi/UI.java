@@ -54,6 +54,32 @@ public abstract class UI {
       WAITPROC, KILLPROC
    };
 
+   /**
+    * Actions for file change detection popup.
+    * 
+    * <p>When a file is modified externally while open in Javi, the user
+    * can choose one of these actions:</p>
+    * <ul>
+    *   <li>{@link #RELOAD} - Reload the file from disk, discarding buffer changes</li>
+    *   <li>{@link #IGNORE} - Ignore this change, keep buffer contents</li>
+    *   <li>{@link #IGNORE_ALWAYS} - Permanently ignore external changes for this file</li>
+    *   <li>{@link #SHOW_DIFF} - Show diff between buffer and disk version</li>
+    *   <li>{@link #STOP_EDITING} - Close this buffer</li>
+    * </ul>
+    */
+   public enum ReloadAction {
+      /** Reload the file from disk, discarding buffer changes. */
+      RELOAD,
+      /** Ignore this change notification, keep buffer contents. */
+      IGNORE,
+      /** Permanently ignore external changes for this file during this session. */
+      IGNORE_ALWAYS,
+      /** Show diff between current buffer and disk version. */
+      SHOW_DIFF,
+      /** Close this buffer (prompts to save if modified). */
+      STOP_EDITING
+   }
+
    private static UI instance;
 
    protected UI() {
@@ -103,7 +129,15 @@ public abstract class UI {
 
    public abstract Buttons istopConverter(String commandname);
    public abstract boolean ireportBadBackup(String filename, BadBackupFile e);
-   public abstract boolean iconfirmReload(String filename, boolean isModified);
+
+   /**
+    * Ask user how to handle a file that was modified externally.
+    * 
+    * @param filename the name of the modified file
+    * @param isModified true if the buffer also has unsaved changes
+    * @return the user's chosen action
+    */
+   public abstract ReloadAction iconfirmReload(String filename, boolean isModified);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -293,16 +327,18 @@ public abstract class UI {
    }
 
    /**
-    * Ask user to confirm reloading a file that was modified externally.
+    * Ask user how to handle a file that was modified externally.
+    * 
     * @param filename the name of the modified file
-    * @return true if user wants to reload, false to ignore
+    * @param isModified true if the buffer also has unsaved changes
+    * @return the user's chosen action, or IGNORE if no UI instance
     */
-   public static final boolean confirmReload(String filename, boolean isModified) {
+   public static final ReloadAction confirmReload(String filename, boolean isModified) {
       if (null != instance)
          return instance.iconfirmReload(filename, isModified);
       else {
          trace("confirmReload called with no UI instance");
-         return false;
+         return ReloadAction.IGNORE;
       }
    }
 

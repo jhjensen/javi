@@ -464,9 +464,32 @@ public class EditContainer<OType> implements
                   ev.backup.idleSave();
                   // check if file was modified externally
                   if (ev.prop.checkModified()) {
-                     if (UI.confirmReload(ev.getName(),ev.isModified())) {
-                        ev.reload();
-                     }
+                     // Loop to allow returning to dialog after Show Diff
+                     UI.ReloadAction action;
+                     do {
+                        action = UI.confirmReload(
+                           ev.getName(), ev.isModified());
+                        switch (action) {
+                           case RELOAD:
+                              ev.reload();
+                              break;
+                           case IGNORE:
+                              // Do nothing, just update modified time below
+                              break;
+                           case IGNORE_ALWAYS:
+                              ev.prop.setIgnoreExternalChanges(true);
+                              break;
+                           case SHOW_DIFF:
+                              // Launch external diff tool and wait for it
+                              ev.showExternalDiff();
+                              // Loop will continue to show dialog again
+                              break;
+                           case STOP_EDITING:
+                              // TODO_AI: Implement stop editing
+                              // Need to properly close buffer
+                              break;
+                        }
+                     } while (action == UI.ReloadAction.SHOW_DIFF);
                      // update modified time whether reloaded or ignored
                      ev.prop.updateModifiedTime();
                   }
@@ -1042,6 +1065,55 @@ public class EditContainer<OType> implements
       synchronized  (listeners) {
          for (FileStatusListener evl : listeners)
             evl.fileWritten(this);
+      }
+   }
+
+   /**
+    * Show diff between buffer content and file on disk using external diff tool.
+    *
+    * <p>Writes the current buffer to a temp file and launches an external
+    * diff tool (configured via java.javi.diffcmd property, defaults to kdiff3)
+    * to compare the buffer content with the actual file on disk.
+    * Waits for the diff tool to complete before returning.</p>
+    */
+   final void showExternalDiff() {
+      java.io.File tempFile = null;
+      try {
+         // Create temp file with buffer content
+         tempFile = java.io.File.createTempFile("javi_diff_", ".tmp");
+
+         // Write buffer content to temp file
+         try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
+               new java.io.FileOutputStream(tempFile), "UTF-8")) {
+            Iterator<String> iter = getStringIter();
+            while (iter.hasNext()) {
+               writer.write(iter.next());
+               writer.write("\n");
+            }
+         }
+
+         // Get the actual file path
+         String actualFile = prop.fdes.shortName;
+         if (prop.fdes instanceof FileDescriptor.LocalFile) {
+            actualFile = ((FileDescriptor.LocalFile) prop.fdes).canonName;
+         }
+
+         // Launch diff tool and wait for it to complete
+         String diffCmd = System.getProperty("java.javi.diffcmd", "kdiff3");
+         String[] cmd = {diffCmd, tempFile.getAbsolutePath(), actualFile};
+         Process proc = Runtime.getRuntime().exec(cmd);
+         proc.waitFor();
+
+      } catch (IOException e) {
+         UI.popError("Failed to launch diff: " + e.getMessage(), e);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         UI.popError("Diff interrupted", e);
+      } finally {
+         // Clean up temp file
+         if (null != tempFile) {
+            tempFile.delete();
+         }
       }
    }
 

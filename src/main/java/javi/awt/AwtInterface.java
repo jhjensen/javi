@@ -16,12 +16,14 @@ import java.awt.Frame;
 import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Label;
 import java.awt.LayoutManager;
 import java.awt.Menu;
 import java.awt.MenuItem;
+import java.awt.Panel;
 import java.awt.Point;
 import java.awt.PopupMenu;
 import java.awt.TextArea;
@@ -1329,53 +1331,84 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          .postWait().getResult();
    }
 
-   final class ConfirmReloadDia extends SyncAwt<Boolean> {
+   /**
+    * Dialog for handling external file modifications.
+    * 
+    * <p>Shows options when a file has been modified on disk while open in the editor.
+    * Uses {@link SyncAwt} to safely release biglock2 before displaying, avoiding
+    * deadlock between the idle handler and AWT event thread.</p>
+    */
+   final class ConfirmReloadDia extends SyncAwt<UI.ReloadAction> {
 
       private String filename;
       private boolean isModified;
-      private ReloadButton dia = new ReloadButton();
+      private ReloadDialog dia = new ReloadDialog();
 
       ConfirmReloadDia(String filenamei, boolean isModifiedi) {
          filename = filenamei;
          isModified = isModifiedi;
       }
 
-      private final class ReloadButton extends NDialog {
+      private final class ReloadDialog extends NDialog {
          private static final long serialVersionUID = 1;
 
          private Label msglabel = new Label();
 
          private NButton reload = new NButton("Reload", this);
          private NButton ignore = new NButton("Ignore", this);
+         private NButton ignoreAlways = new NButton("Ignore Always", this);
+         private NButton showDiff = new NButton("Show Diff", this);
+         private NButton stopEdit = new NButton("Stop Edit", this);
 
-         ReloadButton() {
-            super(frm, "File Changed", new FlowLayout());
-            add(msglabel);
-            add(reload);
-            add(ignore);
+         ReloadDialog() {
+            super(frm, "File Changed", new GridLayout(3, 1, 5, 5));
+            Panel msgPanel = new Panel(new FlowLayout(FlowLayout.CENTER));
+            msgPanel.add(msglabel);
+            add(msgPanel);
+            Panel row1 = new Panel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+            row1.add(reload);
+            row1.add(ignore);
+            row1.add(ignoreAlways);
+            add(row1);
+            Panel row2 = new Panel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+            row2.add(showDiff);
+            row2.add(stopEdit);
+            add(row2);
          }
 
-         boolean getChoice() {
-            String tstring = filename + " modified  externally" +   (isModified ? " and internally " : "") ;
-            this.setTitle(tstring);
+         UI.ReloadAction getChoice() {
+            String tstring = filename + " modified externally"
+               + (isModified ? " and internally" : "");
+            this.setTitle("File Changed");
 
-            msglabel.setText(tstring
-               + " - Reload it?");
+            msglabel.setText(tstring);
 
             this.pack();
-            Dimension d = msglabel.getPreferredSize();
-            this.setSize(d.width + 40, d.height * 7);
+            Dimension d = getPreferredSize();
+            this.setSize(Math.min(d.width + 40, 400), d.height + 20);
             setVisible(true);
-            return getRes() == reload;
+
+            Object res = getRes();
+            if (res == reload) {
+               return UI.ReloadAction.RELOAD;
+            } else if (res == ignoreAlways) {
+               return UI.ReloadAction.IGNORE_ALWAYS;
+            } else if (res == showDiff) {
+               return UI.ReloadAction.SHOW_DIFF;
+            } else if (res == stopEdit) {
+               return UI.ReloadAction.STOP_EDITING;
+            } else {
+               return UI.ReloadAction.IGNORE;
+            }
          }
       }
 
-      Boolean doAwt() {
+      UI.ReloadAction doAwt() {
          return dia.getChoice();
       }
    }
 
-   public boolean iconfirmReload(String filename, boolean isModified) {
+   public UI.ReloadAction iconfirmReload(String filename, boolean isModified) {
       return new ConfirmReloadDia(filename, isModified).postWait().getResult();
    }
 

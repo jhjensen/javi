@@ -111,26 +111,51 @@ public final class StreamInterface extends UI {
       }
    }
 
-   public boolean iconfirmReload(String filename, boolean isModified) {
+   /**
+    * Handle external file modification notification via text interface.
+    * 
+    * <p>Prompts user with options:</p>
+    * <ul>
+    *   <li>r - Reload file from disk</li>
+    *   <li>i - Ignore this notification</li>
+    *   <li>a - Ignore all future notifications for this file</li>
+    *   <li>d - Show diff between buffer and disk</li>
+    *   <li>c - Close buffer</li>
+    * </ul>
+    * 
+    * @param filename the modified file name
+    * @param isModified true if buffer also has unsaved changes
+    * @return the chosen ReloadAction
+    */
+   public ReloadAction iconfirmReload(String filename, boolean isModified) {
       try {
          while (true) {
             if (!inStr.ready())
-               trace(filename + " changed on disk" +(isModified ? " and in editor" : "") + " , reload file?(y/n) ");
-                  
+               trace(filename + " changed on disk"
+                  + (isModified ? " and in editor" : "")
+                  + " - (r)eload, (i)gnore, ignore (a)lways, (d)iff, (c)lose? ");
+
             int ch = inStr.read();
-            //trace("read in " + (char)ch);
             switch (ch) {
-               case 'y':
-                  return true;
-               case 'n':
-                  return false;
+               case 'r':
+                  return ReloadAction.RELOAD;
+               case 'i':
+                  return ReloadAction.IGNORE;
+               case 'a':
+                  return ReloadAction.IGNORE_ALWAYS;
+               case 'd':
+                  return ReloadAction.SHOW_DIFF;
+               case 'c':
+                  return ReloadAction.STOP_EDITING;
+               case -1:
+                  return ReloadAction.IGNORE;
                default:
                   trace("stream got unexpected char = " + ch);
             }
          }
       } catch (IOException err) {
-         trace("ireportDiff can not read from input Stream ");
-         return false;
+         trace("iconfirmReload can not read from input Stream ");
+         return ReloadAction.IGNORE;
       }
    }
 

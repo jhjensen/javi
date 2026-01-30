@@ -10,6 +10,15 @@ import java.nio.file.Files;
 
 //import static history.Tools.trace;
 
+/**
+ * Properties and metadata for an edited file.
+ * 
+ * <p>FileProperties tracks file format (line endings, charset), read-only status,
+ * and external modification detection. It handles file I/O operations like
+ * safe write (write to temp, then rename).</p>
+ * 
+ * @param <OType> Element type stored in the EditContainer (typically String)
+ */
 public final class FileProperties<OType> implements Serializable {
 
    private enum FileMode { UNIX, MS, MIXED };
@@ -20,12 +29,74 @@ public final class FileProperties<OType> implements Serializable {
    private transient Charset charSet;
    private transient String fileString;
    private transient boolean readonly = false;
-   private transient long lastModified = 0;
+
+   /** Last known modification time of the file on disk. */
+   private transient long lastModifiedTime = 0;
+
+   /** If true, ignore external modifications for this file. */
+   private transient boolean ignoreExternalChanges = false;
 
    private String lsep = staticLine; //??? final
 
    public String toString() {
       return fdes.toString();
+   }
+
+   /**
+    * Set whether to ignore external changes to this file.
+    * 
+    * @param ignore true to ignore external changes
+    */
+   public synchronized void setIgnoreExternalChanges(boolean ignore) {
+      ignoreExternalChanges = ignore;
+   }
+
+   /**
+    * Check if external changes should be ignored for this file.
+    * 
+    * @return true if external changes are being ignored
+    */
+   public synchronized boolean isIgnoringExternalChanges() {
+      return ignoreExternalChanges;
+   }
+
+   /**
+    * Check if the file has been modified externally since last check.
+    * 
+    * <p>Compares current file modification time against stored time.
+    * Returns false if the file is not a local file or if external
+    * changes are being ignored.</p>
+    * 
+    * @return true if file was modified externally
+    */
+   public synchronized boolean checkModified() {
+      if (ignoreExternalChanges) {
+         return false;
+      }
+      if (!(fdes instanceof FileDescriptor.LocalFile)) {
+         return false;
+      }
+      FileDescriptor.LocalFile lf = (FileDescriptor.LocalFile) fdes;
+      if (!lf.exists()) {
+         return false;
+      }
+      long currentModTime = lf.lastModified();
+      return lastModifiedTime != 0 && currentModTime != lastModifiedTime;
+   }
+
+   /**
+    * Update stored modification time to current file modification time.
+    * 
+    * <p>Call this after reading or writing the file, or after the user
+    * decides to ignore an external change notification.</p>
+    */
+   public synchronized void updateModifiedTime() {
+      if (fdes instanceof FileDescriptor.LocalFile) {
+         FileDescriptor.LocalFile lf = (FileDescriptor.LocalFile) fdes;
+         if (lf.exists()) {
+            lastModifiedTime = lf.lastModified();
+         }
+      }
    }
 
    public synchronized void setReadOnly(boolean flag) {
@@ -106,33 +177,9 @@ public final class FileProperties<OType> implements Serializable {
             ? "\r\n"
             : System.getProperty("line.separator");
 
-      // record modification time for later detection of external changes
-      if (fdes instanceof FileDescriptor.LocalFile) {
-         lastModified = ((FileDescriptor.LocalFile) fdes).lastModified();
-      }
+      // Initialize modification time tracking when file is first read
+      updateModifiedTime();
 
       return fileString;
-   }
-
-   /**
-    * Check if the file has been modified externally since it was read.
-    * @return true if the file was modified externally
-    */
-   public boolean checkModified() {
-      if (lastModified == 0 || !(fdes instanceof FileDescriptor.LocalFile)) {
-         return false;
-      }
-      long currentModTime = ((FileDescriptor.LocalFile) fdes).lastModified();
-      return currentModTime != lastModified;
-   }
-
-   /**
-    * Update the stored modification time to the current file time.
-    * Call this after reloading or after a save.
-    */
-   public void updateModifiedTime() {
-      if (fdes instanceof FileDescriptor.LocalFile) {
-         lastModified = ((FileDescriptor.LocalFile) fdes).lastModified();
-      }
    }
 }
