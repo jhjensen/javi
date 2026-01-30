@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 import static history.Tools.trace;
 
-final class EditCache<OType> implements Iterable {
+final class EditCache<OType> implements Iterable<OType> {
 
    private ArrayList<OType> varray = new ArrayList<OType>(1024);
 

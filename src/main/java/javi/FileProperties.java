@@ -132,10 +132,8 @@ public final class FileProperties<OType> implements Serializable {
 
    void writeAll(Iterator<String> sitr)  throws IOException {
 
-      OutputStreamWriter ow = new OutputStreamWriter(
-         new BufferedOutputStream(fdes.getOutputStream()), charSet);
-
-      try {
+      try (OutputStreamWriter ow = new OutputStreamWriter(
+            new BufferedOutputStream(fdes.getOutputStream()), charSet)) {
          while (sitr.hasNext()) {
             String line = sitr.next();
             //trace("writing:" + line);
@@ -143,8 +141,6 @@ public final class FileProperties<OType> implements Serializable {
             ow.write(lsep, 0, lsep.length());
          }
          ow.flush();
-      } finally {
-         ow.close();
       }
    }
 

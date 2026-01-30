@@ -122,18 +122,15 @@ public final class Tools {
       if (charSet == null)
          charSet = Charset.defaultCharset();
 
-      BufferedReader in =  new BufferedReader(
-         new InputStreamReader(proc.getInputStream(), charSet));
       ArrayList<String> output = new ArrayList<String>();
-      try {
+      try (BufferedReader in = new BufferedReader(
+            new InputStreamReader(proc.getInputStream(), charSet))) {
          for (String str; null != (str = in.readLine());)
             output.add(str);
          proc.waitFor();
       } catch (InterruptedException e) {
          trace("!!!! interupted executing "
             + java.util.Arrays.toString(command));
-      } finally {
-         in.close();
       }
       return output;
    }
