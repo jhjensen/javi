@@ -122,9 +122,9 @@ public final class Tools {
       if (charSet == null)
          charSet = Charset.defaultCharset();
 
-      BufferedReader in =  new BufferedReader(
+      var in = new BufferedReader(
          new InputStreamReader(proc.getInputStream(), charSet));
-      ArrayList<String> output = new ArrayList<String>();
+      var output = new ArrayList<String>();
       try {
          for (String str; null != (str = in.readLine());)
             output.add(str);

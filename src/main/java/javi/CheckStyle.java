@@ -76,7 +76,7 @@ final class CheckStyle extends Rgroup {
       if (0 == fdlist.size())
          UI.reportMessage("no files to compile");
       else  {
-         ArrayList<String> dlist = new ArrayList<String>(fdlist.size());
+         var dlist = new ArrayList<String>(fdlist.size());
          dlist.add(0, "cstyle");
          dlist.add(0, "perl");
 

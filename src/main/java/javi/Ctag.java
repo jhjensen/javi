@@ -36,9 +36,9 @@ final class Ctag {
        */
       Position[] getPositions(String tagfile) throws IOException {
          if (null == positions) {
-            try (RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r")) {
+            try (var ctfile = new RandomAccessFile(tagfile, "r")) {
                ctfile.seek(filestart);
-               ArrayList<Position> tempvec = new ArrayList<Position>();
+               var tempvec = new ArrayList<Position>();
                do {
                   tempvec.add(getnextpos(ctfile));
                } while (fileend > ctfile.getFilePointer());

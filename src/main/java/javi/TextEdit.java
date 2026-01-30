@@ -275,7 +275,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("com = " + command + " args:" + args + ":");
       switch (command) {
          case 'd':
-            ArrayList<String>  delvec = new ArrayList<String>(100);
+            var delvec = new ArrayList<String>(100);
             for (int ii = linestart; ii <= linefinish;) {
                if (null == rangePattern
                      || (inverse ^ (searchForward(rangePattern, 0, ii))))  {
@@ -741,7 +741,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       count++;
       //trace("stringtoarray count " + count);
-      ArrayList<String> sarr = new ArrayList<String>(count);
+      var sarr = new ArrayList<String>(count);
       lastindex = 0;
       for (int ii = 0; ii < count; ii++) {
          int nline = s.indexOf('\n', lastindex);
