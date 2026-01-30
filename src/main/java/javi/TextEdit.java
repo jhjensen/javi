@@ -18,6 +18,38 @@ import history.Tools;
 import static history.Tools.trace;
 import static javi.FileDescriptor.LocalFile.make;
 
+/**
+ * Main text editing class extending EditContainer with string-specific operations.
+ *
+ * <p>TextEdit provides all text manipulation operations for the editor including:
+ * <ul>
+ *   <li><b>Text insertion</b>: {@link #inserttext}, {@link #insertStrings}</li>
+ *   <li><b>Line operations</b>: join, split, indent, change case</li>
+ *   <li><b>Search/replace</b>: {@link #substitute} with regex support</li>
+ *   <li><b>Ex commands</b>: {@link #processCommand} parses vi ex-mode commands</li>
+ *   <li><b>File I/O</b>: {@link #writeFile}, charset detection</li>
+ * </ul>
+ *
+ * <h2>Static Root</h2>
+ * <p>A static {@code root} TextEdit serves as parent for all other TextEdit instances,
+ * enabling state serialization/deserialization for the entire editor session.</p>
+ *
+ * <h2>Key Operations</h2>
+ * <ul>
+ *   <li>{@code inserttext(String, x, y)} - Insert text at position, handles newlines</li>
+ *   <li>{@code substitute(line, pattern, replacement, global)} - Regex substitution</li>
+ *   <li>{@code processCommand(cmd, ypos)} - Execute ex-mode command string</li>
+ *   <li>{@code writeFile()} - Write buffer to file with charset preservation</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>Inherits thread safety requirements from {@link EditContainer}. Most operations
+ * require holding {@link EventQueue#biglock2}.</p>
+ *
+ * @param <OType> Element type (typically String for text files)
+ * @see EditContainer
+ * @see FvContext
+ */
 public class TextEdit<OType> extends EditContainer<OType> {
    private static TextEdit<String> root;
    private static final long serialVersionUID = 1;

@@ -115,6 +115,24 @@ cstyle-file:
 	perl cstyle $(FILE)
 
 #==============================================================================
+# Documentation targets
+#==============================================================================
+
+# Generate Javadoc documentation
+javadoc:
+	mkdir -p build/docs/javadoc
+	javadoc -d build/docs/javadoc \
+		-sourcepath src/main/java:src/history/java \
+		-classpath lib/rhino-1.7.14.jar:lib/juniversalchardet-1.0.3.jar:lib/rxtx-2.1.7.jar \
+		-subpackages javi:history \
+		-windowtitle "Javi Editor API" \
+		-doctitle "Javi - Vi-like Editor in Java" \
+		-header "Javi Editor" \
+		-quiet \
+		-Xdoclint:none
+	@echo "Javadoc generated: build/docs/javadoc/index.html"
+
+#==============================================================================
 # Development utility targets
 #==============================================================================
 
@@ -181,6 +199,9 @@ help:
 	@echo "Code Quality:"
 	@echo "  make cstyle   - Run checkstyle on all Java files"
 	@echo "  make cstyle-file FILE=path - Run checkstyle on specific file"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  make javadoc  - Generate Javadoc documentation"
 	@echo ""
 	@echo "Development:"
 	@echo "  make tags     - Generate ctags"

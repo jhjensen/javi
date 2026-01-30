@@ -8,6 +8,46 @@ import history.Tools;
 import static history.Tools.trace;
 import static history.Tools.traceLev;
 
+/**
+ * Central event dispatch and synchronization for the Javi editor.
+ *
+ * <p>EventQueue manages:
+ * <ul>
+ *   <li><b>Event queue</b>: Key events, commands, and other inputs</li>
+ *   <li><b>Global lock</b>: {@link #biglock2} coordinates all editor operations</li>
+ *   <li><b>Idle processing</b>: Background tasks run when queue empty</li>
+ *   <li><b>Cursor blinking</b>: Timer-based cursor visibility toggle</li>
+ * </ul>
+ *
+ * <h2>The Big Lock (biglock2)</h2>
+ * <p><b>CRITICAL</b>: {@link #biglock2} is the primary synchronization mechanism.
+ * Nearly all editor operations must hold this lock. It is a {@link DebugLock}
+ * (extended ReentrantLock) with debugging support:</p>
+ * <ul>
+ *   <li>{@code assertOwned()} - Verify current thread holds lock</li>
+ *   <li>{@code assertUnOwned()} - Verify current thread doesn't hold lock</li>
+ *   <li>Timeout-based acquisition with logging on contention</li>
+ * </ul>
+ *
+ * <h2>Event Loop</h2>
+ * <p>The main loop in {@link #nextEvent} handles:</p>
+ * <ol>
+ *   <li>Check queue for pending events</li>
+ *   <li>If empty, run idle handlers (file backup, etc.)</li>
+ *   <li>Turn on cursor, wait for input with timeout</li>
+ *   <li>Blink cursor on timeout, repeat</li>
+ *   <li>Periodic GC after ~1 minute idle</li>
+ * </ol>
+ *
+ * <h2>Thread Safety</h2>
+ * <p><b>WARNING</b>: Lock ordering issues exist. See BUGS.md B3 and B7.
+ * The pattern of unlocking {@code biglock2} in {@code inextEvent} while
+ * other code may hold it can lead to deadlock.</p>
+ *
+ * @see DebugLock
+ * @see Idler
+ * @see IEvent
+ */
 public final class EventQueue {
 
    private EventQueue() { }

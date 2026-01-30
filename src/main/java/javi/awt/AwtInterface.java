@@ -70,6 +70,55 @@ import history.BadBackupFile;
 
 import static history.Tools.trace;
 
+/**
+ * Main AWT-based graphical user interface for the Javi editor.
+ *
+ * <p>AwtInterface is the primary UI implementation, providing:
+ * <ul>
+ *   <li><b>Window management</b>: Main frame, dialogs, menus</li>
+ *   <li><b>Event handling</b>: Keyboard, mouse, focus, window events</li>
+ *   <li><b>Text display</b>: Via embedded {@link OldView} canvas</li>
+ *   <li><b>Status bar</b>: Command echo, messages via {@link StatusBar}</li>
+ *   <li><b>Clipboard</b>: System clipboard integration</li>
+ *   <li><b>Drag-and-drop</b>: File drop support</li>
+ * </ul>
+ *
+ * <h2>Architecture</h2>
+ * <p>AwtInterface extends {@link UI} and implements multiple AWT listener interfaces.
+ * It's a singleton (enforced by UI base class). The class is large (~1640 lines)
+ * and could benefit from refactoring - see todo.md M14.</p>
+ *
+ * <h2>Key Components</h2>
+ * <ul>
+ *   <li>{@code mainframe} - The main Frame window</li>
+ *   <li>{@code mfield} - Command line TextField</li>
+ *   <li>{@link OldView} - Text rendering canvas</li>
+ *   <li>{@link StatusBar} - Status display</li>
+ *   <li>{@link AwtFontList} - Font management</li>
+ * </ul>
+ *
+ * <h2>Dialog Methods</h2>
+ * <ul>
+ *   <li>{@link #ireportDiff} - File/backup conflict resolution</li>
+ *   <li>{@link #ichooseWriteable} - Read-only file handling</li>
+ *   <li>{@link #iconfirmReload} - Confirm reload from disk</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>Most operations run on AWT Event Dispatch Thread. Editor operations
+ * must coordinate with {@link EventQueue#biglock2}. Some methods are called
+ * from background threads and must handle synchronization.</p>
+ *
+ * <h2>Known Issues</h2>
+ * <ul>
+ *   <li>Deadlock potential in file-changed dialog - see BUGS.md B1</li>
+ *   <li>Class is too large, should be refactored - see todo.md M14</li>
+ * </ul>
+ *
+ * @see UI
+ * @see OldView
+ * @see EventQueue
+ */
 public final class AwtInterface extends UI implements java.io.Serializable,
    WindowListener, FocusListener, ActionListener,
    EventQueue.Idler {

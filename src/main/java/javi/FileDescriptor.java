@@ -28,6 +28,42 @@ import java.nio.charset.Charset;
 import history.Tools;
 //import static history.Tools.trace;
 
+/**
+ * Abstract representation of a file for the Javi editor.
+ *
+ * <p>FileDescriptor provides a unified interface for different file types:
+ * <ul>
+ *   <li>{@link LocalFile} - Regular filesystem files</li>
+ *   <li>{@link LocalDir} - Directories</li>
+ *   <li>{@link InternalFd} - Internal buffers (scratch, help, etc.)</li>
+ *   <li>{@link RemoteFile} - Remote files (SSH, etc.) - UNCLEAR if fully implemented</li>
+ * </ul>
+ *
+ * <h2>Key Properties</h2>
+ * <ul>
+ *   <li>{@link #canonName} - Canonical/unique name for file identity</li>
+ *   <li>{@link #shortName} - Display name shown to user</li>
+ * </ul>
+ *
+ * <h2>File Operations</h2>
+ * <ul>
+ *   <li>{@link #exists()}, {@link #canWrite()}, {@link #isFile()} - Status checks</li>
+ *   <li>{@link #getOutputStream()} - Write access</li>
+ *   <li>{@link #getString()} - Read entire file as string</li>
+ *   <li>{@link #delete()} - Remove file</li>
+ * </ul>
+ *
+ * <h2>Factory Method</h2>
+ * <p>Use {@link #make(String)} to create appropriate FileDescriptor subclass
+ * based on the filename/URI. Currently only creates LocalFile instances.</p>
+ *
+ * <h2>Charset Detection</h2>
+ * <p>{@link LocalFile} uses juniversalchardet for automatic charset detection
+ * when reading files, falling back to UTF-8 if detection fails.</p>
+ *
+ * @see LocalFile
+ * @see EditContainer
+ */
 public class FileDescriptor implements Serializable {
 
    private static final long serialVersionUID = 1;

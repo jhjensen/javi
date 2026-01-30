@@ -13,6 +13,46 @@ import static javi.JeyEvent.CTRL_MASK;
 
 import static history.Tools.trace;
 
+/**
+ * Key mapping and event dispatch for vi-style modal editing.
+ *
+ * <p>MapEvent manages the binding of keyboard input to editor commands:
+ * <ul>
+ *   <li><b>Key bindings</b>: Maps key combinations to command names</li>
+ *   <li><b>Modal dispatch</b>: Different bindings for command vs insert mode</li>
+ *   <li><b>Count handling</b>: Numeric prefixes (e.g., "5j" moves 5 lines)</li>
+ *   <li><b>Dot command</b>: Repeats last edit operation</li>
+ * </ul>
+ *
+ * <h2>Key Groups</h2>
+ * <ul>
+ *   <li>{@code skeys} - Static/special keys (function keys, control chars)</li>
+ *   <li>{@code mkeys} - Movement keys (hjkl, arrows, word motion)</li>
+ * </ul>
+ *
+ * <h2>Binding Methods</h2>
+ * <ul>
+ *   <li>{@code keybind(char, command, arg)} - Bind character to command</li>
+ *   <li>{@code keyactionbind(keyCode, command, arg, modifiers)} - Bind key code</li>
+ * </ul>
+ *
+ * <h2>Event Processing</h2>
+ * <p>The main loop calls {@link #nextEvent} which:</p>
+ * <ol>
+ *   <li>Gets key event from {@link EventQueue}</li>
+ *   <li>Accumulates count prefix if digit</li>
+ *   <li>Looks up binding in appropriate key group</li>
+ *   <li>Executes command via {@link Rgroup#doCommand}</li>
+ * </ol>
+ *
+ * <h2>Initialization</h2>
+ * <p>{@link #bindCommands} sets up all default key bindings at startup.
+ * Bindings can be modified via {@code :map} ex command.</p>
+ *
+ * @see KeyGroup
+ * @see Rgroup
+ * @see JeyEvent
+ */
 public final class MapEvent {
 
    private static KeyGroup skeys = new KeyGroup();

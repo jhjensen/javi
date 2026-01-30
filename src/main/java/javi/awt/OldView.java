@@ -36,6 +36,46 @@ import javi.ScrollEvent;
 
 //import java.awt.RenderingHints;
 
+/**
+ * Primary text rendering view using AWT Canvas for the Javi editor.
+ *
+ * <p>OldView handles all text display and cursor rendering:
+ * <ul>
+ *   <li><b>Text rendering</b>: Line-by-line with syntax awareness</li>
+ *   <li><b>Cursor display</b>: Block/line cursor with blink support</li>
+ *   <li><b>Scrolling</b>: Vertical scrolling with optimized repainting</li>
+ *   <li><b>Mouse handling</b>: Click positioning, selection, wheel scroll</li>
+ *   <li><b>Double buffering</b>: Offscreen image for flicker-free display</li>
+ * </ul>
+ *
+ * <h2>Coordinate Systems</h2>
+ * <ul>
+ *   <li><b>File coordinates</b>: Line number (1-based) and column</li>
+ *   <li><b>Screen coordinates</b>: Pixel position on canvas</li>
+ *   <li><b>Character grid</b>: Row/column in monospace character units</li>
+ * </ul>
+ *
+ * <h2>Rendering Optimization</h2>
+ * <p>OldView uses {@link javi.ChangeOpt} to minimize repainting:</p>
+ * <ul>
+ *   <li>{@code BLINKCURSOR} - Only toggle cursor visibility</li>
+ *   <li>{@code INSERT} - Scroll optimization for line insertion</li>
+ *   <li>{@code CHANGED} - Repaint only changed line range</li>
+ *   <li>{@code REDRAW} - Full repaint when necessary</li>
+ * </ul>
+ *
+ * <h2>Tab Handling</h2>
+ * <p>Uses {@link DeTabber} to convert tab characters to spaces
+ * based on configurable tab stop width.</p>
+ *
+ * <h2>Thread Safety</h2>
+ * <p><b>WARNING</b>: Some methods have race conditions. The {@code imageg}
+ * (offscreen graphics) access is not fully thread-safe. See BUGS.md.</p>
+ *
+ * @see View
+ * @see AwtView
+ * @see AtView
+ */
 final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 

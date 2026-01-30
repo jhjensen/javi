@@ -1,6 +1,33 @@
 package history;
 import java.io.DataInput;
 
+/**
+ * Memory-backed DataInput for reading serialized data from byte arrays.
+ *
+ * <p>ByteInput provides DataInput interface over a byte array, used primarily
+ * for reading undo history records from {@link PersistantStack}'s .dmp2 files.</p>
+ *
+ * <h2>Key Features</h2>
+ * <ul>
+ *   <li><b>Seekable</b>: {@link #seek(int)} allows random access</li>
+ *   <li><b>Sliceable</b>: Constructor can create view of another ByteInput</li>
+ *   <li><b>DataInput</b>: Standard methods like readInt, readUTF, etc.</li>
+ * </ul>
+ *
+ * <h2>Usage Pattern</h2>
+ * <pre>{@code
+ * ByteInput inp = new ByteInput(bytes);
+ * int value = inp.readInt();
+ * String str = inp.readUTF();
+ * }</pre>
+ *
+ * <h2>Bounds Checking</h2>
+ * <p>Methods throw {@link ArrayIndexOutOfBoundsException} if reading
+ * past the limit. Use {@link #available()} to check remaining bytes.</p>
+ *
+ * @see PersistantStack
+ * @see java.io.DataInput
+ */
 public final class ByteInput implements DataInput {
 
    private byte[] buf;

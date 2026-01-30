@@ -5,10 +5,42 @@ import java.io.Serializable;
 import java.util.Collection;
 import static history.Tools.trace;
 
-/** this is an abstract class which defines the necessary methods
-    for an editvec to to IO
-*/
-
+/**
+ * Abstract base class for asynchronous I/O conversion in EditContainer.
+ *
+ * <p>IoConverter defines the interface for converting input streams into
+ * elements for {@link EditContainer}. It supports:
+ * <ul>
+ *   <li><b>Background loading</b>: Runs in separate thread for non-blocking file reads</li>
+ *   <li><b>Lazy expansion</b>: Content loaded on demand as user scrolls</li>
+ *   <li><b>Build callbacks</b>: Notification when loading completes</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p><b>WARNING</b>: The {@link #expandLock} method releases {@link EventQueue#biglock2}
+ * while holding {@code this} monitor, which can lead to deadlock if another thread
+ * acquires locks in opposite order. See BUGS.md B3.</p>
+ *
+ * <h2>Lifecycle</h2>
+ * <ol>
+ *   <li>Construct with {@link FileProperties}</li>
+ *   <li>{@link #init1} called by EditContainer to set cache and callbacks</li>
+ *   <li>{@link #startThread} spawns background reader if needed</li>
+ *   <li>{@link #getnext} called repeatedly to read elements</li>
+ *   <li>{@link #dispose} cleans up when file closed</li>
+ * </ol>
+ *
+ * <h2>Subclass Implementations</h2>
+ * <ul>
+ *   <li>{@link StringIoc} - Line-by-line text file reading</li>
+ *   <li>{@link ClassConverter} - For non-string element types</li>
+ *   <li>{@link PositionIoc} - For position list files</li>
+ * </ul>
+ *
+ * @param <OType> Element type produced (typically String)
+ * @see EditContainer
+ * @see EditCache
+ */
 public class IoConverter<OType> implements Runnable, Serializable {
    private static final long serialVersionUID = 1;
 

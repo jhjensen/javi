@@ -18,35 +18,45 @@ import history.BadBackupFile;
 //import history.Tools;
 import static history.Tools.trace;
 
-/** This class is the basic storage for an editor written in java.
-
-   It implements a vector that fills itself automaticly from
-   a stream.  this allows the editor to  work with  a large, or networked file
-   without waiting for the entire file. to be read in.</P>
-
-   It has undo capability which allows infinite undo to the start of the editing
-   session. It also allows undo to a particular element. It also allows undo
-   to a particular element.</p>
-
-   it has position tracking capability. this allows marking a position in
-   a file that follows a particular element. If element before
-   it are added or deleted.</p>
-
-   Care must be taken to use contains() to protect references
-   to the finish method, because any reference to the finish method
-   does not return until the stream is completely read. </P>
-
-   likewise it is necessary to call contains before calling at() if the
-   editvec is not finished reading.  Otherwise an exception may be thrown
-   for a element that really is in the file.</p>
-
-   It should be noted that the file iocontroller assumes that
-   the cannonical name
-   of a file is unique, which is not really true on MS-DOS where you
-   can get different cannonical names for the same file.  this can
-   cause registeruniq to register the same file twice.</p>
-*/
-
+/**
+ * Core storage class for the Javi editor with undo/redo and lazy loading.
+ *
+ * <p>EditContainer is the fundamental data structure underlying all text editing.
+ * It provides:
+ * <ul>
+ *   <li><b>Lazy loading</b>: Vector auto-fills from a stream, allowing editing of
+ *       large/networked files without waiting for complete read</li>
+ *   <li><b>Infinite undo</b>: Full history back to session start via {@link UndoHistory}</li>
+ *   <li><b>Position tracking</b>: Marks that follow elements as content is added/deleted</li>
+ *   <li><b>Persistence</b>: Undo history persisted to .dmp2 files via {@link history.PersistantStack}</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>Most operations require holding {@link EventQueue#biglock2}. The
+ * {@code listeners} collection has its own synchronization.</p>
+ *
+ * <h2>Important Invariants</h2>
+ * <ul>
+ *   <li>Call {@link #contains(int)} before accessing elements during async read</li>
+ *   <li>Call {@link #contains(int)} before calling {@link #at(int)} if not finished reading</li>
+ *   <li>Every EditContainer except root must have a parent</li>
+ *   <li>File canonical name is used as unique key (may not be unique on MS-DOS)</li>
+ * </ul>
+ *
+ * <h2>Key Relationships</h2>
+ * <ul>
+ *   <li>{@link TextEdit} - Main subclass for text editing operations</li>
+ *   <li>{@link IoConverter} - Handles async I/O for lazy loading</li>
+ *   <li>{@link UndoHistory} - Manages undo/redo stack</li>
+ *   <li>{@link FvContext} - Binds file to view for display</li>
+ *   <li>{@link EditCache} - Internal element storage</li>
+ * </ul>
+ *
+ * @param <OType> Element type stored (typically String for text)
+ * @see TextEdit
+ * @see UndoHistory
+ * @see IoConverter
+ */
 public class EditContainer<OType> implements
    Serializable, ReAnimator, Iterable<OType> {
 

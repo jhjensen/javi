@@ -10,6 +10,43 @@ import history.BadBackupFile;
 
 import static history.Tools.trace;
 
+/**
+ * Abstract interface for user interaction (GUI or stream-based).
+ *
+ * <p>UI defines the interface between editor logic and presentation layer.
+ * Two implementations exist:
+ * <ul>
+ *   <li>{@link javi.awt.AwtInterface} - Graphical AWT interface</li>
+ *   <li>{@link StreamInterface} - Text stream interface for testing/scripting</li>
+ * </ul>
+ *
+ * <h2>Singleton Pattern</h2>
+ * <p>UI uses a singleton pattern with protected constructor. Only one UI
+ * instance can exist. Access via {@link #getInstance()}.</p>
+ *
+ * <h2>Key Responsibilities</h2>
+ * <ul>
+ *   <li><b>Dialogs</b>: File conflict resolution, error display, confirmations</li>
+ *   <li><b>Status bar</b>: Message display, command echo</li>
+ *   <li><b>Window management</b>: Show, hide, focus, resize</li>
+ *   <li><b>State persistence</b>: Save/restore UI state</li>
+ * </ul>
+ *
+ * <h2>Dialog Methods</h2>
+ * <ul>
+ *   <li>{@link #ireportDiff} - File/backup version conflict dialog</li>
+ *   <li>{@link #ichooseWriteable} - Read-only file handling</li>
+ *   <li>{@link #iconfirmReload} - Confirm file reload from disk</li>
+ *   <li>{@link #ireportBadBackup} - Corrupt backup file handling</li>
+ * </ul>
+ *
+ * <h2>Known Issues</h2>
+ * <p><b>WARNING</b>: Infinite loop potential in {@code reportDiff} if
+ * unhandled button value returned. See BUGS.md B8.</p>
+ *
+ * @see javi.awt.AwtInterface
+ * @see StreamInterface
+ */
 public abstract class UI {
    public enum Buttons {
       CHECKOUT, MAKEWRITEABLE, DONOTHING, MAKEBACKUP,

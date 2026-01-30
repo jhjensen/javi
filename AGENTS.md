@@ -55,13 +55,18 @@ make clean
 
 ### Temporary Files
 
-Use `tmp/` directory in the project root for temporary files during agent operations.
+Use `ai/` directory in the project root for temporary files during agent operations.
 This directory is gitignored and allows VS Code command approval to work smoothly
 (avoids paths outside the project that require extra approval steps).
 
+The `ai/` directory also contains:
+- Plan files for todo items (`ai/plan-*.md`)
+- Analysis output and notes
+- Any working files agents need
+
 ```bash
 # Example: writing analysis output
-./gradlew compileJava 2>&1 | grep "warning:" > tmp/warnings.txt
+./gradlew compileJava 2>&1 | grep "warning:" > ai/warnings.txt
 ```
 
 ## Running Tests
@@ -228,6 +233,26 @@ Detailed summaries available in:
 - [src/SUMMARY.md](src/SUMMARY.md)
 - [oldstuff/SUMMARY.md](oldstuff/SUMMARY.md)
 - [lib/SUMMARY.md](lib/SUMMARY.md)
+
+## API Documentation
+
+**Javadoc** is available at `build/docs/javadoc/index.html`. Generate with `make javadoc`.
+
+Key documented classes:
+- `EditContainer` - Core storage with undo and lazy loading
+- `TextEdit` - Text manipulation operations
+- `FvContext` - File-View context binding
+- `View` - Abstract display interface
+- `EventQueue` - Event dispatch and synchronization (biglock2)
+- `Rgroup` - Command system base class
+- `PersistantStack` - Disk-backed undo persistence
+- `AwtInterface` - Main GUI implementation
+
+## Task Planning
+
+Todo items and their implementation plans are in:
+- [todo.md](todo.md) - Consolidated task list with priorities
+- `ai/plan-*.md` - Detailed implementation plans for each task
 
 ## Contact/History
 

@@ -10,6 +10,42 @@ import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.Charset;
 
+/**
+ * Utility class for debugging, process execution, and common operations.
+ *
+ * <p>Tools provides static utilities used throughout the Javi codebase:</p>
+ *
+ * <h2>Tracing/Debugging</h2>
+ * <ul>
+ *   <li>{@link #trace(Object...)} - Log message with file:line info</li>
+ *   <li>{@link #traceLev(String, int)} - Trace with stack offset</li>
+ *   <li>{@link #caller()} - Get calling method name</li>
+ *   <li>{@link #Assert(boolean, Object)} - Runtime assertion</li>
+ * </ul>
+ *
+ * <h2>Process Execution</h2>
+ * <ul>
+ *   <li>{@link #execute(Charset, String...)} - Run command, return output lines</li>
+ *   <li>{@link #executeIn(String, String...)} - Run command with stdin input</li>
+ *   <li>{@link #runcmd(String...)} - Run command, return BufferedReader</li>
+ *   <li>{@link #iocmd(String...)} - Run command, return Process</li>
+ * </ul>
+ *
+ * <h2>Usage Example</h2>
+ * <pre>{@code
+ * import static history.Tools.trace;
+ * 
+ * trace("value is", someValue);  // Logs: FileName.java:42 value is, someValue
+ * }</pre>
+ *
+ * <h2>Known Issues</h2>
+ * <ul>
+ *   <li>{@link #doGC()} uses deprecated runFinalization() - see IMPROVEMENTS.md M5</li>
+ *   <li>Command execution doesn't escape arguments - potential injection (BUGS.md #24)</li>
+ * </ul>
+ *
+ * @see javi.UI#popError
+ */
 public final class Tools {
    //private static long lastTime = System.nanoTime();
 

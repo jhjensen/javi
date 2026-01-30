@@ -16,11 +16,51 @@ import static history.Tools.trace;
 
 import java.nio.file.StandardOpenOption;
 
-// PersistantStack is a funny sort of Stack.  If you add an element
-// in the middle the rest of the array is deleted.  The array is backed by a
-// disk file, and in fact may not keep any of the array in memory.
-//
-
+/**
+ * Disk-backed stack for persistent undo history.
+ *
+ * <p>PersistantStack provides a modified stack data structure where inserting
+ * in the middle truncates the rest. It backs the array to a .dmp2 disk file,
+ * allowing undo history to persist across editor sessions.</p>
+ *
+ * <h2>Key Characteristics</h2>
+ * <ul>
+ *   <li><b>Partial memory</b>: May not keep entire array in memory</li>
+ *   <li><b>Truncating insert</b>: Adding in middle deletes all following elements</li>
+ *   <li><b>Persistent</b>: Backed by .dmp2 file for persistant undo and crash recovery</li>
+ *   <li><b>Lazy loading</b>: Elements read from disk on demand</li>
+ * </ul>
+ *
+ * <h2>File Format</h2>
+ * <p>The .dmp2 file format stores:</p>
+ * <ul>
+ *   <li>File identifier/magic number</li>
+ *   <li>Offset table for random access to records</li>
+ *   <li>Serialized records (undo operations)</li>
+ *   <li>User callback data</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>Not thread-safe. Caller must ensure synchronization.
+ * File locking via {@link FileLock} prevents concurrent access to .dmp2 files.</p>
+ *
+ * <h2>Known Issues</h2>
+ * <ul>
+ *   <li>Uses deprecated {@code finalize()} - should migrate to Cleaner (see BUGS.md)</li>
+ *   <li>Flush on every push is expensive - should move to close (see todo.md M17)</li>
+ * </ul>
+ *
+ * <h2>Abstract Methods</h2>
+ * <p>Subclasses must implement:</p>
+ * <ul>
+ *   <li>{@link #usercb} - Read user callback data from backup</li>
+ *   <li>{@link #deletecb} - Called when elements are removed</li>
+ * </ul>
+ *
+ * @param <E> Element type stored in the stack
+ * @see javi.UndoHistory
+ * @see ByteInput
+ */
 public abstract class PersistantStack<E> {
 
    protected abstract void usercb(ByteInput dis) throws EOFException;

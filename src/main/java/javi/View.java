@@ -3,6 +3,49 @@ package javi;
 import static history.Tools.trace;
 import static javi.ChangeOpt.Opcode.*;
 
+/**
+ * Abstract base class for editor display views.
+ *
+ * <p>View defines the interface between the editing model and visual display.
+ * It handles:
+ * <ul>
+ *   <li><b>Cursor management</b>: Position, blinking, visibility</li>
+ *   <li><b>Screen coordinates</b>: Mapping file lines to screen rows</li>
+ *   <li><b>Insert mode</b>: Visual feedback during text insertion</li>
+ *   <li><b>Change notification</b>: Optimized repainting via {@link COpt}</li>
+ * </ul>
+ *
+ * <h2>View Implementations</h2>
+ * <ul>
+ *   <li>{@link javi.awt.OldView} - Main AWT text rendering view</li>
+ *   <li>{@link javi.awt.AtView} - Alternative AWT view</li>
+ *   <li>{@link VScreen} - VT100 terminal view</li>
+ * </ul>
+ *
+ * <h2>Change Optimization (COpt)</h2>
+ * <p>The inner {@link COpt} class optimizes repainting by tracking what changed:</p>
+ * <ul>
+ *   <li>{@code NOOP} - No change pending</li>
+ *   <li>{@code BLINKCURSOR} - Only cursor blink needed</li>
+ *   <li>{@code INSERT} - Lines inserted, can scroll optimize</li>
+ *   <li>{@code CHANGED} - Lines changed, partial repaint</li>
+ *   <li>{@code REDRAW} - Full repaint needed</li>
+ * </ul>
+ *
+ * <h2>Coordinate System</h2>
+ * <ul>
+ *   <li>{@code fileX, fileY} - Cursor position in file (1-based lines)</li>
+ *   <li>Screen coordinates mapped via {@link #screeny}, {@link #screenFirstLine}</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>View methods are called from the AWT event thread. Cursor state is transient
+ * and not synchronized; changes must coordinate with {@link EventQueue#biglock2}.</p>
+ *
+ * @see FvContext
+ * @see javi.awt.OldView
+ * @see ChangeOpt
+ */
 public abstract class View  extends
       EventQueue.CursorControl implements java.io.Serializable {
 

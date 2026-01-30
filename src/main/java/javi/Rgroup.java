@@ -6,6 +6,43 @@ import java.util.Iterator;
 import java.util.Map;
 import static history.Tools.trace;
 
+/**
+ * Abstract base class for command groups in the vi command system.
+ *
+ * <p>Rgroup (Routine Group) is the foundation of Javi's command architecture.
+ * Each subclass groups related commands (edit, move, misc, etc.) and handles
+ * their execution through the abstract {@link #doroutine} method.</p>
+ *
+ * <h2>Command Registration</h2>
+ * <p>Commands are registered via {@link #register(String[])} which populates
+ * the static {@code cmhash} HashMap. Each command maps to a {@link KeyBinding}
+ * that captures the Rgroup instance and command index.</p>
+ *
+ * <h2>Key Subclasses</h2>
+ * <ul>
+ *   <li>{@link EditGroup} - Insert, delete, change commands</li>
+ *   <li>{@link MoveGroup} - Cursor movement commands</li>
+ *   <li>{@link MiscCommands} - File operations, settings, etc.</li>
+ *   <li>{@link KeyGroup} - Keyboard mapping commands</li>
+ * </ul>
+ *
+ * <h2>Command Execution Flow</h2>
+ * <ol>
+ *   <li>{@link MapEvent} maps keypress to command name</li>
+ *   <li>{@link #bindingLookup} finds KeyBinding in cmhash</li>
+ *   <li>{@link KeyBinding#dobind} calls {@link #doroutine} on the Rgroup</li>
+ *   <li>Subclass {@code doroutine} executes command logic</li>
+ * </ol>
+ *
+ * <h2>Dynamic Loading</h2>
+ * <p>{@link #loadgroup} supports loading command groups from external classes
+ * at runtime, enabling plugin-style extensibility.</p>
+ *
+ * @see KeyBinding
+ * @see MapEvent
+ * @see EditGroup
+ * @see MoveGroup
+ */
 public abstract class Rgroup {
 
    final class KeyBinding {

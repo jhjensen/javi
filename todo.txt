@@ -1,29 +1,56 @@
-edit todo.txt for clarity and priority. 
-If you are unsure what is meant by some of the items as for clarification.
-Some of these items are old, and I have forgotten what the meant.
-items in todo.txt are paragraphs separated by empty lines.
-Each item will be a future prompt for you, so try to be complete.
-ignore everything  after the "done :" line.
-put the output into todo.md
 
-integrate git. Magit might be an inspiration.
+for the pop up when a file is modified on disk:
+There is a deadlock when that popup appears, but before it is filled out.
+There is probably a lock that needs to be taken to prevent a ta command from holding the lock
+Add display difference of file and editor file and file on disk similar to opening a file button to the file changed popup.
+Add permanently ignore file difference button.
+Add stop editing button - if the file is modified there should be save and stop editing
+The stream interface needs to have those choices as well.
 
-integrate LSP
+debug the following novel stacktrace:
+javi.FvContext.cursorabs(FvContext.java:509)
+javi.EditGroup.markmode(EditGroup.java:298)
+javi.EditGroup.doroutine(EditGroup.java:157)
+javi.Rgroup$KeyBinding.dobind(Rgroup.java:34)
+javi.Rgroup.doCommand(Rgroup.java:75)
+javi.MarkEvent.execute(MarkEvent.java:17)
+javi.EventQueue.nextEvent(EventQueue.java:171)
+javi.MapEvent.run(MapEvent.java:281)
+javi.Javi.main(Javi.java:194)
+AwtInterface.java:967 popping string viewevent.run caught
+java.lang.NullPointerException: Cannot read field "x" because "pos" is null
 
-integrate copilot.
 
-I would like a popup when a currently open file is changed on the filesystem.
-I suspect it can be tied into the EventQueue idler interface.
+Better icon.
 
-create a methodolgy for  doing tests for ui. functions.
+display last line of output on statusbar after mk command completes.
+This is a harder than it sounds.  The line in positionIOC that displays this
+            UI.reportMessage(this + "complete " + errcount + " results");
+Has no access to the previous line.
+
+Is there something like clang-format for java? If so integrate it.
+
+diredit similar to vi
+Start with display of directory, entering sub directories.  
+Delete files, sorting by size.  display size including dir size like ncdu
+Create file
+
+documentation, help system, binding list
+
+integrate LSP and/or tree-sitter.  The first use case would be to replace/improve over ctags/mkid.
+
+Integrate copilot/AI.
+
+integrate git. Magit might be an inspiration. 
+
+Improve test coverage.
+Possibly using the Stream
+Create a methodology for  testing ui.
+convert testcases to Junit 
 
 enhance make dist: verify that everthing is checked in, built and and tests run,  create a versioned jar and create a tag.
 
 Work on eliminating the SuppressWarnings directives.
-
-display last line of output on statusbar after mk command.
-
-is there something like clang-format for java? If so integrate it.
 
 improve vt100
 in vt100 should really detect our current charset from the terminal
@@ -42,15 +69,13 @@ Also BadBackupFile should inherit from IOException
 
 refactor AwtInterface into separate files?
 
-when rebuilding kill the old build if it is still running?
-
 get rid of getnext?
 
-findbug cmd not working
+findbug cmd not working, maybe update to other linter.  Spotbugs?
 
 lock access to .dmp2
 
-list of shells
+multiple shells.  It would be good to allow multiple shells to run,
 
 improve remote ctag.
 
@@ -60,24 +85,27 @@ redo PersitantStack->RanFileArray
 
 jython if it ever supports python3
 
-diredit similare to vi
-
 fix cmd line.
 
 use Iterable<OType> in EditContainer instead of Object Array
 EditContainer Container/Iterator
 EditVec could be Container?
 
-IOcontroller could be Iterator<OType>?
+IoConverter could be Generator/ Iterator<OType>?
 
 chinese
 edit file list
 
-convert testcases to Junit 
-
 new view from oldstuff?
 
 done :
+
+when rebuilding kill the old build if it is still running?
+
+
+I would like a popup when a currently open file is changed on the filesystem.
+I suspect it can be tied into the EventQueue idler interface.
+
 {[(0O;:.,Ll1| 1234 '`"um
    static import.
    EditTester1 fails
@@ -112,3 +140,56 @@ done :
    make all positions have a FileDescriptor
    O sometimes pukes
    ex move, copy  are wrong
+ 
+
+____________________________________________________________
+Create todo.md based on todo.txt, with any clarifications possible.
+Integrate Bugs.Md and Improvements.md into todo.md
+items in todo.txt are paragraphs separated by empty lines.
+ignore everything after the "done :" line.
+If you are unsure what is meant by some of the items make a note of the issue in the output and move on.
+Some of these items are old, and I have forgotten what the meant.
+Each item will be a future prompt for AI, so try to be complete.
+
+____________________________________________________________
+Rename tmp directory to ai, a directory that ai can use for whatever purpose is useful.
+
+Analyze all the code and add javadoc comments.
+The primary purpose of the javadoc is to do to future AI analysis.
+be consise, but include any information useful the that purpose.
+Modify the makefile to create javadoc.
+Create javadoc for the project and add a pointer to it for agents.md
+Goals for the javadoc are:
+- consistent docstrings give the model names, roles, params, and invariants to anchor its reasoning; clarifies intent over ad-hoc comments; makes autocomplete and search more reliable.
+- public APIs, shared interfaces, data models, and tricky invariants deserve precise Javadoc (with brief + detailed descriptions). Internal glue/obvious getters can stay light.
+- focus on the 20–30% most-used or most-risky surfaces
+- Agents can grep/search for function signatures + purpose without reading entire implementations.
+-  Pre/postconditions, param constraints, thread-safety notes, and ownership semantics are exactly what models need to avoid subtle bugs.
+- Consistent vocabulary: Standardized tags (@param, @return, @throws) are easier to parse than free-form prose scattered in code.
+Any uncertainties mark with UNCLEAR, don't ask.
+
+Then create a plan markdown file for each todo item.  
+These files should be in the ai directory.
+Each one should be a separate file and include an indication of how easy and desirable the fix is.
+The rateing and a link should be included in todo.md
+Any uncertainties mark with UNCLEAR, don't ask.
+it is likely that the todo.md entry will be modified.
+The difficulty may be reassesed.
+The todo entry should end up as a high level summary of the proposed change
+
+
+____________________________________________________________
+
+For the items in todo.md create a subagent to work on items using the linked plans.
+
+prioritize high priority, easy tasks first.
+
+Each subagent will create a git branch and worktree to implement the item and test it. 
+worktrees should be in the ai directory.
+Changes should include relevant javadoc comments, and tests.  Unit tests and tests that use StreamInterface will be useful.
+Unit tests should be implemented with junit.
+If the subagent is blocked needing feedback update the plan document with what feed back it needs and continue
+
+As each sub agent completes the main agent should report it and check for git conflicts in other completed branches.
+
+____________________________________________________________

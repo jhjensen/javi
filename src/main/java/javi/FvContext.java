@@ -14,7 +14,44 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static history.Tools.trace;
 
-
+/**
+ * Binds a {@link TextEdit} file buffer to a {@link View} for display.
+ *
+ * <p>FvContext (File-View Context) is the central coordination point between
+ * the data model (TextEdit) and the display (View). Each FvContext represents
+ * one view of one file, storing:
+ * <ul>
+ *   <li>Cursor position (x, y coordinates)</li>
+ *   <li>Scroll position</li>
+ *   <li>Selection state</li>
+ *   <li>Change tracking for repaints</li>
+ * </ul>
+ *
+ * <h2>Static State Management</h2>
+ * <p>FvContext manages global editor state through static fields:</p>
+ * <ul>
+ *   <li>{@code fvmap} - LinkedHashMap of all View -&gt; TextEdit -&gt; FvContext mappings</li>
+ *   <li>{@code currfvc} - Currently active FvContext</li>
+ *   <li>{@code defaultFvc} - Default context for new views</li>
+ * </ul>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>All FvMap operations require holding {@link EventQueue#biglock2}.
+ * The map uses {@code assertOwned()} to verify lock is held.</p>
+ *
+ * <h2>Key Operations</h2>
+ * <ul>
+ *   <li>{@link #setCurrentFvc} - Switch to this context as active</li>
+ *   <li>{@link #getPos} / {@link #setPos} - Cursor management</li>
+ *   <li>{@link #registerUniq} - Ensure unique file/view binding</li>
+ *   <li>{@link #dispose} - Clean up when view or file closed</li>
+ * </ul>
+ *
+ * @param <OType> Element type of underlying TextEdit (typically String)
+ * @see View
+ * @see TextEdit
+ * @see EventQueue#biglock2
+ */
 public final class FvContext<OType> implements Serializable {
    private static final long serialVersionUID = 1;
 

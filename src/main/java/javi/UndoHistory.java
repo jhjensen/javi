@@ -8,6 +8,40 @@ import history.ByteInput;
 import history.PersistantStack;
 //import static history.Tools.trace;
 
+/**
+ * Manages undo/redo history for an EditContainer with disk persistence.
+ *
+ * <p>UndoHistory extends {@link PersistantStack} to provide:
+ * <ul>
+ *   <li><b>Infinite undo</b>: All changes since undo file created can be undone</li>
+ *   <li><b>Persistence</b>: Undo history survives editor restarts via .dmp2 files</li>
+ *   <li><b>Write tracking</b>: Knows whether file has unsaved changes</li>
+ *   <li><b>Marks</b>: {@link EhMark} positions for undo-to-specific-point</li>
+ * </ul>
+ *
+ * <h2>Change Records</h2>
+ * <p>Each edit operation creates a {@link ChangeRecord} subclass:</p>
+ * <ul>
+ *   <li>{@code DeleteRecord} - Line deletion</li>
+ *   <li>{@code InsertRecord} - Line insertion</li>
+ *   <li>{@code ModRecord} - Line modification</li>
+ *   <li>{@code WriteRecord} - File write marker</li>
+ *   <li>{@code BaseRecord} - Session start marker</li>
+ *   <li>{@code CheckRecord} - Checkpoint marker</li>
+ * </ul>
+ *
+ * <h2>Usage</h2>
+ * <p>UndoHistory is created by {@link EditContainer} and managed internally.
+ * Undo/redo operations are triggered by user commands via {@link EditGroup}.</p>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>Inherits thread safety from PersistantStack. Caller must synchronize.</p>
+ *
+ * @param <OType> Element type (matches EditContainer's type)
+ * @see PersistantStack
+ * @see EditContainer
+ * @see ChangeRecord
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class UndoHistory<OType>
       extends PersistantStack<UndoHistory.ChangeRecord<OType>> {

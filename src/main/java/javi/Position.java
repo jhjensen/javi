@@ -1,5 +1,36 @@
 package javi;
 
+/**
+ * Immutable position in a file: x (column), y (line), and file reference.
+ *
+ * <p>Position represents a cursor location or marker in the editor:
+ * <ul>
+ *   <li>{@link #x} - Column position (0-based)</li>
+ *   <li>{@link #y} - Line number (1-based)</li>
+ *   <li>{@link #filename} - FileDescriptor identifying the file</li>
+ *   <li>{@link #comment} - Optional description (e.g., "search result")</li>
+ * </ul>
+ *
+ * <h2>Immutability</h2>
+ * <p>Position is immutable. For mutable positions, see {@link MovePos}.
+ * Use {@link #getMovable()} to get a mutable copy.</p>
+ *
+ * <h2>Special Values</h2>
+ * <ul>
+ *   <li>{@link #badpos} - Sentinel for invalid/unknown position</li>
+ * </ul>
+ *
+ * <h2>Equality</h2>
+ * <p>Two positions are equal if they have same file, x, and y.
+ * The comment is NOT part of equality.</p>
+ *
+ * <h2>Modernization Note</h2>
+ * <p>This class is a candidate for conversion to a Java record.
+ * See IMPROVEMENTS.md M7.</p>
+ *
+ * @see MovePos
+ * @see FvContext
+ */
 public final class Position {
 
    public final int x;
