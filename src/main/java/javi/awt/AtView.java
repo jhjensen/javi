@@ -161,13 +161,13 @@ final class AtView implements
 
    AtView(Font font) {
       //trace("this = " + this + " font = " + font);
-      by = new HashMap<Attribute, Object>(3);
+      by = new HashMap<>(3);
       by.put(TextAttribute.FONT, font);
 //   temp.put(TextAttribute.CHAR_REPLACEMENT,new ShapeGraphicAttribute(
 //     new Rectangle(5,5),ShapeGraphicAttribute.CENTER_BASELINE,true));
       by.put(TextAttribute.FOREGROUND, foreground);
       by.put(TextAttribute.BACKGROUND, background);
-      byu = new HashMap<Attribute, Object>(by);
+      byu = new HashMap<>(by);
       byu.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_LOW_DOTTED);
       bpu = new HashMap<Attribute, Object>(byu);
       bpu.put(TextAttribute.FOREGROUND, insertCursor);

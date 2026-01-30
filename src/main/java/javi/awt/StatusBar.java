@@ -20,7 +20,7 @@ final class StatusBar extends Canvas {
    private int charheight;
    private int charascent;
    private int charwidth;
-   private ArrayList<String> messeges = new ArrayList<String>();
+   private ArrayList<String> messeges = new ArrayList<>();
    private static final int hoffset = 4;
    private boolean sizeChanged;
 

@@ -299,7 +299,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       TestFrame(String str, String namei) {
          super(str);
          name = namei;
-         HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(
+         HashSet<AWTKeyStroke> keyset = new HashSet<>(
             getFocusTraversalKeys(
                KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
 
