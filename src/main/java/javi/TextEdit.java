@@ -44,8 +44,13 @@ import static javi.FileDescriptor.LocalFile.make;
  * </ul>
  *
  * <h2>Thread Safety</h2>
- * <p>Inherits thread safety requirements from {@link EditContainer}. Most operations
- * require holding {@link EventQueue#biglock2}.</p>
+ * <p>Inherits thread safety requirements from {@link EditContainer}:</p>
+ * <ul>
+ *   <li>All modification methods require {@link EventQueue#biglock2}</li>
+ *   <li>Most operations called from the main event loop already hold the lock</li>
+ *   <li>Read operations during background I/O must use {@link #containsNow(int)}</li>
+ * </ul>
+ * <p>See THREADING.md for complete documentation of the locking strategy.</p>
  *
  * @param <OType> Element type (typically String for text files)
  * @see EditContainer

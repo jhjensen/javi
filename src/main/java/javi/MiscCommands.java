@@ -58,16 +58,20 @@ public final class MiscCommands extends Rgroup {
          case 6:
             return null; // fvc.edvec.undoElement(fvc.inserty()); return null;
          case 7:
-            startshell(fvc, (String) arg);
+            // Type safety: arg should be String from key mapping
+            startshell(fvc, arg instanceof String ? (String) arg : null);
             return null;
          case 8:
-            loadgroup(fvc.edvec.getName(), (String) arg);
+            // Type safety: arg should be String from key mapping
+            loadgroup(fvc.edvec.getName(), arg instanceof String ? (String) arg : null);
             return null;
          case 9:
-            startcom((String) arg, fvc);
+            // Type safety: arg should be String from key mapping
+            startcom(arg instanceof String ? (String) arg : null, fvc);
             return null;
          case 10:
-            startcmd((String) arg, fvc);
+            // Type safety: arg should be String from key mapping
+            startcmd(arg instanceof String ? (String) arg : null, fvc);
             return null;
          case 11:
             defheight = oBToInt(arg);

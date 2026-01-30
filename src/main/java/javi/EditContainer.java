@@ -32,8 +32,14 @@ import static history.Tools.trace;
  * </ul>
  *
  * <h2>Thread Safety</h2>
- * <p>Most operations require holding {@link EventQueue#biglock2}. The
- * {@code listeners} collection has its own synchronization.</p>
+ * <p>Most operations require holding {@link EventQueue#biglock2}. Key invariants:</p>
+ * <ul>
+ *   <li>All modification methods (insert, delete, change) require biglock2</li>
+ *   <li>Static collections {@code filehash} and {@code listeners} have separate sync</li>
+ *   <li>The {@code listeners} collection uses its own monitor for iteration</li>
+ *   <li>Methods use {@code assertOwned()} to verify lock state at runtime</li>
+ * </ul>
+ * <p>See THREADING.md for complete documentation of the locking strategy.</p>
  *
  * <h2>Important Invariants</h2>
  * <ul>
@@ -858,8 +864,23 @@ public class EditContainer<OType> implements
       backup.forceWritten();
    }
 
+   /**
+    * Prepare for modification at the given index.
+    * <p><b>Thread Safety</b>: Requires {@link EventQueue#biglock2}.
+    * This method is called before any modification to ensure:
+    * <ul>
+    *   <li>File is fully read (via {@link #finish()})</li>
+    *   <li>Index is valid</li>
+    *   <li>File is writable</li>
+    *   <li>Backup state is initialized</li>
+    * </ul>
+    * @param index the position where modification will occur
+    * @throws ArrayIndexOutOfBoundsException if index is invalid
+    * @throws ReadOnlyException if file is read-only
+    */
    private void mkback(int index) {
       //trace("mkback");
+      EventQueue.biglock2.assertOwned();
       finish();
       if (0 != index && !containsNow(index))
          throw new ArrayIndexOutOfBoundsException(index);

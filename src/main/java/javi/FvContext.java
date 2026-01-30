@@ -364,7 +364,8 @@ public final class FvContext<OType> implements Serializable {
                trace("failed to acquire big lock, try and exit anyway");
             disposeAll(true);
          } catch (Exception e) {
-            trace("exit threw " + e);
+            trace("exit threw exception during shutdown", e);
+            // Print full stack trace for debugging shutdown issues
             e.printStackTrace();
          } finally {
             EventQueue.biglock2.unlock();

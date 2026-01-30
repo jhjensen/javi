@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import history.Tools;
+import static history.Tools.trace;
 
 public final class Command extends Rgroup {
 
@@ -48,10 +49,12 @@ public final class Command extends Rgroup {
                commandproc(fvc);
                return null;
             case 5:
-               checkout((String) arg, fvc);
+               // Type safety: arg should be String from key mapping
+               checkout(arg instanceof String ? (String) arg : arg.toString(), fvc);
                return null;
             case 6:
-               setcommand((String) arg, fvc);
+               // Type safety: arg should be String from key mapping
+               setcommand(arg instanceof String ? (String) arg : arg.toString(), fvc);
                return null;
             case 7:
                fvc.edvec.reload();
@@ -66,10 +69,10 @@ public final class Command extends Rgroup {
                throw new RuntimeException("doroutine called with " + rnum);
          }
       } catch (IOException e)  {
-         UI.reportMessage("command caught IOException" + e);
-         e.printStackTrace();
+         UI.reportMessage("command caught IOException: " + e.getMessage());
+         trace("command caught IOException", e);
       } catch (InputException e) {
-         e.printStackTrace();
+         trace("command caught InputException", e);
          UI.reportMessage(e.toString());
       }
       return null;

@@ -10,6 +10,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import static history.Tools.trace;
 
+/**
+ * Server for handling external file open requests.
+ *
+ * <p>Allows other processes to request Javi to open files via socket connection.
+ * Used primarily for integrating Javi as an external editor with other tools.</p>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>The server runs in its own thread and acquires {@link EventQueue#biglock2}
+ * only when opening files. The socket hash is protected by this class's implicit
+ * synchronization through single-threaded access patterns.</p>
+ *
+ * @see EditContainer.FileStatusListener
+ */
 final class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
@@ -56,15 +69,15 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
                UI.toFront();
             }
          } catch (Throwable e) {
-            trace("server.run caught exception " + e);
-            e.printStackTrace();
+            trace("server.run caught exception", e);
+            if (!(e instanceof IOException))
+               e.printStackTrace(); // Full trace for unexpected exceptions
             try {
                //trace("closing socket");
                if (null != sock)
                   sock.close();
             } catch (IOException e1) {
-               trace("caught exception while trying to close" + e1);
-               e1.printStackTrace();
+               trace("caught exception while trying to close socket", e1);
             }
          } finally {
             if (EventQueue.biglock2.isHeldByCurrentThread())

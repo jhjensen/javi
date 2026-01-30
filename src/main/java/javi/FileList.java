@@ -100,7 +100,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             case 2:
                //trace("fopen command arg" + arg);
                //trace("instance " + instance);
-               return openFileName((String) arg, fvc.vi);
+               // Type safety: arg should be String from key mapping
+               return openFileName(arg instanceof String ? (String) arg : arg.toString(), fvc.vi);
             case 3:
                processZ(fvc);
                return null;
