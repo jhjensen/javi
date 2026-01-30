@@ -27,16 +27,24 @@ final class Ctag {
          //trace(this);
       }
 
+      /**
+       * Gets the positions for this tag entry, loading from file if needed.
+       *
+       * @param tagfile the path to the ctags file
+       * @return array of Position objects for this tag
+       * @throws IOException if an I/O error occurs reading the tag file
+       */
       Position[] getPositions(String tagfile) throws IOException {
          if (null == positions) {
-            RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r");
-            ctfile.seek(filestart);
-            ArrayList<Position> tempvec = new ArrayList<Position>();
-            do {
-               tempvec.add(getnextpos(ctfile));
-            } while (fileend > ctfile.getFilePointer());
+            try (RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r")) {
+               ctfile.seek(filestart);
+               ArrayList<Position> tempvec = new ArrayList<Position>();
+               do {
+                  tempvec.add(getnextpos(ctfile));
+               } while (fileend > ctfile.getFilePointer());
 
-            positions = tempvec.toArray(narray);
+               positions = tempvec.toArray(narray);
+            }
          }
 
          return positions;
@@ -72,15 +80,19 @@ final class Ctag {
    private String ctfilename;
    private ArrayList<TagEntry> carray = new ArrayList<TagEntry>();
 
+   /**
+    * Creates a new Ctag instance by reading the tag file index.
+    * Initializes the tag entry cache with boundary entries.
+    *
+    * @param tagfilename the path to the ctags file
+    * @throws IOException if an I/O error occurs reading the tag file
+    */
    Ctag(String tagfilename) throws IOException {
       ctfilename = tagfilename;
-      RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r");
-      try {
+      try (RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r")) {
          carray.add(new TagEntry(String.valueOf(Character.MIN_VALUE), 0, 0));
          carray.add(new TagEntry(String.valueOf(Character.MAX_VALUE),
             ctfile.length(), ctfile.length()));
-      } finally {
-         ctfile.close();
       }
    }
 
@@ -127,10 +139,19 @@ final class Ctag {
       }
    }
 
+   /**
+    * Looks up a tag name by searching through the tag file.
+    * Uses binary search through cached tag entries and reads more
+    * entries from the file as needed.
+    *
+    * @param name the tag name to find
+    * @param guess the initial position in the cache to start searching
+    * @return the TagEntry if found, null otherwise
+    * @throws IOException if an I/O error occurs reading the tag file
+    */
    private TagEntry filelookup(String name, int guess) throws IOException {
       //trace("filelookup guess = " + guess);
-      RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r");
-      try {
+      try (RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r")) {
          while (true) {
             TagEntry te1 = carray.get(guess);
             TagEntry te2 = carray.get(guess + 1);
@@ -147,8 +168,6 @@ final class Ctag {
             else  if (compare == 0)
                return te1;
          }
-      } finally {
-         ctfile.close();
       }
    }
 

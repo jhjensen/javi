@@ -292,15 +292,11 @@ public class TextEdit<OType> extends EditContainer<OType> {
             if (file.exists() && !file.canWrite())
                throw new EditContainer.ReadOnlyException(
                   this, file.getCanonicalPath());
-            PrintWriter os = new PrintWriter(file, "UTF-8");
-            try {
-
+            try (PrintWriter os = new PrintWriter(file, "UTF-8")) {
                for (int ii = linestart; ii <= linefinish; ii++)
                   if (null == rangePattern
                         || (inverse ^ (searchForward(rangePattern, 0, ii))))
                      os.println(at(ii));
-            } finally {
-               os.close();
             }
             return linestart;
          case 's':

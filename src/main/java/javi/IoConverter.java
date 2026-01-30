@@ -161,8 +161,20 @@ public class IoConverter<OType> implements Runnable, Serializable {
       abstract BackupStatus getBackupStatus();
    }
 
+   /**
+    * Expands the buffer to ensure at least 'desired' elements are loaded.
+    * This wrapper method handles the complex lock ordering between biglock2
+    * and this object's monitor to prevent deadlock.
+    *
+    * @param desired the minimum number of elements needed
+    * @return true if loading is complete, false if still loading
+    * @throws IOException if an I/O error occurs during loading
+    */
    final boolean expand(int desired) throws IOException {
-      // this layer prevents a deadlock
+      // This layer prevents a deadlock by managing lock acquisition order.
+      // expandLock() may release biglock2 while holding 'this' monitor
+      // (to allow wait() to work), returning 2 to signal we need to
+      // reacquire biglock2 before trying again.
       int eret;
       while (2 == (eret = expandLock(desired)))
          EventQueue.biglock2.lock();
@@ -172,6 +184,36 @@ public class IoConverter<OType> implements Runnable, Serializable {
    }
 
 
+   /**
+    * Internal method that checks/expands the buffer while holding this monitor.
+    *
+    * <p><strong>LOCK ORDERING WARNING:</strong> This method releases biglock2
+    * while holding 'this' object's monitor (in the STARTED case). This is an
+    * intentional pattern to allow wait() to function, but creates a potential
+    * deadlock risk if not carefully managed:</p>
+    *
+    * <ul>
+    * <li>Normal lock order: biglock2 → this (IoConverter instance)</li>
+    * <li>This method temporarily inverts that order by releasing biglock2
+    *     while holding 'this', then signaling caller to reacquire biglock2</li>
+    * <li>The return value of 2 tells expand() to reacquire biglock2 and retry</li>
+    * </ul>
+    *
+    * <p>This pattern works because:</p>
+    * <ol>
+    * <li>We always release biglock2 before waiting on 'this'</li>
+    * <li>The I/O thread (rthread) only acquires 'this' monitor, never biglock2</li>
+    * <li>The caller (expand) reacquires biglock2 after expandLock returns 2</li>
+    * </ol>
+    *
+    * <p>TODO: Consider refactoring to use java.util.concurrent primitives
+    * (CountDownLatch, Condition, etc.) for clearer lock management.</p>
+    *
+    * @param desired the minimum number of elements needed
+    * @return 0 if data already available, 1 if loading finished, 2 if caller
+    *         must reacquire biglock2 and retry
+    * @throws IOException if an I/O error occurs during loading
+    */
    final synchronized int expandLock(int desired) throws IOException {
 
       //trace("enter expand "  + this + " desired = " + desired);
