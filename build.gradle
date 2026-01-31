@@ -16,15 +16,36 @@ jacoco {
 
 repositories {
     mavenCentral()
+    // RXTX serial library may need additional repositories
+    maven {
+        url 'https://repo.spring.io/plugins-release/'
+        content {
+            includeGroup 'org.rxtx'
+        }
+    }
 }
 
 dependencies {
-    // Add external JARs from the 'lib' directory
-    implementation fileTree(dir: 'lib', include: '*.jar')
-
-    // Example: Add additional dependencies from Maven Central (if needed)
-    // implementation 'org.apache.commons:commons-lang3:3.12.0'
-
+    // Primary dependencies from Maven Central for reproducible builds
+    // Note: local JARs in lib/ are kept as fallback but not included in classpath
+    // to avoid duplicate class issues
+    
+    // JavaScript engine for scripting support
+    implementation 'org.mozilla:rhino:1.7.14'
+    
+    // Character encoding detection
+    implementation 'com.github.albfernandez:juniversalchardet:2.4.0'
+    
+    // Serial port communication (for VT100 terminal emulation)
+    // Note: RXTX may require native libraries for your platform
+    implementation 'org.rxtx:rxtx:2.1.7'
+    
+    // Test dependencies
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    
+    // JaCoCo agent for coverage
+    jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.12:runtime'
 }
 
 sourceSets {
@@ -40,47 +61,61 @@ sourceSets {
 }
 
 tasks.named('compileJava') {
-    options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked', '-Xmaxwarns', '500', '-Werror']
+    options.compilerArgs += [
+        '-Xlint:all',           // All standard warnings
+        '-Xlint:-serial',       // Ignore serialVersionUID (too noisy for existing code)
+        '-Xlint:-processing',   // Ignore annotation processing warnings
+        '-Xlint:-rawtypes',     // Ignore raw type warnings (existing code uses many)
+        '-Xlint:-static',       // Ignore static access via instance
+        '-Xlint:-cast',         // Ignore redundant cast warnings
+        '-Xlint:-dangling-doc-comments', // Ignore dangling javadoc comments
+        '-Xlint:-this-escape',  // Ignore this-escape in constructors (existing pattern)
+        '-Xmaxwarns', '500',    // Limit warning output
+        '-Werror'               // Treat warnings as errors
+    ]
+    options.deprecation = true
+    options.encoding = 'UTF-8'
 }
 
 // Ensure history classes are included in the JAR
+// I3: Version from project property or git describe
+def projectVersion = project.findProperty('version') ?: 'dev'
+
 tasks.named('jar') {
     manifest {
         attributes(
             'Implementation-Title': 'javi',
-            'Implementation-Version': '1.0',
-            'Main-Class': 'javi.Javi', // Replace with your actual main class
+            'Implementation-Version': projectVersion,
+            'Build-Date': new Date().format('yyyy-MM-dd HH:mm:ss'),
+            'Main-Class': 'javi.Javi',
             'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
         )
     }
     archiveBaseName.set('javi')
-    archiveVersion.set('1.0')
+    archiveVersion.set(projectVersion)
     destinationDirectory.set(file("$buildDir/libs"))
 }
 
-// Copy JAR to dist directory (like ant used to do)
+// I3: Copy JAR to dist directory with optional versioning
 tasks.register('dist', Copy) {
     dependsOn jar
     from jar.archiveFile
     into "$projectDir/dist"
-    rename { 'javi.jar' }
+    // Use versioned name if version provided, otherwise javi.jar
+    rename { projectVersion == 'dev' ? 'javi.jar' : "javi-${projectVersion}.jar" }
 }
 
-// Copy fat JAR to dist directory
+// I3: Copy fat JAR to dist directory with optional versioning
 tasks.register('distFat', Copy) {
     dependsOn shadowJar
     from shadowJar.archiveFile
     into "$projectDir/dist"
-    rename { 'javi-all.jar' }
+    rename { projectVersion == 'dev' ? 'javi-all.jar' : "javi-all-${projectVersion}.jar" }
 }
 
 // Configuration for JaCoCo agent JAR
 configurations {
     jacocoAgent
-}
-
-dependencies {
-    jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.12:runtime'
 }
 
 // Run PSTest with JaCoCo coverage

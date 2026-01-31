@@ -37,6 +37,13 @@ jar:
 fatjar:
 	./gradlew shadowJar
 
+#==============================================================================
+# I3: Release Distribution Targets
+#==============================================================================
+
+# Version from git describe (tag-commits-hash) or 'dev' if no tags
+VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+
 # Copy JAR to dist directory
 dist: jar
 	./gradlew dist
@@ -44,6 +51,48 @@ dist: jar
 # Copy fat JAR to dist directory  
 dist-fat: fatjar
 	./gradlew distFat
+
+# Verify working directory is clean (no uncommitted changes)
+verify-clean:
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Error: Working directory not clean. Commit or stash changes first."; \
+		git status --short; \
+		exit 1; \
+	fi
+	@echo "✓ Working directory clean"
+
+# Create a release distribution
+# 1. Verifies clean git status
+# 2. Compiles and checks for errors
+# 3. Runs all tests
+# 4. Creates versioned JAR
+# 5. Creates git tag
+dist-release: verify-clean compile test
+	@echo ""
+	@echo "Building release $(VERSION)..."
+	@mkdir -p dist
+	./gradlew jar -Pversion=$(VERSION)
+	cp build/libs/javi-$(VERSION).jar dist/
+	@echo ""
+	@echo "✓ Created: dist/javi-$(VERSION).jar"
+	@echo ""
+	@echo "To create a git tag, run:"
+	@echo "  git tag -a v$(VERSION) -m 'Release $(VERSION)'"
+	@echo "  git push origin v$(VERSION)"
+
+# Create a release with fat JAR (includes all dependencies)
+dist-release-fat: verify-clean compile test
+	@echo ""
+	@echo "Building fat release $(VERSION)..."
+	@mkdir -p dist
+	./gradlew shadowJar -Pversion=$(VERSION)
+	cp build/libs/javi-all-$(VERSION).jar dist/
+	@echo ""
+	@echo "✓ Created: dist/javi-all-$(VERSION).jar"
+
+# Show current version
+version:
+	@echo "Current version: $(VERSION)"
 
 # Full build (compile + jar)
 build: compile jar
@@ -179,31 +228,38 @@ help:
 	@echo "Javi Makefile Targets:"
 	@echo ""
 	@echo "Build:"
-	@echo "  make compile  - Compile Java sources (warnings are errors)"
-	@echo "  make jar      - Build JAR file"
-	@echo "  make fatjar   - Build fat JAR with dependencies"
-	@echo "  make dist     - Copy JAR to dist/ directory"
-	@echo "  make dist-fat - Copy fat JAR to dist/ directory"
-	@echo "  make build    - Full build (compile + jar)"
-	@echo "  make clean    - Clean build artifacts"
+	@echo "  make compile      - Compile Java sources (warnings are errors)"
+	@echo "  make jar          - Build JAR file"
+	@echo "  make fatjar       - Build fat JAR with dependencies"
+	@echo "  make build        - Full build (compile + jar)"
+	@echo "  make clean        - Clean build artifacts"
+	@echo ""
+	@echo "Distribution:"
+	@echo "  make dist         - Copy JAR to dist/ directory"
+	@echo "  make dist-fat     - Copy fat JAR to dist/ directory"
+	@echo "  make dist-release - Build verified release (clean + test + versioned JAR)"
+	@echo "  make dist-release-fat - Build verified fat JAR release"
+	@echo "  make version      - Show current version from git"
 	@echo ""
 	@echo "Test:"
-	@echo "  make test     - Run all tests"
-	@echo "  make pstest   - Run PersistantStack tests"
-	@echo "  make edittest - Run EditTester1 tests"
+	@echo "  make test         - Run all tests"
+	@echo "  make pstest       - Run PersistantStack tests"
+	@echo "  make edittest     - Run EditTester1 tests"
+	@echo "  make intarraytest - Run IntArray tests"
+	@echo "  make test-coverage - Run tests with coverage report"
 	@echo ""
 	@echo "Run:"
-	@echo "  make run      - Run the application"
+	@echo "  make run          - Run the application"
 	@echo "  make run-file FILE=path/to/file - Run with specific file"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  make cstyle   - Run checkstyle on all Java files"
+	@echo "  make cstyle       - Run checkstyle on all Java files"
 	@echo "  make cstyle-file FILE=path - Run checkstyle on specific file"
 	@echo ""
 	@echo "Documentation:"
-	@echo "  make javadoc  - Generate Javadoc documentation"
+	@echo "  make javadoc      - Generate Javadoc documentation"
 	@echo ""
 	@echo "Development:"
-	@echo "  make tags     - Generate ctags"
-	@echo "  make ID       - Generate ID database"
-	@echo "  make help     - Show this help"
+	@echo "  make tags         - Generate ctags"
+	@echo "  make ID           - Generate ID database"
+	@echo "  make help         - Show this help"
