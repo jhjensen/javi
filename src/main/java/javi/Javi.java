@@ -107,6 +107,34 @@ public final class Javi {
       //trace("javi Version " + version);
    }
 
+   /**
+    * Print usage information to stderr.
+    *
+    * <p>Called when -h/--help is specified or when invalid arguments
+    * are provided.</p>
+    */
+   private static void printUsage() {
+      System.err.println("Usage: javi [options] [files...]");
+      System.err.println("Options:");
+      System.err.println("  -h, --help     Show this help message");
+      System.err.println("  -c <command>   Execute command on startup");
+      System.err.println("  -p <file>      Use persistence file for session state");
+      System.err.println("  files...       Files to edit");
+   }
+
+   /**
+    * Main entry point for the Javi editor.
+    *
+    * <p>Parses command line arguments and initializes the editor.
+    * Supports the following options:</p>
+    * <ul>
+    *   <li>{@code -h, --help} - Print usage and exit</li>
+    *   <li>{@code -c <command>} - Execute command after startup</li>
+    *   <li>{@code -p <file>} - Use persistence file for session state</li>
+    * </ul>
+    *
+    * @param args command line arguments
+    */
    public static void main(String[] args) {
       //trace(System.getProperties().toString());
       //trace("prop : \n" + System.getProperties());
@@ -119,7 +147,9 @@ public final class Javi {
       String command = null;
       boolean cflag = false;
       boolean pflag = false;
-      for (String str : args) {
+      // B10: Improved command line argument handling with validation
+      for (int i = 0; i < args.length; i++) {
+         String str = args[i];
          //trace("commandline: " + str);
          if (cflag) {
             command = str;
@@ -127,14 +157,45 @@ public final class Javi {
          } else if (pflag) {
             persistName = str;
             pflag = false;
+         } else if (str.equals("-h") || str.equals("--help")) {
+            printUsage();
+            System.exit(0);
          } else if (str.equals("-c")) {
+            // B10: Check that -c has an argument
+            if (i + 1 >= args.length) {
+               System.err.println("Error: -c requires a command argument");
+               printUsage();
+               System.exit(1);
+            }
             cflag = true;
          } else if (str.equals("-p")) {
+            // B10: Check that -p has an argument
+            if (i + 1 >= args.length) {
+               System.err.println("Error: -p requires a file argument");
+               printUsage();
+               System.exit(1);
+            }
             pflag = true;
+         } else if (str.startsWith("-") && str.length() > 1) {
+            // B10: Reject unknown flags
+            System.err.println("Error: Unknown option: " + str);
+            printUsage();
+            System.exit(1);
          } else {
             sb.append(str);
             sb.append('\n');
          }
+      }
+      // B10: Handle trailing flag without argument (shouldn't happen with above checks)
+      if (cflag) {
+         System.err.println("Error: -c requires a command argument");
+         printUsage();
+         System.exit(1);
+      }
+      if (pflag) {
+         System.err.println("Error: -p requires a file argument");
+         printUsage();
+         System.exit(1);
       }
       File pfile = null == persistName
                              ? null

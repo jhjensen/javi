@@ -84,13 +84,26 @@ final class Ctag {
       }
    }
 
+   /**
+    * Look up a tag name in the ctags file using binary search.
+    *
+    * <p>Performs a binary search through the in-memory tag index, falling
+    * back to file lookup when the exact entry isn't cached.</p>
+    *
+    * @param name the tag name to look up
+    * @return array of Position objects for the tag, or null if not found
+    * @throws IOException if there's an error reading the tags file
+    */
    Position[] taglookup(String name) throws IOException {
       //trace("looking up " + name);
       int hirange = carray.size() - 1;
       int lowrange = 0;
       int guess = hirange >> 1;
       TagEntry te = carray.get(guess);
-      while (true) {
+      // B8: Add iteration limit to prevent infinite loop in case of data corruption
+      int maxIterations = carray.size() + 10;
+      int iterations = 0;
+      while (iterations++ < maxIterations) {
          if (lowrange == hirange - 1) {
             te = filelookup(name, lowrange);
             return null == te
@@ -125,13 +138,30 @@ final class Ctag {
             }
          }
       }
+      // B8: Log warning if iteration limit was reached
+      trace("Ctag.taglookup: iteration limit reached for name=" + name);
+      return null;
    }
 
+   /**
+    * Look up a tag by reading directly from the file.
+    *
+    * <p>Called when the binary search narrows down to a range that needs
+    * direct file access to find the exact entry.</p>
+    *
+    * @param name the tag name to look up
+    * @param guess the starting index in carray
+    * @return the TagEntry if found, null otherwise
+    * @throws IOException if there's an error reading the file
+    */
    private TagEntry filelookup(String name, int guess) throws IOException {
       //trace("filelookup guess = " + guess);
       RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r");
       try {
-         while (true) {
+         // B8: Add iteration limit to prevent infinite loop
+         int maxIterations = 10000;
+         int iterations = 0;
+         while (iterations++ < maxIterations) {
             TagEntry te1 = carray.get(guess);
             TagEntry te2 = carray.get(guess + 1);
             //trace("findfile te1 " + te1 + " te2 " + te2);
@@ -147,6 +177,9 @@ final class Ctag {
             else  if (compare == 0)
                return te1;
          }
+         // B8: Log warning if iteration limit was reached
+         trace("Ctag.filelookup: iteration limit reached for name=" + name);
+         return null;
       } finally {
          ctfile.close();
       }
