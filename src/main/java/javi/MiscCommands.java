@@ -12,27 +12,30 @@ import static history.Tools.trace;
 public final class MiscCommands extends Rgroup {
    MiscCommands() {
       final String[] rnames = {
-            "",
-            "xxxunused",
-            "zprocess",
-            "redraw",
-            "undo",
-            "redo", // 5
-            "undoline",
-            "vt",
-            "loadgroup",
-            "comm",
-            "exec", // 10
-            "lines", // 5
-            "setwidth",
+         "",
+         "xxxunused",
+         "zprocess",
+         "redraw",
+         "undo",
+         "redo",             // 5
+         "undoline",
+         "vt",
+         "loadgroup",
+         "comm",
+         "exec",            //10
+         "lines", // 5
+         "setwidth",
+         "shells",           // 13
+         "shellclose",       // 14
+         "shellnext",        // 15
+         "shellprev",        // 16
+         "shellname",        // 17
       };
       register(rnames);
    }
 
    private static TextEdit debugfile;
-   private static TextEdit shellfile;
    private static TextEdit cmdfile;
-   private static String lastshell = null;
    private static int defwidth = 80;
    private static int defheight = 80;
 
@@ -79,6 +82,21 @@ public final class MiscCommands extends Rgroup {
          case 12:
             defwidth = oBToInt(arg);
             return null;
+         case 13:
+            listShells(fvc);
+            return null;
+         case 14:
+            closeShell(fvc, (String) arg);
+            return null;
+         case 15:
+            nextShell(fvc);
+            return null;
+         case 16:
+            prevShell(fvc);
+            return null;
+         case 17:
+            renameShell(fvc, arg instanceof String ? (String) arg : null);
+            return null;
 
          default:
             throw new RuntimeException("vigroup:default");
@@ -108,10 +126,7 @@ public final class MiscCommands extends Rgroup {
             cmdfile = null;
          if (ev == debugfile)
             debugfile = null;
-         if (ev == shellfile)
-            shellfile = null;
-         // if (ev == picCon)
-         // picCon=null;
+         // ShellManager handles shell session cleanup
          if (ev == commCon)
             commCon = null;
          return false;
@@ -136,18 +151,142 @@ public final class MiscCommands extends Rgroup {
 
    private void startshell(FvContext fvc, String host) throws IOException, InputException {
       trace("reached startshell " + host);
-      if (null != shellfile && null != host) {
-         FvContext.connectFv(shellfile, fvc.vi);
-      } else {
-         EditContainer.registerListener(fli);
-         if (null == host)
-            host = lastshell;
-         else
-            lastshell = host;
-         shellfile = Vt100.Telnet.make(host);
-         FvContext.connectFv(shellfile, fvc.vi);
+
+      // F8 toggle: if already viewing a shell buffer, enter passthrough mode
+      if (null == host && fvc.edvec instanceof Vt100) {
+         ((Vt100) fvc.edvec).handleKeys(fvc);
+         return;
       }
 
+      ShellManager mgr = ShellManager.getInstance();
+
+      // If no argument and we have an active shell, switch to it
+      if (null == host && mgr.getSessionCount() > 0) {
+         ShellSession active = mgr.getActive();
+         if (null != active) {
+            FvContext.connectFv(active.getBuffer(), fvc.vi);
+            return;
+         }
+      }
+
+      // Try to parse arg as a session number
+      if (null != host) {
+         try {
+            int shellId = Integer.parseInt(host);
+            if (mgr.switchToId(shellId)) {
+               ShellSession session = mgr.getActive();
+               FvContext.connectFv(session.getBuffer(), fvc.vi);
+               return;
+            }
+            // Fall through to create new shell if not found
+         } catch (NumberFormatException e) {
+            // Not a number — try as session name
+            if (mgr.switchToName(host)) {
+               ShellSession session = mgr.getActive();
+               FvContext.connectFv(session.getBuffer(), fvc.vi);
+               return;
+            }
+            // Not found by name — treat as SSH hostname
+         }
+      }
+
+      // Create new shell session
+      EditContainer.registerListener(fli);
+      ShellSession session = mgr.newShell(host);
+      FvContext.connectFv(session.getBuffer(), fvc.vi);
+   }
+
+   /**
+    * Lists all active shell sessions.
+    *
+    * @param fvc the current file-view context
+    */
+   private static void listShells(FvContext fvc) {
+      ShellManager mgr = ShellManager.getInstance();
+      String list = mgr.getShellList();
+      UI.reportMessage(list.replaceAll("\n", " | "));
+   }
+
+   /**
+    * Closes the current or specified shell session.
+    *
+    * @param fvc the current file-view context
+    * @param arg optional shell ID to close
+    * @throws InputException if shell ID is invalid
+    */
+   private static void closeShell(FvContext fvc, String arg)
+         throws InputException {
+      ShellManager mgr = ShellManager.getInstance();
+
+      if (null != arg && !arg.isEmpty()) {
+         try {
+            int shellId = Integer.parseInt(arg);
+            if (!mgr.closeShell(shellId)) {
+               throw new InputException("No shell with ID " + shellId);
+            }
+         } catch (NumberFormatException e) {
+            throw new InputException("Invalid shell ID: " + arg, e);
+         }
+      } else {
+         if (!mgr.closeActiveShell()) {
+            throw new InputException("No active shell to close");
+         }
+      }
+   }
+
+   /**
+    * Switches to the next shell session.
+    *
+    * @param fvc the current file-view context
+    * @throws IOException if buffer connection fails
+    * @throws InputException if connection fails
+    */
+   private static void nextShell(FvContext fvc) throws IOException, InputException {
+      ShellManager mgr = ShellManager.getInstance();
+      if (mgr.nextShell()) {
+         ShellSession active = mgr.getActive();
+         if (null != active) {
+            FvContext.connectFv(active.getBuffer(), fvc.vi);
+         }
+      }
+   }
+
+   /**
+    * Switches to the previous shell session.
+    *
+    * @param fvc the current file-view context
+    * @throws IOException if buffer connection fails
+    * @throws InputException if connection fails
+    */
+   private static void prevShell(FvContext fvc) throws IOException, InputException {
+      ShellManager mgr = ShellManager.getInstance();
+      if (mgr.previousShell()) {
+         ShellSession active = mgr.getActive();
+         if (null != active) {
+            FvContext.connectFv(active.getBuffer(), fvc.vi);
+         }
+      }
+   }
+
+   /**
+    * Renames the active shell session.
+    *
+    * @param fvc the current file-view context
+    * @param newName the new name for the shell
+    */
+   private static void renameShell(FvContext fvc, String newName) {
+      if (newName == null || newName.isEmpty()) {
+         UI.reportMessage("Usage: :shellname <name>");
+         return;
+      }
+      ShellManager mgr = ShellManager.getInstance();
+      ShellSession active = mgr.getActive();
+      if (null == active) {
+         UI.reportMessage("No active shell to rename");
+         return;
+      }
+      active.setName(newName);
+      UI.reportMessage("Shell " + active.getId() + " renamed to: " + newName);
    }
 
    private static TextEdit commCon;

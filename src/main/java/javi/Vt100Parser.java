@@ -3,31 +3,117 @@ import java.io.BufferedInputStream;
 import history.Tools;
 import static history.Tools.trace;
 
+/**
+ * Parser for VT100/ANSI escape sequences.
+ *
+ * <p>Vt100Parser reads bytes from a terminal input stream and translates
+ * VT100/ANSI escape sequences into calls on a {@link VScreen} interface.
+ * Regular characters are buffered and passed through.</p>
+ *
+ * <h2>State Machine</h2>
+ * <p>The parser operates as a state machine with states for:</p>
+ * <ul>
+ *   <li>NORM - Normal character processing</li>
+ *   <li>ESC - Escape character received, awaiting command</li>
+ *   <li>GETNUM - Processing CSI sequence with numeric parameters</li>
+ *   <li>MODE - Processing private mode sequences</li>
+ *   <li>OSCMODE - Processing Operating System Command sequences</li>
+ * </ul>
+ *
+ * <h2>Supported Sequences</h2>
+ * <table border="1">
+ *   <tr><th>Sequence</th><th>Description</th></tr>
+ *   <tr><td>ESC[nA</td><td>Cursor up n rows</td></tr>
+ *   <tr><td>ESC[nB</td><td>Cursor down n rows</td></tr>
+ *   <tr><td>ESC[nC</td><td>Cursor right n columns</td></tr>
+ *   <tr><td>ESC[nD</td><td>Cursor left n columns</td></tr>
+ *   <tr><td>ESC[n;mH</td><td>Cursor position (row;column)</td></tr>
+ *   <tr><td>ESC[nJ</td><td>Erase display (0=to end, 1=to start, 2=all)</td></tr>
+ *   <tr><td>ESC[nK</td><td>Erase line (0=to end, 1=to start, 2=all)</td></tr>
+ *   <tr><td>ESC[nL</td><td>Insert n lines</td></tr>
+ *   <tr><td>ESC[nM</td><td>Delete n lines</td></tr>
+ *   <tr><td>ESC[nP</td><td>Delete n characters</td></tr>
+ *   <tr><td>ESC[nS</td><td>Scroll up n lines</td></tr>
+ *   <tr><td>ESC[nT</td><td>Scroll down n lines</td></tr>
+ *   <tr><td>ESC[n@</td><td>Insert n blank characters</td></tr>
+ *   <tr><td>ESC[nm</td><td>Set graphic rendition (colors/attributes)</td></tr>
+ *   <tr><td>ESC 7</td><td>Save cursor position</td></tr>
+ *   <tr><td>ESC 8</td><td>Restore cursor position</td></tr>
+ *   <tr><td>ESC M</td><td>Reverse index (move cursor up)</td></tr>
+ * </table>
+ *
+ * @see VScreen
+ * @see Vt100
+ */
 final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
+   /** Current parser state. */
    private int state = NORM;
+
+   /** State: Normal character processing. */
    private static final int NORM = 0;
+
+   /** State: Escape character received. */
    private static final int ESC = 1;
+
+   /** State: Processing CSI sequence with numeric parameters. */
    private static final int GETNUM = 2;
+
+   /** State: Processing private mode sequences. */
    private static final int MODE = 3;
-//  private final static int MODEND =4;
+
+   /** State: Processing OSC sequence start. */
    private static final int OSCMODE = 5;
+
+   /** State: Processing OSC sequence separator. */
    private static final int OSCMODE2 = 6;
+
+   /** State: Processing OSC sequence content. */
    private static final int OSCMODE3 = 7;
-   // private final static int GETTITLE =8;
+
+   /** State: Carriage return received. */
    private static final int CR = 9;
+
+   /** The virtual screen to update. */
    private final VScreen window;
+
+   /** Buffer for accumulating normal characters. */
    private final StringBuilder sb = new StringBuilder(200);
+
+   /** Array for accumulating numeric parameters in CSI sequences. */
    private int[] numacc = null;
+
+   /** Current index into numacc array. */
    private int currnumacc;
+
+   /** Highest numacc index that was explicitly set. */
    private int highestSet;
+
+   /** Mode number for private mode sequences. */
    private int modenumber;
+
+   /** OSC command character. */
    private char oscmode;
+
+   /** Buffer for OSC string content. */
    private final StringBuilder oscstring = new StringBuilder(80);
+
+   /** Input stream from terminal process. */
    private final BufferedInputStream input;
+
+   /** Most recently read byte. */
    private char recbyte;
+
+   /** Parser thread. */
    private Thread rthread = new Thread(this, "vt100 parser thread");
 
+   /**
+    * Creates a new VT100 parser.
+    *
+    * @param win the VScreen to update
+    * @param ins the input stream to read from
+    * @throws NullPointerException if ins is null
+    */
    Vt100Parser(VScreen win, BufferedInputStream ins) {
       if (null == ins) throw new NullPointerException("invalid initialisation");
       input = ins;
@@ -35,10 +121,16 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       rthread.start();
    }
 
+   /**
+    * Stops the parser thread.
+    */
    void stop() {
       rthread.interrupt();
    }
 
+   /**
+    * Main parser loop - reads bytes and dispatches to event queue.
+    */
    public void run() {
       try {
          while (true) {
@@ -90,7 +182,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          case '\177': //ignored
             break;
          case 7:
-            trace("ignored bell char"); //???
+            // BEL character - ring the bell
+            trace1("bell character");
+            window.bell();
             break;
          case '\b': //??? sbprocess
             window.incX(-1, sb);
@@ -103,8 +197,11 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             sb.append(inc);
             state = CR;
             break;
-         case 15:
-            trace1("receive SI character select character set");
+         case 14: // SO - Shift Out (select G1 character set)
+            trace1("receive SO character select G1 character set");
+            break;
+         case 15: // SI - Shift In (select G0 character set)
+            trace1("receive SI character select G0 character set");
             break;
          case 12:
          case 11:
@@ -172,14 +269,20 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             case 'J':
                switch (numacc[currnumacc]) {
                   case 0:
-                     trace1("erase from pos to end of screen");
+                     trace1("erase from cursor to end of screen");
+                     window.eraseScreenToEnd(sb);
                      break;
                   case 1:
-                     trace1("erase from start of screen to pos");
+                     trace1("erase from start of screen to cursor");
+                     window.eraseScreenToBeginning(sb);
                      break;
                   case 2:
                      window.eraseScreen(sb);
                      trace1("erase entire screen ");
+                     break;
+                  case 3:
+                     // ESC[3J - erase scrollback buffer (xterm extension)
+                     trace1("erase scrollback (ignored)");
                      break;
                   default:
                      trace1("unknown [J index " + numacc[currnumacc]);
@@ -192,7 +295,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                      window.eraseToEnd(sb);
                      break;
                   case 1 :
-                     trace1("erase from beginning of line to cursor ???");
+                     trace1("erase from beginning of line to cursor");
+                     window.eraseToBeginning(sb);
                      break;
                   case 2 :
                      trace1("erase entire line at cursor ");
@@ -206,9 +310,10 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             case 'P': // from xterm doc erase number of characters
                window.eraseChars(def ? 1 : numacc[currnumacc], sb);
                break;
-            case 'm': // Character Attributes
-               // capturing plain text so ignore
-               trace1("[m (graphic Rendition - bold etc) unimplementd");
+            case 'm': // Character Attributes (SGR - Select Graphic Rendition)
+               // Pass parameters to window for potential color/attribute handling
+               trace1("[m (graphic Rendition)");
+               window.setGraphicRendition(numacc, sb);
                break;
             case ';':
                if (currnumacc <= numacc.length - 1) {
@@ -257,6 +362,74 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                   ? 1
                   : numacc[currnumacc], sb);
                break;
+            case 'M': // Delete lines (ESC[nM)
+               trace1("delete " + (def ? 1 : numacc[currnumacc]) + " lines");
+               window.deleteLines(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'S': // Scroll up (ESC[nS)
+               trace1("scroll up " + (def ? 1 : numacc[currnumacc]) + " lines");
+               window.scrollUp(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'T': // Scroll down (ESC[nT)
+               trace1("scroll down " + (def ? 1 : numacc[currnumacc]) + " lines");
+               window.scrollDown(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'f': // Horizontal and Vertical Position (same as H)
+               switch (currnumacc + (def ? 0 : 1)) {
+                  case 0 :
+                     trace1("HVP move to home");
+                     window.setXY(1, 1, sb);
+                     break;
+                  case 1:
+                     trace1("HVP move to row " + numacc[0]);
+                     window.setXY(1, numacc[0], sb);
+                     break;
+                  case 2:
+                     trace1("HVP move to (" + numacc[1] + "," + numacc[0] + ")");
+                     window.setXY(numacc[1], numacc[0], sb);
+                     break;
+                  default :
+                     trace("bad number accumulated for HVP: " +  currnumacc);
+               }
+               break;
+            case 'G': // Cursor Character Absolute (ESC[nG) - move to column n
+               trace1("cursor to column " + (def ? 1 : numacc[currnumacc]));
+               window.setX(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'd': // Line Position Absolute (ESC[nd) - move to row n
+               trace1("cursor to row " + (def ? 1 : numacc[currnumacc]));
+               window.setY(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'E': // Cursor Next Line (ESC[nE) - move to beginning of line n down
+               trace1("cursor next line " + (def ? 1 : numacc[currnumacc]));
+               window.incY(def ? 1 : numacc[currnumacc], sb);
+               window.setX(1, sb);
+               break;
+            case 'F': // Cursor Previous Line (ESC[nF) - move to beginning of line n up
+               trace1("cursor prev line " + (def ? 1 : numacc[currnumacc]));
+               window.incY(-(def ? 1 : numacc[currnumacc]), sb);
+               window.setX(1, sb);
+               break;
+            case 'X': // Erase Character (ESC[nX) - erase n characters (replace with spaces)
+               trace1("erase " + (def ? 1 : numacc[currnumacc]) + " characters");
+               window.eraseChars(def ? 1 : numacc[currnumacc], sb);
+               break;
+            case 'n': // Device Status Report
+               trace1("device status report (ignored)");
+               // Would normally send response back to terminal
+               break;
+            case 'c': // Device Attributes
+               trace1("device attributes request (ignored)");
+               // Would normally send response back to terminal
+               break;
+            case 's': // Save Cursor Position (ANSI.SYS / SCO)
+               trace1("save cursor (ANSI.SYS)");
+               window.saveCursor(sb);
+               break;
+            case 'u': // Restore Cursor Position (ANSI.SYS / SCO)
+               trace1("restore cursor (ANSI.SYS)");
+               window.restoreCursor(sb);
+               break;
             default:
                trace("unkown [ terminator " + (char) inc + " decimal "  + inc
                   + " 0x" + Integer.toHexString(inc));
@@ -285,7 +458,12 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                trace("smooth scrolling ??? inc = " + inc);
                break;
             case 47:
-               trace("??? use alternate screen buffer");
+            case 1047: // F10: use alternate screen buffer
+            case 1049: // F10: save cursor + use alternate screen buffer
+               window.switchAlternateScreen(1 == val, sb);
+               break;
+            case 25: // DECTCEM: show/hide cursor
+               trace("cursor visibility " + (1 == val ? "show" : "hide"));
                break;
 
             default:
@@ -298,27 +476,39 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    }
 
    private void caseOSCMODE3(int inc) {
-      if (7 == inc) {
+      if (7 == inc || 0x9c == inc) { // BEL or ST terminates OSC
          state = NORM;
+         String title = oscstring.toString();
          oscstring.setLength(0);
          switch (oscmode) {
-            case '0':
-               trace("change icon and title :" + oscstring);
+            case '0': // Set icon name and window title
+               trace1("change icon and title: " + title);
+               window.setTitle(title);
                break;
-            case '1':
-               trace("change icon name:" + oscstring);
+            case '1': // Set icon name
+               trace1("change icon name: " + title);
                break;
-            case '2':
-               trace("change window name:" + oscstring);
+            case '2': // Set window title
+               trace1("change window title: " + title);
+               window.setTitle(title);
                break;
-            case '4':
-               trace("change log file :" + oscstring);
+            case '4': // Set/change color palette (ignored)
+               trace1("change color palette (ignored): " + title);
+               break;
+            case '7': // Set working directory (iTerm2, etc.)
+               trace1("set working directory (ignored): " + title);
                break;
             default:
-               trace("unexpected oscmode " + oscmode);
+               trace1("unexpected oscmode " + oscmode + ": " + title);
          }
-      } else
-         oscstring.append(inc);
+      } else if ('\\' == inc && oscstring.length() > 0
+            && oscstring.charAt(oscstring.length() - 1) == 27) {
+         // ESC \ also terminates OSC (String Terminator)
+         oscstring.setLength(oscstring.length() - 1);
+         caseOSCMODE3(7); // Process as if BEL was received
+      } else {
+         oscstring.append((char) inc);
+      }
    }
 
    private void caseESC(int inc) {

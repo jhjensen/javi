@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
@@ -14,27 +16,108 @@ import gnu.io.UnsupportedCommOperationException;
 import history.Tools;
 import static history.Tools.trace;
 
-
+/**
+ * VT100 terminal emulator for shell and serial port connections.
+ *
+ * <p>Vt100 provides terminal emulation by parsing VT100/ANSI escape sequences
+ * and rendering the output in a TextEdit buffer. It supports:</p>
+ *
+ * <h2>Features</h2>
+ * <ul>
+ *   <li>VT100/ANSI escape sequence parsing</li>
+ *   <li>Cursor movement and positioning</li>
+ *   <li>Screen clearing and line editing</li>
+ *   <li>Insert mode support</li>
+ *   <li>Auto-detected or explicit charset encoding</li>
+ *   <li>Multiple session support via {@link ShellManager}</li>
+ * </ul>
+ *
+ * <h2>Supported Escape Sequences</h2>
+ * <ul>
+ *   <li>Cursor movement: up, down, left, right, absolute positioning</li>
+ *   <li>Screen operations: clear screen, clear line, erase characters</li>
+ *   <li>Mode control: insert mode, cursor save/restore</li>
+ *   <li>OSC sequences: window title changes</li>
+ * </ul>
+ *
+ * <h2>Connection Types</h2>
+ * <ul>
+ *   <li>{@link Telnet} - Local shell or SSH connections</li>
+ *   <li>{@link CommReader} - Serial port connections</li>
+ * </ul>
+ *
+ * @see Vt100Parser
+ * @see VScreen
+ * @see ShellSession
+ */
 class Vt100 extends TextEdit<String> {
 
 
    private static final long serialVersionUID = 1;
-   private final OutputStreamWriter writer;
-//   private final OutputStream str;
 
+   /** Writer for sending data to the terminal process. */
+   private final OutputStreamWriter writer;
+
+   /** The charset used for encoding terminal I/O. */
+   private final Charset charset;
+
+   /** Current file-view context for display updates. */
    private FvContext currfvc = null;
+
+   /** Current cursor position in the virtual terminal. */
    private MovePos vtcursor = new MovePos(0, 1);
+
+   /** Whether insert mode is active (vs overwrite). */
    private boolean insertmode = false;
+
+   /** Number of visible rows in the terminal. */
    private int rows;
+
+   /** Parser for VT100 escape sequences. */
    private final Vt100Parser parser;
 
+   /**
+    * Creates a VT100 terminal with auto-detected charset.
+    *
+    * <p>Charset is detected from environment variables (LANG, LC_ALL, etc.)
+    * via {@link CharsetDetector}.</p>
+    *
+    * @param ostri output stream to the terminal process
+    * @param istr input stream from the terminal process
+    * @param ioc I/O converter for the terminal buffer
+    * @throws java.io.UnsupportedEncodingException if charset is unsupported
+    * @deprecated Use {@link #Vt100(OutputStream, BufferedInputStream, IoConverter, Charset)}
+    */
+   @Deprecated
    Vt100(OutputStream ostri, BufferedInputStream istr,
          IoConverter<String> ioc) throws java.io.UnsupportedEncodingException {
-      //StringIoc ioc = new StringIoc("vt100 start",null);
+      this(ostri, istr, ioc, CharsetDetector.detectTerminalCharset());
+   }
+
+   /**
+    * Creates a VT100 terminal with explicit charset.
+    *
+    * @param ostri output stream to the terminal process
+    * @param istr input stream from the terminal process
+    * @param ioc I/O converter for the terminal buffer
+    * @param charsetToUse the charset for encoding I/O
+    */
+   Vt100(OutputStream ostri, BufferedInputStream istr,
+         IoConverter<String> ioc, Charset charsetToUse) {
       super(ioc, ioc.prop);
-      //str = ostri;
+      this.charset = charsetToUse;
       parser = new Vt100Parser(new ECScreen(), istr);
-      writer = new OutputStreamWriter(ostri, StandardCharsets.UTF_8);
+      writer = new OutputStreamWriter(ostri, charset);
+      trace("Vt100: initialized with charset " + charset.name());
+   }
+
+   /**
+    * Gets the charset used for this terminal.
+    *
+    * @return the terminal charset
+    */
+   public Charset getCharset() {
+      return charset;
    }
 
    public final void startHandle(FvContext fvc) {
@@ -88,6 +171,8 @@ class Vt100 extends TextEdit<String> {
                      break;
                   case JeyEvent.VK_INSERT:
                      return;
+                  case JeyEvent.VK_F8:
+                     return;  // F8 toggles back to vi-edit mode
                   default:
                      trace("unhandle KeyCode " + kev.getKeyCode());
                }
@@ -96,6 +181,10 @@ class Vt100 extends TextEdit<String> {
                if ('\r' == ch
                      && '\r' == kev.getKeyCode()) // this was really a cr
                   ch = '\n';
+               // F11: Ctrl+] (0x1d) exits shell passthrough mode
+               // (alternative to Insert key, which is unavailable on Mac)
+               if (0x1d == ch)
+                  return;
                //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
                //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
                //trace ("passing key location " + kev.getKeyLocation());
@@ -224,6 +313,54 @@ class Vt100 extends TextEdit<String> {
          insertString(sb);
          vtcursor.y = readIn() - savecursor.y;
          vtcursor.x = savecursor.x;
+      }
+
+      // F10: Alternate screen buffer state
+      private ArrayList<String> savedScreen;
+      private MovePos savedAltCursor;
+      private boolean inAlternateScreen;
+
+      void switchAlternateScreen(boolean enable, StringBuilder sb) {
+         insertString(sb);
+         if (enable && !inAlternateScreen) {
+            // Save main screen content
+            int end = readIn();
+            int start = end - rows - 1;
+            if (start < 1)
+               start = 1;
+            savedScreen = new ArrayList<>(rows);
+            for (int ii = start; ii < end; ii++)
+               savedScreen.add(at(ii).toString());
+            savedAltCursor = new MovePos(vtcursor.x, vtcursor.y);
+            // Clear screen for alternate buffer
+            for (int ii = start; ii < end; ii++)
+               changeElementAt("", ii);
+            vtcursor.x = 0;
+            vtcursor.y = start;
+            inAlternateScreen = true;
+            trace("switched to alternate screen buffer");
+         } else if (!enable && inAlternateScreen) {
+            // Restore main screen content
+            if (savedScreen != null) {
+               int end = readIn();
+               int start = end - rows - 1;
+               if (start < 1)
+                  start = 1;
+               for (int ii = 0;
+                     ii < savedScreen.size() && start + ii < end;
+                     ii++)
+                  changeElementAt(savedScreen.get(ii), start + ii);
+               savedScreen = null;
+            }
+            if (savedAltCursor != null) {
+               vtcursor.x = savedAltCursor.x;
+               vtcursor.y = savedAltCursor.y;
+               savedAltCursor = null;
+            }
+            inAlternateScreen = false;
+            trace("restored main screen buffer");
+         }
+         updateScreen(sb);
       }
 
    }
