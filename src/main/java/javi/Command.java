@@ -20,6 +20,7 @@ public final class Command extends Rgroup {
       "checkout",  //5
       "set",
       "e!",
+      "help",       //8
    };
 
    static void init()  {
@@ -53,6 +54,9 @@ public final class Command extends Rgroup {
                return null;
             case 7:
                fvc.edvec.reload();
+               return null;
+            case 8:
+               showHelp((String) arg, fvc);
                return null;
             default:
                throw new RuntimeException("doroutine called with " + rnum);
@@ -100,6 +104,19 @@ public final class Command extends Rgroup {
          }
          UI.reportMessage(bf.toString());
       }
+   }
+
+   /**
+    * Display help for the given topic.
+    *
+    * @param topic the help topic (null for index)
+    * @param fvc the current file-view context
+    * @throws InputException if help cannot be displayed
+    */
+   private static void showHelp(String topic, FvContext fvc)
+         throws InputException {
+      TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
+      FvContext.connectFv(helpBuffer, fvc.vi);
    }
 
    private Object readFile(Object arg, FvContext fvc) throws
