@@ -614,6 +614,17 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //frm.setBackground(AtView.background);
       //frm.setForeground(AtView.foreground);
 
+      // Set application icon (multiple sizes for better rendering)
+      lFrm.setIconImages(IconUtil.createJaviIcons());
+
+      // Set macOS Dock icon using Taskbar API (Java 9+)
+      if (java.awt.Taskbar.isTaskbarSupported()) {
+         java.awt.Taskbar taskbar = java.awt.Taskbar.getTaskbar();
+         if (taskbar.isSupported(java.awt.Taskbar.Feature.ICON_IMAGE)) {
+            taskbar.setIconImage(IconUtil.createJaviIcon(128));
+         }
+      }
+
       lFrm.setFont(AwtFontList.getCurr(null));
       lFrm.addFocusListener(this);
       lFrm.setDropTarget(new Dropper(lFrm));
