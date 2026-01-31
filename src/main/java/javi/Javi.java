@@ -78,6 +78,7 @@ public final class Javi {
       new EditGroup();
       Command.init();
       new PosListList.Cmd();
+      new DirEdit.Commands();
 
       MoveGroup.init();
       new JS.JSR();
