@@ -91,7 +91,12 @@ public class EditContainer<OType> implements
       backup.baseRecord();
    }
 
-   private void reinitBack() throws IOException {
+   /**
+    * Reinitializes the backup system after a failure.
+    * Resets the undo history and marks the file as needing to be re-read.
+    * @throws IOException if initialization fails
+    */
+   public void reinitBack() throws IOException {
       backupMade = false;
       //trace("mlisten " + mlisten);
       UndoHistory.EhMark mrk  = backup.ereset();
@@ -173,7 +178,16 @@ public class EditContainer<OType> implements
 
    static final void init(MarkListener ml) {
       mlisten = ml;
-      EventQueue.registerIdle(new IdleHandler());
+   }
+
+   /**
+    * Returns the FileProperties for this EditContainer.
+    * Package-private for use by FileList's IdleHandler.
+    * @return the FileProperties instance
+    */
+   @SuppressWarnings("rawtypes")
+   final FileProperties getFileProperties() {
+      return prop;
    }
 
    static final void dumpStatic() {
@@ -452,71 +466,20 @@ public class EditContainer<OType> implements
       }
    }
 
-   private static final class IdleHandler implements EventQueue.Idler {
-      public void idle() {
-
-         //trace("idle handler ");
-         EventQueue.biglock2.assertOwned();
-         for (EditContainer ev : filehash.values())
-            if (null != ev.backup)
-               try {
-                  //trace("backing up " + ev);
-                  ev.backup.idleSave();
-                  // check if file was modified externally
-                  if (ev.prop.checkModified()) {
-                     // Loop to allow returning to dialog after Show Diff
-                     UI.ReloadAction action;
-                     do {
-                        action = UI.confirmReload(
-                           ev.getName(), ev.isModified());
-                        switch (action) {
-                           case RELOAD:
-                              ev.reload();
-                              break;
-                           case IGNORE:
-                              // Do nothing, just update modified time below
-                              break;
-                           case IGNORE_ALWAYS:
-                              ev.prop.setIgnoreExternalChanges(true);
-                              break;
-                           case SHOW_DIFF:
-                              // Launch external diff tool and wait for it
-                              ev.showExternalDiff();
-                              // Loop will continue to show dialog again
-                              break;
-                           case STOP_EDITING:
-                              // TODO_AI: Implement stop editing
-                              // Need to properly close buffer
-                              break;
-                        }
-                     } while (action == UI.ReloadAction.SHOW_DIFF);
-                     // update modified time whether reloaded or ignored
-                     ev.prop.updateModifiedTime();
-                  }
-               } catch (BadBackupFile e) {
-                  if (UI.reportBadBackup(ev.getName(), e)) {
-                     try {
-                        ev.reload();
-                        trace("try to delete file");
-                        ev.fdes().getPersistantFd().delete();
-                     } catch (IOException ie) {
-                        UI.popError("unable to delete backupfile ", ie);
-                     }
-                  }
-               } catch (Throwable e) {
-                  UI.popError("Problem with backup File starting over", e);
-                  try {
-                     ev.reinitBack();
-                  } catch (IOException ex) {
-                     UI.popError("Problem starting over ", ex);
-                  }
-               }
-      }
+   /**
+    * Returns true if this EditContainer has an undo history.
+    * Package-private for use by FileList's IdleHandler.
+    * @return true if backup is initialized
+    */
+   final boolean hasBackup() {
+      return backup != null;
    }
 
 // for testing
    final void idleSave() throws IOException {
-      backup.idleSave();
+      if (backup != null) {
+         backup.idleSave();
+      }
    }
 
    final void finishedRead() {

@@ -152,10 +152,23 @@ javi/
 - `UndoHistory` - Undo/redo management
 - `PersistantStack` - Disk-backed undo stack
 
+## Terminology
+
+- **Buffer/File/EditContainer**: What Emacs calls a "buffer" is referred to as a "file" or `EditContainer` in this codebase. `EditContainer` is the base class that manages text content with undo capability.
+- **View**: The display/window showing a buffer's content
+- **FvContext**: File-View Context - binds an EditContainer to a View
+
 ## Configuration Files
 
 - `.javini` - Configuration file (vi-style commands)
-- `.dmp2` files - Binary backup/persistence files
+- `.dmp2` files - Binary backup/persistence files (locked while Javi is running)
+
+### .dmp2 Lock Files
+
+The `.dmp2` files use Java's `FileLock` (OS-level advisory lock) to prevent concurrent access. If Javi exits abnormally:
+- On Unix/macOS: The OS automatically releases the lock when the process terminates
+- If the lock persists: Another Javi instance may still be running - check with `ps aux | grep -i javi`
+- To force unlock: Kill the Javi process, or delete the .dmp2 file (loses undo history)
 
 ## Common Development Tasks
 

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import history.BadBackupFile;
 import history.Tools;
 import static history.Tools.trace;
 
@@ -209,6 +210,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    private FileList(FileParser fileParse, FileProperties prop) {
       super(fileParse, prop);
       new Commands();
+      EventQueue.registerIdle(new IdleHandler());
    }
 
    public static FvContext getContext(View newView) {
@@ -580,6 +582,48 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       EventQueue.insert(new ExitEvent());
    }
 
+   /**
+    * Saves and closes the specified file from the file list.
+    *
+    * <p>If the file is modified, it will be saved first. If this is the last
+    * file, the application will quit. Otherwise, the file is removed from
+    * the file list.</p>
+    *
+    * @param ev the TextEdit to close
+    * @param isCurrentlyViewed true if this file is currently being viewed
+    * @param fvc the FvContext (only used if isCurrentlyViewed is true)
+    * @throws IOException if save fails
+    * @throws InputException if reconnect fails
+    */
+   @SuppressWarnings("unchecked")
+   private static void saveAndCloseFile(TextEdit ev, boolean isCurrentlyViewed,
+         FvContext fvc) throws IOException, InputException {
+      int fileIndex = instance.indexOf(ev);
+      if (fileIndex == -1)
+         return; // not in file list
+
+      // Save if modified
+      if (ev.isModified())
+         ev.printout();
+
+      // Determine next file to show
+      TextEdit nextFile = instance.containsNow(fileIndex + 1)
+         ? instance.at(fileIndex + 1)
+         : instance.at(1);
+
+      if (2 == instance.finish()) {
+         // On last file - quit
+         quit(true, fvc != null ? fvc : FvContext.getCurrFvc());
+      } else {
+         // Remove from file list
+         instance.remove(fileIndex, 1);
+         if (isCurrentlyViewed && fvc != null) {
+            fvc.fixCursor();
+            FvContext.reconnect(ev, nextFile);
+         }
+      }
+   }
+
    @SuppressWarnings({"unchecked", "rawtypes"})
    private static void processZ(FvContext fvc) throws
          InputException {
@@ -605,16 +649,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             // gross hack because if a dummy file is created first the parent is root.
 
             if (-1 != fileIndex) {
-
-               if (ev.isModified())
-                  ev.printout();
-               if (2 == instance.finish()) { // on last file
-                  quit(true, fvc);
-               } else {
-                  instance.remove(fileIndex, 1);
-                  fvc.fixCursor();
-                  FvContext.reconnect(ev, nextFile);
-               }
+               // File is in the file list - use saveAndCloseFile
+               saveAndCloseFile(ev, true, fvc);
             } else if (instance.isParent(ev) || (ev instanceof Vt100)) {
                   // This could be cleaned up with a misc file list
                FvContext.dispose(ev, nextFile);
@@ -655,6 +691,99 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       } catch (Throwable e) {
          trace("main caught exception " + e);
          e.printStackTrace();
+      }
+   }
+
+   /**
+    * Idle handler for periodic file maintenance tasks.
+    *
+    * <p>Performs two functions during idle time for files in the FileList:</p>
+    * <ul>
+    *   <li>Saves undo history incrementally</li>
+    *   <li>Checks for external file modifications and prompts user</li>
+    * </ul>
+    */
+   private static final class IdleHandler implements EventQueue.Idler {
+      @SuppressWarnings("unchecked")
+      public void idle() {
+         EventQueue.biglock2.assertOwned();
+
+         if (instance == null)
+            return;
+
+         for (TextEdit<String> ev : instance) {
+            // Save undo history
+            if (ev.hasBackup())
+               try {
+                  ev.idleSave();
+               } catch (BadBackupFile e) {
+                  if (UI.reportBadBackup(ev.getName(), e)) {
+                     try {
+                        ev.reload();
+                        ev.fdes().getPersistantFd().delete();
+                     } catch (IOException ie) {
+                        UI.popError("unable to delete backupfile ", ie);
+                     }
+                  }
+               } catch (Throwable e) {
+                  UI.popError("Problem with backup File starting over", e);
+                  try {
+                     ev.reinitBack();
+                  } catch (IOException ex) {
+                     UI.popError("Problem starting over ", ex);
+                  }
+               }
+
+            // Check for external file modifications
+            FileProperties fp = ev.getFileProperties();
+            if (fp.checkModified()) {
+               // Check if this file is currently being viewed
+               FvContext currFvc = FvContext.getCurrFvc();
+               boolean isCurrentlyViewed = currFvc != null && currFvc.edvec == ev;
+
+               // Loop to allow returning to dialog after Show Diff
+               UI.ReloadAction action;
+               do {
+                  action = UI.confirmReload(ev.getName(), ev.isModified());
+                  switch (action) {
+                     case RELOAD:
+                        try {
+                           ev.reload();
+                           if (isCurrentlyViewed) {
+                              currFvc.fixCursor();
+                           }
+                        } catch (IOException e) {
+                           UI.popError("Error reloading file", e);
+                        }
+                        break;
+                     case IGNORE:
+                        // Do nothing, just update modified time below
+                        break;
+                     case IGNORE_ALWAYS:
+                        fp.setIgnoreExternalChanges(true);
+                        break;
+                     case SHOW_DIFF:
+                        // Launch external diff tool and wait for it
+                        ev.showExternalDiff();
+                        // Loop will continue to show dialog again
+                        break;
+                     case STOP_EDITING:
+                        // Save and close this file
+                        try {
+                           saveAndCloseFile(ev, isCurrentlyViewed,
+                              isCurrentlyViewed ? currFvc : null);
+                        } catch (IOException | InputException e) {
+                           UI.popError("Error closing file", e);
+                        }
+                        break;
+                  }
+               } while (action == UI.ReloadAction.SHOW_DIFF);
+               // update modified time whether reloaded or ignored
+               if (action != UI.ReloadAction.STOP_EDITING) {
+                  fp.updateModifiedTime();
+               }
+            }
+         }
       }
    }
 }
