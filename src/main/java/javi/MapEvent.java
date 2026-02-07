@@ -76,6 +76,23 @@ public final class MapEvent {
    private static int riterate = 0;   //iterations for command that use 0
    private static int fiterate = 0;  //number of iterations forced to 1
 
+   /**
+    * Get all key bindings as formatted strings.
+    *
+    * @return list of key binding descriptions
+    */
+   static java.util.List<String> getAllBindings() {
+      java.util.List<String> result = new java.util.ArrayList<>();
+      result.add("MOVEMENT KEYS");
+      result.add("-------------");
+      result.addAll(mkeys.getBindingList());
+      result.add("");
+      result.add("COMMAND KEYS");
+      result.add("------------");
+      result.addAll(skeys.getBindingList());
+      return result;
+   }
+
    static void bindCommands() {
       Matcher sentenceRegex = Pattern.compile("\\.( |$)").matcher("");
       Matcher paragraphRegex = Pattern.compile("^ *$").matcher("");

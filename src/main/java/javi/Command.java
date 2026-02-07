@@ -21,6 +21,7 @@ public final class Command extends Rgroup {
       "set",
       "e!",
       "help",       //8
+      "map",        //9
    };
 
    static void init()  {
@@ -57,6 +58,9 @@ public final class Command extends Rgroup {
                return null;
             case 8:
                showHelp((String) arg, fvc);
+               return null;
+            case 9:
+               showMap(fvc);
                return null;
             default:
                throw new RuntimeException("doroutine called with " + rnum);
@@ -117,6 +121,18 @@ public final class Command extends Rgroup {
          throws InputException {
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);
+   }
+
+   /**
+    * Display all key bindings.
+    *
+    * @param fvc the current file-view context
+    * @throws InputException if bindings cannot be displayed
+    */
+   private static void showMap(FvContext fvc)
+         throws InputException {
+      TextEdit<String> mapBuffer = HelpSystem.getKeyBindings();
+      FvContext.connectFv(mapBuffer, fvc.vi);
    }
 
    private Object readFile(Object arg, FvContext fvc) throws
