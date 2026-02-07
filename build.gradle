@@ -3,6 +3,7 @@ plugins {
     id 'java'
     id 'jacoco'  // Code coverage
     id 'com.github.johnrengelman.shadow' version '8.1.1' // Add Shadow Plugin
+    id 'com.github.spotbugs' version '6.0.7' // B9: Static analysis
 }
 
 java {
@@ -12,6 +13,29 @@ java {
 
 jacoco {
     toolVersion = "0.8.12"
+}
+
+import com.github.spotbugs.snom.Effort
+import com.github.spotbugs.snom.Confidence
+
+// B9: SpotBugs configuration
+spotbugs {
+    effort = Effort.valueOf('MAX')
+    reportLevel = Confidence.valueOf('MEDIUM')
+    ignoreFailures = true  // Don't fail build, just report
+}
+
+// B9: Configure SpotBugs to generate HTML reports
+spotbugsMain {
+    reports {
+        html {
+            required = true
+            outputLocation = file("${layout.buildDirectory.get()}/reports/spotbugs/main.html")
+        }
+        xml {
+            required = false
+        }
+    }
 }
 
 repositories {

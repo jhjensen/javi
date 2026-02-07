@@ -157,6 +157,11 @@ public abstract class InsertBuffer extends View.Inserter {
                break;
             case 3:
                if (0 == buffer.length()) {
+                  // B10: Prevent deleting the prompt character in command line mode
+                  if (singleline && fvc.insertx() <= 1) {
+                     // At or before prompt position, don't delete
+                     break;
+                  }
                   fvc.cursorx(-1);
                   fvc.deleteChars('0', false, true, 1);
                } else {
