@@ -820,6 +820,9 @@ public abstract class PersistantStack<E> {
    private int filesize;
    private FileChannel fc;
    private FileLock lock;
+   // Pending truncation point - set in push(), handled in flush()
+   // -1 means no pending truncation
+   private int pendingTruncateAt = -1;
 
 
 }
