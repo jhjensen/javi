@@ -706,122 +706,13 @@ Add charset detection to JavaScript file handling.
 
 ## Build & Infrastructure
 
-### I1. Rename tmp Directory to ai
-**Priority**: Low  
-**Difficulty**: Easy  
-**Plan**: [ai/plan-I1-I6-build.md](ai/plan-I1-I6-build.md)  
-**Status**: ✅ COMPLETED  
-
-Rename the `tmp/` directory to `ai/` as a dedicated directory for AI agent operations.
-
-**Changes needed**:
-- Rename directory
-- Update `.gitignore`
-- Update `AGENTS.md`
-
----
-
-### I2. Add Javadoc to Codebase
-**Priority**: High  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-**Status**: ✅ COMPLETED  
-**Completeness**: 100%  
-**Unclear**: No  
-
-Add Javadoc comments throughout the codebase.
-
-**Goals**:
-- Consistent docstrings with names, roles, params, and invariants
-- Focus on public APIs, shared interfaces, data models, and tricky invariants
-- Focus on the 20-30% most-used or most-risky surfaces
-- Pre/postconditions, param constraints, thread-safety notes, ownership semantics
-- Standardized tags (@param, @return, @throws)
-
-**Deliverables**:
-1. ✅ Add Javadoc comments (key classes: EditContainer, TextEdit, FvContext, View, EventQueue, Rgroup, PersistantStack, AwtInterface)
-2. ✅ Modify makefile to create javadoc (`make javadoc` target)
-3. ✅ Add pointer to generated javadoc in AGENTS.md
-
----
-
-### I3. Enhance make dist Target
-**Priority**: Medium  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-**Status**: ✅ COMPLETED  
-**Completeness**: 100%  
-**Unclear**: No  
-
-Improve the distribution build target.
-
-**Requirements**:
-1. ✅ Verify everything is checked in (clean git status) - `make verify-clean`
-2. ✅ Verify code is built successfully - `make compile`
-3. ✅ Verify all tests pass - `make test`
-4. ✅ Create versioned JAR - via `./gradlew jar -Pversion=$(VERSION)`
-5. ✅ Create git tag - instructions provided in output
-
-**New targets**: `dist-release`, `dist-release-fat`, `version`, `verify-clean`
-
----
-
-### I4. Proper Dependency Management
-**Priority**: Medium  
-**Difficulty**: Medium  
-**Source**: IMPROVEMENTS.md  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-**Status**: ✅ COMPLETED  
-**Completeness**: 100%  
-**Unclear**: No  
-
-Move from JARs in `lib/` to Maven Central dependencies in `build.gradle`:
-
-```gradle
-dependencies {
-    implementation 'org.mozilla:rhino:1.7.14'
-    implementation 'com.github.albfernandez:juniversalchardet:2.4.0'
-    implementation 'org.rxtx:rxtx:2.1.7'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-}
-```
-
-**Note**: `lib/` directory kept as fallback for offline builds.
-
----
-
-### I5. Enable More Compiler Warnings
-**Priority**: Low  
-**Difficulty**: Easy  
-**Source**: IMPROVEMENTS.md  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-**Status**: ✅ COMPLETED  
-**Completeness**: 100%  
-**Unclear**: No  
-
-Add to build.gradle:
-```gradle
-tasks.withType(JavaCompile) {
-    options.compilerArgs += [
-        '-Xlint:all',
-        '-Xlint:-serial',  // Suppress noisy warnings for existing code
-        '-Xlint:-rawtypes',
-        '-Werror'
-    ]
-    options.deprecation = true
-    options.encoding = 'UTF-8'
-}
-```
-
-**Implementation**: Warnings enabled with selective suppressions for legacy code patterns.
-
----
-
 ### I6. Jython Support
+**Status**: Hold  
 **Priority**: Low  
 **Difficulty**: Unknown  
-**Plan**: [ai/plan-I1-I6-build.md](ai/plan-I1-I6-build.md)
+**Plan**: 
 
+search the web looking for python implementations of java like Jython that support python 3
 **Note**: "jython if it ever supports python3" - Jython is a Python implementation for JVM. Currently Jython only supports Python 2.7. This is blocked on Jython project progress.
 
 **Status**: Waiting on external project
@@ -911,45 +802,6 @@ Relationship between these classes and the benefit of refactoring is unclear.
 
 ---
 
-## Completed Items (from todo.txt)
-
-The following items were marked as done in the original todo.txt:
-
-- ✅ Static import fixes
-- ✅ EditTester1 failures
-- ✅ Join doesn't put in space
-- ✅ :200 doesn't goto line
-- ✅ Circular MovePos/Position
-- ✅ Editing file doesn't fixup positions
-- ✅ Mouse and V mode issues
-- ✅ Not saving history when X out
-- ✅ Modal dialog
-- ✅ Build/cstyle on commit
-- ✅ Resizing with mouse doesn't work
-- ✅ togglestatus changes window size
-- ✅ Circular font/setsize
-- ✅ compa makes status too big
-- ✅ OldView thread safety fix
-- ✅ Full screen mode slowness
-- ✅ Ex command history issues
-- ✅ ^g problem fix
-- ✅ Tag waiting for file read problem
-- ✅ Using file version requires repaint
-- ✅ Remake vi.exe
-- ✅ Edit already open file fails
-- ✅ Unix filetype
-- ✅ Only catch in main
-- ✅ Load modules
-- ✅ HashTable -> HashMap
-- ✅ R command
-- ✅ enum support
-- ✅ Fix \r\n file handling
-- ✅ Make all positions have a FileDescriptor
-- ✅ O sometimes pukes
-- ✅ Ex move, copy commands
-- ✅ Popup when currently open file is changed on filesystem (basic version)
-
----
 
 ## Priority Summary
 
