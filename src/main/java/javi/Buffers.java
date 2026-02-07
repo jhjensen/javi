@@ -68,8 +68,12 @@ public final class Buffers {
             } else {
                if (bufo instanceof ArrayList) {
                   ((ArrayList<String>) bufo).addAll(buffer);
-               } else { // bufo is string
-                  buffer.add(0, (String) bufo);
+               } else if (bufo instanceof String s) { // bufo is string
+                  buffer.add(0, s);
+                  bufo = buffer;
+               } else {
+                  // Unexpected type - convert to string and prepend
+                  buffer.add(0, bufo.toString());
                   bufo = buffer;
                }
             }

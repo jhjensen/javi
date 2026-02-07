@@ -141,65 +141,80 @@ public final class EventQueue {
 
    private static Object inextEvent(CursorControl vi) {
       Object ev = null;
-      biglock2.unlock();
-      // trace("Init time trace: getting event");
-      synchronized (EventQueue.class) {
-         if (0 != queue.size())
-            ev = queue.removeFirst();
-      }
-
-      if (null != ev) {
-         biglock2.lock();
-         return ev;
-      }
-
-      while (true)
-         try {
-            for (Idler id : iList) {
-               // trace("executing Idler " + id);
-               biglock2.lock();
-               try {
-                  id.idle();
-               } finally {
-                  biglock2.unlock();
-               }
-            }
-            break;
-         } catch (IOException e) {
-            UI.popError("exception caught in idle loop", e);
-         }
-
-      vi.setCursorOn();
-      int gccount = 60 * 1000 / timeout; // gc after about a minute of idle
-
-      while (null == ev) {
-         synchronized (EventQueue.class) {
-            if (0 != queue.size()) {
-               ev = queue.removeFirst();
-               break;
-            } else if (0 == gccount--) { // after idle awhile gc once
-               // after 5 hours do another gc
-               gccount = 5 * 60 * 60 * 1000 / timeout;
-               Tools.doGC();
-               continue;
-            } else {
-               try {
-                  EventQueue.class.wait(timeout);
-               } catch (InterruptedException e) {
-                  UI.popError("unexpected interrupt ", e);
-               }
-            }
-         }
-         // trace("about to blink cursor on " +vi);
-         biglock2.lock();
-         vi.blinkcursor(); // flip cursor
+      boolean lockHeld = true;  // Track lock state for cleanup
+      try {
          biglock2.unlock();
-      }
+         lockHeld = false;
+         //trace("Init time trace: getting event");
+         synchronized (EventQueue.class) {
+            if (0 != queue.size())
+               ev = queue.removeFirst();
+         }
 
-      vi.setCursorOff();
-      // trace("eventqueue.java returning " + ev);
-      biglock2.lock();
-      return ev;
+         if (null != ev) {
+            biglock2.lock();
+            lockHeld = true;
+            return ev;
+         }
+
+         while (true)
+            try {
+               for (Idler id : iList) {
+                  //trace("executing Idler " + id);
+                  biglock2.lock();
+                  lockHeld = true;
+                  try {
+                     id.idle();
+                  } finally {
+                     biglock2.unlock();
+                     lockHeld = false;
+                  }
+               }
+               break;
+            } catch (IOException e) {
+               UI.popError("exception caught in idle loop", e);
+            }
+
+         vi.setCursorOn();
+         int gccount = 60 * 1000 / timeout; // gc after about a minute of idle
+
+         while (null == ev) {
+            synchronized (EventQueue.class) {
+               if (0 != queue.size()) {
+                  ev = queue.removeFirst();
+                  break;
+               } else if (0 == gccount--)  { // after idle awhile gc once
+                  // after 5 hours do another gc
+                  gccount = 5 * 60 * 60 * 1000 / timeout;
+                  Tools.doGC();
+                  continue;
+               } else {
+                  try {
+                     EventQueue.class.wait(timeout);
+                  } catch (InterruptedException e) {
+                     UI.popError("unexpected interrupt ", e);
+                  }
+               }
+            }
+            //trace("about to blink cursor on " +vi);
+            biglock2.lock();
+            lockHeld = true;
+            vi.blinkcursor(); // flip cursor
+            biglock2.unlock();
+            lockHeld = false;
+         }
+
+         vi.setCursorOff();
+         //trace("eventqueue.java returning " + ev);
+         biglock2.lock();
+         lockHeld = true;
+         return ev;
+      } finally {
+         // Ensure lock is always held on exit (method contract)
+         if (!lockHeld) {
+            biglock2.lock();
+         }
+      }
    }
 
    public static void focusGained() {

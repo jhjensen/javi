@@ -82,8 +82,8 @@ public final class AwtCircBuffer extends CircBuffer implements
 
             //trace("sytemclip contentents = " + systemclip.getContents(this));
          } catch (Exception e) {
-            e.printStackTrace();
-            trace("caught exception getting clipboard" + e);
+            // Non-critical: clipboard may not be available (e.g., headless mode)
+            trace("Failed to enable clipboard: " + e.getMessage());
          }
       } else {
          systemclip = null;
@@ -129,8 +129,8 @@ public final class AwtCircBuffer extends CircBuffer implements
          //trace("trans :" + tr.getTransferData(DataFlavor.stringFlavor) +":");
          add(tr.getTransferData(DataFlavor.stringFlavor).toString());
       } catch (Throwable e) {
-         e.printStackTrace();
-         trace("caught exception in getclip " + e);
+         // Non-critical: clipboard paste may fail due to format issues
+         trace("Failed to get clipboard contents: " + e.getMessage());
       }
    }
 }

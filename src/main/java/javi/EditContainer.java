@@ -199,8 +199,10 @@ public class EditContainer<OType> implements
    static final void dumpStatic() {
       //Thread.dumpStack();
       trace("dump listeners");
-      for (Object obj : listeners)
-         System.err.println("      listener : " + obj);
+      synchronized  (listeners) {
+         for (Object obj : listeners)
+            System.err.println("      listener : " + obj);
+      }
       trace("dump filelist");
       for (Object obj : filehash.entrySet())
          System.err.println("      file : " + obj);

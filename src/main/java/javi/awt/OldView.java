@@ -809,8 +809,8 @@ final class OldView extends AwtView {
                   repaint(200);
                }
             } catch (Throwable e) {
-               trace("npaint caught " + e);
-               // UI.popError("npaint caught", e);
+               // Log error but don't pop dialog - this is called frequently during paint
+               trace("npaint caught: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             } finally {
                EventQueue.biglock2.unlock();
             }
