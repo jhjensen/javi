@@ -18,35 +18,6 @@ This document consolidates items from todo.txt, BUGS.md, and IMPROVEMENTS.md int
 
 ## Feature Requests
 
-### F1. File Change Detection Popup Enhancements
-**Priority**: High  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-F1-file-change-popup.md](ai/plan-F1-file-change-popup.md)
-
-When a file is modified on disk while open in the editor, the popup appears. Currently there's a deadlock issue.
-
-**Requirements**:
-1. Fix the deadlock that occurs when the popup appears but before user responds
-   - Investigate which lock is held by `ta` command that prevents the popup from working
-2. Add "Display Difference" button - show diff between editor buffer and file on disk (similar to the existing "open file" functionality)
-3. Add "Permanently Ignore File Differences" button - stop monitoring this file for changes
-4. Add "Stop Editing" button - if the file has modifications, provide "Save and Stop Editing" option
-5. Ensure the StreamInterface (non-GUI mode) also supports these choices
-
-**Files likely involved**: `AwtInterface.java`, `EventQueue.java`, potentially `FileDescriptor.java`
-
----
-
-### F2. Better Application Icon
-**Priority**: Low  
-**Difficulty**: Easy  
-**Plan**: [ai/plan-F2-better-icon.md](ai/plan-F2-better-icon.md)
-
-Create or obtain a more visually appealing icon for the Javi editor.
-
-**Note**: Currently uses default Java application icon or a basic one.
-
----
 
 ### F3. Display Last Line of Output on Status Bar After `mk` Command
 **Priority**: Medium  
