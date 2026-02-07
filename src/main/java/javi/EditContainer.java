@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1047,7 +1048,7 @@ public class EditContainer<OType> implements
 
          // Write buffer content to temp file
          try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-               new java.io.FileOutputStream(tempFile), "UTF-8")) {
+               new java.io.FileOutputStream(tempFile), StandardCharsets.UTF_8)) {
             Iterator<String> iter = getStringIter();
             while (iter.hasNext()) {
                writer.write(iter.next());

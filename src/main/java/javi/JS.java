@@ -6,6 +6,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ImporterTopLevel;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -131,7 +132,7 @@ public final class JS {
       }
 
       public static void evalFile(String fileName) throws IOException {
-         jsEvalIter(new java.util.Scanner(new java.io.File(fileName), "UTF-8"),
+         jsEvalIter(new java.util.Scanner(new java.io.File(fileName), StandardCharsets.UTF_8),
             fileName);
       }
 
