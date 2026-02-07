@@ -18,9 +18,8 @@ import static history.Tools.trace;
 final class JarResources {
 
    // jar resource mapping tables
-   private HashMap<String, Integer> htSizes = new HashMap<String, Integer>();
-   private HashMap<String, byte[]> htJarContents =
-      new HashMap<String, byte[]>();
+   private HashMap<String, Integer> htSizes = new HashMap<>();
+   private HashMap<String, byte[]> htJarContents = new HashMap<>();
 
    // a jar file
    private String jarFileName;
@@ -45,55 +44,39 @@ final class JarResources {
 
    /** initializes internal hash tables with Jar file resources.  */
    private void init() throws IOException {
-      ZipFile zf = new ZipFile(jarFileName);
-      try {
-         // extracts just sizes only.
-         Enumeration e = zf.entries();
+      // First pass: extract just sizes
+      try (ZipFile zf = new ZipFile(jarFileName)) {
+         Enumeration<?> e = zf.entries();
          while (e.hasMoreElements()) {
             ZipEntry ze = (ZipEntry) e.nextElement();
-
-            //trace(dumpZipEntry(ze));
-
             htSizes.put(ze.getName(), Integer.valueOf((int) ze.getSize()));
          }
-         zf.close();
+      }
 
-         // extract resources and put them into the hashtable.
-         ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
-               new FileInputStream(jarFileName)));
+      // Second pass: extract resources and put them into the hashtable
+      try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
+               new FileInputStream(jarFileName)))) {
+         ZipEntry ze = null;
+         while ((ze = zis.getNextEntry()) != null) {
+            if (ze.isDirectory())
+               continue;
 
-         try {
-            ZipEntry ze = null;
-            while ((ze = zis.getNextEntry()) != null) {
+            int size = (int) ze.getSize();
+            // -1 means unknown size.
+            if (size == -1)
+               size = htSizes.get(ze.getName()).intValue();
 
-               if (ze.isDirectory())
-                  continue;
-
-               //trace("ze.getName()="+ze.getName()+ ","+"getSize()="+ze.getSize() );
-
-               int size = (int) ze.getSize();
-               // -1 means unknown size.
-               if (size == -1)
-                  size = htSizes.get(ze.getName()).intValue();
-
-               byte[] b = new byte[size];
-               int rb = 0;
-               int chunk = 0;
-               while ((size - rb) > 0) {
-                  chunk = zis.read(b, rb, size - rb);
-                  if (chunk == -1)
-                     break;
-                  rb += chunk;
-               }
-               htJarContents.put(ze.getName(), b);
+            byte[] b = new byte[size];
+            int rb = 0;
+            int chunk = 0;
+            while ((size - rb) > 0) {
+               chunk = zis.read(b, rb, size - rb);
+               if (chunk == -1)
+                  break;
+               rb += chunk;
             }
-
-         } finally {
-            zis.close();
+            htJarContents.put(ze.getName(), b);
          }
-         //trace( ze.getName()+"  rb="+rb+ ",size="+size+ ",csize="+ze.getCompressedSize() );
-      } finally {
-         zf.close();
       }
    }
 
@@ -154,7 +137,7 @@ final class JarResources {
 
 abstract class MultiClassLoader extends ClassLoader {
 
-   private HashMap<String, Class> classes = new HashMap<String, Class>();
+   private HashMap<String, Class> classes = new HashMap<>();
    private char      classNameReplacementChar;
 
    MultiClassLoader() {

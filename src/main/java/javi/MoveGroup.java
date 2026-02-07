@@ -24,7 +24,7 @@ final class MoveGroup extends Rgroup {
    private Position lastmark;
    private Position lastmark2;
    private HashMap<Integer, Position> markpos =
-      new HashMap<Integer, Position>(5);
+      new HashMap<>(5);
    private Matcher[] brega;
    private Matcher breg;
    private int dotcommand;

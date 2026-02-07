@@ -169,17 +169,17 @@ final class AtView implements
       by.put(TextAttribute.BACKGROUND, background);
       byu = new HashMap<>(by);
       byu.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_LOW_DOTTED);
-      bpu = new HashMap<Attribute, Object>(byu);
+      bpu = new HashMap<>(byu);
       bpu.put(TextAttribute.FOREGROUND, insertCursor);
-      ly = new HashMap<Attribute, Object>(by);
+      ly = new HashMap<>(by);
       ly.put(TextAttribute.BACKGROUND, lightBlue);
-      lyu = new HashMap<Attribute, Object>(ly);
+      lyu = new HashMap<>(ly);
       lyu.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_LOW_DOTTED);
-      gpu = new HashMap<Attribute, Object>(bpu);
+      gpu = new HashMap<>(bpu);
       gpu.put(TextAttribute.BACKGROUND, paraBackground);
-      gyu = new HashMap<Attribute, Object>(byu);
+      gyu = new HashMap<>(byu);
       gyu.put(TextAttribute.BACKGROUND, paraBackground);
-      gy = new HashMap<Attribute, Object>(by);
+      gy = new HashMap<>(by);
       gy.put(TextAttribute.BACKGROUND, paraBackground);
       text = "";
 

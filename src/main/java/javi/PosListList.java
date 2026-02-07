@@ -161,7 +161,7 @@ public final class PosListList extends TextList<Position> {
 
    public static final class Cmd extends Rgroup {
 
-      private static ArrayList<Position> tagstack = new ArrayList<Position>();
+      private static ArrayList<Position> tagstack = new ArrayList<>();
       private static PosListList inst;
 
       @SuppressWarnings({"unchecked", "rawtypes"})
@@ -180,7 +180,7 @@ public final class PosListList extends TextList<Position> {
             "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
       private static Ctag ctags;
       private static HashMap<String, TextEdit> tahash =
-         new HashMap<String, TextEdit>(100);
+         new HashMap<>(100);
 
       public static void gotoList(FvContext fvc, TextEdit list) throws
             InputException  {
