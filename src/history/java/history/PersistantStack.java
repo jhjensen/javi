@@ -370,16 +370,51 @@ public abstract class PersistantStack<E> {
       }
    }
 
+   /**
+    * Convert delayed file to real file and acquire file lock.
+    *
+    * <p>Opens the file channel, attempts to acquire an exclusive lock,
+    * and transitions from delayed to real file state.</p>
+    *
+    * <h3>Locking Behavior</h3>
+    * <ul>
+    *   <li>Uses {@link FileChannel#tryLock()} for non-blocking lock attempt</li>
+    *   <li>Throws {@link FileLockException} if file is already locked</li>
+    *   <li>Lock is held until {@link #reset()} or {@link #invalidateFile()} is called</li>
+    * </ul>
+    *
+    * @throws IOException if unable to open file channel
+    * @throws FileLockException if file is locked by another process
+    */
    final void makeReal() throws IOException {
 
       if (delayFile != null) {
+         // B11: Check if file exists and is readable before attempting lock
+         if (delayFile.exists() && !delayFile.canWrite()) {
+            throw new FileLockException("file is not writable: " + delayFile);
+         }
          fc = FileChannel.open(delayFile.toPath(),
              StandardOpenOption.CREATE,
              StandardOpenOption.READ,
              StandardOpenOption.WRITE);
-         lock = fc.tryLock();
-         if (lock == null)
-             throw new FileLockException("unable to obtain lock on file");
+         try {
+            lock = fc.tryLock();
+            if (lock == null) {
+               fc.close();
+               fc = null;
+               throw new FileLockException(
+                  "unable to obtain lock on file (may be in use by another process): "
+                  + delayFile);
+            }
+         } catch (java.nio.channels.OverlappingFileLockException e) {
+            // B11: Handle case where same JVM already has lock
+            if (fc != null) {
+               fc.close();
+               fc = null;
+            }
+            throw new FileLockException(
+               "file is already locked by this process: " + delayFile, e);
+         }
          rfile = delayFile;
          delayFile = null;
       }
@@ -692,6 +727,23 @@ public abstract class PersistantStack<E> {
       super.finalize();
    }
 
+   /**
+    * Reset the stack to initial state, releasing file lock and channel.
+    *
+    * <p>Clears all cached data, releases the file lock and closes
+    * the file channel. After reset, the stack can be reused with
+    * a new file.</p>
+    *
+    * <h3>Resource Cleanup Order</h3>
+    * <ol>
+    *   <li>Save references to lock and channel</li>
+    *   <li>Clear internal state</li>
+    *   <li>Release file lock (if held)</li>
+    *   <li>Close file channel</li>
+    * </ol>
+    *
+    * @throws IOException if unable to close resources
+    */
    public final void reset() throws IOException { //??? needs test
 
       quitAtEnd = false;
@@ -704,16 +756,27 @@ public abstract class PersistantStack<E> {
       size = 0;
       writtenCount = 0;
       filesize = 0;
-      lock = null;
 
-      FileChannel tfc = fc;
-      fc = null;
+      // B11: Fix bug - save references before clearing to ensure proper cleanup
       FileLock tlock = lock;
+      FileChannel tfc = fc;
       lock = null;
-      if (tlock != null)
-          tlock.close();
-      if (tfc != null)
-          tfc.close();
+      fc = null;
+      // B11: Release lock before closing channel for proper cleanup order
+      if (tlock != null) {
+         try {
+            tlock.release();
+         } catch (IOException e) {
+            trace("PersistantStack.reset: error releasing lock: " + e);
+         }
+      }
+      if (tfc != null) {
+         try {
+            tfc.close();
+         } catch (IOException e) {
+            trace("PersistantStack.reset: error closing channel: " + e);
+         }
+      }
    }
 
    private void invalidateFile() throws IOException {

@@ -50,7 +50,7 @@ make clean
 
 ### Build Output
 - Classes: `build/classes/java/main/`
-- JAR: `build/libs/javi-1.0.jar`
+- JAR: `build/libs/javi-dev.jar`
 - Fat JAR: `build/libs/javi-all.jar`
 
 ### Temporary Files

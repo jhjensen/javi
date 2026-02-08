@@ -76,16 +76,19 @@ public final class Command extends Rgroup {
    }
 
    private static final ArrayList<String> cmdlist = new ArrayList<String>();
+   /**
+    * Reads initialization commands from the .javini configuration file.
+    * Each line in the file is added to the command list for later execution.
+    *
+    * @throws IOException if an I/O error occurs reading the file
+    */
    static void readini() throws IOException {
       FileDescriptor.LocalFile ifile = FileDescriptor.LocalFile.make(".javini");
       if (!ifile.isFile())
          return;
-      BufferedReader ini = ifile.getBufferedReader();
-      try {
+      try (BufferedReader ini = ifile.getBufferedReader()) {
          for (String line; null != (line = ini.readLine());)
             cmdlist.add(line);
-      } finally {
-         ini.close();
       }
    }
 

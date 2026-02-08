@@ -161,12 +161,16 @@ public abstract class UI {
       instance.isetStream(inreader);
    }
 
+   // B8: Maximum iterations to prevent infinite loop on unhandled button values
+   private static final int MAX_REPORT_DIFF_ITERATIONS = 100;
+
    @SuppressWarnings("fallthrough")
    static final boolean reportDiff(String filename, int linenum,
          Object filevers, Object backupvers,
          BackupStatus status, String backupname) throws IOException {
       //trace(" filename = " + filename + " linenum = " + linenum + " filevers = " + filevers + " backupvers = " + backupvers + " status = " + status );
-      while (true) {
+      int iterations = 0;  // B8: Track iterations to detect infinite loop
+      while (iterations++ < MAX_REPORT_DIFF_ITERATIONS) {
          while (null == instance)
             try {
                Thread.sleep(200);
@@ -212,6 +216,10 @@ public abstract class UI {
          }
          //trace("reportDiff returning diaflag = " + diaflag);
       }
+      // B8: Reached max iterations, log error and default to using file
+      trace("reportDiff: max iterations (" + MAX_REPORT_DIFF_ITERATIONS
+         + ") reached for " + filename + ", defaulting to use file");
+      return true;
    }
 
    static final void showCommand() {
