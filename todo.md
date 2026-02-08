@@ -15,55 +15,34 @@ This document consolidates items from todo.txt, BUGS.md, and IMPROVEMENTS.md int
 6. [Unclear Items](#unclear-items)
 
 ---
+## New requests
+
+the commands agents run should generally not put output to stdout or stderr.  
+The agent should examine the output in the file, rather than try to read stdout/err.
+The reduces the number of commands that the agent has to have approved.
+These output files belong in the ai directory.
+Modify Agents.md with clear instructions to this effect that copilot will understand.
+
+In PositionIoc it reports the last line read in.  
+There are subclasses that also report the last line, for instance JavaCompiler.
+refactor so that common code is used.  
+Also if there are no lines of output that should be reported.
 
 ## Feature Requests
 
-### F1. File Change Detection Popup Enhancements
-**Priority**: High  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-F1-file-change-popup.md](ai/plan-F1-file-change-popup.md)
-
-When a file is modified on disk while open in the editor, the popup appears. Currently there's a deadlock issue.
-
-**Requirements**:
-1. Fix the deadlock that occurs when the popup appears but before user responds
-   - Investigate which lock is held by `ta` command that prevents the popup from working
-2. Add "Display Difference" button - show diff between editor buffer and file on disk (similar to the existing "open file" functionality)
-3. Add "Permanently Ignore File Differences" button - stop monitoring this file for changes
-4. Add "Stop Editing" button - if the file has modifications, provide "Save and Stop Editing" option
-5. Ensure the StreamInterface (non-GUI mode) also supports these choices
-
-**Files likely involved**: `AwtInterface.java`, `EventQueue.java`, potentially `FileDescriptor.java`
-
----
-
-### F2. Better Application Icon
-**Priority**: Low  
-**Difficulty**: Easy  
-**Plan**: [ai/plan-F2-better-icon.md](ai/plan-F2-better-icon.md)
-
-Create or obtain a more visually appealing icon for the Javi editor.
-
-**Note**: Currently uses default Java application icon or a basic one.
-
----
 
 ### F3. Display Last Line of Output on Status Bar After `mk` Command
 **Priority**: Medium  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-F3-mk-output-statusbar.md](ai/plan-F3-mk-output-statusbar.md)
+**Difficulty**: Easy  
+**Plan**: [ai/plan-F3-mk-output-statusbar.md](ai/plan-F3-mk-output-statusbar.md)  
+**Completeness**: 100%  
+**Unclear**: No
 
 After the `mk` (make) command completes, display the last line of output on the status bar.
 
-**Challenge**: The line in `positionIOC` that displays completion:
-```java
-UI.reportMessage(this + "complete " + errcount + " results");
-```
-...has no access to the previous/last output line from the build.
+**Implementation**: Added `lastOutputLine` field to `PositionIoc` that tracks the last non-empty line read during parsing. The `formatCompletionMessage()` method constructs the status message including this line (truncated to 60 chars if needed).
 
-**Approach**: May need to capture and store the last line from the build output stream before reporting completion.
-
-**Files involved**: `IoConverter.java`, `PositionMark.java` or related, `UI.java`
+**Files modified**: `src/main/java/javi/PositionIoc.java`
 
 ---
 
@@ -706,97 +685,13 @@ Add charset detection to JavaScript file handling.
 
 ## Build & Infrastructure
 
-### I1. Rename tmp Directory to ai
-**Priority**: Low  
-**Difficulty**: Easy  
-**Plan**: [ai/plan-I1-I6-build.md](ai/plan-I1-I6-build.md)  
-**Status**: ✅ COMPLETED  
-
-Rename the `tmp/` directory to `ai/` as a dedicated directory for AI agent operations.
-
-**Changes needed**:
-- Rename directory
-- Update `.gitignore`
-- Update `AGENTS.md`
-
----
-
-### I2. Add Javadoc to Codebase
-**Priority**: High  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-**Status**: ✅ COMPLETED  
-
-Add Javadoc comments throughout the codebase.
-
-**Goals**:
-- Consistent docstrings with names, roles, params, and invariants
-- Focus on public APIs, shared interfaces, data models, and tricky invariants
-- Focus on the 20-30% most-used or most-risky surfaces
-- Pre/postconditions, param constraints, thread-safety notes, ownership semantics
-- Standardized tags (@param, @return, @throws)
-
-**Deliverables**:
-1. Add Javadoc comments
-2. Modify makefile to create javadoc
-3. Add pointer to generated javadoc in AGENTS.md
-
----
-
-### I3. Enhance make dist Target
-**Priority**: Medium  
-**Difficulty**: Medium  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)  
-
-Improve the distribution build target.
-
-**Requirements**:
-1. Verify everything is checked in (clean git status)
-2. Verify code is built successfully
-3. Verify all tests pass
-4. Create versioned JAR
-5. Create git tag
-
----
-
-### I4. Proper Dependency Management
-**Priority**: Medium  
-**Difficulty**: Medium  
-**Source**: IMPROVEMENTS.md  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)
-
-Move from JARs in `lib/` to Maven Central dependencies in `build.gradle`:
-
-```gradle
-dependencies {
-    implementation 'org.mozilla:rhino:1.7.14'
-    implementation 'com.github.albfernandez:juniversalchardet:2.4.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
-}
-```
-
----
-
-### I5. Enable More Compiler Warnings
-**Priority**: Low  
-**Difficulty**: Easy  
-**Source**: IMPROVEMENTS.md  
-**Plan**: [ai/plan-I2-I5-infrastructure.md](ai/plan-I2-I5-infrastructure.md)
-
-Add to build.gradle:
-```gradle
-tasks.withType(JavaCompile) {
-    options.compilerArgs += ['-Xlint:all', '-Werror']
-}
-```
-
----
-
 ### I6. Jython Support
+**Status**: Hold  
 **Priority**: Low  
 **Difficulty**: Unknown  
-**Plan**: [ai/plan-I1-I6-build.md](ai/plan-I1-I6-build.md)
+**Plan**: 
 
+search the web looking for python implementations of java like Jython that support python 3
 **Note**: "jython if it ever supports python3" - Jython is a Python implementation for JVM. Currently Jython only supports Python 2.7. This is blocked on Jython project progress.
 
 **Status**: Waiting on external project
@@ -886,45 +781,6 @@ Relationship between these classes and the benefit of refactoring is unclear.
 
 ---
 
-## Completed Items (from todo.txt)
-
-The following items were marked as done in the original todo.txt:
-
-- ✅ Static import fixes
-- ✅ EditTester1 failures
-- ✅ Join doesn't put in space
-- ✅ :200 doesn't goto line
-- ✅ Circular MovePos/Position
-- ✅ Editing file doesn't fixup positions
-- ✅ Mouse and V mode issues
-- ✅ Not saving history when X out
-- ✅ Modal dialog
-- ✅ Build/cstyle on commit
-- ✅ Resizing with mouse doesn't work
-- ✅ togglestatus changes window size
-- ✅ Circular font/setsize
-- ✅ compa makes status too big
-- ✅ OldView thread safety fix
-- ✅ Full screen mode slowness
-- ✅ Ex command history issues
-- ✅ ^g problem fix
-- ✅ Tag waiting for file read problem
-- ✅ Using file version requires repaint
-- ✅ Remake vi.exe
-- ✅ Edit already open file fails
-- ✅ Unix filetype
-- ✅ Only catch in main
-- ✅ Load modules
-- ✅ HashTable -> HashMap
-- ✅ R command
-- ✅ enum support
-- ✅ Fix \r\n file handling
-- ✅ Make all positions have a FileDescriptor
-- ✅ O sometimes pukes
-- ✅ Ex move, copy commands
-- ✅ Popup when currently open file is changed on filesystem (basic version)
-
----
 
 ## Priority Summary
 

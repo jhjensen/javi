@@ -9,6 +9,7 @@ ID
 dist
 build
 lib
+instructions.md
 javitests/junit3.8.2
 build.txt
 dummy0

@@ -23,6 +23,16 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
       EditContainer.registerListener(this);
    }
 
+   /**
+    * Main server loop that accepts incoming socket connections.
+    * Reads file names from the remote client and opens them in the editor.
+    *
+    * <p>Note: The instream (BufferedReader) is intentionally NOT closed in the
+    * normal path because closing it would also close the underlying socket,
+    * which needs to remain open for the donefile() callback later. The socket
+    * is stored in shash and will be closed by donefile() when the file is
+    * written or disposed.</p>
+    */
    public void run() {
       while (true) {
          Socket sock = null;
@@ -73,14 +83,22 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
       }
    }
 
+   /**
+    * Notifies the remote client that the file edit is complete.
+    * Sends a response byte and closes the socket connection.
+    *
+    * @param ev the EditContainer whose file has been processed
+    */
    void donefile(EditContainer ev) {
       //trace("server.donefile entered " + ev);
       Socket outsock = shash.get(ev);
       if (null == outsock)
          return;
-      BufferedOutputStream outstream = null;
-      try {
-         outstream = new BufferedOutputStream(outsock.getOutputStream());
+      // Note: closing outsock also closes the output stream, but we use
+      // try-with-resources for proper cleanup ordering (flush before close)
+      try (Socket sockToClose = outsock;
+           BufferedOutputStream outstream =
+               new BufferedOutputStream(outsock.getOutputStream())) {
          outstream.write('a');
          outstream.write('\r');
          outstream.write('\n');
@@ -89,14 +107,6 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
          UI.hide();
       } catch (IOException e) {
          trace("server.donefile caught exception " + e);
-      } finally {
-         try {
-            outsock.close();
-            if (outstream != null)
-               outstream.close();
-         } catch (IOException e) {
-            trace("server.donefile caught exception " + e);
-         }
       }
    }
 
