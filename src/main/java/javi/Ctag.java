@@ -156,7 +156,6 @@ final class Ctag {
    }
 
    /**
-<<<<<<< HEAD
     * Look up a tag by reading directly from the file.
     *
     * Looks up a tag name by searching through the tag file.
@@ -193,8 +192,6 @@ final class Ctag {
          // B8: Log warning if iteration limit was reached
          trace("Ctag.filelookup: iteration limit reached for name=" + name);
          return null;
-      } finally {
-         ctfile.close();
       }
    }
 
