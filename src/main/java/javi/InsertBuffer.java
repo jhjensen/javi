@@ -52,7 +52,7 @@ public abstract class InsertBuffer extends View.Inserter {
    }
 
    @SuppressWarnings({"unchecked", "rawtypes"})
-   static final String getcomline(String prompt) {
+   public static final String getcomline(String prompt) {
       FvContext<?> commFvc =  FvContext.startComLine();
       EditContainer ev = commFvc.edvec;
       try {

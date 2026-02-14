@@ -819,7 +819,7 @@ public class EditContainer<OType> implements
       return ecache.getElementsAt(start, start + number);
    }
 
-   final synchronized ArrayList<String> remove(
+   public final synchronized ArrayList<String> remove(
          int start, int number) {
 
       if (!contains(start + number - 1))
@@ -877,7 +877,7 @@ public class EditContainer<OType> implements
 
    /** cover routine for insert() that takes a single object. */
    @SuppressWarnings("unchecked")
-   final void insertOne(OType ob, int index) {
+   public final void insertOne(OType ob, int index) {
       OType[] obarray = (OType[]) new Object[1];
       obarray[0] = ob;
       mkback(index - 1);
