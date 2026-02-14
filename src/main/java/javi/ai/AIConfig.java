@@ -1,0 +1,288 @@
+package javi.ai;
+
+import static history.Tools.trace;
+
+/**
+ * Configuration manager for AI integration settings.
+ *
+ * <p>AIConfig stores and manages provider selection, API keys, model
+ * preferences, and other AI-related settings. Configuration can be
+ * set via the {@code .javini} file or through {@code :set} commands.</p>
+ *
+ * <h2>Configuration Keys</h2>
+ * <table>
+ *   <tr><th>Key</th><th>Default</th><th>Description</th></tr>
+ *   <tr><td>ai.provider</td><td>openai</td><td>AI provider: openai, anthropic</td></tr>
+ *   <tr><td>ai.model</td><td>(provider default)</td><td>Model name</td></tr>
+ *   <tr><td>ai.maxTokens</td><td>2048</td><td>Max response tokens</td></tr>
+ *   <tr><td>ai.apikey</td><td>(from env)</td><td>API key (or use env var)</td></tr>
+ * </table>
+ *
+ * <h2>API Key Resolution</h2>
+ * <p>API keys are resolved in order:</p>
+ * <ol>
+ *   <li>Explicit config value from {@code :set ai.apikey=...}</li>
+ *   <li>Environment variable: {@code OPENAI_API_KEY} or {@code ANTHROPIC_API_KEY}</li>
+ *   <li>UNCLEAR: GitHub Copilot token from copilot CLI auth</li>
+ * </ol>
+ *
+ * <h2>Thread Safety</h2>
+ * <p>All fields use volatile or synchronized access for thread safety.</p>
+ *
+ * @see AIProvider
+ * @see AIClient
+ * @see AICommands
+ */
+public final class AIConfig {
+
+   /** Supported AI provider identifiers. */
+   public enum Provider {
+      /** OpenAI GPT models. */
+      OPENAI("openai"),
+      /** Anthropic Claude models. */
+      ANTHROPIC("anthropic");
+
+      private final String id;
+
+      Provider(String id) {
+         this.id = id;
+      }
+
+      /**
+       * Get the string identifier for this provider.
+       *
+       * @return provider id string
+       */
+      public String getId() {
+         return id;
+      }
+
+      /**
+       * Look up a Provider by string id.
+       *
+       * @param id the provider id (case-insensitive)
+       * @return the matching Provider
+       * @throws IllegalArgumentException if id is not recognized
+       */
+      public static Provider fromId(String id) {
+         for (Provider p : values()) {
+            if (p.id.equalsIgnoreCase(id)) {
+               return p;
+            }
+         }
+         throw new IllegalArgumentException("Unknown AI provider: " + id
+            + ". Supported: openai, anthropic");
+      }
+   }
+
+   private static final AIConfig INSTANCE = new AIConfig();
+
+   private volatile Provider provider = Provider.OPENAI;
+   private volatile String model = null; // null means use provider default
+   private volatile int maxTokens = 2048;
+   private volatile String apiKey = null;
+   private volatile String systemPrompt = DEFAULT_SYSTEM_PROMPT;
+
+   /** Default system prompt for code assistance. */
+   static final String DEFAULT_SYSTEM_PROMPT =
+      "You are a helpful coding assistant integrated into a vi-style "
+      + "text editor called Javi. Be concise and direct. "
+      + "When showing code, match the style of the surrounding code. "
+      + "Prefer short, actionable answers.";
+
+   /** Private constructor for singleton. */
+   private AIConfig() {
+   }
+
+   /**
+    * Get the singleton AIConfig instance.
+    *
+    * @return the global AIConfig
+    */
+   public static AIConfig getInstance() {
+      return INSTANCE;
+   }
+
+   /**
+    * Get the currently configured provider.
+    *
+    * @return the AI provider enum value
+    */
+   public Provider getProvider() {
+      return provider;
+   }
+
+   /**
+    * Set the AI provider.
+    *
+    * @param providerStr provider id string (e.g., "openai", "anthropic")
+    */
+   public void setProvider(String providerStr) {
+      this.provider = Provider.fromId(providerStr);
+      trace("AI provider set to: " + this.provider.getId());
+   }
+
+   /**
+    * Get the model name, or the provider default if not explicitly set.
+    *
+    * @return the model name
+    */
+   public String getModel() {
+      if (null != model) {
+         return model;
+      }
+      return switch (provider) {
+         case OPENAI -> "gpt-4o";
+         case ANTHROPIC -> "claude-sonnet-4-20250514";
+      };
+   }
+
+   /**
+    * Set the model name.
+    *
+    * @param model the model identifier
+    */
+   public void setModel(String model) {
+      this.model = model;
+      trace("AI model set to: " + model);
+   }
+
+   /**
+    * Get the maximum response tokens.
+    *
+    * @return max tokens
+    */
+   public int getMaxTokens() {
+      return maxTokens;
+   }
+
+   /**
+    * Set the maximum response tokens.
+    *
+    * @param maxTokens max tokens (must be positive)
+    * @throws IllegalArgumentException if maxTokens is not positive
+    */
+   public void setMaxTokens(int maxTokens) {
+      if (maxTokens <= 0) {
+         throw new IllegalArgumentException("maxTokens must be positive");
+      }
+      this.maxTokens = maxTokens;
+   }
+
+   /**
+    * Get the API key, resolving from environment if not explicitly set.
+    *
+    * <p>Resolution order:</p>
+    * <ol>
+    *   <li>Explicitly configured key</li>
+    *   <li>Environment variable ({@code OPENAI_API_KEY} or
+    *       {@code ANTHROPIC_API_KEY})</li>
+    * </ol>
+    *
+    * @return the API key, or null if not configured
+    */
+   public String getApiKey() {
+      if (null != apiKey) {
+         return apiKey;
+      }
+      // Try environment variables
+      return switch (provider) {
+         case OPENAI -> System.getenv("OPENAI_API_KEY");
+         case ANTHROPIC -> System.getenv("ANTHROPIC_API_KEY");
+      };
+   }
+
+   /**
+    * Set the API key explicitly.
+    *
+    * <p><b>SECURITY</b>: The key is stored in memory only, never
+    * logged or written to files.</p>
+    *
+    * @param apiKey the API key string
+    */
+   public void setApiKey(String apiKey) {
+      this.apiKey = apiKey;
+      // Never log API keys
+      trace("AI API key configured (length: " + apiKey.length() + ")");
+   }
+
+   /**
+    * Get the system prompt for AI conversations.
+    *
+    * @return the system prompt string
+    */
+   public String getSystemPrompt() {
+      return systemPrompt;
+   }
+
+   /**
+    * Set a custom system prompt.
+    *
+    * @param prompt the system prompt text
+    */
+   public void setSystemPrompt(String prompt) {
+      this.systemPrompt = prompt;
+   }
+
+   /**
+    * Check if the AI system is configured with an API key.
+    *
+    * @return true if an API key is available
+    */
+   public boolean isConfigured() {
+      return null != getApiKey();
+   }
+
+   /**
+    * Process a set command for AI configuration.
+    *
+    * <p>Handles commands like:
+    * <ul>
+    *   <li>{@code set ai.provider=openai}</li>
+    *   <li>{@code set ai.model=gpt-4o}</li>
+    *   <li>{@code set ai.maxTokens=4096}</li>
+    *   <li>{@code set ai.apikey=sk-...}</li>
+    * </ul>
+    *
+    * @param key the setting key (after "ai." prefix)
+    * @param value the setting value
+    * @return true if the setting was recognized and applied
+    */
+   public boolean setSetting(String key, String value) {
+      switch (key) {
+         case "provider":
+            setProvider(value);
+            return true;
+         case "model":
+            setModel(value);
+            return true;
+         case "maxTokens":
+         case "maxtokens":
+            setMaxTokens(Integer.parseInt(value));
+            return true;
+         case "apikey":
+            setApiKey(value);
+            return true;
+         case "prompt":
+            setSystemPrompt(value);
+            return true;
+         default:
+            return false;
+      }
+   }
+
+   /**
+    * Get a summary of current configuration (without exposing API key).
+    *
+    * @return human-readable configuration summary
+    */
+   public String getSummary() {
+      String keyStatus = null != getApiKey()
+         ? "configured (" + getApiKey().length() + " chars)"
+         : "NOT SET";
+      return "AI Config: provider=" + provider.getId()
+         + " model=" + getModel()
+         + " maxTokens=" + maxTokens
+         + " apiKey=" + keyStatus;
+   }
+}
