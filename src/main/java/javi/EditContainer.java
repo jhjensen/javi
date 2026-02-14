@@ -76,7 +76,12 @@ public class EditContainer<OType> implements
 
    private static final long serialVersionUID = 1;
 
-   final String getName() {
+   /**
+    * Get the short name of this container's file.
+    *
+    * @return the short filename
+    */
+   public final String getName() {
       return prop.fdes.shortName;
    }
 
@@ -242,6 +247,7 @@ public class EditContainer<OType> implements
    public void disposeFvc() throws IOException {
 
       //trace("dispose " + super.toString()  + "\"" + prop.fdes.canonName+  "\" class = " + prop.conv.getClass() );
+      notifyFileClosed();
       if (disposeListener != null)
          disposeListener.fileDisposed(this);
 
@@ -510,6 +516,7 @@ public class EditContainer<OType> implements
       //for (int i=0;i<ecache.size();i++)
       //   trace("obj[i] = " +at(i));
       finishedread = true;
+      notifyFileOpened();
       if (!backupMade) {
          while (ecache.size() <= 1) {
             @SuppressWarnings("unchecked")
@@ -521,6 +528,24 @@ public class EditContainer<OType> implements
          backup.baseRecord();
       }
       //trace("exit " + this);
+   }
+
+   private void notifyFileOpened() {
+      for (FileChangeListener changeListener : changeListeners)
+         if (null != changeListener)
+            changeListener.fileOpened(this);
+   }
+
+   private void notifyFileClosed() {
+      for (FileChangeListener changeListener : changeListeners)
+         if (null != changeListener)
+            changeListener.fileClosed(this);
+   }
+
+   private void notifyContentChanged() {
+      for (FileChangeListener changeListener : changeListeners)
+         if (null != changeListener)
+            changeListener.contentChanged(this);
    }
 
    private final class ArrayChange extends IoConverter.BuildCB {
@@ -927,14 +952,23 @@ public class EditContainer<OType> implements
 
    }
 
-   abstract static class FileChangeListener {
-      abstract void addedLines(FileDescriptor fd, int count, int index);
+   public abstract static class FileChangeListener {
+      public abstract void addedLines(FileDescriptor fd, int count, int index);
+
+      public void fileOpened(EditContainer<?> ec) {
+      }
+
+      public void fileClosed(EditContainer<?> ec) {
+      }
+
+      public void contentChanged(EditContainer<?> ec) {
+      }
    }
 
    private static FileChangeListener[] changeListeners =
-      new FileChangeListener[3];
+      new FileChangeListener[4];
 
-   static final void registerChangeListen(FileChangeListener fl) {
+   public static final void registerChangeListen(FileChangeListener fl) {
       for (int i = 0; i < changeListeners.length; i++)
          if (null == changeListeners[i]) {
             changeListeners[i] = fl;
@@ -1052,6 +1086,21 @@ public class EditContainer<OType> implements
       return new StringIter(iterator());
    }
 
+   /**
+    * Returns the full document content as a single string with
+    * newline separators. Used by FileChangeListeners that need
+    * the complete buffer text.
+    */
+   public final String getDocumentText() {
+      StringBuilder sb = new StringBuilder();
+      for (int i = 1; i < ecache.size(); i++) {
+         if (i > 1)
+            sb.append('\n');
+         sb.append(ecache.get(i).toString());
+      }
+      return sb.toString();
+   }
+
    public final Iterator<OType> iterator() {
       var ret = new EIter();
       ret.next(); // skip 0 untill zero based
@@ -1137,22 +1186,26 @@ public class EditContainer<OType> implements
       InsertRecord rec = new InsertRecord(obarray, indexi);
       if (!undoDisabled)
          backup.push(rec);
+      notifyContentChanged();
    }
 
    private void insertRecord(String[] obarray, int indexi) {
       InsertStringRecord rec = new InsertStringRecord(obarray, indexi);
       if (!undoDisabled)
          backup.push(rec);
+      notifyContentChanged();
    }
 
    private void insertRecord(Iterator<OType> it, int indexi, int count) {
       InsertRecord rec = new InsertRecord(it, indexi, count, true);
       if (!undoDisabled)
          backup.push(rec);
+      notifyContentChanged();
    }
 
    private void insertRecordDone(Iterator<OType> it, int indexi, int count) {
       backup.push(new InsertRecord(it, indexi, count, false));
+      notifyContentChanged();
    }
 
    private void modRecord(OType ob, int index) {
@@ -1160,6 +1213,7 @@ public class EditContainer<OType> implements
       ModRecord rec = new ModRecord(ob, index);
       if (!undoDisabled)
          backup.push(rec);
+      notifyContentChanged();
    }
 
    private void deleteRecord(int start, int number) {
@@ -1167,6 +1221,7 @@ public class EditContainer<OType> implements
       DeleteRecord rec = new DeleteRecord(start, number);
       if (!undoDisabled)
          backup.push(rec);
+      notifyContentChanged();
    }
 
    final boolean isParent(EditContainer ev) {

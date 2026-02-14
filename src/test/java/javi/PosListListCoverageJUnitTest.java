@@ -44,20 +44,22 @@ class PosListListCoverageJUnitTest {
             pllCmd = new PosListList.Cmd();
          } catch (RuntimeException e) {
             // Commands already registered by another test class.
-            // Create minimal Cmd via Unsafe/allocateInstance to
-            // get a doroutine-callable handle. Since static instance
-            // is already initialized, this is safe.
          }
          if (pllCmd == null) {
-            // Use the previous class's Cmd instance via reflection.
-            // Any test-class @BeforeAll that ran first stored it.
             pllCmd = sharedCmd;
-            if (pllCmd == null) {
-               // Class loaded but no shared ref: construct by
-               // forcing class loading (static init already done).
-               Class.forName("javi.PosListList$Cmd");
+         }
+         if (pllCmd == null) {
+            // Find existing Cmd via command hash — another test
+            // class already constructed and registered it.
+            Rgroup.KeyBinding kb = Rgroup.bindingLookup("ta");
+            if (kb != null) {
+               java.lang.reflect.Field outer =
+                  kb.getClass().getDeclaredField("this$0");
+               outer.setAccessible(true);
+               pllCmd = (PosListList.Cmd) outer.get(kb);
             }
-         } else {
+         }
+         if (pllCmd != null) {
             sharedCmd = pllCmd;
          }
          pllInstance = getInstance();
@@ -107,13 +109,6 @@ class PosListListCoverageJUnitTest {
       f.set(pllInstance, val);
    }
 
-   private static Method getContainsPositionMethod() throws Exception {
-      Method m = PosListList.Cmd.class.getDeclaredMethod(
-         "containsPosition", TextEdit.class, Position.class);
-      m.setAccessible(true);
-      return m;
-   }
-
    private static Method getPoptagMethod() throws Exception {
       Method m = PosListList.Cmd.class.getDeclaredMethod(
          "poptag", View.class);
@@ -143,130 +138,6 @@ class PosListListCoverageJUnitTest {
          new FileProperties<>(fd, StringIoc.converter);
       IoConverter<String> ioc = new IoConverter<>(fp, false);
       return new TextEdit<>(ioc, fp);
-   }
-
-   // ================================================================
-   // containsPosition
-   // ================================================================
-
-   @Nested
-   @DisplayName("containsPosition")
-   class ContainsPositionTests {
-
-      private Method containsPos;
-
-      @BeforeAll
-      static void setup() throws Exception {
-         // already set up in outer class
-      }
-
-      @BeforeEach
-      void getMethod() throws Exception {
-         containsPos = getContainsPositionMethod();
-      }
-
-      @Test
-      @DisplayName("returns false for empty list")
-      void emptyList() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            TextEdit<Position> list = makePositionList("cp-empty");
-            Position p = new Position(0, 42, "Foo.java", "test");
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p);
-            assertFalse(result);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-
-      @Test
-      @DisplayName("returns true when position exists")
-      void foundPosition() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            Position p1 = new Position(0, 10, "A.java", "a");
-            Position p2 = new Position(0, 20, "B.java", "b");
-            TextEdit<Position> list =
-               makePositionList("cp-found", p1, p2);
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p1);
-            assertTrue(result);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-
-      @Test
-      @DisplayName("returns true when match differs only in comment")
-      void matchIgnoresComment() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            Position p1 = new Position(3, 10, "X.java", "original");
-            TextEdit<Position> list =
-               makePositionList("cp-comment", p1);
-            // Same file/x/y, different comment
-            Position p2 = new Position(3, 10, "X.java", "different");
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p2);
-            assertTrue(result,
-               "Position.equals ignores comment field");
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-
-      @Test
-      @DisplayName("returns false for different line number")
-      void differentLine() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            Position p1 = new Position(0, 10, "A.java", "a");
-            TextEdit<Position> list =
-               makePositionList("cp-diffline", p1);
-            Position p2 = new Position(0, 11, "A.java", "b");
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p2);
-            assertFalse(result);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-
-      @Test
-      @DisplayName("returns false for different file")
-      void differentFile() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            Position p1 = new Position(0, 10, "A.java", "a");
-            TextEdit<Position> list =
-               makePositionList("cp-difffile", p1);
-            Position p2 = new Position(0, 10, "B.java", "b");
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p2);
-            assertFalse(result);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-
-      @Test
-      @DisplayName("finds position in middle of list")
-      void middleOfList() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            Position p1 = new Position(0, 1, "A.java", "a");
-            Position p2 = new Position(0, 2, "B.java", "b");
-            Position p3 = new Position(0, 3, "C.java", "c");
-            TextEdit<Position> list =
-               makePositionList("cp-middle", p1, p2, p3);
-            boolean result = (boolean) containsPos.invoke(
-               null, list, p2);
-            assertTrue(result);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
    }
 
    // ================================================================

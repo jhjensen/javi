@@ -13,12 +13,12 @@ public final class JeyEvent {
 
       if (!isAct) {
          switch (keyChar) { // for shifted characters the code is shifted, and
-            case ' ':           // we don't want to distinguish with the
-            case 8:           // modifers except for a few special cases
-            case 26:
-               break;
-            default:
-               modifiersi &= ~SHIFT_MASK;
+         case ' ': // we don't want to distinguish with the
+         case 8: // modifers except for a few special cases
+         case 26:
+            break;
+         default:
+            modifiersi &= ~SHIFT_MASK;
          }
       }
 
@@ -26,9 +26,8 @@ public final class JeyEvent {
          ? keyCode
          : keyChar;
 
-      modifiers =
-          (modifiersi & (SHIFT_MASK | META_MASK | CTRL_MASK | ALT_MASK))
-          | (isAct ? ACT_MASK : 0);
+      modifiers = (modifiersi & (SHIFT_MASK | META_MASK | CTRL_MASK | ALT_MASK))
+         | (isAct ? ACT_MASK : 0);
    }
 
    public int hashCode() {
@@ -82,8 +81,8 @@ public final class JeyEvent {
    public static final int VK_PAGE_UP = 33;
    public static final int VK_PAGE_DOWN = 34;
    public static final int VK_END = 35;
-   public static final int VK_HOME  = 36;
-   public static final int VK_LEFT  = 37;
+   public static final int VK_HOME = 36;
+   public static final int VK_LEFT = 37;
    public static final int VK_UP = 38;
    public static final int VK_RIGHT = 39;
    public static final int VK_DOWN = 40;
@@ -109,10 +108,14 @@ public final class JeyEvent {
     */
    public static int convertExtendedModifiers(int extMods) {
       int result = 0;
-      if ((extMods & 0x40) != 0) result |= SHIFT_MASK;   // SHIFT_DOWN_MASK
-      if ((extMods & 0x80) != 0) result |= CTRL_MASK;    // CTRL_DOWN_MASK
-      if ((extMods & 0x100) != 0) result |= META_MASK;   // META_DOWN_MASK
-      if ((extMods & 0x200) != 0) result |= ALT_MASK;    // ALT_DOWN_MASK
+      if ((extMods & 0x40) != 0)
+         result |= SHIFT_MASK; // SHIFT_DOWN_MASK
+      if ((extMods & 0x80) != 0)
+         result |= CTRL_MASK; // CTRL_DOWN_MASK
+      if ((extMods & 0x100) != 0)
+         result |= META_MASK; // META_DOWN_MASK
+      if ((extMods & 0x200) != 0)
+         result |= ALT_MASK; // ALT_DOWN_MASK
       return result;
    }
 

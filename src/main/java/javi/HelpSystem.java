@@ -1,5 +1,6 @@
 package javi;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -33,6 +34,50 @@ public final class HelpSystem {
 
    /** Private constructor to prevent instantiation. */
    private HelpSystem() {
+   }
+
+   /**
+    * Provider interface for dynamically registered help topics.
+    */
+   public interface HelpTopicProvider {
+      void appendHelp();
+   }
+
+   private static final ArrayList<RegisteredTopic> registeredTopics =
+      new ArrayList<>();
+
+   private static final class RegisteredTopic {
+      final String name;
+      final String[] aliases;
+      final HelpTopicProvider provider;
+
+      RegisteredTopic(String name, String[] aliases,
+            HelpTopicProvider provider) {
+         this.name = name;
+         this.aliases = aliases;
+         this.provider = provider;
+      }
+
+      boolean matches(String topic) {
+         if (name.equals(topic))
+            return true;
+         for (String alias : aliases)
+            if (alias.equals(topic))
+               return true;
+         return false;
+      }
+   }
+
+   /**
+    * Register a help topic dynamically.
+    *
+    * @param name the primary topic name
+    * @param aliases alternative names that also match
+    * @param provider callback that appends help content
+    */
+   public static void registerHelpTopic(String name, String[] aliases,
+         HelpTopicProvider provider) {
+      registeredTopics.add(new RegisteredTopic(name, aliases, provider));
    }
 
    /**
@@ -128,7 +173,17 @@ public final class HelpSystem {
             appendGitHelp();
             break;
          default:
-            appendUnknownTopic(normalizedTopic);
+            // Check dynamically registered topics
+            boolean found = false;
+            for (RegisteredTopic rt : registeredTopics) {
+               if (rt.matches(normalizedTopic)) {
+                  rt.provider.appendHelp();
+                  found = true;
+                  break;
+               }
+            }
+            if (!found)
+               appendUnknownTopic(normalizedTopic);
             break;
       }
 
@@ -137,17 +192,27 @@ public final class HelpSystem {
    }
 
    /** Primary help topic names for tab completion. */
-   private static final String[] TOPICS = {
+   private static final String[] BUILT_IN_TOPICS = {
       "index", "movement", "editing", "search", "files", "ex",
       "visual", "undo", "window", "shell", "diredit", "filelist",
       "directory", "keybindings", "folding"
    };
 
    /**
-    * Get all primary help topic names (for tab completion).
+    * Get all help topic names (built-in + registered, for tab
+    * completion).
     */
    static String[] getTopics() {
-      return TOPICS;
+      if (registeredTopics.isEmpty())
+         return BUILT_IN_TOPICS;
+      String[] result = new String[BUILT_IN_TOPICS.length
+         + registeredTopics.size()];
+      System.arraycopy(BUILT_IN_TOPICS, 0, result, 0,
+         BUILT_IN_TOPICS.length);
+      for (int i = 0; i < registeredTopics.size(); i++)
+         result[BUILT_IN_TOPICS.length + i] =
+            registeredTopics.get(i).name;
+      return result;
    }
 
    /**
@@ -417,6 +482,10 @@ public final class HelpSystem {
       append("  :help keybindings - Key binding architecture");
       append("  :help folding    - Code folding commands");
       append("  :help git        - Git integration commands");
+      for (RegisteredTopic rt : registeredTopics)
+         append("  :help " + rt.name
+            + " ".repeat(Math.max(1, 11 - rt.name.length()))
+            + "- " + rt.name + " help");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -463,7 +532,8 @@ public final class HelpSystem {
       append("WORD MOVEMENT");
       append("-------------");
       append("  w                Forward to start of word");
-      append("  W                Forward to start of WORD (whitespace-delimited)");
+      append(
+         "  W                Forward to start of WORD (whitespace-delimited)");
       append("  b                Backward to start of word");
       append("  B                Backward to start of WORD");
       append("  e                Forward to end of word");
@@ -1196,6 +1266,7 @@ public final class HelpSystem {
       append("  keybindings - Key binding architecture");
       append("  folding    - Code folding");
       append("  git        - Git integration");
+      append("  lsp        - Language Server Protocol");
       append("");
       append("Type :help for index.");
    }
@@ -1252,5 +1323,13 @@ public final class HelpSystem {
       append("  - zR with all folds already open clears all folds.");
       append("");
       append("Type :help for index.");
+   }
+
+   /**
+    * Append a line to the help buffer. Package-private for use
+    * by registered help topic providers.
+    */
+   public static void appendLine(String line) {
+      append(line);
    }
 }

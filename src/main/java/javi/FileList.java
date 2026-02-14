@@ -345,7 +345,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    public static boolean gotoposition(Position p,
       boolean setstatus, View vi) throws InputException {
       //trace("gotoposition p " + p);
-      if (null == p)
+      if (null == p || null == instance)
          return false;
       //trace("goto position " + p);
       boolean retval = instance.openFile(p, vi);

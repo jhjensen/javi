@@ -60,8 +60,15 @@ class PosListListTagProcessingJUnitTest {
                pllCmd = new PosListList.Cmd();
                PosListListCoverageJUnitTest.sharedCmd = pllCmd;
             } catch (RuntimeException e) {
-               // Already registered — use reflection
-               Class.forName("javi.PosListList$Cmd");
+               // Already registered — find via command hash
+               Rgroup.KeyBinding kb = Rgroup.bindingLookup("ta");
+               if (kb != null) {
+                  java.lang.reflect.Field outer =
+                     kb.getClass().getDeclaredField("this$0");
+                  outer.setAccessible(true);
+                  pllCmd = (PosListList.Cmd) outer.get(kb);
+                  PosListListCoverageJUnitTest.sharedCmd = pllCmd;
+               }
             }
          }
          pllInstance = getInstance();
@@ -626,55 +633,6 @@ class PosListListTagProcessingJUnitTest {
             assertDoesNotThrow(() ->
                navMethod.invoke(null, tagResults,
                   "nothing", view));
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
-      }
-   }
-
-   // ================================================================
-   // createTagList with null ctagFinder
-   // ================================================================
-
-   @Nested
-   @DisplayName("createTagList")
-   class CreateTagListTests {
-
-      @Test
-      @DisplayName("works with null ctagFinder")
-      void nullCtagFinder() throws Exception {
-         EventQueue.biglock2.lock();
-         try {
-            // Save and nullify ctagFinder
-            Field cf = PosListList.Cmd.class
-               .getDeclaredField("ctagFinder");
-            cf.setAccessible(true);
-            Object saved = cf.get(null);
-            cf.set(null, null);
-            try {
-               Method m = PosListList.Cmd.class
-                  .getDeclaredMethod("createTagList",
-                     String.class);
-               m.setAccessible(true);
-               // Should handle null ctagFinder gracefully
-               TextEdit result;
-               try {
-                  result = (TextEdit) m.invoke(
-                     pllCmd, "nonexistentSymbol99");
-               } catch (java.lang.reflect.InvocationTargetException e) {
-                  if (e.getCause() instanceof java.io.IOException) {
-                     assumeTrue(false,
-                        "lid not on PATH: " + e.getCause().getMessage());
-                     return;
-                  }
-                  throw e;
-               }
-               assertNotNull(result,
-                  "should return TextEdit even with "
-                     + "null ctagFinder");
-            } finally {
-               cf.set(null, saved);
-            }
          } finally {
             EventQueue.biglock2.unlock();
          }

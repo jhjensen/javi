@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
@@ -29,7 +30,7 @@ public final class PosListList extends TextList<Position> {
    private final class FileChangeHandler
          extends EditContainer.FileChangeListener  {
 
-      void addedLines(FileDescriptor fd, int count, int index) {
+      public void addedLines(FileDescriptor fd, int count, int index) {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
          // fix up the line numbers
          EditContainer<Position> errlist = at(1);
@@ -207,6 +208,132 @@ public final class PosListList extends TextList<Position> {
       private static HashMap<String, TextEdit> tagCache =
          new HashMap<>(100);
 
+      private static final ArrayList<TagLookupProvider> tagProviders =
+         new ArrayList<>();
+
+      /**
+       * Registers a tag lookup provider.
+       * Providers are queried grouped by {@link TagLookupProvider.LookupType}:
+       * DEFINITIONS first, BOTH second, REFERENCES last.
+       *
+       * @param provider the lookup provider to register
+       */
+      public static void registerTagProvider(TagLookupProvider provider) {
+         tagProviders.add(provider);
+      }
+
+      /**
+       * Ctags-based tag lookup provider.
+       * Returns positions from the ctags index file.
+       */
+      private static class CtagsLookupProvider
+            implements TagLookupProvider {
+         @Override
+         public TagLookupProvider.LookupType getType() {
+            return TagLookupProvider.LookupType.BOTH;
+         }
+
+         @Override
+         public boolean tryLookup(FvContext fvc) {
+            return false;
+         }
+
+         @Override
+         public List<Position> lookupPositions(
+               FvContext fvc, String tagName) {
+            if (null == ctagFinder)
+               return java.util.Collections.emptyList();
+            // Extract simple name from qualified name
+            String[] segments = DOT_PATTERN.split(tagName);
+            String simpleName =
+               segments[segments.length - 1];
+            try {
+               Position[] positions =
+                  ctagFinder.taglookup(simpleName);
+               if (null == positions || 0 == positions.length)
+                  return java.util.Collections.emptyList();
+               List<Position> result =
+                  new ArrayList<>(positions.length);
+               for (Position p : positions) {
+                  if (null != p)
+                     result.add(p);
+               }
+               return result;
+            } catch (IOException e) {
+               trace("CtagsLookupProvider: " + e);
+               return java.util.Collections.emptyList();
+            }
+         }
+      }
+
+      /**
+       * Lid (mkid) lookup provider.
+       * Runs the {@code lid -R grep} command and returns positions.
+       */
+      private static class LidLookupProvider
+            implements TagLookupProvider {
+         @Override
+         public TagLookupProvider.LookupType getType() {
+            return TagLookupProvider.LookupType.REFERENCES;
+         }
+
+         @Override
+         public boolean tryLookup(FvContext fvc) {
+            return false;
+         }
+
+         @Override
+         public List<Position> lookupPositions(
+               FvContext fvc, String tagName) {
+            // Extract simple name from qualified name
+            String[] segments = DOT_PATTERN.split(tagName);
+            String simpleName =
+               segments[segments.length - 1];
+            try {
+               String[] cmd =
+                  {"lid", "-R", "grep", simpleName};
+               java.io.BufferedReader reader =
+                  history.Tools.runcmd(cmd);
+               List<Position> results = new ArrayList<>();
+               String line;
+               while (null
+                     != (line = reader.readLine())) {
+                  if (0 == line.length())
+                     continue;
+                  Position pos =
+                     parseLidLine(line);
+                  if (null != pos)
+                     results.add(pos);
+               }
+               reader.close();
+               return results;
+            } catch (IOException e) {
+               // lid not available or failed
+               return java.util.Collections.emptyList();
+            }
+         }
+
+         private static Position parseLidLine(String line) {
+            try {
+               int pos = line.indexOf(':', 3);
+               if (pos < 0)
+                  return null;
+               String file = line.substring(0, pos);
+               String rest = line.substring(pos + 1);
+               int pos2 = rest.indexOf(':');
+               if (pos2 < 0)
+                  return null;
+               int y = Integer.parseInt(
+                  rest.substring(0, pos2));
+               String comment = rest.substring(pos2 + 1)
+                  .trim();
+               return new Position(0, y, file, comment);
+            } catch (NumberFormatException e) {
+               return null;
+            }
+         }
+      }
+
       public static void gotoList(FvContext fvc, TextEdit list) throws
             InputException  {
          instance.gotoList(fvc, list);
@@ -257,6 +384,12 @@ public final class PosListList extends TextList<Position> {
             "cp",
          };
          register(rnames);
+         // Register built-in providers: ctags (BOTH) and lid (REFERENCES).
+         // LSP providers (DEFINITIONS, REFERENCES) are registered
+         // by LspCommands when loaded via loadclass.
+         // Query order is by LookupType: DEFINITIONS, BOTH, REFERENCES.
+         registerTagProvider(new CtagsLookupProvider());
+         registerTagProvider(new LidLookupProvider());
          flush();
       }
 
@@ -506,13 +639,9 @@ public final class PosListList extends TextList<Position> {
                        : tagName;
 
          trace("gototag entry tagName="
-            + (tagName == null ? "null" : "'" + tagName + "'")
-            + " searchText='" + searchText + "'");
+            + (tagName == null ? "null" : "'" + tagName + "'"));
 
          if (filePositionPattern.reset(searchText).find()) {
-            trace("gototag filePositionPattern matched file="
-               + filePositionPattern.group(1) + " line="
-               + filePositionPattern.group(4));
             FvContext fileContext = FileList.openFileName(
                filePositionPattern.group(1), fvc.vi);
             if (null != fileContext) {
@@ -521,88 +650,115 @@ public final class PosListList extends TextList<Position> {
                fileContext.edvec.contains(ypos);
                fileContext.cursoryabs(ypos);
                tagstack.add(originalPosition);
-               trace("gototag filePosition navigated, return");
                return;
             }
-            trace("gototag filePosition openFileName returned null");
          }
 
          if (null == tagName) {
             tagName = fvc.at().toString();
             tagName = extractIdentifier(
                tagName, fvc.insertx());
-            trace("gototag extracted sym='" + tagName + "'");
          }
 
-         if (tagName.isEmpty()) {
-            trace("gototag empty tagName, return");
+         if (tagName.isEmpty())
+            return;
+
+         String[] nameSegments = DOT_PATTERN.split(tagName);
+         String simpleName =
+            nameSegments[nameSegments.length - 1];
+
+         // Check cache first
+         @SuppressWarnings("unchecked")
+         TextEdit<Position> cachedResults =
+            tagCache.get(simpleName);
+         if (null != cachedResults) {
+            tagstack.add(originalPosition);
+            instance.setLastList(cachedResults);
+            if (nameSegments.length > 1
+                  && cachedResults.readIn() > 1) {
+               navigateToBestScoredTag(cachedResults,
+                  cachedResults.readIn(), nameSegments,
+                  tagName, fvc.vi);
+            } else {
+               navigateToFirstTag(cachedResults,
+                  tagName, fvc.vi);
+            }
             return;
          }
 
-         // Ctags + mkid combined lookup
-         TextEdit tagResults = taglookup(tagName, fvc.vi);
-         if (null == tagResults) {
-            trace("gototag taglookup returned null");
-            throw new InputException("tag not found: " + tagName);
-         }
-         trace("gototag taglookup done tagResults="
-            + tagResults.toString() + " finish="
-            + tagResults.finish());
-
-         // Check for any non-defpos entries in the result
-         boolean hasResults = false;
-         for (int i = 1; i < tagResults.readIn(); i++) {
-            if (tagResults.at(i) != PositionIoc.defpos) {
-               hasResults = true;
-               break;
+         // Collect positions from all providers, grouped by type:
+         // DEFINITIONS first, then BOTH, then REFERENCES.
+         List<Position> allPositions = new ArrayList<>();
+         java.util.Set<String> seen = new java.util.HashSet<>();
+         TagLookupProvider.LookupType[] typeOrder = {
+            TagLookupProvider.LookupType.DEFINITIONS,
+            TagLookupProvider.LookupType.BOTH,
+            TagLookupProvider.LookupType.REFERENCES,
+         };
+         for (TagLookupProvider.LookupType type : typeOrder) {
+            for (TagLookupProvider provider : tagProviders) {
+               if (provider.getType() == type) {
+                  List<Position> provPositions =
+                     provider.lookupPositions(fvc, tagName);
+                  for (Position p : provPositions) {
+                     String key = p.filename.canonName
+                        + ":" + p.y;
+                     if (seen.add(key))
+                        allPositions.add(p);
+                  }
+               }
             }
          }
-         trace("gototag hasResults=" + hasResults);
-         if (tagResults.finish() <= 1 || !hasResults)
-            throw new InputException("tag not found: " + tagName);
+
+         // Merge matching directories
+         ArrayList<Position> dirMatches =
+            findDirectories(tagName);
+         for (Position dp : dirMatches) {
+            String key = dp.filename.canonName
+               + ":" + dp.y;
+            if (seen.add(key))
+               allPositions.add(dp);
+         }
+
+         if (allPositions.isEmpty())
+            throw new InputException(
+               "tag not found: " + tagName);
+
+         // Create TextEdit with all positions
+         Position[] posArray =
+            allPositions.toArray(new Position[0]);
+         java.io.BufferedReader emptyInput =
+            new java.io.BufferedReader(
+               new java.io.StringReader(""));
+         PositionIoc doneReader = new PositionIoc(
+            simpleName, emptyInput,
+            PositionIoc.pconverter);
+         TextEdit<Position> tagResults =
+            new TextEdit<>(doneReader, posArray,
+               instance, doneReader.prop);
+         tagResults.readIn();
+         tagCache.put(simpleName, tagResults);
+         tagResults.addDisposeNotify(disposeListener);
+         if (tagResults.at(1) != PositionIoc.defpos)
+            instance.insertOne(tagResults,
+               instance.finish());
 
          tagstack.add(originalPosition);
          instance.setLastList(tagResults);
-         trace("gototag done, pushed tagstack size="
-            + tagstack.size());
-      }
 
-      /**
-       * Check whether a TextEdit already contains a Position.
-       * Used to prevent duplicate directory entries on repeated
-       * lookups of the same symbol.
-       */
-      @SuppressWarnings("unchecked")
-      private static boolean containsPosition(
-            TextEdit<Position> list, Position pos) {
-         int count = list.readIn();
-         for (int i = 1; i < count; i++) {
-            if (pos.equals(list.at(i)))
-               return true;
+         // Navigate to best result
+         if (nameSegments.length > 1
+               && tagResults.readIn() > 1) {
+            navigateToBestScoredTag(tagResults,
+               tagResults.readIn(), nameSegments,
+               tagName, fvc.vi);
+         } else {
+            navigateToFirstTag(tagResults,
+               tagName, fvc.vi);
          }
-         return false;
-      }
 
-      private TextEdit<Position> createTagList(String sym)
-            throws IOException {
-         Position[] tagPositions = null;
-
-         trace("createTagList ctagFinder=" + ctagFinder);
-         if (null != ctagFinder) {
-            tagPositions = ctagFinder.taglookup(sym);
-            if ((tagPositions != null))
-               if (tagPositions.length == 0)
-                  tagPositions = null;
-         }
-         PositionIoc reader = new XrefReader(sym, tagPositions);
-
-         TextEdit<Position> tagResults = new TextEdit<Position>(
-            reader, tagPositions, instance, reader.prop);
-         tagResults.contains(2);
-         tagCache.put(sym, tagResults);
-         if (tagResults.at(1) != PositionIoc.defpos)
-            instance.insertOne(tagResults, instance.finish());
-         return tagResults;
+         trace("gototag '" + tagName + "' total="
+            + allPositions.size());
       }
 
       private static final Pattern DOT_PATTERN =
@@ -621,64 +777,6 @@ public final class PosListList extends TextList<Position> {
       }
       private TagCacheDisposer disposeListener =
          new TagCacheDisposer();
-
-      private TextEdit taglookup(String qualifiedName, View vi)
-            throws InputException {
-         trace("taglookup qualifiedName='" + qualifiedName + "'");
-         String[] nameSegments = DOT_PATTERN.split(qualifiedName);
-
-         if (0 == nameSegments.length) {
-            throw new InputException(
-               "invalid tag target" + qualifiedName);
-         }
-
-         String simpleName = nameSegments[nameSegments.length - 1];
-         @SuppressWarnings("unchecked") // raw TextEdit from HashMap
-         TextEdit<Position> tagResults = tagCache.get(simpleName);
-         trace("taglookup simpleName='" + simpleName
-            + "' cached=" + (tagResults != null));
-         try {
-            if (null == tagResults) {
-               tagResults = createTagList(simpleName);
-               tagResults.addDisposeNotify(disposeListener);
-            }
-
-            int tagFinish = tagResults.finish();
-            trace("taglookup tagResults.finish()" + tagFinish
-               + " donereading=" + tagResults.donereading());
-
-            int ctagCount = 1;
-            for (; ctagCount < tagFinish; ctagCount++) {
-               Position ctagpos = tagResults.at(ctagCount);
-               if (!Ctag.getTagName(ctagpos).equals(simpleName))
-                  break;
-            }
-            trace("taglookup ctagCount=" + ctagCount);
-
-            // Always merge matching directories into the tag list
-            @SuppressWarnings("unchecked")
-            TextEdit<Position> tlist = tagResults;
-            ArrayList<Position> dirMatches =
-               findDirectories(qualifiedName);
-            trace("taglookup dirMatches=" + dirMatches.size());
-            for (Position dp : dirMatches) {
-               if (!containsPosition(tlist, dp))
-                  tlist.insertOne(dp, tlist.readIn());
-            }
-
-            if (ctagCount > 1) {
-               navigateToBestScoredTag(tagResults,
-                  ctagCount, nameSegments, qualifiedName, vi);
-            } else if (tagResults.readIn() > 1) {
-               navigateToFirstTag(tagResults,
-                  qualifiedName, vi);
-            }
-         } catch (IOException e) {
-            trace("PosListList taglookup caught " + e);
-         }
-
-         return tagResults;
-      }
 
       private static void navigateToBestScoredTag(
             TextEdit<Position> tagResults, int ctagCount,

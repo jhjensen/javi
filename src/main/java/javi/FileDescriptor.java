@@ -87,6 +87,15 @@ public class FileDescriptor implements Serializable {
       return canonName;
    }
 
+   /**
+    * Returns whether this descriptor represents a local file.
+    *
+    * @return true if this is a LocalFile
+    */
+   public boolean isLocalFile() {
+      return this instanceof LocalFile;
+   }
+
    private static final String separator = File.separator;
    private static String separator2 = "." + File.separator;
 

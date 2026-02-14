@@ -346,7 +346,7 @@ public final class FvContext<OType> implements Serializable {
 
    private static final class FoldChangeListener
          extends EditContainer.FileChangeListener {
-      void addedLines(FileDescriptor fd, int count, int index) {
+      public void addedLines(FileDescriptor fd, int count, int index) {
          for (Iterator<FvContext<?>> fit = fvmap.iterator();
                fit.hasNext();) {
             FvContext<?> fvc = fit.next();
@@ -537,6 +537,7 @@ public final class FvContext<OType> implements Serializable {
             locked = EventQueue.biglock2.tryLock(2, TimeUnit.SECONDS);
             if (!locked)
                trace("failed to acquire big lock, try and exit anyway");
+            javi.lsp.LspManager.getInstance().shutdownAll();
             disposeAll(true);
          } catch (Exception e) {
             trace("exit threw exception during shutdown", e);
@@ -596,7 +597,7 @@ public final class FvContext<OType> implements Serializable {
    static void reconnect(TextEdit<?> ed, TextEdit<?> next) throws InputException {
 
       // trace("reconnecting oldfile " + ed + " next " + next);
-      if (currfvc.edvec == ed)
+      if (currfvc != null && currfvc.edvec == ed)
          FvContext.connectFv(next, currfvc.vi);
       // trace("starting iterator");
       for (Iterator<FvContext<?>> fit = fvmap.iterator(); fit.hasNext();) {

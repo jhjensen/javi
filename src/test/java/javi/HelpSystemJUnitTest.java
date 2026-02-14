@@ -154,6 +154,50 @@ class HelpSystemJUnitTest {
    }
 
    @Test
+   @DisplayName("getHelp('lsp') returns LSP help")
+   void helpLspTopic() {
+      TextEdit<String> buf = HelpSystem.getHelp("lsp");
+      String text = bufferText(buf);
+      assertTrue(text.contains("LSP"),
+         "LSP help should contain LSP header");
+      assertTrue(text.contains(":lsp.def"),
+         "LSP help should document :lsp.def");
+      assertTrue(text.contains(":lsp.ref"),
+         "LSP help should document :lsp.ref");
+      assertTrue(text.contains(":lsp.hover"),
+         "LSP help should document :lsp.hover");
+      assertTrue(text.contains(":lsp.comp"),
+         "LSP help should document :lsp.comp");
+      assertTrue(text.contains(":lsp.diag"),
+         "LSP help should document :lsp.diag");
+      assertTrue(text.contains(":lsp.status"),
+         "LSP help should document :lsp.status");
+      assertTrue(text.contains(":lsp.config"),
+         "LSP help should document :lsp.config");
+      assertTrue(text.contains(":lsp.toggle"),
+         "LSP help should document :lsp.toggle");
+      assertTrue(text.contains(":lsp.restart"),
+         "LSP help should document :lsp.restart");
+   }
+
+   @Test
+   @DisplayName("getHelp('languageserver') alias works")
+   void helpLanguageServerAlias() {
+      TextEdit<String> buf = HelpSystem.getHelp("languageserver");
+      String text = bufferText(buf);
+      assertTrue(text.contains("LSP"));
+   }
+
+   @Test
+   @DisplayName("help index mentions lsp topic")
+   void helpIndexMentionsLsp() {
+      TextEdit<String> buf = HelpSystem.getHelp("index");
+      String text = bufferText(buf);
+      assertTrue(text.contains("lsp"),
+         "help index should list the lsp topic");
+   }
+
+   @Test
    @DisplayName("getHelp is case-insensitive")
    void helpCaseInsensitive() {
       TextEdit<String> buf = HelpSystem.getHelp("MOVEMENT");

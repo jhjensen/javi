@@ -52,8 +52,18 @@ class PosListListJUnitTest {
             PosListListCoverageJUnitTest.sharedCmd = pllCmd;
          } catch (RuntimeException e) {
             // Commands already registered by another test class.
-            // Static inst is already initialized.
             pllCmd = PosListListCoverageJUnitTest.sharedCmd;
+            if (pllCmd == null) {
+               // Find via command hash
+               Rgroup.KeyBinding kb = Rgroup.bindingLookup("ta");
+               if (kb != null) {
+                  java.lang.reflect.Field outer =
+                     kb.getClass().getDeclaredField("this$0");
+                  outer.setAccessible(true);
+                  pllCmd = (PosListList.Cmd) outer.get(kb);
+                  PosListListCoverageJUnitTest.sharedCmd = pllCmd;
+               }
+            }
          }
       } finally {
          EventQueue.biglock2.unlock();
@@ -548,12 +558,9 @@ class PosListListJUnitTest {
       @Test
       @DisplayName(":ta nonexistent throws InputException or succeeds via mkid")
       void taNotFoundThrowsInputException() throws Exception {
-         // Use a tag unlikely to be in the mkid database.
-         // If lid finds the token in indexed files, gototag
-         // succeeds (no exception) — that is valid behavior.
-         // The test verifies that IF an exception is thrown,
-         // it is InputException with the expected message.
-         String bogusTag = "xqzwvkjm" + "7829" + "notag";
+         // Build tag name dynamically so lid won't find it
+         // in any ID database index (including worktree parents)
+         String bogusTag = "qxjk" + "7wnz" + "m9";
          EventQueue.biglock2.lock();
          try {
             TestView view = new TestView(true);

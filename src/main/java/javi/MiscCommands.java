@@ -1222,6 +1222,7 @@ public final class MiscCommands extends Rgroup {
       }
    }
 
+
    // Parse a key specification string into a JeyEvent.
    // Formats: single char (e.g. "x"), C-x for ctrl+char,
    // special names: F1-F12, Up, Down, Left, Right, Home, End, PgUp, PgDn,
@@ -1329,11 +1330,12 @@ public final class MiscCommands extends Rgroup {
       }
    }
 
+
    /**
     * Load a class by fully-qualified name, triggering its static
-    * initializer.  Used from {@code .javini} to load plugins.
+    * initializer.  Used from .javini to load plugins.
     *
-    * @param className fully-qualified class name (e.g. "javi.git.GitCommands")
+    * @param className fully-qualified class name (e.g. "javi.lsp.LspCommands")
     */
    private static void loadClass(String className) {
       if (null == className || className.isEmpty()) {
@@ -1346,5 +1348,4 @@ public final class MiscCommands extends Rgroup {
          UI.reportError("loadclass: class not found: " + className);
       }
    }
-
 }
