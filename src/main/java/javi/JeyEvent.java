@@ -62,6 +62,15 @@ public final class JeyEvent {
       return code;
    }
 
+   /**
+    * Get the modifier flags for this key event.
+    *
+    * @return bitmask of SHIFT_MASK, CTRL_MASK, ALT_MASK, META_MASK
+    */
+   int getModifiers() {
+      return modifiers & (SHIFT_MASK | META_MASK | CTRL_MASK | ALT_MASK);
+   }
+
    private static final int ACT_MASK = 16;
 
    public static final int SHIFT_MASK = 1;
@@ -89,6 +98,7 @@ public final class JeyEvent {
    public static final int VK_F9 = 120;
    public static final int VK_F10 = 121;
    public static final int VK_F11 = 122;
+   public static final int VK_F12 = 123;
    public static final int VK_DELETE = 127;
    public static final char CHAR_UNDEFINED = 65535;
 

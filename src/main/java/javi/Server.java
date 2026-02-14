@@ -94,11 +94,10 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
       Socket outsock = shash.get(ev);
       if (null == outsock)
          return;
-      // Note: closing outsock also closes the output stream, but we use
-      // try-with-resources for proper cleanup ordering (flush before close)
-      try (Socket sockToClose = outsock;
-           BufferedOutputStream outstream =
-               new BufferedOutputStream(outsock.getOutputStream())) {
+      // try-with-resources ensures Socket is closed after use
+      try (outsock) {
+         BufferedOutputStream outstream =
+               new BufferedOutputStream(outsock.getOutputStream());
          outstream.write('a');
          outstream.write('\r');
          outstream.write('\n');

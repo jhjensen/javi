@@ -100,6 +100,33 @@ public final class HelpSystem {
    }
 
    /**
+    * Get a buffer listing all current key bindings.
+    *
+    * @return TextEdit buffer containing formatted key bindings
+    */
+   public static TextEdit<String> getKeyBindings() {
+      if (null == helpBuffer) {
+         createHelpBuffer();
+      }
+      clearBuffer();
+      append("KEY BINDINGS");
+      append("============");
+      append("");
+
+      // Delegate to MapEvent for the actual binding list
+      java.util.List<String> bindings = MapEvent.getAllBindings();
+      for (String line : bindings) {
+         append(line);
+      }
+
+      if (bindings.isEmpty()) {
+         append("  (no bindings registered)");
+      }
+
+      return helpBuffer;
+   }
+
+   /**
     * Create the help buffer if it doesn't exist.
     */
    private static void createHelpBuffer() {
