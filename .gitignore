@@ -20,6 +20,6 @@ cycle.xml
 reportXMLtoHTML.xsl
 .gradle
 .vscode
-ai/
+/ai/
 todo.md
 todo.txt
