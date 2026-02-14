@@ -103,6 +103,7 @@ public final class Javi {
       new JavaCompiler();
       new CheckStyle();
       new FormatDispatch();
+      new javi.git.GitCommands();
       //trace("unexpectedly slow");
 
       //new vcs.cmvc();
