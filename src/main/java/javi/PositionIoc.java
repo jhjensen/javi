@@ -22,7 +22,8 @@ public class PositionIoc extends BufInIoc<Position> {
 
    static final PositionConverter pconverter = new PositionConverter();
    static final Position defpos = new Position(0, 0, "", null);
-   private int errcount = 0;
+   /** Count of results found, accessible to subclasses for custom reporting. */
+   protected int resultCount = 0;
    /** The last non-empty output line read, for display in completion message. */
    private String lastOutputLine = null;
    /** Maximum length for the last output line in the status message. */
@@ -103,17 +104,34 @@ public class PositionIoc extends BufInIoc<Position> {
    }
 
    /**
+    * Adds a position result and increments the result count.
+    *
+    * <p>Subclasses that build positions outside of {@link #getnext()} (e.g.,
+    * via compiler API callbacks or direct file scanning) should call this
+    * method instead of {@link #addElement} to ensure {@link #resultCount}
+    * is accurately tracked.
+    *
+    * @param pos the position to add
+    */
+   protected void addResult(Position pos) {
+      addElement(pos);
+      resultCount++;
+   }
+
+   /**
     * Formats the completion message including the last output line.
     *
     * <p>The message format is: "{name} complete {count} results: {lastLine}"
     * The last line is truncated if it exceeds {@link #MAX_OUTPUT_LINE_LENGTH}
-    * characters.
+    * characters. If there are no results and no output, reports "no output".
+    *
+    * <p>Subclasses may override this to provide a custom completion message.
     *
     * @return the formatted completion message
     */
-   private String formatCompletionMessage() {
+   protected String formatCompletionMessage() {
       StringBuilder msg = new StringBuilder();
-      msg.append(this).append(" complete ").append(errcount).append(" results");
+      msg.append(this).append(" complete ").append(resultCount).append(" results");
 
       if (null != lastOutputLine && lastOutputLine.length() > 0) {
          msg.append(": ");
@@ -123,16 +141,34 @@ public class PositionIoc extends BufInIoc<Position> {
          } else {
             msg.append(lastOutputLine);
          }
+      } else if (0 == resultCount) {
+         msg.append(": no output");
       }
       return msg.toString();
    }
 
    /**
+    * Reports the completion message to the status bar.
+    *
+    * <p>Subclasses may override this to change how or whether the
+    * completion message is reported.
+    */
+   protected void reportCompletion() {
+      if (0 != toString().length())
+         UI.reportMessage(formatCompletionMessage());
+   }
+
+   @Override
+   protected void postRun() {
+      reportCompletion();
+   }
+
+   /**
     * Returns the next parsed position from the input stream.
     *
-    * <p>When no more positions are available and the stream is exhausted,
-    * displays a completion message on the status bar showing the number of
-    * results and the last line of output.
+    * <p>When no more positions are available the stream is exhausted
+    * and null is returned. Completion reporting is handled by
+    * {@link #postRun()} after the run loop finishes.
     *
     * @return the next Position, or null if no more input
     */
@@ -141,11 +177,8 @@ public class PositionIoc extends BufInIoc<Position> {
 
       Position pos = parsefile();
       //trace("get next got pos " + pos);
-      if (null == pos) {
-         if (0 != toString().length())
-            UI.reportMessage(formatCompletionMessage());
-      } else {
-         errcount++;
+      if (null != pos) {
+         resultCount++;
       }
       return pos;
    }

@@ -136,6 +136,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
       try {
          preRun();
          dorun();
+         postRun();
       } catch (InterruptedException ad) {
          UI.popError("IoConverter caught ", ad);
       } catch (IOException ie) {
@@ -283,6 +284,13 @@ public class IoConverter<OType> implements Runnable, Serializable {
    protected void preRun() throws IOException {
    }
 
+   /**
+    * Called after dorun() completes. Subclasses can override to
+    * perform post-processing such as reporting completion status.
+    */
+   protected void postRun() {
+   }
+
    protected void truncIo() {
       if (rthread != null)
          rthread.interrupt();
@@ -332,6 +340,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
 
          preRun();
          dorun();
+         postRun();
          //trace("after dorun mainarray size =" +mainArray.size() + " " + this);
          //trace("after dorun ioarray size=" + ioarray.size() + " " + this);
       } catch (Throwable e) {

@@ -72,6 +72,7 @@ final class JavaCompiler extends Rgroup {
       private final ArrayList<FileDescriptor.LocalFile> flist;
       private int errcount = 0;
       private int warncount = 0;
+      private boolean compilationSuccess = false;
 
       private static String shortString(
             ArrayList<FileDescriptor.LocalFile>  flisti) {
@@ -104,8 +105,16 @@ final class JavaCompiler extends Rgroup {
             case MANDATORY_WARNING, WARNING -> warncount++;
          }
          mess = mess.replace('\n', ' ');
-         addElement(new Position((int) diagnostic.getColumnNumber(),
+         addResult(new Position((int) diagnostic.getColumnNumber(),
             (int) diagnostic.getLineNumber(), src, mess));
+      }
+
+      @Override
+      protected String formatCompletionMessage() {
+         return "done compiling "
+            + (compilationSuccess ? "successfully " : "")
+            + "with " + errcount + " errors and "
+            + warncount + " warnings";
       }
 
       protected void preRun() {
@@ -140,11 +149,7 @@ final class JavaCompiler extends Rgroup {
             boolean success = compiler.getTask(null, fileManager,
                this, Arrays.asList(options), null, clist).call();
 
-            UI.reportError("done compiling " + (success
-               ? "successfully"
-               : (" with " + errcount + " errors and "
-                  + warncount + " warnings")
-               ));
+            compilationSuccess = success;
 
             fileManager.close();
          } catch (IOException e) {
