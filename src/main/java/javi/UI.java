@@ -83,6 +83,26 @@ public abstract class UI {
       STOP_EDITING
    }
 
+   /**
+    * Actions for file close confirmation popup.
+    *
+    * <p>When the user tries to close a modified file from the file list,
+    * they can choose one of these actions:</p>
+    * <ul>
+    *   <li>{@link #SAVE} - Save the file then close it</li>
+    *   <li>{@link #DISCARD} - Close without saving</li>
+    *   <li>{@link #CANCEL} - Cancel the close operation</li>
+    * </ul>
+    */
+   public enum CloseAction {
+      /** Save the file then close it. */
+      SAVE,
+      /** Close without saving, discarding changes. */
+      DISCARD,
+      /** Cancel the close operation. */
+      CANCEL
+   }
+
    private static UI instance;
 
    protected UI() {
@@ -189,6 +209,14 @@ public abstract class UI {
     */
    public abstract void iupdateHelpScrollbar(
       int current, int max, int visible);
+
+   /**
+    * Ask user whether to save a modified file before closing.
+    *
+    * @param filename the name of the modified file
+    * @return the user's chosen action
+    */
+   public abstract CloseAction iconfirmClose(String filename);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -398,6 +426,21 @@ public abstract class UI {
       else {
          trace("confirmReload called with no UI instance");
          return ReloadAction.IGNORE;
+      }
+   }
+
+   /**
+    * Ask user whether to save a modified file before closing.
+    *
+    * @param filename the name of the modified file
+    * @return the user's chosen action, or CANCEL if no UI instance
+    */
+   public static final CloseAction confirmClose(String filename) {
+      if (null != instance)
+         return instance.iconfirmClose(filename);
+      else {
+         trace("confirmClose called with no UI instance");
+         return CloseAction.CANCEL;
       }
    }
 

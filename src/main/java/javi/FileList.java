@@ -189,6 +189,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       instance = (FileList) is.readObject();
       instance.restoreList(is);
       instance.new Commands();
+      instance.setReadOnly(true);
    }
 
    private static FileList instance = null;
@@ -255,6 +256,17 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       super(fileParse, prop);
       new Commands();
       EventQueue.registerIdle(new IdleHandler());
+      setReadOnly(true);
+   }
+
+   /** Temporarily allow internal modifications to the read-only file list. */
+   private void beginInternalModify() {
+      setReadOnly(false);
+   }
+
+   /** Restore read-only state after internal modification. */
+   private void endInternalModify() {
+      setReadOnly(true);
    }
 
    public static FvContext getContext(View newView) {
@@ -380,8 +392,13 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             if (!fh.canWrite())
                text.setReadOnly(true);
             int index = FvContext.getcontext(vi, this).getCurrentIndex() + 1;
-            insertOne(text, index);
-            instance.checkpoint();
+            instance.beginInternalModify();
+            try {
+               insertOne(text, index);
+               instance.checkpoint();
+            } finally {
+               instance.endInternalModify();
+            }
             ec = text;
          }
       }
@@ -442,8 +459,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       int index = null == vi
                   ? 1
                   : FvContext.getcontext(vi, this).getCurrentIndex() + 1;
-      TextEdit<String> text = insertStream(flist, index);
-      instance.checkpoint();
+      instance.beginInternalModify();
+      TextEdit<String> text;
+      try {
+         text = insertStream(flist, index);
+         instance.checkpoint();
+      } finally {
+         instance.endInternalModify();
+      }
       showEdit(text, vi);
       return text;
    }
@@ -714,7 +737,12 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          quit(true, fvc != null ? fvc : FvContext.getCurrFvc());
       } else {
          // Remove from file list
-         instance.remove(fileIndex, 1);
+         instance.beginInternalModify();
+         try {
+            instance.remove(fileIndex, 1);
+         } finally {
+            instance.endInternalModify();
+         }
          if (isCurrentlyViewed && fvc != null) {
             fvc.fixCursor();
             FvContext.reconnect(ev, nextFile);
@@ -777,11 +805,21 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                       Integer.valueOf((instance.at(1)).finish()));
          Tools.checkAssertion((2 == instance.at(2).finish()),
                       Integer.valueOf((instance.at(1)).finish()));
-         instance.remove(1, 1);
-         instance.checkpoint();
+         instance.beginInternalModify();
+         try {
+            instance.remove(1, 1);
+            instance.checkpoint();
+         } finally {
+            instance.endInternalModify();
+         }
          //trace("instance[1] " + instance.at(1));
          Tools.checkAssertion(2 == instance.finish(), instance.finish());
-         instance.undo();
+         instance.beginInternalModify();
+         try {
+            instance.undo();
+         } finally {
+            instance.endInternalModify();
+         }
 
          //Tools.checkAssertion(instance.finish()== 3, instance.finish());
          findModified();

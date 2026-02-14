@@ -162,6 +162,11 @@ public final class StreamInterface extends UI {
    }
 
    public void irepaint() { /* unimplemented */ }
+
+   public CloseAction iconfirmClose(String filename) {
+      return CloseAction.DISCARD;
+   }
+
    public void idispose() { /* unimplemented */ }
    public String igetFile() {
       return "filename";

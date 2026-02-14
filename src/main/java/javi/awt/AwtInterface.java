@@ -1640,6 +1640,58 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       return new ConfirmReloadDia(filename, isModified).postWait().getResult();
    }
 
+   public UI.CloseAction iconfirmClose(String filename) {
+      return new ConfirmCloseDia(filename).postWait().getResult();
+   }
+
+   final class ConfirmCloseDia extends SyncAwt<UI.CloseAction> {
+      private String filename;
+
+      ConfirmCloseDia(String filenamei) {
+         filename = filenamei;
+      }
+
+      private final class CloseDialog extends NDialog {
+         private static final long serialVersionUID = 1;
+         private Label msglabel = new Label();
+         private NButton savebut = new NButton("Save", this);
+         private NButton discard = new NButton("Discard", this);
+         private NButton cancel = new NButton("Cancel", this);
+
+         CloseDialog() {
+            super(frm, "Close Modified File", new GridLayout(2, 1, 5, 5));
+            Panel msgPanel = new Panel(new FlowLayout(FlowLayout.CENTER));
+            msgPanel.add(msglabel);
+            add(msgPanel);
+            Panel butPanel = new Panel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+            butPanel.add(savebut);
+            butPanel.add(discard);
+            butPanel.add(cancel);
+            add(butPanel);
+         }
+
+         UI.CloseAction getChoice() {
+            msglabel.setText(filename + " is modified. Save before closing?");
+            this.pack();
+            Dimension d = getPreferredSize();
+            this.setSize(Math.min(d.width + 40, 500), d.height + 20);
+            setVisible(true);
+
+            Object res = getRes();
+            if (res == savebut)
+               return UI.CloseAction.SAVE;
+            else if (res == discard)
+               return UI.CloseAction.DISCARD;
+            else
+               return UI.CloseAction.CANCEL;
+         }
+      }
+
+      UI.CloseAction doAwt() {
+         return new CloseDialog().getChoice();
+      }
+   }
+
    private static final class Diff extends NDialog {
       private static final long serialVersionUID = 1;
       private Label replab1 = new Label();
