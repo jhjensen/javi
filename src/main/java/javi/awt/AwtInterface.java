@@ -299,12 +299,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       TestFrame(String str, String namei) {
          super(str);
          name = namei;
-         HashSet<AWTKeyStroke> keyset = new HashSet<>(
+         var keyset = new HashSet<AWTKeyStroke>(
             getFocusTraversalKeys(
                KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
 
-         for (Iterator it = keyset.iterator(); it.hasNext();) {
-            AWTKeyStroke key = (AWTKeyStroke) (it.next());
+         for (var it = keyset.iterator(); it.hasNext();) {
+            var key = it.next();
             if (key.getKeyCode() == KeyEvent.VK_TAB
                   && 0 == key.getModifiers())
                it.remove();
@@ -900,18 +900,15 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    public void itoFront() {
       trace("toFront");
-      java.awt.EventQueue.invokeLater(new Runnable() {
-
-         public void run() {
-            frm.toFront();
-            frm.setExtendedState(frm.getExtendedState() & ~Frame.ICONIFIED);
-            frm.setAlwaysOnTop(true);
-            frm.toFront();
-            frm.requestFocus();
-            frm.setAlwaysOnTop(false);
-            frm.repaint();
-            frm.setVisible(true);
-         }
+      java.awt.EventQueue.invokeLater(() -> {
+         frm.toFront();
+         frm.setExtendedState(frm.getExtendedState() & ~Frame.ICONIFIED);
+         frm.setAlwaysOnTop(true);
+         frm.toFront();
+         frm.requestFocus();
+         frm.setAlwaysOnTop(false);
+         frm.repaint();
+         frm.setVisible(true);
       });
    }
 

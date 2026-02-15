@@ -58,7 +58,7 @@ public final class FvContext<OType> implements Serializable {
    private static final class FvMap implements Serializable {
       private static final long serialVersionUID = 1;
       private LinkedHashMap<View, HashMap<TextEdit, FvContext>> viewhash =
-         new LinkedHashMap<View, HashMap<TextEdit, FvContext>>(1);
+         new LinkedHashMap<>(1);
 
       FvMap() {
          EditContainer.registerListener(new FS());
@@ -371,9 +371,9 @@ public final class FvContext<OType> implements Serializable {
       if (!ignoreLock)
          EventQueue.biglock2.assertOwned();
 
-      Set<TextEdit> allEdits = new HashSet<TextEdit>(100);
+      var allEdits = new HashSet<TextEdit>(100);
 
-      for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();)
+      for (var fit = fvmap.iterator(); fit.hasNext();)
          allEdits.add(fit.next().edvec);
 
       for (TextEdit ev : allEdits)

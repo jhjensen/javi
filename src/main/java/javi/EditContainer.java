@@ -1012,7 +1012,7 @@ public class EditContainer<OType> implements
    }
 
    public final Iterator<OType> iterator() {
-      Iterator<OType> ret = new EIter();
+      var ret = new EIter();
       ret.next(); // skip 0 untill zero based
       return ret;
 

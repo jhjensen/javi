@@ -51,7 +51,7 @@ final class DirList extends TextEdit<DirEntry> {
 
    TextEdit<Position> globalgrep(String searchstr) {
       int size = readIn();
-      ArrayList<DirEntry> dlist = new ArrayList<>(size);
+      var dlist = new ArrayList<DirEntry>(size);
       for (int ii = 1; ii < size; ii++) {
          //trace("adding directory " + at(ii));
          dlist.add(at(ii));
