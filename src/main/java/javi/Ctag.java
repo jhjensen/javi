@@ -38,7 +38,7 @@ final class Ctag {
          if (null == positions) {
             try (RandomAccessFile ctfile = new RandomAccessFile(tagfile, "r")) {
                ctfile.seek(filestart);
-               ArrayList<Position> tempvec = new ArrayList<Position>();
+               ArrayList<Position> tempvec = new ArrayList<>();
                do {
                   tempvec.add(getnextpos(ctfile));
                } while (fileend > ctfile.getFilePointer());
@@ -78,7 +78,7 @@ final class Ctag {
    }
 
    private String ctfilename;
-   private ArrayList<TagEntry> carray = new ArrayList<TagEntry>();
+   private ArrayList<TagEntry> carray = new ArrayList<>();
 
    /**
     * Creates a new Ctag instance by reading the tag file index.

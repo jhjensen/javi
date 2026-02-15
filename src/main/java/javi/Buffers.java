@@ -13,7 +13,7 @@ public final class Buffers {
 
    // I don't usually use that many buffers
    private static HashMap<Integer, Object> buflist
-      = new HashMap<Integer, Object>(10);
+      = new HashMap<>(10);
    private static final int circSize = 10; // addressable by single digit int.
    private static CircBuffer delbuffer;
 

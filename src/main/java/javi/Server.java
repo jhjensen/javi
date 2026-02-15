@@ -13,7 +13,7 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
    private HashMap<EditContainer, Socket> shash =
-      new HashMap<EditContainer, Socket>(10);
+      new HashMap<>(10);
 
    private ServerSocket lsock;
 

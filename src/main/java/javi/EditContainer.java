@@ -170,11 +170,11 @@ public class EditContainer<OType> implements
 
 // objects that want to hear about certain events
    private static final ArrayList<FileStatusListener> listeners =
-      new ArrayList<FileStatusListener>();
+      new ArrayList<>();
 
 // hash table of files edited, used to keep files unique
    private static HashMap<FileDescriptor, EditContainer> filehash =
-      new HashMap<FileDescriptor, EditContainer>(50);
+      new HashMap<>(50);
 
    static final void init(MarkListener ml) {
       mlisten = ml;

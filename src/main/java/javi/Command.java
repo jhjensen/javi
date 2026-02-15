@@ -75,7 +75,7 @@ public final class Command extends Rgroup {
       return null;
    }
 
-   private static final ArrayList<String> cmdlist = new ArrayList<String>();
+   private static final ArrayList<String> cmdlist = new ArrayList<>();
    /**
     * Reads initialization commands from the .javini configuration file.
     * Each line in the file is added to the command list for later execution.

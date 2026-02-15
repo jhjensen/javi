@@ -40,7 +40,7 @@ final class DirList extends TextEdit<DirEntry> {
    ArrayList<FileDescriptor.LocalFile> fileList(FilenameFilter fl) {
       int size = readIn();
       ArrayList<FileDescriptor.LocalFile> flist =
-         new ArrayList<FileDescriptor.LocalFile>(100 * size);
+         new ArrayList<>(100 * size);
       for (int ii = 1; ii < size; ii++) {
          for (FileDescriptor.LocalFile str : at(ii).fh.listDes(fl))  {
             flist.add(str);
@@ -51,7 +51,7 @@ final class DirList extends TextEdit<DirEntry> {
 
    TextEdit<Position> globalgrep(String searchstr) {
       int size = readIn();
-      ArrayList<DirEntry> dlist = new ArrayList<DirEntry>(size);
+      ArrayList<DirEntry> dlist = new ArrayList<>(size);
       for (int ii = 1; ii < size; ii++) {
          //trace("adding directory " + at(ii));
          dlist.add(at(ii));
