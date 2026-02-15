@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
 import gnu.io.PortInUseException;
@@ -33,7 +34,7 @@ class Vt100 extends TextEdit<String> {
       super(ioc, ioc.prop);
       //str = ostri;
       parser = new Vt100Parser(new ECScreen(), istr);
-      writer = new OutputStreamWriter(ostri, "UTF-8");
+      writer = new OutputStreamWriter(ostri, StandardCharsets.UTF_8);
    }
 
    public final void startHandle(FvContext fvc) {

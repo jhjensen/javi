@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utility class for debugging, process execution, and common operations.
@@ -140,12 +141,12 @@ public final class Tools {
 
    public static BufferedReader runcmd(List<String>  str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), StandardCharsets.UTF_8));
    }
 
    public static BufferedReader runcmd(String... str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), StandardCharsets.UTF_8));
    }
 
    public static synchronized Process iocmd(List<String>  str) throws

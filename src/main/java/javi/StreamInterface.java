@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import history.BadBackupFile;
 import static history.Tools.trace;
 
@@ -19,7 +20,7 @@ public final class StreamInterface extends UI {
 
    public StreamInterface() throws IOException {
       inStr = new BufferedReader(
-         new InputStreamReader(System.in, "UTF-8"));
+         new InputStreamReader(System.in, StandardCharsets.UTF_8));
    }
 
    public Buttons ireportDiff(String filename, int linenum,

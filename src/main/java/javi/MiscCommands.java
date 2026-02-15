@@ -3,6 +3,7 @@ package javi;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import history.Tools;
@@ -178,7 +179,7 @@ public final class MiscCommands extends Rgroup  {
             IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader input = new BufferedReader(new InputStreamReader(
-            proc.getInputStream(), "UTF-8"));
+            proc.getInputStream(), StandardCharsets.UTF_8));
          return new ProcIo(namei, proc, input, cmd);
       }
 
