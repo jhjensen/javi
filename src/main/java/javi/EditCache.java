@@ -8,7 +8,7 @@ import static history.Tools.trace;
 
 final class EditCache<OType> implements Iterable<OType> {
 
-   private ArrayList<OType> varray = new ArrayList<OType>(1024);
+   private ArrayList<OType> varray = new ArrayList<>(1024);
 
    public void clear(int start, int end) {
       varray.subList(start, end).clear();
@@ -60,7 +60,7 @@ final class EditCache<OType> implements Iterable<OType> {
    public ArrayList<String> rangeAsStrings(int cindex, int eindex) {
       //trace("cindex = " + cindex + " currsize = " + varray.size()
       //  + " objtype = " + objs[0].getClass() );
-      ArrayList<String> outarray = new ArrayList<String>(eindex - cindex);
+      var outarray = new ArrayList<String>(eindex - cindex);
 
       for (int i = cindex; i < eindex; i++)
          outarray.add(varray.get(i).toString());
@@ -76,7 +76,7 @@ final class EditCache<OType> implements Iterable<OType> {
 
    public synchronized ArrayList<String> getElementsAt(int start, int end) {
 
-      ArrayList<String>  outarray = new ArrayList<String>();
+      var outarray = new ArrayList<String>();
 
       for (int i = start; i < end; i++)
          outarray.add(varray.get(i).toString());

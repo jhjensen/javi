@@ -18,9 +18,8 @@ import static history.Tools.trace;
 final class JarResources {
 
    // jar resource mapping tables
-   private HashMap<String, Integer> htSizes = new HashMap<String, Integer>();
-   private HashMap<String, byte[]> htJarContents =
-      new HashMap<String, byte[]>();
+   private HashMap<String, Integer> htSizes = new HashMap<>();
+   private HashMap<String, byte[]> htJarContents = new HashMap<>();
 
    // a jar file
    private String jarFileName;
@@ -45,19 +44,16 @@ final class JarResources {
 
    /** initializes internal hash tables with Jar file resources.  */
    private void init() throws IOException {
+      // First pass: extract just sizes
       try (ZipFile zf = new ZipFile(jarFileName)) {
-         // extracts just sizes only.
-         Enumeration e = zf.entries();
+         Enumeration<?> e = zf.entries();
          while (e.hasMoreElements()) {
             ZipEntry ze = (ZipEntry) e.nextElement();
-
-            //trace(dumpZipEntry(ze));
-
             htSizes.put(ze.getName(), Integer.valueOf((int) ze.getSize()));
          }
       }
 
-      // extract resources and put them into the hashtable.
+      // Second pass: extract resources and put them into the hashtable
       try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
             new FileInputStream(jarFileName)))) {
          ZipEntry ze = null;
@@ -145,7 +141,7 @@ final class JarResources {
 
 abstract class MultiClassLoader extends ClassLoader {
 
-   private HashMap<String, Class> classes = new HashMap<String, Class>();
+   private HashMap<String, Class> classes = new HashMap<>();
    private char      classNameReplacementChar;
 
    MultiClassLoader() {

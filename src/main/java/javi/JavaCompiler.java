@@ -26,15 +26,11 @@ final class JavaCompiler extends Rgroup {
       FvContext fvc, boolean dotmode) throws IOException, InputException {
 //trace("vigroup doroutine rnum = " + rnum );
       switch (rnum) {
-         case 1:
-            compcommand(fvc);
-            return null;
-         case 2:
-            compacommand();
-            return null;
-         default:
-            throw new RuntimeException("vigroup:default");
+         case 1 -> compcommand(fvc);
+         case 2 -> compacommand();
+         default -> throw new RuntimeException("vigroup:default");
       }
+      return null;
    }
 
    private static void compcommand(FvContext fvc)  throws IOException {
@@ -45,13 +41,13 @@ final class JavaCompiler extends Rgroup {
 
       if (0 == count && null != fvc)  {
          ArrayList<FileDescriptor.LocalFile> flist =
-            new ArrayList<FileDescriptor.LocalFile>(1);
+            new ArrayList<>(1);
          flist.add((FileDescriptor.LocalFile) fvc.edvec.fdes());
          PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
 
       } else {
          ArrayList<FileDescriptor.LocalFile> flist =
-            new ArrayList<FileDescriptor.LocalFile>(count);
+            new ArrayList<>(count);
          for (EditContainer ef : efs)
             flist.add((FileDescriptor.LocalFile) ef.fdes());
          PosListList.Cmd.setErrors(new JavaCompilerInst(flist));
@@ -99,20 +95,13 @@ final class JavaCompiler extends Rgroup {
          String mess = diagnostic.getMessage(null);
          String src = source == null
             ? mess.split(":")[0]
-            : source instanceof javax.tools.FileObject
-               ? ((javax.tools.FileObject) source).getName()
+            : source instanceof javax.tools.FileObject fo
+               ? fo.getName()
                : diagnostic.getSource().toString();
 
          switch (diagnostic.getKind()) {
-            case ERROR:
-            case NOTE:
-            case OTHER:
-               errcount++;
-               break;
-            case MANDATORY_WARNING:
-            case WARNING:
-               warncount++;
-               break;
+            case ERROR, NOTE, OTHER -> errcount++;
+            case MANDATORY_WARNING, WARNING -> warncount++;
          }
          mess = mess.replace('\n', ' ');
          addElement(new Position((int) diagnostic.getColumnNumber(),

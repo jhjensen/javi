@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import history.BadBackupFile;
@@ -233,9 +232,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    private ArrayList<EditContainer> findfilemod(String str) {
       //trace("findfilemod " + str);
-      Matcher regex =  Pattern.compile(str).matcher("");
+      var regex = Pattern.compile(str).matcher("");
 
-      ArrayList<EditContainer> svec = new ArrayList<EditContainer>(20);
+      var svec = new ArrayList<EditContainer>(20);
 
       for (EditContainer ef : this) {
          //trace("looking at ef" + ef.canonname());

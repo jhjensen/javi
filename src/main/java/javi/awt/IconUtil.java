@@ -13,7 +13,7 @@ import java.util.List;
  * Utility class for creating application icons for the Javi editor.
  *
  * <p>Generates programmatic icons since we cannot include external graphics files.
- * Creates a distinctive icon with a large "J" watermark and "vi" text on a 
+ * Creates a distinctive icon with a large "J" watermark and "vi" text on a
  * dark blue background, reflecting Javi's vi-style editing heritage.</p>
  *
  * <h2>Icon Design</h2>
@@ -60,8 +60,8 @@ public final class IconUtil {
    /**
     * Creates a Javi icon at the specified size.
     *
-    * <p>The icon features a large "J" watermark in the background with "vi" text 
-    * centered on top, all on a dark blue background with a subtle border. 
+    * <p>The icon features a large "J" watermark in the background with "vi" text
+    * centered on top, all on a dark blue background with a subtle border.
     * The font sizes scale with the icon size.</p>
     *
     * @param size the width and height of the icon in pixels (square icon)

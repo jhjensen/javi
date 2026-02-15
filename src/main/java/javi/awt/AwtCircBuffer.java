@@ -55,13 +55,13 @@ public final class AwtCircBuffer extends CircBuffer implements
       public Object doroutine(int rnum, Object arg, int count,
             int rcount, FvContext fvc, boolean dotmode) {
          switch (rnum) {
-            case 1:
-               getclip();
-               return null;
-            default:
+            case 1 -> getclip();
+            default -> {
                trace("doroutine called with " + rnum);
                throw new RuntimeException("invalid circ buffer command");
+            }
          }
+         return null;
       }
    }
 

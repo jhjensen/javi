@@ -56,7 +56,7 @@ public abstract class UI {
 
    /**
     * Actions for file change detection popup.
-    * 
+    *
     * <p>When a file is modified externally while open in Javi, the user
     * can choose one of these actions:</p>
     * <ul>
@@ -132,7 +132,7 @@ public abstract class UI {
 
    /**
     * Ask user how to handle a file that was modified externally.
-    * 
+    *
     * @param filename the name of the modified file
     * @param isModified true if the buffer also has unsaved changes
     * @return the user's chosen action
@@ -336,7 +336,7 @@ public abstract class UI {
 
    /**
     * Ask user how to handle a file that was modified externally.
-    * 
+    *
     * @param filename the name of the modified file
     * @param isModified true if the buffer also has unsaved changes
     * @return the user's chosen action, or IGNORE if no UI instance

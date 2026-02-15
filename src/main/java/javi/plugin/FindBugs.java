@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.nio.charset.StandardCharsets;
 import javi.FvContext;
 import javi.Plugin;
 import javi.Position;
@@ -89,7 +90,7 @@ public final class FindBugs extends Rgroup implements Plugin {
             FileDescriptor.InternalFd.make("findbug"), converter),
             true,
             new BufferedReader(
-               new InputStreamReader(new FileInputStream("findout"), "UTF-8")));
+               new InputStreamReader(new FileInputStream("findout"), StandardCharsets.UTF_8)));
           //lib/findbugs-3.0.1/bin/findbugs -emacs -medium -textui -auxclasspath "..:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/jre/lib/ext/RXTXcomm.jar:lib/rhino1_7R3/js.jar:lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
 
       }

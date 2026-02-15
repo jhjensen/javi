@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utility class for debugging, process execution, and common operations.
@@ -34,7 +35,7 @@ import java.nio.charset.Charset;
  * <h2>Usage Example</h2>
  * <pre>{@code
  * import static history.Tools.trace;
- * 
+ *
  * trace("value is", someValue);  // Logs: FileName.java:42 value is, someValue
  * }</pre>
  *
@@ -122,7 +123,7 @@ public final class Tools {
       if (charSet == null)
          charSet = Charset.defaultCharset();
 
-      ArrayList<String> output = new ArrayList<String>();
+      var output = new ArrayList<String>();
       try (BufferedReader in = new BufferedReader(
             new InputStreamReader(proc.getInputStream(), charSet))) {
          for (String str; null != (str = in.readLine());)
@@ -137,12 +138,12 @@ public final class Tools {
 
    public static BufferedReader runcmd(List<String>  str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), StandardCharsets.UTF_8));
    }
 
    public static BufferedReader runcmd(String... str) throws IOException {
       return new BufferedReader(
-         new InputStreamReader(iocmd(str).getInputStream(), "UTF-8"));
+         new InputStreamReader(iocmd(str).getInputStream(), StandardCharsets.UTF_8));
    }
 
    public static synchronized Process iocmd(List<String>  str) throws

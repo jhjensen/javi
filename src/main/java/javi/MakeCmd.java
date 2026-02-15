@@ -3,6 +3,7 @@ package javi;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import history.Tools;
@@ -71,7 +72,7 @@ final class MakeCmd extends Rgroup {
       static PositionCmd make(String name, String... cmd) throws IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader buf = new BufferedReader(
-            new InputStreamReader(proc.getInputStream(), "UTF-8"));
+            new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8));
          return new PositionCmd(name, proc, buf);
       }
 

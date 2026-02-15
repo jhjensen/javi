@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import static history.Tools.trace;
 
@@ -13,7 +14,7 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
 
    //vic serv;
    private HashMap<EditContainer, Socket> shash =
-      new HashMap<EditContainer, Socket>(10);
+      new HashMap<>(10);
 
    private ServerSocket lsock;
 
@@ -41,7 +42,7 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
             sock = lsock.accept();
 
             instream = new BufferedReader(
-               new InputStreamReader(sock.getInputStream(), "UTF-8"));
+               new InputStreamReader(sock.getInputStream(), StandardCharsets.UTF_8));
 
             if (1 != instream.read())  {
                throw new InputException("invalid byte from remote");

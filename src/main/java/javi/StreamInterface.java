@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import history.BadBackupFile;
 import static history.Tools.trace;
 
@@ -19,7 +20,7 @@ public final class StreamInterface extends UI {
 
    public StreamInterface() throws IOException {
       inStr = new BufferedReader(
-         new InputStreamReader(System.in, "UTF-8"));
+         new InputStreamReader(System.in, StandardCharsets.UTF_8));
    }
 
    public Buttons ireportDiff(String filename, int linenum,
@@ -113,7 +114,7 @@ public final class StreamInterface extends UI {
 
    /**
     * Handle external file modification notification via text interface.
-    * 
+    *
     * <p>Prompts user with options:</p>
     * <ul>
     *   <li>r - Reload file from disk</li>
@@ -122,7 +123,7 @@ public final class StreamInterface extends UI {
     *   <li>d - Show diff between buffer and disk</li>
     *   <li>c - Close buffer</li>
     * </ul>
-    * 
+    *
     * @param filename the modified file name
     * @param isModified true if buffer also has unsaved changes
     * @return the chosen ReloadAction

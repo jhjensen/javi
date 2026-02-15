@@ -87,8 +87,8 @@ public abstract class Rgroup {
    }
 
    private static HashMap<String, KeyBinding> cmhash =
-      new HashMap<String, KeyBinding>(200);
-   private HashMap<String, Object> glist = new HashMap<String, Object>(100);
+      new HashMap<>(200);
+   private HashMap<String, Object> glist = new HashMap<>(100);
 
    static final KeyBinding bindingLookup(String name) {
       //trace("bindingLookup " + name + " ret " + cmhash.get(name));

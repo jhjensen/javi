@@ -38,7 +38,7 @@ final class FontEntry implements FvExecute, java.io.Serializable {
    private static Float deffontposture = TextAttribute.POSTURE_REGULAR;
 
    private void makedefault()  {
-      atmap = new HashMap<TextAttribute, Object>(4);
+      atmap = new HashMap<>(4);
       atmap.put(TextAttribute.WEIGHT, deffontweight);
       atmap.put(TextAttribute.SIZE, deffontsize);
       atmap.put(TextAttribute.FAMILY, deffontname);
@@ -75,7 +75,7 @@ final class FontEntry implements FvExecute, java.io.Serializable {
          makedefault();
       else {
 
-         atmap = new HashMap<TextAttribute, Object>(4);
+         atmap = new HashMap<>(4);
 
          atmap.put(TextAttribute.FAMILY,  nameReg.reset(str).find()
             ? nameReg.group(1)

@@ -102,7 +102,7 @@ public final class EventQueue {
 //static ReentrantLock biglock = new ReentrantLock();
    public static final DebugLock biglock2 = new DebugLock();
 
-   private static LinkedList<Object> queue = new LinkedList<Object>();
+   private static LinkedList<Object> queue = new LinkedList<>();
 
    private static int timeout = 500;
 
@@ -114,7 +114,7 @@ public final class EventQueue {
       void idle() throws IOException;
    }
 
-   private static ArrayList<Idler> iList = new ArrayList<Idler>(3);
+   private static ArrayList<Idler> iList = new ArrayList<>(3);
 
    public static void registerIdle(Idler inst) {
       //trace("adding Idler " + inst);

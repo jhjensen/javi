@@ -12,11 +12,11 @@ import java.nio.file.Files;
 
 /**
  * Properties and metadata for an edited file.
- * 
+ *
  * <p>FileProperties tracks file format (line endings, charset), read-only status,
  * and external modification detection. It handles file I/O operations like
  * safe write (write to temp, then rename).</p>
- * 
+ *
  * @param <OType> Element type stored in the EditContainer (typically String)
  */
 public final class FileProperties<OType> implements Serializable {
@@ -44,7 +44,7 @@ public final class FileProperties<OType> implements Serializable {
 
    /**
     * Set whether to ignore external changes to this file.
-    * 
+    *
     * @param ignore true to ignore external changes
     */
    public synchronized void setIgnoreExternalChanges(boolean ignore) {
@@ -53,7 +53,7 @@ public final class FileProperties<OType> implements Serializable {
 
    /**
     * Check if external changes should be ignored for this file.
-    * 
+    *
     * @return true if external changes are being ignored
     */
    public synchronized boolean isIgnoringExternalChanges() {
@@ -62,11 +62,11 @@ public final class FileProperties<OType> implements Serializable {
 
    /**
     * Check if the file has been modified externally since last check.
-    * 
+    *
     * <p>Compares current file modification time against stored time.
     * Returns false if the file is not a local file or if external
     * changes are being ignored.</p>
-    * 
+    *
     * @return true if file was modified externally
     */
    public synchronized boolean checkModified() {
@@ -86,7 +86,7 @@ public final class FileProperties<OType> implements Serializable {
 
    /**
     * Update stored modification time to current file modification time.
-    * 
+    *
     * <p>Call this after reading or writing the file, or after the user
     * decides to ignore an external change notification.</p>
     */

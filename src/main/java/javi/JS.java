@@ -6,6 +6,7 @@ import org.mozilla.javascript.ScriptableObject;
 import org.mozilla.javascript.ImporterTopLevel;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -112,9 +113,10 @@ public final class JS {
          //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
 
          switch (rnum) {
-            case 1:
+            case 1 -> {
                return execRoutine(rnum, arg, count, rcount, fvc, dotmode);
-            case 2:
+            }
+            case 2 -> {
                try {
                   jsEvalIter(fvc.edvec.iterator(), fvc.edvec.getName());
                } catch (Throwable e) {
@@ -122,17 +124,15 @@ public final class JS {
                   e.printStackTrace();
                   UI.reportError(e.toString());
                }
-               return null;
-            case 3:
-               JS.jsClear();
-               return null;
-            default:
-               throw new RuntimeException();
+            }
+            case 3 -> JS.jsClear();
+            default -> throw new RuntimeException();
          }
+         return null;
       }
 
       public static void evalFile(String fileName) throws IOException {
-         jsEvalIter(new java.util.Scanner(new java.io.File(fileName), "UTF-8"),
+         jsEvalIter(new java.util.Scanner(new java.io.File(fileName), StandardCharsets.UTF_8),
             fileName);
       }
 

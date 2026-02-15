@@ -178,9 +178,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
       int eret;
       while (2 == (eret = expandLock(desired)))
          EventQueue.biglock2.lock();
-      return eret == 0
-             ? false
-             : true;
+      return eret != 0;
    }
 
 

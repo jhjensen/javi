@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,7 +14,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import history.ByteInput;
-import history.BadBackupFile;
 
 //import history.Tools;
 import static history.Tools.trace;
@@ -170,11 +170,11 @@ public class EditContainer<OType> implements
 
 // objects that want to hear about certain events
    private static final ArrayList<FileStatusListener> listeners =
-      new ArrayList<FileStatusListener>();
+      new ArrayList<>();
 
 // hash table of files edited, used to keep files unique
    private static HashMap<FileDescriptor, EditContainer> filehash =
-      new HashMap<FileDescriptor, EditContainer>(50);
+      new HashMap<>(50);
 
    static final void init(MarkListener ml) {
       mlisten = ml;
@@ -1011,7 +1011,7 @@ public class EditContainer<OType> implements
    }
 
    public final Iterator<OType> iterator() {
-      Iterator<OType> ret = new EIter();
+      var ret = new EIter();
       ret.next(); // skip 0 untill zero based
       return ret;
 
@@ -1047,7 +1047,7 @@ public class EditContainer<OType> implements
 
          // Write buffer content to temp file
          try (java.io.OutputStreamWriter writer = new java.io.OutputStreamWriter(
-               new java.io.FileOutputStream(tempFile), "UTF-8")) {
+               new java.io.FileOutputStream(tempFile), StandardCharsets.UTF_8)) {
             Iterator<String> iter = getStringIter();
             while (iter.hasNext()) {
                writer.write(iter.next());

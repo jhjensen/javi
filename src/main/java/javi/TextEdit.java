@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -275,7 +276,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       //trace("com = " + command + " args:" + args + ":");
       switch (command) {
          case 'd':
-            ArrayList<String>  delvec = new ArrayList<String>(100);
+            var delvec = new ArrayList<String>(100);
             for (int ii = linestart; ii <= linefinish;) {
                if (null == rangePattern
                      || (inverse ^ (searchForward(rangePattern, 0, ii))))  {
@@ -292,7 +293,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
             if (file.exists() && !file.canWrite())
                throw new EditContainer.ReadOnlyException(
                   this, file.getCanonicalPath());
-            try (PrintWriter os = new PrintWriter(file, "UTF-8")) {
+            try (PrintWriter os = new PrintWriter(file, StandardCharsets.UTF_8)) {
                for (int ii = linestart; ii <= linefinish; ii++)
                   if (null == rangePattern
                         || (inverse ^ (searchForward(rangePattern, 0, ii))))
@@ -741,7 +742,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       count++;
       //trace("stringtoarray count " + count);
-      ArrayList<String> sarr = new ArrayList<String>(count);
+      var sarr = new ArrayList<String>(count);
       lastindex = 0;
       for (int ii = 0; ii < count; ii++) {
          int nline = s.indexOf('\n', lastindex);
@@ -915,7 +916,7 @@ final class EditTester1 {
       make(filename).delete();
       String fullPath = testPath(filename);
       OutputStreamWriter fs = new OutputStreamWriter(
-         new FileOutputStream(fullPath), "UTF-8");
+         new FileOutputStream(fullPath), StandardCharsets.UTF_8);
       try {
          fs.write(contents);
       } finally {
@@ -929,7 +930,7 @@ final class EditTester1 {
       char[] fchar = new char[(int) f.length() + 20];
       //FileReader fs = new FileReader(filename,"UTF-8");
       InputStreamReader fs = new InputStreamReader(
-         new FileInputStream(fullPath), "UTF-8");
+         new FileInputStream(fullPath), StandardCharsets.UTF_8);
       try {
          int len = fs.read(fchar, 0, fchar.length);
          if (len != contents.length())
@@ -1146,7 +1147,7 @@ final class EditTester1 {
       {
          make("perftest.dmp2").delete();
          OutputStreamWriter fs = new OutputStreamWriter(
-            new FileOutputStream(testPath("perftest")), "UTF-8");
+            new FileOutputStream(testPath("perftest")), StandardCharsets.UTF_8);
          try {
             for (int ii = 0; ii < tot; ii++)
                fs.write("xxline " + ii + '\n');

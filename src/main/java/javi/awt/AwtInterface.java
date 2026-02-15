@@ -50,7 +50,6 @@ import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 
 import javi.BackupStatus;
@@ -299,12 +298,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       TestFrame(String str, String namei) {
          super(str);
          name = namei;
-         HashSet<AWTKeyStroke> keyset = new HashSet<AWTKeyStroke>(
+         var keyset = new HashSet<AWTKeyStroke>(
             getFocusTraversalKeys(
                KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
 
-         for (Iterator it = keyset.iterator(); it.hasNext();) {
-            AWTKeyStroke key = (AWTKeyStroke) (it.next());
+         for (var it = keyset.iterator(); it.hasNext();) {
+            var key = it.next();
             if (key.getKeyCode() == KeyEvent.VK_TAB
                   && 0 == key.getModifiers())
                it.remove();
@@ -900,18 +899,15 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    public void itoFront() {
       trace("toFront");
-      java.awt.EventQueue.invokeLater(new Runnable() {
-
-         public void run() {
-            frm.toFront();
-            frm.setExtendedState(frm.getExtendedState() & ~Frame.ICONIFIED);
-            frm.setAlwaysOnTop(true);
-            frm.toFront();
-            frm.requestFocus();
-            frm.setAlwaysOnTop(false);
-            frm.repaint();
-            frm.setVisible(true);
-         }
+      java.awt.EventQueue.invokeLater(() -> {
+         frm.toFront();
+         frm.setExtendedState(frm.getExtendedState() & ~Frame.ICONIFIED);
+         frm.setAlwaysOnTop(true);
+         frm.toFront();
+         frm.requestFocus();
+         frm.setAlwaysOnTop(false);
+         frm.repaint();
+         frm.setVisible(true);
       });
    }
 
@@ -1344,7 +1340,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    /**
     * Dialog for handling external file modifications.
-    * 
+    *
     * <p>Shows options when a file has been modified on disk while open in the editor.
     * Uses {@link SyncAwt} to safely release biglock2 before displaying, avoiding
     * deadlock between the idle handler and AWT event thread.</p>

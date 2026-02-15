@@ -1,7 +1,7 @@
 src/main/java/javi/awt/OldView.java,2
 src/main/java/javi/TextEdit.java,5
 src/main/java/javi/Command.java,1
-src/main/java/javi/UI.java,2
+src/main/java/javi/UI.java,1
 src/main/java/javi/MovePos.java,2
 src/main/java/javi/MapEvent.java,1
 src/main/java/javi/IoConverter.java,7
@@ -26,7 +26,7 @@ src/main/java/javi/awt/AwtView.java,1
 src/main/java/javi/UndoHistory.java,6
 src/main/java/javi/JavaCompiler.java,1
 src/main/java/javi/View.java,1
-src/main/java/javi/JS.java,2
+src/main/java/javi/JS.java,1
 src/main/java/javi/BackupStatus.java,1
 src/main/java/javi/XrefReader.java,1
 src/main/java/javi/Javi.java,1
