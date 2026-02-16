@@ -30,6 +30,8 @@ This file provides context for AI assistants working with the Javi project.
 - Perl (for checkstyle script)
 
 ### Build Commands
+Commands should be prefaced with "source ~/.bashrc" to set the correct path.
+Don't analyze stdout.  redirect stdout/err to a file and analyze that
 
 ```bash
 # Compile Java sources (default target)
@@ -64,9 +66,21 @@ The `ai/` directory also contains:
 - Analysis output and notes
 - Any working files agents need
 
+### Command Output
+
+**Always redirect stdout/stderr to files in the `ai/` directory** rather than trying to read command output directly. This reduces the number of commands requiring approval and avoids issues with output being truncated or hard to parse.
+
 ```bash
-# Example: writing analysis output
-./gradlew compileJava 2>&1 | grep "warning:" > ai/warnings.txt
+# CORRECT: Redirect to file, then analyze
+make compile 2>&1 > ai/compile.txt
+cat ai/compile.txt | grep "error:"
+
+# CORRECT: Compile and check result
+make test 2>&1 > ai/test-output.txt
+tail -20 ai/test-output.txt
+
+# WRONG: Don't try to analyze stdout directly
+make compile  # output may be truncated or require extra approval
 ```
 
 ## Running Tests
