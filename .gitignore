@@ -21,5 +21,6 @@ reportXMLtoHTML.xsl
 .gradle
 .vscode
 /ai/
+AGENTS.md
 todo.md
 todo.txt
