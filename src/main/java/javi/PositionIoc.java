@@ -158,6 +158,14 @@ public class PositionIoc extends BufInIoc<Position> {
          UI.reportMessage(formatCompletionMessage());
    }
 
+   /**
+    * Reports completion after the run loop finishes.
+    *
+    * <p>Overrides {@link IoConverter#postRun()} to display a status
+    * message with the result count and last output line. Subclasses
+    * may further override {@link #reportCompletion()} or
+    * {@link #formatCompletionMessage()} to customise reporting.
+    */
    @Override
    protected void postRun() {
       reportCompletion();
