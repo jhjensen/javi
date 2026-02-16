@@ -37,11 +37,11 @@ public class AIException extends Exception {
     * Create an AIException with a message and HTTP status code.
     *
     * @param message the error description
-    * @param statusCode the HTTP status code from the provider
+    * @param httpStatus the HTTP status code from the provider
     */
-   public AIException(String message, int statusCode) {
+   public AIException(String message, int httpStatus) {
       super(message);
-      this.statusCode = statusCode;
+      this.statusCode = httpStatus;
    }
 
    /**

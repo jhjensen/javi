@@ -45,18 +45,18 @@ public final class AnthropicProvider implements AIProvider {
    /**
     * Create an Anthropic provider with the given configuration.
     *
-    * @param apiKey the Anthropic API key
-    * @param model the model name (e.g., "claude-sonnet-4-20250514")
-    * @throws AIException if apiKey is null or empty
+    * @param key the Anthropic API key
+    * @param modelName the model name (e.g., "claude-sonnet-4-20250514")
+    * @throws AIException if key is null or empty
     */
-   public AnthropicProvider(String apiKey, String model) throws AIException {
-      if (null == apiKey || apiKey.isEmpty()) {
+   public AnthropicProvider(String key, String modelName) throws AIException {
+      if (null == key || key.isEmpty()) {
          throw new AIException("Anthropic API key not configured. "
             + "Set ANTHROPIC_API_KEY environment variable or use "
             + ":set ai.apikey=<key>");
       }
-      this.apiKey = apiKey;
-      this.model = model;
+      this.apiKey = key;
+      this.model = modelName;
       this.httpClient = HttpClient.newBuilder()
          .connectTimeout(TIMEOUT)
          .build();

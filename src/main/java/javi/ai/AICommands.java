@@ -1,8 +1,6 @@
 package javi.ai;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import javi.EditContainer;
 import javi.FvContext;
@@ -12,8 +10,6 @@ import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
-
-import static history.Tools.trace;
 
 /**
  * Command group for AI-related editor commands.

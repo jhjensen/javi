@@ -44,8 +44,8 @@ public final class AIConfig {
 
       private final String id;
 
-      Provider(String id) {
-         this.id = id;
+      Provider(String idStr) {
+         this.id = idStr;
       }
 
       /**
@@ -140,11 +140,11 @@ public final class AIConfig {
    /**
     * Set the model name.
     *
-    * @param model the model identifier
+    * @param modelName the model identifier
     */
-   public void setModel(String model) {
-      this.model = model;
-      trace("AI model set to: " + model);
+   public void setModel(String modelName) {
+      this.model = modelName;
+      trace("AI model set to: " + modelName);
    }
 
    /**
@@ -159,14 +159,14 @@ public final class AIConfig {
    /**
     * Set the maximum response tokens.
     *
-    * @param maxTokens max tokens (must be positive)
-    * @throws IllegalArgumentException if maxTokens is not positive
+    * @param tokens max tokens (must be positive)
+    * @throws IllegalArgumentException if tokens is not positive
     */
-   public void setMaxTokens(int maxTokens) {
-      if (maxTokens <= 0) {
+   public void setMaxTokens(int tokens) {
+      if (tokens <= 0) {
          throw new IllegalArgumentException("maxTokens must be positive");
       }
-      this.maxTokens = maxTokens;
+      this.maxTokens = tokens;
    }
 
    /**
@@ -198,12 +198,12 @@ public final class AIConfig {
     * <p><b>SECURITY</b>: The key is stored in memory only, never
     * logged or written to files.</p>
     *
-    * @param apiKey the API key string
+    * @param key the API key string
     */
-   public void setApiKey(String apiKey) {
-      this.apiKey = apiKey;
+   public void setApiKey(String key) {
+      this.apiKey = key;
       // Never log API keys
-      trace("AI API key configured (length: " + apiKey.length() + ")");
+      trace("AI API key configured (length: " + key.length() + ")");
    }
 
    /**

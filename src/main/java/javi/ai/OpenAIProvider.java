@@ -46,18 +46,18 @@ public final class OpenAIProvider implements AIProvider {
    /**
     * Create an OpenAI provider with the given configuration.
     *
-    * @param apiKey the OpenAI API key
-    * @param model the model name (e.g., "gpt-4o")
-    * @throws AIException if apiKey is null or empty
+    * @param key the OpenAI API key
+    * @param modelName the model name (e.g., "gpt-4o")
+    * @throws AIException if key is null or empty
     */
-   public OpenAIProvider(String apiKey, String model) throws AIException {
-      if (null == apiKey || apiKey.isEmpty()) {
+   public OpenAIProvider(String key, String modelName) throws AIException {
+      if (null == key || key.isEmpty()) {
          throw new AIException("OpenAI API key not configured. "
             + "Set OPENAI_API_KEY environment variable or use "
             + ":set ai.apikey=<key>");
       }
-      this.apiKey = apiKey;
-      this.model = model;
+      this.apiKey = key;
+      this.model = modelName;
       this.httpClient = HttpClient.newBuilder()
          .connectTimeout(TIMEOUT)
          .build();
