@@ -111,6 +111,15 @@ public class FileDescriptor implements Serializable {
       throw new IOException("unable to create an output stream");
    }
 
+   /**
+    * Open an InputStream for reading this file's bytes.
+    * Callers are responsible for closing the stream.
+    * Throws IOException for file types that do not support streaming.
+    */
+   java.io.InputStream openInputStream() throws IOException {
+      throw new IOException("streaming not supported for " + shortName);
+   }
+
    String getString() throws IOException {
       throw new IOException("unable to open file");
    }
@@ -492,6 +501,17 @@ public class FileDescriptor implements Serializable {
          return new FileOutputStream(fh);
       }
 
+      /**
+       * Open a raw InputStream from position 0 for this local file.
+       * Returns a null-input-stream for non-existent files.
+       * Callers are responsible for closing the returned stream.
+       */
+      final java.io.InputStream openInputStream() throws IOException {
+         if (!exists()) {
+            return java.io.InputStream.nullInputStream();
+         }
+         return new FileInputStream(fh);
+      }
 
       final void delete() throws IOException {
          if (fh.exists() && !fh.delete()) {

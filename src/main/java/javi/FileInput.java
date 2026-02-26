@@ -19,6 +19,10 @@ final class FileInput extends BufInIoc<String> {
       rpos = Integer.MAX_VALUE;
       fileend = filestart;
       filestring = null;
+      if (null != reader) {
+         try { reader.close(); } catch (java.io.IOException ignore) { }
+         reader = null;
+      }
       super.truncIo();
    }
 
@@ -31,6 +35,20 @@ final class FileInput extends BufInIoc<String> {
    private enum FileMode { UNIX, MS, MIXED };
 
    public String getnext() {
+      //trace("fileread getnext");
+      // B8: streaming path — delegate to BufferedReader.readLine().
+      if (null != reader) {
+         try {
+            String line = reader.readLine();
+            if (null == line) {
+               try { reader.close(); } catch (java.io.IOException ignore) { }
+               reader = null;
+            }
+            return line;
+         } catch (java.io.IOException e) {
+            throw new RuntimeException("FileInput streaming read failed", e);
+         }
+      }
       //trace("fileread getnext");
       String retval = getLine();
       if (null != retval)
@@ -105,7 +123,20 @@ final class FileInput extends BufInIoc<String> {
    private transient int npos;
    private transient int rpos;
 
+   /** B8: streaming reader; non-null when the streaming read path is active. */
+   private transient java.io.BufferedReader reader;
+
    protected void preRun() throws IOException {
+      // B8: attempt streaming read path to avoid holding full file in memory.
+      reader = prop.openStreamingReader();
+      if (null != reader) {
+         // Streaming path: lsep has been set by openStreamingReader().
+         filestring = null;
+         inputmode = FileMode.UNIX;  // readLine() strips all terminators
+         return;
+      }
+
+      // Fallback: full-string path for non-local or unsupported file types.
       filestring = prop.initFile();
       fileend = filestring.length();
       filestart = 0;

@@ -1,12 +1,15 @@
 package javi;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import org.mozilla.universalchardet.UniversalDetector;
 
 //import static history.Tools.trace;
 
@@ -199,6 +202,60 @@ public final class FileProperties<OType> implements Serializable {
       conv = proto.conv;
       charSet = proto.charSet;
       lsep = proto.lsep;
+   }
+
+   /**
+    * Open a streaming {@link BufferedReader} for this file.
+    *
+    * <p>Reads a small leading sample (up to 8 KB) to detect the character
+    * encoding and line separator, then opens a fresh stream from position 0
+    * backed by a real {@code FileInputStream} (not a {@code byte[]} copy).
+    * This avoids holding the entire file content in memory during load.
+    *
+    * <p>Returns {@code null} when streaming is not supported by the underlying
+    * {@link FileDescriptor} (e.g. remote or internal-buffer files), allowing
+    * callers to fall back to {@link #initFile()}.
+    *
+    * @return a streaming {@code BufferedReader}, or {@code null} if unavailable
+    * @throws IOException on I/O error
+    */
+   BufferedReader openStreamingReader() throws IOException {
+      // Read sample bytes for charset + lsep detection.
+      byte[] sample;
+      try (java.io.InputStream sampleStream = fdes.openInputStream()) {
+         sample = sampleStream.readNBytes(8192);
+      } catch (IOException e) {
+         // Streaming not supported; caller falls back to initFile().
+         return null;
+      }
+
+      if (sample.length == 0) {
+         return null;  // empty file — nothing to stream
+      }
+
+      // Detect charset from sample.
+      UniversalDetector detector = new UniversalDetector(null);
+      detector.handleData(sample, 0, sample.length);
+      detector.dataEnd();
+      String encoding = detector.getDetectedCharset();
+      detector.reset();
+      charSet = encoding != null ? Charset.forName(encoding) : Charset.defaultCharset();
+
+      // Detect lsep from decoded sample text.
+      String sampleText = new String(sample, charSet);
+      int nIdx = sampleText.indexOf('\n');
+      int rIdx = sampleText.indexOf('\r');
+      lsep = rIdx == -1
+         ? "\n"
+         : rIdx + 1 == nIdx
+            ? "\r\n"
+            : System.getProperty("line.separator");
+
+      updateModifiedTime();
+
+      // Open a fresh stream from position 0 for actual line reading.
+      java.io.InputStream stream = fdes.openInputStream();
+      return new BufferedReader(new InputStreamReader(stream, charSet));
    }
 
    public String initFile() throws IOException {
