@@ -239,14 +239,17 @@ final class Ctag {
 
       //scan backwards to find non matching of label
       //trace("backmark " + backmark);
-      for (long offset = backmark - 300;; offset -= 300) {
+      for (long offset = Math.max(0, backmark - 300);; offset -= 300) {
          //trace("back tracking offset " + offset);
          ctfile.seek(offset);
          line = ctfile.readLine(); // find beginning of line
          line = ctfile.readLine(); // line up to next new line
          if  (null == line || !line.startsWith(curtag))
             break;
+         if (offset <= 0)
+            break;
          offset -= line.length();
+         offset = Math.max(0, offset);
       }
 
       do {

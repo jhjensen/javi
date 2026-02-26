@@ -9,25 +9,26 @@ import java.util.Date;
 import history.Tools;
 import static history.Tools.trace;
 
-public final class MiscCommands extends Rgroup  {
+public final class MiscCommands extends Rgroup {
    MiscCommands() {
       final String[] rnames = {
-         "",
-         "xxxunused",
-         "zprocess",
-         "redraw",
-         "undo",
-         "redo",             // 5
-         "undoline",
-         "vt",
-         "loadgroup",
-         "comm",
-         "exec",            //10
-         "lines", // 5
-         "setwidth",
+            "",
+            "xxxunused",
+            "zprocess",
+            "redraw",
+            "undo",
+            "redo", // 5
+            "undoline",
+            "vt",
+            "loadgroup",
+            "comm",
+            "exec", // 10
+            "lines", // 5
+            "setwidth",
       };
       register(rnames);
    }
+
    private static TextEdit debugfile;
    private static TextEdit shellfile;
    private static TextEdit cmdfile;
@@ -37,10 +38,10 @@ public final class MiscCommands extends Rgroup  {
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
-      //trace("rnum = " + rnum );
+      // trace("rnum = " + rnum );
       switch (rnum) {
          case 1:
-            //free
+            // free
             return null;
          case 2:
             zprocess(rcount, fvc);
@@ -55,7 +56,7 @@ public final class MiscCommands extends Rgroup  {
             redo(fvc);
             return null;
          case 6:
-            return null; //fvc.edvec.undoElement(fvc.inserty()); return null;
+            return null; // fvc.edvec.undoElement(fvc.inserty()); return null;
          case 7:
             startshell(fvc, (String) arg);
             return null;
@@ -79,7 +80,7 @@ public final class MiscCommands extends Rgroup  {
             throw new RuntimeException("vigroup:default");
       }
 
-//trace("end ");
+      // trace("end ");
    }
 
    public static int getHeight() {
@@ -92,9 +93,11 @@ public final class MiscCommands extends Rgroup  {
 
    private static final class MyFl implements EditContainer.FileStatusListener {
 
-      public void fileAdded(EditContainer ev)  { }
+      public void fileAdded(EditContainer ev) {
+      }
 
-      public void fileWritten(EditContainer ev) { }
+      public void fileWritten(EditContainer ev) {
+      }
 
       public boolean fileDisposed(EditContainer ev) {
          if (ev == cmdfile)
@@ -103,8 +106,8 @@ public final class MiscCommands extends Rgroup  {
             debugfile = null;
          if (ev == shellfile)
             shellfile = null;
-         //  if (ev == picCon)
-         //     picCon=null;
+         // if (ev == picCon)
+         // picCon=null;
          if (ev == commCon)
             commCon = null;
          return false;
@@ -120,15 +123,14 @@ public final class MiscCommands extends Rgroup  {
       fvc.fixCursor();
    }
 
-   private static void redo(FvContext fvc)  throws IOException {
+   private static void redo(FvContext fvc) throws IOException {
       int index = fvc.edvec.redo();
       if (index != -1)
          fvc.cursoryabs(index);
       fvc.fixCursor();
    }
 
-   private void startshell(FvContext fvc, String host) throws
-         IOException, InputException {
+   private void startshell(FvContext fvc, String host) throws IOException, InputException {
       trace("reached startshell " + host);
       if (null != shellfile && null != host) {
          FvContext.connectFv(shellfile, fvc.vi);
@@ -144,20 +146,19 @@ public final class MiscCommands extends Rgroup  {
 
    }
 
-   private  static TextEdit commCon;
-   private  static String portname = "COM1";
-   private  static int baudrate = 38400;
+   private static TextEdit commCon;
+   private static String portname = "COM1";
+   private static int baudrate = 38400;
 
-   private static void startcom(String arg, FvContext fvc) throws
-         IOException, InputException {
-      //trace("reached startcommCon");
+   private static void startcom(String arg, FvContext fvc) throws IOException, InputException {
+      // trace("reached startcommCon");
       if (null == commCon) {
          if (null != arg)
             try {
                String[] args = arg.split(" +");
                if (2 != args.length)
                   throw new InputException("invalid arguments to comm command:"
-                     + arg);
+                        + arg);
                baudrate = Integer.parseInt(args[1]);
                portname = args[0];
             } catch (NumberFormatException e) {
@@ -175,19 +176,18 @@ public final class MiscCommands extends Rgroup  {
       private static final long serialVersionUID = 1;
       private transient Process proc;
 
-      static ProcIo mkProcIo(String namei, String... cmd) throws
-            IOException {
+      static ProcIo mkProcIo(String namei, String... cmd) throws IOException {
          Process proc = Tools.iocmd(cmd);
          BufferedReader input = new BufferedReader(new InputStreamReader(
-            proc.getInputStream(), StandardCharsets.UTF_8));
+               proc.getInputStream(), StandardCharsets.UTF_8));
          return new ProcIo(namei, proc, input, cmd);
       }
 
-      @SuppressWarnings({"unchecked", "rawtypes"})
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       private ProcIo(String namei, Process proci,
             BufferedReader inp, String... cmd) {
          super(new FileProperties(FileDescriptor.InternalFd.make(namei),
-            StringIoc.converter), true, inp);
+               StringIoc.converter), true, inp);
          proc = proci;
       }
 
@@ -205,20 +205,20 @@ public final class MiscCommands extends Rgroup  {
       }
    };
 
-   private static String[] lastcmd =  {"bash", "-i", "-c",
-      "(cd ../javitests; java -Xshare:off javitests.PerfTest )"
+   private static String[] lastcmd = { "bash", "-i", "-c",
+         "(cd ../javitests; java -Xshare:off javitests.PerfTest )"
    };
 
    private static void startcmd(String cname, FvContext fvc) {
-      //trace("startcmd:" + cname);
+      // trace("startcmd:" + cname);
       try {
          if (null == cmdfile) {
-            //??? make this workjavac.compcommand(null,true);
+            // ??? make this workjavac.compcommand(null,true);
             if (null != cname)
                lastcmd[3] = cname;
 
             EditContainer.registerListener(fli);
-            ProcIo pi  = ProcIo.mkProcIo(lastcmd[3], lastcmd);
+            ProcIo pi = ProcIo.mkProcIo(lastcmd[3], lastcmd);
             cmdfile = new TextEdit<String>(pi, pi.prop);
          }
          FvContext.connectFv(cmdfile, fvc.vi);
@@ -231,13 +231,12 @@ public final class MiscCommands extends Rgroup  {
       int scchange = 0;
       float scrpos = 0.f;
 
-   outloop:
-      while (true) {
+      outloop: while (true) {
          int key = EventQueue.nextKey(fvc.vi);
          if (key >= '0' && key <= '9')
             scchange = scchange * 10 + (key & 0x0f);
-         else  {
-            //trace("scchange " + scchange);
+         else {
+            // trace("scchange " + scchange);
             if (0 != scchange) {
                defheight = scchange;
                fvc.vi.setSizebyChar(-1, scchange);
@@ -268,11 +267,12 @@ public final class MiscCommands extends Rgroup  {
    private static Date lastredraw = new Date();
 
    static void redraw(boolean flushFlag) throws IOException {
-      //trace("redraw flushFlag " + flushFlag + " currFvc " + FvContext.getCurrFvc());
+      // trace("redraw flushFlag " + flushFlag + " currFvc " +
+      // FvContext.getCurrFvc());
       UI.repaint();
       if (flushFlag) {
          Date nDate = new Date();
-         long elapsed =  nDate.getTime() - lastredraw.getTime();
+         long elapsed = nDate.getTime() - lastredraw.getTime();
          trace("elapsed " + elapsed);
          if (elapsed < 500) { // two redraws in <.5 seconds
             trace("start flush elapsed" + elapsed);
@@ -289,14 +289,14 @@ public final class MiscCommands extends Rgroup  {
 
          Tools.doGC();
 
-         trace(" used memory " +  (Runtime.getRuntime().totalMemory()
-            - Runtime.getRuntime().freeMemory())
-            // + "total memory " + Runtime.getRuntime().totalMemory()
+         trace(" used memory " + (Runtime.getRuntime().totalMemory()
+               - Runtime.getRuntime().freeMemory())
+         // + "total memory " + Runtime.getRuntime().totalMemory()
          );
          lastredraw = new Date();
          trace("GC time in milliseconds "
-            + (lastredraw.getTime() - nDate.getTime()));
-         //vic.memfree();
+               + (lastredraw.getTime() - nDate.getTime()));
+         // vic.memfree();
       }
    }
 

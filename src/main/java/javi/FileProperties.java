@@ -13,15 +13,20 @@ import java.nio.file.Files;
 /**
  * Properties and metadata for an edited file.
  *
- * <p>FileProperties tracks file format (line endings, charset), read-only status,
+ * <p>
+ * FileProperties tracks file format (line endings, charset), read-only status,
  * and external modification detection. It handles file I/O operations like
- * safe write (write to temp, then rename).</p>
+ * safe write (write to temp, then rename).
+ * </p>
  *
  * @param <OType> Element type stored in the EditContainer (typically String)
  */
 public final class FileProperties<OType> implements Serializable {
 
-   private enum FileMode { UNIX, MS, MIXED };
+   private enum FileMode {
+      UNIX, MS, MIXED
+   };
+
    static final String staticLine = System.getProperty("line.separator");
    private static final long serialVersionUID = 1;
    public final FileDescriptor fdes;
@@ -36,7 +41,7 @@ public final class FileProperties<OType> implements Serializable {
    /** If true, ignore external modifications for this file. */
    private transient boolean ignoreExternalChanges = false;
 
-   private String lsep = staticLine; //??? final
+   private String lsep = staticLine; // ??? final
 
    public String toString() {
       return fdes.toString();
@@ -63,9 +68,11 @@ public final class FileProperties<OType> implements Serializable {
    /**
     * Check if the file has been modified externally since last check.
     *
-    * <p>Compares current file modification time against stored time.
+    * <p>
+    * Compares current file modification time against stored time.
     * Returns false if the file is not a local file or if external
-    * changes are being ignored.</p>
+    * changes are being ignored.
+    * </p>
     *
     * @return true if file was modified externally
     */
@@ -87,8 +94,10 @@ public final class FileProperties<OType> implements Serializable {
    /**
     * Update stored modification time to current file modification time.
     *
-    * <p>Call this after reading or writing the file, or after the user
-    * decides to ignore an external change notification.</p>
+    * <p>
+    * Call this after reading or writing the file, or after the user
+    * decides to ignore an external change notification.
+    * </p>
     */
    public synchronized void updateModifiedTime() {
       if (fdes instanceof FileDescriptor.LocalFile) {
@@ -108,11 +117,10 @@ public final class FileProperties<OType> implements Serializable {
    }
 
    void safeWrite(Iterator<String> strIter) throws IOException {
-      if (fdes.exists() && fdes instanceof  FileDescriptor.LocalFile) {
+      if (fdes.exists() && fdes instanceof FileDescriptor.LocalFile) {
          FileDescriptor.LocalFile fd2 = (FileDescriptor.LocalFile) fdes;
 
-         FileDescriptor.LocalFile tempFile =
-            FileDescriptor.LocalFile.make(fd2.canonName + ".new");
+         FileDescriptor.LocalFile tempFile = FileDescriptor.LocalFile.make(fd2.canonName + ".new");
 
          try {
             new FileProperties<>(this, tempFile).writeAll(strIter);
@@ -123,20 +131,20 @@ public final class FileProperties<OType> implements Serializable {
          }
 
          Files.setPosixFilePermissions(tempFile.toPath(),
-             Files.getPosixFilePermissions(fdes.toPath()));
+               Files.getPosixFilePermissions(fdes.toPath()));
          tempFile.renameTo(fd2, false);
       } else {
          writeAll(strIter);
       }
    }
 
-   void writeAll(Iterator<String> sitr)  throws IOException {
+   void writeAll(Iterator<String> sitr) throws IOException {
 
       try (OutputStreamWriter ow = new OutputStreamWriter(
             new BufferedOutputStream(fdes.getOutputStream()), charSet)) {
          while (sitr.hasNext()) {
             String line = sitr.next();
-            //trace("writing:" + line);
+            // trace("writing:" + line);
             ow.write(line, 0, line.length());
             ow.write(lsep, 0, lsep.length());
          }
@@ -163,15 +171,15 @@ public final class FileProperties<OType> implements Serializable {
 
    public String initFile() throws IOException {
       fileString = fdes.getString();
-      //trace("fileString:" + fileString);
+      // trace("fileString:" + fileString);
       int npos = fileString.indexOf('\n');
       int rpos = fileString.indexOf('\r');
 
       lsep = rpos == -1
-         ? "\n"
-         : rpos + 1 == npos
-            ? "\r\n"
-            : System.getProperty("line.separator");
+            ? "\n"
+            : rpos + 1 == npos
+                  ? "\r\n"
+                  : System.getProperty("line.separator");
 
       // Initialize modification time tracking when file is first read
       updateModifiedTime();

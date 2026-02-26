@@ -101,6 +101,18 @@ build: compile jar
 # Test targets
 #==============================================================================
 
+.PHONY: FORCE
+FORCE:
+
+ai.output:
+	mkdir -p $@
+
+ai.output/junit.out: FORCE | ai.output
+	./gradlew test > $@ 2>&1
+
+ai.output/test.out: FORCE | ai.output
+	$(MAKE) compile test-core > $@ 2>&1
+
 # Run PSTest (PersistantStack tests)
 pstest: compile
 	java -cp $(CLASSPATH) history.PSTest
@@ -116,12 +128,14 @@ intarraytest: compile
 ctagtest: compile
 	java -ea -cp $(CLASSPATH) javi.Ctag
 
-# Run all tests
-test: ctagtest intarraytest pstest edittest 
+# Core legacy test sequence (without wrapper)
+test-core: ctagtest intarraytest pstest edittest
 
-# Run JUnit 5 tests via Gradle
-junit:
-	./gradlew test
+# Run all legacy tests and capture output
+test: ai.output/test.out
+
+# Run JUnit 5 tests via Gradle and capture output
+junit: ai.output/junit.out
 
 # Run PSTest with coverage and generate report
 pstest-coverage:
