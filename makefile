@@ -119,6 +119,10 @@ ctagtest: compile
 # Run all tests
 test: ctagtest intarraytest pstest edittest 
 
+# Run JUnit 5 tests via Gradle
+junit:
+	./gradlew test
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage

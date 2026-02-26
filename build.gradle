@@ -101,6 +101,11 @@ tasks.named('compileJava') {
     options.encoding = 'UTF-8'
 }
 
+tasks.named('test') {
+    useJUnitPlatform()
+    jacoco.enabled = false
+}
+
 // Ensure history classes are included in the JAR
 // I3: Version from project property or git describe
 def projectVersion = project.findProperty('version') ?: 'dev'
