@@ -32,7 +32,6 @@ public final class FileProperties<OType> implements Serializable {
    public final FileDescriptor fdes;
    public final ClassConverter<OType> conv;
    private transient Charset charSet;
-   private transient String fileString;
    private transient boolean readonly = false;
 
    /** Last known modification time of the file on disk.
@@ -191,7 +190,6 @@ public final class FileProperties<OType> implements Serializable {
       fdes = fd;
       conv = convi;
       charSet = Charset.defaultCharset();
-      fileString = "";
    }
 
    // create properties that will have the same format as a prototype
@@ -200,13 +198,12 @@ public final class FileProperties<OType> implements Serializable {
       fdes = fd;
       conv = proto.conv;
       charSet = proto.charSet;
-      fileString = "";
       lsep = proto.lsep;
    }
 
    public String initFile() throws IOException {
-      fileString = fdes.getString();
-      // trace("fileString:" + fileString);
+      String fileString = fdes.getString();
+      //trace("fileString:" + fileString);
       int npos = fileString.indexOf('\n');
       int rpos = fileString.indexOf('\r');
 
