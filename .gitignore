@@ -13,14 +13,9 @@ instructions.md
 javitests/junit3.8.2
 build.txt
 dummy0
-*.log
 penv
 images
 cycle.xml
 reportXMLtoHTML.xsl
 .gradle
 .vscode
-/ai/
-AGENTS.md
-todo.md
-todo.txt
