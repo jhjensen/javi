@@ -141,14 +141,12 @@ public final class EventQueue {
 
    private static Object inextEvent(CursorControl vi) {
       Object ev = null;
-      boolean lockHeld = true;  // Track lock state for cleanup
       // B7: verify the caller holds biglock2 before we release it.
       // This surfaces protocol violations immediately rather than allowing
       // a silent IllegalMonitorStateException from unlock().
       biglock2.assertOwned();
       try {
          biglock2.unlock();
-         lockHeld = false;
          //trace("Init time trace: getting event");
          synchronized (EventQueue.class) {
             if (0 != queue.size())
@@ -157,7 +155,6 @@ public final class EventQueue {
 
          if (null != ev) {
             biglock2.lock();
-            lockHeld = true;
             return ev;
          }
 
@@ -166,12 +163,10 @@ public final class EventQueue {
                for (Idler id : iList) {
                   //trace("executing Idler " + id);
                   biglock2.lock();
-                  lockHeld = true;
                   try {
                      id.idle();
                   } finally {
                      biglock2.unlock();
-                     lockHeld = false;
                   }
                }
                break;
@@ -202,20 +197,18 @@ public final class EventQueue {
             }
             //trace("about to blink cursor on " +vi);
             biglock2.lock();
-            lockHeld = true;
             vi.blinkcursor(); // flip cursor
             biglock2.unlock();
-            lockHeld = false;
          }
 
          vi.setCursorOff();
          //trace("eventqueue.java returning " + ev);
          biglock2.lock();
-         lockHeld = true;
          return ev;
       } finally {
-         // Ensure lock is always held on exit (method contract)
-         if (!lockHeld) {
+         // B4: isHeldByCurrentThread() reflects actual lock state - no stale
+         // flag risk if an exception is thrown before a lockHeld assignment.
+         if (!biglock2.isHeldByCurrentThread()) {
             biglock2.lock();
          }
       }
