@@ -142,6 +142,10 @@ public final class EventQueue {
    private static Object inextEvent(CursorControl vi) {
       Object ev = null;
       boolean lockHeld = true;  // Track lock state for cleanup
+      // B7: verify the caller holds biglock2 before we release it.
+      // This surfaces protocol violations immediately rather than allowing
+      // a silent IllegalMonitorStateException from unlock().
+      biglock2.assertOwned();
       try {
          biglock2.unlock();
          lockHeld = false;
