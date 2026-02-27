@@ -327,8 +327,12 @@ public class IoConverter<OType> implements Runnable, Serializable {
          //trace("start of run " + this);
          Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
          EventQueue.biglock2.lock();
-         BackupStatus temp = aNotify.getBackupStatus();
-         EventQueue.biglock2.unlock();
+         BackupStatus temp;
+         try {
+            temp = aNotify.getBackupStatus();
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
          synchronized (this) {
             backupstatus = temp;
             if (backupstatus != null) {

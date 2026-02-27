@@ -728,8 +728,11 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_DRAGGED:
                if (1 == mousePressed) {
                   EventQueue.biglock2.lock();
-                  updateTempMarkPos(mousepos((MouseEvent) ev));
-                  EventQueue.biglock2.unlock();
+                  try {
+                     updateTempMarkPos(mousepos((MouseEvent) ev));
+                  } finally {
+                     EventQueue.biglock2.unlock();
+                  }
                }
                break;
             case MouseEvent.MOUSE_MOVED:

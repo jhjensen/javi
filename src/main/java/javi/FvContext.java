@@ -113,7 +113,8 @@ public final class FvContext<OType> implements Serializable {
       }
 
       void put(FvContext fvc) {
-         // trace("putting a new fvcontext " + fvc);
+         EventQueue.biglock2.assertOwned();
+         //trace("putting a new fvcontext " + fvc);
          HashMap<TextEdit, FvContext> ehash = viewhash.get(fvc.vi);
          if (null == ehash) {
             // this only happens when we get a new view
@@ -358,9 +359,10 @@ public final class FvContext<OType> implements Serializable {
 
    private static final class QuitClass implements Runnable {
       public void run() {
-
+         boolean locked = false;
          try {
-            if (!EventQueue.biglock2.tryLock(2, TimeUnit.SECONDS))
+            locked = EventQueue.biglock2.tryLock(2, TimeUnit.SECONDS);
+            if (!locked)
                trace("failed to acquire big lock, try and exit anyway");
             disposeAll(true);
          } catch (Exception e) {
@@ -368,7 +370,8 @@ public final class FvContext<OType> implements Serializable {
             // Print full stack trace for debugging shutdown issues
             e.printStackTrace();
          } finally {
-            EventQueue.biglock2.unlock();
+            if (locked)
+               EventQueue.biglock2.unlock();
          }
       }
    }

@@ -370,13 +370,16 @@ public abstract class View  extends
                trace("sleeping 200");
                Thread.sleep(200);
                EventQueue.biglock2.lock();
-               int newReadin = text.readIn();
+               try {
+                  int newReadin = text.readIn();
 
-               if (newReadin > readin || text.donereading()) {
-                  readin = newReadin;
-                  op.redraw();
+                  if (newReadin > readin || text.donereading()) {
+                     readin = newReadin;
+                     op.redraw();
+                  }
+               } finally {
+                  EventQueue.biglock2.unlock();
                }
-               EventQueue.biglock2.unlock();
             } while (!text.donereading() && readin <= needed);
          } catch (InterruptedException e) {
             trace("ignoring InterruptedException");

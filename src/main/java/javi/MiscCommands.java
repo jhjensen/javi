@@ -283,8 +283,11 @@ public final class MiscCommands extends Rgroup {
             DirList.getDefault().flushCache();
             PosListList.Cmd.flush();
             EventQueue.biglock2.unlock();
-            UI.flush();
-            EventQueue.biglock2.lock();
+            try {
+               UI.flush();
+            } finally {
+               EventQueue.biglock2.lock();
+            }
             FvContext.dump();
             EditContainer.dumpStatic();
             FileList.iclearUndo();
