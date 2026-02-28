@@ -1,7 +1,6 @@
 package javi;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -467,10 +466,22 @@ public class FileDescriptor implements Serializable {
          fh.deleteOnExit();
       }
 
+      /**
+       * Open a streaming BufferedReader for this local file.
+       *
+       * <p>B8: Reads a small sample (up to 8 KB) for charset detection,
+       * then opens a fresh FileInputStream from position 0. This avoids
+       * loading the entire file into a byte[] just to wrap it in a
+       * ByteArrayInputStream.
+       */
       final BufferedReader getBufferedReader() throws IOException {
-         byte[] filebyte = readFile();
+         byte[] sample;
+         try (java.io.InputStream sampleStream = openInputStream()) {
+            sample = sampleStream.readNBytes(8192);
+         }
+
          UniversalDetector detector = new UniversalDetector(null);
-         detector.handleData(filebyte, 0, filebyte.length);
+         detector.handleData(sample, 0, sample.length);
          detector.dataEnd();
          String encoding = detector.getDetectedCharset();
          detector.reset();
@@ -478,8 +489,9 @@ public class FileDescriptor implements Serializable {
          Charset charSet = encoding == null
             ? Charset.defaultCharset()
             : Charset.forName(encoding);
+         // Open a fresh stream from position 0 for reading.
          return new BufferedReader(new InputStreamReader(
-            new ByteArrayInputStream(filebyte), charSet));
+            openInputStream(), charSet));
       }
 
       final String getString() throws IOException {
