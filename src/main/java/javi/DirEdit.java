@@ -2,11 +2,13 @@ package javi;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 
 import static history.Tools.trace;
 
@@ -30,7 +32,18 @@ import static history.Tools.trace;
  *   <tr><td>.</td><td>Toggle hidden files</td></tr>
  *   <tr><td>s</td><td>Cycle sort mode (name/size/date/type)</td></tr>
  *   <tr><td>R</td><td>Refresh directory listing</td></tr>
+ *   <tr><td>dd</td><td>Delete file under cursor</td></tr>
  *   <tr><td>q</td><td>Quit directory browser</td></tr>
+ * </table>
+ *
+ * <h2>Ex Commands (File Operations)</h2>
+ * <table>
+ *   <tr><th>Command</th><th>Action</th></tr>
+ *   <tr><td>{@code :diredit_delete}</td><td>Delete file under cursor</td></tr>
+ *   <tr><td>{@code :diredit_rename name}</td><td>Rename file under cursor</td></tr>
+ *   <tr><td>{@code :diredit_mkdir name}</td><td>Create new subdirectory</td></tr>
+ *   <tr><td>{@code :diredit_newfile name}</td><td>Create new empty file</td></tr>
+ *   <tr><td>{@code :diredit_copy dest}</td><td>Copy file under cursor</td></tr>
  * </table>
  *
  * <h2>Display Format</h2>
@@ -56,6 +69,9 @@ public final class DirEdit extends TextEdit<String> {
    /** Current sort mode. */
    private SortMode sortMode = SortMode.NAME;
 
+   /** Files marked for deletion. Package-private for testing. */
+   final HashSet<String> markedForDelete = new HashSet<>();
+
    /** Date formatter for file dates. */
    private static final SimpleDateFormat dateFormat =
       new SimpleDateFormat("yyyy-MM-dd HH:mm");
@@ -74,11 +90,12 @@ public final class DirEdit extends TextEdit<String> {
 
    /**
     * Creates a new DirEdit for the specified directory.
+    * Package-private for testing.
     *
     * @param dir the directory to display
     */
    @SuppressWarnings({"unchecked", "rawtypes"})
-   private DirEdit(FileDescriptor.LocalDir dir) {
+   DirEdit(FileDescriptor.LocalDir dir) {
       super(new IoConverter(new FileProperties(
          FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
          StringIoc.converter), true),
@@ -86,8 +103,8 @@ public final class DirEdit extends TextEdit<String> {
             FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
             StringIoc.converter));
       this.currentDir = dir;
+      populateDirectoryImpl();
       setReadOnly(true);
-      populateDirectory();
       finish();
    }
 
@@ -125,8 +142,23 @@ public final class DirEdit extends TextEdit<String> {
 
    /**
     * Populates the buffer with directory contents.
+    * Temporarily disables read-only mode to allow buffer modification
+    * during refresh operations.
     */
-   private void populateDirectory() {
+   void populateDirectory() {
+      // Temporarily allow writes for repopulation
+      setReadOnly(false);
+      try {
+         populateDirectoryImpl();
+      } finally {
+         setReadOnly(true);
+      }
+   }
+
+   /**
+    * Internal implementation of directory population.
+    */
+   private void populateDirectoryImpl() {
       // Clear existing content
       if (readIn() > 1) {
          remove(1, readIn());
@@ -170,7 +202,10 @@ public final class DirEdit extends TextEdit<String> {
 
       // Add help footer
       lines.add("");
-      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort  [R] refresh  [q] quit");
+      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort"
+         + "  [R] refresh  [q] quit");
+      lines.add("  [dd] delete  :diredit_rename  :diredit_mkdir"
+         + "  :diredit_newfile  :diredit_copy");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -257,6 +292,14 @@ public final class DirEdit extends TextEdit<String> {
    private String formatEntry(File file, boolean isParent) {
       StringBuilder sb = new StringBuilder();
 
+      // Show mark flag if file is marked
+      String name = file.getName();
+      if (!isParent && markedForDelete.contains(name)) {
+         sb.append("D ");
+      } else {
+         sb.append("  ");
+      }
+
       // Permissions (simplified)
       if (file.isDirectory()) {
          sb.append("d");
@@ -315,32 +358,42 @@ public final class DirEdit extends TextEdit<String> {
    /**
     * Gets the filename from the current line.
     *
+    * <p>Line format after mark prefix (2 chars: "  " or "D "):
+    * {@code [d-]rwx  <size>  <date>  <name>}
+    *
     * @param lineNum the line number
     * @return the filename, or null if not a file entry line
     */
    String getFilename(int lineNum) {
-      if (lineNum < 1 || lineNum > readIn()) {
+      if (lineNum < 1 || lineNum >= readIn()) {
          return null;
       }
       String line = at(lineNum).toString();
 
-      // Skip header lines (lines starting with spaces before permissions)
-      if (line.startsWith("  ") && !line.startsWith("  [")) {
-         // Check if it's the "Directory:" line
-         if (line.contains("Directory:")) {
-            return null;
-         }
-         // It's a non-file line
+      // Skip blank or very short lines
+      if (line.length() < 3) {
          return null;
       }
 
-      // Skip help footer
-      if (line.startsWith("  [")) {
+      // Skip header ("  Directory: ...") line
+      if (line.contains("Directory:")) {
          return null;
       }
 
-      // Parse filename from end of line
-      // Format: "drwx  <size>  <date>  <name>"
+      // Skip help footer lines ("  [Enter]..." or "  [dd]...")
+      if (line.contains("  [")) {
+         return null;
+      }
+
+      // File entry lines have a 2-char mark prefix followed by
+      // a permission character (d, -, l) at position 2
+      char permChar = line.charAt(2);
+      if (permChar != 'd' && permChar != '-' && permChar != 'l') {
+         return null;
+      }
+
+      // Parse filename from end of line (after last "  " separator)
+      // Format: "<mark><perm>  <size>  <date>  <name>"
       int lastSpace = line.lastIndexOf("  ");
       if (lastSpace >= 0) {
          String name = line.substring(lastSpace + 2);
@@ -443,6 +496,320 @@ public final class DirEdit extends TextEdit<String> {
    }
 
    /**
+    * Deletes the file or directory under the cursor.
+    * Non-empty directories are not deleted (safety guard).
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if the cursor is not on a file entry
+    */
+   void deleteSelected(FvContext fvc) throws InputException {
+      int lineNum = fvc.inserty();
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         throw new InputException("No file under cursor");
+      }
+      if ("../".equals(filename)) {
+         throw new InputException("Cannot delete parent directory reference");
+      }
+
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      File target = new File(currentDir.fh, name);
+
+      if (!target.exists()) {
+         throw new InputException("File not found: " + name);
+      }
+
+      if (target.isDirectory()) {
+         String[] children = target.list();
+         if (null != children && children.length > 0) {
+            throw new InputException("Directory not empty: " + name
+               + " (" + children.length + " entries)");
+         }
+      }
+
+      if (!target.delete()) {
+         throw new InputException("Failed to delete: " + name);
+      }
+
+      UI.reportMessage("Deleted: " + name);
+      trace("DirEdit: deleted " + target.getAbsolutePath());
+      markedForDelete.remove(name);
+      populateDirectory();
+      // Keep cursor in bounds (last valid line is readIn()-1)
+      if (fvc.inserty() >= readIn()) {
+         fvc.cursoryabs(readIn() - 1);
+      }
+   }
+
+   /**
+    * Renames the file under the cursor.
+    *
+    * @param fvc the current FvContext
+    * @param newName the new filename (just the name, not a path)
+    * @throws InputException if the cursor is not on a file entry,
+    *    the new name is invalid, or the rename fails
+    */
+   void renameSelected(FvContext fvc, String newName)
+         throws InputException {
+      int lineNum = fvc.inserty();
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         throw new InputException("No file under cursor");
+      }
+      if ("../".equals(filename)) {
+         throw new InputException("Cannot rename parent directory reference");
+      }
+
+      if (null == newName || newName.trim().isEmpty()) {
+         throw new InputException("New name required: :diredit_rename <name>");
+      }
+
+      newName = newName.trim();
+
+      // Reject names containing path separators
+      if (newName.contains("/") || newName.contains("\\")) {
+         throw new InputException(
+            "New name must not contain path separators: " + newName);
+      }
+
+      String oldName = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      File source = new File(currentDir.fh, oldName);
+      File dest = new File(currentDir.fh, newName);
+
+      if (!source.exists()) {
+         throw new InputException("File not found: " + oldName);
+      }
+      if (dest.exists()) {
+         throw new InputException("Already exists: " + newName);
+      }
+
+      if (!source.renameTo(dest)) {
+         throw new InputException(
+            "Failed to rename: " + oldName + " -> " + newName);
+      }
+
+      UI.reportMessage("Renamed: " + oldName + " -> " + newName);
+      trace("DirEdit: renamed " + source.getAbsolutePath()
+         + " -> " + dest.getAbsolutePath());
+      populateDirectory();
+   }
+
+   /**
+    * Creates a new subdirectory in the current directory.
+    *
+    * @param fvc the current FvContext
+    * @param name the directory name to create
+    * @throws InputException if the name is invalid or creation fails
+    */
+   void createDirectory(FvContext fvc, String name) throws InputException {
+      if (null == name || name.trim().isEmpty()) {
+         throw new InputException(
+            "Directory name required: :diredit_mkdir <name>");
+      }
+
+      name = name.trim();
+
+      if (name.contains("/") || name.contains("\\")) {
+         throw new InputException(
+            "Name must not contain path separators: " + name);
+      }
+
+      File newDir = new File(currentDir.fh, name);
+
+      if (newDir.exists()) {
+         throw new InputException("Already exists: " + name);
+      }
+
+      if (!newDir.mkdir()) {
+         throw new InputException("Failed to create directory: " + name);
+      }
+
+      UI.reportMessage("Created directory: " + name);
+      trace("DirEdit: created directory " + newDir.getAbsolutePath());
+      populateDirectory();
+   }
+
+   /**
+    * Creates a new empty file in the current directory.
+    *
+    * @param fvc the current FvContext
+    * @param name the file name to create
+    * @throws InputException if the name is invalid or creation fails
+    * @throws IOException if an I/O error occurs
+    */
+   void createFile(FvContext fvc, String name)
+         throws InputException, IOException {
+      if (null == name || name.trim().isEmpty()) {
+         throw new InputException(
+            "File name required: :diredit_newfile <name>");
+      }
+
+      name = name.trim();
+
+      if (name.contains("/") || name.contains("\\")) {
+         throw new InputException(
+            "Name must not contain path separators: " + name);
+      }
+
+      File newFile = new File(currentDir.fh, name);
+
+      if (newFile.exists()) {
+         throw new InputException("Already exists: " + name);
+      }
+
+      if (!newFile.createNewFile()) {
+         throw new InputException("Failed to create file: " + name);
+      }
+
+      UI.reportMessage("Created file: " + name);
+      trace("DirEdit: created file " + newFile.getAbsolutePath());
+      populateDirectory();
+   }
+
+   /**
+    * Copies the file under the cursor to a new name.
+    *
+    * @param fvc the current FvContext
+    * @param destName the destination filename (in the same directory)
+    * @throws InputException if the cursor is not on a file entry,
+    *    the destination is invalid, or the copy fails
+    * @throws IOException if an I/O error occurs during copy
+    */
+   void copySelected(FvContext fvc, String destName)
+         throws InputException, IOException {
+      int lineNum = fvc.inserty();
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         throw new InputException("No file under cursor");
+      }
+      if ("../".equals(filename)) {
+         throw new InputException(
+            "Cannot copy parent directory reference");
+      }
+
+      if (null == destName || destName.trim().isEmpty()) {
+         throw new InputException(
+            "Destination required: :diredit_copy <name>");
+      }
+
+      destName = destName.trim();
+
+      String srcName = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      File source = new File(currentDir.fh, srcName);
+      File dest = new File(currentDir.fh, destName);
+
+      if (!source.exists()) {
+         throw new InputException("File not found: " + srcName);
+      }
+      if (source.isDirectory()) {
+         throw new InputException(
+            "Cannot copy directories: " + srcName);
+      }
+      if (dest.exists()) {
+         throw new InputException("Already exists: " + destName);
+      }
+
+      Files.copy(source.toPath(), dest.toPath(),
+         StandardCopyOption.COPY_ATTRIBUTES);
+
+      UI.reportMessage("Copied: " + srcName + " -> " + destName);
+      trace("DirEdit: copied " + source.getAbsolutePath()
+         + " -> " + dest.getAbsolutePath());
+      populateDirectory();
+   }
+
+   /**
+    * Marks or unmarks the file under the cursor for deletion.
+    * Marked files display a 'D' flag at the start of the line.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if the cursor is not on a file entry
+    */
+   void toggleDeleteMark(FvContext fvc) throws InputException {
+      int lineNum = fvc.inserty();
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         throw new InputException("No file under cursor");
+      }
+      if ("../".equals(filename)) {
+         throw new InputException(
+            "Cannot mark parent directory reference");
+      }
+
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+
+      if (markedForDelete.contains(name)) {
+         markedForDelete.remove(name);
+         UI.reportMessage("Unmarked: " + name);
+      } else {
+         markedForDelete.add(name);
+         UI.reportMessage("Marked for delete: " + name);
+      }
+      populateDirectory();
+   }
+
+   /**
+    * Executes all pending file operations (currently: deletions).
+    * Clears marks after execution. Reports results.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if no marks are set
+    */
+   void executeMarks(FvContext fvc) throws InputException {
+      if (markedForDelete.isEmpty()) {
+         throw new InputException("No files marked for deletion");
+      }
+
+      int deleted = 0;
+      int failed = 0;
+      ArrayList<String> errors = new ArrayList<>();
+
+      for (String name : new ArrayList<>(markedForDelete)) {
+         File target = new File(currentDir.fh, name);
+         if (!target.exists()) {
+            markedForDelete.remove(name);
+            continue;
+         }
+         if (target.isDirectory()) {
+            String[] children = target.list();
+            if (null != children && children.length > 0) {
+               errors.add(name + " (not empty)");
+               failed++;
+               continue;
+            }
+         }
+         if (target.delete()) {
+            markedForDelete.remove(name);
+            deleted++;
+            trace("DirEdit: batch deleted " + target.getAbsolutePath());
+         } else {
+            errors.add(name + " (delete failed)");
+            failed++;
+         }
+      }
+
+      StringBuilder msg = new StringBuilder();
+      msg.append("Deleted ").append(deleted).append(" file(s)");
+      if (failed > 0) {
+         msg.append(", ").append(failed).append(" failed: ");
+         msg.append(String.join(", ", errors));
+      }
+      UI.reportMessage(msg.toString());
+      populateDirectory();
+      if (fvc.inserty() >= readIn()) {
+         fvc.cursoryabs(readIn() - 1);
+      }
+   }
+
+   /**
     * Returns the current directory.
     *
     * @return the current directory
@@ -469,6 +836,13 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_sort",      // 5 - cycle sort mode
          "diredit_refresh",   // 6 - refresh listing
          "diredit_quit",      // 7 - quit directory editor
+         "diredit_delete",    // 8 - delete file under cursor
+         "diredit_rename",    // 9 - rename file under cursor
+         "diredit_mkdir",     // 10 - create new directory
+         "diredit_newfile",   // 11 - create new empty file
+         "diredit_copy",      // 12 - copy file under cursor
+         "diredit_mark",      // 13 - toggle delete mark
+         "diredit_execute",   // 14 - execute marked operations
       };
 
       /**
@@ -535,6 +909,52 @@ public final class DirEdit extends TextEdit<String> {
                // Switch to file list (same as F2)
                return Rgroup.doCommand("gotofilelist", null, 0, 0,
                   fvc, false);
+
+            case 8: // diredit_delete
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).deleteSelected(fvc);
+               }
+               return null;
+
+            case 9: // diredit_rename
+               if (fvc.edvec instanceof DirEdit) {
+                  String newName = (null != arg) ? arg.toString() : null;
+                  ((DirEdit) fvc.edvec).renameSelected(fvc, newName);
+               }
+               return null;
+
+            case 10: // diredit_mkdir
+               if (fvc.edvec instanceof DirEdit) {
+                  String dirName = (null != arg) ? arg.toString() : null;
+                  ((DirEdit) fvc.edvec).createDirectory(fvc, dirName);
+               }
+               return null;
+
+            case 11: // diredit_newfile
+               if (fvc.edvec instanceof DirEdit) {
+                  String fileName = (null != arg) ? arg.toString() : null;
+                  ((DirEdit) fvc.edvec).createFile(fvc, fileName);
+               }
+               return null;
+
+            case 12: // diredit_copy
+               if (fvc.edvec instanceof DirEdit) {
+                  String destPath = (null != arg) ? arg.toString() : null;
+                  ((DirEdit) fvc.edvec).copySelected(fvc, destPath);
+               }
+               return null;
+
+            case 13: // diredit_mark
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).toggleDeleteMark(fvc);
+               }
+               return null;
+
+            case 14: // diredit_execute
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).executeMarks(fvc);
+               }
+               return null;
 
             default:
                throw new RuntimeException("DirEdit.Commands: invalid rnum "

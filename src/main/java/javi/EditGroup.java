@@ -551,6 +551,17 @@ final class EditGroup extends Rgroup {
        InterruptedException, IOException, InputException {
 //trace("count = " + count + " rcount = " + rcount
 //    +  " fvc = " + fvc);
+
+      // In DirEdit, 'dd' triggers file deletion instead of line deletion
+      if (fvc.edvec instanceof DirEdit) {
+         if (!dotmode)
+            dotevent3 = EventQueue.nextKeye(fvc.vi);
+         if ('d' == dotevent3.getKeyChar()) {
+            ((DirEdit) fvc.edvec).deleteSelected(fvc);
+         }
+         return;
+      }
+
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
