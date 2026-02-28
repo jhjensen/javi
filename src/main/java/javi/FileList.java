@@ -694,6 +694,16 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       }
    }
 
+   /** Package-private test support for JUnit access to FileList singleton. */
+   static final class TestAccess {
+      static FileList getInstance() {
+         return instance;
+      }
+      static void reset() {
+         instance = null;
+      }
+   }
+
    /**
     * Idle handler for periodic file maintenance tasks.
     *
