@@ -1482,6 +1482,55 @@ class TextEditJUnitTest {
    }
 
     // =================================================================
+    // Port of test4: mismatched backup — both 'f' and 'b' responses
+    // =================================================================
+
+    /**
+     * Port of test4: file says "aaaa", backup has "xxx" state.
+     * First open responds 'f' (use file) — content stays "aaaa" and
+     * undo has no effect. Second open responds 'b' (use backup) —
+     * content is "xxx" from the backup history.
+     */
+    @Test
+    void mismatchedBackupFileThenBackupResponse() throws IOException {
+        String fname = "ju_test4";
+        String prereq = "ju_test4_pre";
+        deleteTestFiles(prereq, fname);
+
+        // Build prerequisite backup: insert "xxx", checkpoint, undo, dispose
+        UI.setStream(new StringReader(""));
+        TextEdit<String> pre = openTestFile(prereq);
+        pre.inserttext("xxx", 0, 1);
+        pre.checkpoint();
+        pre.undo();
+        pre.inserttext("xxx", 0, 1);
+        pre.checkpoint();
+        pre.printout();
+        pre.disposeFvc();
+
+        // First open: file "aaaa", backup has "xxx" state → respond 'f'
+        UI.setStream(new StringReader("f\n"));
+        EditTester1.copyFile(testPath(prereq + ".dmp2"),
+            testPath(fname + ".dmp2"));
+        writeTestFile(fname, "aaaa\n");
+        TextEdit<String> ex = openTestFile(fname);
+        assertEquals("aaaa", ex.at(1).toString());
+        ex.undo();
+        assertEquals("aaaa", ex.at(1).toString());
+        ex.disposeFvc();
+
+        // Second open: same setup → respond 'b' (use backup)
+        UI.setStream(new StringReader("b\n"));
+        EditTester1.copyFile(testPath(prereq + ".dmp2"),
+            testPath(fname + ".dmp2"));
+        ex = openTestFile(fname);
+        assertEquals("xxx", ex.at(1).toString());
+        ex.disposeFvc();
+
+        deleteTestFiles(prereq, fname);
+    }
+
+    // =================================================================
     // Performance: coarse regression guard (port of perftest)
     // =================================================================
 

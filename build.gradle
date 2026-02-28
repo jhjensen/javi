@@ -12,7 +12,7 @@ java {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    // Use Gradle's default JaCoCo version for compatibility
 }
 
 import com.github.spotbugs.snom.Effort
@@ -49,6 +49,11 @@ repositories {
     }
 }
 
+// Configuration for standalone JaCoCo agent (PSTest, IntArrayTest)
+configurations {
+    jacocoManualAgent
+}
+
 dependencies {
     // Primary dependencies from Maven Central for reproducible builds
     // Note: local JARs in lib/ are kept as fallback but not included in classpath
@@ -69,7 +74,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     
     // JaCoCo agent for coverage
-    jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.12:runtime'
+    jacocoManualAgent 'org.jacoco:org.jacoco.agent:0.8.13:runtime'
 }
 
 sourceSets {
@@ -103,7 +108,28 @@ tasks.named('compileJava') {
 
 tasks.named('test') {
     useJUnitPlatform()
-    jacoco.enabled = false
+    jacoco.enabled = true
+}
+
+// T1/T3: JaCoCo coverage report + minimum threshold enforcement
+tasks.named('jacocoTestReport') {
+    dependsOn test
+    reports {
+        html.required = true
+        xml.required = true
+    }
+}
+
+tasks.named('jacocoTestCoverageVerification') {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                // Start with a low threshold; raise as coverage improves
+                minimum = 0.15
+            }
+        }
+    }
 }
 
 // Ensure history classes are included in the JAR
@@ -142,11 +168,6 @@ tasks.register('distFat', Copy) {
     rename { projectVersion == 'dev' ? 'javi-all.jar' : "javi-all-${projectVersion}.jar" }
 }
 
-// Configuration for JaCoCo agent JAR
-configurations {
-    jacocoAgent
-}
-
 // Run PSTest with JaCoCo coverage
 tasks.register('pstestCoverage', JavaExec) {
     dependsOn compileJava
@@ -159,7 +180,7 @@ tasks.register('pstestCoverage', JavaExec) {
     def execFile = file("${layout.buildDirectory.get()}/jacoco/pstest.exec")
     doFirst {
         execFile.parentFile.mkdirs()
-        def agentJar = configurations.jacocoAgent.singleFile
+        def agentJar = configurations.jacocoManualAgent.singleFile
         jvmArgs "-javaagent:${agentJar}=destfile=${execFile}"
     }
 }
@@ -176,7 +197,7 @@ tasks.register('intArrayTestCoverage', JavaExec) {
     def execFile = file("${layout.buildDirectory.get()}/jacoco/intarraytest.exec")
     doFirst {
         execFile.parentFile.mkdirs()
-        def agentJar = configurations.jacocoAgent.singleFile
+        def agentJar = configurations.jacocoManualAgent.singleFile
         jvmArgs "-javaagent:${agentJar}=destfile=${execFile}", '-ea'
     }
 }
