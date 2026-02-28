@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -1366,5 +1367,173 @@ class TextEditJUnitTest {
         ex.disposeFvc();
         deleteTestFiles(fname);
     }
+
+    // =================================================================
+    // Port of test2+test3: sequential persistence chain
+    // =================================================================
+
+    /**
+     * Port of test2+test3: tests that undo history persists correctly
+     * across a file-copy chain. Creates a file (like test1), copies
+     * its files to a new name, opens the copy and verifies undo/redo
+     * of the inherited history.
+     */
+   @Test
+   void persistenceChainUndoRedo() throws IOException {
+      String base = "ju_chain_base";
+      String copy1 = "ju_chain_copy1";
+      String copy2 = "ju_chain_copy2";
+      UI.setStream(new StringReader("b\n"));
+      deleteTestFiles(base, copy1, copy2);
+
+      // Step 1: create base file with undo history (like test1)
+      TextEdit<String> ex = openTestFile(base);
+      assertEquals(2, ex.finish());
+      ex.inserttext("aaa", 0, 1);
+      ex.checkpoint();
+      assertEquals("aaa", ex.at(1).toString());
+      ex.idleSave();
+      ex.undo();
+      assertEquals(0, ex.at(1).toString().length());
+      // Insert different text after undo
+      ex.inserttext("xxx", 0, 1);
+      ex.checkpoint();
+      ex.printout();
+      ex.disposeFvc();
+
+      // Step 2: copy files to copy1 (like test2 copies from test1)
+      UI.setStream(new StringReader("b\n"));
+      EditTester1.copyFile(testPath(base), testPath(copy1));
+      EditTester1.copyFile(testPath(base + ".dmp2"),
+         testPath(copy1 + ".dmp2"));
+
+      TextEdit<String> ex2 = openTestFile(copy1);
+      assertEquals("xxx", ex2.at(1).toString());
+      ex2.undo();
+      assertEquals(0, ex2.at(1).toString().length());
+      ex2.redo();
+      assertEquals("xxx", ex2.at(1).toString());
+      ex2.undo();
+      ex2.disposeFvc();
+
+      // Step 3: copy files to copy2 (like test3 copies from test2)
+      UI.setStream(new StringReader("b\n"));
+      EditTester1.copyFile(testPath(copy1), testPath(copy2));
+      EditTester1.copyFile(testPath(copy1 + ".dmp2"),
+         testPath(copy2 + ".dmp2"));
+
+      TextEdit<String> ex3 = openTestFile(copy2);
+      assertEquals(0, ex3.at(1).toString().length());
+      ex3.redo();
+      assertEquals("xxx", ex3.at(1).toString());
+      ex3.undo();
+      ex3.disposeFvc();
+
+      deleteTestFiles(base, copy1, copy2);
+   }
+
+    // =================================================================
+    // Port of test15: deleted dmp2 mid-session → BadBackupFile
+    // =================================================================
+
+    /**
+     * Port of test15: deletes the .dmp2 backup file mid-session,
+     * then attempts to save (dispose). The persistence layer detects
+     * the missing/corrupt backup and throws {@link history.BadBackupFile}.
+     *
+     * <p>After the exception, reopening the file should recover to
+     * the last successfully-saved state.</p>
+     */
+   @Test
+   void deletedDmp2CausesBadBackup() throws IOException {
+      String fname = "ju_test15";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("a\n", 0, 1);
+      ex.idleSave();
+
+      // Delete the backup file mid-session
+      FileDescriptor.LocalFile dmpFile = makeLocal(fname + ".dmp2");
+      dmpFile.delete();
+
+      // Continue editing after dmp2 is gone
+      ex.inserttext("b\n", 0, 2);
+      ex.inserttext("c\n", 0, 3);
+      ex.checkpoint();
+      ex.printout();
+
+      // disposeFvc should throw BadBackupFile because the dmp2 was deleted
+      assertThrows(history.BadBackupFile.class, () -> ex.disposeFvc());
+
+      // Force GC to let the PersistantStack finalize cleanly
+      history.Tools.doGC();
+
+      // Reopen: should recover to the last successfully-saved state
+      UI.setStream(new StringReader(""));
+      TextEdit<String> ex2 = openTestFile(fname);
+      // Only "a" was saved before dmp2 was deleted
+      ex2.undo();
+      assertEquals("a", ex2.at(1).toString());
+      ex2.disposeFvc();
+
+      deleteTestFiles(fname);
+   }
+
+    // =================================================================
+    // Performance: coarse regression guard (port of perftest)
+    // =================================================================
+
+    /**
+     * Coarse port of EditTester1.perftest: creates a 20000-line file,
+     * runs a global delete command, verifies line count, reopens and
+     * checks persistence. Also asserts the operation completes within
+     * a generous time bound.
+     */
+   @Test
+   void perftestGlobalDeleteAndReopen() throws Exception {
+      String fname = "ju_perftest";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      int tot = 20000;
+      int expectedAfterDelete = 13123;
+      // generous bound: 2 seconds on any modern machine
+      long maxMillis = 2000;
+
+      // Write the test file
+      try (OutputStreamWriter fs = new OutputStreamWriter(
+            new FileOutputStream(testPath(fname)),
+            StandardCharsets.UTF_8)) {
+         for (int i = 0; i < tot; i++) {
+            fs.write("xxline " + i + '\n');
+         }
+      }
+
+      history.Tools.doGC();
+      long start = System.currentTimeMillis();
+
+      TextEdit<String> ex = openTestFile(fname);
+      assertEquals(tot + 1, ex.finish());
+
+      // global delete: remove all lines containing "9"
+      ex.processCommand("g/9/d", 1);
+      assertEquals(expectedAfterDelete, ex.finish());
+      ex.printout();
+      ex.disposeFvc();
+
+      // Reopen and verify persistence
+      ex = openTestFile(fname);
+      assertEquals(expectedAfterDelete, ex.finish());
+      ex.disposeFvc();
+
+      long elapsed = System.currentTimeMillis() - start;
+      assertTrue(elapsed < maxMillis,
+         "perftest should complete in <" + maxMillis
+         + "ms, took " + elapsed + "ms");
+
+      deleteTestFiles(fname);
+   }
 
 }
