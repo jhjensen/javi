@@ -243,13 +243,14 @@ final class Ctag {
          //trace("back tracking offset " + offset);
          ctfile.seek(offset);
          line = ctfile.readLine(); // find beginning of line
+         if (offset <= 0) {
+             break;
+         }
          line = ctfile.readLine(); // line up to next new line
+
          if  (null == line || !line.startsWith(curtag))
             break;
-         if (offset <= 0)
-            break;
-         offset -= line.length();
-         offset = Math.max(0, offset);
+         offset = Math.max(0, offset - line.length());
       }
 
       do {
