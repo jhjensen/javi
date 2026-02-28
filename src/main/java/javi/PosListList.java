@@ -1,5 +1,6 @@
 package javi;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -224,6 +225,7 @@ public final class PosListList extends TextList<Position> {
             "gotodirlist",
             "gotoroot",
             "nextposwait",
+            "gotosearchpath",
          };
          register(rnames);
          flush();
@@ -269,13 +271,25 @@ public final class PosListList extends TextList<Position> {
                throw new InputException("bad command");
 
             case GOTO_DIR_LIST:
-               FvContext.connectFv(DirList.getDefault(), fvc.vi);
-               return null;
+               // F3: Open directory editor for current file's directory
+               String dirPath = ".";
+               FileDescriptor fd = fvc.edvec.fdes();
+               if (fd instanceof FileDescriptor.LocalFile) {
+                  File parentDir = ((FileDescriptor.LocalFile) fd).fh
+                     .getParentFile();
+                  if (null != parentDir && parentDir.isDirectory()) {
+                     dirPath = parentDir.getPath();
+                  }
+               }
+               return DirEdit.openDirectory(dirPath, fvc.vi);
             case GOTO_ROOT:
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
             case NEXT_POS_WAIT:
                inst.gotoNextPos(fvc, (boolean[]) arg, true);
+               return null;
+            case 15:
+               FvContext.connectFv(DirList.getDefault(), fvc.vi);
                return null;
             default:
                throw new RuntimeException("vigroup:default");
@@ -350,6 +364,15 @@ public final class PosListList extends TextList<Position> {
             str = fvc.at().toString();
             str = getLastSym(str, fvc.insertx());
          }
+
+         // Check if the symbol is a directory path — open DirEdit
+         File dirCheck = new File(str);
+         if (dirCheck.isDirectory()) {
+            tagstack.add(porig);
+            DirEdit.openDirectory(str, fvc.vi);
+            return;
+         }
+
          TextEdit templist = taglookup(str, fvc.vi);
          if (null != templist) {
             inst.setLastList(templist);
