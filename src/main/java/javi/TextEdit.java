@@ -1361,9 +1361,11 @@ final class EditTester1 {
          ex.disposeFvc();
          myassert(false, ex);
       } catch (final history.BadBackupFile e) {
-         // This exception causes a PersistentStack to eventually finalize
-         // in a funny state. This GC forces the error log to come in the
-         // context of this test.
+         // B5: Intentionally caught — test15 verifies that deleting a .dmp2
+         // file mid-stream triggers BadBackupFile. The exception causes a
+         // PersistentStack to eventually finalize in a funny state. This GC
+         // forces the error log to come in the context of this test.
+         trace("test15: expected BadBackupFile: " + e.getMessage());
          Tools.doGC();
       }
 

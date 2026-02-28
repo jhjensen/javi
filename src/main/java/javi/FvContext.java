@@ -455,6 +455,11 @@ public final class FvContext<OType> implements Serializable {
       cursoryabs(ypos);
    }
 
+   // B6: rawtypes unavoidable — FvContext stores TextEdit<?> (wildcard)
+   // but FvMap and callers pass raw TextEdit. Parameterizing FvContext
+   // would require threading type parameters through FvMap, View,
+   // connectFv, and all command dispatch — a large architectural refactor.
+   // Deferred: see plan-B4-B7-thread-safety.md.
    @SuppressWarnings({ "unchecked", "rawtypes" })
    FvContext switchContext(TextEdit ev, int incval) {
       FvContext newcontext = fvmap.get(vi, ev);
@@ -469,7 +474,7 @@ public final class FvContext<OType> implements Serializable {
       return newcontext;
    }
 
-   @SuppressWarnings({ "unchecked", "rawtypes" })
+   @SuppressWarnings({ "unchecked", "rawtypes" }) // B6: same raw TextEdit issue
    public static FvContext getcontext(View viloc, TextEdit te) {
       // trace("fvcontext.getcontext " + e + " and " + viloc);
 
