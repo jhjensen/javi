@@ -354,6 +354,7 @@ public class FileDescriptor implements Serializable {
             //trace("cname " + cname);
             return cname;
          } catch (Throwable e) {
+            Tools.trace("makecname failed for " + fh.getName() + ": " + e);
             return "BAD file:" + fh.getName() + ":" + e;
          }
       }

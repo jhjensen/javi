@@ -107,7 +107,7 @@ public final class StreamInterface extends UI {
             }
          }
       } catch (IOException err) {
-         trace("ireportDiff can not read from input Stream ");
+         trace("ireportDiff can not read from input Stream: " + err);
          return false;
       }
    }
@@ -155,7 +155,7 @@ public final class StreamInterface extends UI {
             }
          }
       } catch (IOException err) {
-         trace("iconfirmReload can not read from input Stream ");
+         trace("iconfirmReload can not read from input Stream: " + err);
          return ReloadAction.IGNORE;
       }
    }

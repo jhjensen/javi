@@ -89,7 +89,7 @@ final class FileInput extends BufInIoc<String> {
       }
    }
 
-   FileInput(FileProperties fp) {
+   FileInput(FileProperties<String> fp) {
       super(fp, false, null);
       //trace("new FileInput prop = " + fp);
       if (null == fp)

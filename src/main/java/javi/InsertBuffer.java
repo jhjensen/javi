@@ -323,7 +323,8 @@ public abstract class InsertBuffer extends View.Inserter {
                }
             }
          } catch (InterruptedException e) {
-            trace("Interrupted Exception!!!");
+            Thread.currentThread().interrupt();
+            trace("Interrupted Exception: " + e);
          } finally  {
             cleanup(fvc);
             buffer.setLength(0);

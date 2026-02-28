@@ -405,6 +405,7 @@ public class EditContainer<OType> implements
             }
          }
       } catch (java.util.regex.PatternSyntaxException e) {
+         trace("bad regex in findOpen: " + e);
          return null;
       }
       return null;

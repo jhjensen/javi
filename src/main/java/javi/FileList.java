@@ -420,7 +420,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       private transient boolean dupflag = false;
       private transient boolean foundf = false;
 
-      FileParser(FileProperties fp, String fnames)  {
+      FileParser(FileProperties<TextEdit<String>> fp, String fnames)  {
          super(fp, true, new BufferedReader(new StringReader(fnames)));
       }
 

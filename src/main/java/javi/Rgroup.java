@@ -154,7 +154,6 @@ public abstract class Rgroup {
          glist.remove(realfile);
       }
       try {
-         @SuppressWarnings("unchecked")
          Class<?> nclass = Class.forName(lclass);
          glist.put(realfile, nclass.getDeclaredConstructor().newInstance());
       } catch (IllegalAccessException e) {
