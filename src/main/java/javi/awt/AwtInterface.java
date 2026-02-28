@@ -199,17 +199,20 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             int holdCount = EventQueue.biglock2.getHoldCount();
             for (int ii = 0; ii < holdCount; ii++)
                EventQueue.biglock2.unlock();
-
-            EventQueue.biglock2.assertUnOwned();
-            post();
             try {
-               while (!finished)
-                  wait();
-            } catch (InterruptedException e) {
-               trace("ignoring InterruptedException");
+               EventQueue.biglock2.assertUnOwned();
+               post();
+               try {
+                  while (!finished)
+                     wait();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  trace("ignoring InterruptedException: " + e);
+               }
+            } finally {
+               for (int ii = 0; ii < holdCount; ii++)
+                  EventQueue.biglock2.lock();
             }
-            for (int ii = 0; ii < holdCount; ii++)
-               EventQueue.biglock2.lock();
          }
          return this;
       }
@@ -518,7 +521,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                while (!flushed)
                   wait();
             } catch (InterruptedException e) {
-               trace("ignoring interruptedException");
+               Thread.currentThread().interrupt();
+               trace("ignoring InterruptedException: " + e);
             }
          }
       }

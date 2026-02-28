@@ -139,6 +139,7 @@ public final class Javi {
       //trace(System.getProperties().toString());
       //trace("prop : \n" + System.getProperties());
       EventQueue.biglock2.lock();
+      try {
       trace("enter Javi Main");
       //new Thread(new Preloader(), "preloader").start();
       Thread curr = Thread.currentThread();
@@ -286,7 +287,9 @@ public final class Javi {
          }
       }
 
-      EventQueue.biglock2.unlock();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
       //trace("calling UI.dispose");
       UI.dispose();
       trace("calling System.exit");
