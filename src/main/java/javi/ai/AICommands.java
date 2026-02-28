@@ -58,6 +58,7 @@ public final class AICommands extends Rgroup {
    private static final int CMD_CONFIG   = 6;
    private static final int CMD_CLEAR    = 7;
    private static final int CMD_TEST     = 8;
+   private static final int CMD_COMPLETE = 9;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -79,6 +80,7 @@ public final class AICommands extends Rgroup {
          "ai.config",      // 6 - show config
          "ai.clear",       // 7 - clear history
          "ai.test",        // 8 - test connection
+         "ai.complete",    // 9 - inline code completion
       };
       register(rnames);
    }
@@ -104,6 +106,8 @@ public final class AICommands extends Rgroup {
             return doClear();
          case CMD_TEST:
             return doTest();
+         case CMD_COMPLETE:
+            return doComplete(fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -153,6 +157,8 @@ public final class AICommands extends Rgroup {
             return doClear();
          case "test":
             return doTest();
+         case "complete":
+            return doComplete(fvc);
          case "help":
             showAiHelp(fvc);
             return null;
@@ -375,6 +381,89 @@ public final class AICommands extends Rgroup {
    }
 
    /**
+    * Perform AI-powered code completion at the current cursor position.
+    *
+    * <p>Sends the code from the start of the buffer up to the cursor
+    * to the AI provider, requesting a completion. The result is inserted
+    * directly at the cursor position (no ghost text preview).</p>
+    *
+    * <p>If the AI returns multi-line text, each line is inserted
+    * sequentially starting at the cursor line.</p>
+    *
+    * @param fvc the current file-view context
+    * @return null
+    * @throws IOException if an I/O error occurs
+    */
+   @SuppressWarnings("unchecked")
+   private Object doComplete(FvContext fvc) throws IOException {
+      String code = getCodeBeforeCursor(fvc);
+      if (null == code || code.isEmpty()) {
+         UI.reportMessage("AI: no code context for completion");
+         return null;
+      }
+
+      String fileName = fvc.edvec.getName();
+      UI.reportMessage("AI: generating completion...");
+
+      try {
+         AIClient client = AIClient.getInstance();
+         String completion = client.complete(code, fileName);
+
+         if (null == completion || completion.isEmpty()) {
+            UI.reportMessage("AI: no completion available");
+            return null;
+         }
+
+         // Strip leading/trailing blank lines
+         completion = completion.strip();
+
+         // Insert the completion at cursor position
+         EditContainer ec = fvc.edvec;
+         int cursorLine = fvc.inserty();
+
+         String[] lines = completion.split("\n", -1);
+         for (int i = 0; i < lines.length; i++) {
+            ec.insertOne(lines[i], cursorLine + i);
+         }
+
+         UI.reportMessage("AI: inserted " + lines.length + " line"
+            + (lines.length > 1 ? "s" : ""));
+
+      } catch (AIException e) {
+         UI.reportMessage("AI Error: " + e.getMessage());
+      }
+      return null;
+   }
+
+   /**
+    * Get the code from the current buffer from line 1 up to the
+    * cursor position (inclusive).
+    *
+    * @param fvc the current file-view context
+    * @return the code text before cursor, or null if empty
+    */
+   @SuppressWarnings("unchecked")
+   private String getCodeBeforeCursor(FvContext fvc) {
+      EditContainer ec = fvc.edvec;
+      int cursorLine = fvc.inserty();
+      if (cursorLine < 1)
+         return null;
+
+      int maxLine = Math.min(cursorLine, ec.readIn() - 1);
+      // Limit context to ~200 lines before cursor for manageable prompt
+      int startLine = Math.max(1, maxLine - 200);
+
+      StringBuilder sb = new StringBuilder(maxLine * 80);
+      for (int i = startLine; i <= maxLine; i++) {
+         Object line = ec.at(i);
+         if (null != line)
+            sb.append(line.toString());
+         sb.append('\n');
+      }
+      return sb.toString();
+   }
+
+   /**
     * Show AI help in the status area.
     *
     * @param fvc the current file-view context
@@ -388,6 +477,7 @@ public final class AICommands extends Rgroup {
       appendToChatBuffer("  :ai explain         Explain current code");
       appendToChatBuffer("  :ai review          Review code for issues");
       appendToChatBuffer("  :ai doc             Generate documentation");
+      appendToChatBuffer("  :ai complete        Insert AI code completion");
       appendToChatBuffer("  :ai config          Show AI configuration");
       appendToChatBuffer("  :ai clear           Clear chat history");
       appendToChatBuffer("  :ai test            Test provider connection");

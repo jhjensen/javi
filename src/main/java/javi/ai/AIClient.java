@@ -182,6 +182,29 @@ public final class AIClient {
    }
 
    /**
+    * Generate a code completion for the given prefix text.
+    *
+    * <p>This is a one-shot request. The AI is instructed to return
+    * only the completion text that would naturally follow the given
+    * code, without explanation or markdown fences.</p>
+    *
+    * @param codeBefore the code text before the cursor
+    * @param fileName the name of the file being edited (for context)
+    * @return the completion suggestion text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   public String complete(String codeBefore, String fileName)
+         throws IOException, AIException {
+      String prompt = "Complete the following code. "
+         + "Return ONLY the completion text that should be inserted next. "
+         + "Do NOT include any explanation, markdown fences, or the "
+         + "existing code. Just the new code to insert.\n\n"
+         + "File: " + fileName + "\n\n" + codeBefore;
+      return oneShot(prompt);
+   }
+
+   /**
     * Send a one-shot request without modifying conversation history.
     *
     * @param prompt the complete user prompt
