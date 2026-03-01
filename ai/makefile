@@ -48,9 +48,14 @@ ai/diff.out: FORCE
 ai/git-status.out: FORCE
 	git status > $@ 2>&1
 
+# JaCoCo coverage report + verification (runs JUnit tests + legacy tests first)
+ai/coverage.out: FORCE
+	./gradlew test pstestCoverage intArrayTestCoverage jacocoTestCoverageVerification > $@ 2>&1; echo "exit: $$?" >> $@
+
 # Convenience aliases (short names)
 compile.out: ai/compile.out
 junit.out:   ai/junit.out
 test.out:    ai/test.out
 cstyle.out:  ai/cstyle.out
 javadoc.out: ai/javadoc.out
+coverage.out: ai/coverage.out

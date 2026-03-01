@@ -111,22 +111,40 @@ tasks.named('test') {
     jacoco.enabled = true
 }
 
-// T1/T3: JaCoCo coverage report + minimum threshold enforcement
+// T1/T3: JaCoCo coverage report — merges JUnit + legacy test exec data
 tasks.named('jacocoTestReport') {
     dependsOn test
+    // Include coverage data from legacy PSTest/IntArrayTest runs if available
+    executionData.from(
+        fileTree(dir: "${layout.buildDirectory.get()}/jacoco")
+            .include('*.exec')
+    )
     reports {
         html.required = true
         xml.required = true
     }
 }
 
+// T1/T3: JaCoCo minimum threshold enforcement
 tasks.named('jacocoTestCoverageVerification') {
     dependsOn jacocoTestReport
+    executionData.from(
+        fileTree(dir: "${layout.buildDirectory.get()}/jacoco")
+            .include('*.exec')
+    )
     violationRules {
         rule {
+            // Overall project minimum (includes javi.awt at 0%)
             limit {
-                // Start with a low threshold; raise as coverage improves
                 minimum = 0.15
+            }
+        }
+        rule {
+            // Testable packages must meet a higher bar
+            element = 'PACKAGE'
+            includes = ['javi', 'history']
+            limit {
+                minimum = 0.20
             }
         }
     }
