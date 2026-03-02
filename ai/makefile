@@ -52,9 +52,14 @@ ai/git-status.out: FORCE
 ai/coverage.out: FORCE
 	./gradlew test pstestCoverage intArrayTestCoverage jacocoTestCoverageVerification > $@ 2>&1; echo "exit: $$?" >> $@
 
+# Test coverage (runs JUnit + legacy tests, generates merged JaCoCo report)
+ai/test-coverage.out: FORCE
+	$(MAKE) test-coverage > $@ 2>&1; echo "exit: $$?" >> $@
+
 # Convenience aliases (short names)
 compile.out: ai/compile.out
 junit.out:   ai/junit.out
+test-coverage.out: ai/test-coverage.out
 test.out:    ai/test.out
 cstyle.out:  ai/cstyle.out
 javadoc.out: ai/javadoc.out

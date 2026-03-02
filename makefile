@@ -145,15 +145,12 @@ pstest-coverage:
 		--sourcefiles src/main/java --sourcefiles src/history/java \
 		--html build/reports/coverage-pstest
 	@echo "Coverage report: build/reports/coverage-pstest/index.html"
+	@echo "NOTE: For full coverage including JUnit tests, use 'make test-coverage'"
 
-# Run all tests with coverage and generate report
+# Run all tests with coverage and generate merged report
 test-coverage:
-	./gradlew pstestCoverage intArrayTestCoverage
-	java -jar lib/org.jacoco.cli-0.8.12-nodeps.jar report build/jacoco/pstest.exec build/jacoco/intarraytest.exec \
-		--classfiles build/classes/java/main \
-		--sourcefiles src/main/java --sourcefiles src/history/java \
-		--html build/reports/coverage
-	@echo "Coverage report: build/reports/coverage/index.html"
+	./gradlew test pstestCoverage intArrayTestCoverage jacocoTestReport
+	@echo "Coverage report: build/reports/jacoco/test/html/index.html"
 
 #==============================================================================
 # Run targets
