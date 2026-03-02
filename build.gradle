@@ -136,15 +136,23 @@ tasks.named('jacocoTestCoverageVerification') {
         rule {
             // Overall project minimum (includes javi.awt at 0%)
             limit {
-                minimum = 0.15
+                minimum = 0.22
             }
         }
         rule {
             // Testable packages must meet a higher bar
             element = 'PACKAGE'
-            includes = ['javi', 'history']
+            includes = ['javi']
             limit {
-                minimum = 0.20
+                minimum = 0.23
+            }
+        }
+        rule {
+            // history package has strong coverage — hold higher bar
+            element = 'PACKAGE'
+            includes = ['history']
+            limit {
+                minimum = 0.70
             }
         }
     }
