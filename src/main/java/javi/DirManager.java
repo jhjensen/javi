@@ -91,6 +91,24 @@ public final class DirManager extends TextEdit<String> {
    private DirManager(FileProperties<String> fp) {
       super(new IoConverter(fp, true), fp);
       finish();
+      syncFromDirList();
+   }
+
+   /**
+    * Synchronize search path state from DirList.
+    * Called once at startup to import existing search path entries.
+    */
+   private void syncFromDirList() {
+      try {
+         DirList dl = DirList.getDefault();
+         if (null == dl)
+            return;
+         for (FileDescriptor.LocalDir dir : dl.getSearchDirs()) {
+            searchPath.add(dir);
+         }
+      } catch (Exception e) {
+         trace("DirManager: syncFromDirList failed: " + e);
+      }
    }
 
    // ---------------------------------------------------------------
@@ -145,16 +163,25 @@ public final class DirManager extends TextEdit<String> {
 
    /**
     * Format a single file/directory entry for display.
+    * Directories in the search path get an [S] indicator.
     *
     * @param f the file to format
     * @return formatted display string
     */
    private String formatEntry(File f) {
       String name = f.getName();
-      if (f.isDirectory())
+      boolean isDir = f.isDirectory();
+      if (isDir)
          name += "/";
       long size = f.length();
-      return String.format("%-40s %8d", name, size);
+
+      // Search path indicator for directories
+      String marker = "  ";
+      if (isDir && isInSearchPath(f)) {
+         marker = "S ";
+      }
+
+      return String.format("%s%-40s %8d", marker, name, size);
    }
 
    /**
@@ -208,6 +235,51 @@ public final class DirManager extends TextEdit<String> {
             result.add(f);
       }
       return result;
+   }
+
+   /**
+    * Check whether a directory is in the search path.
+    *
+    * @param dir the directory to check
+    * @return true if the directory is in the search path
+    */
+   boolean isInSearchPath(FileDescriptor.LocalDir dir) {
+      return searchPath.contains(dir);
+   }
+
+   /**
+    * Check whether a file (directory) is in the search path.
+    * Convenience method for DirEdit's formatEntry display.
+    *
+    * @param file the file to check
+    * @return true if the file's directory is in the search path
+    */
+   boolean isInSearchPath(File file) {
+      if (!file.isDirectory())
+         return false;
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(file.getPath());
+      return searchPath.contains(dir);
+   }
+
+   /**
+    * Toggle a directory's search path membership.
+    *
+    * @param dir the directory to toggle
+    * @return true if the directory is now in the search path
+    */
+   boolean toggleSearchPath(FileDescriptor.LocalDir dir) {
+      if (searchPath.contains(dir)) {
+         searchPath.remove(dir);
+         trace("DirManager: removed search dir " + dir);
+         return false;
+      } else {
+         searchPath.add(dir);
+         // Also add to DirList for backward compatibility
+         DirList.getDefault().addSearchDir(dir);
+         trace("DirManager: added search dir " + dir);
+         return true;
+      }
    }
 
    /**

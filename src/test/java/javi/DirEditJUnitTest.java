@@ -439,4 +439,62 @@ class DirEditJUnitTest {
       // For now just verify the DirEdit was created successfully
       assertNotNull(dirEdit);
    }
+
+   // --- Search path indicator tests ---
+
+   @Test
+   void searchPathDirShowsSMarker() throws Exception {
+      File subDir = new File(tempDir, "sp_marker_test");
+      subDir.mkdir();
+      File childDir = new File(subDir, "spchild");
+      childDir.mkdirs();
+
+      FileDescriptor.LocalDir childLocal =
+         FileDescriptor.LocalDir.make(childDir.getAbsolutePath());
+
+      DirManager dm = DirManager.getInstance();
+      dm.addSearchDir(childLocal);
+
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundS = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("spchild/") && line.startsWith("S ")) {
+            foundS = true;
+            break;
+         }
+      }
+      assertTrue(foundS,
+         "Search path directory should show 'S ' marker");
+
+      dm.removeSearchDir(childLocal);
+   }
+
+   @Test
+   void nonSearchPathDirShowsSpacePrefix() throws Exception {
+      File subDir = new File(tempDir, "sp_no_marker_test");
+      subDir.mkdir();
+      File childDir = new File(subDir, "normaldir");
+      childDir.mkdirs();
+
+      FileDescriptor.LocalDir childLocal =
+         FileDescriptor.LocalDir.make(childDir.getAbsolutePath());
+
+      DirManager dm = DirManager.getInstance();
+      dm.removeSearchDir(childLocal);
+
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundSpace = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("normaldir/") && line.startsWith("  ")) {
+            foundSpace = true;
+            break;
+         }
+      }
+      assertTrue(foundSpace,
+         "Non-search-path directory should show space prefix");
+   }
 }

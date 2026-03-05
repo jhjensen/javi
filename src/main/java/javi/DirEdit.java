@@ -204,8 +204,9 @@ public final class DirEdit extends TextEdit<String> {
       lines.add("");
       lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort"
          + "  [R] refresh  [q] quit");
-      lines.add("  [dd] delete  :diredit_rename  :diredit_mkdir"
-         + "  :diredit_newfile  :diredit_copy");
+      lines.add("  [dd] delete  [S] search path toggle"
+         + "  :diredit_rename  :diredit_mkdir  :diredit_newfile");
+      lines.add("  :diredit_copy  :dirmanager_toggle_searchpath");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -296,6 +297,9 @@ public final class DirEdit extends TextEdit<String> {
       String name = file.getName();
       if (!isParent && markedForDelete.contains(name)) {
          sb.append("D ");
+      } else if (!isParent && file.isDirectory()
+            && DirManager.getInstance().isInSearchPath(file)) {
+         sb.append("S ");
       } else {
          sb.append("  ");
       }
@@ -843,6 +847,7 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_copy",      // 12 - copy file under cursor
          "diredit_mark",      // 13 - toggle delete mark
          "diredit_execute",   // 14 - execute marked operations
+         "dirmanager_toggle_searchpath", // 15 - toggle search path
       };
 
       /**
@@ -953,6 +958,49 @@ public final class DirEdit extends TextEdit<String> {
             case 14: // diredit_execute
                if (fvc.edvec instanceof DirEdit) {
                   ((DirEdit) fvc.edvec).executeMarks(fvc);
+               }
+               return null;
+
+            case 15: // dirmanager_toggle_searchpath
+               if (fvc.edvec instanceof DirEdit) {
+                  DirEdit de = (DirEdit) fvc.edvec;
+                  int lineNum = fvc.inserty();
+                  String filename = de.getFilename(lineNum);
+
+                  if (null == filename) {
+                     UI.reportMessage("Not a file entry");
+                     return null;
+                  }
+
+                  if (!filename.endsWith("/")) {
+                     UI.reportMessage("Not a directory: " + filename);
+                     return null;
+                  }
+
+                  // Build full path for the directory
+                  String dirName;
+                  if ("../".equals(filename)) {
+                     File parentFile = de.getCurrentDir().fh.getParentFile();
+                     if (null == parentFile) {
+                        UI.reportMessage(
+                           "Cannot add root parent to search path");
+                        return null;
+                     }
+                     dirName = parentFile.getPath();
+                  } else {
+                     dirName = de.getCurrentDir().shortName
+                        + File.separator
+                        + filename.substring(0, filename.length() - 1);
+                  }
+
+                  FileDescriptor.LocalDir dir =
+                     FileDescriptor.LocalDir.make(dirName);
+                  boolean nowIn =
+                     DirManager.getInstance().toggleSearchPath(dir);
+                  de.populateDirectory();
+                  UI.reportMessage(nowIn
+                     ? "Added to search path: " + dirName
+                     : "Removed from search path: " + dirName);
                }
                return null;
 

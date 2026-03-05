@@ -85,6 +85,22 @@ final class DirList extends TextEdit<DirEntry> {
       return deflist;
    }
 
+   /**
+    * Returns the search path directories as a list.
+    *
+    * @return list of search path directories
+    */
+   ArrayList<FileDescriptor.LocalDir> getSearchDirs() {
+      ArrayList<FileDescriptor.LocalDir> dirs = new ArrayList<>();
+      int size = readIn();
+      for (int ii = 1; ii < size; ii++) {
+         DirEntry de = at(ii);
+         if (null != de && null != de.fh)
+            dirs.add(de.fh);
+      }
+      return dirs;
+   }
+
    void initSearch(String searchNamei) {
 
       dindex = 0;
