@@ -443,4 +443,205 @@ class MoveGroupJUnitTest {
       ex.disposeFvc();
       deleteTestFiles(fname);
    }
+
+   // ============================================================
+   // FvContext-based movement integration tests
+   // ============================================================
+
+   @Test
+   void fvcCursorGotoLineViaCommand() throws Exception {
+      String fname = "ju_mg_fvcgoto";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("line1\nline2\nline3\nline4\nline5\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      // goto line 3 via processCommand
+      int pos = ex.processCommand("3", fvc.inserty());
+      assertTrue(pos >= 0, "goto line should succeed");
+      fvc.cursoryabs(pos);
+      assertEquals(3, fvc.inserty());
+
+      // goto line 1
+      pos = ex.processCommand("1", fvc.inserty());
+      fvc.cursoryabs(pos);
+      assertEquals(1, fvc.inserty());
+
+      // goto last line with $
+      pos = ex.processCommand("$", fvc.inserty());
+      assertTrue(pos > 0, "$ should return last line");
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcCursorXAbsMovesToColumn() throws Exception {
+      String fname = "ju_mg_fvcx";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("abcdefghij\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      fvc.cursorxabs(0);
+      assertEquals(0, fvc.insertx());
+
+      fvc.cursorxabs(5);
+      assertEquals(5, fvc.insertx());
+
+      // Max value should clamp to end of line
+      fvc.cursorxabs(Integer.MAX_VALUE);
+      assertTrue(fvc.insertx() <= 10,
+         "cursor should clamp to line length");
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcCursorYRelativeMove() throws Exception {
+      String fname = "ju_mg_fvcy";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("a\nb\nc\nd\ne\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      fvc.cursoryabs(1);
+      assertEquals(1, fvc.inserty());
+
+      fvc.cursory(2);
+      assertEquals(3, fvc.inserty());
+
+      fvc.cursory(-1);
+      assertEquals(2, fvc.inserty());
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcCursorAbsMovesToXY() throws Exception {
+      String fname = "ju_mg_fvcabs";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("hello\nworld\ntest\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      fvc.cursorabs(2, 2);
+      assertEquals(2, fvc.inserty());
+      assertEquals(2, fvc.insertx());
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcExMoveCommand() throws Exception {
+      String fname = "ju_mg_fvcmv";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("first\nsecond\nthird\nfourth\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      // ex move command: move line 1 to after line 3
+      // moveLine inserts at 3, deletes at 1 → second, first, third, fourth
+      int result = ex.processCommand("1m3", fvc.inserty());
+      assertTrue(result >= 0, "move command should succeed");
+      assertEquals("second", ex.at(1).toString());
+      assertEquals("first", ex.at(2).toString());
+      assertEquals("third", ex.at(3).toString());
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcExCopyCommand() throws Exception {
+      String fname = "ju_mg_fvccopy";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("alpha\nbeta\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      // copy line 1 to after line 2
+      int result = ex.processCommand("1t2", fvc.inserty());
+      assertTrue(result >= 0, "copy command should succeed");
+      assertEquals("alpha", ex.at(1).toString());
+      assertEquals("beta", ex.at(2).toString());
+      assertEquals("alpha", ex.at(3).toString());
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcExRangeDelete() throws Exception {
+      String fname = "ju_mg_fvcrd";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("a\nb\nc\nd\ne\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      // delete lines 2-3
+      int result = ex.processCommand("2,3d", fvc.inserty());
+      assertTrue(result >= 0, "range delete should succeed");
+      assertEquals("a", ex.at(1).toString());
+      assertEquals("d", ex.at(2).toString());
+      assertEquals("e", ex.at(3).toString());
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void fvcLineOffsetNavigation() throws Exception {
+      String fname = "ju_mg_fvcoff";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("l1\nl2\nl3\nl4\nl5\nl6\n", 0, 1);
+      ex.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(ex, view);
+
+      int pos = ex.processCommand("2+2", fvc.inserty());
+      assertTrue(pos >= 0, "offset should succeed");
+      assertEquals(4, pos);
+
+      pos = ex.processCommand("5-2", fvc.inserty());
+      assertTrue(pos >= 0, "negative offset should succeed");
+      assertEquals(3, pos);
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
 }

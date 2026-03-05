@@ -1,6 +1,10 @@
 package javi;
 
+import java.io.StringReader;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -153,5 +157,193 @@ class CommandJUnitTest {
       String s = kb.toString();
       assertNotNull(s);
       assertTrue(s.length() > 0, "toString should be non-empty");
+   }
+
+   // ============================================================
+   // Command.command() dispatch integration tests
+   // ============================================================
+
+   @BeforeEach
+   void acquireLock() {
+      EventQueue.biglock2.lock();
+   }
+
+   @AfterEach
+   void releaseLock() {
+      EventQueue.biglock2.unlock();
+   }
+
+   private static String testPath(String name) {
+      return history.Testutil.testFile(name).getPath();
+   }
+
+   private static void deleteTestFiles(String baseName) {
+      for (String ext : new String[]{"", ".dmp2"}) {
+         try {
+            FileDescriptor.LocalFile.make(
+               history.Testutil.testFile(baseName + ext)).delete();
+         } catch (Exception ignore) {
+         }
+      }
+   }
+
+   private static TextEdit<String> openTestFile(String name) {
+      FileDescriptor fd = FileDescriptor.make(testPath(name));
+      FileProperties<String> fp =
+         new FileProperties<>(fd, StringIoc.converter);
+      FileInput fi = new FileInput(fp);
+      TextEdit<String> te = new TextEdit<>(fi, fp);
+      te.finish();
+      return te;
+   }
+
+   @Test
+   void commandDispatchesTabstopToView() throws Exception {
+      String fname = "ju_cmd_ts";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      Command.command("tabstop 4", fvc, null);
+      assertEquals(4, view.getTabStop());
+
+      Command.command("tabstop 8", fvc, null);
+      assertEquals(8, view.getTabStop());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandDispatchesSetTabstop() throws Exception {
+      String fname = "ju_cmd_set";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      Command.command("set tabstop=3", fvc, null);
+      assertEquals(3, view.getTabStop());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandDispatchesExSubstitute() throws Exception {
+      String fname = "ju_cmd_sub";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      te.inserttext("hello world\n", 0, 1);
+      te.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      // ex substitute goes through Command.command -> processCommand
+      Command.command("1s/hello/hey/", fvc, null);
+      assertEquals("hey world", te.at(1).toString());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandDispatchesGotoLine() throws Exception {
+      String fname = "ju_cmd_goto";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      te.inserttext("line1\nline2\nline3\n", 0, 1);
+      te.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      // numeric-only command goes through processCommand as goto-line
+      Command.command("2", fvc, null);
+      assertEquals(2, fvc.inserty());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandUnknownReportsError() throws Exception {
+      String fname = "ju_cmd_unk";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      // Unknown command should not throw, just report message
+      Command.command("xyznonexistent", fvc, null);
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandWithNullFvcUsesCurrent() throws Exception {
+      String fname = "ju_cmd_null";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      // null fvc should use getCurrFvc()
+      Command.command("tabstop 6", null, null);
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandGlobalDelete() throws Exception {
+      String fname = "ju_cmd_gdel";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      te.inserttext("keep1\nremove\nkeep2\nremove\nkeep3\n", 0, 1);
+      te.checkpoint();
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      Command.command("g/remove/d", fvc, null);
+      assertEquals("keep1", te.at(1).toString());
+      assertEquals("keep2", te.at(2).toString());
+      assertEquals("keep3", te.at(3).toString());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void commandWithExplicitArgs() throws Exception {
+      String fname = "ju_cmd_args";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> te = openTestFile(fname);
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+
+      // Pass args explicitly (third parameter)
+      Command.command("tabstop", fvc, "5");
+      assertEquals(5, view.getTabStop());
+
+      te.disposeFvc();
+      deleteTestFiles(fname);
    }
 }
