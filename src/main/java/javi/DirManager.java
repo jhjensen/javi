@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import static history.Tools.trace;
 
 /**
@@ -303,6 +306,248 @@ public final class DirManager extends TextEdit<String> {
    // ---------------------------------------------------------------
    // Static open helpers (same pattern as DirEdit)
    // ---------------------------------------------------------------
+
+   // --  Phase 6: Search-Path Backend APIs ─────────────────────
+   //     (ported from DirList)
+
+   /** Current directory index for file-find iteration. */
+   private transient int dindex;
+   /** Current file index within a directory for regex search. */
+   private transient int findex;
+   /** Max directory count for current search. */
+   private transient int maxIndex;
+   /** Target filename for simple file-find search. */
+   private transient String searchName;
+   /** Compiled regex pattern for regex file-find search. */
+   private transient Matcher regex;
+
+   /**
+    * Initialize a simple file-name search across the search path.
+    * After calling, use {@link #findNextFile()} to iterate results.
+    *
+    * @param name the file name to search for
+    */
+   void initSearch(String name) {
+      dindex = 0;
+      findex = -1;
+      maxIndex = searchPath.size();
+      searchName = name;
+   }
+
+   /**
+    * Initialize a regex file-name search across the search path.
+    * After calling, use {@link #findNextFileR()} to iterate results.
+    *
+    * @return true if the regex compiled successfully
+    */
+   boolean initSearchR() {
+      dindex = 0;
+      findex = -1;
+      maxIndex = searchPath.size();
+      try {
+         regex = Pattern.compile(searchName,
+            Pattern.CASE_INSENSITIVE).matcher("");
+      } catch (PatternSyntaxException e) {
+         return false;
+      }
+      return true;
+   }
+
+   /**
+    * Find the next file matching {@link #searchName} in the search path.
+    * Checks each search-path directory for a file with the exact name.
+    *
+    * @return the matching file descriptor, or null if no more matches
+    */
+   FileDescriptor.LocalFile findNextFile() {
+      while (++dindex <= maxIndex) {
+         if (dindex == 1) {
+            // First entry: check current directory
+            FileDescriptor.LocalFile fh =
+               FileDescriptor.LocalFile.make(searchName);
+            if (fh.isFile() || fh.isDirectory())
+               return fh;
+         } else {
+            FileDescriptor.LocalDir dir = searchPath.get(dindex - 2);
+            FileDescriptor.LocalFile fh = dir.createFile(searchName);
+            if (fh.isFile() || fh.isDirectory())
+               return fh;
+         }
+      }
+      return null;
+   }
+
+   /**
+    * Find the next file matching the regex pattern in the search path.
+    * Iterates all files in each search-path directory testing the name.
+    *
+    * @return the matching file descriptor, or null if no more matches
+    */
+   FileDescriptor findNextFileR() {
+      while (dindex <= maxIndex) {
+         FileDescriptor.LocalDir dir;
+         String[] flist;
+
+         if (dindex == 0) {
+            // First entry: search current directory
+            // (skip — handled by simple search)
+            dindex++;
+            findex = -1;
+            continue;
+         }
+
+         dir = searchPath.get(dindex - 1);
+         flist = dir.fh.list();
+
+         if (null != flist)
+            while (++findex < flist.length) {
+               if (null == regex)
+                  throw new RuntimeException("regex not initialized");
+               if (regex.reset(flist[findex]).matches()) {
+                  FileDescriptor.LocalFile fh = dindex == 1
+                     ? FileDescriptor.LocalFile.make(flist[findex])
+                     : dir.createFile(flist[findex]);
+                  if (fh.isFile() || fh.isDirectory())
+                     return fh;
+               }
+            }
+
+         dindex++;
+         findex = -1;
+      }
+      return null;
+   }
+
+   /**
+    * Flush cached directory listings across all search-path entries.
+    * Forces re-reading file lists from disk on next access.
+    */
+   void flushCache() {
+      // Nothing cached in DirManager search path entries yet;
+      // DirList still owns caches during migration. Delegate.
+      DirList.getDefault().flushCache();
+   }
+
+   /**
+    * Perform a grep across all files in the search path.
+    * Returns a TextEdit containing Position entries for each match.
+    *
+    * @param searchstr the regex pattern to search for
+    * @return a TextEdit of Position results
+    */
+   @SuppressWarnings("unchecked")
+   TextEdit<Position> globalgrep(String searchstr) {
+      ArrayList<DirCacheEntry> dlist = new ArrayList<>(searchPath.size());
+      for (FileDescriptor.LocalDir dir : searchPath) {
+         dlist.add(new DirCacheEntry(dir));
+      }
+      GrepReader conv = new GrepReader(searchstr, dlist, true);
+      return new TextEdit<Position>(conv, conv.prop);
+   }
+
+   /**
+    * Lightweight directory entry with file-list caching.
+    * Used by GrepReader for iterating files in search-path directories.
+    */
+   private static final class DirCacheEntry {
+      final FileDescriptor.LocalDir fh;
+      private String[] fcache;
+
+      DirCacheEntry(FileDescriptor.LocalDir dir) {
+         fh = dir;
+      }
+
+      String[] getCache() {
+         if (null == fcache)
+            fcache = fh.list();
+         return fcache;
+      }
+   }
+
+   /**
+    * Inner class that performs grep across multiple directories.
+    * Extends PositionIoc to produce Position results for each match.
+    * Ported from DirList.GrepReader.
+    */
+   private static final class GrepReader extends PositionIoc {
+
+      private transient Matcher matcher;
+      private ArrayList<DirCacheEntry> dirlist;
+      private transient boolean invert = false;
+
+      private static final String filespec =
+         "(.*\\.bin)|(.*\\.ml3)|(.*\\.rom)|(.*\\.loc)|(.*\\.axe)|"
+         + "(.*\\.o)|(.*\\.class)|(.*\\.lib)|(.*\\.obj)|(.*\\.pdb)|"
+         + "(.*\\.ilk)|(^tags)|(.*\\.exe)|(^ID)|(.*\\.cla +ss)|"
+         + "(.*\\.core)|(.*\\.dll)|(.*\\.gz)|(.*\\.zip)|"
+         + "(.*\\.hex)|(.*\\.dmp)|(.*\\.dmp2)|(.*\\.jar)|(^tags)$";
+
+      private static final Matcher fileMatcher = Pattern.compile(
+               filespec, Pattern.CASE_INSENSITIVE).matcher("");
+      private static final long serialVersionUID = 1;
+
+      private static long sizeLimit = 1;
+
+      GrepReader(String spec, ArrayList<DirCacheEntry> dirlisti,
+            boolean inverti) {
+         super("grep " + spec, null, pconverter);
+         dirlist = dirlisti;
+         matcher = Pattern.compile("(^.*(" + spec
+            + ").*$)|(^(.*)$)", Pattern.MULTILINE).matcher("");
+         invert = inverti;
+      }
+
+      protected void dorun() {
+         for (DirCacheEntry dir : dirlist) {
+            for (String filename : dir.getCache()) {
+               if (invert ^ fileMatcher.reset(filename).find()) {
+                  FileDescriptor.LocalFile fd = dir.fh.createFile(filename);
+                  if (!fd.isDirectory()) {
+                     if (fd.length() > sizeLimit * 1000000) {
+                        String[] choices = {
+                           "skip", "grep", "quit grep", "remove file"};
+                        UI.Result res = UI.reportModVal(
+                           fd.shortName + " length "
+                           + (fd.length() / 1000000)
+                           + " Mb is over grep size limit",
+                           "MB", choices, sizeLimit);
+                        sizeLimit = res.newValue;
+                        if ("skip".equals(res.choice))
+                           continue;
+                        else if ("quit grep".equals(res.choice))
+                           return;
+                        else if ("remove file".equals(res.choice)) {
+                           try {
+                              fd.delete();
+                           } catch (IOException e) {
+                              UI.popError(
+                                 "removing file failed" + fd, e);
+                           }
+                           continue;
+                        }
+                     }
+                     try {
+                        int linecount = 1;
+                        matcher.reset(fd.getString());
+                        while (matcher.find()) {
+                           if (matcher.start(2) != -1) {
+                              Position pos = new Position(
+                                 matcher.start(2) - matcher.start(),
+                                 linecount, fd, matcher.group(0));
+                              addElement(pos);
+                           }
+                           linecount++;
+                        }
+                     } catch (IOException e) {
+                        trace("caught IOException grepping " + fd);
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+
 
    /**
     * Open a directory in the DirManager, connecting it to a view.
