@@ -149,7 +149,7 @@ pstest-coverage:
 
 # Run all tests with coverage and generate merged report
 test-coverage:
-	./gradlew test pstestCoverage intArrayTestCoverage jacocoTestReport
+	./gradlew jacocoTestReport
 	@echo "Coverage report: build/reports/jacoco/test/html/index.html"
 
 #==============================================================================
