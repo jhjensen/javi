@@ -1533,6 +1533,13 @@ final class OldView extends AwtView {
             }
          }
 
+         // Ghost text preview on the ghost line
+         String ghost = getGhostText();
+         if (null != ghost && tindex == getGhostLine()) {
+            atIt.addGhostText(ghost, getGhostCol());
+         }
+         }
+
          if (index == screenposy) {
             atIt.emphasize(true);
             String iString = getInsertString();

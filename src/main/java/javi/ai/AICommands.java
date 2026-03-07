@@ -10,6 +10,7 @@ import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
+import javi.View;
 
 /**
  * Command group for AI-related editor commands.
@@ -59,9 +60,18 @@ public final class AICommands extends Rgroup {
    private static final int CMD_CLEAR    = 7;
    private static final int CMD_TEST     = 8;
    private static final int CMD_COMPLETE = 9;
+   private static final int CMD_ACCEPT   = 10;
+   private static final int CMD_DISMISS  = 11;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
+
+   /** Pending ghost text lines for accept/dismiss. */
+   private static String[] pendingGhostLines;
+   /** Line number where ghost text was placed. */
+   private static int pendingGhostLine;
+   /** Column offset where ghost text starts. */
+   private static int pendingGhostCol;
 
    /**
     * Create and register all AI commands.
@@ -80,7 +90,9 @@ public final class AICommands extends Rgroup {
          "ai.config",      // 6 - show config
          "ai.clear",       // 7 - clear history
          "ai.test",        // 8 - test connection
-         "ai.complete",    // 9 - inline code completion
+         "ai.complete",    // 9 - inline code completion (ghost text)
+         "ai.accept",      // 10 - accept ghost text completion
+         "ai.dismiss",     // 11 - dismiss ghost text completion
       };
       register(rnames);
    }
@@ -108,6 +120,10 @@ public final class AICommands extends Rgroup {
             return doTest();
          case CMD_COMPLETE:
             return doComplete(fvc);
+         case CMD_ACCEPT:
+            return doAcceptGhost(fvc);
+         case CMD_DISMISS:
+            return doDismissGhost();
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -159,6 +175,10 @@ public final class AICommands extends Rgroup {
             return doTest();
          case "complete":
             return doComplete(fvc);
+         case "accept":
+            return doAcceptGhost(fvc);
+         case "dismiss":
+            return doDismissGhost();
          case "help":
             showAiHelp(fvc);
             return null;
@@ -414,24 +434,70 @@ public final class AICommands extends Rgroup {
             return null;
          }
 
-         // Strip leading/trailing blank lines
          completion = completion.strip();
-
-         // Insert the completion at cursor position
-         EditContainer ec = fvc.edvec;
-         int cursorLine = fvc.inserty();
-
          String[] lines = completion.split("\n", -1);
-         for (int i = 0; i < lines.length; i++) {
-            ec.insertOne(lines[i], cursorLine + i);
-         }
+         int cursorLine = fvc.inserty();
+         int cursorCol = fvc.insertx();
 
-         UI.reportMessage("AI: inserted " + lines.length + " line"
-            + (lines.length > 1 ? "s" : ""));
+         // Store for accept
+         pendingGhostLines = lines;
+         pendingGhostLine = cursorLine;
+         pendingGhostCol = cursorCol;
+
+         // Show first line as ghost text preview (gray overlay)
+         View.setGhostText(lines[0], cursorLine, cursorCol);
+         fvc.vi.repaint();
+
+         String hint = lines.length > 1
+            ? "AI: " + lines.length + " lines — :ai accept / :ai dismiss"
+            : "AI: :ai accept / :ai dismiss";
+         UI.reportMessage(hint);
 
       } catch (AIException e) {
          UI.reportMessage("AI Error: " + e.getMessage());
       }
+      return null;
+   }
+
+   /**
+    * Accept the ghost text completion and insert it into the buffer.
+    */
+   @SuppressWarnings("unchecked")
+   private Object doAcceptGhost(FvContext fvc) throws IOException {
+      if (null == pendingGhostLines) {
+         UI.reportMessage("AI: no pending completion");
+         return null;
+      }
+      EditContainer ec = fvc.edvec;
+      int cursorLine = pendingGhostLine;
+      String[] lines = pendingGhostLines;
+
+      // Insert the first line at cursor column into current line
+      String currentLine = ec.at(cursorLine).toString();
+      String merged = currentLine.substring(0, pendingGhostCol)
+         + lines[0] + currentLine.substring(pendingGhostCol);
+      ec.changeElementAtStr(merged, cursorLine);
+
+      // Insert remaining lines
+      for (int i = 1; i < lines.length; i++) {
+         ec.insertOne(lines[i], cursorLine + i);
+      }
+
+      View.clearGhostText();
+      pendingGhostLines = null;
+      fvc.vi.repaint();
+      UI.reportMessage("AI: inserted " + lines.length + " line"
+         + (lines.length > 1 ? "s" : ""));
+      return null;
+   }
+
+   /**
+    * Dismiss the ghost text completion without inserting.
+    */
+   private Object doDismissGhost() {
+      View.clearGhostText();
+      pendingGhostLines = null;
+      UI.reportMessage("AI: completion dismissed");
       return null;
    }
 

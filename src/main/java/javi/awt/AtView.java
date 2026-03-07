@@ -28,6 +28,7 @@ final class AtView implements
    private HashMap<Attribute, Object> ryu;
    private HashMap<Attribute, Object> cyu;
    private HashMap<Attribute, Object> yyu;
+   private HashMap<Attribute, Object> ghostAttr;
 
    private String text;
    private int pos;
@@ -38,6 +39,8 @@ final class AtView implements
    private int olineStart;
    private int olineEnd;
    private Color lineFg;
+   private int ghostStart;
+   private int ghostEnd;
 //private AttributedCharacterIterator aci;
 //private int aciOffset;
 //private int aciEnd;
@@ -77,6 +80,8 @@ final class AtView implements
       emphFlag = false;
       olineStart = -1;
       olineEnd = -1;
+      ghostStart = -1;
+      ghostEnd = -1;
       line2start = Integer.MAX_VALUE;
       termAttrs = null;
       lineFg = null;
@@ -126,13 +131,16 @@ final class AtView implements
          if (line2start != Integer.MAX_VALUE)
             throw new RuntimeException(
                "detabing and multiline display not supported");
-         int[] tvals = {highStart, highFinish, olineStart, olineEnd};
+         int[] tvals = {highStart, highFinish, olineStart, olineEnd,
+            ghostStart, ghostEnd};
 
          text = DeTabber.deTab(text, tabOffset, tabstop, tvals);
          highStart = tvals[0];
          highFinish = tvals[1];
          olineStart = tvals[2];
          olineEnd = tvals[3];
+         ghostStart = tvals[4];
+         ghostEnd = tvals[5];
       }
    }
 
@@ -143,6 +151,12 @@ final class AtView implements
                   : olineEnd)
             , text.length());
       olineEnd++;
+   }
+
+   void addGhostText(String str, int offset) {
+      ghostStart = offset;
+      ghostEnd = offset + str.length();
+      text = text.substring(0, offset) + str + text.substring(offset);
    }
 
    void setHighlight(int start, int finish) {
@@ -280,6 +294,8 @@ final class AtView implements
       yyu = new HashMap<>(yy);
       yyu.put(TextAttribute.UNDERLINE,
          TextAttribute.UNDERLINE_LOW_DOTTED);
+      ghostAttr = new HashMap<>(by);
+      ghostAttr.put(TextAttribute.FOREGROUND, Color.DARK_GRAY);
       text = "";
 
    }
@@ -355,6 +371,9 @@ final class AtView implements
             ? termAttrs[pos] : CellAttr.DEFAULT;
          return buildTermMap(attr);
       }
+      // Ghost text takes priority when cursor is in ghost range
+      if (ghostEnd != -1 && pos >= ghostStart && pos < ghostEnd)
+         return ghostAttr;
       Map<Attribute, Object> base =
          olineEnd == -1
          ? pos  <  highStart
@@ -404,6 +423,8 @@ final class AtView implements
       retval = leastgtpos(retval, highFinish, pos);
       retval = leastgtpos(retval, olineEnd, pos);
       retval = leastgtpos(retval, olineStart, pos);
+      retval = leastgtpos(retval, ghostStart, pos);
+      retval = leastgtpos(retval, ghostEnd, pos);
       return leastgtpos(retval, line2start, pos);
 //trace("grun retval = " + retval + " line2start = " + line2start);
    }

@@ -131,6 +131,33 @@ public abstract class View  extends
       return inserter != null;
    }
 
+   // Ghost text preview state
+   private static String ghostText;
+   private static int ghostLine;
+   private static int ghostCol;
+
+   public static void setGhostText(String text, int line, int col) {
+      ghostText = text;
+      ghostLine = line;
+      ghostCol = col;
+   }
+
+   public static void clearGhostText() {
+      ghostText = null;
+   }
+
+   protected static String getGhostText() {
+      return ghostText;
+   }
+
+   protected static int getGhostLine() {
+      return ghostLine;
+   }
+
+   protected static int getGhostCol() {
+      return ghostCol;
+   }
+
    public final boolean isTraverseable() {
       return traverse;
    }
