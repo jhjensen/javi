@@ -656,6 +656,11 @@ public class EditContainer<OType> implements
       prop.setReadOnly(flag);
    }
 
+   boolean handleKey(JeyEvent jEv, FvContext fvc) throws
+         InputException, InterruptedException, IOException {
+      return false;
+   }
+
    public final String toString() {
       return (ioError
               ? "!!! IOError reading in file "

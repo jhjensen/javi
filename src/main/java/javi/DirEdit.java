@@ -108,6 +108,36 @@ public final class DirEdit extends TextEdit<String> {
       finish();
    }
 
+   @Override
+   boolean handleKey(JeyEvent jEv, FvContext fvc) throws
+         InputException, InterruptedException, IOException {
+      switch (jEv.getKeyChar()) {
+         case 's':
+            cycleSortMode(fvc);
+            return true;
+         case 'R':
+            refresh(fvc);
+            return true;
+         case 'q':
+            Rgroup.doCommand("gotofilelist", null, 0, 0, fvc, false);
+            return true;
+         case '\n': case '\r':
+            openSelected(fvc);
+            return true;
+         case '-':
+            goToParent(fvc);
+            return true;
+         case '.':
+            toggleHidden(fvc);
+            return true;
+         case 'D':
+            deleteSelected(fvc);
+            return true;
+         default:
+            return false;
+      }
+   }
+
    /**
     * Opens a directory browser for the specified path.
     *

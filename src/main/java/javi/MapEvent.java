@@ -387,7 +387,8 @@ public final class MapEvent {
       fiterate = aiterate;  // number of iterations forced to 1
       if (0 == fiterate)
          fiterate = 1;
-      if (domovement(jEv, fiterate, riterate, false, fvc)
+      if (fvc.edvec.handleKey(jEv, fvc)
+            || domovement(jEv, fiterate, riterate, false, fvc)
             || screenmovement(jEv, fvc)) {
          aiterate = 0;
          return;

@@ -20,3 +20,4 @@ reportXMLtoHTML.xsl
 .gradle
 .vscode
 ai.output
+bin
