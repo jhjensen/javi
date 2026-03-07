@@ -55,8 +55,8 @@ import static history.Tools.trace;
  */
 public final class MapEvent {
 
-   private static KeyGroup skeys = new KeyGroup();
-   private static KeyGroup mkeys = new KeyGroup();
+   private static KeyGroup skeys = new KeyGroup("normal-edit");
+   private static KeyGroup mkeys = new KeyGroup("normal-move");
 
 //private FvContext fvc=0;
 
@@ -91,6 +91,20 @@ public final class MapEvent {
       result.add("------------");
       result.addAll(skeys.getBindingList());
       return result;
+   }
+
+   /**
+    * Get a named keygroup for runtime binding modification.
+    *
+    * @param groupName "move" for movement keys, "edit" for editing keys
+    * @return the KeyGroup, or null if name not recognized
+    */
+   static KeyGroup getKeyGroup(String groupName) {
+      return switch (groupName) {
+         case "move" -> mkeys;
+         case "edit" -> skeys;
+         default -> null;
+      };
    }
 
    static void bindCommands() {

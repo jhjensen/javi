@@ -32,7 +32,9 @@ public final class MiscCommands extends Rgroup {
       SHELL_NAME,  // 17: rename shell
       SHELL_ENV,   // 18: set shell env var
       SHELL_HISTORY, // 19: show shell output history
-      SHELL_NEW,  // 20: create new shell
+      SHELL_NEW,   // 20: create new shell
+      MAP_KEY,     // 21: :mapkey command
+      UNMAP_KEY,   // 22: :unmapkey command
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -50,7 +52,7 @@ public final class MiscCommands extends Rgroup {
          "loadgroup",
          "comm",
          "exec",            //10
-         "lines", // 5
+         "lines",
          "setwidth",
          "shells",           // 13
          "shellclose",       // 14
@@ -60,6 +62,8 @@ public final class MiscCommands extends Rgroup {
          "shellenv",         // 18
          "shellhistory",     // 19
          "shellnew",         // 20
+         "mapkey",           // 21
+         "unmapkey",         // 22
       };
       register(rnames);
    }
@@ -136,6 +140,12 @@ public final class MiscCommands extends Rgroup {
          case SHELL_NEW:
             newShellCommand(fvc,
                arg instanceof String ? (String) arg : null);
+            return null;
+         case MAP_KEY:
+            doMap(arg instanceof String ? (String) arg : null);
+            return null;
+         case UNMAP_KEY:
+            doUnmap(arg instanceof String ? (String) arg : null);
             return null;
 
          default:
@@ -627,7 +637,103 @@ public final class MiscCommands extends Rgroup {
 
    private static Date lastredraw = new Date();
 
+   // :mapkey <group> <key> <command> — bind a key in a keygroup at runtime
+   // group: "move" or "edit"
+   // key: single char, C-x for ctrl, or special name (F1-F12, Up, Down, etc.)
+   private static void doMap(String arg) throws InputException {
+      if (arg == null || arg.isBlank())
+         throw new InputException("usage: mapkey <group> <key> <command>");
+      String[] parts = arg.trim().split("\\s+", 3);
+      if (parts.length < 3)
+         throw new InputException("usage: mapkey <group> <key> <command>");
+
+      KeyGroup kg = MapEvent.getKeyGroup(parts[0]);
+      if (kg == null)
+         throw new InputException("unknown keygroup: " + parts[0]
+            + " (use move or edit)");
+
+      JeyEvent key = parseKeySpec(parts[1]);
+      String command = parts[2];
+
+      if (Rgroup.bindingLookup(command) == null)
+         throw new InputException("unknown command: " + command);
+
+      kg.bind(key, command, null);
+   }
+
+   // :unmapkey <group> <key> — remove a key binding from a keygroup
+   private static void doUnmap(String arg) throws InputException {
+      if (arg == null || arg.isBlank())
+         throw new InputException("usage: unmapkey <group> <key>");
+      String[] parts = arg.trim().split("\\s+", 2);
+      if (parts.length < 2)
+         throw new InputException("usage: unmapkey <group> <key>");
+
+      KeyGroup kg = MapEvent.getKeyGroup(parts[0]);
+      if (kg == null)
+         throw new InputException("unknown keygroup: " + parts[0]
+            + " (use move or edit)");
+
+      JeyEvent key = parseKeySpec(parts[1]);
+      if (!kg.unbind(key))
+         throw new InputException("no binding for key: " + parts[1]);
+   }
+
+   // Parse a key specification string into a JeyEvent.
+   // Formats: single char (e.g. "x"), C-x for ctrl+char,
+   // special names: F1-F12, Up, Down, Left, Right, Home, End, PgUp, PgDn,
+   // Insert, Delete
+   private static JeyEvent parseKeySpec(String spec) throws InputException {
+      if (spec.length() == 1)
+         return new JeyEvent(0, 0, spec.charAt(0));
+
+      if (spec.length() == 3 && spec.charAt(1) == '-') {
+         char mod = spec.charAt(0);
+         char ch = spec.charAt(2);
+         if (mod == 'C')
+            return new JeyEvent(JeyEvent.CTRL_MASK, 0, ch);
+         if (mod == 'S')
+            return new JeyEvent(JeyEvent.SHIFT_MASK, 0, ch);
+         if (mod == 'M')
+            return new JeyEvent(JeyEvent.META_MASK, 0, ch);
+         if (mod == 'A')
+            return new JeyEvent(JeyEvent.ALT_MASK, 0, ch);
+      }
+
+      int keyCode = switch (spec) {
+         case "F1"  -> JeyEvent.VK_F1;
+         case "F2"  -> JeyEvent.VK_F2;
+         case "F3"  -> JeyEvent.VK_F3;
+         case "F4"  -> JeyEvent.VK_F4;
+         case "F5"  -> JeyEvent.VK_F5;
+         case "F6"  -> JeyEvent.VK_F6;
+         case "F7"  -> JeyEvent.VK_F7;
+         case "F8"  -> JeyEvent.VK_F8;
+         case "F9"  -> JeyEvent.VK_F9;
+         case "F10" -> JeyEvent.VK_F10;
+         case "F11" -> JeyEvent.VK_F11;
+         case "F12" -> JeyEvent.VK_F12;
+         case "Up"    -> JeyEvent.VK_UP;
+         case "Down"  -> JeyEvent.VK_DOWN;
+         case "Left"  -> JeyEvent.VK_LEFT;
+         case "Right" -> JeyEvent.VK_RIGHT;
+         case "Home"  -> JeyEvent.VK_HOME;
+         case "End"   -> JeyEvent.VK_END;
+         case "PgUp"  -> JeyEvent.VK_PAGE_UP;
+         case "PgDn"  -> JeyEvent.VK_PAGE_DOWN;
+         case "Insert" -> JeyEvent.VK_INSERT;
+         case "Delete" -> JeyEvent.VK_DELETE;
+         default -> -1;
+      };
+
+      if (keyCode == -1)
+         throw new InputException("unknown key: " + spec);
+
+      return new JeyEvent(0, keyCode, JeyEvent.CHAR_UNDEFINED);
+   }
+
    static void redraw(boolean flushFlag) throws IOException {
+
       // trace("redraw flushFlag " + flushFlag + " currFvc " +
       // FvContext.getCurrFvc());
       UI.repaint();

@@ -13,12 +13,25 @@ import java.util.Map;
  * are used for movement keys and static/editing keys.</p>
  */
 final class KeyGroup {
+   private final String name;
    private HashMap<JeyEvent, Rgroup.KeyBinding> bindingMap =
       new HashMap<JeyEvent, Rgroup.KeyBinding>(200);
 
    /** Stores the command name for each binding for documentation purposes. */
    private HashMap<JeyEvent, String> commandNames =
       new HashMap<JeyEvent, String>(200);
+
+   KeyGroup(String name) {
+      this.name = name;
+   }
+
+   KeyGroup() {
+      this.name = null;
+   }
+
+   String getName() {
+      return name;
+   }
 
    private static Rgroup.KeyBinding getkb(String name, Object arg) {
       //trace("looking up " + name);
@@ -57,6 +70,33 @@ final class KeyGroup {
       //trace("get " + e + " return " + bindingMap.get(e) + " event hash "
       //    + e.hashCode());
       return bindingMap.get(e);
+   }
+
+   /**
+    * Add or replace a runtime binding (for :map command).
+    * Unlike keybind(), this allows overwriting existing bindings.
+    */
+   void bind(JeyEvent key, String commandName, Object arg) {
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup(commandName);
+      bindingMap.put(key, kb.proto(arg));
+      commandNames.put(key, commandName);
+   }
+
+   /**
+    * Remove a binding (for :unmap command).
+    *
+    * @return true if a binding was removed
+    */
+   boolean unbind(JeyEvent key) {
+      commandNames.remove(key);
+      return null != bindingMap.remove(key);
+   }
+
+   /**
+    * Get the command name bound to a key, or null.
+    */
+   String getCommandName(JeyEvent key) {
+      return commandNames.get(key);
    }
 
    /**
