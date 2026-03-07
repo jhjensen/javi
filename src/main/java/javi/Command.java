@@ -10,6 +10,21 @@ import static history.Tools.trace;
 
 public final class Command extends Rgroup {
 
+   enum Cmd {
+      UNUSED,        // 0: noop
+      READ_FILE,     // 1: read file (r)
+      TAB_STOP,      // 2: set tab stop
+      TERMINATE,     // 3: terminate editor
+      COMMAND_PROC,  // 4: command processor (:)
+      CHECKOUT,      // 5: checkout/open file
+      SET,           // 6: set option
+      RELOAD,        // 7: reload file (e!)
+      HELP,          // 8: show help
+      MAP,           // 9: show key map
+   }
+
+   private static final Cmd[] CMDS = Cmd.values();
+
    private static Command instance;
 
    private static final String[] rnames = {
@@ -34,35 +49,35 @@ public final class Command extends Rgroup {
          FvContext fvc, boolean dotmode) throws InterruptedException {
       //trace("vic doroutine rnum = " + rnum);
       try  {
-         switch (rnum) {
-            case 0:
+         switch (CMDS[rnum]) {
+            case UNUSED:
                return null; // noop
-            case 1:
+            case READ_FILE:
                return readFile(arg, fvc);
-            case 2:
+            case TAB_STOP:
                fvc.vi.setTabStop(oToInt(arg));
                return null;
-            case 3:
+            case TERMINATE:
                Runtime.getRuntime().halt(0);
                return null;
-            case 4:
+            case COMMAND_PROC:
                commandproc(fvc);
                return null;
-            case 5:
+            case CHECKOUT:
                // Type safety: arg should be String from key mapping
                checkout(arg instanceof String ? (String) arg : arg.toString(), fvc);
                return null;
-            case 6:
+            case SET:
                // Type safety: arg should be String from key mapping
                setcommand(arg instanceof String ? (String) arg : arg.toString(), fvc);
                return null;
-            case 7:
+            case RELOAD:
                fvc.edvec.reload();
                return null;
-            case 8:
+            case HELP:
                showHelp((String) arg, fvc);
                return null;
-            case 9:
+            case MAP:
                showMap(fvc);
                return null;
             default:

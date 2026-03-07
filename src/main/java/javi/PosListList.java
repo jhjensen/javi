@@ -187,6 +187,26 @@ public final class PosListList extends TextList<Position> {
          inst.gotoList(fvc, list);
       }
 
+      enum PCmd {
+         UNUSED,              // 0
+         TA,                  // 1: tag lookup (ta)
+         GOTO_TAG,            // 2: go to tag
+         POP_TAG,             // 3: pop tag stack
+         FL,                  // 4: flush tag cache
+         REP,                 // 5: global grep
+         TE,                  // 6: (unused)
+         GOTO_PL_LIST,        // 7: go to position list
+         DUMMY1,              // 8: (unused)
+         NEXT_POS,            // 9: next position
+         GOTO_POSITION_LIST,  // 10: go to position list
+         DUMMY_PLL,           // 11: (unused/error)
+         GOTO_DIR_LIST,       // 12: go to dir list
+         GOTO_ROOT,           // 13: go to root
+         NEXT_POS_WAIT,       // 14: next position (wait)
+      }
+
+      private static final PCmd[] CMDS = PCmd.values();
+
       Cmd() throws IOException {
          final String[] rnames = {
             "",
@@ -213,48 +233,48 @@ public final class PosListList extends TextList<Position> {
             FvContext fvc, boolean dotmode) throws
             IOException, InputException {
          //trace("rnum = " + rnum );
-         switch (rnum) {
-            case 1:
+         switch (CMDS[rnum]) {
+            case TA:
                if (null != arg)
                   gototag(arg.toString().trim(), fvc);
                return null;
-            case 2:
+            case GOTO_TAG:
                gototag(null, fvc);
                return null;
-            case 3:
+            case POP_TAG:
                poptag(fvc.vi);
                return null;
-            case 4:
+            case FL:
                flush();
                return null;
-            case 5:
+            case REP:
                if (null != arg)
                   inst.addList(DirList.getDefault().globalgrep(
                      arg.toString()));
                return null;
-            case 6:
+            case TE:
                return null; //markex(new extext(new testr()),fvc); return null;
-            case 7:
+            case GOTO_PL_LIST:
                inst.gotoList(fvc, inst);
                return null; // fallthrough
-            case 8:
+            case DUMMY1:
                return null; //jlintcommand();return null;
-            case 9:
+            case NEXT_POS:
                inst.gotoNextPos(fvc, (boolean[]) arg, false);
                return null;
-            case 10:
+            case GOTO_POSITION_LIST:
                inst.gotoList(fvc, null);
                return null;
-            case 11:
+            case DUMMY_PLL:
                throw new InputException("bad command");
 
-            case 12:
+            case GOTO_DIR_LIST:
                FvContext.connectFv(DirList.getDefault(), fvc.vi);
                return null;
-            case 13:
+            case GOTO_ROOT:
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
-            case 14:
+            case NEXT_POS_WAIT:
                inst.gotoNextPos(fvc, (boolean[]) arg, true);
                return null;
             default:
