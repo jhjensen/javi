@@ -10,6 +10,39 @@ import static history.Tools.trace;
 final class MoveGroup extends Rgroup {
    private static final MoveGroup inst = new MoveGroup();
 
+   enum Cmd {
+      UNUSED,           // 0
+      MOVE_CHAR,        // 1: move cursor left/right (h/l)
+      MOVE_LINE,        // 2: move cursor up/down (j/k)
+      FORWARD_WORD,     // 3: forward word (w)
+      FORWARD_WORD_BIG, // 4: forward WORD (W)
+      BACKWARD_WORD,    // 5: backward word (b)
+      BACKWARD_WORD_BIG, // 6: backward WORD (B)
+      END_WORD,         // 7: end of word (e)
+      END_WORD_BIG,     // 8: end of WORD (E)
+      START_TEXT,       // 9: first non-blank (^)
+      BALANCE_CHAR,     // 10: matching bracket (%)
+      SHIFT_MOVE_LINE,  // 11: move line for shift
+      MOVE_LINE_START,  // 12: line start/end (0/$)
+      SCREEN_MOVE,      // 13: screen position (H/M/L)
+      FIND_CHAR,        // 14: find char on line (f/F/t/T)
+      REPEAT_FIND,      // 15: repeat find char (;/,)
+      REG_SEARCH,       // 16: regex search (n/N)
+      SEARCH_COMMAND,   // 17: search command (/?)
+      LINE_POS,         // 18: line position (|)
+      GOTO_LINE,        // 19: go to line (G)
+      FIND_MARK,        // 20: go to mark (`/')
+      MARK,             // 21: set mark (m)
+      FORWARD_REGEX,    // 22: forward regex search
+      BACKWARD_REGEX,   // 23: backward regex search
+      MOVE_OVER,        // 24: repeat last motion (.)
+      MOVE_SCREEN,      // 25: move screen position
+      UNUSED_M1,        // 26
+      MOVE_SCREEN_LINE, // 27: scroll screen line
+   }
+
+   private static final Cmd[] CMDS = Cmd.values();
+
    static void init() { /* forces static inst filed to be newed */
    }
 
@@ -27,7 +60,7 @@ final class MoveGroup extends Rgroup {
       new HashMap<>(5);
    private Matcher[] brega;
    private Matcher breg;
-   private int dotcommand;
+   private Cmd dotcommand = Cmd.UNUSED;
    private int dotcount;
    private int dotrcount;
    private boolean dotrev;
@@ -87,113 +120,114 @@ final class MoveGroup extends Rgroup {
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws InputException, IOException {
-      if (!dotmode && (24 != rnum)) {
-         dotcommand = rnum;
+      Cmd cmd = CMDS[rnum];
+      if (!dotmode && (cmd != Cmd.MOVE_OVER)) {
+         dotcommand = cmd;
          dotcount = count;
          dotrcount = rcount;
          dotarg = arg;
          dotrev = false;
       }
       //trace("rnum = " + rnum);
-      switch (rnum) {
-         case 1:
+      switch (cmd) {
+         case MOVE_CHAR:
             movechar(((Boolean) arg).booleanValue(), count, fvc);
             return null;
-         case 2:
+         case MOVE_LINE:
             moveline(((Boolean) arg).booleanValue(), count, fvc);
             return null;
-         case 3:
+         case FORWARD_WORD:
             if (dotrev)
                backwardword(count, fvc);
             else
                forwardword(count, fvc);
             return null;
-         case 4:
+         case FORWARD_WORD_BIG:
             if (dotrev)
                backwardWord(count, fvc);
             else
                forwardWord(count, fvc);
             return null;
-         case 5:
+         case BACKWARD_WORD:
             if (dotrev)
                forwardword(count, fvc);
             else
                backwardword(count, fvc);
             return null;
-         case 6:
+         case BACKWARD_WORD_BIG:
             if (dotrev)
                forwardWord(count, fvc);
             else
                backwardWord(count, fvc);
             return null;
-         case 7:
+         case END_WORD:
             endword(count, fvc);
             return null;
-         case 8:
+         case END_WORD_BIG:
             endWord(count, fvc);
             return null;
-         case 9:
+         case START_TEXT:
             starttext(fvc);
             return null;
-         case 10:
+         case BALANCE_CHAR:
             balancechar(fvc);
             return null;
-         case 11:
+         case SHIFT_MOVE_LINE:
             shiftmoveline(((Boolean) arg).booleanValue(), count, fvc);
             return null;
-         case 12:
+         case MOVE_LINE_START:
             movelinestart(arg, count, fvc);
             return null;
-         case 13:
+         case SCREEN_MOVE:
             screenmoveabs(arg, rcount, fvc);
             return null;
-         case 14:
+         case FIND_CHAR:
             findchar((boolean[]) arg, fvc, dotmode);
             return null;
-         case 15:
+         case REPEAT_FIND:
             repeatfind((boolean[]) arg, fvc);
             return null;
-         case 16:
+         case REG_SEARCH:
             regsearch(((Boolean) arg).booleanValue(), count, fvc);
             return null;
-         case 17:
+         case SEARCH_COMMAND:
             searchcommandI(((Boolean) arg).booleanValue(), count, fvc, dotmode);
             return null;
-         case 18:
+         case LINE_POS:
             linepos(arg, rcount, fvc);
             return null;
-         case 19:
+         case GOTO_LINE:
             gotoline(count, rcount, fvc, arg);
             return null;
-         case 20:
+         case FIND_MARK:
             findmark(fvc, EventQueue.nextKey(fvc.vi));
             return null;
-         case 21:
+         case MARK:
             mark(fvc, EventQueue.nextKey(fvc.vi));
             return null;
-         case 22:
+         case FORWARD_REGEX:
             rsearch((Matcher) arg, false, count, fvc);
             return null;
-         case 23:
+         case BACKWARD_REGEX:
             rsearch((Matcher) arg, true, count, fvc);
             return null;
-         case 24:
-            if (0 != dotcommand) {
+         case MOVE_OVER:
+            if (Cmd.UNUSED != dotcommand) {
                if (0 == rcount)
                   count = dotcount;
                dotcount = count;
                dotrev = ((Boolean)  arg).booleanValue();
                //trace("dotrev = " + dotrev);
-               return doroutine(dotcommand, dotarg, dotcount, dotrcount,
-                  fvc, true);
+               return doroutine(dotcommand.ordinal(), dotarg, dotcount,
+                  dotrcount, fvc, true);
             }
             return null;
-         case 25:
+         case MOVE_SCREEN:
             screenmoverel(arg, count, fvc);
             return null;
-         case 26:
+         case UNUSED_M1:
             return null;  //movehalfscreen(arg,count,fvc.vi); return null;
-         case 27:
+         case MOVE_SCREEN_LINE:
             fvc.screeny(1 == (((Integer) arg).intValue())
                ? count
                : -count);

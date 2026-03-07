@@ -10,6 +10,25 @@ import history.Tools;
 import static history.Tools.trace;
 
 public final class MiscCommands extends Rgroup {
+
+   enum Cmd {
+      UNUSED,      // 0
+      XXX_UNUSED,  // 1: free slot
+      Z_PROCESS,   // 2: z-position scroll
+      REDRAW,      // 3: redraw screen
+      UNDO,        // 4: undo (u)
+      REDO,        // 5: redo (^R)
+      UNDO_LINE,   // 6: undo line (U)
+      VT,          // 7: start shell
+      LOAD_GROUP,  // 8: load group
+      COMM,        // 9: start com
+      EXEC,        // 10: execute command
+      LINES,       // 11: set height
+      SET_WIDTH,   // 12: set width
+   }
+
+   private static final Cmd[] CMDS = Cmd.values();
+
    MiscCommands() {
       final String[] rnames = {
             "",
@@ -39,44 +58,44 @@ public final class MiscCommands extends Rgroup {
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
       // trace("rnum = " + rnum );
-      switch (rnum) {
-         case 1:
+      switch (CMDS[rnum]) {
+         case XXX_UNUSED:
             // free
             return null;
-         case 2:
+         case Z_PROCESS:
             zprocess(rcount, fvc);
             return null;
-         case 3:
+         case REDRAW:
             redraw(true);
             return null;
-         case 4:
+         case UNDO:
             undo(fvc);
             return null;
-         case 5:
+         case REDO:
             redo(fvc);
             return null;
-         case 6:
+         case UNDO_LINE:
             return null; // fvc.edvec.undoElement(fvc.inserty()); return null;
-         case 7:
+         case VT:
             // Type safety: arg should be String from key mapping
             startshell(fvc, arg instanceof String ? (String) arg : null);
             return null;
-         case 8:
+         case LOAD_GROUP:
             // Type safety: arg should be String from key mapping
             loadgroup(fvc.edvec.getName(), arg instanceof String ? (String) arg : null);
             return null;
-         case 9:
+         case COMM:
             // Type safety: arg should be String from key mapping
             startcom(arg instanceof String ? (String) arg : null, fvc);
             return null;
-         case 10:
+         case EXEC:
             // Type safety: arg should be String from key mapping
             startcmd(arg instanceof String ? (String) arg : null, fvc);
             return null;
-         case 11:
+         case LINES:
             defheight = oBToInt(arg);
             return null;
-         case 12:
+         case SET_WIDTH:
             defwidth = oBToInt(arg);
             return null;
 

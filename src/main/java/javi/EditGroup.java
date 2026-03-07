@@ -6,7 +6,40 @@ import static history.Tools.trace;
 
 final class EditGroup extends Rgroup {
 
-   private int dotcommand;
+   enum Cmd {
+      UNUSED,          // 0
+      INSERT,          // 1: insert before cursor (i)
+      INSERT_LINE,     // 2: insert at line start (I)
+      APPEND,          // 3: append after cursor (a)
+      APPEND_LINE,     // 4: append at line end (A)
+      OPENLINE,        // 5: open line below (o)
+      OPENLINE_ABOVE,  // 6: open line above (O)
+      SUBSTITUTE,      // 7: substitute char (s)
+      SUBSTITUTE_LINE, // 8: substitute line (S)
+      DELETE_CHARS,    // 9: delete characters (x)
+      DELETE_TO_END,   // 10: delete to end of line (D)
+      DELETE_TO_END_I, // 11: delete to end + insert (C)
+      DELETE_MODE,     // 12: delete with motion (d)
+      JOIN_LINES,      // 13: join lines (J)
+      SUB_CHAR,        // 14: replace character (r)
+      CHANGE_CASE,     // 15: toggle case (~)
+      CHANGE_MODE,     // 16: change with motion (c)
+      PUT_BEFORE,      // 17: put before cursor (P)
+      PUT_AFTER,       // 18: put after cursor (p)
+      Q_MODE,          // 19: record macro (q)
+      YANK_MODE,       // 20: yank with motion (y)
+      YANK,            // 21: yank lines (Y)
+      DO_OVER,         // 22: repeat last edit (.)
+      MARK_MODE,       // 23: visual mark mode (v/V)
+      EG_UNUSED1,      // 24
+      EG_UNUSED2,      // 25
+      SHIFT_MODE,      // 26: shift lines (>/<)
+      TAB_FIX,         // 27: fix tabs
+   }
+
+   private static final Cmd[] CMDS = Cmd.values();
+
+   private Cmd dotcommand = Cmd.UNUSED;
    private char dotbufid;
    private JeyEvent dotevent2;
    private JeyEvent dotevent3;
@@ -55,118 +88,120 @@ final class EditGroup extends Rgroup {
          FvContext  fvc, boolean dotmode) throws
          InterruptedException, IOException, InputException {
       //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
+      Cmd cmd = CMDS[rnum];
       try {
-         if (!dotmode && !(rnum >= 20 && rnum <= 22)) {
-            dotcommand = rnum;
+         if (!dotmode && !(cmd == Cmd.YANK_MODE || cmd == Cmd.YANK
+               || cmd == Cmd.DO_OVER)) {
+            dotcommand = cmd;
             dotcount = count;
             dotrcount = rcount;
             dotarg = arg;
             dotrcount = rcount;
          }
 
-         switch (rnum) {
-            case 1:
+         switch (cmd) {
+            case INSERT:
                boolean[] a2 = (boolean[]) arg;
                InsertBuffer.insertMode(dotmode, count, fvc, a2[0], a2[1]);
                break;
-            case 2:
+            case INSERT_LINE:
                fvc.cursorxabs(0);
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 3:
+            case APPEND:
                fvc.cursorx(1);
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 4:
+            case APPEND_LINE:
                fvc.cursorxabs(Integer.MAX_VALUE);
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 5:
+            case OPENLINE:
                fvc.cursorxabs(Integer.MAX_VALUE);
                fvc.inserttext("\n");
                fvc.cursory(1);
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 6:
+            case OPENLINE_ABOVE:
                fvc.cursorxabs(0);
                fvc.inserttext("\n");
 
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 7:
+            case SUBSTITUTE:
                substitute(dotmode, count, fvc);
                break;
-            case 8:
+            case SUBSTITUTE_LINE:
                ucSubstitute(dotmode, count, fvc);
                break;
-            case 9:
+            case DELETE_CHARS:
                boolean[] a1 = (boolean[]) arg;
                fvc.deleteChars('0', a1[0], a1[1], count);
                break;
-            case 10:
+            case DELETE_TO_END:
                deletetoend('0', count, fvc);
                break;
-            case 11:
+            case DELETE_TO_END_I:
                deletetoend('0', count, fvc);
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
-            case 12:
+            case DELETE_MODE:
                deletemode('0', dotmode, count, rcount, fvc);
                break;
-            case 13:
+            case JOIN_LINES:
                fvc.cursorxabs(fvc.edvec.joinlines(count, fvc.inserty()));
                break;
-            case 14:
+            case SUB_CHAR:
                subChar(dotmode, count, fvc);
                break;
-            case 15:
+            case CHANGE_CASE:
                fvc.edvec.changecase(fvc.insertx(), fvc.inserty(),
                   fvc.insertx() + count, fvc.inserty());
                fvc.cursorx(count);
                break;
-            case 16:
+            case CHANGE_MODE:
                changemode('0', dotmode, count, rcount, fvc);
                break;
-            case 17:
+            case PUT_BEFORE:
                putbuffer('0', false, fvc);
                break;
-            case 18:
+            case PUT_AFTER:
                putbuffer('0', true, fvc);
                break;
-            case 19:
+            case Q_MODE:
                qmode(count, rcount, dotmode, fvc);
                break;
-            case 20:
+            case YANK_MODE:
                yankmode('0', false, count, rcount, fvc);
                break;
-            case 21:
+            case YANK:
                ArrayList<String> bufs = fvc.getElementsAt(count);
                //trace("yank " + count + " lines ");
                Buffers.deleted('0', bufs);
                break;
-            case 22:
-               if (0 != dotcommand) {
+            case DO_OVER:
+               if (Cmd.UNUSED != dotcommand) {
                   if (0 == rcount)
                      count = dotcount;
                   dotcount = count;
-                  return doroutine(dotcommand, dotarg, dotcount,
+                  return doroutine(dotcommand.ordinal(), dotarg, dotcount,
                      dotrcount, fvc, true);
                }
                return null;
-            case 23:
+            case MARK_MODE:
                markmode('0', dotmode, count, rcount, fvc,
                   1 == ((Integer) arg).intValue());
                break;
-            case 24:
-            case 25:
+            case EG_UNUSED1:
+            case EG_UNUSED2:
                return null;
 
-            case 26:
+            case SHIFT_MODE:
                shiftmode(((Integer) arg).intValue(), count,
                   fvc, dotmode, rcount);
                break;
 
-            case 27:
+            case TAB_FIX:
                fvc.edvec.tabfix(fvc.vi.getTabStop());
                break;
             default:

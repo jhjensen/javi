@@ -74,6 +74,23 @@ public abstract class InsertBuffer extends View.Inserter {
 
    private final class Cmd extends Rgroup {
 
+      enum ICmd {
+         UNUSED,          // 0
+         TOGGLE_INSERT,   // 1: toggle insert/overwrite
+         TAB_INSERT,      // 2: insert tab
+         BACKSPACE,       // 3: backspace
+         DELETE,          // 4: delete char
+         COMPLETE,        // 5: complete/exit insert mode
+         INSERT_NEWLINE,  // 6: insert newline
+         CANCEL,          // 7: cancel insert
+         SET_VERBATIM,    // 8: verbatim input mode
+         PREV_LINE,       // 9: previous history line
+         NEXT_LINE,       // 10: next history line
+         PUT_BUF,         // 11: put buffer
+      }
+
+      private static final ICmd[] ICMDS = ICmd.values();
+
       Cmd() {
          final String[] rnames = {
             "",
@@ -134,8 +151,8 @@ public abstract class InsertBuffer extends View.Inserter {
             FvContext fvc, boolean dotmode) throws InputException {
          //trace("rnum = " + rnum);
 
-         switch (rnum) {
-            case 1:
+         switch (ICMDS[rnum]) {
+            case TOGGLE_INSERT:
                itext(1, fvc);
                if (fvc.edvec instanceof Vt100) {
                   Vt100 v100  = (Vt100) fvc.edvec;
@@ -146,7 +163,7 @@ public abstract class InsertBuffer extends View.Inserter {
                   return this;
                }
                break;
-            case 2:
+            case TAB_INSERT:
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
                int linepos = fvc.insertx() + buffer.length();
@@ -155,7 +172,7 @@ public abstract class InsertBuffer extends View.Inserter {
                   buffer.append(' ');
                fvc.vi.lineChanged(fvc.inserty());
                break;
-            case 3:
+            case BACKSPACE:
                if (0 == buffer.length()) {
                   // B10: Prevent deleting the prompt character in command line mode
                   if (singleline && fvc.insertx() <= 1) {
@@ -169,10 +186,10 @@ public abstract class InsertBuffer extends View.Inserter {
                   fvc.vi.lineChanged(fvc.inserty());
                }
                break;
-            case  4: // delete
+            case DELETE:
                fvc.deleteChars('0', false, true, 1);
                break;
-            case 5:
+            case COMPLETE:
                itext(count, fvc);
                if (count > 1) {
                   if (overwrite)
@@ -182,18 +199,18 @@ public abstract class InsertBuffer extends View.Inserter {
                      fvc.cursorabs(fvc.inserttext(dotbuffer));
                }
                return this;
-            case 6:
+            case INSERT_NEWLINE:
                buffer.append('\n');
                itext(count, fvc);
                break;
-            case 7:
+            case CANCEL:
                buffer.setLength(0);
                fvc.changeElement(original);
                return this;
-            case 8:
+            case SET_VERBATIM:
                verbatim = true;
                break;
-            case 9:
+            case PREV_LINE:
                int temp = currline;
                char prompt = fvc.at().toString().charAt(0);
                while (--temp > 1)
@@ -205,7 +222,7 @@ public abstract class InsertBuffer extends View.Inserter {
                   fvc.changeElement(fvc.at(currline));
                }
                break;
-            case 10:
+            case NEXT_LINE:
                temp = currline;
                prompt = fvc.at().toString().charAt(0);
                if (temp == fvc.inserty())
@@ -224,7 +241,7 @@ public abstract class InsertBuffer extends View.Inserter {
                buffer.setLength(0);
                fvc.changeElement(fvc.at(currline));
                break;
-            case 11:
+            case PUT_BUF:
                Buffers.appendCurrBuf(buffer, singleline);
                fvc.changeElement(fvc.at(currline)); // force redraw
                break;
