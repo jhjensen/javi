@@ -181,10 +181,6 @@ class Vt100 extends TextEdit<String> {
                if ('\r' == ch
                      && '\r' == kev.getKeyCode()) // this was really a cr
                   ch = '\n';
-               // F11: Ctrl+] (0x1d) exits shell passthrough mode
-               // (alternative to Insert key, which is unavailable on Mac)
-               if (0x1d == ch)
-                  return;
                //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
                //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
                //trace ("passing key location " + kev.getKeyLocation());
