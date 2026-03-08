@@ -758,6 +758,7 @@ public abstract class PersistantStack<E> {
 
       cache.clear();
       offsets = null;
+      binp = null; // B8: release dmp2 byte[] backing array for GC
 
       size = 0;
       writtenCount = 0;

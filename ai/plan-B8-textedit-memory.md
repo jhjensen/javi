@@ -14,6 +14,15 @@
 ByteBuffer buf = ByteBuffer.allocate(length);  // full file in heap
 ```
 
+### Memory Profile
+- `setFile()` calls `readFile()` → `ByteBuffer.allocate(fileSize)` → `buf.array()` → full byte[] on heap
+- `ByteInput(iarray)` wraps that byte[] — no copy, just a reference with offset/limit
+- `binp` (instance field) holds the ByteInput, keeping the byte[] alive for random-access reads via `seek()`+`readExternal()`
+- `offsets` (IntArray) stores record positions for O(1) lookup into `binp`
+- `cache` (ArrayList) holds recently-accessed records in memory
+- **Bug found**: `reset()` nulled `offsets` but NOT `binp`, leaking the byte[] until GC of the PersistantStack itself
+- **Fix applied**: Added `binp = null` in `reset()` to release the backing byte[] when the file is closed
+
 ### Analysis
 - .dmp2 files use random access (offset table + seek pattern)
 - Memory-mapped approach was considered (commented code at line ~547) but abandoned
@@ -23,5 +32,6 @@ ByteBuffer buf = ByteBuffer.allocate(length);  // full file in heap
 ### Recommendation
 - LOW priority: .dmp2 files are typically small (undo history, not full file content)
 - The main memory wins have been achieved in FileInput (file content loading)
+- The `binp = null` fix in `reset()` ensures the byte[] is released on close
 - If profiling shows .dmp2 as a concern, consider MappedByteBuffer approach
-- No code change recommended without measured evidence of impact
+- No further code change recommended without measured evidence of impact
