@@ -111,9 +111,19 @@ public final class DirEdit extends TextEdit<String> {
    @Override
    boolean handleKey(JeyEvent jEv, FvContext fvc) throws
          InputException, InterruptedException, IOException {
-      switch (jEv.getKeyChar()) {
+      char ch = jEv.getKeyChar();
+      if (ch == JeyEvent.CHAR_UNDEFINED) {
+         return false; // let action keys (arrows, F-keys, etc.) through
+      }
+
+      // DirEdit-specific commands
+      switch (ch) {
          case 's':
             cycleSortMode(fvc);
+            return true;
+         case 'S':
+            Rgroup.doCommand("dirmanager_toggle_searchpath", null, 0, 0,
+               fvc, false);
             return true;
          case 'R':
             refresh(fvc);
@@ -134,8 +144,39 @@ public final class DirEdit extends TextEdit<String> {
             deleteSelected(fvc);
             return true;
          default:
-            return false;
+            break;
       }
+
+      // Allow navigation keys through to mkeys/skeys dispatch
+      switch (ch) {
+         case 'h': case 'j': case 'k': case 'l':
+         case 'H': case 'M': case 'L':
+         case 'w': case 'W': case 'b': case 'B': case 'e': case 'E':
+         case 'f': case 'F': case 't': case 'T':
+         case 'n': case 'N':
+         case ';': case ',':
+         case '0': case '1': case '2': case '3': case '4':
+         case '5': case '6': case '7': case '8': case '9':
+         case '$': case '^': case '|':
+         case 'G': case '%': case '+':
+         case '(': case ')': case '{': case '}': case '[': case ']':
+         case 'm': case '\'':
+         case '/': case '?':
+         case ':': case 'z': case 'Z':
+         case ' ':
+         case 27: // Escape
+            return false;
+         default:
+            break;
+      }
+
+      // Allow control characters through (Ctrl-F, Ctrl-B, etc.)
+      if (ch < 32) {
+         return false;
+      }
+
+      // Block everything else (editing commands: i,a,o,c,d,x,p,r,~, etc.)
+      return true;
    }
 
    /**

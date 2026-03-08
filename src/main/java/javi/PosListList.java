@@ -204,6 +204,7 @@ public final class PosListList extends TextList<Position> {
          GOTO_DIR_LIST,       // 12: go to dir list
          GOTO_ROOT,           // 13: go to root
          NEXT_POS_WAIT,       // 14: next position (wait)
+         GOTO_DIR_LIST_DEFAULT, // 15: go to default dir list
       }
 
       private static final PCmd[] CMDS = PCmd.values();
@@ -288,7 +289,7 @@ public final class PosListList extends TextList<Position> {
             case NEXT_POS_WAIT:
                inst.gotoNextPos(fvc, (boolean[]) arg, true);
                return null;
-            case 15:
+            case GOTO_DIR_LIST_DEFAULT:
                FvContext.connectFv(DirList.getDefault(), fvc.vi);
                return null;
             default:
