@@ -242,13 +242,14 @@ public final class EventQueue {
       return nextEvent(vi).getKeyChar();
    }
 
-   // B4: POTENTIAL DEADLOCK — nextKeye holds synchronized(EventQueue.class)
-   // while nextEvent→inextEvent releases/reacquires biglock2. If another
-   // thread holds biglock2 and calls a synchronized(EventQueue.class) method
-   // (e.g., insert()), classic ABBA deadlock occurs. Currently mitigated by
-   // the fact that AWT/insert callers don't hold biglock2, but this is
-   // fragile. See THREADING.md "Known Lock Ordering Issues".
-   static synchronized JeyEvent nextKeye(CursorControl vi) throws InputException {
+   // B4 FIX: removed 'synchronized' — the old declaration held the
+   // EventQueue.class monitor for the entire nextEvent→inextEvent call,
+   // which internally releases/reacquires biglock2. Any thread holding
+   // biglock2 that called insert() (synchronized on EventQueue.class) would
+   // deadlock (ABBA ordering). Queue access inside inextEvent is already
+   // guarded by fine-grained synchronized(EventQueue.class) blocks, so the
+   // outer synchronized was redundant and hazardous.
+   static JeyEvent nextKeye(CursorControl vi) throws InputException {
       return nextEvent(vi);
    }
 

@@ -72,6 +72,25 @@ Holding `biglock2` during these operations can cause deadlock:
 
 See BUGS.md B3 for detailed analysis of deadlock risks.
 
+**Resolved: nextKeye/insert ABBA deadlock (B4)**
+
+`nextKeye()` was formerly declared `static synchronized`, holding the
+`EventQueue.class` monitor for the entire `nextEvent→inextEvent` call.
+`inextEvent` releases and reacquires `biglock2` multiple times (for idle
+handlers, cursor blinking, etc.). Meanwhile, `insert()` is also
+`static synchronized` (holds `EventQueue.class`). If any thread ever held
+`biglock2` and then called `insert()`, classic ABBA deadlock:
+
+```
+Thread A (event loop): holds EventQueue.class → wants biglock2
+Thread B (any thread):  holds biglock2          → wants EventQueue.class
+```
+
+**Fix**: Removed `synchronized` from `nextKeye()`. Queue access is already
+protected by fine-grained `synchronized(EventQueue.class)` blocks inside
+`inextEvent()`, so the outer monitor was redundant. The main event loop is
+single-threaded, so no concurrent `nextKeye` calls are possible.
+
 **Pattern to avoid:**
 ```java
 // DANGEROUS: Nested locking in opposite order
