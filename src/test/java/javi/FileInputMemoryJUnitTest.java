@@ -283,6 +283,66 @@ class FileInputMemoryJUnitTest {
    }
 
    /**
+    * Benchmark-style test: creates a 5&nbsp;MB temporary file, measures
+    * heap usage before and after loading via {@code FileInput}, and
+    * asserts that peak memory does not exceed 3x the file size on disk.
+    *
+    * <p>This is a tighter bound than {@link #testStreamingLoadMemoryBound()}
+    * and serves as a regression guard proving the streaming
+    * {@code BufferedReader} path avoids holding the entire file content
+    * in a single monolithic {@code String}.</p>
+    */
+   @Test
+   void testBenchmarkLargeFilePeakMemory() throws Exception {
+      // Build a ~5 MB file: 50_000 lines x ~100 chars each
+      int lineCount = 50_000;
+      int lineWidth = 100;
+      java.io.File file = writeLargeFile("benchmark_peak.txt",
+         lineCount, lineWidth);
+      long fileSize = file.length();
+      assertTrue(fileSize > 4_000_000,
+         "Benchmark file should be at least 4 MB, got " + fileSize);
+
+      // Warm up: load and discard once so JIT / class-loading costs
+      // do not inflate the measurement.
+      TextEdit<String> warmup = loadFile(file);
+      warmup.terminate();
+      warmup = null;
+
+      // Establish a clean baseline after warmup
+      long baseline = usedMemory();
+
+      // Measured load
+      TextEdit<String> te = loadFile(file);
+
+      long afterLoad = usedMemory();
+      long delta = afterLoad - baseline;
+
+      // Assert the 3x bound — streaming should keep well under this.
+      assertTrue(delta < fileSize * 3,
+         "Peak memory increase (" + delta + " bytes, ratio "
+         + String.format("%.2f", (double) delta / fileSize)
+         + "x) must be < 3x file size (" + fileSize + " bytes)");
+
+      // Verify content integrity
+      assertEquals(lineCount + 1, te.readIn(),
+         "Line count should match (readIn includes initial empty element)");
+
+      String first = (String) te.at(1);
+      assertTrue(first.startsWith("Line 0: "),
+         "First line content mismatch");
+
+      String last = (String) te.at(lineCount);
+      assertTrue(last.startsWith("Line " + (lineCount - 1) + ": "),
+         "Last line content mismatch");
+
+      te.terminate();
+
+      // Verify temp file cleanup is possible (file handle released)
+      assertTrue(file.delete(), "Temp file should be deletable after load");
+   }
+
+   /**
     * Load two large files sequentially and verify both load correctly.
     * This guards against static-state leaks between file loads.
     */
