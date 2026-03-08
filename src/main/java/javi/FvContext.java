@@ -209,9 +209,27 @@ public final class FvContext<OType> implements Serializable {
    private int fileposy = 1; // the position of the cursor in the file
    private int fileposx = 0; // the position of the cursor in the file
    private boolean vis;
+   private KeyMap keyMap; // buffer-specific keymap overlay, null for default
 
    static void dump() {
       fvmap.dump();
+   }
+
+   /**
+    * Get the buffer-specific keymap overlay for this context.
+    *
+    * @return the keymap overlay, or null to use the default mode keymap
+    */
+   KeyMap getKeyMap() {
+      return keyMap;
+   }
+
+   /**
+    * Set a buffer-specific keymap overlay for this context.
+    * Pass null to revert to the default mode keymap.
+    */
+   void setKeyMap(KeyMap km) {
+      this.keyMap = km;
    }
 
    static int viewCount() {

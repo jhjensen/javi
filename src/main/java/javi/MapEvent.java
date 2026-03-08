@@ -57,6 +57,7 @@ public final class MapEvent {
 
    private static KeyGroup skeys = new KeyGroup("normal-edit");
    private static KeyGroup mkeys = new KeyGroup("normal-move");
+   private static KeyMap normalKeyMap;
 
 //private FvContext fvc=0;
 
@@ -254,6 +255,31 @@ public final class MapEvent {
       skeys.keyactionbind(JeyEvent.VK_DELETE, "deletetoend", null, SHIFT_MASK);
       skeys.keyactionbind(JeyEvent.VK_INSERT, "insert", ft, 0);
       skeys.keybind('j', "jsevalfile", null, JeyEvent.ALT_MASK);
+
+      // Create and register the built-in "normal" keymap
+      normalKeyMap = new KeyMap("normal", mkeys, skeys);
+      KeyMap.register(normalKeyMap);
+   }
+
+   /**
+    * Get the normal-mode keymap (root keymap for command mode).
+    */
+   static KeyMap getNormalKeyMap() {
+      return normalKeyMap;
+   }
+
+   /**
+    * Resolve the effective keymap for a given context.
+    * Checks for a buffer-specific keymap overlay first, otherwise
+    * returns the default normal keymap.
+    */
+   static KeyMap getActiveKeyMap(FvContext fvc) {
+      if (fvc != null) {
+         KeyMap bufferMap = fvc.getKeyMap();
+         if (bufferMap != null)
+            return bufferMap;
+      }
+      return normalKeyMap;
    }
 
    static boolean domovement(JeyEvent ein, int fiteratei, int riteratei,
@@ -261,7 +287,8 @@ public final class MapEvent {
          InterruptedException, IOException, InputException {
       //trace("domovement fvc = " + fvc);
       //trace("domovement ev = " + ein);
-      Rgroup.KeyBinding binding = mkeys.get(ein);
+      KeyMap active = getActiveKeyMap(fvc);
+      Rgroup.KeyBinding binding = active.lookupMove(ein);
       if (null != binding) {
          //trace("binding rg = " + binding.rg + " event " + ein);
          binding.dobind(fiteratei, riteratei, fvc, dotmode);
@@ -272,7 +299,8 @@ public final class MapEvent {
 
    private static boolean screenmovement(JeyEvent e1, FvContext fvc) throws
          InterruptedException, InputException, IOException {
-      Rgroup.KeyBinding binding = skeys.get(e1);
+      KeyMap active = getActiveKeyMap(fvc);
+      Rgroup.KeyBinding binding = active.lookupEdit(e1);
       if (null == binding)
          return false;
       //trace("binding  = " + binding);
