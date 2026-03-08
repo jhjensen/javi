@@ -153,6 +153,7 @@ public final class DirEdit extends TextEdit<String> {
          case 'H': case 'M': case 'L':
          case 'w': case 'W': case 'b': case 'B': case 'e': case 'E':
          case 'f': case 'F': case 't': case 'T':
+         case 'd':
          case 'n': case 'N':
          case ';': case ',':
          case '0': case '1': case '2': case '3': case '4':
@@ -260,7 +261,7 @@ public final class DirEdit extends TextEdit<String> {
          sortFiles(fileList);
 
          // Add parent directory entry if not root
-         File parent = dirFile.getParentFile();
+         File parent = dirFile.getAbsoluteFile().getParentFile();
          if (null != parent) {
             lines.add(formatEntry(parent, true));
          }
@@ -528,7 +529,7 @@ public final class DirEdit extends TextEdit<String> {
     * @param fvc the current FvContext
     */
    void goToParent(FvContext fvc) {
-      File parent = currentDir.fh.getParentFile();
+      File parent = currentDir.fh.getAbsoluteFile().getParentFile();
       if (null != parent) {
          currentDir = FileDescriptor.LocalDir.make(parent.getPath());
          populateDirectory();
@@ -602,6 +603,14 @@ public final class DirEdit extends TextEdit<String> {
             throw new InputException("Directory not empty: " + name
                + " (" + children.length + " entries)");
          }
+      }
+
+      // Confirmation prompt
+      UI.reportMessage("Delete " + name + "? (y/n)");
+      char confirm = EventQueue.nextKey(fvc.vi);
+      if (confirm != 'y' && confirm != 'Y') {
+         UI.reportMessage("Delete cancelled");
+         return;
       }
 
       if (!target.delete()) {
