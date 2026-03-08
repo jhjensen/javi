@@ -25,6 +25,11 @@ public final class MiscCommands extends Rgroup {
       EXEC,        // 10: execute command
       LINES,       // 11: set height
       SET_WIDTH,   // 12: set width
+      SHELLS,      // 13: list shells
+      SHELL_CLOSE, // 14: close shell
+      SHELL_NEXT,  // 15: next shell
+      SHELL_PREV,  // 16: prev shell
+      SHELL_NAME,  // 17: rename shell
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -101,19 +106,19 @@ public final class MiscCommands extends Rgroup {
          case SET_WIDTH:
             defwidth = oBToInt(arg);
             return null;
-         case 13:
+         case SHELLS:
             listShells(fvc);
             return null;
-         case 14:
+         case SHELL_CLOSE:
             closeShell(fvc, (String) arg);
             return null;
-         case 15:
+         case SHELL_NEXT:
             nextShell(fvc);
             return null;
-         case 16:
+         case SHELL_PREV:
             prevShell(fvc);
             return null;
-         case 17:
+         case SHELL_NAME:
             renameShell(fvc, arg instanceof String ? (String) arg : null);
             return null;
 
