@@ -91,6 +91,11 @@ public final class HelpSystem {
          case "scroll":
             appendWindowHelp();
             break;
+         case "shell":
+         case "terminal":
+         case "vt100":
+            appendShellHelp();
+            break;
          default:
             appendUnknownTopic(normalizedTopic);
             break;
@@ -171,6 +176,7 @@ public final class HelpSystem {
       append("  :help visual     - Visual selection mode");
       append("  :help undo       - Undo and redo");
       append("  :help window     - Window and scrolling");
+      append("  :help shell      - Shell / terminal commands");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -571,6 +577,62 @@ public final class HelpSystem {
    }
 
    /**
+    * Append shell/terminal help.
+    */
+   private static void appendShellHelp() {
+      append("SHELL / TERMINAL COMMANDS");
+      append("=========================");
+      append("");
+      append("Javi includes an integrated VT100 terminal emulator.");
+      append("You can run shell commands inside the editor without");
+      append("leaving your editing session.");
+      append("");
+      append("STARTING A SHELL");
+      append("----------------");
+      append("  F8               Open or toggle to shell");
+      append("  :shell            Alias for F8 (open / toggle)");
+      append("  :shell <host>    Open SSH session to host");
+      append("  :shell <n>       Switch to shell by ID");
+      append("");
+      append("PASSTHROUGH MODE");
+      append("----------------");
+      append("  F8 (in shell)    Enter passthrough mode");
+      append("                   All keystrokes go to the shell.");
+      append("  F8 (passthrough) Exit passthrough, back to editor");
+      append("");
+      append("SHELL MANAGEMENT");
+      append("----------------");
+      append("  :shells          List all active shells");
+      append("  :shellclose      Close current shell");
+      append("  :shellclose <n>  Close shell by ID");
+      append("  :shellnext       Switch to next shell");
+      append("  :shellprev       Switch to previous shell");
+      append("  :shellname <n>   Rename current shell");
+      append("");
+      append("ENVIRONMENT");
+      append("-----------");
+      append("  :shellenv K=V    Set env variable in current shell");
+      append("                   Exports it immediately via 'export'.");
+      append("");
+      append("HISTORY");
+      append("-------");
+      append("  :shellhistory    Open full scrollback in read-only buffer");
+      append("");
+      append("CLOSING");
+      append("-------");
+      append("  ZZ               Close shell buffer AND kill process");
+      append("  :shellclose      Same as above for the active shell");
+      append("");
+      append("NOTES");
+      append("-----");
+      append("  - TERM is set to 'xterm' for each shell.");
+      append("  - COLUMNS and LINES are sent on shell creation.");
+      append("  - The shell runs under 'script' for PTY support.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
     * Append help for unknown topic.
     */
    private static void appendUnknownTopic(String topic) {
@@ -585,6 +647,7 @@ public final class HelpSystem {
       append("  visual     - Visual selection");
       append("  undo       - Undo and redo");
       append("  window     - Window and scrolling");
+      append("  shell      - Shell / terminal");
       append("");
       append("Type :help for index.");
    }

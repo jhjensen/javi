@@ -140,6 +140,9 @@ public final class Command extends Rgroup {
     */
    private static void showHelp(String topic, FvContext fvc)
          throws InputException {
+      // Auto-redirect to shell help when in a VT100 buffer with no topic
+      if ((null == topic || topic.isEmpty()) && fvc.edvec instanceof Vt100)
+         topic = "shell";
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);
    }
