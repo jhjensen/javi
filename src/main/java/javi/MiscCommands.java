@@ -30,6 +30,8 @@ public final class MiscCommands extends Rgroup {
       SHELL_NEXT,  // 15: next shell
       SHELL_PREV,  // 16: prev shell
       SHELL_NAME,  // 17: rename shell
+      SHELL_ENV,   // 18: set shell env var
+      SHELL_HISTORY, // 19: show shell output history
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -54,6 +56,8 @@ public final class MiscCommands extends Rgroup {
          "shellnext",        // 15
          "shellprev",        // 16
          "shellname",        // 17
+         "shellenv",         // 18
+         "shellhistory",     // 19
       };
       register(rnames);
    }
@@ -121,6 +125,12 @@ public final class MiscCommands extends Rgroup {
          case SHELL_NAME:
             renameShell(fvc, arg instanceof String ? (String) arg : null);
             return null;
+         case SHELL_ENV:
+            setShellEnv(fvc, arg instanceof String ? (String) arg : null);
+            return null;
+         case SHELL_HISTORY:
+            showShellHistory(fvc);
+            return null;
 
          default:
             throw new RuntimeException("vigroup:default");
@@ -150,7 +160,8 @@ public final class MiscCommands extends Rgroup {
             cmdfile = null;
          if (ev == debugfile)
             debugfile = null;
-         // ShellManager handles shell session cleanup
+         // Clean up shell session when its buffer is closed (e.g., via ZZ)
+         ShellManager.getInstance().closeByBuffer(ev);
          if (ev == commCon)
             commCon = null;
          return false;
@@ -188,8 +199,13 @@ public final class MiscCommands extends Rgroup {
       if (null == host && mgr.getSessionCount() > 0) {
          ShellSession active = mgr.getActive();
          if (null != active) {
-            FvContext.connectFv(active.getBuffer(), fvc.vi);
-            return;
+            if (!active.isAlive()) {
+               // Shell process died — clean up orphaned session
+               mgr.closeActiveShell();
+            } else {
+               FvContext.connectFv(active.getBuffer(), fvc.vi);
+               return;
+            }
          }
       }
 
@@ -311,6 +327,65 @@ public final class MiscCommands extends Rgroup {
       }
       active.setName(newName);
       UI.reportMessage("Shell " + active.getId() + " renamed to: " + newName);
+   }
+
+   /**
+    * Sets an environment variable for the active shell session.
+    *
+    * @param fvc the current file-view context
+    * @param arg key=value pair
+    */
+   private static void setShellEnv(FvContext fvc, String arg) {
+      if (arg == null || arg.isEmpty() || !arg.contains("=")) {
+         UI.reportMessage("Usage: :shellenv <key>=<value>");
+         return;
+      }
+      ShellManager mgr = ShellManager.getInstance();
+      ShellSession active = mgr.getActive();
+      if (null == active) {
+         UI.reportMessage("No active shell");
+         return;
+      }
+      int eq = arg.indexOf('=');
+      String key = arg.substring(0, eq).trim();
+      String value = arg.substring(eq + 1).trim();
+      if (key.isEmpty()) {
+         UI.reportMessage("Usage: :shellenv <key>=<value>");
+         return;
+      }
+      active.setEnvVar(key, value);
+      UI.reportMessage("Shell " + active.getId() + ": " + key + "=" + value);
+   }
+
+   /**
+    * Shows the output history of the active shell in a read-only buffer.
+    *
+    * @param fvc the current file-view context
+    * @throws InputException if buffer connection fails
+    */
+   private static void showShellHistory(FvContext fvc) throws InputException {
+      ShellManager mgr = ShellManager.getInstance();
+      ShellSession active = mgr.getActive();
+      if (null == active) {
+         UI.reportMessage("No active shell");
+         return;
+      }
+      TextEdit<String> buffer = active.getBuffer();
+      int lineCount = buffer.finish();
+      StringBuilder sb = new StringBuilder();
+      for (int i = 1; i < lineCount; i++) {
+         if (i > 1)
+            sb.append('\n');
+         sb.append(buffer.at(i).toString());
+      }
+      String content = sb.toString();
+      if (content.isEmpty())
+         content = "(no output)";
+      StringIoc ioc = new StringIoc(
+         "shell-history-" + active.getId() + " (" + active.getName() + ")",
+         content);
+      TextEdit<String> histBuf = new TextEdit<>(ioc, ioc.prop);
+      FvContext.connectFv(histBuf, fvc.vi);
    }
 
    private static TextEdit commCon;

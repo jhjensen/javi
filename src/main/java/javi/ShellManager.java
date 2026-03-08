@@ -282,6 +282,35 @@ public final class ShellManager {
    }
 
    /**
+    * Removes and destroys the shell session associated with the given buffer.
+    *
+    * <p>Only destroys the process; does not dispose the VT100 buffer,
+    * since this is called when the buffer is already being disposed.</p>
+    *
+    * @param buffer the buffer being disposed
+    * @return true if a matching session was found and removed
+    */
+   public synchronized boolean closeByBuffer(EditContainer<?> buffer) {
+      for (int i = 0; i < sessions.size(); i++) {
+         if (sessions.get(i).getBuffer() == buffer) {
+            ShellSession session = sessions.remove(i);
+            trace("ShellManager: closing session " + session.getId()
+               + " (buffer disposed)");
+            session.destroyProcess();
+            if (sessions.isEmpty()) {
+               activeIndex = -1;
+            } else if (activeIndex >= sessions.size()) {
+               activeIndex = sessions.size() - 1;
+            } else if (activeIndex > i) {
+               activeIndex--;
+            }
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /**
     * Closes all shell sessions.
     *
     * <p>Called during editor shutdown.</p>
@@ -359,9 +388,14 @@ public final class ShellManager {
       for (int i = 0; i < sessions.size(); i++) {
          ShellSession s = sessions.get(i);
          String marker = (i == activeIndex) ? "* " : "  ";
-         sb.append(String.format("%s%d: %s [%s]%n",
+         String envInfo = "";
+         java.util.Map<String, String> env = s.getEnvVars();
+         if (!env.isEmpty())
+            envInfo = " env=" + env;
+         sb.append(String.format("%s%d: %s [%s]%s%n",
             marker, s.getId(), s.getName(),
-            s.isAlive() ? "running" : "stopped"));
+            s.isAlive() ? "running" : "stopped",
+            envInfo));
       }
       return sb.toString();
    }

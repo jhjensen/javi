@@ -3,7 +3,11 @@ package javi;
 import java.io.IOException;
 import java.io.BufferedInputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -56,6 +60,9 @@ public final class ShellSession {
    /** Charset used for this session. */
    private final Charset charset;
 
+   /** Per-session environment variables. */
+   private final Map<String, String> envVars = new LinkedHashMap<>();
+
    /**
     * Creates a new shell session.
     *
@@ -88,10 +95,29 @@ public final class ShellSession {
       // Build command array
       String[] cmd = buildCommand(host);
 
-      // Start the process
-      this.process = Tools.iocmd(cmd);
+      // Start process with terminal environment variables
+      int cols = MiscCommands.getWidth();
+      int rows = MiscCommands.getHeight();
+      ProcessBuilder pb = new ProcessBuilder(cmd);
+      pb.redirectErrorStream(true);
+      java.util.Map<String, String> env = pb.environment();
+      env.put("TERM", "xterm");
+      env.put("COLUMNS", Integer.toString(cols));
+      env.put("LINES", Integer.toString(rows));
+      env.putAll(envVars);
+      this.process = pb.start();
       trace("ShellSession " + id + ": started process with charset "
-         + charset.name());
+         + charset.name() + " TERM=xterm COLUMNS=" + cols + " LINES=" + rows);
+
+      // Send stty to set PTY dimensions
+      try {
+         OutputStreamWriter sttyWriter = new OutputStreamWriter(
+            process.getOutputStream(), charset);
+         sttyWriter.write("stty rows " + rows + " cols " + cols + "\n");
+         sttyWriter.flush();
+      } catch (IOException e) {
+         trace("ShellSession " + id + ": failed to send stty: " + e);
+      }
 
       // Create VT100 terminal
       this.vt100 = new Vt100(
@@ -158,6 +184,45 @@ public final class ShellSession {
    public void setName(String newName) {
       if (newName != null && !newName.isEmpty())
          this.name = newName;
+   }
+
+   /**
+    * Sets an environment variable for this session and exports it
+    * to the running shell.
+    *
+    * @param key the variable name
+    * @param value the variable value
+    */
+   public void setEnvVar(String key, String value) {
+      envVars.put(key, value);
+      // Export to the running shell process
+      if (null != process && process.isAlive()) {
+         try {
+            OutputStreamWriter w = new OutputStreamWriter(
+               process.getOutputStream(), charset);
+            w.write("export " + key + "=" + shellQuote(value) + "\n");
+            w.flush();
+         } catch (IOException e) {
+            trace("ShellSession " + id + ": failed to export env var: " + e);
+         }
+      }
+   }
+
+   /**
+    * Gets an unmodifiable view of the session environment variables.
+    *
+    * @return the environment variables map
+    */
+   public Map<String, String> getEnvVars() {
+      return Collections.unmodifiableMap(envVars);
+   }
+
+   /**
+    * Shell-quotes a value for safe use in an export command.
+    */
+   private static String shellQuote(String val) {
+      // Use single quotes; escape embedded single quotes
+      return "'" + val.replace("'", "'\\''") + "'";
    }
 
    /**
@@ -265,6 +330,28 @@ public final class ShellSession {
          try {
             if (!process.waitFor(500, java.util.concurrent.TimeUnit.MILLISECONDS)) {
                // Force kill if still running
+               process.destroyForcibly();
+            }
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            process.destroyForcibly();
+         }
+      }
+   }
+
+   /**
+    * Destroys only the shell process without disposing the VT100 buffer.
+    *
+    * <p>Used when the buffer has already been disposed (e.g., via ZZ) and
+    * we only need to terminate the underlying process.</p>
+    */
+   void destroyProcess() {
+      trace("ShellSession " + id + ": destroying process");
+      if (null != process) {
+         process.destroy();
+         try {
+            if (!process.waitFor(500,
+                  java.util.concurrent.TimeUnit.MILLISECONDS)) {
                process.destroyForcibly();
             }
          } catch (InterruptedException e) {
