@@ -39,10 +39,9 @@ import javi.View;
  * interactions. Conversation history is maintained by {@link AIClient}.</p>
  *
  * <h2>Thread Safety</h2>
- * <p>AI API calls are made synchronously on the event thread. This is
- * a known limitation — future work should move API calls to a
- * background thread. UNCLEAR: how to best integrate async results
- * with Javi's event/lock model (EventQueue.biglock2).</p>
+ * <p>Chat uses {@link AIAsyncExecutor} to run API calls on a background
+ * thread. Results are dispatched back via {@link javi.EventQueue}.
+ * Other commands (explain, review, doc) remain synchronous.</p>
  *
  * @see AIClient
  * @see AIConfig
@@ -62,6 +61,7 @@ public final class AICommands extends Rgroup {
    private static final int CMD_COMPLETE = 9;
    private static final int CMD_ACCEPT   = 10;
    private static final int CMD_DISMISS  = 11;
+   private static final int CMD_CANCEL   = 12;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -93,6 +93,7 @@ public final class AICommands extends Rgroup {
          "ai.complete",    // 9 - inline code completion (ghost text)
          "ai.accept",      // 10 - accept ghost text completion
          "ai.dismiss",     // 11 - dismiss ghost text completion
+         "ai.cancel",      // 12 - cancel in-flight AI request
       };
       register(rnames);
    }
@@ -124,6 +125,8 @@ public final class AICommands extends Rgroup {
             return doAcceptGhost(fvc);
          case CMD_DISMISS:
             return doDismissGhost();
+         case CMD_CANCEL:
+            return doCancel();
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -179,6 +182,8 @@ public final class AICommands extends Rgroup {
             return doAcceptGhost(fvc);
          case "dismiss":
             return doDismissGhost();
+         case "cancel":
+            return doCancel();
          case "help":
             showAiHelp(fvc);
             return null;
@@ -217,29 +222,53 @@ public final class AICommands extends Rgroup {
       appendToChatBuffer("YOU: " + message);
       appendToChatBuffer("");
 
-      try {
-         AIClient client = AIClient.getInstance();
-         String response = client.chat(message);
+      // Show chat buffer immediately so user sees their message
+      FvContext.connectFv(chatBuffer, fvc.vi);
 
-         appendToChatBuffer("AI: " + response);
-         appendToChatBuffer("");
-         appendToChatBuffer("---");
-         appendToChatBuffer("");
+      // Capture view for the async callback
+      final View vi = fvc.vi;
+      final String msg = message;
 
-         // Show the chat buffer
-         FvContext.connectFv(chatBuffer, fvc.vi);
-
-      } catch (AIException e) {
-         String errMsg = "AI Error: " + e.getMessage();
-         if (e.isAuthError()) {
-            errMsg += "\nSet API key with :set ai.apikey=<key> "
-               + "or set environment variable.";
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance().chat(msg);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         response -> {
+            appendToChatBuffer("AI: " + response);
+            appendToChatBuffer("");
+            appendToChatBuffer("---");
+            appendToChatBuffer("");
+            try {
+               FvContext.connectFv(chatBuffer, vi);
+            } catch (InputException e) {
+               UI.reportMessage("Input Error: " + e.getMessage());
+            }
+            vi.repaint();
+            UI.reportMessage("AI: response received");
+         },
+         error -> {
+            Throwable cause = error.getCause() != null
+               ? error.getCause() : error;
+            String errMsg = "AI Error: " + cause.getMessage();
+            if (cause instanceof AIException ae && ae.isAuthError()) {
+               errMsg += "\nSet API key with :set ai.apikey=<key> "
+                  + "or set environment variable.";
+            }
+            appendToChatBuffer(errMsg);
+            appendToChatBuffer("");
+            try {
+               FvContext.connectFv(chatBuffer, vi);
+            } catch (InputException e) {
+               UI.reportMessage("Input Error: " + e.getMessage());
+            }
+            vi.repaint();
+            UI.reportMessage(errMsg);
          }
-         appendToChatBuffer(errMsg);
-         appendToChatBuffer("");
-         FvContext.connectFv(chatBuffer, fvc.vi);
-         UI.reportMessage(errMsg);
-      }
+      );
       return null;
    }
 
@@ -492,6 +521,20 @@ public final class AICommands extends Rgroup {
    }
 
    /**
+    * Cancel any in-flight AI request.
+    *
+    * @return null
+    */
+   private Object doCancel() {
+      if (AIAsyncExecutor.isBusy()) {
+         AIAsyncExecutor.cancel();
+      } else {
+         UI.reportMessage("AI: no active request");
+      }
+      return null;
+   }
+
+   /**
     * Dismiss the ghost text completion without inserting.
     */
    private Object doDismissGhost() {
@@ -547,6 +590,7 @@ public final class AICommands extends Rgroup {
       appendToChatBuffer("  :ai config          Show AI configuration");
       appendToChatBuffer("  :ai clear           Clear chat history");
       appendToChatBuffer("  :ai test            Test provider connection");
+      appendToChatBuffer("  :ai cancel          Cancel in-flight request");
       appendToChatBuffer("  :ai help            Show this help");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
