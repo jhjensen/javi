@@ -71,6 +71,7 @@ dependencies {
     
     // Test dependencies
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.assertj:assertj-swing-junit:3.17.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     
     // JaCoCo agent for coverage

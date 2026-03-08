@@ -1585,4 +1585,76 @@ class TextEditJUnitTest {
       deleteTestFiles(fname);
    }
 
+   // --- Port of EditTester1.stringarrtest() ---
+
+   @Test
+   void stringToArrayTrailingNewline() {
+      var sarr = TextEdit.stringtoarray("1\n\n");
+      assertEquals(3, sarr.size());
+      assertEquals("1", sarr.get(0));
+      assertEquals(0, sarr.get(1).length());
+      assertEquals(0, sarr.get(2).length());
+   }
+
+   @Test
+   void stringToArrayTwoLines() {
+      var sarr = TextEdit.stringtoarray("1\n2\n");
+      assertEquals(3, sarr.size());
+      assertEquals("1", sarr.get(0));
+      assertEquals("2", sarr.get(1));
+      assertEquals(0, sarr.get(2).length());
+   }
+
+   @Test
+   void stringToArrayLeadingNewline() {
+      var sarr = TextEdit.stringtoarray("\n1\n2\n");
+      assertEquals(4, sarr.size());
+      assertEquals(0, sarr.get(0).length());
+      assertEquals("1", sarr.get(1));
+      assertEquals("2", sarr.get(2));
+      assertEquals(0, sarr.get(3).length());
+   }
+
+   @Test
+   void stringToArraySingleNewline() {
+      var sarr = TextEdit.stringtoarray("\n");
+      assertEquals(2, sarr.size());
+      assertEquals(0, sarr.get(0).length());
+      assertEquals(0, sarr.get(1).length());
+   }
+
+   @Test
+   void stringToArrayNoTrailingNewline() {
+      var sarr = TextEdit.stringtoarray("1\n2");
+      assertEquals(2, sarr.size());
+      assertEquals("1", sarr.get(0));
+      assertEquals("2", sarr.get(1));
+   }
+
+   @Test
+   void stringToArrayLeadingNewlineNoTrailing() {
+      var sarr = TextEdit.stringtoarray("\n1\n2");
+      assertEquals(3, sarr.size());
+      assertEquals(0, sarr.get(0).length());
+      assertEquals("1", sarr.get(1));
+      assertEquals("2", sarr.get(2));
+   }
+
+   @Test
+   void stringToArrayNewlineThenOne() {
+      var sarr = TextEdit.stringtoarray("\n1\n");
+      assertEquals(3, sarr.size());
+      assertEquals(0, sarr.get(0).length());
+      assertEquals("1", sarr.get(1));
+      assertEquals(0, sarr.get(2).length());
+   }
+
+   @Test
+   void stringToArraySingleLine() {
+      var sarr = TextEdit.stringtoarray("1\n");
+      assertEquals(2, sarr.size());
+      assertEquals("1", sarr.get(0));
+      assertEquals(0, sarr.get(1).length());
+   }
+
 }
