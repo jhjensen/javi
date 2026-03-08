@@ -134,10 +134,27 @@ class Vt100 extends TextEdit<String> {
             //trace("setfvc inserting line at "  + ev.readIn());
             insertOne("", readIn());
          }
+         // Update shell PTY size to match actual screen dimensions
+         sendStty(rows, MiscCommands.getWidth());
       }
 
       currfvc = fvc;
       //trace("leave setfvc readIn = " + ev.readIn());
+   }
+
+   /**
+    * Sends stty command to update the PTY dimensions.
+    *
+    * @param termRows number of rows
+    * @param termCols number of columns
+    */
+   void sendStty(int termRows, int termCols) {
+      try {
+         writer.write("stty rows " + termRows + " cols " + termCols + "\n");
+         writer.flush();
+      } catch (IOException e) {
+         trace("sendStty failed: " + e);
+      }
    }
 
    public final String fromString(String str) {
