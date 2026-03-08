@@ -356,7 +356,7 @@ public class EditContainer<OType> implements
    }
 
    /** editvec will notify object of evlistener events */
-   static final void registerListener(FileStatusListener evl) {
+   public static final void registerListener(FileStatusListener evl) {
       synchronized  (listeners) {
          //trace("listeners add");
          //Thread.dumpStack();
@@ -365,7 +365,7 @@ public class EditContainer<OType> implements
       }
    }
 
-   static final void unRegisterListener(FileStatusListener evl) {
+   public static final void unRegisterListener(FileStatusListener evl) {
       synchronized  (listeners) {
          //trace("unRegisterListener");
          //Thread.dumpStack();
@@ -1499,7 +1499,7 @@ public class EditContainer<OType> implements
       void fileDisposed(EditContainer ev);
    }
 
-   interface FileStatusListener {
+   public interface FileStatusListener {
       void fileAdded(EditContainer ev);
       void fileWritten(EditContainer ev);
       boolean fileDisposed(EditContainer ev);

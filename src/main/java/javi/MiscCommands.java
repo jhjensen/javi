@@ -42,6 +42,7 @@ public final class MiscCommands extends Rgroup {
       FOLD_INDENT,   // 27: :foldindent - indent-based folds
       FOLD_MARKER,   // 28: :foldmarker - marker-based folds
       LOAD_PLUGIN,   // 29: :loadplugin - load a plugin JAR
+      LOAD_CLASS,    // 30: :loadclass - load a class by name (plugin)
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -78,6 +79,7 @@ public final class MiscCommands extends Rgroup {
          "foldindent",       // 27
          "foldmarker",       // 28
          "loadplugin",       // 29
+         "loadclass",        // 30
       };
       register(rnames);
    }
@@ -184,6 +186,9 @@ public final class MiscCommands extends Rgroup {
          case LOAD_PLUGIN:
             loadPlugin(arg instanceof String
                ? (String) arg : null);
+            return null;
+         case LOAD_CLASS:
+            loadClass(arg instanceof String ? (String) arg : null);
             return null;
 
          default:
@@ -1090,6 +1095,24 @@ public final class MiscCommands extends Rgroup {
          trace("GC time in milliseconds "
                + (lastredraw.getTime() - nDate.getTime()));
          // vic.memfree();
+      }
+   }
+
+   /**
+    * Load a class by fully-qualified name, triggering its static
+    * initializer.  Used from {@code .javini} to load plugins.
+    *
+    * @param className fully-qualified class name (e.g. "javi.git.GitCommands")
+    */
+   private static void loadClass(String className) {
+      if (null == className || className.isEmpty()) {
+         UI.reportMessage("loadclass requires a class name");
+         return;
+      }
+      try {
+         Class.forName(className.trim());
+      } catch (ClassNotFoundException e) {
+         UI.reportError("loadclass: class not found: " + className);
       }
    }
 

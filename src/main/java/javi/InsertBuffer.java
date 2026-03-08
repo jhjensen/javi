@@ -167,6 +167,16 @@ public abstract class InsertBuffer extends View.Inserter {
                if (singleline && tryHelpCompletion(fvc)) {
                   break;
                }
+               if (singleline) {
+                  String comp = TabComplete.complete(
+                     fvc.at().toString(), fvc.insertx(),
+                     buffer.toString());
+                  if (null != comp) {
+                     buffer.append(comp);
+                     fvc.vi.lineChanged(fvc.inserty());
+                     break;
+                  }
+               }
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
                int linepos = fvc.insertx() + buffer.length();

@@ -3,3 +3,4 @@ fontsize 15.5
 fontweight 1.0
 lines 70
 loadplugin javi-hello.jar
+loadclass javi.git.GitCommands

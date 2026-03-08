@@ -4,6 +4,7 @@ import static history.Tools.trace;
 
 import java.awt.AWTEvent;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
@@ -1316,6 +1317,20 @@ final class OldView extends AwtView {
          if (scrAttrs != null)
             atIt.setTerminalAttrs(
                scrAttrs.getRow(tindex));
+
+         boolean isDiffBuffer = null != gettext()
+            && "*git-diff*".equals(
+               gettext().fdes().getShortName());
+         if (isDiffBuffer) {
+            String lt = atIt.getText();
+            if (!lt.isEmpty()) {
+               char c0 = lt.charAt(0);
+               if (c0 == '-' && !lt.startsWith("---"))
+                  atIt.setLineForeground(Color.red);
+               else if (c0 == '@')
+                  atIt.setLineForeground(Color.cyan);
+            }
+         }
 
          if (index == screenposy) {
             atIt.emphasize(true);

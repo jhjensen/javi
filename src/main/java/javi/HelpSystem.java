@@ -124,6 +124,10 @@ public final class HelpSystem {
          case "folds":
             appendFoldingHelp();
             break;
+         case "git":
+         case "vcs":
+            appendGitHelp();
+            break;
          default:
             appendUnknownTopic(normalizedTopic);
             break;
@@ -430,6 +434,7 @@ public final class HelpSystem {
       append("  :help directory  - Directory list buffer");
       append("  :help keybindings - Key binding architecture");
       append("  :help folding    - Code folding commands");
+      append("  :help git        - Git integration commands");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -1076,6 +1081,81 @@ public final class HelpSystem {
    }
 
    /**
+    * Append git integration help.
+    */
+   private static void appendGitHelp() {
+      append("GIT INTEGRATION");
+      append("===============");
+      append("");
+      append("Javi provides Magit-inspired Git commands accessible via");
+      append("colon commands. Requires git on PATH and a git repository.");
+      append("");
+      append("SHORTHAND");
+      append("---------");
+      append("  :git <subcmd>      Shorthand for :git_<subcmd>");
+      append("                     e.g. :git status  =>  :git_status");
+      append("                          :git log      =>  :git_log");
+      append("");
+      append("STATUS AND STAGING");
+      append("------------------");
+      append("  :git_status        Show staged, unstaged, and untracked files");
+      append("  :git_stage <file>  Stage a file (git add)");
+      append("  :git_unstage <file> Unstage a file (git restore --staged)");
+      append("  :git_stage_line    Stage the file on the cursor line");
+      append("  :git_unstage_line  Unstage the file on the cursor line");
+      append("  :git_toggle        Toggle staged/unstaged for cursor line");
+      append("  :git_discard       Discard unstaged changes for cursor line");
+      append("  :git_refresh       Refresh the status buffer");
+      append("");
+      append("COMMITTING");
+      append("----------");
+      append("  :git_commit        Open commit message buffer");
+      append("  :git_do_commit     Finalize commit with message from buffer");
+      append("");
+      append("VIEWING");
+      append("-------");
+      append("  :git_diff [file]   Show diff (all or specific file)");
+      append("  :git_log           Show last 30 log entries (graph)");
+      append("  :git_branch        Show all branches");
+      append("");
+      append("BRANCH OPERATIONS");
+      append("-----------------");
+      append("  :git_branch_create <name>  Create a new branch");
+      append("  :git_branch_switch <name>  Switch to a branch");
+      append("  :git_branch_delete <name>  Delete a merged branch");
+      append("  :git_merge <branch>        Merge branch into current");
+      append("  :git_rebase <branch>       Rebase current branch onto branch");
+      append("  :git_rebase --continue     Continue rebase after resolving conflicts");
+      append("  :git_rebase --abort        Abort an in-progress rebase");
+      append("");
+      append("REMOTE OPERATIONS");
+      append("-----------------");
+      append("  :git_fetch         Fetch from remote");
+      append("  :git_pull          Pull from remote (fetch + merge)");
+      append("  :git_push          Push to remote");
+      append("");
+      append("STASH");
+      append("-----");
+      append("  :git_stash         Stash working directory changes");
+      append("  :git_stash_pop     Pop the top stash entry");
+      append("  :git_stash_list    Show stash list in a buffer");
+      append("");
+      append("WORKFLOW");
+      append("--------");
+      append("  1. :git_status                  View state");
+      append("  2. :git_stage <file>            Stage changes");
+      append("  3. :git_commit                  Open commit editor");
+      append("  4. :git_do_commit               Finalize commit");
+      append("  5. :git_push                    Push to remote");
+      append("");
+      append("The status buffer auto-refreshes when files are saved.");
+      append("Output buffers (*git-status*, *git-diff*, etc.) are");
+      append("standard read-only buffers navigable with normal vi keys.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
     * Append help for unknown topic.
     */
    private static void appendUnknownTopic(String topic) {
@@ -1096,6 +1176,7 @@ public final class HelpSystem {
       append("  directory  - Directory list buffer");
       append("  keybindings - Key binding architecture");
       append("  folding    - Code folding");
+      append("  git        - Git integration");
       append("");
       append("Type :help for index.");
    }

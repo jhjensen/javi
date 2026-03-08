@@ -3,8 +3,11 @@ package javi.git;
 import java.io.IOException;
 import java.util.List;
 
+import javi.Command;
+import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
+import javi.Plugin;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -17,16 +20,29 @@ import javi.UI;
  * git_commit, git_diff, git_log, git_branch. These are invoked
  * via colon commands like {@code :git_status}.</p>
  *
+ * <p>Implements {@link Plugin} so git integration loads through
+ * the plugin mechanism rather than direct instantiation.</p>
+ *
  * @see GitProcess
  * @see GitStatusBuffer
  */
-public final class GitCommands extends Rgroup {
+public final class GitCommands extends Rgroup implements Plugin {
+
+   /** Plugin descriptor for the plugin loader. */
+   public static final String pluginInfo = "git integration commands";
+
+   static {
+      new GitCommands();
+   }
 
    /** The git status buffer, reused across invocations. */
    private static TextEdit<String> statusBuffer;
 
    /** The git output buffer for diff/log/branch results. */
    private static TextEdit<String> outputBuffer;
+
+   /** Whether the file-write listener has been registered. */
+   private static boolean listenerRegistered;
 
    public GitCommands() {
       final String[] rnames = {
@@ -46,6 +62,16 @@ public final class GitCommands extends Rgroup {
          "git_toggle",
          "git_discard",
          "git_refresh",
+         "git_stash",
+         "git_stash_pop",
+         "git_stash_list",
+         "git_merge",
+         "git_fetch",
+         "git_pull",
+         "git_push",
+         "git_branch_delete",
+         "git_rebase",
+         "git",
       };
       register(rnames);
    }
@@ -102,6 +128,36 @@ public final class GitCommands extends Rgroup {
          case 15:
             gitRefresh(fvc);
             return null;
+         case 16:
+            gitStash(fvc);
+            return null;
+         case 17:
+            gitStashPop(fvc);
+            return null;
+         case 18:
+            gitStashList(fvc);
+            return null;
+         case 19:
+            gitMerge(arg, fvc);
+            return null;
+         case 20:
+            gitFetch(fvc);
+            return null;
+         case 21:
+            gitPull(fvc);
+            return null;
+         case 22:
+            gitPush(fvc);
+            return null;
+         case 23:
+            gitBranchDelete(arg, fvc);
+            return null;
+         case 24:
+            gitRebase(arg, fvc);
+            return null;
+         case 25:
+            gitDispatch(arg, fvc);
+            return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
       }
@@ -112,6 +168,7 @@ public final class GitCommands extends Rgroup {
     */
    private static void gitStatus(FvContext fvc) throws
          IOException, InputException {
+      ensureListenerRegistered();
       List<String> lines = GitStatusBuffer.getStatusLines();
       statusBuffer = createBuffer("*git-status*", lines);
       FvContext.connectFv(statusBuffer, fvc.vi);
@@ -453,6 +510,359 @@ public final class GitCommands extends Rgroup {
       }
       // Untracked files are just the bare filename
       return trimmed;
+   }
+
+   /**
+    * Stash working directory changes.
+    */
+   private static void gitStash(FvContext fvc) throws
+         IOException, InputException {
+      List<String> output = GitProcess.execute("stash");
+      if (output.isEmpty()) {
+         UI.reportMessage("Nothing to stash");
+      } else {
+         UI.reportMessage(String.join(" ", output));
+      }
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      }
+   }
+
+   /**
+    * Pop the top stash entry.
+    */
+   private static void gitStashPop(FvContext fvc) throws
+         IOException, InputException {
+      List<String> output = GitProcess.execute("stash", "pop");
+      if (output.isEmpty()) {
+         UI.reportMessage("No stash entries");
+      } else {
+         UI.reportMessage(output.get(0));
+      }
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      }
+   }
+
+   /**
+    * Show stash list in a buffer.
+    */
+   private static void gitStashList(FvContext fvc) throws
+         IOException, InputException {
+      List<String> output = GitProcess.execute("stash", "list");
+      if (output.isEmpty()) {
+         UI.reportMessage("No stash entries");
+         return;
+      }
+      outputBuffer = createBuffer("*git-stash-list*", output);
+      FvContext.connectFv(outputBuffer, fvc.vi);
+   }
+
+   /**
+    * Merge a branch into the current branch.
+    * Usage: :git_merge branchname
+    *
+    * <p>On success, reports the merge result.  On conflict, opens a
+    * buffer listing the conflicted files so the user can resolve them.</p>
+    */
+   private static void gitMerge(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      if (null == arg) {
+         throw new InputException(
+            "git_merge requires a branch name");
+      }
+      String branch = arg.toString().trim();
+      GitProcess.Result res = GitProcess.executeWithResult(
+         "merge", branch);
+      if (0 == res.exitCode) {
+         if (res.output.isEmpty()) {
+            UI.reportMessage("Merged " + branch + " (already up to date)");
+         } else {
+            UI.reportMessage("Merged " + branch + ": "
+               + res.output.get(0));
+         }
+      } else {
+         // Check for merge conflicts
+         List<String> conflicts = GitProcess.execute(
+            "diff", "--name-only", "--diff-filter=U");
+         if (!conflicts.isEmpty()) {
+            java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+            lines.add("Merge Conflicts");
+            lines.add("===============");
+            lines.add("");
+            lines.add("Branch: " + branch);
+            lines.add("Conflicted files (" + conflicts.size() + "):");
+            lines.add("");
+            for (String f : conflicts) {
+               lines.add("  " + f);
+            }
+            lines.add("");
+            lines.add("Resolve conflicts, then :git_stage each file"
+               + " and :git_do_commit");
+            lines.add("To abort: run 'git merge --abort' in a shell");
+            outputBuffer = createBuffer("*git-merge*", lines);
+            FvContext.connectFv(outputBuffer, fvc.vi);
+         } else {
+            // Non-conflict failure — show raw output
+            outputBuffer = createBuffer("*git-merge*", res.output);
+            FvContext.connectFv(outputBuffer, fvc.vi);
+         }
+      }
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      }
+   }
+
+   /**
+    * Fetch from remote.  Usage: :git_fetch
+    */
+   private static void gitFetch(FvContext fvc) throws
+         IOException, InputException {
+      GitProcess.Result res = GitProcess.executeWithResult("fetch");
+      if (0 == res.exitCode) {
+         if (res.output.isEmpty()) {
+            UI.reportMessage("Fetch complete (no changes)");
+         } else {
+            outputBuffer = createBuffer("*git-fetch*", res.output);
+            FvContext.connectFv(outputBuffer, fvc.vi);
+         }
+      } else {
+         UI.reportMessage("Fetch failed: "
+            + (res.output.isEmpty() ? "unknown error"
+               : res.output.get(0)));
+      }
+   }
+
+   /**
+    * Pull from remote (fetch + merge).  Usage: :git_pull
+    */
+   private static void gitPull(FvContext fvc) throws
+         IOException, InputException {
+      GitProcess.Result res = GitProcess.executeWithResult("pull");
+      if (0 == res.exitCode) {
+         if (res.output.isEmpty()) {
+            UI.reportMessage("Pull complete (up to date)");
+         } else {
+            UI.reportMessage("Pull: " + res.output.get(0));
+         }
+      } else {
+         // Pull may result in merge conflicts
+         List<String> conflicts = GitProcess.execute(
+            "diff", "--name-only", "--diff-filter=U");
+         if (!conflicts.isEmpty()) {
+            java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+            lines.add("Pull Merge Conflicts");
+            lines.add("====================");
+            lines.add("");
+            lines.add("Conflicted files (" + conflicts.size() + "):");
+            lines.add("");
+            for (String f : conflicts) {
+               lines.add("  " + f);
+            }
+            lines.add("");
+            lines.add("Resolve conflicts, then :git_stage each file"
+               + " and :git_do_commit");
+            outputBuffer = createBuffer("*git-pull*", lines);
+            FvContext.connectFv(outputBuffer, fvc.vi);
+         } else {
+            UI.reportMessage("Pull failed: "
+               + (res.output.isEmpty() ? "unknown error"
+                  : res.output.get(0)));
+         }
+      }
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      }
+   }
+
+   /**
+    * Delete a branch.  Usage: :git_branch_delete name
+    *
+    * <p>Uses {@code git branch -d} which only deletes fully-merged
+    * branches.  For force-delete, the user must use a shell.</p>
+    */
+   private static void gitBranchDelete(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      if (null == arg) {
+         throw new InputException(
+            "git_branch_delete requires a branch name");
+      }
+      String name = arg.toString().trim();
+      GitProcess.Result res = GitProcess.executeWithResult(
+         "branch", "-d", name);
+      if (0 == res.exitCode) {
+         UI.reportMessage("Deleted branch: " + name);
+      } else {
+         UI.reportMessage("Delete failed: "
+            + (res.output.isEmpty() ? "unknown error"
+               : res.output.get(0)));
+      }
+   }
+
+   /**
+    * Rebase the current branch.
+    * Usage: :git_rebase &lt;branch&gt;  — rebase onto branch
+    *        :git_rebase --abort    — abort in-progress rebase
+    *        :git_rebase --continue — continue after conflict resolution
+    *
+    * <p>On conflict, opens a buffer listing conflicted files so the
+    * user can resolve them and then run {@code :git_rebase --continue}.</p>
+    */
+   private static void gitRebase(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      if (null == arg) {
+         throw new InputException(
+            "Usage: :git_rebase <branch> | --abort | --continue");
+      }
+      String param = arg.toString().trim();
+      GitProcess.Result res;
+      if ("--abort".equals(param)) {
+         res = GitProcess.executeWithResult("rebase", "--abort");
+         if (0 == res.exitCode) {
+            UI.reportMessage("Rebase aborted");
+         } else {
+            UI.reportMessage("Rebase abort failed: "
+               + (res.output.isEmpty() ? "unknown error"
+                  : res.output.get(0)));
+         }
+      } else if ("--continue".equals(param)) {
+         res = GitProcess.executeWithResult("rebase", "--continue");
+         if (0 == res.exitCode) {
+            UI.reportMessage("Rebase continued successfully");
+         } else {
+            showRebaseConflicts(res, "rebase --continue", fvc);
+         }
+      } else {
+         res = GitProcess.executeWithResult("rebase", param);
+         if (0 == res.exitCode) {
+            if (res.output.isEmpty()) {
+               UI.reportMessage("Rebased onto " + param
+                  + " (already up to date)");
+            } else {
+               UI.reportMessage("Rebased onto " + param + ": "
+                  + res.output.get(0));
+            }
+         } else {
+            showRebaseConflicts(res, "rebase " + param, fvc);
+         }
+      }
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      }
+   }
+
+   /**
+    * Show rebase conflict details in a buffer, or raw output if no
+    * conflicts are detected.
+    */
+   private static void showRebaseConflicts(GitProcess.Result res,
+         String cmdDesc, FvContext fvc) throws IOException, InputException {
+      List<String> conflicts = GitProcess.execute(
+         "diff", "--name-only", "--diff-filter=U");
+      if (!conflicts.isEmpty()) {
+         java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+         lines.add("Rebase Conflicts");
+         lines.add("================");
+         lines.add("");
+         lines.add("Command: git " + cmdDesc);
+         lines.add("Conflicted files (" + conflicts.size() + "):");
+         lines.add("");
+         for (String f : conflicts) {
+            lines.add("  " + f);
+         }
+         lines.add("");
+         lines.add("Resolve conflicts, then :git_stage each file"
+            + " and :git_rebase --continue");
+         lines.add("To abort: :git_rebase --abort");
+         outputBuffer = createBuffer("*git-rebase*", lines);
+         FvContext.connectFv(outputBuffer, fvc.vi);
+      } else {
+         outputBuffer = createBuffer("*git-rebase*", res.output);
+         FvContext.connectFv(outputBuffer, fvc.vi);
+      }
+   }
+
+   /**
+    * Push to remote.  Usage: :git_push
+    */
+   private static void gitPush(FvContext fvc) throws
+         IOException, InputException {
+      GitProcess.Result res = GitProcess.executeWithResult("push");
+      if (0 == res.exitCode) {
+         if (res.output.isEmpty()) {
+            UI.reportMessage("Push complete");
+         } else {
+            UI.reportMessage("Push: " + res.output.get(0));
+         }
+      } else {
+         UI.reportMessage("Push failed: "
+            + (res.output.isEmpty() ? "unknown error"
+               : res.output.get(0)));
+      }
+   }
+
+   /**
+    * Dispatch {@code :git <subcommand> [args]} to the matching
+    * {@code git_<subcommand>} command.  For example, {@code :git status}
+    * dispatches to {@code git_status}, and {@code :git stage file.java}
+    * dispatches to {@code git_stage} with argument {@code file.java}.
+    */
+   private static void gitDispatch(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      if (null == arg) {
+         gitStatus(fvc);
+         return;
+      }
+      String full = arg.toString().trim();
+      String sub;
+      String rest;
+      int sp = full.indexOf(' ');
+      if (sp >= 0) {
+         sub = full.substring(0, sp);
+         rest = full.substring(sp + 1).trim();
+      } else {
+         sub = full;
+         rest = null;
+      }
+      String cmdName = "git_" + sub;
+      Command.command(cmdName, fvc, rest);
+   }
+
+   /**
+    * Register the file-write listener for auto-refresh.
+    * Called when git_status first opens; idempotent.
+    */
+   private static void ensureListenerRegistered() {
+      if (!listenerRegistered) {
+         EditContainer.registerListener(new GitWriteListener());
+         listenerRegistered = true;
+      }
+   }
+
+   /**
+    * Listener that auto-refreshes the git status buffer when a file
+    * is written.
+    */
+   private static final class GitWriteListener
+         implements EditContainer.FileStatusListener {
+
+      public void fileAdded(EditContainer ev) {
+      }
+
+      public void fileWritten(EditContainer ev) {
+         if (null != statusBuffer) {
+            try {
+               List<String> lines = GitStatusBuffer.getStatusLines();
+               statusBuffer = createBuffer("*git-status*", lines);
+            } catch (IOException e) {
+               // silently ignore refresh failures
+            }
+         }
+      }
+
+      public boolean fileDisposed(EditContainer ev) {
+         return false;
+      }
    }
 
    /**

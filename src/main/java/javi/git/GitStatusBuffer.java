@@ -34,7 +34,7 @@ public final class GitStatusBuffer {
     * @param raw raw porcelain v2 output lines
     * @return formatted lines for display
     */
-   static List<String> formatStatus(List<String> raw) {
+   public static List<String> formatStatus(List<String> raw) {
       String branch = "unknown";
       String oid = "";
       String upstream = "";
@@ -152,7 +152,9 @@ public final class GitStatusBuffer {
       result.add("Commands: :git_toggle (stage/unstage at cursor)"
          + "  :git_stage_line  :git_unstage_line  :git_discard");
       result.add("          :git_commit  :git_diff  :git_log"
-         + "  :git_refresh");
+         + "  :git_refresh  :git_stash  :git_stash_pop");
+      result.add("          :git_merge <branch>  :git_fetch"
+         + "  :git_pull  :git_push");
 
       return result;
    }

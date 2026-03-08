@@ -22,6 +22,8 @@ final class AtView implements
    private HashMap<Attribute, Object> gpu;
    private HashMap<Attribute, Object> gyu;
    private HashMap<Attribute, Object> gy;
+   private HashMap<Attribute, Object> ry;
+   private HashMap<Attribute, Object> cy;
 
    private String text;
    private int pos;
@@ -31,6 +33,7 @@ final class AtView implements
    private int line2start;
    private int olineStart;
    private int olineEnd;
+   private Color lineFg;
 //private AttributedCharacterIterator aci;
 //private int aciOffset;
 //private int aciEnd;
@@ -72,7 +75,17 @@ final class AtView implements
       olineEnd = -1;
       line2start = Integer.MAX_VALUE;
       termAttrs = null;
+      lineFg = null;
       //aci = null;
+   }
+
+   /**
+    * Set the foreground color for the current line.  Overrides the
+    * default green for non-emphasized, non-highlighted rendering.
+    * Reset on each {@link #setText} call.
+    */
+   void setLineForeground(Color c) {
+      lineFg = c;
    }
 
    String getText() {
@@ -222,6 +235,10 @@ final class AtView implements
       gy = new HashMap<>(by);
       gy.put(TextAttribute.BACKGROUND, paraBackground);
       termMap = new HashMap<>(by);
+      ry = new HashMap<>(by);
+      ry.put(TextAttribute.FOREGROUND, Color.red);
+      cy = new HashMap<>(by);
+      cy.put(TextAttribute.FOREGROUND, Color.cyan);
       text = "";
 
    }
@@ -297,7 +314,7 @@ final class AtView implements
             ? termAttrs[pos] : CellAttr.DEFAULT;
          return buildTermMap(attr);
       }
-      return
+      Map<Attribute, Object> base =
          olineEnd == -1
          ? pos  <  highStart
          ? emphFlag ? byu : by
@@ -313,6 +330,12 @@ final class AtView implements
          : pos < line2start
          ? bpu
          : gpu;
+      if (null != lineFg && base == by) {
+         return lineFg == Color.red ? ry
+            : lineFg == Color.cyan ? cy
+            : by;
+      }
+      return base;
       //trace ("this= " + this);
       //trace ("pos = " + pos + " returning " + retval.get(TextAttribute.BACKGROUND));
       //return retval;

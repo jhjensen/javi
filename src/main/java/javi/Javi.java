@@ -103,7 +103,11 @@ public final class Javi {
       new JavaCompiler();
       new CheckStyle();
       new FormatDispatch();
-      new javi.git.GitCommands();
+      try {
+         Class.forName("javi.git.GitCommands");
+      } catch (ClassNotFoundException e) {
+         UI.reportError("git plugin not found: " + e);
+      }
       //trace("unexpectedly slow");
 
       //new vcs.cmvc();
