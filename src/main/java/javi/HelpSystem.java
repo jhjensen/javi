@@ -96,6 +96,11 @@ public final class HelpSystem {
          case "vt100":
             appendShellHelp();
             break;
+         case "diredit":
+         case "directory":
+         case "dir":
+            appendDirEditHelp();
+            break;
          default:
             appendUnknownTopic(normalizedTopic);
             break;
@@ -177,6 +182,7 @@ public final class HelpSystem {
       append("  :help undo       - Undo and redo");
       append("  :help window     - Window and scrolling");
       append("  :help shell      - Shell / terminal commands");
+      append("  :help diredit    - Directory editor (DirEdit)");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -633,6 +639,55 @@ public final class HelpSystem {
    }
 
    /**
+    * Append directory editor help.
+    */
+   private static void appendDirEditHelp() {
+      append("DIRECTORY EDITOR (DirEdit)");
+      append("=========================");
+      append("");
+      append("The directory editor provides netrw-like filesystem browsing.");
+      append("Open a directory with :e <dir> or :diredit <dir>");
+      append("");
+      append("NAVIGATION");
+      append("----------");
+      append("  Enter            Open file or enter directory");
+      append("  -                Go to parent directory");
+      append("  .                Toggle hidden (dot) files");
+      append("  q                Quit directory browser (go to file list)");
+      append("");
+      append("DISPLAY");
+      append("-------");
+      append("  s                Cycle sort mode (name/size/date/type)");
+      append("  R                Refresh directory listing");
+      append("");
+      append("FILE OPERATIONS");
+      append("---------------");
+      append("  D                Delete file under cursor (with confirmation)");
+      append("  dd               Delete file under cursor (via normal mode)");
+      append("  :diredit_rename <name>   Rename file under cursor");
+      append("  :diredit_mkdir <name>    Create new subdirectory");
+      append("  :diredit_newfile <name>  Create new empty file");
+      append("  :diredit_copy <dest>     Copy file under cursor");
+      append("");
+      append("SEARCH PATH");
+      append("-----------");
+      append("  S                Toggle directory in/out of search path");
+      append("  Directories in the search path are marked with 'S'.");
+      append("");
+      append("MARKS");
+      append("-----");
+      append("  Files marked for deletion show 'D' at the start of the line.");
+      append("");
+      append("DISPLAY FORMAT");
+      append("--------------");
+      append("  Each line shows: [mark] permissions  size  date  name");
+      append("  Directories have a trailing '/' and show <DIR> for size.");
+      append("  The '../' entry navigates to the parent directory.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
     * Append help for unknown topic.
     */
    private static void appendUnknownTopic(String topic) {
@@ -648,6 +703,7 @@ public final class HelpSystem {
       append("  undo       - Undo and redo");
       append("  window     - Window and scrolling");
       append("  shell      - Shell / terminal");
+      append("  diredit    - Directory editor");
       append("");
       append("Type :help for index.");
    }

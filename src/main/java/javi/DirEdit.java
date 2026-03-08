@@ -261,7 +261,14 @@ public final class DirEdit extends TextEdit<String> {
          sortFiles(fileList);
 
          // Add parent directory entry if not root
-         File parent = dirFile.getAbsoluteFile().getParentFile();
+         // Use canonical path to resolve "." segments properly
+         File resolved;
+         try {
+            resolved = dirFile.getCanonicalFile();
+         } catch (IOException e) {
+            resolved = dirFile.getAbsoluteFile();
+         }
+         File parent = resolved.getParentFile();
          if (null != parent) {
             lines.add(formatEntry(parent, true));
          }
@@ -529,11 +536,19 @@ public final class DirEdit extends TextEdit<String> {
     * @param fvc the current FvContext
     */
    void goToParent(FvContext fvc) {
-      File parent = currentDir.fh.getAbsoluteFile().getParentFile();
-      if (null != parent) {
-         currentDir = FileDescriptor.LocalDir.make(parent.getPath());
-         populateDirectory();
-         fvc.cursoryabs(3); // Position on first entry
+      try {
+         // Use getCanonicalFile() to resolve "." and ".." segments
+         // before getting parent. getAbsoluteFile() leaves "." in the
+         // path so parent of "/X/Y/." is "/X/Y" (same directory).
+         File resolved = currentDir.fh.getCanonicalFile();
+         File parent = resolved.getParentFile();
+         if (null != parent) {
+            currentDir = FileDescriptor.LocalDir.make(parent.getPath());
+            populateDirectory();
+            fvc.cursoryabs(3); // Position on first entry
+         }
+      } catch (IOException e) {
+         trace("DirEdit: failed to resolve parent: " + e);
       }
    }
 

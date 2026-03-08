@@ -143,6 +143,11 @@ public final class Command extends Rgroup {
       // Auto-redirect to shell help when in a VT100 buffer with no topic
       if ((null == topic || topic.isEmpty()) && fvc.edvec instanceof Vt100)
          topic = "shell";
+      // When no topic specified and current buffer is DirEdit, show dir help
+      if ((null == topic || topic.isEmpty())
+            && fvc.edvec instanceof DirEdit) {
+         topic = "diredit";
+      }
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);
    }
