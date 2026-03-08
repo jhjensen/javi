@@ -682,9 +682,43 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             return;
          }
       }
-      FvContext<?> fileListFvc = fvc.switchContext(this, 1);
-      if (fvc.edvec != this)
-         FvContext.connectFv((TextEdit) fileListFvc.at(), fvc.vi);
+   }
+
+   /**
+    * Move the buffer at the cursor position down one slot in the file list.
+    * Does nothing if already at the last position.
+    */
+   static void moveBufferDown(FvContext fvc) {
+      int idx = fvc.inserty();
+      if (!instance.containsNow(idx + 1))
+         return;
+      instance.beginInternalModify();
+      try {
+         // Move the next element up to idx, pushing current element down
+         instance.moveLine(idx + 1, idx);
+         instance.checkpoint();
+      } finally {
+         instance.endInternalModify();
+      }
+      fvc.cursoryabs(idx + 1);
+   }
+
+   /**
+    * Move the buffer at the cursor position up one slot in the file list.
+    * Does nothing if already at the first position.
+    */
+   static void moveBufferUp(FvContext fvc) {
+      int idx = fvc.inserty();
+      if (idx <= 1)
+         return;
+      instance.beginInternalModify();
+      try {
+         instance.moveLine(idx, idx - 1);
+         instance.checkpoint();
+      } finally {
+         instance.endInternalModify();
+      }
+      fvc.cursoryabs(idx - 1);
    }
 
    static void quit(boolean save, FvContext fvc) {
@@ -842,6 +876,12 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       static boolean isContentUnchanged(TextEdit<String> ev,
             FileProperties fp) {
          return FileList.isContentUnchanged(ev, fp);
+      }
+      static void beginModify() {
+         instance.beginInternalModify();
+      }
+      static void endModify() {
+         instance.endInternalModify();
       }
    }
 

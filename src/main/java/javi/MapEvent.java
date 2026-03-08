@@ -339,6 +339,7 @@ public final class MapEvent {
 
       // Miscellaneous editing
       km.bindEditKey('J', "joinlines", null);
+      // K bound in filelist overlay, not here
       km.bindEditKey('r', "subchar", null);
       km.bindEditKey('~', "changecase", null);
       km.bindEditKey('R', "insert", tf);

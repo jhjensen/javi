@@ -300,6 +300,8 @@ final class KeyMap {
       KeyMap filelistMap = createOverlay("filelist", normalMap);
       filelistMap.bindMoveKey((char) 13, "nextpos", ff);  // CR
       filelistMap.bindMoveKey((char) 10, "nextpos", ff);  // LF
+      filelistMap.bindEditKey('J', "filelistmovedown", null);
+      filelistMap.bindEditKey('K', "filelistmoveup", null);
       register(filelistMap);
 
       // Directory overlay: DirEdit buffer-specific bindings

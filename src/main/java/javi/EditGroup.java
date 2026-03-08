@@ -35,6 +35,8 @@ final class EditGroup extends Rgroup {
       EG_UNUSED2,      // 25
       SHIFT_MODE,      // 26: shift lines (>/<)
       TAB_FIX,         // 27: fix tabs
+      FILELIST_MOVE_UP, // 28: move buffer up in file list (K)
+      FILELIST_MOVE_DOWN, // 29: move buffer down in file list (J)
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -77,7 +79,9 @@ final class EditGroup extends Rgroup {
          "egunused1",
          "egunused2",           //25
          "shiftmode",
-         "tabfix"
+         "tabfix",
+         "filelistmoveup",   //28
+         "filelistmovedown"  //29
       };
       final String[] descs = {
          null,
@@ -108,6 +112,8 @@ final class EditGroup extends Rgroup {
          null,
          "shift lines left/right",
          "fix tabs in selection",
+         "move buffer up in file list",
+         "move buffer down in file list"
       };
       register(rnames, descs);
    }
@@ -186,6 +192,10 @@ final class EditGroup extends Rgroup {
             case JOIN_LINES:
                fvc.cursorxabs(fvc.edvec.joinlines(count, fvc.inserty()));
                break;
+            case FILELIST_MOVE_DOWN:
+               if (fvc.edvec instanceof FileList)
+                  FileList.moveBufferDown(fvc);
+               break;
             case SUB_CHAR:
                subChar(dotmode, count, fvc);
                break;
@@ -247,6 +257,10 @@ final class EditGroup extends Rgroup {
 
             case TAB_FIX:
                fvc.edvec.tabfix(fvc.vi.getTabStop());
+               break;
+            case FILELIST_MOVE_UP:
+               if (fvc.edvec instanceof FileList)
+                  FileList.moveBufferUp(fvc);
                break;
             default:
                throw new RuntimeException("invalid doroutine index");

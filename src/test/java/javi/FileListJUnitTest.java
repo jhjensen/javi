@@ -123,8 +123,10 @@ class FileListJUnitTest {
       try {
          FileList inst = FileList.TestAccess.getInstance();
          int sizeBefore = inst.finish();
+         FileList.TestAccess.beginModify();
          inst.remove(1, 1);
          inst.checkpoint();
+         FileList.TestAccess.endModify();
          int sizeAfter = inst.finish();
          assertEquals(sizeBefore - 1, sizeAfter,
                "remove(1,1) should reduce size by 1");
@@ -140,7 +142,9 @@ class FileListJUnitTest {
       try {
          FileList inst = FileList.TestAccess.getInstance();
          int sizeBefore = inst.finish();
+         FileList.TestAccess.beginModify();
          inst.undo();
+         FileList.TestAccess.endModify();
          int sizeAfter = inst.finish();
          assertEquals(sizeBefore + 1, sizeAfter,
                "undo should restore the removed entry");
