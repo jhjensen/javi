@@ -63,7 +63,7 @@ public final class FvContext<OType> implements Serializable {
 
    private static final class FvMap implements Serializable {
       private static final long serialVersionUID = 1;
-      private LinkedHashMap<View, HashMap<TextEdit, FvContext>> viewhash = new LinkedHashMap<>(1);
+      private LinkedHashMap<View, HashMap<TextEdit<?>, FvContext<?>>> viewhash = new LinkedHashMap<>(1);
 
       FvMap() {
          EditContainer.registerListener(new FS());
@@ -78,8 +78,8 @@ public final class FvContext<OType> implements Serializable {
          }
 
          public boolean fileDisposed(EditContainer ev) {
-            if (ev instanceof TextEdit)
-               remove((TextEdit) ev);
+            if (ev instanceof TextEdit<?> te)
+               remove(te);
             return false;
          }
       }
@@ -95,41 +95,41 @@ public final class FvContext<OType> implements Serializable {
 
       void dump() {
          EventQueue.biglock2.assertOwned();
-         for (HashMap<TextEdit, FvContext> ehash : viewhash.values())
-            for (FvContext fvc : ehash.values())
+         for (HashMap<TextEdit<?>, FvContext<?>> ehash : viewhash.values())
+            for (FvContext<?> fvc : ehash.values())
                trace("view hash contains " + fvc);
       }
 
-      FvContext get(View vi, TextEdit edvec) {
+      FvContext<?> get(View vi, TextEdit<?> edvec) {
          EventQueue.biglock2.assertOwned();
-         HashMap<TextEdit, FvContext> ehash = viewhash.get(vi);
+         HashMap<TextEdit<?>, FvContext<?>> ehash = viewhash.get(vi);
          if (null == ehash) {
             // this only happens when we get a new view
-            ehash = new HashMap<TextEdit, FvContext>(viewhash.size());
+            ehash = new HashMap<TextEdit<?>, FvContext<?>>(viewhash.size());
             viewhash.put(vi, ehash);
             return null;
          }
          return ehash.get(edvec);
       }
 
-      void put(FvContext fvc) {
+      void put(FvContext<?> fvc) {
          EventQueue.biglock2.assertOwned();
          //trace("putting a new fvcontext " + fvc);
-         HashMap<TextEdit, FvContext> ehash = viewhash.get(fvc.vi);
+         HashMap<TextEdit<?>, FvContext<?>> ehash = viewhash.get(fvc.vi);
          if (null == ehash) {
             // this only happens when we get a new view
-            ehash = new HashMap<TextEdit, FvContext>(viewhash.size());
+            ehash = new HashMap<TextEdit<?>, FvContext<?>>(viewhash.size());
             viewhash.put(fvc.vi, ehash);
          }
          ehash.put(fvc.edvec, fvc);
       }
 
-      Iterator<FvContext> iterator() {
+      Iterator<FvContext<?>> iterator() {
          EventQueue.biglock2.assertOwned();
          return new FvIterator();
       }
 
-      Collection<HashMap<TextEdit, FvContext>> tmap() {
+      Collection<HashMap<TextEdit<?>, FvContext<?>>> tmap() {
          EventQueue.biglock2.assertOwned();
          return viewhash.values();
       }
@@ -139,9 +139,9 @@ public final class FvContext<OType> implements Serializable {
          viewhash.clear();
       }
 
-      void remove(TextEdit ed) {
+      void remove(TextEdit<?> ed) {
          EventQueue.biglock2.assertOwned();
-         for (HashMap<TextEdit, FvContext> ehash : viewhash.values())
+         for (HashMap<TextEdit<?>, FvContext<?>> ehash : viewhash.values())
             ehash.remove(ed);
       }
 
@@ -152,16 +152,16 @@ public final class FvContext<OType> implements Serializable {
             throw new RuntimeException("fvcontext.dispose: didnt find " + vi);
       }
 
-      private final class FvIterator implements Iterator<FvContext> {
+      private final class FvIterator implements Iterator<FvContext<?>> {
 
-         private Iterator<HashMap<TextEdit, FvContext>> viit = viewhash.values().iterator();
-         private Iterator<FvContext> fvit;
+         private Iterator<HashMap<TextEdit<?>, FvContext<?>>> viit = viewhash.values().iterator();
+         private Iterator<FvContext<?>> fvit;
 
          FvIterator() {
             EventQueue.biglock2.assertOwned();
             fvit = viit.hasNext()
                   ? viit.next().values().iterator()
-                  : new ArrayList<FvContext>().iterator();
+                  : new ArrayList<FvContext<?>>().iterator();
          }
 
          public boolean hasNext() {
@@ -176,7 +176,7 @@ public final class FvContext<OType> implements Serializable {
             return false;
          }
 
-         public FvContext next() {
+         public FvContext<?> next() {
             EventQueue.biglock2.assertOwned();
             if (fvit.hasNext())
                return fvit.next();
@@ -197,8 +197,8 @@ public final class FvContext<OType> implements Serializable {
 
    private static FvMap fvmap = new FvMap();
 
-   private static FvContext defaultFvc;
-   private static FvContext currfvc; // the main text display area
+   private static FvContext<?> defaultFvc;
+   private static FvContext<?> currfvc; // the main text display area
    private static final TextEdit<String> defaultText;
 
    public final TextEdit<OType> edvec;
@@ -232,8 +232,8 @@ public final class FvContext<OType> implements Serializable {
    private static final class FmListener extends EditContainer.MarkListener {
 
       void invalidateBack(UndoHistory.EhMark ehm) {
-         for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();) {
-            FvContext fvc = fit.next();
+         for (Iterator<FvContext<?>> fit = fvmap.iterator(); fit.hasNext();) {
+            FvContext<?> fvc = fit.next();
             if (fvc.vis)
                fvc.vi.checkValid(ehm);
          }
@@ -260,7 +260,7 @@ public final class FvContext<OType> implements Serializable {
       }
    }
 
-   static Object getcurobj(TextEdit list) {
+   static Object getcurobj(TextEdit<?> list) {
       // trace("getcurobj = " +
       // (fvcontext.getcontext(currfvc.vi,list).getCurrentObject()));
       return getcontext(currfvc.vi, list).at();
@@ -277,8 +277,8 @@ public final class FvContext<OType> implements Serializable {
          if (currfvc.vi == vi) // the usual case
             currfvc.vis = false;
          else
-            for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();) {
-               FvContext fvc = fit.next();
+            for (Iterator<FvContext<?>> fit = fvmap.iterator(); fit.hasNext();) {
+               FvContext<?> fvc = fit.next();
                if (fvc.vi == vi)
                   fvc.vis = false;
             }
@@ -296,7 +296,7 @@ public final class FvContext<OType> implements Serializable {
       vis = true;
    }
 
-   public static FvContext getCurrFvc() {
+   public static FvContext<?> getCurrFvc() {
       // trace("returning currfvc " + currfvc);
       return currfvc;
    }
@@ -320,7 +320,7 @@ public final class FvContext<OType> implements Serializable {
       throw new RuntimeException("findNextView cant find vi " + vi);
    }
 
-   public static FvContext nextView() {
+   public static FvContext<?> nextView() {
       View nvi = currfvc.findNextView();
       getcontext(nvi, nvi.getCurrFile()).setCurrView();
       return currfvc;
@@ -345,9 +345,9 @@ public final class FvContext<OType> implements Serializable {
             && po.x == fileposx && po.y == fileposy;
    }
 
-   private static void fixCursor(TextEdit ed) {
-      for (HashMap<TextEdit, FvContext> hmap : fvmap.tmap()) {
-         FvContext fv = hmap.get(ed);
+   private static void fixCursor(TextEdit<?> ed) {
+      for (HashMap<TextEdit<?>, FvContext<?>> hmap : fvmap.tmap()) {
+         FvContext<?> fv = hmap.get(ed);
          if (null != fv)
             fv.cursorabs(fv.fileposx, fv.fileposy); // fix up cursor position
       }
@@ -380,12 +380,12 @@ public final class FvContext<OType> implements Serializable {
       if (!ignoreLock)
          EventQueue.biglock2.assertOwned();
 
-      var allEdits = new HashSet<TextEdit>(100);
+      var allEdits = new HashSet<TextEdit<?>>(100);
 
       for (var fit = fvmap.iterator(); fit.hasNext();)
          allEdits.add(fit.next().edvec);
 
-      for (TextEdit ev : allEdits)
+      for (TextEdit<?> ev : allEdits)
          try {
             // trace("disposing in fvc quit" + ev);
             ev.disposeFvc();
@@ -399,7 +399,7 @@ public final class FvContext<OType> implements Serializable {
       currfvc = null;
    }
 
-   public static void dispose(TextEdit ed, TextEdit next) throws InputException, IOException {
+   public static void dispose(TextEdit<?> ed, TextEdit<?> next) throws InputException, IOException {
       // trace("disposing " + ed + " currfvc " + currfvc);
 
       reconnect(ed, next);
@@ -407,34 +407,34 @@ public final class FvContext<OType> implements Serializable {
       ed.disposeFvc();
    }
 
-   public static FvContext connectFv(TextEdit file, View vi) throws InputException {
+   public static FvContext<?> connectFv(TextEdit<?> file, View vi) throws InputException {
 
       if (null != tfc && vi == tfc.vi)
          throw new InputException(
                "can't change command window to display other data");
       UI.setTitle(file.toString());
-      FvContext fvc = FvContext.getcontext(vi, file);
+      FvContext<?> fvc = FvContext.getcontext(vi, file);
       fvc.setCurrView();
       return fvc;
    }
 
-   static void reconnect(TextEdit ed, TextEdit next) throws InputException {
+   static void reconnect(TextEdit<?> ed, TextEdit<?> next) throws InputException {
 
       // trace("reconnecting oldfile " + ed + " next " + next);
       if (currfvc.edvec == ed)
          FvContext.connectFv(next, currfvc.vi);
       // trace("starting iterator");
-      for (Iterator<FvContext> fit = fvmap.iterator(); fit.hasNext();) {
-         FvContext fvc = fit.next();
+      for (Iterator<FvContext<?>> fit = fvmap.iterator(); fit.hasNext();) {
+         FvContext<?> fvc = fit.next();
          if (fvc.edvec == ed)
             getcontext(fvc.vi, next).activate();
       }
       // trace("done iterator");
    }
 
-   public static FvContext dispose(View vi) {
+   public static FvContext<?> dispose(View vi) {
       // trace("removing " + vi);
-      FvContext retval = null;
+      FvContext<?> retval = null;
       if (currfvc.vi == vi)
          retval = nextView();
       fvmap.remove(vi);
@@ -455,16 +455,15 @@ public final class FvContext<OType> implements Serializable {
       cursoryabs(ypos);
    }
 
-   // B6: rawtypes unavoidable — FvContext stores TextEdit<?> (wildcard)
-   // but FvMap and callers pass raw TextEdit. Parameterizing FvContext
-   // would require threading type parameters through FvMap, View,
-   // connectFv, and all command dispatch — a large architectural refactor.
-   // Deferred: see plan-B4-B7-thread-safety.md.
-   @SuppressWarnings({ "unchecked", "rawtypes" })
-   FvContext switchContext(TextEdit ev, int incval) {
-      FvContext newcontext = fvmap.get(vi, ev);
+   /** Capture helper: bridges wildcard TextEdit to concrete FvContext constructor. */
+   private static <T> FvContext<T> createFvc(View vi, TextEdit<T> te) {
+      return new FvContext<>(vi, te);
+   }
+
+   FvContext<?> switchContext(TextEdit<?> ev, int incval) {
+      FvContext<?> newcontext = fvmap.get(vi, ev);
       if (null == newcontext) {
-         newcontext = new FvContext(vi, ev);
+         newcontext = createFvc(vi, ev);
          fvmap.put(newcontext);
       } else {
          if (newcontext != this)
@@ -474,18 +473,17 @@ public final class FvContext<OType> implements Serializable {
       return newcontext;
    }
 
-   @SuppressWarnings({ "unchecked", "rawtypes" }) // B6: same raw TextEdit issue
-   public static FvContext getcontext(View viloc, TextEdit te) {
+   public static FvContext<?> getcontext(View viloc, TextEdit<?> te) {
       // trace("fvcontext.getcontext " + e + " and " + viloc);
 
-      FvContext context = fvmap.get(viloc, te);
+      FvContext<?> context = fvmap.get(viloc, te);
       if (null == defaultFvc) {
-         defaultFvc = new FvContext(viloc, defaultText);
+         defaultFvc = new FvContext<>(viloc, defaultText);
          fvmap.put(defaultFvc);
       }
 
       if (null == context) {
-         context = new FvContext(viloc, te);
+         context = createFvc(viloc, te);
          fvmap.put(context);
       }
       return context;
@@ -648,13 +646,13 @@ public final class FvContext<OType> implements Serializable {
       cursorabs(pos);
    }
 
-   private static FvContext tfc;
+   private static FvContext<?> tfc;
 
-   public static void setCommand(FvContext tfci) {
+   public static void setCommand(FvContext<?> tfci) {
       tfc = tfci;
    }
 
-   static FvContext startComLine() {
+   static FvContext<?> startComLine() {
       // tfc.setCurrView();
       UI.showCommand();
       return tfc;

@@ -122,7 +122,7 @@ public final class PosListList extends TextList<Position> {
       finish();
    }
 
-   private void gotoNextPos(FvContext fvc, boolean[] reverse,
+   private void gotoNextPos(FvContext<?> fvc, boolean[] reverse,
          boolean wait) throws InputException {
       //trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
