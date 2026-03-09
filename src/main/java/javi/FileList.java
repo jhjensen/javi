@@ -450,6 +450,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         if (fh instanceof FileDescriptor.LocalDir) {
                            foundf |= DirList.getDefault().addSearchDir(
                               (FileDescriptor.LocalDir) fh);
+                           DirManager.getInstance().addSearchDir(
+                              (FileDescriptor.LocalDir) fh);
                            continue oloop;
                         } else {
                            if (null != EditContainer.findfile(fh))
@@ -474,6 +476,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         if (fh != null) {
                            if (fh instanceof FileDescriptor.LocalDir) {
                               foundf |= DirList.getDefault().addSearchDir(
+                                  (FileDescriptor.LocalDir) fh);
+                              DirManager.getInstance().addSearchDir(
                                   (FileDescriptor.LocalDir) fh);
                            } else {
                               if (EditContainer.findfile(fh) != null) {
@@ -506,6 +510,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         if (fha instanceof FileDescriptor.LocalDir) {
                            foundf |= DirList.getDefault().addSearchDir(
                               (FileDescriptor.LocalDir) fha);
+                           DirManager.getInstance().addSearchDir(
+                              (FileDescriptor.LocalDir) fha);
                         } else {
                            if (null != EditContainer.findfile(fha))
                               dupflag = true;
@@ -531,6 +537,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         FileDescriptor fh = FileDescriptor.make(searchName);
                         if (fh instanceof FileDescriptor.LocalDir) {
                            foundf |= DirList.getDefault().addSearchDir(
+                              (FileDescriptor.LocalDir) fh);
+                           DirManager.getInstance().addSearchDir(
                               (FileDescriptor.LocalDir) fh);
                         } else {
                            if (null != EditContainer.findfile(fh))
