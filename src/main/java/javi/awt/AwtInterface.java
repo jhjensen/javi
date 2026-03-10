@@ -1353,7 +1353,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       private String filename;
       private boolean isModified;
-      private ReloadDialog dia = new ReloadDialog();
 
       ConfirmReloadDia(String filenamei, boolean isModifiedi) {
          filename = filenamei;
@@ -1415,7 +1414,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
 
       UI.ReloadAction doAwt() {
-         return dia.getChoice();
+         // Create dialog on EDT to avoid cross-thread AWT component issues
+         return new ReloadDialog().getChoice();
       }
    }
 

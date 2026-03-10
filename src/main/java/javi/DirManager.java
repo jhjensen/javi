@@ -211,6 +211,7 @@ public final class DirManager extends TextEdit<String> {
          return false;
       searchPath.add(dir);
       trace("DirManager: added search dir " + dir);
+      populateDirectory(); // refresh display so [S] marker appears
       return true;
    }
 
@@ -221,7 +222,10 @@ public final class DirManager extends TextEdit<String> {
     * @return true if removed
     */
    boolean removeSearchDir(FileDescriptor.LocalDir dir) {
-      return searchPath.remove(dir);
+      boolean removed = searchPath.remove(dir);
+      if (removed)
+         populateDirectory(); // refresh display so [S] marker disappears
+      return removed;
    }
 
    /**
