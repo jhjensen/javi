@@ -106,7 +106,7 @@ class Vt100 extends TextEdit<String> {
          IoConverter<String> ioc, Charset charsetToUse) {
       super(ioc, ioc.prop);
       this.charset = charsetToUse;
-      parser = new Vt100Parser(new ECScreen(), istr);
+      parser = new Vt100Parser(new ECScreen(), istr, charset);
       writer = new OutputStreamWriter(ostri, charset);
       trace("Vt100: initialized with charset " + charset.name());
    }
