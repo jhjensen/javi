@@ -1,5 +1,7 @@
 package javi;
 import java.io.BufferedInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import history.Tools;
 import static history.Tools.trace;
 
@@ -101,7 +103,10 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    /** Input stream from terminal process. */
    private final BufferedInputStream input;
 
-   /** Most recently read byte. */
+   /** Reader that decodes the input stream using the terminal charset. */
+   private final InputStreamReader reader;
+
+   /** Most recently read character. */
    private char recbyte;
 
    /** Parser thread. */
@@ -115,8 +120,13 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
     * @throws NullPointerException if ins is null
     */
    Vt100Parser(VScreen win, BufferedInputStream ins) {
+      this(win, ins, Charset.defaultCharset());
+   }
+
+   Vt100Parser(VScreen win, BufferedInputStream ins, Charset charset) {
       if (null == ins) throw new NullPointerException("invalid initialisation");
       input = ins;
+      reader = new InputStreamReader(ins, charset);
       window = win;
       rthread.start();
    }
@@ -135,7 +145,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       try {
          while (true) {
             synchronized (this) {
-               int rec = input.read();
+               int rec = reader.read();
                //trace("rec = " + (int)rec);
 
                if (rec == -1)  {
@@ -217,8 +227,6 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             if (inc < 20)
                trace1("unhandeld control character 0x"
                   + Integer.toHexString(inc));
-            if (inc > 0x7f)
-               trace(this + "questionable char " + Integer.toHexString(inc));
             sb.append(inc);
       }
    }
@@ -613,9 +621,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       //trace("ParseInput executing on recbyte " + (int)recbyte);
       try {
          doChar(recbyte);
-         while (input.available() != 0)   {
-            //trace("input available" + input.available());
-            doChar((char) input.read());
+         while (reader.ready())   {
+            //trace("input available");
+            doChar((char) reader.read());
          }
          if (state == CR) {
             sb.setLength(sb.length() - 1);
