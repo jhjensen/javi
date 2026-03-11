@@ -303,6 +303,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       //trace("openFile fh " + fh + " ec " + ec + "  fh.isFile() "   + fh.isFile());
       if (null == ec && fh instanceof FileDescriptor.LocalFile) {
          FileDescriptor.LocalFile fhl = (FileDescriptor.LocalFile) fh;
+         if (fhl.fh.isDirectory()) {
+            try {
+               DirEdit.openDirectory(fhl.fh.getPath(), vi);
+            } catch (IOException e) {
+               throw new InputException("Cannot open directory: " + fhl);
+            }
+            return true;
+         }
          if (fhl.canRead() && fhl.isFile()) {
             FileProperties fp = new FileProperties(fh, StringIoc.converter);
             TextEdit<String> text = new TextEdit<String>(

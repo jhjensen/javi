@@ -84,6 +84,19 @@ final class DirList extends TextEdit<DirEntry> {
       return true;
    }
 
+   boolean removeSearchDir(FileDescriptor.LocalDir fh) {
+      DirEntry de = new DirEntry(fh);
+      int numEntrys = readIn();
+      for (int ii = 1; ii < numEntrys; ii++) {
+         if (de.equals(at(ii))) {
+            remove(ii, ii);
+            checkpoint();
+            return true;
+         }
+      }
+      return false;
+   }
+
    static DirList getDefault() {
       return deflist;
    }

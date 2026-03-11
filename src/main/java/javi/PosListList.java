@@ -324,6 +324,28 @@ public final class PosListList extends TextList<Position> {
          }
       }
 
+      private static ArrayList<Position> findDirectories(String name) {
+         ArrayList<Position> results = new ArrayList<>();
+         // Check if literal path is a directory
+         File dirCheck = new File(name);
+         if (dirCheck.isDirectory()) {
+            FileDescriptor.LocalFile fd =
+               FileDescriptor.LocalFile.make(dirCheck.getPath());
+            results.add(new Position(0, 1, fd, "directory"));
+         }
+         // Search across the search path
+         DirManager dm = DirManager.getInstance();
+         for (FileDescriptor.LocalDir dir : dm.getSearchPath()) {
+            File candidate = new File(dir.fh, name);
+            if (candidate.isDirectory()) {
+               FileDescriptor.LocalFile fd =
+                  FileDescriptor.LocalFile.make(candidate.getPath());
+               results.add(new Position(0, 1, fd, "directory"));
+            }
+         }
+         return results;
+      }
+
       private static String getLastSym(String str, int startid) {
          //trace(":" + str + " startid = " + startid);
          int endid = startid;
@@ -366,11 +388,19 @@ public final class PosListList extends TextList<Position> {
             str = getLastSym(str, fvc.insertx());
          }
 
-         // Check if the symbol is a directory path — open DirEdit
-         File dirCheck = new File(str);
-         if (dirCheck.isDirectory()) {
+         // Search for matching directories across the search path
+         ArrayList<Position> dirMatches = findDirectories(str);
+         if (!dirMatches.isEmpty()) {
             tagstack.add(porig);
-            DirEdit.openDirectory(str, fvc.vi);
+            Position[] parray = dirMatches.toArray(new Position[0]);
+            PositionIoc ioc = new PositionIoc(
+               "dir:" + str, null, PositionIoc.pconverter);
+            TextEdit<Position> dirList = new TextEdit<Position>(
+               ioc, parray, inst, ioc.prop);
+            dirList.contains(2);
+            inst.insertOne(dirList, inst.finish());
+            inst.setLastList(dirList);
+            FileList.gotoposition(parray[0], true, fvc.vi);
             return;
          }
 

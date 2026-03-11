@@ -223,8 +223,10 @@ public final class DirManager extends TextEdit<String> {
     */
    boolean removeSearchDir(FileDescriptor.LocalDir dir) {
       boolean removed = searchPath.remove(dir);
-      if (removed)
+      if (removed) {
+         DirList.getDefault().removeSearchDir(dir);
          populateDirectory(); // refresh display so [S] marker disappears
+      }
       return removed;
    }
 
@@ -278,11 +280,11 @@ public final class DirManager extends TextEdit<String> {
    boolean toggleSearchPath(FileDescriptor.LocalDir dir) {
       if (searchPath.contains(dir)) {
          searchPath.remove(dir);
+         DirList.getDefault().removeSearchDir(dir);
          trace("DirManager: removed search dir " + dir);
          return false;
       } else {
          searchPath.add(dir);
-         // Also add to DirList for backward compatibility
          DirList.getDefault().addSearchDir(dir);
          trace("DirManager: added search dir " + dir);
          return true;
