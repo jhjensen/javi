@@ -110,6 +110,14 @@ tasks.named('compileJava') {
 tasks.named('test') {
     useJUnitPlatform()
     jacoco.enabled = true
+    // T1: per-test timeout to prevent hangs during CI
+    systemProperty 'junit.jupiter.execution.timeout.default', '30s'
+    // T1: verbose test logging to identify slow/hanging tests
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        showStandardStreams = false
+        exceptionFormat = 'short'
+    }
 }
 
 // T1/T3: JaCoCo coverage report — merges JUnit + legacy test exec data
