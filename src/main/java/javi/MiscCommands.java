@@ -517,7 +517,7 @@ public final class MiscCommands extends Rgroup {
          trace("elapsed " + elapsed);
          if (elapsed < 500) { // two redraws in <.5 seconds
             trace("start flush elapsed" + elapsed);
-            DirList.getDefault().flushCache();
+            DirManager.getInstance().flushCache();
             PosListList.Cmd.flush();
             EventQueue.biglock2.unlock();
             try {

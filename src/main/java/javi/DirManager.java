@@ -210,6 +210,7 @@ public final class DirManager extends TextEdit<String> {
       if (searchPath.contains(dir))
          return false;
       searchPath.add(dir);
+      DirList.getDefault().addSearchDir(dir);
       trace("DirManager: added search dir " + dir);
       populateDirectory(); // refresh display so [S] marker appears
       return true;
@@ -336,7 +337,7 @@ public final class DirManager extends TextEdit<String> {
    void initSearch(String name) {
       dindex = 0;
       findex = -1;
-      maxIndex = searchPath.size();
+      maxIndex = searchPath.size() + 1; // +1: dindex 1 probes cwd
       searchName = name;
    }
 
@@ -429,8 +430,9 @@ public final class DirManager extends TextEdit<String> {
     * Forces re-reading file lists from disk on next access.
     */
    void flushCache() {
-      // Nothing cached in DirManager search path entries yet;
-      // DirList still owns caches during migration. Delegate.
+      // DirManager search path uses FileDescriptor.LocalDir which
+      // reads from disk on each access — no persistent cache to flush.
+      // Also flush DirList for the search-path view.
       DirList.getDefault().flushCache();
    }
 

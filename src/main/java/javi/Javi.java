@@ -241,7 +241,7 @@ public final class Javi {
                }
          }
       }
-      DirList.getDefault(); // force initialization of dirlist
+      DirManager.getInstance(); // force initialization of directory manager
       FileList.make(sb.toString());
       try {
          if (normalInit) {

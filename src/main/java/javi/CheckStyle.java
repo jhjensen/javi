@@ -69,7 +69,7 @@ final class CheckStyle extends Rgroup {
       FileList.writeModifiedFiles(".*\\.java");  // write out java files
 
       ArrayList<FileDescriptor.LocalFile> fdlist =
-         DirList.getDefault().fileList(
+         DirManager.getInstance().fileList(
             new GrepFilter(".*\\.java$", false));
 
       //trace("dlist = " + dlist);

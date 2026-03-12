@@ -344,11 +344,11 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    @SuppressWarnings("unchecked")
    private TextEdit<String> findOpenWithDirlist(String fname) {
 
-      DirList dlist = DirList.getDefault();
-      DirList.getDefault().initSearch(fname);
+      DirManager dm = DirManager.getInstance();
+      dm.initSearch(fname);
       //trace(" looking for " + fname + "in directory list"); EditContainer.dumpStatic();
       FileDescriptor.LocalFile fh;
-      while (null != (fh = dlist.findNextFile())) {
+      while (null != (fh = dm.findNextFile())) {
          TextEdit<String> te = (TextEdit<String>) EditContainer.findfile(fh);
          //trace("returning te " + te);
          if (null != te)
@@ -456,9 +456,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      if (FileDescriptor.isSpecial(searchName))  {
                         FileDescriptor fh = FileDescriptor.make(searchName);
                         if (fh instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir(
-                              (FileDescriptor.LocalDir) fh);
-                           DirManager.getInstance().addSearchDir(
+                           foundf |= DirManager.getInstance().addSearchDir(
                               (FileDescriptor.LocalDir) fh);
                            continue oloop;
                         } else {
@@ -472,20 +470,18 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                            }
                         }
                      }
-                     DirList.getDefault().initSearch(searchName);
+                     DirManager.getInstance().initSearch(searchName);
                      stage = 2;
                      // nobreak
                   case 2:
                      //trace("stage 2 looking for " + searchName + "in directory list");
-                     DirList dlist = DirList.getDefault();
+                     DirManager dmgr = DirManager.getInstance();
                      while (true) {
-                        FileDescriptor.LocalFile fh = dlist.findNextFile();
+                        FileDescriptor.LocalFile fh = dmgr.findNextFile();
                         //trace("dlist fh " + fh);
                         if (fh != null) {
                            if (fh instanceof FileDescriptor.LocalDir) {
-                              foundf |= DirList.getDefault().addSearchDir(
-                                  (FileDescriptor.LocalDir) fh);
-                              DirManager.getInstance().addSearchDir(
+                              foundf |= DirManager.getInstance().addSearchDir(
                                   (FileDescriptor.LocalDir) fh);
                            } else {
                               if (EditContainer.findfile(fh) != null) {
@@ -505,20 +501,18 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                            continue oloop;
                         }
                      }
-                     stage = !foundf && dlist.initSearchR() ? 3 : 4;
+                     stage = !foundf && dmgr.initSearchR() ? 3 : 4;
                      //trace("end stg2 stage " + stage + " foundf = " + foundf);
 
                      break;
 
                   case 3:
                      //trace("stage 3 regexp directory list search:" + searchName + " edv = " + edv);
-                     dlist = DirList.getDefault();
+                     dmgr = DirManager.getInstance();
                      FileDescriptor fha;
-                     while (null != (fha = dlist.findNextFileR())) {
+                     while (null != (fha = dmgr.findNextFileR())) {
                         if (fha instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir(
-                              (FileDescriptor.LocalDir) fha);
-                           DirManager.getInstance().addSearchDir(
+                           foundf |= DirManager.getInstance().addSearchDir(
                               (FileDescriptor.LocalDir) fha);
                         } else {
                            if (null != EditContainer.findfile(fha))
@@ -544,9 +538,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         //trace("last chance create file");
                         FileDescriptor fh = FileDescriptor.make(searchName);
                         if (fh instanceof FileDescriptor.LocalDir) {
-                           foundf |= DirList.getDefault().addSearchDir(
-                              (FileDescriptor.LocalDir) fh);
-                           DirManager.getInstance().addSearchDir(
+                           foundf |= DirManager.getInstance().addSearchDir(
                               (FileDescriptor.LocalDir) fh);
                         } else {
                            if (null != EditContainer.findfile(fh))

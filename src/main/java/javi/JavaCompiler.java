@@ -56,7 +56,7 @@ final class JavaCompiler extends Rgroup {
 
    private static void compacommand() throws IOException, InputException {
       FileList.writeModifiedFiles(".*\\.java"); // write out java files
-      ArrayList<FileDescriptor.LocalFile> dlist = DirList.getDefault().fileList(
+      ArrayList<FileDescriptor.LocalFile> dlist = DirManager.getInstance().fileList(
          new GrepFilter(".*\\.java$", false));
 
       if (0 == dlist.size())

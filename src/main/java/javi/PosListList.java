@@ -252,7 +252,7 @@ public final class PosListList extends TextList<Position> {
                return null;
             case REP:
                if (null != arg)
-                  inst.addList(DirList.getDefault().globalgrep(
+                  inst.addList(DirManager.getInstance().globalgrep(
                      arg.toString()));
                return null;
             case TE:
