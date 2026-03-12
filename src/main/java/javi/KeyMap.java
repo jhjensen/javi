@@ -154,6 +154,41 @@ final class KeyMap {
       return java.util.Collections.unmodifiableSet(registry.keySet());
    }
 
+   // ---- Buffer-type keymap initialization ----
+
+   /**
+    * Create and register overlay keymaps for known buffer types.
+    * Called once from {@link MapEvent#bindCommands()} after the normal
+    * keymap is built.
+    */
+   static void initBufferKeyMaps(KeyMap normalMap) {
+      // FileList overlay: Enter opens file at cursor instead of movelinestart
+      KeyMap filelistMap = createOverlay("filelist", normalMap);
+      boolean[] ff = {false, false};
+      JeyEvent enterCR = new JeyEvent(0, 0, (char) 13); // ^M / CR
+      JeyEvent enterLF = new JeyEvent(0, 0, (char) 10); // ^J / LF
+      filelistMap.addMoveBinding(enterCR, "nextpos", ff);
+      filelistMap.addMoveBinding(enterLF, "nextpos", ff);
+      register(filelistMap);
+
+      // Shell overlay: extensibility point for shell-specific bindings
+      KeyMap shellMap = createOverlay("shell", normalMap);
+      register(shellMap);
+   }
+
+   /**
+    * Resolve the appropriate buffer-type keymap for a given buffer.
+    * Returns null if the buffer uses the default normal keymap.
+    */
+   @SuppressWarnings("rawtypes")
+   static KeyMap resolveForBuffer(TextEdit buffer) {
+      if (buffer instanceof FileList)
+         return get("filelist");
+      if (buffer instanceof Vt100)
+         return get("shell");
+      return null;
+   }
+
    @Override
    public String toString() {
       return "KeyMap[" + name

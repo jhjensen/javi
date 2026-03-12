@@ -259,6 +259,9 @@ public final class MapEvent {
       // Create and register the built-in "normal" keymap
       normalKeyMap = new KeyMap("normal", mkeys, skeys);
       KeyMap.register(normalKeyMap);
+
+      // Create buffer-type overlay keymaps (filelist, shell, etc.)
+      KeyMap.initBufferKeyMaps(normalKeyMap);
    }
 
    /**
@@ -278,6 +281,12 @@ public final class MapEvent {
          KeyMap bufferMap = fvc.getKeyMap();
          if (bufferMap != null)
             return bufferMap;
+         // Auto-detect buffer type and cache the keymap
+         bufferMap = KeyMap.resolveForBuffer(fvc.edvec);
+         if (bufferMap != null) {
+            fvc.setKeyMap(bufferMap);
+            return bufferMap;
+         }
       }
       return normalKeyMap;
    }

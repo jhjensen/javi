@@ -35,6 +35,7 @@ public final class MiscCommands extends Rgroup {
       SHELL_NEW,   // 20: create new shell
       MAP_KEY,     // 21: :mapkey command
       UNMAP_KEY,   // 22: :unmapkey command
+      SHOW_KEYMAP, // 23: :keymap - show current keymap
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -64,6 +65,7 @@ public final class MiscCommands extends Rgroup {
          "shellnew",         // 20
          "mapkey",           // 21
          "unmapkey",         // 22
+         "keymap",           // 23
       };
       register(rnames);
    }
@@ -146,6 +148,9 @@ public final class MiscCommands extends Rgroup {
             return null;
          case UNMAP_KEY:
             doUnmap(arg instanceof String ? (String) arg : null);
+            return null;
+         case SHOW_KEYMAP:
+            showKeyMap(fvc);
             return null;
 
          default:
@@ -677,6 +682,18 @@ public final class MiscCommands extends Rgroup {
       JeyEvent key = parseKeySpec(parts[1]);
       if (!kg.unbind(key))
          throw new InputException("no binding for key: " + parts[1]);
+   }
+
+   private static void showKeyMap(FvContext fvc) {
+      KeyMap active = MapEvent.getActiveKeyMap(fvc);
+      StringBuilder sb = new StringBuilder(active.getName());
+      KeyMap p = active.getParent();
+      while (p != null) {
+         sb.append(" -> ").append(p.getName());
+         p = p.getParent();
+      }
+      sb.append("  [registered: ").append(KeyMap.registeredNames()).append(']');
+      UI.reportMessage(sb.toString());
    }
 
    // Parse a key specification string into a JeyEvent.
