@@ -707,16 +707,22 @@ final class OldView extends AwtView {
          // trace("ev " + ev.getID() + " has focus " + hasFocus());
          switch (ev.getID()) {
             case MouseEvent.MOUSE_PRESSED:
+               if (forwardVt100Mouse((MouseEvent) ev, true))
+                  return;
                mousepress((MouseEvent) ev);
                mousePressed = ((MouseEvent) ev).getButton();
                break;
 
             case MouseEvent.MOUSE_RELEASED:
+               if (forwardVt100Mouse((MouseEvent) ev, false))
+                  return;
                mouserelease((MouseEvent) ev);
                mousePressed = 0;
                break;
 
             case MouseEvent.MOUSE_WHEEL:
+               if (forwardVt100Wheel((MouseWheelEvent) ev))
+                  return;
                MouseWheelEvent mwv = (MouseWheelEvent) ev;
                int mvAmt = mwv.getScrollType() == MouseWheelEvent.WHEEL_BLOCK_SCROLL
                      ? getRows(1.f)
@@ -728,6 +734,8 @@ final class OldView extends AwtView {
                return;
 
             case MouseEvent.MOUSE_DRAGGED:
+               if (forwardVt100MouseDrag((MouseEvent) ev))
+                  return;
                if (1 == mousePressed) {
                   EventQueue.biglock2.lock();
                   try {
@@ -749,6 +757,77 @@ final class OldView extends AwtView {
                trace("unhandle event ev " + ev + "  has focus " + hasFocus());
                super.processEvent(ev);
          }
+      }
+
+      /**
+       * Maps AWT button number to VT100 button code.
+       */
+      private int vt100Button(MouseEvent event) {
+         return switch (event.getButton()) {
+            case MouseEvent.BUTTON1 -> 0;
+            case MouseEvent.BUTTON2 -> 1;
+            case MouseEvent.BUTTON3 -> 2;
+            default -> 0;
+         };
+      }
+
+      /**
+       * Converts pixel coordinates to 1-based terminal cell coordinates.
+       */
+      private int cellCol(MouseEvent event) {
+         int x = (event.getX() - xoffset) / charwidth + 1;
+         return x < 1 ? 1 : x;
+      }
+
+      private int cellRow(MouseEvent event) {
+         int y = event.getY() / charheight + 1;
+         return y < 1 ? 1 : y;
+      }
+
+      /**
+       * Forwards a mouse press/release to VT100 if tracking is active.
+       *
+       * @return true if the event was consumed
+       */
+      private boolean forwardVt100Mouse(MouseEvent event, boolean pressed) {
+         ShellManager sm = ShellManager.getInstance();
+         if (null == sm || !sm.isMouseTrackingActive())
+            return false;
+         sm.forwardMouseEvent(
+            vt100Button(event), cellCol(event), cellRow(event), pressed);
+         return true;
+      }
+
+      /**
+       * Forwards a mouse wheel event to VT100 if tracking is active.
+       *
+       * @return true if the event was consumed
+       */
+      private boolean forwardVt100Wheel(MouseWheelEvent event) {
+         ShellManager sm = ShellManager.getInstance();
+         if (null == sm || !sm.isMouseTrackingActive())
+            return false;
+         int button = event.getWheelRotation() < 0 ? 64 : 65;
+         sm.forwardMouseEvent(
+            button, cellCol(event), cellRow(event), true);
+         return true;
+      }
+
+      /**
+       * Forwards a mouse drag event to VT100 if button-event or any-event
+       * tracking is active (modes 1002/1003).
+       *
+       * @return true if the event was consumed
+       */
+      private boolean forwardVt100MouseDrag(MouseEvent event) {
+         ShellManager sm = ShellManager.getInstance();
+         if (null == sm || !sm.isMouseTrackingActive())
+            return false;
+         // Only mode 1002 (button-event) and 1003 (any-event) track motion
+         int button = 32 + vt100Button(event); // motion flag = +32
+         sm.forwardMouseEvent(
+            button, cellCol(event), cellRow(event), true);
+         return true;
       }
 
       public void paint(Graphics g) {

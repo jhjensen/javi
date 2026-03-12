@@ -474,6 +474,15 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                trace("cursor visibility " + (1 == val ? "show" : "hide"));
                break;
 
+            case 1000: // Normal mouse tracking
+            case 1002: // Button-event mouse tracking
+            case 1003: // Any-event mouse tracking
+               window.setMouseTracking(modenumber, 1 == val);
+               break;
+            case 1006: // SGR extended mouse mode
+               window.setSgrMouseMode(1 == val);
+               break;
+
             default:
                trace("setting unknown mode " + (char) modenumber
                   + " decimal "  + modenumber + " 0x"

@@ -76,6 +76,12 @@ class Vt100 extends TextEdit<String> {
    /** Parser for VT100 escape sequences. */
    private final Vt100Parser parser;
 
+   /** Mouse tracking mode: 0=off, 1000=normal, 1002=button, 1003=any. */
+   private int mouseTrackingMode;
+
+   /** Whether SGR (1006) mouse encoding is active vs legacy X10. */
+   private boolean sgrMouseMode;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -179,6 +185,71 @@ class Vt100 extends TextEdit<String> {
          currfvc.placeline(readIn() - 1, .99999f);
       }
       trace("Vt100: resized to " + newRows + "x" + newCols);
+   }
+
+   /**
+    * Checks if mouse tracking is currently enabled.
+    *
+    * @return true if any mouse tracking mode is active
+    */
+   boolean isMouseTrackingEnabled() {
+      return mouseTrackingMode != 0;
+   }
+
+   /**
+    * Sets the mouse tracking mode.
+    *
+    * @param mode 0=off, 1000=normal, 1002=button-event, 1003=any-event
+    * @param enable true to enable, false to disable
+    */
+   void setMouseTracking(int mode, boolean enable) {
+      if (enable)
+         mouseTrackingMode = mode;
+      else if (mouseTrackingMode == mode)
+         mouseTrackingMode = 0;
+      trace("Vt100: mouse tracking mode=" + mouseTrackingMode);
+   }
+
+   /**
+    * Sets SGR (mode 1006) mouse encoding on or off.
+    */
+   void setSgrMouseMode(boolean enable) {
+      sgrMouseMode = enable;
+      trace("Vt100: SGR mouse mode=" + sgrMouseMode);
+   }
+
+   /**
+    * Sends a mouse event to the shell process as an escape sequence.
+    *
+    * <p>Encodes the event using SGR (mode 1006) if active, otherwise
+    * legacy X10 encoding. SGR format: ESC[&lt;button;col;rowM (press)
+    * or ESC[&lt;button;col;rowm (release). Legacy format: ESC[Mcbxy
+    * where cb=button+32, x=col+32, y=row+32.</p>
+    *
+    * @param button 0=left, 1=middle, 2=right, 64=scrollUp, 65=scrollDown
+    * @param col 1-based column
+    * @param row 1-based row
+    * @param pressed true for press, false for release
+    */
+   void sendMouseEvent(int button, int col, int row, boolean pressed) {
+      try {
+         if (sgrMouseMode) {
+            // SGR extended mode: ESC[<button;col;rowM/m
+            writer.write("\033[<" + button + ";" + col + ";" + row
+               + (pressed ? "M" : "m"));
+         } else {
+            // Legacy X10: ESC[M cb cx cy (add 32 to each value)
+            if (col > 222 || row > 222)
+               return; // legacy encoding limited to 223
+            writer.write("\033[M");
+            writer.write((char) (button + 32));
+            writer.write((char) (col + 32));
+            writer.write((char) (row + 32));
+         }
+         writer.flush();
+      } catch (IOException e) {
+         trace("sendMouseEvent failed: " + e);
+      }
    }
 
    public final String fromString(String str) {
@@ -398,6 +469,14 @@ class Vt100 extends TextEdit<String> {
             trace("restored main screen buffer");
          }
          updateScreen(sb);
+      }
+
+      void setMouseTracking(int mode, boolean enable) {
+         Vt100.this.setMouseTracking(mode, enable);
+      }
+
+      void setSgrMouseMode(boolean enable) {
+         Vt100.this.setSgrMouseMode(enable);
       }
 
    }
