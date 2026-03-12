@@ -107,6 +107,52 @@ final class KeyMap {
       return editKeys.unbind(key);
    }
 
+   // ---- Convenience binding methods (preferred API) ----
+
+   /**
+    * Bind a character key as a movement binding.
+    * Preferred over calling KeyGroup.keybind() directly.
+    */
+   void bindMoveKey(char ch, String command, Object arg) {
+      moveKeys.keybind(ch, command, arg);
+   }
+
+   /**
+    * Bind a character key with modifiers as a movement binding.
+    */
+   void bindMoveKey(char ch, String command, Object arg, int modifiers) {
+      moveKeys.keybind(ch, command, arg, modifiers);
+   }
+
+   /**
+    * Bind an action key (VK_ code) as a movement binding.
+    */
+   void bindMoveAction(int keyCode, String command, Object arg, int modifiers) {
+      moveKeys.keyactionbind(keyCode, command, arg, modifiers);
+   }
+
+   /**
+    * Bind a character key as an edit binding.
+    * Preferred over calling KeyGroup.keybind() directly.
+    */
+   void bindEditKey(char ch, String command, Object arg) {
+      editKeys.keybind(ch, command, arg);
+   }
+
+   /**
+    * Bind a character key with modifiers as an edit binding.
+    */
+   void bindEditKey(char ch, String command, Object arg, int modifiers) {
+      editKeys.keybind(ch, command, arg, modifiers);
+   }
+
+   /**
+    * Bind an action key (VK_ code) as an edit binding.
+    */
+   void bindEditAction(int keyCode, String command, Object arg, int modifiers) {
+      editKeys.keyactionbind(keyCode, command, arg, modifiers);
+   }
+
    // ---- Access to underlying KeyGroups ----
 
    KeyGroup getMoveKeys() {
@@ -163,12 +209,10 @@ final class KeyMap {
     */
    static void initBufferKeyMaps(KeyMap normalMap) {
       // FileList overlay: Enter opens file at cursor instead of movelinestart
-      KeyMap filelistMap = createOverlay("filelist", normalMap);
       boolean[] ff = {false, false};
-      JeyEvent enterCR = new JeyEvent(0, 0, (char) 13); // ^M / CR
-      JeyEvent enterLF = new JeyEvent(0, 0, (char) 10); // ^J / LF
-      filelistMap.addMoveBinding(enterCR, "nextpos", ff);
-      filelistMap.addMoveBinding(enterLF, "nextpos", ff);
+      KeyMap filelistMap = createOverlay("filelist", normalMap);
+      filelistMap.bindMoveKey((char) 13, "nextpos", ff);  // CR
+      filelistMap.bindMoveKey((char) 10, "nextpos", ff);  // LF
       register(filelistMap);
 
       // Shell overlay: extensibility point for shell-specific bindings

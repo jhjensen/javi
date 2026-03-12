@@ -140,27 +140,30 @@ public final class Command extends Rgroup {
     */
    private static void showHelp(String topic, FvContext fvc)
          throws InputException {
-      // Auto-redirect to shell help when in a VT100 buffer with no topic
-      if ((null == topic || topic.isEmpty()) && fvc.edvec instanceof Vt100)
-         topic = "shell";
-      // When no topic specified and current buffer is DirEdit, show dir help
-      if ((null == topic || topic.isEmpty())
-            && fvc.edvec instanceof DirEdit) {
-         topic = "diredit";
+      // Auto-redirect to context-sensitive help when no topic specified
+      if (null == topic || topic.isEmpty()) {
+         if (fvc.edvec instanceof Vt100)
+            topic = "shell";
+         else if (fvc.edvec instanceof DirEdit)
+            topic = "diredit";
+         else if (fvc.edvec instanceof FileList)
+            topic = "filelist";
+         else if (fvc.edvec instanceof DirList)
+            topic = "directory";
       }
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);
    }
 
    /**
-    * Display all key bindings.
+    * Display context-aware key bindings for the active keymap.
     *
     * @param fvc the current file-view context
     * @throws InputException if bindings cannot be displayed
     */
    private static void showMap(FvContext fvc)
          throws InputException {
-      TextEdit<String> mapBuffer = HelpSystem.getKeyBindings();
+      TextEdit<String> mapBuffer = HelpSystem.getContextBindings(fvc);
       FvContext.connectFv(mapBuffer, fvc.vi);
    }
 

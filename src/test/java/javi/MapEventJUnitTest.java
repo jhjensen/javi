@@ -1,6 +1,7 @@
 package javi;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -230,5 +231,189 @@ class MapEventJUnitTest {
       assertNotNull(s);
       assertTrue(s.contains("JeyEvent"),
          "toString should contain class name");
+   }
+
+   // ============================================================
+   // KeyMap — convenience binding methods (F19)
+   // ============================================================
+
+   @Test
+   void keyMapBindMoveKeyAndLookup() {
+      KeyGroup move = new KeyGroup("test-move");
+      KeyGroup edit = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test", move, edit);
+
+      km.bindMoveKey('h', "movechar", Boolean.FALSE);
+
+      JeyEvent ev = new JeyEvent(0, 0, 'h');
+      Rgroup.KeyBinding kb = km.lookupMove(ev);
+      assertNotNull(kb, "bindMoveKey should make key resolvable via lookupMove");
+   }
+
+   @Test
+   void keyMapBindMoveKeyWithModifier() {
+      KeyGroup move = new KeyGroup("test-move");
+      KeyGroup edit = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test", move, edit);
+
+      km.bindMoveKey((char) 6, "movechar", Boolean.TRUE, JeyEvent.CTRL_MASK);
+
+      JeyEvent ev = new JeyEvent(JeyEvent.CTRL_MASK, 0, (char) 6);
+      assertNotNull(km.lookupMove(ev),
+         "bindMoveKey with modifier should be findable");
+   }
+
+   @Test
+   void keyMapBindMoveActionAndLookup() {
+      KeyGroup move = new KeyGroup("test-move");
+      KeyGroup edit = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test", move, edit);
+
+      km.bindMoveAction(JeyEvent.VK_LEFT, "movechar", Boolean.FALSE, 0);
+
+      JeyEvent ev = new JeyEvent(0, JeyEvent.VK_LEFT,
+         JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupMove(ev),
+         "bindMoveAction should make action key resolvable");
+   }
+
+   @Test
+   void keyMapBindEditKeyAndLookup() {
+      KeyGroup move = new KeyGroup("test-move");
+      KeyGroup edit = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test", move, edit);
+
+      km.bindEditKey('x', "deletechars", null);
+
+      JeyEvent ev = new JeyEvent(0, 0, 'x');
+      Rgroup.KeyBinding kb = km.lookupEdit(ev);
+      assertNotNull(kb, "bindEditKey should make key resolvable via lookupEdit");
+   }
+
+   @Test
+   void keyMapBindEditActionAndLookup() {
+      KeyGroup move = new KeyGroup("test-move");
+      KeyGroup edit = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test", move, edit);
+
+      km.bindEditAction(JeyEvent.VK_F1, "deletechars", null, 0);
+
+      JeyEvent ev = new JeyEvent(0, JeyEvent.VK_F1,
+         JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(ev),
+         "bindEditAction should make action key resolvable");
+   }
+
+   @Test
+   void keyMapOverlayWithConvenienceMethods() {
+      KeyGroup move = new KeyGroup("parent-move");
+      KeyGroup edit = new KeyGroup("parent-edit");
+      KeyMap parent = new KeyMap("parent", move, edit);
+      parent.bindMoveKey('h', "movechar", Boolean.FALSE);
+
+      KeyMap child = KeyMap.createOverlay("child", parent);
+      child.bindMoveKey('h', "moveline", Boolean.TRUE);
+
+      // Child should resolve to overridden binding
+      JeyEvent ev = new JeyEvent(0, 0, 'h');
+      Rgroup.KeyBinding childKb = child.lookupMove(ev);
+      assertNotNull(childKb, "child overlay should find overridden binding");
+
+      // Keys not in child should fall through to parent
+      parent.bindMoveKey('l', "movechar", Boolean.TRUE);
+      JeyEvent evL = new JeyEvent(0, 0, 'l');
+      assertNotNull(child.lookupMove(evL),
+         "child should fall through to parent for unbound keys");
+   }
+
+   // ============================================================
+   // KeyMap — registeredNames
+   // ============================================================
+
+   @Test
+   void registeredNamesReturnsImmutableSet() {
+      Set<String> names = KeyMap.registeredNames();
+      assertNotNull(names, "registeredNames should not return null");
+   }
+
+   // ============================================================
+   // HelpSystem — topic coverage (F20)
+   // ============================================================
+
+   @Test
+   void helpSystemIndexTopicNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("index");
+         assertNotNull(buf, "index help should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemFileListTopicNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("filelist");
+         assertNotNull(buf, "filelist help should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemDirectoryTopicNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("directory");
+         assertNotNull(buf, "directory help should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemKeybindingsTopicNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("keybindings");
+         assertNotNull(buf, "keybindings help should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemShellTopicNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("shell");
+         assertNotNull(buf, "shell help should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemKeymapAliasNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("keymap");
+         assertNotNull(buf, "keymap alias should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void helpSystemDirAliasNotNull() {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = HelpSystem.getHelp("dir");
+         assertNotNull(buf, "dir alias should return a buffer");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 }

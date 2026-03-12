@@ -97,9 +97,22 @@ public final class HelpSystem {
             appendShellHelp();
             break;
          case "diredit":
+            appendDirEditHelp();
+            break;
+         case "filelist":
+         case "files-list":
+            appendFileListHelp();
+            break;
          case "directory":
          case "dir":
-            appendDirEditHelp();
+         case "dirlist":
+            appendDirectoryHelp();
+            break;
+         case "keybindings":
+         case "keymap":
+         case "bindings":
+         case "keys":
+            appendKeybindingsHelp();
             break;
          default:
             appendUnknownTopic(normalizedTopic);
@@ -131,6 +144,68 @@ public final class HelpSystem {
 
       if (bindings.isEmpty()) {
          append("  (no bindings registered)");
+      }
+
+      return helpBuffer;
+   }
+
+   /**
+    * Get a buffer listing context-aware key bindings for the active keymap.
+    *
+    * @param fvc the current file-view context
+    * @return TextEdit buffer containing bindings for the active keymap
+    */
+   public static TextEdit<String> getContextBindings(FvContext fvc) {
+      if (null == helpBuffer) {
+         createHelpBuffer();
+      }
+      clearBuffer();
+
+      KeyMap active = MapEvent.getActiveKeyMap(fvc);
+      append("ACTIVE KEY BINDINGS");
+      append("===================");
+      append("");
+
+      // Show keymap chain
+      StringBuilder chain = new StringBuilder("Keymap chain: ");
+      chain.append(active.getName());
+      KeyMap p = active.getParent();
+      while (p != null) {
+         chain.append(" -> ").append(p.getName());
+         p = p.getParent();
+      }
+      append(chain.toString());
+      append("");
+
+      // Show overlay bindings if this is not the root keymap
+      if (active.getParent() != null) {
+         java.util.List<String> moveOverrides =
+            active.getMoveKeys().getBindingList();
+         java.util.List<String> editOverrides =
+            active.getEditKeys().getBindingList();
+         if (!moveOverrides.isEmpty() || !editOverrides.isEmpty()) {
+            append("OVERLAY BINDINGS (" + active.getName() + ")");
+            append("------------------------------------------");
+            if (!moveOverrides.isEmpty()) {
+               append("  Movement overrides:");
+               for (String b : moveOverrides)
+                  append("    " + b);
+            }
+            if (!editOverrides.isEmpty()) {
+               append("  Edit overrides:");
+               for (String b : editOverrides)
+                  append("    " + b);
+            }
+            append("");
+         }
+      }
+
+      // Show all effective bindings from the base keymap
+      java.util.List<String> bindings = MapEvent.getAllBindings();
+      append("BASE BINDINGS (normal)");
+      append("----------------------");
+      for (String line : bindings) {
+         append(line);
       }
 
       return helpBuffer;
@@ -183,6 +258,9 @@ public final class HelpSystem {
       append("  :help window     - Window and scrolling");
       append("  :help shell      - Shell / terminal commands");
       append("  :help diredit    - Directory editor (DirEdit)");
+      append("  :help filelist   - File list buffer");
+      append("  :help directory  - Directory list buffer");
+      append("  :help keybindings - Key binding architecture");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -688,6 +766,137 @@ public final class HelpSystem {
    }
 
    /**
+    * Append file list buffer help.
+    */
+   private static void appendFileListHelp() {
+      append("FILE LIST BUFFER");
+      append("================");
+      append("");
+      append("The file list (F2) shows all open files/buffers.");
+      append("It uses a dedicated keymap overlay ('filelist') where");
+      append("some keys behave differently from normal editing.");
+      append("");
+      append("NAVIGATION");
+      append("----------");
+      append("  j, Down          Move to next file");
+      append("  k, Up            Move to previous file");
+      append("  Enter, F1        Open file at cursor");
+      append("  Ctrl-F1          Open and wait for position list");
+      append("  Shift-F1         Open in split view");
+      append("");
+      append("FILE MANAGEMENT");
+      append("---------------");
+      append("  F2               Return to previous buffer");
+      append("  :w               Save current file");
+      append("  :e <file>        Open a new file");
+      append("");
+      append("SEARCHING");
+      append("---------");
+      append("  / ?              Search file names forward/backward");
+      append("  n N              Repeat search");
+      append("");
+      append("KEYBINDING OVERLAY");
+      append("------------------");
+      append("  The filelist uses a 'filelist' keymap layered on top");
+      append("  of the normal keymap. Enter/CR is remapped to open");
+      append("  the file at cursor instead of moving down a line.");
+      append("  All other normal-mode keys work as usual.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
+    * Append directory list buffer help.
+    */
+   private static void appendDirectoryHelp() {
+      append("DIRECTORY LIST BUFFER");
+      append("=====================");
+      append("");
+      append("The directory list (F3) shows configured directories.");
+      append("Use it to browse and search files across directories.");
+      append("");
+      append("NAVIGATION");
+      append("----------");
+      append("  j, Down          Move to next directory");
+      append("  k, Up            Move to previous directory");
+      append("  Enter, F1        Open/expand directory at cursor");
+      append("");
+      append("SEARCHING");
+      append("---------");
+      append("  / ?              Search directory names forward/backward");
+      append("  n N              Repeat search");
+      append("");
+      append("DIRECTORY OPERATIONS");
+      append("--------------------");
+      append("  F3               Toggle/refresh directory list");
+      append("  :e .             Edit current directory");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
+    * Append keybindings architecture help.
+    */
+   private static void appendKeybindingsHelp() {
+      append("KEY BINDING ARCHITECTURE");
+      append("========================");
+      append("");
+      append("Javi uses layered keymaps for context-sensitive key bindings.");
+      append("");
+      append("KEYMAP HIERARCHY");
+      append("----------------");
+      append("  buffer-specific keymap  (e.g. 'filelist', 'shell')");
+      append("         | parent");
+      append("  mode-based keymap       (e.g. 'normal')");
+      append("");
+      append("  Keys are looked up in the buffer-specific overlay first.");
+      append("  If not found, lookup falls through to the parent keymap.");
+      append("");
+      append("REGISTERED KEYMAPS");
+      append("------------------");
+      java.util.Set<String> names = KeyMap.registeredNames();
+      for (String name : names) {
+         KeyMap km = KeyMap.get(name);
+         StringBuilder sb = new StringBuilder("  ");
+         sb.append(name);
+         if (km.getParent() != null)
+            sb.append("  (parent: ").append(km.getParent().getName())
+               .append(')');
+         append(sb.toString());
+      }
+      append("");
+      append("KEY GROUPS");
+      append("----------");
+      append("  Each keymap has two key groups:");
+      append("  - movement keys  (hjkl, arrows, word motion, scrolling)");
+      append("  - editing keys   (i/a/o, d/c/y, function keys, etc.)");
+      append("");
+      append("RUNTIME MODIFICATION");
+      append("--------------------");
+      append("  :mapkey <group> <key> <command>   Bind a key");
+      append("  :unmapkey <group> <key>           Unbind a key");
+      append("  :keymap                           Show active keymap chain");
+      append("  :map                              Show all key bindings");
+      append("");
+      append("  group: 'move' for movement keys, 'edit' for editing keys");
+      append("  key:   single char, C-x (ctrl), S-x (shift), F1-F12,");
+      append("         Up, Down, Left, Right, Home, End, PgUp, PgDn");
+      append("");
+      append("BUFFER-TYPE AUTO-DETECTION");
+      append("-------------------------");
+      append("  When you switch to a buffer, its type is detected:");
+      append("  - File list (F2)     -> 'filelist' keymap");
+      append("  - Shell/Terminal (F8) -> 'shell' keymap");
+      append("  - Regular file       -> 'normal' keymap");
+      append("");
+      append("  The :help command also adapts: in a shell buffer,");
+      append("  :help with no topic shows shell help instead of the index.");
+      append("  Similarly for filelist and directory buffers.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
     * Append help for unknown topic.
     */
    private static void appendUnknownTopic(String topic) {
@@ -704,6 +913,9 @@ public final class HelpSystem {
       append("  window     - Window and scrolling");
       append("  shell      - Shell / terminal");
       append("  diredit    - Directory editor");
+      append("  filelist   - File list buffer");
+      append("  directory  - Directory list buffer");
+      append("  keybindings - Key binding architecture");
       append("");
       append("Type :help for index.");
    }
