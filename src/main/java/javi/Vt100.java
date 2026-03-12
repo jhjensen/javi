@@ -157,6 +157,30 @@ class Vt100 extends TextEdit<String> {
       }
    }
 
+   /**
+    * Notifies this terminal that the display has been resized.
+    *
+    * <p>Updates internal row count, adds lines if the terminal grew,
+    * and sends stty to inform the shell process of the new dimensions.</p>
+    *
+    * @param newRows new number of rows
+    * @param newCols new number of columns
+    */
+   void notifyResize(int newRows, int newCols) {
+      if (newRows <= 0 || newCols <= 0)
+         return;
+      rows = newRows;
+      int neededRows = rows - readIn() + 1;
+      while (--neededRows > -1)
+         insertOne("", readIn());
+      sendStty(rows, newCols);
+      if (null != currfvc) {
+         currfvc.cursorabs(vtcursor.x, vtcursor.y);
+         currfvc.placeline(readIn() - 1, .99999f);
+      }
+      trace("Vt100: resized to " + newRows + "x" + newCols);
+   }
+
    public final String fromString(String str) {
       return str;
    }

@@ -362,6 +362,20 @@ public final class ShellSession {
    }
 
    /**
+    * Notifies this session that the display has been resized.
+    *
+    * <p>Propagates the new dimensions to the VT100 terminal, which
+    * updates the PTY via stty.</p>
+    *
+    * @param rows the new number of rows
+    * @param cols the new number of columns
+    */
+   void notifyResize(int rows, int cols) {
+      if (isAlive())
+         vt100.notifyResize(rows, cols);
+   }
+
+   /**
     * Sends a signal to the shell process (Unix only).
     *
     * @param signal the signal name (e.g., "INT", "TERM", "HUP")

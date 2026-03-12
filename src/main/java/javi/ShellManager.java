@@ -329,6 +329,20 @@ public final class ShellManager {
    }
 
    /**
+    * Notifies all active shell sessions of a window resize.
+    *
+    * <p>Called when the editor view is resized so that shell PTY
+    * dimensions are updated via stty.</p>
+    *
+    * @param rows the new number of rows
+    * @param cols the new number of columns
+    */
+   public synchronized void notifyResize(int rows, int cols) {
+      for (ShellSession session : sessions)
+         session.notifyResize(rows, cols);
+   }
+
+   /**
     * Finds a session by its associated buffer.
     *
     * @param buffer the TextEdit buffer to search for

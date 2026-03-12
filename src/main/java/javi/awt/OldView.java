@@ -28,6 +28,7 @@ import javi.FvContext;
 import javi.MarkEvent;
 import javi.PosEvent;
 import javi.Position;
+import javi.ShellManager;
 import javi.UI;
 import javi.View;
 import javi.ChangeOpt;
@@ -622,6 +623,7 @@ final class OldView extends AwtView {
          if (screenposy >= screenSize)
             moveScreen(screenposy - screenSize + 1);
          super.setSize(pixelWidth, newy);
+         ShellManager.getInstance().notifyResize(screenSize, minColumns);
          // imageg = null;
          // trace("oldview = " + this + " cliprect = " + cliprect);
          // trace("pixelwidth = " + pixelWidth + " charwidth = " + charwidth + "
