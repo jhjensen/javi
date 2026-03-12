@@ -1144,7 +1144,21 @@ final class EditTester1 {
       int after = 13123;
       // was 500 in jr1 1.6; much older computer, could be SSD.
       long targettime = 220;
-      long targetmem = 2600000; // was 1100000 in jre 1.6
+      // Memory delta threshold: how much retained memory the test operations
+      // may leave behind after full GC.  Absolute thresholds are unreliable
+      // because System.gc() is advisory and modern GCs (G1/ZGC on Java 9+)
+      // don't always reclaim the same amount.  A delta-based check isolates
+      // the test from JVM baseline variation.
+      //
+      // Java String representation history (why old thresholds went stale):
+      //   Java 1.0.2-8: String backed by char[] — always 2 bytes/char.
+      //   Java 9+ (JEP 254 Compact Strings): String backed by byte[] with
+      //     a coder flag — 1 byte/char for Latin-1/ASCII, 2 bytes for others.
+      //     Also changed object header sizes (compressed oops, etc.).
+      //   Original targetmem 1100000 was for JRE 1.6; bumped to 2600000 later
+      //   but still failed intermittently due to GC non-determinism on modern
+      //   JVMs.  Switched to delta-based measurement to be GC-tolerant.
+      long targetMemDelta = 2000000;
 
       // this is fairly wierd, but It seems like the gc doesn't really collect
       //   all the memory even though I call it three times.  It makes memory
@@ -1170,9 +1184,10 @@ final class EditTester1 {
       }
       Tools.doGC();
       long elapsed;
+      long startMem = Runtime.getRuntime().totalMemory()
+                    - Runtime.getRuntime().freeMemory();
       {
-         trace("start memory " + (Runtime.getRuntime().totalMemory()
-             - Runtime.getRuntime().freeMemory()));
+         trace("start memory " + startMem);
          Date start = new Date();
          TextEdit<String> ex = newTe("perftest");
          myassert(ex.finish() == tot + 1, ex.finish());
@@ -1195,14 +1210,14 @@ final class EditTester1 {
       }
 
       Tools.doGC();
-      long mem =  Runtime.getRuntime().totalMemory()
-                  - Runtime.getRuntime().freeMemory();
-      trace("end memory " + mem);
+      long endMem =  Runtime.getRuntime().totalMemory()
+                   - Runtime.getRuntime().freeMemory();
+      long memDelta = endMem - startMem;
+      trace("end memory " + endMem + " (delta " + memDelta + ")");
       trace("elapsed time = " + elapsed + " milliseconds");
 
       //try {Thread.sleep(1000000);} catch (InterruptedException e) {}
-      // todo reenable this test when it is fixed
-      // myassert(mem < targetmem, Long.valueOf(mem));
+      myassert(memDelta < targetMemDelta, Long.valueOf(memDelta));
       myassert(elapsed < targettime, Long.valueOf(elapsed));
    }
 
