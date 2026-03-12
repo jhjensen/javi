@@ -23,15 +23,19 @@ import static history.Tools.trace;
  * will be migrated one at a time (see plan-F5-directory-editor.md,
  * Phases 6-8). During migration, DirList remains functional.</p>
  *
- * <h2>Callers to Migrate</h2>
+ * <h2>Callers Migrated</h2>
  * <ul>
- *   <li>FileList — getDefault(), fileList(FilenameFilter)</li>
- *   <li>PosListList — globalgrep(String)</li>
- *   <li>JavaCompiler — getDefault(), addSearchDir(dir)</li>
- *   <li>CheckStyle — getDefault() for search path</li>
- *   <li>MiscCommands — gotosearchpath, direct DirList access</li>
- *   <li>Javi — startup insertion of initial directories</li>
+ *   <li>FileList — uses DirManager for search, addSearchDir</li>
+ *   <li>PosListList — uses DirManager for globalgrep, gotosearchpath</li>
+ *   <li>JavaCompiler — uses DirManager.fileList()</li>
+ *   <li>CheckStyle — uses DirManager.fileList()</li>
+ *   <li>MiscCommands — uses DirManager.flushCache()</li>
+ *   <li>Javi — uses DirManager.getInstance() at startup</li>
  * </ul>
+ *
+ * <h2>Remaining</h2>
+ * <p>DirList is only used internally by DirManager for persistence
+ * back-sync. No external callers remain.</p>
  *
  * @see DirList the legacy search-path manager (to be replaced)
  * @see DirEdit the legacy directory browser (to be replaced)
@@ -308,6 +312,24 @@ public final class DirManager extends TextEdit<String> {
     */
    int searchPathSize() {
       return searchPath.size();
+   }
+
+   /**
+    * Populate the buffer with the search path directory list.
+    * Used by the "gotosearchpath" command to display the search path
+    * as an editable list in the DirManager view.
+    */
+   void showSearchPath() {
+      currentDir = null;
+      int size = readIn();
+      if (size > 1)
+         remove(1, size - 1);
+
+      int line = 1;
+      for (FileDescriptor.LocalDir dir : searchPath) {
+         insertOne(dir.toString(), line++);
+      }
+      checkpoint();
    }
 
    // ---------------------------------------------------------------

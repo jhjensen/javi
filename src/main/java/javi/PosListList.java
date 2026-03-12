@@ -290,7 +290,8 @@ public final class PosListList extends TextList<Position> {
                inst.gotoNextPos(fvc, (boolean[]) arg, true);
                return null;
             case GOTO_DIR_LIST_DEFAULT:
-               FvContext.connectFv(DirList.getDefault(), fvc.vi);
+               DirManager.getInstance().showSearchPath();
+               FvContext.connectFv(DirManager.getInstance(), fvc.vi);
                return null;
             default:
                throw new RuntimeException("vigroup:default");

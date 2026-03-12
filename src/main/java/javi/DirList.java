@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import static history.Tools.trace;
 
-// NOTE: DirList is being replaced by DirManager (F5). Still has 8 callers
-// (FileList, PosListList, JavaCompiler, CheckStyle, MiscCommands, Javi).
+// NOTE: DirList is being replaced by DirManager (F5). Only internal
+// callers remain (DirManager back-sync for persistence).
 // Do not add new callers — use DirManager.getInstance() instead.
 final class DirList extends TextEdit<DirEntry> {
    private static final long serialVersionUID = 1;
