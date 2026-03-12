@@ -108,7 +108,11 @@ tasks.named('compileJava') {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // T3: Exclude GUI tests — they need AwtInterface (conflicts with
+        // StreamInterface singleton used by headless tests). Run via guiTest.
+        excludeTags 'gui'
+    }
     jacoco.enabled = true
     // T1: per-test timeout to prevent hangs during CI
     systemProperty 'junit.jupiter.execution.timeout.default', '30s'
@@ -117,6 +121,21 @@ tasks.named('test') {
         events 'started', 'passed', 'failed', 'skipped'
         showStandardStreams = false
         exceptionFormat = 'short'
+    }
+}
+
+// T3: Separate test task for AssertJ Swing GUI tests (own JVM, needs display)
+tasks.register('guiTest', Test) {
+    useJUnitPlatform {
+        includeTags 'gui'
+    }
+    group = 'verification'
+    description = 'Run AssertJ Swing GUI tests (requires graphical display)'
+    systemProperty 'junit.jupiter.execution.timeout.default', '60s'
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        showStandardStreams = true
+        exceptionFormat = 'full'
     }
 }
 
