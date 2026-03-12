@@ -10,9 +10,11 @@ import java.util.regex.Pattern;
 /**
  * Tests for {@link XrefReader} inner converter logic.
  *
- * <p>The XrefConv.fromString method parses grep-style output
+ * <p>
+ * The XrefConv.fromString method parses grep-style output
  * (file:line:comment) into Position objects. These tests exercise
- * that parsing without needing external commands.</p>
+ * that parsing without needing external commands.
+ * </p>
  */
 class XrefReaderJUnitTest {
 
@@ -20,11 +22,9 @@ class XrefReaderJUnitTest {
     * Access the static xconverter field and call fromString.
     */
    private Position convert(String line) throws Exception {
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("xconverter");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("xconverter");
       f.setAccessible(true);
-      ClassConverter<Position> conv =
-         (ClassConverter<Position>) f.get(null);
+      ClassConverter<Position> conv = (ClassConverter<Position>) f.get(null);
       return conv.fromString(line);
    }
 
@@ -55,7 +55,7 @@ class XrefReaderJUnitTest {
    @Test
    void parsesDeepPath() throws Exception {
       Position pos = convert(
-         "src/main/java/javi/Vt100Parser.java:100:    private int state;");
+            "src/main/java/javi/Vt100Parser.java:100:    private int state;");
       assertNotNull(pos);
       assertEquals(100, pos.y);
    }
@@ -85,8 +85,7 @@ class XrefReaderJUnitTest {
    @Test
    void linpatMatchesStandardGrepFormat() throws Exception {
       // Verify the regex pattern used internally
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("linepat");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("linepat");
       f.setAccessible(true);
       Matcher m = (Matcher) f.get(null);
       assertTrue(m.reset("src/Foo.java:10: hello").matches());
@@ -94,8 +93,7 @@ class XrefReaderJUnitTest {
 
    @Test
    void linpatMatchesTildeInPath() throws Exception {
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("linepat");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("linepat");
       f.setAccessible(true);
       Matcher m = (Matcher) f.get(null);
       assertTrue(m.reset("~/src/Foo.java:10: hello").matches());
@@ -103,8 +101,7 @@ class XrefReaderJUnitTest {
 
    @Test
    void linpatMatchesBackslashPath() throws Exception {
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("linepat");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("linepat");
       f.setAccessible(true);
       Matcher m = (Matcher) f.get(null);
       assertTrue(m.reset("src\\main\\Foo.java:10: hello").matches());
@@ -112,8 +109,7 @@ class XrefReaderJUnitTest {
 
    @Test
    void linpatMatchesDriveLetter() throws Exception {
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("linepat");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("linepat");
       f.setAccessible(true);
       Matcher m = (Matcher) f.get(null);
       assertTrue(m.reset("C:src/Foo.java:10: hello").matches());
@@ -121,8 +117,7 @@ class XrefReaderJUnitTest {
 
    @Test
    void linpatRejectsNoLineNumber() throws Exception {
-      java.lang.reflect.Field f =
-         XrefReader.class.getDeclaredField("linepat");
+      java.lang.reflect.Field f = XrefReader.class.getDeclaredField("linepat");
       f.setAccessible(true);
       Matcher m = (Matcher) f.get(null);
       assertFalse(m.reset("src/Foo.java: no number").matches());

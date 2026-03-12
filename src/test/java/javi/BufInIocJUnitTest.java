@@ -35,8 +35,8 @@ class BufInIocJUnitTest {
    private BufInIoc<String> makeBufInIoc(String content) {
       BufferedReader reader = new BufferedReader(new StringReader(content));
       FileProperties<String> fp = new FileProperties<>(
-         FileDescriptor.InternalFd.make("bufinIocTest"),
-         StringIoc.converter);
+            FileDescriptor.InternalFd.make("bufinIocTest"),
+            StringIoc.converter);
       return new BufInIoc<>(fp, false, reader);
    }
 
@@ -135,8 +135,8 @@ class BufInIocJUnitTest {
    @Test
    void constructorWithNullReader() throws Exception {
       FileProperties<String> fp = new FileProperties<>(
-         FileDescriptor.InternalFd.make("nullReaderTest"),
-         StringIoc.converter);
+            FileDescriptor.InternalFd.make("nullReaderTest"),
+            StringIoc.converter);
       BufInIoc<String> ioc = new BufInIoc<>(fp, false, null);
       // getLine should return null immediately since input is null
       assertNull(callGetLine(ioc));

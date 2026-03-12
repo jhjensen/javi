@@ -75,6 +75,6 @@ class ChangeOptJUnitTest {
    @Test
    void invalidValueOfThrows() {
       assertThrows(IllegalArgumentException.class,
-         () -> ChangeOpt.Opcode.valueOf("NONEXISTENT"));
+            () -> ChangeOpt.Opcode.valueOf("NONEXISTENT"));
    }
 }

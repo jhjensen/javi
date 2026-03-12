@@ -18,9 +18,11 @@ import java.util.List;
 /**
  * Tests for {@link Vt100Parser} state machine logic.
  *
- * <p>Uses reflection to invoke the private {@code doChar} method
+ * <p>
+ * Uses reflection to invoke the private {@code doChar} method
  * directly, bypassing the reader thread and EventQueue. A recording
- * {@link VScreen} subclass captures all method calls for assertion.</p>
+ * {@link VScreen} subclass captures all method calls for assertion.
+ * </p>
  */
 class Vt100ParserJUnitTest {
 

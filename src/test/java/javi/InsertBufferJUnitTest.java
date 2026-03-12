@@ -27,8 +27,7 @@ class InsertBufferJUnitTest {
       EventQueue.biglock2.lock();
       ib.resetCalled = false;
       // Clear internal buffer via reflection
-      java.lang.reflect.Field bf =
-         InsertBuffer.class.getDeclaredField("buffer");
+      java.lang.reflect.Field bf = InsertBuffer.class.getDeclaredField("buffer");
       bf.setAccessible(true);
       ((StringBuilder) bf.get(ib)).setLength(0);
    }

@@ -234,10 +234,9 @@ class ViewCOptJUnitTest {
          String content) {
       try {
          FileDescriptor fd = FileDescriptor.InternalFd.make(name);
-         FileProperties<String> fp =
-            new FileProperties<>(fd, StringIoc.converter);
+         FileProperties<String> fp = new FileProperties<>(fd, StringIoc.converter);
          TextEdit<String> te = new TextEdit<>(
-            new IoConverter<>(fp, false), fp);
+               new IoConverter<>(fp, false), fp);
          // Insert content lines
          String[] lines = content.split("\n", -1);
          for (int i = 0; i < lines.length; i++) {
