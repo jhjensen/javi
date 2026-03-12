@@ -10,7 +10,7 @@ import java.util.regex.PatternSyntaxException;
 import static history.Tools.trace;
 
 /**
- * F5 Phase 5: Unified Directory Manager — replaces both DirList and DirEdit.
+ * F5: Unified Directory Manager — replaces both DirList and DirEdit.
  *
  * <p>DirManager combines the interactive directory browsing UI of DirEdit
  * with the search-path management role of DirList. It is a
@@ -18,26 +18,21 @@ import static history.Tools.trace;
  * strings, while maintaining an internal list of directories marked for
  * the search path.</p>
  *
- * <h2>Migration Plan</h2>
- * <p>Callers currently using DirList's search-path and file-find APIs
- * will be migrated one at a time (see plan-F5-directory-editor.md,
- * Phases 6-8). During migration, DirList remains functional.</p>
- *
- * <h2>Callers Migrated</h2>
+ * <h2>Migrated Callers</h2>
  * <ul>
- *   <li>FileList — uses DirManager for search, addSearchDir</li>
- *   <li>PosListList — uses DirManager for globalgrep, gotosearchpath</li>
- *   <li>JavaCompiler — uses DirManager.fileList()</li>
- *   <li>CheckStyle — uses DirManager.fileList()</li>
- *   <li>MiscCommands — uses DirManager.flushCache()</li>
- *   <li>Javi — uses DirManager.getInstance() at startup</li>
+ *   <li>FileList — search, addSearchDir</li>
+ *   <li>PosListList — globalgrep, gotosearchpath</li>
+ *   <li>JavaCompiler — fileList()</li>
+ *   <li>CheckStyle — fileList()</li>
+ *   <li>MiscCommands — flushCache()</li>
+ *   <li>Javi — getInstance() at startup</li>
  * </ul>
  *
- * <h2>Remaining</h2>
- * <p>DirList is only used internally by DirManager for persistence
- * back-sync. No external callers remain.</p>
+ * <h2>Persistence</h2>
+ * <p>DirManager persists the search path independently via a
+ * private {@code TextEdit<String>} store ("searchpath" internal file).
+ * DirList is no longer referenced.</p>
  *
- * @see DirList the legacy search-path manager (to be replaced)
  * @see DirEdit the legacy directory browser (to be replaced)
  */
 public final class DirManager extends TextEdit<String> {
@@ -61,7 +56,7 @@ public final class DirManager extends TextEdit<String> {
    public enum SortMode { NAME, SIZE, DATE, TYPE }
 
    // ---------------------------------------------------------------
-   // Search-path state (from DirList)
+   // Search-path state
    // ---------------------------------------------------------------
 
    /**
@@ -75,8 +70,11 @@ public final class DirManager extends TextEdit<String> {
    // Singleton
    // ---------------------------------------------------------------
 
-   /** The single DirManager instance (replaces DirList.deflist). */
+   /** The single DirManager instance. */
    private static DirManager instance;
+
+   /** Persistent backing store for search path entries. */
+   private static TextEdit<String> searchPathStore;
 
    /**
     * Get or create the singleton DirManager.
@@ -98,24 +96,60 @@ public final class DirManager extends TextEdit<String> {
    private DirManager(FileProperties<String> fp) {
       super(new IoConverter(fp, true), fp);
       finish();
-      syncFromDirList();
+      loadSearchPath();
    }
 
    /**
-    * Synchronize search path state from DirList.
-    * Called once at startup to import existing search path entries.
+    * Lazily initialize the persistent search path store.
+    *
+    * @return the shared search path store
     */
-   private void syncFromDirList() {
+   @SuppressWarnings("unchecked")
+   private static TextEdit<String> getSearchPathStore() {
+      if (searchPathStore == null) {
+         FileDescriptor fd = FileDescriptor.InternalFd.make("searchpath");
+         FileProperties<String> fp =
+            new FileProperties<>(fd, StringIoc.converter);
+         searchPathStore = new TextEdit<>(new IoConverter(fp, true), fp);
+         searchPathStore.finish();
+      }
+      return searchPathStore;
+   }
+
+   /**
+    * Load search path entries from the persistent store.
+    * Called once at startup.
+    */
+   private void loadSearchPath() {
       try {
-         DirList dl = DirList.getDefault();
-         if (null == dl)
-            return;
-         for (FileDescriptor.LocalDir dir : dl.getSearchDirs()) {
-            searchPath.add(dir);
+         TextEdit<String> store = getSearchPathStore();
+         int size = store.readIn();
+         for (int ii = 1; ii < size; ii++) {
+            String path = store.at(ii);
+            if (path != null && !path.isEmpty()) {
+               FileDescriptor.LocalDir dir =
+                  FileDescriptor.LocalDir.make(path);
+               searchPath.add(dir);
+            }
          }
       } catch (Exception e) {
-         trace("DirManager: syncFromDirList failed: " + e);
+         trace("DirManager: loadSearchPath failed: " + e);
       }
+   }
+
+   /**
+    * Persist the current search path to the backing store.
+    */
+   private void saveSearchPath() {
+      TextEdit<String> store = getSearchPathStore();
+      int size = store.readIn();
+      if (size > 1)
+         store.remove(1, size - 1);
+      int line = 1;
+      for (FileDescriptor.LocalDir dir : searchPath) {
+         store.insertOne(dir.toString(), line++);
+      }
+      store.checkpoint();
    }
 
    // ---------------------------------------------------------------
@@ -214,7 +248,7 @@ public final class DirManager extends TextEdit<String> {
       if (searchPath.contains(dir))
          return false;
       searchPath.add(dir);
-      DirList.getDefault().addSearchDir(dir);
+      saveSearchPath();
       trace("DirManager: added search dir " + dir);
       populateDirectory(); // refresh display so [S] marker appears
       return true;
@@ -229,7 +263,7 @@ public final class DirManager extends TextEdit<String> {
    boolean removeSearchDir(FileDescriptor.LocalDir dir) {
       boolean removed = searchPath.remove(dir);
       if (removed) {
-         DirList.getDefault().removeSearchDir(dir);
+         saveSearchPath();
          populateDirectory(); // refresh display so [S] marker disappears
       }
       return removed;
@@ -237,7 +271,6 @@ public final class DirManager extends TextEdit<String> {
 
    /**
     * Get all files across the search path matching a filter.
-    * (Replaces DirList.fileList(FilenameFilter))
     *
     * @param fl the filename filter
     * @return list of matching files
@@ -285,15 +318,13 @@ public final class DirManager extends TextEdit<String> {
    boolean toggleSearchPath(FileDescriptor.LocalDir dir) {
       if (searchPath.contains(dir)) {
          searchPath.remove(dir);
-         DirList.getDefault().removeSearchDir(dir);
          trace("DirManager: removed search dir " + dir);
-         return false;
       } else {
          searchPath.add(dir);
-         DirList.getDefault().addSearchDir(dir);
          trace("DirManager: added search dir " + dir);
-         return true;
       }
+      saveSearchPath();
+      return searchPath.contains(dir);
    }
 
    /**
@@ -336,8 +367,7 @@ public final class DirManager extends TextEdit<String> {
    // Static open helpers (same pattern as DirEdit)
    // ---------------------------------------------------------------
 
-   // --  Phase 6: Search-Path Backend APIs ─────────────────────
-   //     (ported from DirList)
+   // --  Search-Path Backend APIs ──────────────────────────────
 
    /** Current directory index for file-find iteration. */
    private transient int dindex;
@@ -454,8 +484,8 @@ public final class DirManager extends TextEdit<String> {
    void flushCache() {
       // DirManager search path uses FileDescriptor.LocalDir which
       // reads from disk on each access — no persistent cache to flush.
-      // Also flush DirList for the search-path view.
-      DirList.getDefault().flushCache();
+      // Re-populate the current directory view if one is open.
+      populateDirectory();
    }
 
    /**
@@ -497,7 +527,7 @@ public final class DirManager extends TextEdit<String> {
    /**
     * Inner class that performs grep across multiple directories.
     * Extends PositionIoc to produce Position results for each match.
-    * Ported from DirList.GrepReader.
+    * Grep engine for searching across search-path directories.
     */
    private static final class GrepReader extends PositionIoc {
 
