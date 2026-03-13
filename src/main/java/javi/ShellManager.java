@@ -170,6 +170,38 @@ public final class ShellManager {
    }
 
    /**
+    * Checks if the active shell session has VT100 mouse tracking enabled.
+    *
+    * @return true if mouse tracking is active
+    */
+   public synchronized boolean isMouseTrackingActive() {
+      ShellSession session = getActive();
+      if (null != session) {
+         Vt100 vt = session.getVt100();
+         return null != vt && vt.isMouseTrackingEnabled();
+      }
+      return false;
+   }
+
+   /**
+    * Forwards a mouse event to the active shell as VT100 escape sequences.
+    *
+    * @param button 0=left, 1=middle, 2=right, 64=scrollUp, 65=scrollDown
+    * @param col 1-based column
+    * @param row 1-based row
+    * @param pressed true for press, false for release
+    */
+   public synchronized void forwardMouseEvent(
+         int button, int col, int row, boolean pressed) {
+      ShellSession session = getActive();
+      if (null != session) {
+         Vt100 vt = session.getVt100();
+         if (null != vt)
+            vt.sendMouseEvent(button, col, row, pressed);
+      }
+   }
+
+   /**
     * Gets the index of the currently active session.
     *
     * @return the active index, or -1 if none
@@ -326,6 +358,20 @@ public final class ShellManager {
          }
       }
       activeIndex = -1;
+   }
+
+   /**
+    * Notifies all active shell sessions of a window resize.
+    *
+    * <p>Called when the editor view is resized so that shell PTY
+    * dimensions are updated via stty.</p>
+    *
+    * @param rows the new number of rows
+    * @param cols the new number of columns
+    */
+   public synchronized void notifyResize(int rows, int cols) {
+      for (ShellSession session : sessions)
+         session.notifyResize(rows, cols);
    }
 
    /**

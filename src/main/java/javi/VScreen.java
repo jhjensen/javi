@@ -268,4 +268,23 @@ abstract class VScreen {
    void switchAlternateScreen(boolean enable, StringBuilder sb) {
       // Default no-op — subclasses implement actual buffer swap
    }
+
+   /**
+    * Sets mouse tracking mode.
+    *
+    * @param mode 0=off, 1000=normal, 1002=button-event, 1003=any-event
+    * @param enable true to enable, false to disable
+    */
+   void setMouseTracking(int mode, boolean enable) {
+      // Default no-op — subclasses implement actual mouse tracking
+   }
+
+   /**
+    * Sets SGR (mode 1006) mouse encoding.
+    *
+    * @param enable true for SGR format, false for legacy X10 format
+    */
+   void setSgrMouseMode(boolean enable) {
+      // Default no-op
+   }
 }
