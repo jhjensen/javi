@@ -21,3 +21,4 @@ reportXMLtoHTML.xsl
 .vscode
 ai.output
 bin
+tmp
