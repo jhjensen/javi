@@ -60,6 +60,9 @@ public final class DirEdit extends TextEdit<String> {
 
    private static final long serialVersionUID = 1;
 
+   /** All open DirEdit instances (for search-path-change notifications). */
+   private static final ArrayList<DirEdit> openInstances = new ArrayList<>();
+
    /** The directory being displayed. */
    private FileDescriptor.LocalDir currentDir;
 
@@ -106,6 +109,7 @@ public final class DirEdit extends TextEdit<String> {
       populateDirectoryImpl();
       setReadOnly(true);
       finish();
+      openInstances.add(this);
    }
 
    @Override
@@ -154,6 +158,7 @@ public final class DirEdit extends TextEdit<String> {
          case 'w': case 'W': case 'b': case 'B': case 'e': case 'E':
          case 'f': case 'F': case 't': case 'T':
          case 'd':
+         case 'v': case 'V':
          case 'n': case 'N':
          case ';': case ',':
          case '0': case '1': case '2': case '3': case '4':
@@ -915,6 +920,75 @@ public final class DirEdit extends TextEdit<String> {
     */
    public FileDescriptor.LocalDir getCurrentDir() {
       return currentDir;
+   }
+
+   /**
+    * Refresh all open DirEdit instances.
+    * Called by DirManager when the search path changes so that
+    * [S] markers are updated immediately.
+    */
+   static void notifySearchPathChanged() {
+      for (DirEdit de : openInstances) {
+         de.populateDirectory();
+      }
+   }
+
+   /**
+    * Delete files across a range of lines (for V-mode selection).
+    *
+    * @param startLine first line of the range
+    * @param endLine last line of the range (inclusive)
+    * @param fvc the current FvContext
+    * @throws InputException if confirmation is declined
+    */
+   void deleteRange(int startLine, int endLine, FvContext fvc)
+         throws InputException {
+      ArrayList<String> names = new ArrayList<>();
+      for (int i = startLine; i <= endLine; i++) {
+         String fn = getFilename(i);
+         if (null != fn && !"../".equals(fn)) {
+            names.add(fn.endsWith("/")
+               ? fn.substring(0, fn.length() - 1) : fn);
+         }
+      }
+      if (names.isEmpty()) {
+         throw new InputException("No files in selection");
+      }
+
+      UI.reportMessage("Delete " + names.size() + " file(s)? (y/n)");
+      char confirm = EventQueue.nextKey(fvc.vi);
+      if (confirm != 'y' && confirm != 'Y') {
+         UI.reportMessage("Delete cancelled");
+         return;
+      }
+
+      int deleted = 0;
+      int failed = 0;
+      for (String name : names) {
+         File target = new File(currentDir.fh, name);
+         if (target.isDirectory()) {
+            String[] ch = target.list();
+            if (null != ch && ch.length > 0) {
+               failed++;
+               continue;
+            }
+         }
+         if (target.delete()) {
+            deleted++;
+            trace("DirEdit: range-deleted " + target.getAbsolutePath());
+         } else {
+            failed++;
+         }
+      }
+
+      StringBuilder msg = new StringBuilder("Deleted ");
+      msg.append(deleted).append(" file(s)");
+      if (failed > 0)
+         msg.append(", ").append(failed).append(" failed");
+      UI.reportMessage(msg.toString());
+      populateDirectory();
+      if (fvc.inserty() >= readIn())
+         fvc.cursoryabs(readIn() - 1);
    }
 
    /**

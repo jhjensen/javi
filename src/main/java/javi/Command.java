@@ -236,38 +236,16 @@ public final class Command extends Rgroup {
       try {
          KeyBinding kb = bindingLookup(command);
          //trace("command kb = " + kb);
-         boolean comdone = false;
          if (kb != null) {
-            if (kb.matches(instance)) {
-               kb.dobind(args, 0, 0, fvc, false);
-               comdone = true;
-            }
-         }
-
-         //trace("vic.command 3 kb= " + kb + "comdone " + comdone + " fvc " + fvc);
-         if (!comdone) {
-            if (fvc != null)  {
-               int newpos = fvc.edvec.processCommand(line, fvc.inserty());
-               //trace("newpos " + newpos);
-               if (newpos == -1) {
-                  if (kb != null) {
-                     //trace("doing routine " +kb);
-                     kb.dobind(args, 0, 0, fvc, false);
-                  } else
-                      throw new InputException("Unknown Command:" + line);
-               } else {
-                  //???fvc.fixCursor();
-                  fvc.cursoryabs(newpos);
-               }
-            } else {
-               if (kb != null) {
-                  //trace("doing routine " +kb);
-                  kb.dobind(args, 0, 0, null, false);
-               } else {
-                  throw new InputException("Unknown Command:" + line);
-               }
-
-            }
+            kb.dobind(args, 0, 0, fvc, false);
+         } else if (fvc != null) {
+            int newpos = fvc.edvec.processCommand(line, fvc.inserty());
+            if (newpos == -1)
+               throw new InputException("Unknown Command:" + line);
+            else
+               fvc.cursoryabs(newpos);
+         } else {
+            throw new InputException("Unknown Command:" + line);
          }
       } catch (InputException e) {
          UI.reportMessage(e.toString());

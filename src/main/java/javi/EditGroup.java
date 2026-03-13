@@ -333,6 +333,11 @@ final class EditGroup extends Rgroup {
                      fvc.cursorabs(markpos);
                      continue;
                   case 'd':
+                     if (fvc.edvec instanceof DirEdit) {
+                        ((DirEdit) fvc.edvec).deleteRange(
+                           starty, doney, fvc);
+                        break out;
+                     }
                      deletetext(bufid, fvc, false, startx,
                         starty, donex, doney);
                      break out;
@@ -341,11 +346,12 @@ final class EditGroup extends Rgroup {
                      break out;
                   case 'v': case 'V': case 27: // esc
                      break out;
-                  case 'Y':
-                     Buffers.deleted(bufid,
-                        fvc.edvec.getElementsAt(starty, markamount));
-                     break out;
                   case 'D':
+                     if (fvc.edvec instanceof DirEdit) {
+                        ((DirEdit) fvc.edvec).deleteRange(
+                           starty, doney, fvc);
+                        break out;
+                     }
                      fvc.edvec.finish();
                      if (!fvc.edvec.containsNow(starty + markamount - 1))
                         markamount = fvc.edvec.finish() - 1;

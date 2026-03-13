@@ -251,6 +251,7 @@ public final class DirManager extends TextEdit<String> {
       saveSearchPath();
       trace("DirManager: added search dir " + dir);
       populateDirectory(); // refresh display so [S] marker appears
+      DirEdit.notifySearchPathChanged();
       return true;
    }
 
@@ -265,6 +266,7 @@ public final class DirManager extends TextEdit<String> {
       if (removed) {
          saveSearchPath();
          populateDirectory(); // refresh display so [S] marker disappears
+         DirEdit.notifySearchPathChanged();
       }
       return removed;
    }
