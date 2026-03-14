@@ -164,6 +164,9 @@ public abstract class InsertBuffer extends View.Inserter {
                }
                break;
             case TAB_INSERT:
+               if (singleline && tryHelpCompletion(fvc)) {
+                  break;
+               }
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
                int linepos = fvc.insertx() + buffer.length();
@@ -367,6 +370,59 @@ public abstract class InsertBuffer extends View.Inserter {
          }
       }
       return 0;
+   }
+
+   private int helpCompletionIndex = -1;
+   private String helpCompletionPrefix = "";
+
+   /**
+    * Attempt tab completion for `:help <topic>` in command-line mode.
+    * Returns true if completion was handled, false to fall through to
+    * normal tab behavior.
+    */
+   private boolean tryHelpCompletion(FvContext fvc) {
+      // Build the full line: committed text + pending buffer
+      String committed = fvc.at().toString();
+      String fullLine = committed.substring(0, fvc.insertx())
+         + buffer.toString();
+
+      // Only complete after ":help " prefix
+      if (!fullLine.startsWith(":help "))
+         return false;
+
+      String partial = fullLine.substring(6); // after ":help "
+
+      // If prefix changed, reset cycling
+      if (!partial.equals(helpCompletionPrefix)) {
+         helpCompletionPrefix = partial;
+         helpCompletionIndex = -1;
+      }
+
+      // Find matching topics
+      String[] topics = HelpSystem.getTopics();
+      java.util.List<String> matches = new java.util.ArrayList<>();
+      for (String t : topics) {
+         if (t.startsWith(partial))
+            matches.add(t);
+      }
+      if (matches.isEmpty())
+         return false;
+
+      // Cycle through matches
+      helpCompletionIndex = (helpCompletionIndex + 1) % matches.size();
+      String completion = matches.get(helpCompletionIndex);
+
+      // Replace the partial text in buffer with the completion
+      int partialLen = partial.length();
+      if (partialLen <= buffer.length()) {
+         buffer.setLength(buffer.length() - partialLen);
+      } else {
+         buffer.setLength(0);
+      }
+      buffer.append(completion);
+      helpCompletionPrefix = completion; // so next Tab cycles
+      fvc.vi.lineChanged(fvc.inserty());
+      return true;
    }
 
    public final boolean isActive() {

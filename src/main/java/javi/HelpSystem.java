@@ -122,6 +122,20 @@ public final class HelpSystem {
       return helpBuffer;
    }
 
+   /** Primary help topic names for tab completion. */
+   private static final String[] TOPICS = {
+      "index", "movement", "editing", "search", "files", "ex",
+      "visual", "undo", "window", "shell", "diredit", "filelist",
+      "directory", "keybindings"
+   };
+
+   /**
+    * Get all primary help topic names (for tab completion).
+    */
+   static String[] getTopics() {
+      return TOPICS;
+   }
+
    /**
     * Get a buffer listing all current key bindings.
     *
