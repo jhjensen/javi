@@ -84,6 +84,7 @@ public final class Javi {
       new JS.JSR();
       new MakeCmd();
       MapEvent.bindCommands();
+      KeyBindingPersistence.load();
       try {
          //trace("preserver");
          new Server(6001);

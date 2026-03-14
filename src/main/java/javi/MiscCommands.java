@@ -36,6 +36,8 @@ public final class MiscCommands extends Rgroup {
       MAP_KEY,     // 21: :mapkey command
       UNMAP_KEY,   // 22: :unmapkey command
       SHOW_KEYMAP, // 23: :keymap - show current keymap
+      SAVE_MAP_KEYS, // 24: :savemapkeys - persist user bindings
+      LOAD_MAP_KEYS, // 25: :loadmapkeys - load user bindings
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -66,6 +68,8 @@ public final class MiscCommands extends Rgroup {
          "mapkey",           // 21
          "unmapkey",         // 22
          "keymap",           // 23
+         "savemapkeys",      // 24
+         "loadmapkeys",      // 25
       };
       register(rnames);
    }
@@ -151,6 +155,12 @@ public final class MiscCommands extends Rgroup {
             return null;
          case SHOW_KEYMAP:
             showKeyMap(fvc);
+            return null;
+         case SAVE_MAP_KEYS:
+            saveMapKeys();
+            return null;
+         case LOAD_MAP_KEYS:
+            loadMapKeys();
             return null;
 
          default:
@@ -694,6 +704,29 @@ public final class MiscCommands extends Rgroup {
       }
       sb.append("  [registered: ").append(KeyMap.registeredNames()).append(']');
       UI.reportMessage(sb.toString());
+   }
+
+   private static void saveMapKeys() throws InputException {
+      try {
+         int count = KeyBindingPersistence.save();
+         if (count == 0)
+            UI.reportMessage("No user-modified keybindings to save");
+         else
+            UI.reportMessage("Saved " + count + " keybinding(s) to "
+               + KeyBindingPersistence.getConfigPath());
+      } catch (java.io.IOException e) {
+         throw new InputException("Failed to save keybindings: "
+            + e.getMessage());
+      }
+   }
+
+   private static void loadMapKeys() {
+      int count = KeyBindingPersistence.load();
+      if (count == 0)
+         UI.reportMessage("No keybinding file found at "
+            + KeyBindingPersistence.getConfigPath());
+      else
+         UI.reportMessage("Loaded " + count + " keybinding(s)");
    }
 
    // Parse a key specification string into a JeyEvent.

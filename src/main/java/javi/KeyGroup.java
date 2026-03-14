@@ -21,6 +21,10 @@ final class KeyGroup {
    private HashMap<JeyEvent, String> commandNames =
       new HashMap<JeyEvent, String>(200);
 
+   /** Tracks keys modified at runtime via :mapkey (for persistence). */
+   private final HashMap<JeyEvent, String> userBindings =
+      new HashMap<>();
+
    KeyGroup(String name) {
       this.name = name;
    }
@@ -73,13 +77,15 @@ final class KeyGroup {
    }
 
    /**
-    * Add or replace a runtime binding (for :map command).
-    * Unlike keybind(), this allows overwriting existing bindings.
+    * Add or replace a runtime binding (for :mapkey command).
+    * Unlike keybind(), this allows overwriting existing bindings
+    * and tracks the change as a user modification for persistence.
     */
    void bind(JeyEvent key, String commandName, Object arg) {
       Rgroup.KeyBinding kb = Rgroup.bindingLookup(commandName);
       bindingMap.put(key, kb.proto(arg));
       commandNames.put(key, commandName);
+      userBindings.put(key, commandName);
    }
 
    /**
@@ -89,6 +95,7 @@ final class KeyGroup {
     */
    boolean unbind(JeyEvent key) {
       commandNames.remove(key);
+      userBindings.remove(key);
       return null != bindingMap.remove(key);
    }
 
@@ -115,6 +122,30 @@ final class KeyGroup {
    }
 
    /**
+    * Get user-modified bindings as serializable "key command" pairs.
+    * Each entry is formatted as "keyspec command" suitable for
+    * writing to a keybinding config file.
+    *
+    * @return list of user-modified bindings in persistence format
+    */
+   List<String> getUserBindingSpecs() {
+      List<String> result = new ArrayList<>();
+      for (Map.Entry<JeyEvent, String> entry : userBindings.entrySet()) {
+         String keySpec = formatKeySpec(entry.getKey());
+         result.add(keySpec + " " + entry.getValue());
+      }
+      result.sort(String::compareTo);
+      return result;
+   }
+
+   /**
+    * Check whether any user-modified bindings exist.
+    */
+   boolean hasUserBindings() {
+      return !userBindings.isEmpty();
+   }
+
+   /**
     * Format a JeyEvent as a readable key description.
     */
    private String formatKey(JeyEvent ev) {
@@ -131,24 +162,64 @@ final class KeyGroup {
          sb.append("Alt-");
       }
 
-      int keyCode = ev.getKeyCode();
       char keyChar = ev.getKeyChar();
 
-      if (keyCode != 0) {
-         sb.append(getKeyCodeName(keyCode));
-      } else if (keyChar != JeyEvent.CHAR_UNDEFINED && keyChar >= 32) {
-         sb.append(keyChar);
-      } else if (keyChar < 32) {
-         // Control character - display as Ctrl-X
-         if (sb.length() == 0) {
-            sb.append("Ctrl-");
+      if (keyChar != JeyEvent.CHAR_UNDEFINED) {
+         // Character-based event
+         if (keyChar >= 32) {
+            sb.append(keyChar);
+         } else {
+            // Control character - display as Ctrl-X
+            if (sb.length() == 0) {
+               sb.append("Ctrl-");
+            }
+            sb.append((char) (keyChar + 'A' - 1));
          }
-         sb.append((char) (keyChar + 'A' - 1));
       } else {
-         sb.append("?");
+         // Action key event - use keyCode
+         int keyCode = ev.getKeyCode();
+         if (keyCode != 0) {
+            sb.append(getKeyCodeName(keyCode));
+         } else {
+            sb.append("?");
+         }
       }
 
       return sb.toString();
+   }
+
+   /**
+    * Format a JeyEvent as a key specification that can be parsed by
+    * MiscCommands.parseKeySpec(). Roundtrippable format:
+    * single char, C-x for ctrl+char, or special names (F1-F12, etc.)
+    */
+   String formatKeySpec(JeyEvent ev) {
+      int mods = ev.getModifiers();
+      char keyChar = ev.getKeyChar();
+
+      // Character-based events (keyChar is not CHAR_UNDEFINED)
+      if (keyChar != JeyEvent.CHAR_UNDEFINED) {
+         if ((mods & JeyEvent.CTRL_MASK) != 0 && keyChar < 32) {
+            return "C-" + (char) (keyChar + 'a' - 1);
+         }
+         if ((mods & JeyEvent.SHIFT_MASK) != 0) {
+            return "S-" + keyChar;
+         }
+         if ((mods & JeyEvent.ALT_MASK) != 0) {
+            return "A-" + keyChar;
+         }
+         if (keyChar >= 32) {
+            return String.valueOf(keyChar);
+         }
+         return "?";
+      }
+
+      // Action key events (keyChar is CHAR_UNDEFINED, use keyCode)
+      int keyCode = ev.getKeyCode();
+      if (keyCode != 0) {
+         return getKeyCodeName(keyCode);
+      }
+      return "?";
    }
 
    /**

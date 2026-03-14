@@ -226,6 +226,79 @@ public final class HelpSystem {
    }
 
    /**
+    * Get a buffer listing bindings filtered by keymap name.
+    *
+    * <p>If the named keymap is an overlay, shows only its override
+    * bindings. If it is the root keymap, shows all bindings.
+    * Returns unknown-keymap message if name is not registered.</p>
+    *
+    * @param keymapName the keymap name to filter by
+    * @return TextEdit buffer containing filtered bindings
+    */
+   public static TextEdit<String> getFilteredBindings(String keymapName) {
+      if (null == helpBuffer) {
+         createHelpBuffer();
+      }
+      clearBuffer();
+
+      KeyMap km = KeyMap.get(keymapName);
+      if (km == null) {
+         append("Unknown keymap: " + keymapName);
+         append("");
+         append("Registered keymaps: "
+            + KeyMap.registeredNames());
+         return helpBuffer;
+      }
+
+      append("KEY BINDINGS: " + keymapName);
+      append("=".repeat(15 + keymapName.length()));
+      append("");
+
+      // Show keymap chain
+      StringBuilder chain = new StringBuilder("Keymap chain: ");
+      chain.append(km.getName());
+      KeyMap p = km.getParent();
+      while (p != null) {
+         chain.append(" -> ").append(p.getName());
+         p = p.getParent();
+      }
+      append(chain.toString());
+      append("");
+
+      // Show this keymap's own bindings
+      java.util.List<String> moveBindings =
+         km.getMoveKeys().getBindingList();
+      java.util.List<String> editBindings =
+         km.getEditKeys().getBindingList();
+
+      if (!moveBindings.isEmpty()) {
+         append("MOVEMENT KEYS");
+         append("-------------");
+         for (String b : moveBindings)
+            append(b);
+         append("");
+      }
+
+      if (!editBindings.isEmpty()) {
+         append("COMMAND KEYS");
+         append("------------");
+         for (String b : editBindings)
+            append(b);
+         append("");
+      }
+
+      if (moveBindings.isEmpty() && editBindings.isEmpty()) {
+         if (km.getParent() != null)
+            append("  (no overrides - all keys inherited from "
+               + km.getParent().getName() + ")");
+         else
+            append("  (no bindings)");
+      }
+
+      return helpBuffer;
+   }
+
+   /**
     * Create the help buffer if it doesn't exist.
     */
    private static void createHelpBuffer() {
@@ -891,10 +964,20 @@ public final class HelpSystem {
       append("  :unmapkey <group> <key>           Unbind a key");
       append("  :keymap                           Show active keymap chain");
       append("  :map                              Show all key bindings");
+      append("  :map <keymap>                     Show bindings for a keymap");
       append("");
       append("  group: 'move' for movement keys, 'edit' for editing keys");
       append("  key:   single char, C-x (ctrl), S-x (shift), F1-F12,");
       append("         Up, Down, Left, Right, Home, End, PgUp, PgDn");
+      append("");
+      append("PERSISTENCE");
+      append("-----------");
+      append("  :savemapkeys                      Save user bindings to disk");
+      append("  :loadmapkeys                      Load user bindings from disk");
+      append("");
+      append("  Bindings are saved to ~/.javi/keybindings in a format");
+      append("  compatible with :mapkey commands. To auto-load bindings");
+      append("  on startup, add 'loadmapkeys' to your .javini file.");
       append("");
       append("BUFFER-TYPE AUTO-DETECTION");
       append("-------------------------");

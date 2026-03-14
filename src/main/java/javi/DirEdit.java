@@ -175,7 +175,7 @@ public final class DirEdit extends TextEdit<String> {
             break;
       }
 
-      // Allow navigation keys through to mkeys/skeys dispatch
+      // Allow navigation keys through to KeyMap dispatch
       switch (ch) {
          case 'h': case 'j': case 'k': case 'l':
          case 'H': case 'M': case 'L':

@@ -120,12 +120,12 @@ public final class MapEvent {
       Matcher sectionRegex = Pattern.compile("^[^ ].*\\{").matcher("");
 
       // Create the normal keymap first, then populate via KeyMap API
-      KeyGroup mkeys = new KeyGroup("normal-move");
-      KeyGroup skeys = new KeyGroup("normal-edit");
-      normalKeyMap = new KeyMap("normal", mkeys, skeys);
+      KeyGroup moveKeys = new KeyGroup("normal-move");
+      KeyGroup editKeys = new KeyGroup("normal-edit");
+      normalKeyMap = new KeyMap("normal", moveKeys, editKeys);
       KeyMap.register(normalKeyMap);
 
-      // --- Movement keys (mkeys) via KeyMap API ---
+      // --- Movement keys via KeyMap API ---
 
       // Screen scrolling
       normalKeyMap.bindMoveKey((char) 2, "movescreen", mf1, CTRL_MASK);
@@ -220,7 +220,7 @@ public final class MapEvent {
       normalKeyMap.bindMoveKey(']', "forwardregex", sectionRegex);
       normalKeyMap.bindMoveKey('[', "backwardregex", sectionRegex);
 
-      // --- Edit/static keys (skeys) via KeyMap API ---
+      // --- Edit/command keys via KeyMap API ---
 
       // UI / mode switching
       normalKeyMap.bindEditKey('z', "zprocess", null);

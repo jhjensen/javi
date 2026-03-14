@@ -416,4 +416,112 @@ class MapEventJUnitTest {
          EventQueue.biglock2.unlock();
       }
    }
+
+   // ============================================================
+   // HelpSystem — filtered bindings (F20)
+   // ============================================================
+
+   @Test
+   void filteredBindingsUnknownKeymapShowsError() {
+      EventQueue.biglock2.lock();
+      try {
+         // Set up a minimal keymap for the test
+         KeyGroup move = new KeyGroup("test-move");
+         KeyGroup edit = new KeyGroup("test-edit");
+         KeyMap km = new KeyMap("test-filter", move, edit);
+         KeyMap.register(km);
+
+         TextEdit<String> buf =
+            HelpSystem.getFilteredBindings("nonexistent");
+         assertNotNull(buf, "should return a buffer even for unknown keymap");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void filteredBindingsKnownKeymapShowsBindings() {
+      EventQueue.biglock2.lock();
+      try {
+         KeyGroup move = new KeyGroup("fb-move");
+         KeyGroup edit = new KeyGroup("fb-edit");
+         KeyMap km = new KeyMap("fb-test", move, edit);
+         km.bindMoveKey('x', "movechar", Boolean.FALSE);
+         KeyMap.register(km);
+
+         TextEdit<String> buf =
+            HelpSystem.getFilteredBindings("fb-test");
+         assertNotNull(buf, "should return a buffer for known keymap");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ============================================================
+   // KeyGroup — user binding tracking (F21)
+   // ============================================================
+
+   @Test
+   void bindTracksUserBinding() {
+      KeyGroup kg = new KeyGroup("bind-test");
+      // Use keybind first (default binding, not tracked)
+      kg.keybind('h', "movechar", Boolean.FALSE);
+      assertFalse(kg.hasUserBindings(),
+         "keybind should not create user bindings");
+
+      // Use bind (runtime modification, tracked)
+      JeyEvent ev = new JeyEvent(0, 0, 'x');
+      kg.bind(ev, "movechar", Boolean.TRUE);
+      assertTrue(kg.hasUserBindings(),
+         "bind should track as user binding");
+
+      List<String> specs = kg.getUserBindingSpecs();
+      assertEquals(1, specs.size(),
+         "should have one user binding");
+      assertTrue(specs.get(0).contains("movechar"),
+         "spec should contain command name");
+   }
+
+   @Test
+   void unbindRemovesUserBinding() {
+      KeyGroup kg = new KeyGroup("unbind-test");
+      JeyEvent ev = new JeyEvent(0, 0, 'z');
+      kg.bind(ev, "movechar", Boolean.FALSE);
+      assertTrue(kg.hasUserBindings());
+
+      kg.unbind(ev);
+      assertFalse(kg.hasUserBindings(),
+         "unbind should remove user binding");
+   }
+
+   @Test
+   void formatKeySpecRoundtripsChar() {
+      KeyGroup kg = new KeyGroup("spec-test");
+      JeyEvent ev = new JeyEvent(0, 0, 'x');
+      String spec = kg.formatKeySpec(ev);
+      assertEquals("x", spec, "plain char should format as itself");
+   }
+
+   @Test
+   void formatKeySpecRoundtripsActionKey() {
+      KeyGroup kg = new KeyGroup("spec-test");
+      JeyEvent ev = new JeyEvent(0, JeyEvent.VK_F1,
+         JeyEvent.CHAR_UNDEFINED);
+      String spec = kg.formatKeySpec(ev);
+      assertEquals("F1", spec, "F1 action key should format as F1");
+   }
+
+   // ============================================================
+   // KeyBindingPersistence — config path (F21)
+   // ============================================================
+
+   @Test
+   void persistenceConfigPathEndWithKeybindings() {
+      java.nio.file.Path path = KeyBindingPersistence.getConfigPath();
+      assertNotNull(path);
+      assertTrue(path.toString().endsWith("keybindings"),
+         "config path should end with 'keybindings'");
+      assertTrue(path.toString().contains(".javi"),
+         "config path should be under .javi directory");
+   }
 }

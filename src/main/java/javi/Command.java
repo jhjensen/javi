@@ -78,7 +78,7 @@ public final class Command extends Rgroup {
                showHelp((String) arg, fvc);
                return null;
             case MAP:
-               showMap(fvc);
+               showMap(arg instanceof String ? (String) arg : null, fvc);
                return null;
             default:
                throw new RuntimeException("doroutine called with " + rnum);
@@ -156,14 +156,24 @@ public final class Command extends Rgroup {
    }
 
    /**
-    * Display context-aware key bindings for the active keymap.
+    * Display key bindings, optionally filtered by keymap name.
     *
+    * <p>When no filter is given, shows context-aware bindings for
+    * the active buffer. When a keymap name is provided (e.g.
+    * {@code :map filelist}), shows only bindings from that keymap.</p>
+    *
+    * @param keymapFilter optional keymap name to filter by, or null
     * @param fvc the current file-view context
     * @throws InputException if bindings cannot be displayed
     */
-   private static void showMap(FvContext fvc)
+   private static void showMap(String keymapFilter, FvContext fvc)
          throws InputException {
-      TextEdit<String> mapBuffer = HelpSystem.getContextBindings(fvc);
+      TextEdit<String> mapBuffer;
+      if (keymapFilter != null && !keymapFilter.isEmpty()) {
+         mapBuffer = HelpSystem.getFilteredBindings(keymapFilter.trim());
+      } else {
+         mapBuffer = HelpSystem.getContextBindings(fvc);
+      }
       FvContext.connectFv(mapBuffer, fvc.vi);
    }
 
