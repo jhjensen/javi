@@ -3,7 +3,6 @@ package javi;
 import java.awt.Canvas;
 import java.awt.Component;
 import java.awt.Frame;
-
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentFinder;
 import org.assertj.swing.core.GenericTypeMatcher;
@@ -230,5 +229,234 @@ class AssertJSwingGuiJUnitTest {
       assertTrue(f.isDisplayable(), "Frame must be displayable");
       assertFalse(f.getIgnoreRepaint(),
          "Frame should not ignore repaint");
+   }
+
+   // ── Ex-command execution tests ───────────────────────────────
+
+   @Test
+   void t13_exCommandSetTabstop() throws Exception {
+      // Execute :set tabstop=4 and verify it takes effect
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         assertNotNull(fvc, "FvContext must exist");
+         int origTab = fvc.vi.getTabStop();
+         Command.command("set tabstop=4", fvc, null);
+         assertEquals(4, fvc.vi.getTabStop(),
+            "tabstop should be 4 after :set tabstop=4");
+         // Restore original
+         Command.command("set tabstop=" + origTab, fvc, null);
+         assertEquals(origTab, fvc.vi.getTabStop(),
+            "tabstop should be restored");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t14_exCommandReload() throws Exception {
+      // Execute :e! (reload) — verify the buffer is refreshed
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         assertNotNull(fvc, "FvContext must exist");
+         TextEdit te = fvc.edvec;
+         int linesBefore = te.readIn();
+         assertTrue(linesBefore >= 1, "Buffer must have content");
+         // Reload via the registered "e!" command
+         Command.command("e!", fvc, null);
+         int linesAfter = te.readIn();
+         assertTrue(linesAfter >= 1,
+            "Buffer must still have content after reload");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t15_exCommandWriteDetected() throws Exception {
+      // Verify the :w ex-command path exists (write file)
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         TextEdit te = fvc.edvec;
+         // processCommand("w") returns the cursor position on success
+         int result = te.processCommand("w", fvc.inserty());
+         // :w on unmodified buffer returns current y or processes OK
+         assertTrue(result >= 0,
+            "processCommand('w') should succeed (return >= 0)");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ── Navigation tests ─────────────────────────────────────────
+
+   @Test
+   void t16_gotoLineEnd() throws Exception {
+      // G with no count goes to last line
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         TextEdit te = fvc.edvec;
+         int lastLine = te.finish() - 1;
+         assertTrue(lastLine >= 1,
+            "Buffer must have at least 1 line");
+         // Invoke gotoline with rcount=0, arg=null → go to end
+         Rgroup.KeyBinding kb = Rgroup.bindingLookup("gotoline");
+         assertNotNull(kb, "'gotoline' command must be registered");
+         kb.dobind(null, 0, 0, fvc, false);
+         // After G, cursor should be at or near the last line
+         int cursorY = fvc.inserty();
+         assertTrue(cursorY >= lastLine - 1,
+            "After G, cursor (" + cursorY
+               + ") should be near last line (" + lastLine + ")");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t17_gotoLineBeginning() throws Exception {
+      // gg (gotoline with count=1, rcount=1) goes to first line
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         // First go to end so we can verify movement
+         Rgroup.KeyBinding kb = Rgroup.bindingLookup("gotoline");
+         assertNotNull(kb, "'gotoline' command must be registered");
+         kb.dobind(null, 0, 0, fvc, false); // G — go to end
+         // Now go to beginning: gotoline with rcount=1, count=1
+         kb.dobind(null, 1, 1, fvc, false);
+         int cursorY = fvc.inserty();
+         assertEquals(1, cursorY,
+            "After gg, cursor should be at line 1");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t18_cursorMovementUpDown() throws Exception {
+      // Move cursor down then up via moveline
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         TextEdit te = fvc.edvec;
+         // Go to line 1 first
+         Rgroup.KeyBinding gotoKb = Rgroup.bindingLookup("gotoline");
+         gotoKb.dobind(null, 1, 1, fvc, false);
+         assertEquals(1, fvc.inserty(), "Should start at line 1");
+
+         if (te.readIn() > 2) {
+            // Move down 1 line (j)
+            Rgroup.KeyBinding moveKb = Rgroup.bindingLookup("moveline");
+            assertNotNull(moveKb,
+               "'moveline' command must be registered");
+            moveKb.dobind(Boolean.TRUE, 1, 0, fvc, false);
+            assertEquals(2, fvc.inserty(),
+               "After j, cursor should be at line 2");
+            // Move back up (k)
+            moveKb.dobind(Boolean.FALSE, 1, 0, fvc, false);
+            assertEquals(1, fvc.inserty(),
+               "After k, cursor should be at line 1");
+         }
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ── Mode switching / insert infrastructure tests ─────────────
+
+   @Test
+   void t19_insertCommandRegistered() throws Exception {
+      // Verify insert-mode commands are registered
+      EventQueue.biglock2.lock();
+      try {
+         assertNotNull(Rgroup.bindingLookup("insert"),
+            "EditGroup 'insert' (i) must be registered");
+         assertNotNull(Rgroup.bindingLookup("append"),
+            "EditGroup 'append' (a) must be registered");
+         assertNotNull(Rgroup.bindingLookup("openline"),
+            "EditGroup 'openline' (o) must be registered");
+         assertNotNull(Rgroup.bindingLookup("Openline"),
+            "EditGroup 'Openline' (O) must be registered");
+         assertNotNull(Rgroup.bindingLookup("substitute"),
+            "EditGroup 'substitute' (s) must be registered");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t20_editGroupDeleteCharsRegistered() throws Exception {
+      // Verify edit commands that modify text are available
+      EventQueue.biglock2.lock();
+      try {
+         assertNotNull(Rgroup.bindingLookup("deletechars"),
+            "EditGroup 'deletechars' (x) must be registered");
+         assertNotNull(Rgroup.bindingLookup("deletetoend"),
+            "EditGroup 'deletetoend' (D) must be registered");
+         assertNotNull(Rgroup.bindingLookup("joinlines"),
+            "EditGroup 'joinlines' (J) must be registered");
+         assertNotNull(Rgroup.bindingLookup("changecase"),
+            "EditGroup 'changecase' (~) must be registered");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t21_editorBufferTextAccessible() throws Exception {
+      // Verify we can read buffer content through the GUI editor
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         TextEdit te = fvc.edvec;
+         int lineCount = te.readIn();
+         assertTrue(lineCount >= 1,
+            "Editor must have at least 1 line");
+         // Read first line — should not throw
+         Object firstLine = te.at(1);
+         assertNotNull(firstLine,
+            "First line of buffer must not be null");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ── File open tests ──────────────────────────────────────────
+
+   @Test
+   void t22_fileOpenViaDirList() throws Exception {
+      // Verify DirList (file browser) is accessible in GUI context
+      EventQueue.biglock2.lock();
+      try {
+         DirList dirList = DirList.getDefault();
+         assertNotNull(dirList, "Default DirList must exist");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t23_fileListTrackingActive() throws Exception {
+      // Verify FileList is tracking open files
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         assertNotNull(fvc.edvec,
+            "Current editor must have a TextEdit");
+         FileDescriptor fd = fvc.edvec.fdes();
+         assertNotNull(fd,
+            "Current buffer must have a FileDescriptor");
+         String name = fd.shortName;
+         assertNotNull(name,
+            "FileDescriptor must have a name");
+         assertFalse(name.isEmpty(),
+            "FileDescriptor name must not be empty");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 }

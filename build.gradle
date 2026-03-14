@@ -125,6 +125,15 @@ tasks.named('test') {
 }
 
 // T3: Separate test task for AssertJ Swing GUI tests (own JVM, needs display)
+//
+// CI integration with Xvfb (virtual framebuffer):
+//   Xvfb :99 -screen 0 1024x768x24 &
+//   export DISPLAY=:99
+//   ./gradlew guiTest
+//   kill %1   # stop Xvfb
+//
+// On macOS with a desktop session, just run:
+//   ./gradlew guiTest
 tasks.register('guiTest', Test) {
     useJUnitPlatform {
         includeTags 'gui'
