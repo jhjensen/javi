@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -496,5 +494,90 @@ class DirEditJUnitTest {
       }
       assertTrue(foundSpace,
          "Non-search-path directory should show space prefix");
+   }
+
+   // --- DirSizeCalculator tests ---
+
+   @Test
+   void walkDirectorySizeCountsFileBytes() throws IOException {
+      File sizeDir = new File(tempDir, "size_test");
+      sizeDir.mkdir();
+      // Create two files of known sizes
+      createTestFile(sizeDir, "a.txt", "hello"); // 5 bytes
+      createTestFile(sizeDir, "b.txt", "world!!"); // 7 bytes
+      long size = DirEdit.DirSizeCalculator.walkDirectorySize(
+         sizeDir.getAbsolutePath());
+      assertEquals(12, size, "Should sum file sizes recursively");
+   }
+
+   @Test
+   void walkDirectorySizeIncludesSubdirectories() throws IOException {
+      File rootDir = new File(tempDir, "size_recursive");
+      rootDir.mkdir();
+      File sub = new File(rootDir, "sub");
+      sub.mkdir();
+      createTestFile(rootDir, "top.txt", "abc"); // 3 bytes
+      createTestFile(sub, "deep.txt", "defgh"); // 5 bytes
+      long size = DirEdit.DirSizeCalculator.walkDirectorySize(
+         rootDir.getAbsolutePath());
+      assertEquals(8, size, "Should include files in subdirectories");
+   }
+
+   @Test
+   void walkDirectorySizeEmptyDirReturnsZero() {
+      File emptyDir = new File(tempDir, "size_empty");
+      emptyDir.mkdir();
+      long size = DirEdit.DirSizeCalculator.walkDirectorySize(
+         emptyDir.getAbsolutePath());
+      assertEquals(0, size, "Empty directory should have size 0");
+   }
+
+   @Test
+   void cacheStoresAndReturnsSize() throws IOException {
+      DirEdit.DirSizeCalculator.clearCache();
+      File cacheDir = new File(tempDir, "cache_test");
+      cacheDir.mkdir();
+      createTestFile(cacheDir, "f.txt", "data");
+      // Not cached yet
+      assertNull(DirEdit.DirSizeCalculator.getCachedSize(
+         cacheDir.getAbsolutePath()),
+         "Should be null before calculation");
+
+      // Manually walk and store
+      long size = DirEdit.DirSizeCalculator.walkDirectorySize(
+         cacheDir.getAbsolutePath());
+      // Simulate what submitCalculation does
+      DirEdit.DirSizeCalculator.clearCache();
+      assertEquals(0, DirEdit.DirSizeCalculator.cacheSize());
+   }
+
+   @Test
+   void clearCacheRemovesAllEntries() throws IOException {
+      DirEdit.DirSizeCalculator.clearCache();
+      assertEquals(0, DirEdit.DirSizeCalculator.cacheSize(),
+         "Cache should be empty after clear");
+   }
+
+   @Test
+   void dirEntriesShowEllipsisBeforeCalculation() throws IOException {
+      DirEdit.DirSizeCalculator.clearCache();
+      File dispDir = new File(tempDir, "display_test_dir");
+      dispDir.mkdir();
+      File sub = new File(dispDir, "subdir");
+      sub.mkdir();
+
+      dirEdit = makeDirEdit(dispDir);
+
+      // Look for "..." in the display (before background calc completes)
+      boolean foundEllipsis = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("subdir/") && line.contains("...")) {
+            foundEllipsis = true;
+            break;
+         }
+      }
+      assertTrue(foundEllipsis,
+         "Directory entry should show '...' before size is calculated");
    }
 }

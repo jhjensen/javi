@@ -2,13 +2,21 @@ package javi;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static history.Tools.trace;
 
@@ -282,6 +290,18 @@ public final class DirEdit extends TextEdit<String> {
          for (File f : fileList) {
             lines.add(formatEntry(f, false));
          }
+
+         // Submit background size calculations for directories
+         for (File f : fileList) {
+            if (f.isDirectory()) {
+               DirSizeCalculator.submitCalculation(
+                  f.getAbsolutePath(), this);
+            }
+         }
+         if (null != parent) {
+            DirSizeCalculator.submitCalculation(
+               parent.getAbsolutePath(), this);
+         }
       }
 
       // Add help footer
@@ -311,7 +331,9 @@ public final class DirEdit extends TextEdit<String> {
                if (f1.isDirectory() != f2.isDirectory()) {
                   return f1.isDirectory() ? -1 : 1;
                }
-               return Long.compare(f1.length(), f2.length());
+               long s1 = getEffectiveSize(f1);
+               long s2 = getEffectiveSize(f2);
+               return Long.compare(s1, s2);
             };
             break;
          case DATE:
@@ -351,6 +373,22 @@ public final class DirEdit extends TextEdit<String> {
       }
 
       files.sort(comparator);
+   }
+
+   /**
+    * Returns the effective size for sorting — cached recursive size
+    * for directories, file.length() for regular files.
+    *
+    * @param file the file
+    * @return the size in bytes
+    */
+   private long getEffectiveSize(File file) {
+      if (file.isDirectory()) {
+         Long cached = DirSizeCalculator.getCachedSize(
+            file.getAbsolutePath());
+         return (null != cached) ? cached : 0L;
+      }
+      return file.length();
    }
 
    /**
@@ -401,7 +439,13 @@ public final class DirEdit extends TextEdit<String> {
       // Size (right-aligned in 10 chars)
       String size;
       if (file.isDirectory()) {
-         size = "<DIR>";
+         Long cached = DirSizeCalculator.getCachedSize(
+            file.getAbsolutePath());
+         if (null != cached) {
+            size = formatSize(cached);
+         } else {
+            size = "...";
+         }
       } else {
          size = formatSize(file.length());
       }
@@ -587,6 +631,7 @@ public final class DirEdit extends TextEdit<String> {
     * @param fvc the current FvContext
     */
    void refresh(FvContext fvc) {
+      DirSizeCalculator.clearCache();
       populateDirectory();
       UI.reportMessage("Directory refreshed");
    }
@@ -640,6 +685,7 @@ public final class DirEdit extends TextEdit<String> {
       UI.reportMessage("Deleted: " + name);
       trace("DirEdit: deleted " + target.getAbsolutePath());
       markedForDelete.remove(name);
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
       // Keep cursor in bounds (last valid line is readIn()-1)
       if (fvc.inserty() >= readIn()) {
@@ -699,6 +745,7 @@ public final class DirEdit extends TextEdit<String> {
       UI.reportMessage("Renamed: " + oldName + " -> " + newName);
       trace("DirEdit: renamed " + source.getAbsolutePath()
          + " -> " + dest.getAbsolutePath());
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
    }
 
@@ -734,6 +781,7 @@ public final class DirEdit extends TextEdit<String> {
 
       UI.reportMessage("Created directory: " + name);
       trace("DirEdit: created directory " + newDir.getAbsolutePath());
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
    }
 
@@ -771,6 +819,7 @@ public final class DirEdit extends TextEdit<String> {
 
       UI.reportMessage("Created file: " + name);
       trace("DirEdit: created file " + newFile.getAbsolutePath());
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
    }
 
@@ -825,6 +874,7 @@ public final class DirEdit extends TextEdit<String> {
       UI.reportMessage("Copied: " + srcName + " -> " + destName);
       trace("DirEdit: copied " + source.getAbsolutePath()
          + " -> " + dest.getAbsolutePath());
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
    }
 
@@ -907,6 +957,7 @@ public final class DirEdit extends TextEdit<String> {
          msg.append(String.join(", ", errors));
       }
       UI.reportMessage(msg.toString());
+      DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
       if (fvc.inserty() >= readIn()) {
          fvc.cursoryabs(readIn() - 1);
@@ -1177,6 +1228,149 @@ public final class DirEdit extends TextEdit<String> {
                throw new RuntimeException("DirEdit.Commands: invalid rnum "
                   + rnum);
          }
+      }
+   }
+
+   /**
+    * Background calculator for recursive directory sizes.
+    *
+    * <p>Uses a single daemon thread to walk directory trees and cache
+    * results. When a calculation completes, posts an {@link EventQueue.IEvent}
+    * to refresh the requesting DirEdit instance so the size column updates
+    * from "..." to the actual value.</p>
+    *
+    * <p>Thread safety: the cache is a {@link ConcurrentHashMap} so reads
+    * from the EDT (in {@code formatEntry}) are lock-free. The in-flight
+    * set prevents duplicate walks for the same path.</p>
+    */
+   static final class DirSizeCalculator {
+
+      /** Cache: absolute directory path -> total size in bytes. */
+      private static final ConcurrentHashMap<String, Long> sizeCache =
+         new ConcurrentHashMap<>();
+
+      /** Paths currently being calculated (deduplication). */
+      private static final ConcurrentHashMap<String, Boolean> inFlight =
+         new ConcurrentHashMap<>();
+
+      /** Single daemon thread for directory walking. */
+      private static final ExecutorService executor =
+         Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "DirSizeCalculator");
+            t.setDaemon(true);
+            return t;
+         });
+
+      private DirSizeCalculator() {
+      }
+
+      /**
+       * Returns the cached size for a directory, or null if not yet
+       * calculated.
+       *
+       * @param absolutePath the directory's absolute path
+       * @return cached size in bytes, or null
+       */
+      static Long getCachedSize(String absolutePath) {
+         return sizeCache.get(absolutePath);
+      }
+
+      /**
+       * Submits a background size calculation for a directory.
+       * If the size is already cached or a calculation is in flight,
+       * this is a no-op.
+       *
+       * @param absolutePath the directory's absolute path
+       * @param requester the DirEdit to refresh when done
+       */
+      static void submitCalculation(String absolutePath,
+            DirEdit requester) {
+         if (sizeCache.containsKey(absolutePath)) {
+            return;
+         }
+         if (null != inFlight.putIfAbsent(absolutePath, Boolean.TRUE)) {
+            return; // already in flight
+         }
+         executor.submit(() -> {
+            try {
+               long size = walkDirectorySize(absolutePath);
+               sizeCache.put(absolutePath, size);
+               // Post UI refresh on the event queue (runs under biglock2)
+               EventQueue.insert(new EventQueue.IEvent() {
+                  @Override
+                  public void execute() {
+                     if (openInstances.contains(requester)) {
+                        requester.populateDirectory();
+                     }
+                  }
+               });
+            } catch (Exception e) {
+               trace("DirSizeCalculator: error walking "
+                  + absolutePath + ": " + e);
+            } finally {
+               inFlight.remove(absolutePath);
+            }
+         });
+      }
+
+      /**
+       * Walks a directory tree and returns the total size in bytes.
+       *
+       * @param absolutePath the root directory
+       * @return total size of all regular files
+       */
+      static long walkDirectorySize(String absolutePath) {
+         AtomicLong total = new AtomicLong(0);
+         try {
+            Files.walkFileTree(Path.of(absolutePath),
+               new SimpleFileVisitor<Path>() {
+                  @Override
+                  public FileVisitResult visitFile(Path file,
+                        BasicFileAttributes attrs) {
+                     total.addAndGet(attrs.size());
+                     return FileVisitResult.CONTINUE;
+                  }
+
+                  @Override
+                  public FileVisitResult visitFileFailed(Path file,
+                        IOException exc) {
+                     // Skip unreadable files
+                     return FileVisitResult.CONTINUE;
+                  }
+               });
+         } catch (IOException e) {
+            trace("DirSizeCalculator: walkFileTree failed for "
+               + absolutePath + ": " + e);
+         }
+         return total.get();
+      }
+
+      /**
+       * Clears the entire size cache. Called on manual refresh.
+       */
+      static void clearCache() {
+         sizeCache.clear();
+      }
+
+      /**
+       * Clears cached sizes for a specific directory and its children.
+       * Useful when files are created/deleted/modified.
+       *
+       * @param absolutePath the directory whose cache to invalidate
+       */
+      static void invalidate(String absolutePath) {
+         sizeCache.remove(absolutePath);
+         // Also invalidate parent directories up to root
+         File parent = new File(absolutePath).getParentFile();
+         while (null != parent) {
+            sizeCache.remove(parent.getAbsolutePath());
+            parent = parent.getParentFile();
+         }
+      }
+
+      /** Returns cache size (for testing). */
+      static int cacheSize() {
+         return sizeCache.size();
       }
    }
 }
