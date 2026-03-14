@@ -77,16 +77,16 @@ class Vt100 extends TextEdit<String> {
    private final Vt100Parser parser;
 
    /** Mouse tracking mode: 0=off, 1000=normal, 1002=button, 1003=any. */
-   private int mouseTrackingMode;
+   private volatile int mouseTrackingMode;
 
    /** Whether SGR (1006) mouse encoding is active vs legacy X10. */
-   private boolean sgrMouseMode;
+   private volatile boolean sgrMouseMode;
 
    /** Whether bracketed paste mode (2004) is active. */
-   private boolean bracketedPasteMode;
+   private volatile boolean bracketedPasteMode;
 
    /** Whether focus event reporting (1004) is active. */
-   private boolean focusEventsMode;
+   private volatile boolean focusEventsMode;
 
    /**
     * Creates a VT100 terminal with auto-detected charset.
