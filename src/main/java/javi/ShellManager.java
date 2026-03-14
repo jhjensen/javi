@@ -202,6 +202,20 @@ public final class ShellManager {
    }
 
    /**
+    * Forwards a focus event to the active shell if focus reporting is enabled.
+    *
+    * @param focusIn true for focus gained, false for focus lost
+    */
+   public synchronized void forwardFocusEvent(boolean focusIn) {
+      ShellSession session = getActive();
+      if (null != session) {
+         Vt100 vt = session.getVt100();
+         if (null != vt)
+            vt.sendFocusEvent(focusIn);
+      }
+   }
+
+   /**
     * Gets the index of the currently active session.
     *
     * @return the active index, or -1 if none
@@ -428,6 +442,10 @@ public final class ShellManager {
       if (sessions.isEmpty()) {
          return "No active shells";
       }
+
+      // Refresh labels to show current foreground process
+      for (ShellSession s : sessions)
+         s.updateLabel();
 
       StringBuilder sb = new StringBuilder();
       sb.append("Shell Sessions:\n");

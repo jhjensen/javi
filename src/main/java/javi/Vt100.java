@@ -82,6 +82,12 @@ class Vt100 extends TextEdit<String> {
    /** Whether SGR (1006) mouse encoding is active vs legacy X10. */
    private boolean sgrMouseMode;
 
+   /** Whether bracketed paste mode (2004) is active. */
+   private boolean bracketedPasteMode;
+
+   /** Whether focus event reporting (1004) is active. */
+   private boolean focusEventsMode;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -219,6 +225,66 @@ class Vt100 extends TextEdit<String> {
    }
 
    /**
+    * Sets bracketed paste mode (2004) on or off.
+    */
+   void setBracketedPasteMode(boolean enable) {
+      bracketedPasteMode = enable;
+      trace("Vt100: bracketed paste mode=" + bracketedPasteMode);
+   }
+
+   /**
+    * Sets focus event reporting mode (1004) on or off.
+    */
+   void setFocusEventsMode(boolean enable) {
+      focusEventsMode = enable;
+      trace("Vt100: focus events mode=" + focusEventsMode);
+   }
+
+   /**
+    * Checks if focus event reporting is enabled.
+    *
+    * @return true if mode 1004 is active
+    */
+   boolean isFocusEventsEnabled() {
+      return focusEventsMode;
+   }
+
+   /**
+    * Sends a focus event to the shell if focus reporting is enabled.
+    *
+    * @param focusIn true for focus gained, false for focus lost
+    */
+   void sendFocusEvent(boolean focusIn) {
+      if (!focusEventsMode)
+         return;
+      try {
+         writer.write(focusIn ? "\033[I" : "\033[O");
+         writer.flush();
+      } catch (IOException e) {
+         trace("sendFocusEvent failed: " + e);
+      }
+   }
+
+   /**
+    * Sends text to the shell process, wrapping with bracketed paste
+    * markers if bracketed paste mode is enabled.
+    *
+    * @param text the text to send
+    */
+   void sendText(String text) {
+      try {
+         if (bracketedPasteMode)
+            writer.write("\033[200~");
+         writer.write(text);
+         if (bracketedPasteMode)
+            writer.write("\033[201~");
+         writer.flush();
+      } catch (IOException e) {
+         trace("sendText failed: " + e);
+      }
+   }
+
+   /**
     * Sends a mouse event to the shell process as an escape sequence.
     *
     * <p>Encodes the event using SGR (mode 1006) if active, otherwise
@@ -290,14 +356,15 @@ class Vt100 extends TextEdit<String> {
                }
                writer.flush();
             } else {
+               // Check for Cmd+V (macOS) / Ctrl+V clipboard paste
+               if (('v' == ch || 'V' == ch)
+                     && (kev.getModifiers() & JeyEvent.META_MASK) != 0) {
+                  pasteClipboard();
+                  continue;
+               }
                if ('\r' == ch
                      && '\r' == kev.getKeyCode()) // this was really a cr
                   ch = '\n';
-               //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
-               //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
-               //trace ("passing key location " + kev.getKeyLocation());
-               //trace ("passing key Text " + kev.getKeyText(kev.getKeyCode()));
-               //trace ("key modifier " + kev.getModifiersExText(kev.getModifiersEx()));
                writer.write(ch);
                writer.flush();
             }
@@ -305,6 +372,27 @@ class Vt100 extends TextEdit<String> {
       } catch (IOException e) {
          trace("caught IOException " + e);
          return;
+      }
+   }
+
+   /**
+    * Reads clipboard text and sends it to the shell, wrapping with
+    * bracketed paste markers if mode 2004 is active.
+    */
+   private void pasteClipboard() {
+      try {
+         java.awt.datatransfer.Clipboard clip =
+            java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+         java.awt.datatransfer.Transferable tr = clip.getContents(null);
+         if (tr != null && tr.isDataFlavorSupported(
+               java.awt.datatransfer.DataFlavor.stringFlavor)) {
+            String text = (String) tr.getTransferData(
+               java.awt.datatransfer.DataFlavor.stringFlavor);
+            if (text != null && !text.isEmpty())
+               sendText(text);
+         }
+      } catch (Exception e) {
+         trace("pasteClipboard failed: " + e);
       }
    }
 
@@ -477,6 +565,14 @@ class Vt100 extends TextEdit<String> {
 
       void setSgrMouseMode(boolean enable) {
          Vt100.this.setSgrMouseMode(enable);
+      }
+
+      void setBracketedPasteMode(boolean enable) {
+         Vt100.this.setBracketedPasteMode(enable);
+      }
+
+      void setFocusEventsMode(boolean enable) {
+         Vt100.this.setFocusEventsMode(enable);
       }
 
    }

@@ -482,6 +482,18 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             case 1006: // SGR extended mouse mode
                window.setSgrMouseMode(1 == val);
                break;
+            case 7: // Autowrap mode
+               trace("autowrap mode " + (1 == val ? "on" : "off"));
+               break;
+            case 12: // Cursor blink
+               trace("cursor blink " + (1 == val ? "on" : "off"));
+               break;
+            case 1004: // Focus event reporting
+               window.setFocusEventsMode(1 == val);
+               break;
+            case 2004: // Bracketed paste mode
+               window.setBracketedPasteMode(1 == val);
+               break;
 
             default:
                trace("setting unknown mode " + (char) modenumber

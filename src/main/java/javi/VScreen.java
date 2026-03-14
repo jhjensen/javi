@@ -287,4 +287,22 @@ abstract class VScreen {
    void setSgrMouseMode(boolean enable) {
       // Default no-op
    }
+
+   /**
+    * Sets bracketed paste mode (2004).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setBracketedPasteMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets focus event reporting mode (1004).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setFocusEventsMode(boolean enable) {
+      // Default no-op
+   }
 }
