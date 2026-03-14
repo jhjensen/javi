@@ -791,9 +791,11 @@ final class OldView extends AwtView {
        */
       private boolean forwardVt100Mouse(MouseEvent event, boolean pressed) {
          ShellManager sm = ShellManager.getInstance();
-         if (null == sm || !sm.isMouseTrackingActive())
+         javi.TextEdit<?> file = getCurrFile();
+         if (null == sm || null == file
+               || !sm.isMouseTrackingForBuffer(file))
             return false;
-         sm.forwardMouseEvent(
+         sm.forwardMouseEventToBuffer(file,
             vt100Button(event), cellCol(event), cellRow(event), pressed);
          return true;
       }
@@ -805,10 +807,12 @@ final class OldView extends AwtView {
        */
       private boolean forwardVt100Wheel(MouseWheelEvent event) {
          ShellManager sm = ShellManager.getInstance();
-         if (null == sm || !sm.isMouseTrackingActive())
+         javi.TextEdit<?> file = getCurrFile();
+         if (null == sm || null == file
+               || !sm.isMouseTrackingForBuffer(file))
             return false;
          int button = event.getWheelRotation() < 0 ? 64 : 65;
-         sm.forwardMouseEvent(
+         sm.forwardMouseEventToBuffer(file,
             button, cellCol(event), cellRow(event), true);
          return true;
       }
@@ -821,11 +825,13 @@ final class OldView extends AwtView {
        */
       private boolean forwardVt100MouseDrag(MouseEvent event) {
          ShellManager sm = ShellManager.getInstance();
-         if (null == sm || !sm.isMouseTrackingActive())
+         javi.TextEdit<?> file = getCurrFile();
+         if (null == sm || null == file
+               || !sm.isMouseTrackingForBuffer(file))
             return false;
          // Only mode 1002 (button-event) and 1003 (any-event) track motion
          int button = 32 + vt100Button(event); // motion flag = +32
-         sm.forwardMouseEvent(
+         sm.forwardMouseEventToBuffer(file,
             button, cellCol(event), cellRow(event), true);
          return true;
       }

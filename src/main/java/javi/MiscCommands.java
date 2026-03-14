@@ -214,7 +214,9 @@ public final class MiscCommands extends Rgroup {
                // Shell process died — clean up orphaned session
                mgr.closeActiveShell();
             } else {
-               FvContext.connectFv(active.getBuffer(), fvc.vi);
+               FvContext newFvc =
+                  FvContext.connectFv(active.getBuffer(), fvc.vi);
+               ((Vt100) active.getBuffer()).handleKeys(newFvc);
                return;
             }
          }
@@ -226,7 +228,9 @@ public final class MiscCommands extends Rgroup {
             int shellId = Integer.parseInt(host);
             if (mgr.switchToId(shellId)) {
                ShellSession session = mgr.getActive();
-               FvContext.connectFv(session.getBuffer(), fvc.vi);
+               FvContext newFvc =
+                  FvContext.connectFv(session.getBuffer(), fvc.vi);
+               ((Vt100) session.getBuffer()).handleKeys(newFvc);
                return;
             }
             // Fall through to create new shell if not found
@@ -234,7 +238,9 @@ public final class MiscCommands extends Rgroup {
             // Not a number — try as session name
             if (mgr.switchToName(host)) {
                ShellSession session = mgr.getActive();
-               FvContext.connectFv(session.getBuffer(), fvc.vi);
+               FvContext newFvc =
+                  FvContext.connectFv(session.getBuffer(), fvc.vi);
+               ((Vt100) session.getBuffer()).handleKeys(newFvc);
                return;
             }
             // Not found by name — treat as SSH hostname
@@ -244,7 +250,9 @@ public final class MiscCommands extends Rgroup {
       // Create new shell session
       EditContainer.registerListener(fli);
       ShellSession session = mgr.newShell(host);
-      FvContext.connectFv(session.getBuffer(), fvc.vi);
+      FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
+      session.getVt100().startHandle(newFvc);
+      ((Vt100) session.getBuffer()).handleKeys(newFvc);
    }
 
    /**
@@ -301,6 +309,12 @@ public final class MiscCommands extends Rgroup {
          UI.reportMessage("Shell closed. Switched to shell "
             + nextActive.getId());
       } else {
+         // No shells left — switch to the file list (next file)
+         try {
+            Rgroup.doCommand("nextfile", null, 0, 0, fvc, false);
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
          UI.reportMessage("All shells closed");
       }
    }
@@ -318,7 +332,9 @@ public final class MiscCommands extends Rgroup {
       ShellManager mgr = ShellManager.getInstance();
       EditContainer.registerListener(fli);
       ShellSession session = mgr.newShell(host);
-      FvContext.connectFv(session.getBuffer(), fvc.vi);
+      FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
+      // Initialize the Vt100's currfvc so screen updates and scrolling work
+      session.getVt100().startHandle(newFvc);
       UI.reportMessage("Created shell " + session.getId()
          + " (" + session.getName() + ")");
    }
