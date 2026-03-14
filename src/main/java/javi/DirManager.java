@@ -465,9 +465,7 @@ public final class DirManager extends TextEdit<String> {
                if (null == regex)
                   throw new RuntimeException("regex not initialized");
                if (regex.reset(flist[findex]).matches()) {
-                  FileDescriptor.LocalFile fh = dindex == 1
-                     ? FileDescriptor.LocalFile.make(flist[findex])
-                     : dir.createFile(flist[findex]);
+                  FileDescriptor.LocalFile fh = dir.createFile(flist[findex]);
                   if (fh.isFile() || fh.isDirectory())
                      return fh;
                }

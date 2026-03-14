@@ -1,6 +1,9 @@
 package javi;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -203,5 +207,123 @@ class DirManagerJUnitTest {
       dm.openDir(dir);
       assertNotNull(dm.getCurrentDir());
       assertEquals(dir, dm.getCurrentDir());
+   }
+
+   // --- File-find backend tests ---
+
+   @Test
+   void initSearchFindsFileInSearchPath() throws IOException {
+      File sub = new File(tempDir, "findtest");
+      sub.mkdirs();
+      new File(sub, "target.txt").createNewFile();
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
+
+      dm.addSearchDir(dir);
+      try {
+         dm.initSearch("target.txt");
+         FileDescriptor.LocalFile found = dm.findNextFile();
+         assertNotNull(found, "should find target.txt in search path");
+         assertTrue(found.shortName.endsWith("target.txt"));
+      } finally {
+         dm.removeSearchDir(dir);
+      }
+   }
+
+   @Test
+   void findNextFileReturnsNullForMissing() {
+      dm.initSearch("definitely_nonexistent_xyz123.txt");
+      FileDescriptor.LocalFile found = dm.findNextFile();
+      assertNull(found, "should return null for nonexistent file");
+   }
+
+   @Test
+   void initSearchRFindsRegexMatch() throws IOException {
+      File sub = new File(tempDir, "regextest");
+      sub.mkdirs();
+      new File(sub, "alpha.java").createNewFile();
+      new File(sub, "beta.txt").createNewFile();
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
+
+      dm.addSearchDir(dir);
+      try {
+         dm.initSearch(".*\\.java");
+         assertTrue(dm.initSearchR(), "valid regex should compile");
+         FileDescriptor found = dm.findNextFileR();
+         assertNotNull(found, "should find .java file via regex");
+         assertTrue(found.shortName.endsWith(".java"));
+      } finally {
+         dm.removeSearchDir(dir);
+      }
+   }
+
+   @Test
+   void initSearchRFailsOnBadPattern() {
+      dm.initSearch("[invalid");
+      assertFalse(dm.initSearchR(), "bad regex should return false");
+   }
+
+   @Test
+   void fileListReturnsMatchingFiles() throws IOException {
+      File sub = new File(tempDir, "filelisttest");
+      sub.mkdirs();
+      new File(sub, "one.java").createNewFile();
+      new File(sub, "two.java").createNewFile();
+      new File(sub, "three.txt").createNewFile();
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
+
+      dm.addSearchDir(dir);
+      try {
+         FilenameFilter javaFilter = (d, name) -> name.endsWith(".java");
+         ArrayList<FileDescriptor.LocalFile> result = dm.fileList(javaFilter);
+         assertTrue(result.size() >= 2,
+            "should find at least 2 .java files, got " + result.size());
+      } finally {
+         dm.removeSearchDir(dir);
+      }
+   }
+
+   @Test
+   void flushCacheDoesNotThrow() {
+      // flushCache should be safe to call regardless of state
+      dm.flushCache();
+   }
+
+   @Test
+   void globalgrepReturnsTextEdit() throws IOException {
+      File sub = new File(tempDir, "greptest");
+      sub.mkdirs();
+      File tf = new File(sub, "searchme.txt");
+      java.io.FileWriter fw = new java.io.FileWriter(tf);
+      fw.write("line one\nfindable needle here\nline three\n");
+      fw.close();
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
+
+      dm.addSearchDir(dir);
+      try {
+         TextEdit<Position> results = dm.globalgrep("needle");
+         assertNotNull(results, "globalgrep should return non-null");
+      } finally {
+         dm.removeSearchDir(dir);
+      }
+   }
+
+   // --- Search path size tracking ---
+
+   @Test
+   void searchPathSizeTracksAddRemove() {
+      File sub = new File(tempDir, "sizetrack");
+      sub.mkdirs();
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
+
+      int before = dm.searchPathSize();
+      dm.addSearchDir(dir);
+      assertEquals(before + 1, dm.searchPathSize());
+      dm.removeSearchDir(dir);
+      assertEquals(before, dm.searchPathSize());
    }
 }

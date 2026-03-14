@@ -53,7 +53,7 @@ import static history.Tools.trace;
  * -rw-r--r--   1234  2024-01-10  file.txt
  * </pre>
  *
- * @see DirList
+ * @see DirManager
  * @see FileList
  */
 public final class DirEdit extends TextEdit<String> {
