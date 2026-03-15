@@ -471,6 +471,45 @@ class Vt100 extends TextEdit<String> {
 
    private final class ECScreen extends VScreen {
       private MovePos savecursor = new MovePos(0, 1);
+      // SGR attribute state (tracked but not yet rendered per-character)
+      private boolean attrBold;
+      private boolean attrUnderline;
+      private boolean attrReverse;
+      private int attrFgColor = -1;
+      private int attrBgColor = -1;
+
+      void setGraphicRendition(int[] params, StringBuilder sb) {
+         insertString(sb);
+         for (int i = 0; i < params.length; i++) {
+            int p = params[i];
+            switch (p) {
+               case 0: // reset all attributes
+                  attrBold = false;
+                  attrUnderline = false;
+                  attrReverse = false;
+                  attrFgColor = -1;
+                  attrBgColor = -1;
+                  break;
+               case 1: attrBold = true; break;
+               case 4: attrUnderline = true; break;
+               case 7: attrReverse = true; break;
+               case 22: attrBold = false; break;
+               case 24: attrUnderline = false; break;
+               case 27: attrReverse = false; break;
+               default:
+                  if (p >= 30 && p <= 37)
+                     attrFgColor = p - 30;
+                  else if (p >= 40 && p <= 47)
+                     attrBgColor = p - 40;
+                  else if (p == 39)
+                     attrFgColor = -1;
+                  else if (p == 49)
+                     attrBgColor = -1;
+                  break;
+            }
+         }
+      }
+
       void incX(int amount, StringBuilder sb) {
          insertString(sb);
          vtcursor.x += amount;

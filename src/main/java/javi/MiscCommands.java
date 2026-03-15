@@ -270,8 +270,9 @@ public final class MiscCommands extends Rgroup {
          return;
       }
       ShellListIoc ioc = new ShellListIoc(mgr);
-      PosListList.Cmd.addPositionIoc(ioc);
-      PosListList.Cmd.gotoList(fvc, null);
+      TextEdit<Position> list = PosListList.Cmd.addPositionIoc(ioc);
+      list.finish(); // wait for data before navigating
+      FvContext.connectFv(list, fvc.vi);
    }
 
    private static final class ShellListIoc extends PositionIoc {
@@ -317,34 +318,50 @@ public final class MiscCommands extends Rgroup {
          throws InputException, IOException {
       ShellManager mgr = ShellManager.getInstance();
 
+      // Determine target shell ID
+      int targetId;
       if (null != arg && !arg.isEmpty()) {
          try {
-            int shellId = Integer.parseInt(arg);
-            if (!mgr.closeShell(shellId)) {
-               throw new InputException("No shell with ID " + shellId);
-            }
+            targetId = Integer.parseInt(arg);
          } catch (NumberFormatException e) {
             throw new InputException("Invalid shell ID: " + arg, e);
          }
       } else {
-         if (!mgr.closeActiveShell()) {
+         ShellSession active = mgr.getActive();
+         if (null == active)
             throw new InputException("No active shell to close");
+         targetId = active.getId();
+      }
+
+      // Find next shell to switch to (any shell other than the target)
+      ShellSession nextShell = null;
+      for (ShellSession s : mgr.getSessions()) {
+         if (s.getId() != targetId) {
+            nextShell = s;
+            break;
          }
       }
 
-      // After closing, switch to another shell or report
-      ShellSession nextActive = mgr.getActive();
-      if (null != nextActive) {
-         FvContext.connectFv(nextActive.getBuffer(), fvc.vi);
-         UI.reportMessage("Shell closed. Switched to shell "
-            + nextActive.getId());
+      // Switch view BEFORE closing to avoid viewing a disposed buffer
+      if (null != nextShell) {
+         FvContext.connectFv(nextShell.getBuffer(), fvc.vi);
       } else {
-         // No shells left — switch to the file list (next file)
          try {
             Rgroup.doCommand("nextfile", null, 0, 0, fvc, false);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }
+      }
+
+      // Now close the shell
+      if (!mgr.closeShell(targetId)) {
+         throw new InputException("No shell with ID " + targetId);
+      }
+
+      if (null != nextShell) {
+         UI.reportMessage("Shell closed. Switched to shell "
+            + nextShell.getId());
+      } else {
          UI.reportMessage("All shells closed");
       }
    }
@@ -367,6 +384,7 @@ public final class MiscCommands extends Rgroup {
       session.getVt100().startHandle(newFvc);
       UI.reportMessage("Created shell " + session.getId()
          + " (" + session.getName() + ")");
+      ((Vt100) session.getBuffer()).handleKeys(newFvc);
    }
 
    /**
