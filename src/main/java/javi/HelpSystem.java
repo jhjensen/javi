@@ -175,6 +175,11 @@ public final class HelpSystem {
          case "tutorial":
             appendTutorialHelp();
             break;
+         case "ai":
+         case "chat":
+         case "copilot":
+            appendAiHelp();
+            break;
          default:
             // Check dynamically registered topics
             boolean found = false;
@@ -1280,6 +1285,7 @@ public final class HelpSystem {
       append("  git        - Git integration");
       append("  lsp        - Language Server Protocol");
       append("  tutorial   - Tutorial commands");
+      append("  ai         - AI assistant");
       append("");
       append("Type :help for index.");
    }
@@ -1384,6 +1390,57 @@ public final class HelpSystem {
       append("  - The tutorial tracks which commands you have used.");
       append("  - Lessons for mastered commands are auto-skipped.");
       append("  - Type :tutorial to return to a lesson at any time.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
+    * Append AI assistant help.
+    */
+   private static void appendAiHelp() {
+      append("AI ASSISTANT COMMANDS");
+      append("=====================");
+      append("");
+      append("Javi includes an AI assistant for code explanation,");
+      append("review, documentation, and interactive chat.");
+      append("");
+      append("CHAT");
+      append("----");
+      append("  :ai <message>       Send a chat message");
+      append("  :ai chat            Interactive chat prompt");
+      append("  :ai clear           Clear conversation history");
+      append("");
+      append("CODE ANALYSIS");
+      append("-------------");
+      append("  :ai explain         Explain current buffer code");
+      append("  :ai review          Review code for bugs/issues");
+      append("  :ai doc             Generate documentation");
+      append("  :ai refactor <ins>  Refactor with instruction");
+      append("");
+      append("CODE COMPLETION");
+      append("---------------");
+      append("  :ai complete        AI code completion at cursor");
+      append("  :ai accept          Accept ghost text completion");
+      append("  :ai dismiss         Dismiss ghost text completion");
+      append("  :ai cancel          Cancel in-flight AI request");
+      append("");
+      append("CONFIGURATION");
+      append("-------------");
+      append("  :ai config          Show current AI settings");
+      append("  :ai test            Test provider connectivity");
+      append("  :ai help            Show this help in chat buffer");
+      append("");
+      append("  :set ai.provider=openai|anthropic|copilot");
+      append("  :set ai.model=<model-name>");
+      append("  :set ai.apikey=<key>");
+      append("  :set ai.maxTokens=<number>");
+      append("");
+      append("NOTES");
+      append("-----");
+      append("  - Responses appear in the *ai-chat* buffer.");
+      append("  - Chat history persists until :ai clear.");
+      append("  - API key can also be set via environment variable");
+      append("    (OPENAI_API_KEY or ANTHROPIC_API_KEY).");
       append("");
       append("Type :help for index.");
    }

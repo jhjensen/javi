@@ -85,6 +85,7 @@ public final class TestInit {
          Command.init();
          MoveGroup.init();
          FileList.initDescriptions();
+         new javi.ai.AICommands();
       } finally {
          EventQueue.biglock2.unlock();
       }

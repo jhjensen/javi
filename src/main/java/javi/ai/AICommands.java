@@ -6,6 +6,7 @@ import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
 import javi.InsertBuffer;
+import javi.Plugin;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -47,7 +48,10 @@ import javi.View;
  * @see AIConfig
  * @see Rgroup
  */
-public final class AICommands extends Rgroup {
+public final class AICommands extends Rgroup implements Plugin {
+
+   /** Plugin descriptor. */
+   public static final String pluginInfo = "AI assistant — chat, explain, review, complete";
 
    /** Index constants for registered commands. */
    private static final int CMD_AI       = 1;

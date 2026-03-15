@@ -98,6 +98,7 @@ public final class Javi {
       //new v8();
       //new msvc();
       //new FindBugs();
+      new javi.ai.AICommands();
       new JavaCompiler();
       new CheckStyle();
       new FormatDispatch();
