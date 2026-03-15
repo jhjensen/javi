@@ -40,7 +40,9 @@ public final class AIConfig {
       /** OpenAI GPT models. */
       OPENAI("openai"),
       /** Anthropic Claude models. */
-      ANTHROPIC("anthropic");
+      ANTHROPIC("anthropic"),
+      /** GitHub Copilot via LSP agent. */
+      COPILOT("copilot");
 
       private final String id;
 
@@ -71,7 +73,7 @@ public final class AIConfig {
             }
          }
          throw new IllegalArgumentException("Unknown AI provider: " + id
-            + ". Supported: openai, anthropic");
+            + ". Supported: openai, anthropic, copilot");
       }
    }
 
@@ -134,6 +136,7 @@ public final class AIConfig {
       return switch (provider) {
          case OPENAI -> "gpt-4o";
          case ANTHROPIC -> "claude-sonnet-4-20250514";
+         case COPILOT -> "copilot";
       };
    }
 
@@ -189,6 +192,7 @@ public final class AIConfig {
       return switch (provider) {
          case OPENAI -> System.getenv("OPENAI_API_KEY");
          case ANTHROPIC -> System.getenv("ANTHROPIC_API_KEY");
+         case COPILOT -> "copilot"; // Copilot handles its own auth
       };
    }
 

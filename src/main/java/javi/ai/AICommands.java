@@ -62,6 +62,7 @@ public final class AICommands extends Rgroup {
    private static final int CMD_ACCEPT   = 10;
    private static final int CMD_DISMISS  = 11;
    private static final int CMD_CANCEL   = 12;
+   private static final int CMD_REFACTOR = 13;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -94,6 +95,7 @@ public final class AICommands extends Rgroup {
          "ai.accept",      // 10 - accept ghost text completion
          "ai.dismiss",     // 11 - dismiss ghost text completion
          "ai.cancel",      // 12 - cancel in-flight AI request
+         "ai.refactor",   // 13 - refactor code with instruction
       };
       register(rnames);
    }
@@ -127,6 +129,8 @@ public final class AICommands extends Rgroup {
             return doDismissGhost();
          case CMD_CANCEL:
             return doCancel();
+         case CMD_REFACTOR:
+            return doRefactor((String) arg, fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -184,6 +188,8 @@ public final class AICommands extends Rgroup {
             return doDismissGhost();
          case "cancel":
             return doCancel();
+         case "refactor":
+            return doRefactor(subarg, fvc);
          case "help":
             showAiHelp(fvc);
             return null;
@@ -379,6 +385,59 @@ public final class AICommands extends Rgroup {
    }
 
    /**
+    * Refactor code with an AI-generated transformation.
+    *
+    * <p>Prompts the user for a refactoring instruction if none is
+    * provided, then sends the current buffer code along with the
+    * instruction to the AI. Result is shown in the chat buffer.</p>
+    *
+    * @param instruction the refactoring instruction, or null to prompt
+    * @param fvc the current file-view context
+    * @return null
+    * @throws IOException if an I/O error occurs
+    * @throws InputException if input fails
+    */
+   private Object doRefactor(String instruction, FvContext fvc)
+         throws IOException, InputException {
+      String code = getContextCode(fvc);
+      if (null == code) {
+         UI.reportMessage("No code to refactor");
+         return null;
+      }
+
+      if (null == instruction || instruction.isEmpty()) {
+         String line = InsertBuffer.getcomline("refactor> ");
+         if (line.length() <= 10) {
+            return null;
+         }
+         instruction = line.substring(10).trim();
+         if (instruction.isEmpty()) {
+            return null;
+         }
+      }
+
+      ensureChatBuffer();
+      appendToChatBuffer("REFACTOR: " + fvc.edvec.getName());
+      appendToChatBuffer("Instruction: " + instruction);
+      appendToChatBuffer("");
+
+      try {
+         AIClient client = AIClient.getInstance();
+         String response = client.refactor(code, instruction);
+         appendToChatBuffer(response);
+         appendToChatBuffer("");
+         appendToChatBuffer("---");
+         appendToChatBuffer("");
+         FvContext.connectFv(chatBuffer, fvc.vi);
+      } catch (AIException e) {
+         UI.reportMessage("AI Error: " + e.getMessage());
+      } catch (InputException e) {
+         UI.reportMessage("Input Error: " + e.getMessage());
+      }
+      return null;
+   }
+
+   /**
     * Show current AI configuration.
     *
     * @param fvc the current file-view context
@@ -433,11 +492,11 @@ public final class AICommands extends Rgroup {
     * Perform AI-powered code completion at the current cursor position.
     *
     * <p>Sends the code from the start of the buffer up to the cursor
-    * to the AI provider, requesting a completion. The result is inserted
-    * directly at the cursor position (no ghost text preview).</p>
+    * to the AI provider asynchronously. On completion, shows ghost
+    * text preview at the original cursor position. The user can then
+    * accept or dismiss the completion.</p>
     *
-    * <p>If the AI returns multi-line text, each line is inserted
-    * sequentially starting at the cursor line.</p>
+    * <p>Bound to Ctrl+Space in both normal and insert mode.</p>
     *
     * @param fvc the current file-view context
     * @return null
@@ -452,39 +511,45 @@ public final class AICommands extends Rgroup {
       }
 
       String fileName = fvc.edvec.getName();
-      UI.reportMessage("AI: generating completion...");
+      final int cursorLine = fvc.inserty();
+      final int cursorCol = fvc.insertx();
+      final View vi = fvc.vi;
 
-      try {
-         AIClient client = AIClient.getInstance();
-         String completion = client.complete(code, fileName);
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance().complete(code, fileName);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         completion -> {
+            if (null == completion || completion.isEmpty()) {
+               UI.reportMessage("AI: no completion available");
+               return;
+            }
+            completion = completion.strip();
+            String[] lines = completion.split("\n", -1);
 
-         if (null == completion || completion.isEmpty()) {
-            UI.reportMessage("AI: no completion available");
-            return null;
+            pendingGhostLines = lines;
+            pendingGhostLine = cursorLine;
+            pendingGhostCol = cursorCol;
+
+            View.setGhostText(lines[0], cursorLine, cursorCol);
+            vi.repaint();
+
+            String hint = lines.length > 1
+               ? "AI: " + lines.length
+                  + " lines — Tab to accept, Esc to dismiss"
+               : "AI: Tab to accept, Esc to dismiss";
+            UI.reportMessage(hint);
+         },
+         error -> {
+            Throwable cause = error.getCause() != null
+               ? error.getCause() : error;
+            UI.reportMessage("AI Error: " + cause.getMessage());
          }
-
-         completion = completion.strip();
-         String[] lines = completion.split("\n", -1);
-         int cursorLine = fvc.inserty();
-         int cursorCol = fvc.insertx();
-
-         // Store for accept
-         pendingGhostLines = lines;
-         pendingGhostLine = cursorLine;
-         pendingGhostCol = cursorCol;
-
-         // Show first line as ghost text preview (gray overlay)
-         View.setGhostText(lines[0], cursorLine, cursorCol);
-         fvc.vi.repaint();
-
-         String hint = lines.length > 1
-            ? "AI: " + lines.length + " lines — :ai accept / :ai dismiss"
-            : "AI: :ai accept / :ai dismiss";
-         UI.reportMessage(hint);
-
-      } catch (AIException e) {
-         UI.reportMessage("AI Error: " + e.getMessage());
-      }
+      );
       return null;
    }
 
@@ -494,8 +559,7 @@ public final class AICommands extends Rgroup {
    @SuppressWarnings("unchecked")
    private Object doAcceptGhost(FvContext fvc) throws IOException {
       if (null == pendingGhostLines) {
-         UI.reportMessage("AI: no pending completion");
-         return null;
+         return null; // no-op when no ghost text pending
       }
       EditContainer ec = fvc.edvec;
       int cursorLine = pendingGhostLine;
@@ -586,6 +650,7 @@ public final class AICommands extends Rgroup {
       appendToChatBuffer("  :ai explain         Explain current code");
       appendToChatBuffer("  :ai review          Review code for issues");
       appendToChatBuffer("  :ai doc             Generate documentation");
+      appendToChatBuffer("  :ai refactor <ins>  Refactor code with instruction");
       appendToChatBuffer("  :ai complete        Insert AI code completion");
       appendToChatBuffer("  :ai config          Show AI configuration");
       appendToChatBuffer("  :ai clear           Clear chat history");
@@ -594,7 +659,7 @@ public final class AICommands extends Rgroup {
       appendToChatBuffer("  :ai help            Show this help");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
-      appendToChatBuffer("  :set ai.provider=openai|anthropic");
+      appendToChatBuffer("  :set ai.provider=openai|anthropic|copilot");
       appendToChatBuffer("  :set ai.model=<model-name>");
       appendToChatBuffer("  :set ai.apikey=<key>");
       appendToChatBuffer("  :set ai.maxTokens=<number>");

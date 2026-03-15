@@ -182,6 +182,26 @@ public final class AIClient {
    }
 
    /**
+    * Refactor the given code according to the provided instruction.
+    *
+    * <p>This is a one-shot request and does NOT modify conversation
+    * history.</p>
+    *
+    * @param code the code to refactor
+    * @param instruction what refactoring to apply
+    * @return the refactored code
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   public String refactor(String code, String instruction)
+         throws IOException, AIException {
+      return oneShot("Refactor the following code according to the "
+         + "instruction. Return ONLY the refactored code, ready to paste. "
+         + "Do NOT include explanation or markdown fences.\n\n"
+         + "Instruction: " + instruction + "\n\nCode:\n" + code);
+   }
+
+   /**
     * Generate a code completion for the given prefix text.
     *
     * <p>This is a one-shot request. The AI is instructed to return
@@ -268,6 +288,7 @@ public final class AIClient {
       return switch (config.getProvider()) {
          case OPENAI -> new OpenAIProvider(apiKey, model);
          case ANTHROPIC -> new AnthropicProvider(apiKey, model);
+         case COPILOT -> new CopilotProvider();
       };
    }
 }
