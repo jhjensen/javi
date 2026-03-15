@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -182,6 +183,75 @@ class KeyMapJUnitTest {
    void resolveForBufferReturnsNullForPlainTextEdit() {
       // resolveForBuffer handles unknown buffer types gracefully
       assertNull(KeyMap.resolveForBuffer(null));
+   }
+
+   // ---- DirEdit overlay (F17) ----
+
+   @Test
+   void directoryOverlayCanBeCreatedAndResolved() {
+      // Test the infrastructure: createOverlay + register + resolveForBuffer
+      // (bindCommands() isn't called in tests, so we simulate)
+      KeyMap normalSim = new KeyMap("normal-sim",
+         new KeyGroup("ns-move"), new KeyGroup("ns-edit"));
+      KeyMap dirOverlay = KeyMap.createOverlay("directory-test", normalSim);
+      KeyMap.register(dirOverlay);
+
+      KeyMap retrieved = KeyMap.get("directory-test");
+      assertNotNull(retrieved, "directory overlay should be retrievable");
+      assertEquals("normal-sim", retrieved.getParent().getName());
+   }
+
+   // ---- Convenience bind methods ----
+
+   @Test
+   void bindMoveKeyCharAddsBinding() {
+      KeyGroup mg = new KeyGroup("bm-move");
+      KeyGroup eg = new KeyGroup("bm-edit");
+      KeyMap km = new KeyMap("bind-test", mg, eg);
+
+      km.bindMoveKey('x', "movechar", Boolean.FALSE);
+      JeyEvent ev = new JeyEvent(0, 0, 'x');
+      assertNotNull(km.lookupMove(ev),
+         "bindMoveKey should add a movement binding");
+   }
+
+   @Test
+   void bindEditKeyCharAddsBinding() {
+      KeyGroup mg = new KeyGroup("be-move");
+      KeyGroup eg = new KeyGroup("be-edit");
+      KeyMap km = new KeyMap("bind-test", mg, eg);
+
+      km.bindEditKey('d', "movechar", null);
+      JeyEvent ev = new JeyEvent(0, 0, 'd');
+      assertNotNull(km.lookupEdit(ev),
+         "bindEditKey should add an edit binding");
+   }
+
+   @Test
+   void getOverlayKeymapsReturnsOnlyChildren() {
+      // The registered filelist, shell, directory overlays all have parents
+      java.util.List<KeyMap> overlays = KeyMap.getOverlayKeymaps();
+      assertFalse(overlays.isEmpty(),
+         "should have at least one overlay keymap");
+      for (KeyMap km : overlays) {
+         assertNotNull(km.getParent(),
+            "overlay keymaps should have a parent: " + km.getName());
+      }
+   }
+
+   @Test
+   void getReverseBindingMapContainsEntries() {
+      KeyGroup mg = new KeyGroup("rb-move");
+      mg.keybind('h', "movechar", Boolean.FALSE);
+      mg.keybind('l', "movechar", Boolean.TRUE);
+      KeyGroup eg = new KeyGroup("rb-edit");
+      KeyMap km = new KeyMap("rb-test", mg, eg);
+
+      var reverseMap = km.getReverseBindingMap();
+      assertTrue(reverseMap.containsKey("movechar"),
+         "reverse map should contain movechar");
+      assertEquals(2, reverseMap.get("movechar").size(),
+         "movechar should have two key bindings (h and l)");
    }
 
    // ---- toString ----

@@ -744,8 +744,10 @@ public final class MiscCommands extends Rgroup {
       if (spec.length() == 3 && spec.charAt(1) == '-') {
          char mod = spec.charAt(0);
          char ch = spec.charAt(2);
-         if (mod == 'C')
-            return new JeyEvent(JeyEvent.CTRL_MASK, 0, ch);
+         if (mod == 'C') {
+            char ctrlChar = (char) (Character.toLowerCase(ch) - 'a' + 1);
+            return new JeyEvent(JeyEvent.CTRL_MASK, 0, ctrlChar);
+         }
          if (mod == 'S')
             return new JeyEvent(JeyEvent.SHIFT_MASK, 0, ch);
          if (mod == 'M')

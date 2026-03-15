@@ -250,6 +250,10 @@ final class KeyMap {
       filelistMap.bindMoveKey((char) 10, "nextpos", ff);  // LF
       register(filelistMap);
 
+      // Directory overlay: for DirEdit buffer-specific bindings
+      KeyMap dirMap = createOverlay("directory", normalMap);
+      register(dirMap);
+
       // Shell overlay: extensibility point for shell-specific bindings
       KeyMap shellMap = createOverlay("shell", normalMap);
       register(shellMap);
@@ -263,6 +267,8 @@ final class KeyMap {
    static KeyMap resolveForBuffer(TextEdit buffer) {
       if (buffer instanceof FileList)
          return get("filelist");
+      if (buffer instanceof DirEdit)
+         return get("directory");
       if (buffer instanceof Vt100)
          return get("shell");
       return null;
