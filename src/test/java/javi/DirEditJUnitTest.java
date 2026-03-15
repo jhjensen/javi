@@ -378,7 +378,7 @@ class DirEditJUnitTest {
       for (int i = 1; i < dirEdit.readIn(); i++) {
          String line = dirEdit.at(i).toString();
          if (line.contains("diredit_rename")
-               && line.contains("diredit_mkdir")) {
+               && line.contains("diredit_copy")) {
             foundOps = true;
             break;
          }
@@ -494,6 +494,91 @@ class DirEditJUnitTest {
       }
       assertTrue(foundSpace,
          "Non-search-path directory should show space prefix");
+   }
+
+   // --- Sort order tests ---
+
+   @Test
+   void nameSortMixedAlphabetically() throws IOException {
+      File subDir = new File(tempDir, "sort_name_mix");
+      subDir.mkdir();
+      createTestFile(subDir, "aaa.txt");
+      new File(subDir, "zzz_dir").mkdir();
+
+      dirEdit = makeDirEdit(subDir);
+      // NAME sort — uniform alphabetical regardless of type
+      // Lines: 1=header, 2=blank, 3=../, 4=aaa.txt, 5=zzz_dir/
+      assertEquals("aaa.txt", dirEdit.getFilename(4));
+      assertEquals("zzz_dir/", dirEdit.getFilename(5));
+   }
+
+   @Test
+   void sizeSortUniform() throws IOException {
+      File subDir = new File(tempDir, "sort_size_first");
+      subDir.mkdir();
+      createTestFile(subDir, "big.txt", "x".repeat(10000));
+      new File(subDir, "adir").mkdir();
+
+      dirEdit = makeDirEdit(subDir);
+      dirEdit.sortMode = DirEdit.SortMode.SIZE;
+      dirEdit.populateDirectory();
+      // SIZE sort — uniform by size; dir (0 bytes) before big file
+      assertEquals("adir/", dirEdit.getFilename(4));
+      assertEquals("big.txt", dirEdit.getFilename(5));
+   }
+
+   @Test
+   void dateSortUniform() throws IOException {
+      File subDir = new File(tempDir, "sort_date_first");
+      subDir.mkdir();
+      File file = createTestFile(subDir, "old.txt");
+      // Give the file an old timestamp so it sorts first by date
+      file.setLastModified(1000000L);
+      File dir = new File(subDir, "newdir");
+      dir.mkdir();
+      dir.setLastModified(System.currentTimeMillis());
+
+      dirEdit = makeDirEdit(subDir);
+      dirEdit.sortMode = DirEdit.SortMode.DATE;
+      dirEdit.populateDirectory();
+      // DATE sort — uniform by date; old file first
+      assertEquals("old.txt", dirEdit.getFilename(4));
+      assertEquals("newdir/", dirEdit.getFilename(5));
+   }
+
+   @Test
+   void typeSortPutsDirectoriesFirst() throws IOException {
+      File subDir = new File(tempDir, "sort_type_first");
+      subDir.mkdir();
+      createTestFile(subDir, "aaa.txt");
+      new File(subDir, "zzz_dir").mkdir();
+
+      dirEdit = makeDirEdit(subDir);
+      dirEdit.sortMode = DirEdit.SortMode.TYPE;
+      dirEdit.populateDirectory();
+      // TYPE sort — directories first
+      // Lines: 1=header, 2=blank, 3=../, 4=zzz_dir/, 5=aaa.txt
+      assertEquals("zzz_dir/", dirEdit.getFilename(4));
+      assertEquals("aaa.txt", dirEdit.getFilename(5));
+   }
+
+   @Test
+   void helpFooterShowsSortMode() throws IOException {
+      File subDir = new File(tempDir, "footer_sort_test");
+      subDir.mkdir();
+      createTestFile(subDir, "any.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundSort = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("sort:name")) {
+            foundSort = true;
+            break;
+         }
+      }
+      assertTrue(foundSort,
+         "Help footer should show current sort mode");
    }
 
    // --- DirSizeCalculator tests ---

@@ -77,8 +77,8 @@ public final class DirEdit extends TextEdit<String> {
    /** Whether to show hidden (dot) files. */
    private boolean showHidden = false;
 
-   /** Current sort mode. */
-   private SortMode sortMode = SortMode.NAME;
+   /** Current sort mode. Package-private for testing. */
+   SortMode sortMode = SortMode.NAME;
 
    /** Files marked for deletion. Package-private for testing. */
    final HashSet<String> markedForDelete = new HashSet<>();
@@ -89,7 +89,7 @@ public final class DirEdit extends TextEdit<String> {
 
    /** Sort modes for directory listing. */
    public enum SortMode {
-      /** Sort by name (directories first). */
+      /** Sort by name. */
       NAME,
       /** Sort by file size. */
       SIZE,
@@ -154,6 +154,9 @@ public final class DirEdit extends TextEdit<String> {
             return true;
          case 'D':
             deleteSelected(fvc);
+            return true;
+         case 'o': case 'O':
+            createInline(fvc);
             return true;
          default:
             break;
@@ -298,19 +301,16 @@ public final class DirEdit extends TextEdit<String> {
                   f.getAbsolutePath(), this);
             }
          }
-         if (null != parent) {
-            DirSizeCalculator.submitCalculation(
-               parent.getAbsolutePath(), this);
-         }
+         // Don't calculate size for parent ".." — only recurse down
       }
 
       // Add help footer
       lines.add("");
-      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort"
+      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort:"
+         + sortMode.name().toLowerCase()
          + "  [R] refresh  [q] quit");
-      lines.add("  [dd] delete  [S] search path toggle"
-         + "  :diredit_rename  :diredit_mkdir  :diredit_newfile");
-      lines.add("  :diredit_copy  :dirmanager_toggle_searchpath");
+      lines.add("  [dd] delete  [o] new file/dir  [S] search path"
+         + "  :diredit_rename  :diredit_copy");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -322,35 +322,22 @@ public final class DirEdit extends TextEdit<String> {
     * @param files the list of files to sort
     */
    private void sortFiles(ArrayList<File> files) {
-      Comparator<File> comparator;
+      Comparator<File> secondary;
 
       switch (sortMode) {
          case SIZE:
-            comparator = (f1, f2) -> {
-               // Directories first
-               if (f1.isDirectory() != f2.isDirectory()) {
-                  return f1.isDirectory() ? -1 : 1;
-               }
+            secondary = (f1, f2) -> {
                long s1 = getEffectiveSize(f1);
                long s2 = getEffectiveSize(f2);
                return Long.compare(s1, s2);
             };
             break;
          case DATE:
-            comparator = (f1, f2) -> {
-               // Directories first
-               if (f1.isDirectory() != f2.isDirectory()) {
-                  return f1.isDirectory() ? -1 : 1;
-               }
-               return Long.compare(f1.lastModified(), f2.lastModified());
-            };
+            secondary = (f1, f2) ->
+               Long.compare(f1.lastModified(), f2.lastModified());
             break;
          case TYPE:
-            comparator = (f1, f2) -> {
-               // Directories first
-               if (f1.isDirectory() != f2.isDirectory()) {
-                  return f1.isDirectory() ? -1 : 1;
-               }
+            secondary = (f1, f2) -> {
                String ext1 = getExtension(f1.getName());
                String ext2 = getExtension(f2.getName());
                int extCmp = ext1.compareToIgnoreCase(ext2);
@@ -362,14 +349,23 @@ public final class DirEdit extends TextEdit<String> {
             break;
          case NAME:
          default:
-            comparator = (f1, f2) -> {
-               // Directories first
-               if (f1.isDirectory() != f2.isDirectory()) {
-                  return f1.isDirectory() ? -1 : 1;
-               }
-               return f1.getName().compareToIgnoreCase(f2.getName());
-            };
+            secondary = (f1, f2) ->
+               f1.getName().compareToIgnoreCase(f2.getName());
             break;
+      }
+
+      // For TYPE sort, directories come first (no extension);
+      // for other modes, sort uniformly regardless of type.
+      Comparator<File> comparator;
+      if (sortMode == SortMode.TYPE) {
+         comparator = (f1, f2) -> {
+            if (f1.isDirectory() != f2.isDirectory()) {
+               return f1.isDirectory() ? -1 : 1;
+            }
+            return secondary.compare(f1, f2);
+         };
+      } else {
+         comparator = secondary;
       }
 
       files.sort(comparator);
@@ -622,7 +618,6 @@ public final class DirEdit extends TextEdit<String> {
       int nextIdx = (sortMode.ordinal() + 1) % modes.length;
       sortMode = modes[nextIdx];
       populateDirectory();
-      UI.reportMessage("Sort by: " + sortMode.name().toLowerCase());
    }
 
    /**
@@ -634,6 +629,29 @@ public final class DirEdit extends TextEdit<String> {
       DirSizeCalculator.clearCache();
       populateDirectory();
       UI.reportMessage("Directory refreshed");
+   }
+
+   /**
+    * Prompts for a name and creates a file or directory inline.
+    * If the entered name ends with {@code /}, creates a directory;
+    * otherwise creates an empty file.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if creation fails
+    * @throws IOException if an I/O error occurs
+    */
+   void createInline(FvContext fvc) throws InputException, IOException {
+      String prompt = "New: ";
+      String input = InsertBuffer.getcomline(prompt);
+      String name = input.substring(prompt.length()).trim();
+      if (name.isEmpty()) {
+         return;
+      }
+      if (name.endsWith("/")) {
+         createDirectory(fvc, name.substring(0, name.length() - 1));
+      } else {
+         createFile(fvc, name);
+      }
    }
 
    /**
