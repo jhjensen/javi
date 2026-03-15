@@ -148,8 +148,6 @@ public final class Command extends Rgroup {
             topic = "diredit";
          else if (fvc.edvec instanceof FileList)
             topic = "filelist";
-         else if (fvc.edvec instanceof DirList)
-            topic = "directory";
       }
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);

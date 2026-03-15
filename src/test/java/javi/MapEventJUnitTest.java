@@ -1,6 +1,7 @@
 package javi;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -509,6 +510,120 @@ class MapEventJUnitTest {
          JeyEvent.CHAR_UNDEFINED);
       String spec = kg.formatKeySpec(ev);
       assertEquals("F1", spec, "F1 action key should format as F1");
+   }
+
+   // ============================================================
+   // KeyGroup — getReverseBindingMap (F20)
+   // ============================================================
+
+   @Test
+   void reverseBindingMapContainsEntries() {
+      KeyGroup kg = new KeyGroup("test-reverse");
+      kg.keybind('h', "movechar", Boolean.FALSE);
+      kg.keybind('w', "forwardword", null);
+
+      Map<String, List<String>> reverseMap = kg.getReverseBindingMap();
+      assertNotNull(reverseMap);
+      assertTrue(reverseMap.containsKey("movechar"),
+         "reverse map should contain 'movechar'");
+      assertTrue(reverseMap.containsKey("forwardword"),
+         "reverse map should contain 'forwardword'");
+   }
+
+   @Test
+   void reverseBindingMapMultipleKeysPerCommand() {
+      KeyGroup kg = new KeyGroup("test-multi");
+      kg.keybind('h', "movechar", Boolean.FALSE);
+      kg.keybind('l', "movechar", Boolean.TRUE);
+
+      Map<String, List<String>> reverseMap = kg.getReverseBindingMap();
+      List<String> keys = reverseMap.get("movechar");
+      assertNotNull(keys, "movechar should have entries");
+      assertEquals(2, keys.size(),
+         "movechar should have 2 key mappings");
+   }
+
+   @Test
+   void reverseBindingMapEmptyForEmptyGroup() {
+      KeyGroup kg = new KeyGroup("test-empty");
+      Map<String, List<String>> reverseMap = kg.getReverseBindingMap();
+      assertNotNull(reverseMap);
+      assertTrue(reverseMap.isEmpty(),
+         "empty group should have empty reverse map");
+   }
+
+   // ============================================================
+   // KeyMap — getReverseBindingMap (F20)
+   // ============================================================
+
+   @Test
+   void keyMapReverseBindingMapCombinesMoveAndEdit() {
+      KeyGroup moveKeys = new KeyGroup("test-km-move");
+      KeyGroup editKeys = new KeyGroup("test-km-edit");
+      moveKeys.keybind('h', "movechar", Boolean.FALSE);
+      editKeys.keybind('x', "deletechars", null);
+
+      KeyMap km = new KeyMap("test-km", moveKeys, editKeys);
+      Map<String, List<String>> reverseMap = km.getReverseBindingMap();
+
+      assertTrue(reverseMap.containsKey("movechar"),
+         "should include movement commands");
+      assertTrue(reverseMap.containsKey("deletechars"),
+         "should include edit commands");
+   }
+
+   // ============================================================
+   // KeyMap — getOverlayKeymaps (F21)
+   // ============================================================
+
+   @Test
+   void overlayKeymapsListExcludesRootMaps() {
+      // The registry from bindCommands isn't available in test,
+      // but we can create our own and verify the API
+      KeyGroup m = new KeyGroup("root-move");
+      KeyGroup e = new KeyGroup("root-edit");
+      KeyMap root = new KeyMap("test-root", m, e);
+      KeyMap overlay = KeyMap.createOverlay("test-overlay", root);
+
+      KeyMap.register(root);
+      KeyMap.register(overlay);
+
+      List<KeyMap> overlays = KeyMap.getOverlayKeymaps();
+      boolean foundOverlay = false;
+      for (KeyMap km : overlays) {
+         if ("test-overlay".equals(km.getName()))
+            foundOverlay = true;
+         assertNotNull(km.getParent(),
+            "overlay keymaps should have a parent");
+      }
+      assertTrue(foundOverlay,
+         "test-overlay should be in overlay list");
+   }
+
+   // ============================================================
+   // MapEvent.getKeyGroup — overlay dot syntax (F21)
+   // ============================================================
+
+   @Test
+   void getKeyGroupBasicMoveAndEdit() {
+      // Without bindCommands, normalKeyMap is null, so this returns null
+      // This tests the API contract
+      KeyGroup move = MapEvent.getKeyGroup("move");
+      KeyGroup edit = MapEvent.getKeyGroup("edit");
+      // Cannot assert non-null since bindCommands() isn't called in tests
+      // Just verify no exception is thrown
+   }
+
+   @Test
+   void getKeyGroupUnknownReturnsNull() {
+      KeyGroup kg = MapEvent.getKeyGroup("unknown");
+      assertNull(kg, "unknown group should return null");
+   }
+
+   @Test
+   void getKeyGroupOverlayBadNameReturnsNull() {
+      KeyGroup kg = MapEvent.getKeyGroup("nonexistent.move");
+      assertNull(kg, "nonexistent overlay keymap should return null");
    }
 
    // ============================================================

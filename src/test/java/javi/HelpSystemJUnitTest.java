@@ -180,4 +180,48 @@ class HelpSystemJUnitTest {
       assertFalse(text.contains("MOVEMENT COMMANDS"),
          "old topic content should be cleared");
    }
+
+   // ============================================================
+   // F20 — Inline binding annotation
+   // ============================================================
+
+   @Test
+   @DisplayName("getHelp('keybindings') contains keybinding architecture")
+   void helpKeybindingsTopic() {
+      TextEdit<String> buf = HelpSystem.getHelp("keybindings");
+      String text = bufferText(buf);
+      assertTrue(text.contains("KEY BINDING ARCHITECTURE"),
+         "keybindings topic should contain architecture section");
+   }
+
+   @Test
+   @DisplayName("help annotation does not corrupt header lines")
+   void helpAnnotationPreservesHeaders() {
+      TextEdit<String> buf = HelpSystem.getHelp("ex");
+      String text = bufferText(buf);
+      // Header lines with === or --- should not be annotated
+      for (String line : text.split("\n")) {
+         if (line.startsWith("===") || line.startsWith("---")) {
+            assertFalse(line.contains("["),
+               "separator lines should not be annotated: " + line);
+         }
+      }
+   }
+
+   @Test
+   @DisplayName("help annotation does not add brackets to non-command text")
+   void helpAnnotationIgnoresNonCommands() {
+      TextEdit<String> buf = HelpSystem.getHelp("undo");
+      String text = bufferText(buf);
+      // "UNDO AND REDO" is a header, not a command reference
+      assertTrue(text.contains("UNDO AND REDO"),
+         "undo help should include header");
+      // The header line itself should not be annotated with [...]
+      for (String line : text.split("\n")) {
+         if (line.contains("UNDO AND REDO")) {
+            assertFalse(line.contains("["),
+               "header should not be annotated");
+         }
+      }
+   }
 }

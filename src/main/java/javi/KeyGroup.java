@@ -146,6 +146,22 @@ final class KeyGroup {
    }
 
    /**
+    * Build a reverse map from command name to list of key descriptions.
+    * Used by HelpSystem to annotate help text with bound keys.
+    *
+    * @return map of command name to formatted key strings
+    */
+   Map<String, List<String>> getReverseBindingMap() {
+      Map<String, List<String>> result = new java.util.LinkedHashMap<>();
+      for (Map.Entry<JeyEvent, String> entry : commandNames.entrySet()) {
+         String cmdName = entry.getValue();
+         String keyStr = formatKey(entry.getKey());
+         result.computeIfAbsent(cmdName, k -> new ArrayList<>()).add(keyStr);
+      }
+      return result;
+   }
+
+   /**
     * Format a JeyEvent as a readable key description.
     */
    private String formatKey(JeyEvent ev) {

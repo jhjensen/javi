@@ -101,12 +101,35 @@ public final class MapEvent {
    /**
     * Get a named keygroup for runtime binding modification.
     *
-    * @param groupName "move" for movement keys, "edit" for editing keys
+    * <p>Supports two formats:</p>
+    * <ul>
+    *   <li>{@code "move"} / {@code "edit"} — targets the normal keymap</li>
+    *   <li>{@code "keymap.move"} / {@code "keymap.edit"} — targets a
+    *       named overlay keymap (e.g. {@code "filelist.move"})</li>
+    * </ul>
+    *
+    * @param groupName key group identifier
     * @return the KeyGroup, or null if name not recognized
     */
    static KeyGroup getKeyGroup(String groupName) {
       if (normalKeyMap == null)
          return null;
+
+      // Check for overlay keymap prefix: "keymapName.group"
+      int dot = groupName.indexOf('.');
+      if (dot > 0) {
+         String kmName = groupName.substring(0, dot);
+         String group = groupName.substring(dot + 1);
+         KeyMap km = KeyMap.get(kmName);
+         if (km == null)
+            return null;
+         return switch (group) {
+            case "move" -> km.getMoveKeys();
+            case "edit" -> km.getEditKeys();
+            default -> null;
+         };
+      }
+
       return switch (groupName) {
          case "move" -> normalKeyMap.getMoveKeys();
          case "edit" -> normalKeyMap.getEditKeys();

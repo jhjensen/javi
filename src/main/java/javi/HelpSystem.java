@@ -1,5 +1,10 @@
 package javi;
 
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Built-in help system for Javi editor.
  *
@@ -119,6 +124,7 @@ public final class HelpSystem {
             break;
       }
 
+      annotateBindingsInBuffer();
       return helpBuffer;
    }
 
@@ -322,6 +328,76 @@ public final class HelpSystem {
     */
    private static void append(String line) {
       helpBuffer.insertOne(line, helpBuffer.finish());
+   }
+
+   /** Pattern to match colon command references like :help, :shells, :mapkey */
+   private static final Pattern COLON_CMD_PATTERN =
+      Pattern.compile(":(\\w+)");
+
+   /**
+    * Post-process the help buffer to annotate colon command references
+    * with their bound keys. For example, if ":mk" appears in help text
+    * and "mk" is bound to F7, the line is annotated with "[F7]".
+    *
+    * <p>Only annotates lines that contain colon commands with known
+    * key bindings. Lines that are headers, separators, or already
+    * show key information are left unchanged.</p>
+    */
+   private static void annotateBindingsInBuffer() {
+      KeyMap normalMap = MapEvent.getNormalKeyMap();
+      if (normalMap == null)
+         return;
+
+      Map<String, List<String>> reverseMap =
+         normalMap.getReverseBindingMap();
+      if (reverseMap.isEmpty())
+         return;
+
+      int end = helpBuffer.finish();
+      for (int i = 1; i < end; i++) {
+         String line = helpBuffer.at(i).toString();
+         String annotated = annotateLineBindings(line, reverseMap);
+         if (annotated != null) {
+            helpBuffer.remove(i, 1);
+            helpBuffer.insertOne(annotated, i);
+            // re-fetch end since buffer was modified
+            end = helpBuffer.finish();
+         }
+      }
+   }
+
+   /**
+    * Annotate a single line with key binding information.
+    *
+    * @return annotated line, or null if no annotation needed
+    */
+   private static String annotateLineBindings(String line,
+         Map<String, List<String>> reverseMap) {
+      // Skip headers, separator lines, and empty lines
+      if (line.isBlank() || line.startsWith("===") || line.startsWith("---"))
+         return null;
+
+      Matcher m = COLON_CMD_PATTERN.matcher(line);
+      StringBuilder sb = null;
+      int lastEnd = 0;
+
+      while (m.find()) {
+         String cmdName = m.group(1);
+         List<String> keys = reverseMap.get(cmdName);
+         if (keys != null && !keys.isEmpty()) {
+            if (sb == null)
+               sb = new StringBuilder();
+            sb.append(line, lastEnd, m.end());
+            sb.append(" [").append(String.join(", ", keys)).append(']');
+            lastEnd = m.end();
+         }
+      }
+
+      if (sb == null)
+         return null;
+
+      sb.append(line, lastEnd, line.length());
+      return sb.toString();
    }
 
    /**

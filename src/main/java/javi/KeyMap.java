@@ -200,6 +200,41 @@ final class KeyMap {
       return java.util.Collections.unmodifiableSet(registry.keySet());
    }
 
+   /**
+    * Get all registered overlay keymaps (keymaps with a parent).
+    * Used by KeyBindingPersistence for saving overlay user bindings.
+    *
+    * @return list of overlay KeyMaps
+    */
+   static java.util.List<KeyMap> getOverlayKeymaps() {
+      java.util.List<KeyMap> overlays = new java.util.ArrayList<>();
+      for (KeyMap km : registry.values()) {
+         if (km.parent != null)
+            overlays.add(km);
+      }
+      return overlays;
+   }
+
+   /**
+    * Build a combined reverse binding map (command name to key descriptions)
+    * from this keymap's move and edit groups.
+    *
+    * @return map of command name to formatted key strings
+    */
+   java.util.Map<String, java.util.List<String>> getReverseBindingMap() {
+      java.util.Map<String, java.util.List<String>> result =
+         new java.util.LinkedHashMap<>();
+      result.putAll(moveKeys.getReverseBindingMap());
+      for (var entry : editKeys.getReverseBindingMap().entrySet()) {
+         result.merge(entry.getKey(), entry.getValue(), (a, b) -> {
+            java.util.List<String> merged = new java.util.ArrayList<>(a);
+            merged.addAll(b);
+            return merged;
+         });
+      }
+      return result;
+   }
+
    // ---- Buffer-type keymap initialization ----
 
    /**

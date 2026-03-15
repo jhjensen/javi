@@ -653,19 +653,23 @@ public final class MiscCommands extends Rgroup {
    private static Date lastredraw = new Date();
 
    // :mapkey <group> <key> <command> — bind a key in a keygroup at runtime
-   // group: "move" or "edit"
+   // group: "move", "edit", or "keymap.move"/"keymap.edit" for overlays
    // key: single char, C-x for ctrl, or special name (F1-F12, Up, Down, etc.)
    private static void doMap(String arg) throws InputException {
       if (arg == null || arg.isBlank())
-         throw new InputException("usage: mapkey <group> <key> <command>");
+         throw new InputException(
+            "usage: mapkey <group> <key> <command>"
+            + " (group: move, edit, or keymap.move/keymap.edit)");
       String[] parts = arg.trim().split("\\s+", 3);
       if (parts.length < 3)
-         throw new InputException("usage: mapkey <group> <key> <command>");
+         throw new InputException(
+            "usage: mapkey <group> <key> <command>"
+            + " (group: move, edit, or keymap.move/keymap.edit)");
 
       KeyGroup kg = MapEvent.getKeyGroup(parts[0]);
       if (kg == null)
          throw new InputException("unknown keygroup: " + parts[0]
-            + " (use move or edit)");
+            + " (use move, edit, or keymap.move/keymap.edit)");
 
       JeyEvent key = parseKeySpec(parts[1]);
       String command = parts[2];
@@ -687,7 +691,7 @@ public final class MiscCommands extends Rgroup {
       KeyGroup kg = MapEvent.getKeyGroup(parts[0]);
       if (kg == null)
          throw new InputException("unknown keygroup: " + parts[0]
-            + " (use move or edit)");
+            + " (use move, edit, or keymap.move/keymap.edit)");
 
       JeyEvent key = parseKeySpec(parts[1]);
       if (!kg.unbind(key))
