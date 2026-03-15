@@ -90,4 +90,100 @@ class InsertBufferJUnitTest {
    void isActiveInitiallyFalse() throws Exception {
       assertFalse(ib.isActive());
    }
+
+   // ── insertChars edge cases ──────────────────────────────────
+
+   @Test
+   void insertCharsWithUnicode() throws Exception {
+      ib.insertChars(new StringCharacterIterator("\u00e9\u00e8\u00ea"), 0);
+      assertEquals("\u00e9\u00e8\u00ea", ib.getString());
+   }
+
+   @Test
+   void insertCharsEmptyIterator() throws Exception {
+      ib.insertChars(new StringCharacterIterator(""), 0);
+      assertEquals("", ib.getString());
+   }
+
+   @Test
+   void insertCharsPreservesNewlines() throws Exception {
+      ib.insertChars(new StringCharacterIterator("a\nb\nc"), 0);
+      assertEquals("a\nb\nc", ib.getString());
+   }
+
+   @Test
+   void insertCharsPreservesTabs() throws Exception {
+      ib.insertChars(new StringCharacterIterator("col1\tcol2"), 0);
+      assertEquals("col1\tcol2", ib.getString());
+   }
+
+   // ── findspacebound tests ────────────────────────────────────
+
+   @Test
+   void findspaceboundReturnsZeroOnEmptyBuffer() throws Exception {
+      // Create a minimal FvContext with no content above cursor
+      TextEdit<String> te = createTestEdit("only line\n");
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+      fvc.cursoryabs(1);
+
+      assertEquals(0, InsertBuffer.findspacebound(fvc, 0));
+      te.disposeFvc();
+   }
+
+   @Test
+   void findspaceboundFindsNextTabStop() throws Exception {
+      // Line above has spaces then text at position 8
+      TextEdit<String> te = createTestEdit("        code here\ncursor\n");
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+      fvc.cursoryabs(2);
+
+      // At linepos 0, should find distance to next non-space after pos 0
+      int result = InsertBuffer.findspacebound(fvc, 0);
+      // "        code here": first non-space is at 8, so distance = 8
+      assertEquals(8, result);
+      te.disposeFvc();
+   }
+
+   @Test
+   void findspaceboundSkipsBlankLines() throws Exception {
+      // Two lines above: blank then indented
+      TextEdit<String> te = createTestEdit(
+         "    content\n\ncursor\n");
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+      fvc.cursoryabs(3);
+
+      // Line 2 is empty (no match), should check line 1
+      int result = InsertBuffer.findspacebound(fvc, 0);
+      // "    content": space->non-space at 4, so distance=4
+      assertEquals(4, result);
+      te.disposeFvc();
+   }
+
+   @Test
+   void findspaceboundAtCursorLine1ReturnsZero() throws Exception {
+      // Cursor at line 1 => no lines above => 0
+      TextEdit<String> te = createTestEdit("first line\n");
+      TestView view = new TestView(true);
+      FvContext fvc = FvContext.connectFv(te, view);
+      fvc.cursoryabs(1);
+
+      assertEquals(0, InsertBuffer.findspacebound(fvc, 0));
+      te.disposeFvc();
+   }
+
+   private TextEdit<String> createTestEdit(String content) {
+      String path = history.Testutil.testFile("ib_test").getPath();
+      FileDescriptor fd = FileDescriptor.make(path);
+      FileProperties<String> fp =
+         new FileProperties<>(fd, StringIoc.converter);
+      FileInput fi = new FileInput(fp);
+      TextEdit<String> te = new TextEdit<>(fi, fp);
+      te.inserttext(content, 0, 1);
+      te.checkpoint();
+      te.finish();
+      return te;
+   }
 }

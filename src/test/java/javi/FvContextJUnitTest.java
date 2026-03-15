@@ -381,4 +381,141 @@ class FvContextJUnitTest {
          EventQueue.biglock2.unlock();
       }
    }
+
+   // ── Cursor movement tests ───────────────────────────────────
+
+   /**
+    * Test cursoryabs moves cursor to absolute line.
+    */
+   @Test
+   void cursoryabsMovesLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> te = openTestFile("fvc_test1");
+         te.inserttext("line 1\nline 2\nline 3\n", 0, 1);
+         te.checkpoint();
+
+         TestView view = new TestView(true);
+         FvContext fvc = FvContext.connectFv(te, view);
+
+         fvc.cursoryabs(2);
+         assertEquals(2, fvc.inserty());
+         assertEquals("line 2", fvc.at().toString());
+
+         fvc.cursoryabs(3);
+         assertEquals(3, fvc.inserty());
+         assertEquals("line 3", fvc.at().toString());
+
+         te.disposeFvc();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   /**
+    * Test cursorabs(Position) sets x and y.
+    */
+   @Test
+   void cursorabsPositionSetsXY() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> te = openTestFile("fvc_test1");
+         te.inserttext("hello world\nsecond line\n", 0, 1);
+         te.checkpoint();
+
+         TestView view = new TestView(true);
+         FvContext fvc = FvContext.connectFv(te, view);
+
+         Position pos = new Position(5, 2, te.fdes(), "jump");
+         fvc.cursorabs(pos);
+         assertEquals(2, fvc.inserty());
+         assertEquals(5, fvc.insertx());
+
+         te.disposeFvc();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   /**
+    * Test inserttext inserts text and returns new position.
+    */
+   @Test
+   void inserttextInsertsContent() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> te = openTestFile("fvc_test1");
+         te.inserttext("original\n", 0, 1);
+         te.checkpoint();
+
+         TestView view = new TestView(true);
+         FvContext fvc = FvContext.connectFv(te, view);
+
+         int newPos = fvc.inserttext("inserted ").x;
+         assertTrue(newPos >= 0, "inserttext should return valid position");
+         // Re-read the line after insertion
+         String line = te.at(1).toString();
+         assertTrue(line.contains("inserted"),
+            "line should contain inserted text, got: " + line);
+
+         te.disposeFvc();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   /**
+    * Test that setCurrView makes a context current.
+    */
+   @Test
+   void setCurrViewMakesCurrent() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> te1 = openTestFile("fvc_test1");
+         te1.inserttext("file 1\n", 0, 1);
+         te1.checkpoint();
+
+         TextEdit<String> te2 = openTestFile("fvc_test2");
+         te2.inserttext("file 2\n", 0, 1);
+         te2.checkpoint();
+
+         TestView view = new TestView(true);
+         FvContext fvc1 = FvContext.connectFv(te1, view);
+         FvContext fvc2 = FvContext.connectFv(te2, view);
+
+         // fvc2 is current now
+         assertSame(fvc2, FvContext.getCurrFvc());
+
+         // Switch back to fvc1 via setCurrView
+         fvc1.setCurrView();
+         assertSame(fvc1, FvContext.getCurrFvc());
+
+         te1.disposeFvc();
+         te2.disposeFvc();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   /**
+    * Test isGotoOk returns true for a normal context.
+    */
+   @Test
+   void isGotoOkForNormalContext() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> te = openTestFile("fvc_test1");
+         te.inserttext("goto test\n", 0, 1);
+         te.checkpoint();
+
+         TestView view = new TestView(true);
+         FvContext fvc = FvContext.connectFv(te, view);
+
+         assertTrue(fvc.isGotoOk());
+
+         te.disposeFvc();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
 }

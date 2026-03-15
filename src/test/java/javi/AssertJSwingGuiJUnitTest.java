@@ -45,7 +45,7 @@ class AssertJSwingGuiJUnitTest {
       try {
          Class.forName("javi.TextEdit");
          EditTester1.TestCircBuffer.initCmd();
-         DirList.getDefault();
+         DirManager.getInstance();
          FileList.make("");
          Javi.initToUi();
          Javi.initPostUi();
@@ -428,12 +428,12 @@ class AssertJSwingGuiJUnitTest {
    // ── File open tests ──────────────────────────────────────────
 
    @Test
-   void t22_fileOpenViaDirList() throws Exception {
-      // Verify DirList (file browser) is accessible in GUI context
+   void t22_fileOpenViaDirManager() throws Exception {
+      // Verify DirManager (file browser) is accessible in GUI context
       EventQueue.biglock2.lock();
       try {
-         DirList dirList = DirList.getDefault();
-         assertNotNull(dirList, "Default DirList must exist");
+         DirManager dirMgr = DirManager.getInstance();
+         assertNotNull(dirMgr, "DirManager instance must exist");
       } finally {
          EventQueue.biglock2.unlock();
       }
