@@ -427,12 +427,17 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                window.eraseChars(def ? 1 : numacc[currnumacc], sb);
                break;
             case 'n': // Device Status Report
-               trace1("device status report (ignored)");
-               // Would normally send response back to terminal
+               if (!def && numacc[currnumacc] == 6) {
+                  trace1("cursor position report (responding)");
+                  window.respondCursorPosition(sb);
+               } else {
+                  trace1("device status report "
+                     + numacc[currnumacc] + " (ignored)");
+               }
                break;
             case 'c': // Device Attributes
-               trace1("device attributes request (ignored)");
-               // Would normally send response back to terminal
+               trace1("device attributes request (responding)");
+               window.respondDeviceAttributes(sb);
                break;
             case 's': // Save Cursor Position (ANSI.SYS / SCO)
                trace1("save cursor (ANSI.SYS)");
@@ -469,7 +474,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    private void applyMode(int modeNum, boolean enable) {
       switch (modeNum) {
-         case 1:
+         case 1: // Application cursor keys (DECCKM)
+            window.setApplicationCursorKeys(enable);
             break;
          case 2:
             trace("vt52 mode shouldn't happen");

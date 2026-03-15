@@ -323,4 +323,31 @@ abstract class VScreen {
    void setCursorBlinkMode(boolean enable) {
       // Default no-op
    }
+
+   /**
+    * Sets application cursor key mode (DECCKM, mode 1).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setApplicationCursorKeys(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a Primary Device Attributes request (CSI c).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondDeviceAttributes(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a Cursor Position Report request (CSI 6 n).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondCursorPosition(StringBuilder sb) {
+      // Default no-op
+   }
 }

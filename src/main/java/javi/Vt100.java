@@ -97,6 +97,9 @@ class Vt100 extends TextEdit<String> {
    /** Whether cursor blink mode (mode 12) is active. */
    private volatile boolean cursorBlinkMode;
 
+   /** Whether application cursor key mode (DECCKM, mode 1) is active. */
+   private volatile boolean applicationCursorKeys;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -269,6 +272,36 @@ class Vt100 extends TextEdit<String> {
    }
 
    /**
+    * Sets application cursor key mode (DECCKM, mode 1).
+    *
+    * <p>When enabled, arrow keys send ESC O A/B/C/D instead of
+    * ESC [ A/B/C/D.</p>
+    */
+   void setApplicationCursorKeys(boolean enable) {
+      applicationCursorKeys = enable;
+      trace("Vt100: application cursor keys=" + applicationCursorKeys);
+   }
+
+   /**
+    * Sends a response string back to the PTY.
+    *
+    * <p>Used for terminal queries like Device Attributes (DA) and
+    * Cursor Position Report (CPR).</p>
+    *
+    * @param response the escape sequence to send
+    */
+   void sendResponse(String response) {
+      try {
+         synchronized (writerLock) {
+            writer.write(response);
+            writer.flush();
+         }
+      } catch (IOException e) {
+         trace("sendResponse failed: " + e);
+      }
+   }
+
+   /**
     * Checks if focus event reporting is enabled.
     *
     * @return true if mode 1004 is active
@@ -367,16 +400,20 @@ class Vt100 extends TextEdit<String> {
                synchronized (writerLock) {
                   switch (kev.getKeyCode()) {
                      case JeyEvent.VK_LEFT:
-                        writer.write("\33[D");
+                        writer.write(applicationCursorKeys
+                           ? "\33OD" : "\33[D");
                         break;
                      case JeyEvent.VK_RIGHT:
-                        writer.write("\33[C");
+                        writer.write(applicationCursorKeys
+                           ? "\33OC" : "\33[C");
                         break;
                      case JeyEvent.VK_UP:
-                        writer.write("\33[A");
+                        writer.write(applicationCursorKeys
+                           ? "\33OA" : "\33[A");
                         break;
                      case JeyEvent.VK_DOWN:
-                        writer.write("\33[B");
+                        writer.write(applicationCursorKeys
+                           ? "\33OB" : "\33[B");
                         break;
                      case JeyEvent.VK_INSERT:
                         return;
@@ -617,6 +654,25 @@ class Vt100 extends TextEdit<String> {
 
       void setCursorBlinkMode(boolean enable) {
          Vt100.this.setCursorBlinkMode(enable);
+      }
+
+      void setApplicationCursorKeys(boolean enable) {
+         Vt100.this.setApplicationCursorKeys(enable);
+      }
+
+      void respondDeviceAttributes(StringBuilder sb) {
+         insertString(sb);
+         // Identify as VT220 with ANSI color support
+         Vt100.this.sendResponse("\033[?62;22c");
+      }
+
+      void respondCursorPosition(StringBuilder sb) {
+         insertString(sb);
+         int row = vtcursor.y - readIn() + rows + 1;
+         int col = vtcursor.x + 1;
+         if (row < 1) row = 1;
+         if (col < 1) col = 1;
+         Vt100.this.sendResponse("\033[" + row + ";" + col + "R");
       }
 
    }
