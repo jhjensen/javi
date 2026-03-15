@@ -305,4 +305,22 @@ abstract class VScreen {
    void setFocusEventsMode(boolean enable) {
       // Default no-op
    }
+
+   /**
+    * Sets autowrap mode (mode 7).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setAutowrapMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets cursor blink mode (mode 12).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setCursorBlinkMode(boolean enable) {
+      // Default no-op
+   }
 }

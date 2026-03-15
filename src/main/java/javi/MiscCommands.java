@@ -269,10 +269,40 @@ public final class MiscCommands extends Rgroup {
          UI.reportMessage("No active shells");
          return;
       }
-      String content = mgr.getShellList();
-      StringIoc ioc = new StringIoc("shells", content);
-      TextEdit<String> listBuf = new TextEdit<>(ioc, ioc.prop);
-      FvContext.connectFv(listBuf, fvc.vi);
+      ShellListIoc ioc = new ShellListIoc(mgr);
+      PosListList.Cmd.addPositionIoc(ioc);
+      PosListList.Cmd.gotoList(fvc, null);
+   }
+
+   private static final class ShellListIoc extends PositionIoc {
+      private static final long serialVersionUID = 1;
+      private final transient java.util.List<ShellSession> sessions;
+      private final transient int activeId;
+
+      ShellListIoc(ShellManager mgr) {
+         super("shells", null, pconverter);
+         this.sessions = mgr.getSessions();
+         ShellSession active = mgr.getActive();
+         this.activeId = null != active ? active.getId() : -1;
+      }
+
+      @Override
+      void dorun() {
+         for (ShellSession s : sessions) {
+            s.updateLabel();
+            String comment = String.format("Shell %d: %s [%s]%s",
+               s.getId(), s.getName(),
+               s.isAlive() ? "running" : "stopped",
+               s.getId() == activeId ? " *" : "");
+            addResult(new Position(0, 1,
+               s.getBuffer().fdes(), comment));
+         }
+      }
+
+      @Override
+      protected void reportCompletion() {
+         // suppress "shells complete N results" status message
+      }
    }
 
    /**

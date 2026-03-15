@@ -88,6 +88,12 @@ class Vt100 extends TextEdit<String> {
    /** Whether focus event reporting (1004) is active. */
    private volatile boolean focusEventsMode;
 
+   /** Whether autowrap mode (mode 7) is active. */
+   private volatile boolean autowrapMode = true;
+
+   /** Whether cursor blink mode (mode 12) is active. */
+   private volatile boolean cursorBlinkMode;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -238,6 +244,22 @@ class Vt100 extends TextEdit<String> {
    void setFocusEventsMode(boolean enable) {
       focusEventsMode = enable;
       trace("Vt100: focus events mode=" + focusEventsMode);
+   }
+
+   /**
+    * Sets autowrap mode (mode 7) on or off.
+    */
+   void setAutowrapMode(boolean enable) {
+      autowrapMode = enable;
+      trace("Vt100: autowrap mode=" + autowrapMode);
+   }
+
+   /**
+    * Sets cursor blink mode (mode 12) on or off.
+    */
+   void setCursorBlinkMode(boolean enable) {
+      cursorBlinkMode = enable;
+      trace("Vt100: cursor blink mode=" + cursorBlinkMode);
    }
 
    /**
@@ -573,6 +595,14 @@ class Vt100 extends TextEdit<String> {
 
       void setFocusEventsMode(boolean enable) {
          Vt100.this.setFocusEventsMode(enable);
+      }
+
+      void setAutowrapMode(boolean enable) {
+         Vt100.this.setAutowrapMode(enable);
+      }
+
+      void setCursorBlinkMode(boolean enable) {
+         Vt100.this.setCursorBlinkMode(enable);
       }
 
    }

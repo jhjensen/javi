@@ -498,10 +498,10 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             window.setSgrMouseMode(enable);
             break;
          case 7: // Autowrap mode
-            trace("autowrap mode " + (enable ? "on" : "off"));
+            window.setAutowrapMode(enable);
             break;
          case 12: // Cursor blink
-            trace("cursor blink " + (enable ? "on" : "off"));
+            window.setCursorBlinkMode(enable);
             break;
          case 1004: // Focus event reporting
             window.setFocusEventsMode(enable);
