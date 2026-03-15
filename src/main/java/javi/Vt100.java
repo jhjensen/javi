@@ -61,6 +61,9 @@ class Vt100 extends TextEdit<String> {
    /** The charset used for encoding terminal I/O. */
    private final Charset charset;
 
+   /** Lock for synchronizing all writes to the PTY writer. */
+   private final Object writerLock = new Object();
+
    /** Current file-view context for display updates. */
    private FvContext currfvc = null;
 
@@ -168,8 +171,11 @@ class Vt100 extends TextEdit<String> {
     */
    void sendStty(int termRows, int termCols) {
       try {
-         writer.write("stty rows " + termRows + " cols " + termCols + "\n");
-         writer.flush();
+         synchronized (writerLock) {
+            writer.write("stty rows " + termRows
+               + " cols " + termCols + "\n");
+            writer.flush();
+         }
       } catch (IOException e) {
          trace("sendStty failed: " + e);
       }
@@ -280,8 +286,10 @@ class Vt100 extends TextEdit<String> {
       if (!focusEventsMode)
          return;
       try {
-         writer.write(focusIn ? "\033[I" : "\033[O");
-         writer.flush();
+         synchronized (writerLock) {
+            writer.write(focusIn ? "\033[I" : "\033[O");
+            writer.flush();
+         }
       } catch (IOException e) {
          trace("sendFocusEvent failed: " + e);
       }
@@ -295,12 +303,14 @@ class Vt100 extends TextEdit<String> {
     */
    void sendText(String text) {
       try {
-         if (bracketedPasteMode)
-            writer.write("\033[200~");
-         writer.write(text);
-         if (bracketedPasteMode)
-            writer.write("\033[201~");
-         writer.flush();
+         synchronized (writerLock) {
+            if (bracketedPasteMode)
+               writer.write("\033[200~");
+            writer.write(text);
+            if (bracketedPasteMode)
+               writer.write("\033[201~");
+            writer.flush();
+         }
       } catch (IOException e) {
          trace("sendText failed: " + e);
       }
@@ -321,20 +331,22 @@ class Vt100 extends TextEdit<String> {
     */
    void sendMouseEvent(int button, int col, int row, boolean pressed) {
       try {
-         if (sgrMouseMode) {
-            // SGR extended mode: ESC[<button;col;rowM/m
-            writer.write("\033[<" + button + ";" + col + ";" + row
-               + (pressed ? "M" : "m"));
-         } else {
-            // Legacy X10: ESC[M cb cx cy (add 32 to each value)
-            if (col > 222 || row > 222)
-               return; // legacy encoding limited to 223
-            writer.write("\033[M");
-            writer.write((char) (button + 32));
-            writer.write((char) (col + 32));
-            writer.write((char) (row + 32));
+         synchronized (writerLock) {
+            if (sgrMouseMode) {
+               // SGR extended mode: ESC[<button;col;rowM/m
+               writer.write("\033[<" + button + ";" + col + ";"
+                  + row + (pressed ? "M" : "m"));
+            } else {
+               // Legacy X10: ESC[M cb cx cy (add 32 to each)
+               if (col > 222 || row > 222)
+                  return; // legacy encoding limited to 223
+               writer.write("\033[M");
+               writer.write((char) (button + 32));
+               writer.write((char) (col + 32));
+               writer.write((char) (row + 32));
+            }
+            writer.flush();
          }
-         writer.flush();
       } catch (IOException e) {
          trace("sendMouseEvent failed: " + e);
       }
@@ -352,43 +364,45 @@ class Vt100 extends TextEdit<String> {
             JeyEvent kev = EventQueue.nextEvent(fvc.vi);
             char ch = kev.getKeyChar();
             if (ch == JeyEvent.CHAR_UNDEFINED) {
-               switch (kev.getKeyCode()) {
-                  case JeyEvent.VK_LEFT:
-                     //writer.write("\33D");
-                     writer.write("\33[D");
-                     break;
-                  case JeyEvent.VK_RIGHT:
-                     writer.write("\33[C");
-                     //writer.write("\33C");
-                     break;
-                  case JeyEvent.VK_UP:
-                     writer.write("\33[A");
-                     //writer.write("\33A");
-                     break;
-                  case JeyEvent.VK_DOWN:
-                     writer.write("\33[B");
-                     //writer.write("\33B");
-                     break;
-                  case JeyEvent.VK_INSERT:
-                     return;
-                  case JeyEvent.VK_F8:
-                     return;  // F8 toggles back to vi-edit mode
-                  default:
-                     trace("unhandle KeyCode " + kev.getKeyCode());
+               synchronized (writerLock) {
+                  switch (kev.getKeyCode()) {
+                     case JeyEvent.VK_LEFT:
+                        writer.write("\33[D");
+                        break;
+                     case JeyEvent.VK_RIGHT:
+                        writer.write("\33[C");
+                        break;
+                     case JeyEvent.VK_UP:
+                        writer.write("\33[A");
+                        break;
+                     case JeyEvent.VK_DOWN:
+                        writer.write("\33[B");
+                        break;
+                     case JeyEvent.VK_INSERT:
+                        return;
+                     case JeyEvent.VK_F8:
+                        return;
+                     default:
+                        trace("unhandle KeyCode "
+                           + kev.getKeyCode());
+                  }
+                  writer.flush();
                }
-               writer.flush();
             } else {
-               // Check for Cmd+V (macOS) / Ctrl+V clipboard paste
+               // Cmd+V (macOS) / Ctrl+V clipboard paste
                if (('v' == ch || 'V' == ch)
-                     && (kev.getModifiers() & JeyEvent.META_MASK) != 0) {
+                     && (kev.getModifiers()
+                        & JeyEvent.META_MASK) != 0) {
                   pasteClipboard();
                   continue;
                }
                if ('\r' == ch
-                     && '\r' == kev.getKeyCode()) // this was really a cr
+                     && '\r' == kev.getKeyCode())
                   ch = '\n';
-               writer.write(ch);
-               writer.flush();
+               synchronized (writerLock) {
+                  writer.write(ch);
+                  writer.flush();
+               }
             }
          }
       } catch (IOException e) {
