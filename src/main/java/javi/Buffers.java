@@ -22,6 +22,12 @@ public final class Buffers {
       delbuffer = cbuf;
    }
 
+   // B6: unchecked cast unavoidable — buflist is HashMap<Integer, Object>
+   // storing both String and ArrayList<String>. Erasure prevents runtime
+   // verification of ArrayList<String>; instanceof guards are as safe as
+   // possible. Redesigning to typed containers would require splitting the
+   // heterogeneous buflist into separate maps, breaking the vi register
+   // model where a register can hold either a line or multiple lines.
    @SuppressWarnings("unchecked")
    static void deleted(char bufid, String buffer) {
       if (null == buffer)
@@ -50,7 +56,7 @@ public final class Buffers {
       }
    }
 
-   @SuppressWarnings("unchecked")
+   @SuppressWarnings("unchecked") // B6: same erasure issue as above
    static void deleted(char bufid, ArrayList<String> buffer) {
 
       if (null == buffer)
@@ -142,7 +148,7 @@ public final class Buffers {
       //   //trace("lost ownership");
       //}
 
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings("unchecked") // B6: same erasure — obj may be ArrayList<String>
       public static final String myToString(Object obj) {
          //trace("reached myToString" + obj.getClass());
          String s;

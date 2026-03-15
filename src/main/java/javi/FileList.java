@@ -568,8 +568,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       }
    }
 
-   private void nextfile(FvContext fvc) throws InputException {
-      FvContext fileListFvc = fvc.switchContext(this, 1);
+   private void nextfile(FvContext<?> fvc) throws InputException {
+      FvContext<?> fileListFvc = fvc.switchContext(this, 1);
       if (fvc.edvec != this)
          FvContext.connectFv((TextEdit) fileListFvc.at(), fvc.vi);
    }
