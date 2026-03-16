@@ -1,0 +1,180 @@
+package javi;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * JUnit 5 tests for {@link ShellManager} — session management
+ * API on an empty manager instance.
+ *
+ * <p>Does not create real shell sessions (which spawn processes)
+ * because they hang the Gradle test runner on cleanup.</p>
+ */
+class ShellManagerJUnitTest {
+
+   private static ShellManager mgr;
+
+   @BeforeAll
+   static void initOnce() throws Exception {
+      TestInit.init();
+      mgr = ShellManager.getInstance();
+      mgr.closeAll(); // ensure clean state
+   }
+
+   // ================================================================
+   // Singleton & initial state
+   // ================================================================
+
+   @Test
+   @DisplayName("getInstance returns same instance")
+   void singletonIdentity() {
+      assertSame(mgr, ShellManager.getInstance());
+   }
+
+   @Test
+   @DisplayName("no sessions initially after closeAll")
+   void initialCountZero() {
+      assertEquals(0, mgr.getSessionCount());
+   }
+
+   @Test
+   @DisplayName("activeIndex is -1 when empty")
+   void activeIndexNegativeWhenEmpty() {
+      assertEquals(-1, mgr.getActiveIndex());
+   }
+
+   @Test
+   @DisplayName("getActive returns null when empty")
+   void getActiveNullWhenEmpty() {
+      assertNull(mgr.getActive());
+   }
+
+   @Test
+   @DisplayName("getActiveBuffer returns null when empty")
+   void getActiveBufferNullWhenEmpty() {
+      assertNull(mgr.getActiveBuffer());
+   }
+
+   @Test
+   @DisplayName("getSessions returns empty list when empty")
+   void getSessionsEmptyWhenEmpty() {
+      List<ShellSession> sessions = mgr.getSessions();
+      assertNotNull(sessions);
+      assertTrue(sessions.isEmpty());
+   }
+
+   @Test
+   @DisplayName("getShellList reports no active shells")
+   void shellListEmptyMessage() {
+      String list = mgr.getShellList();
+      assertNotNull(list);
+      assertTrue(list.contains("No active shells"),
+         "should say 'No active shells', got: " + list);
+   }
+
+   // ================================================================
+   // Invalid operations on empty manager
+   // ================================================================
+
+   @Test
+   @DisplayName("switchTo with invalid index returns false")
+   void switchToInvalidIndex() {
+      assertFalse(mgr.switchTo(0));
+      assertFalse(mgr.switchTo(-1));
+      assertFalse(mgr.switchTo(100));
+   }
+
+   @Test
+   @DisplayName("switchToId with no sessions returns false")
+   void switchToIdNotFound() {
+      assertFalse(mgr.switchToId(999));
+   }
+
+   @Test
+   @DisplayName("switchToName with no sessions returns false")
+   void switchToNameNotFound() {
+      assertFalse(mgr.switchToName("nonexistent"));
+   }
+
+   @Test
+   @DisplayName("nextShell with no sessions returns false")
+   void nextShellEmpty() {
+      assertFalse(mgr.nextShell());
+   }
+
+   @Test
+   @DisplayName("previousShell with no sessions returns false")
+   void previousShellEmpty() {
+      assertFalse(mgr.previousShell());
+   }
+
+   @Test
+   @DisplayName("closeActiveShell with no sessions returns false")
+   void closeActiveShellEmpty() {
+      assertFalse(mgr.closeActiveShell());
+   }
+
+   @Test
+   @DisplayName("closeShell with unknown ID returns false")
+   void closeShellUnknownId() {
+      assertFalse(mgr.closeShell(999));
+   }
+
+   @Test
+   @DisplayName("closeShellAt with invalid index returns false")
+   void closeShellAtInvalid() {
+      assertFalse(mgr.closeShellAt(0));
+      assertFalse(mgr.closeShellAt(-1));
+   }
+
+   @Test
+   @DisplayName("isMouseTrackingActive returns false when empty")
+   void mouseTrackingFalseWhenEmpty() {
+      assertFalse(mgr.isMouseTrackingActive());
+   }
+
+   @Test
+   @DisplayName("findByName returns null when empty")
+   void findByNameNullWhenEmpty() {
+      assertNull(mgr.findByName("local"));
+   }
+
+   @Test
+   @DisplayName("findByBuffer returns null when empty")
+   void findByBufferNullWhenEmpty() {
+      assertNull(mgr.findByBuffer(null));
+   }
+
+   @Test
+   @DisplayName("closeAll on empty manager is no-op")
+   void closeAllEmptyNoOp() {
+      mgr.closeAll();
+      assertEquals(0, mgr.getSessionCount());
+      assertEquals(-1, mgr.getActiveIndex());
+   }
+
+   @Test
+   @DisplayName("forwardMouseEvent on empty manager is no-op")
+   void forwardMouseEventEmptyNoOp() {
+      // Should not throw even with no active session
+      mgr.forwardMouseEvent(0, 1, 1, true);
+   }
+
+   @Test
+   @DisplayName("notifyResize on empty manager is no-op")
+   void notifyResizeEmptyNoOp() {
+      // Should not throw even with no sessions
+      mgr.notifyResize(24, 80);
+   }
+}
+

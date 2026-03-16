@@ -507,4 +507,103 @@ class EditContainerJUnitTest {
         ex.disposeFvc();
         deleteTestFiles(fname);
     }
+
+    // ============================================================
+    // findfile / grepfile tests
+    // ============================================================
+
+    @Test
+    void findfileReturnsOpenedFile() throws IOException {
+        String fname = "ju_ec_ff1";
+        UI.setStream(new StringReader(""));
+        deleteTestFiles(fname);
+
+        TextEdit<String> ex = openTestFile(fname);
+        FileDescriptor fd = FileDescriptor.make(testPath(fname));
+        EditContainer found = EditContainer.findfile(fd);
+        assertTrue(found != null,
+            "findfile should locate an open file");
+        assertEquals(ex, found);
+
+        ex.disposeFvc();
+        deleteTestFiles(fname);
+    }
+
+    @Test
+    void findfileReturnsNullForUnknown() {
+        FileDescriptor fd = FileDescriptor.make("/no/such/file_xyz");
+        EditContainer found = EditContainer.findfile(fd);
+        assertTrue(found == null,
+            "findfile should return null for unknown file");
+    }
+
+    @Test
+    void grepfileMatchesSuffix() throws IOException {
+        String fname = "ju_ec_grep1";
+        UI.setStream(new StringReader(""));
+        deleteTestFiles(fname);
+
+        TextEdit<String> ex = openTestFile(fname);
+        EditContainer found = EditContainer.grepfile(fname);
+        assertTrue(found != null,
+            "grepfile should match file by suffix");
+        assertEquals(ex, found);
+
+        ex.disposeFvc();
+        deleteTestFiles(fname);
+    }
+
+    @Test
+    void grepfileReturnsNullForNoMatch() {
+        EditContainer found = EditContainer.grepfile(
+            "no_such_file_at_all_xyz");
+        assertTrue(found == null,
+            "grepfile should return null when nothing matches");
+    }
+
+    @Test
+    void getNameReturnsDescriptorName() throws IOException {
+        String fname = "ju_ec_name1";
+        UI.setStream(new StringReader(""));
+        deleteTestFiles(fname);
+
+        TextEdit<String> ex = openTestFile(fname);
+        String name = ex.getName();
+        assertTrue(name.contains(fname),
+            "getName should contain the file name");
+
+        ex.disposeFvc();
+        deleteTestFiles(fname);
+    }
+
+    @Test
+    void insertOneAtFinishAppendsLine() throws IOException {
+        String fname = "ju_ec_iof";
+        UI.setStream(new StringReader(""));
+        deleteTestFiles(fname);
+
+        TextEdit<String> ex = openTestFile(fname);
+        ex.insertOne("first", ex.finish());
+        assertEquals("first", ex.at(ex.finish() - 1).toString());
+
+        ex.disposeFvc();
+        deleteTestFiles(fname);
+    }
+
+    @Test
+    void removeAllLinesLeavesEmpty() throws IOException {
+        String fname = "ju_ec_remall";
+        UI.setStream(new StringReader(""));
+        deleteTestFiles(fname);
+
+        TextEdit<String> ex = openTestFile(fname);
+        ex.inserttext("aaa\nbbb\n", 0, 1);
+        ex.checkpoint();
+        // Remove all content lines
+        ex.remove(1, ex.finish() - 2);
+        assertEquals(2, ex.finish(), "after removing all: sentinel only");
+
+        ex.disposeFvc();
+        deleteTestFiles(fname);
+    }
 }

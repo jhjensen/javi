@@ -71,7 +71,7 @@ class FileListJUnitTest {
       EventQueue.biglock2.lock();
       try {
          String paths = testFile1.getAbsolutePath()
-            + "\n" + testFile2.getAbsolutePath();
+               + "\n" + testFile2.getAbsolutePath();
          FileList.make(paths);
 
          FileList inst = FileList.TestAccess.getInstance();
@@ -79,8 +79,8 @@ class FileListJUnitTest {
          int size = inst.finish();
          // ecache has root element + 2 file entries = 3
          assertTrue(size >= 3,
-            "FileList should have at least 3 entries (root + 2 files), got "
-            + size);
+               "FileList should have at least 3 entries (root + 2 files), got "
+                     + size);
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -95,7 +95,7 @@ class FileListJUnitTest {
          assertNotNull(inst);
          // With root + 2 files, index 2 should exist
          assertTrue(inst.containsNow(2),
-            "containsNow(2) should be true for 2 file entries");
+               "containsNow(2) should be true for 2 file entries");
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -112,12 +112,12 @@ class FileListJUnitTest {
          TextEdit<String> entry1 = inst.at(1);
          assertNotNull(entry1, "entry at index 1 should exist");
          assertEquals(2, entry1.finish(),
-            "file entry should have 2 elements (root + 1 content line)");
+               "file entry should have 2 elements (root + 1 content line)");
 
          TextEdit<String> entry2 = inst.at(2);
          assertNotNull(entry2, "entry at index 2 should exist");
          assertEquals(2, entry2.finish(),
-            "file entry should have 2 elements (root + 1 content line)");
+               "file entry should have 2 elements (root + 1 content line)");
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -134,7 +134,7 @@ class FileListJUnitTest {
          inst.checkpoint();
          int sizeAfter = inst.finish();
          assertEquals(sizeBefore - 1, sizeAfter,
-            "remove(1,1) should reduce size by 1");
+               "remove(1,1) should reduce size by 1");
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -150,7 +150,7 @@ class FileListJUnitTest {
          inst.undo();
          int sizeAfter = inst.finish();
          assertEquals(sizeBefore + 1, sizeAfter,
-            "undo should restore the removed entry");
+               "undo should restore the removed entry");
       } finally {
          EventQueue.biglock2.unlock();
       }
