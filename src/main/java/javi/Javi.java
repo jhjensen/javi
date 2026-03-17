@@ -141,152 +141,132 @@ public final class Javi {
       //trace("prop : \n" + System.getProperties());
       EventQueue.biglock2.lock();
       try {
-      trace("enter Javi Main");
-      //new Thread(new Preloader(), "preloader").start();
-      Thread curr = Thread.currentThread();
-      curr.setPriority(curr.getPriority() - 1);
-      StringBuilder sb = new StringBuilder(args.length * 10);
-      String command = null;
-      boolean cflag = false;
-      boolean pflag = false;
-      // B10: Improved command line argument handling with validation
-      for (int i = 0; i < args.length; i++) {
-         String str = args[i];
-         //trace("commandline: " + str);
+         trace("enter Javi Main");
+         //new Thread(new Preloader(), "preloader").start();
+         Thread curr = Thread.currentThread();
+         curr.setPriority(curr.getPriority() - 1);
+         StringBuilder sb = new StringBuilder(args.length * 10);
+         String command = null;
+         boolean cflag = false;
+         boolean pflag = false;
+         // B10: Improved command line argument handling with validation
+         for (int i = 0; i < args.length; i++) {
+            String str = args[i];
+            //trace("commandline: " + str);
+            if (cflag) {
+               command = str;
+               cflag = false;
+            } else if (pflag) {
+               persistName = str;
+               pflag = false;
+            } else if (str.equals("-h") || str.equals("--help")) {
+               printUsage();
+               System.exit(0);
+            } else if (str.equals("-c")) {
+               // B10: Check that -c has an argument
+               if (i + 1 >= args.length) {
+                  System.err.println("Error: -c requires a command argument");
+                  printUsage();
+                  System.exit(1);
+               }
+               cflag = true;
+            } else if (str.equals("-p")) {
+               // B10: Check that -p has an argument
+               if (i + 1 >= args.length) {
+                  System.err.println("Error: -p requires a file argument");
+                  printUsage();
+                  System.exit(1);
+               }
+               pflag = true;
+            } else if (str.startsWith("-") && str.length() > 1) {
+               // B10: Reject unknown flags
+               System.err.println("Error: Unknown option: " + str);
+               printUsage();
+               System.exit(1);
+            } else {
+               sb.append(str);
+               sb.append('\n');
+            }
+         }
+         // B10: Handle trailing flag without argument (shouldn't happen with above checks)
          if (cflag) {
-            command = str;
-            cflag = false;
-         } else if (pflag) {
-            persistName = str;
-            pflag = false;
-         } else if (str.equals("-h") || str.equals("--help")) {
-            printUsage();
-            System.exit(0);
-         } else if (str.equals("-c")) {
-            // B10: Check that -c has an argument
-            if (i + 1 >= args.length) {
-               System.err.println("Error: -c requires a command argument");
-               printUsage();
-               System.exit(1);
-            }
-            cflag = true;
-         } else if (str.equals("-p")) {
-            // B10: Check that -p has an argument
-            if (i + 1 >= args.length) {
-               System.err.println("Error: -p requires a file argument");
-               printUsage();
-               System.exit(1);
-            }
-            pflag = true;
-         } else if (str.startsWith("-") && str.length() > 1) {
-            // B10: Reject unknown flags
-            System.err.println("Error: Unknown option: " + str);
+            System.err.println("Error: -c requires a command argument");
             printUsage();
             System.exit(1);
-         } else {
-            sb.append(str);
-            sb.append('\n');
          }
-      }
-      // B10: Handle trailing flag without argument (shouldn't happen with above checks)
-      if (cflag) {
-         System.err.println("Error: -c requires a command argument");
-         printUsage();
-         System.exit(1);
-      }
-      if (pflag) {
-         System.err.println("Error: -p requires a file argument");
-         printUsage();
-         System.exit(1);
-      }
-      File pfile = null == persistName
-                             ? null
-                             : new File(persistName);
+         if (pflag) {
+            System.err.println("Error: -p requires a file argument");
+            printUsage();
+            System.exit(1);
+         }
+         File pfile = null == persistName
+                                ? null
+                                : new File(persistName);
 
-      boolean normalInit = true;
-      if (null != pfile) {
-         ObjectInputStream pis = null;
-         try {
-            pis = new ObjectInputStream(
-               new BufferedInputStream(new FileInputStream(pfile)));
-            //UI.trace("!!!!!!!!!!!!!!!! start restore ");
-            TextEdit.restoreState(pis);
-            FileList.restoreState(pis);
-            FvContext.restoreState(pis);
-            UI.restoreState(pis);
-            //UI.trace("!!!!!!!!!!!!!!!! end restore ");
-            //FvContext fvc = FvContext.getCurrFvc();
-            //fvc.vi.requestFocus();
-
-            normalInit = false;
-         } catch (IOException e) {
-            trace("Exception while restoring state " + e);
-            e.printStackTrace();
-            pis = null;
-         } catch (ClassNotFoundException e) {
-            trace("Exception while restoring state " + e);
-            e.printStackTrace();
-            System.exit(0);
-         } catch (Throwable e) {
-            trace("Exception while restoring state " + e);
-            e.printStackTrace();
-            System.exit(0);
-            trace("");
-         } finally {
-            if (pis != null)
-               try {
-                  pis.close();
-               } catch (IOException e) {
-                  trace("caught exception try to close input stream!");
-               }
-         }
-      }
-      DirManager.getInstance(); // force initialization of directory manager
-      FileList.make(sb.toString());
-      try {
-         if (normalInit) {
-            initToUi();
-         }
-
-         initPostUi();
-         if (null != command) {
-            //UI.trace("doing command " + command);
-            Command.command(command, null, null);
-         }
-         Command.doneInit();
-         MapEvent.run();
-      } catch (ExitException e) {
-      } catch (Throwable e) {
-         if (!(e instanceof ExitException)) {
-            trace("main caught vic exception "  + e);
-            e.printStackTrace();
-            trace("exiting");
-         }
-      }
-
-      if (null != pfile)  {
-         //DebuggingObjectOutputStream pout = null;
-         try {
-            ObjectOutputStream pout =
-               new ObjectOutputStream(
-                  new BufferedOutputStream(new FileOutputStream(pfile)));
+         boolean normalInit = true;
+         if (null != pfile) {
+            ObjectInputStream pis = null;
             try {
-               //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! start save");
-               TextEdit.saveState(pout);
-               FileList.saveState(pout);
-               FvContext.saveState(pout);
-               UI.saveState(pout);
-               //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! end save");
+               pis = new ObjectInputStream(
+                  new BufferedInputStream(new FileInputStream(pfile)));
+               //UI.trace("!!!!!!!!!!!!!!!! start restore ");
+               TextEdit.restoreState(pis);
+               FileList.restoreState(pis);
+               FvContext.restoreState(pis);
+               UI.restoreState(pis);
+               //UI.trace("!!!!!!!!!!!!!!!! end restore ");
+               //FvContext fvc = FvContext.getCurrFvc();
+               //fvc.vi.requestFocus();
 
-            } catch (Throwable  e) {
-               UI.popError("Serialization error ", e);
+               normalInit = false;
+            } catch (IOException e) {
+               trace("Exception while restoring state " + e);
+               e.printStackTrace();
+               pis = null;
+            } catch (ClassNotFoundException e) {
+               trace("Exception while restoring state " + e);
+               e.printStackTrace();
+               System.exit(0);
+            } catch (Throwable e) {
+               trace("Exception while restoring state " + e);
+               e.printStackTrace();
+               System.exit(0);
+               trace("");
             } finally {
-               pout.close();
+               if (pis != null)
+                  try {
+                     pis.close();
+                  } catch (IOException e) {
+                     trace("caught exception try to close input stream!");
+                  }
             }
-         } catch (IOException e) {
-            trace("caught exception trying to open serialization file");
          }
-      }
+         DirManager.getInstance(); // force initialization of directory manager
+         FileList.make(sb.toString());
+         try {
+            if (normalInit) {
+               initToUi();
+            }
+
+            initPostUi();
+            if (null != command) {
+               //UI.trace("doing command " + command);
+               Command.command(command, null, null);
+            }
+            Command.doneInit();
+            MapEvent.run();
+         } catch (ExitException e) {
+         } catch (Throwable e) {
+            if (!(e instanceof ExitException)) {
+               trace("main caught vic exception "  + e);
+               e.printStackTrace();
+               trace("exiting");
+            }
+         }
+
+         if (null != pfile)  {
+            saveState(pfile);
+         }
 
       } finally {
          EventQueue.biglock2.unlock();
@@ -295,5 +275,25 @@ public final class Javi {
       UI.dispose();
       trace("calling System.exit");
       System.exit(0);
+   }
+
+   private static void saveState(File pfile) {
+      try {
+         ObjectOutputStream pout =
+            new ObjectOutputStream(
+               new BufferedOutputStream(new FileOutputStream(pfile)));
+         try {
+            TextEdit.saveState(pout);
+            FileList.saveState(pout);
+            FvContext.saveState(pout);
+            UI.saveState(pout);
+         } catch (Throwable e) {
+            UI.popError("Serialization error ", e);
+         } finally {
+            pout.close();
+         }
+      } catch (IOException e) {
+         trace("caught exception trying to open serialization file");
+      }
    }
 }
