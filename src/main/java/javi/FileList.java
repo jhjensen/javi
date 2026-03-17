@@ -101,7 +101,10 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                //trace("fopen command arg" + arg);
                //trace("instance " + instance);
                // Type safety: arg should be String from key mapping
-               return openFileName(arg instanceof String ? (String) arg : arg.toString(), fvc.vi);
+               return openFileName(
+                  arg instanceof String
+                     ? (String) arg : arg.toString(),
+                  fvc.vi);
             case 3:
                processZ(fvc);
                return null;
@@ -447,7 +450,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
                      searchName = getLine();
                      //trace("searching for file " + searchName);
-                     if (null == searchName || searchName.length() == 0)
+                     if (null == searchName
+                        || searchName.length() == 0)
                         break oloop;
 
                      foundf = false;
@@ -554,6 +558,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
                      stage = 1;
                      break;
+                  default:
+                     break oloop;
                }
 
             if (null != edv) {
@@ -677,22 +683,22 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          //perftest();
          make("test1\ntest2");
          instance.finish();
-         Tools.Assert(instance.containsNow(2), instance);
+         Tools.checkAssertion(instance.containsNow(2), instance);
          instance.checkpoint();
          //trace("instance[1] " + instance.at(1));
          //trace("instance[2] " + instance.at(2));
 //     trace("instance[3] " + instance.at(3));
-         Tools.Assert((2 == instance.at(1).finish()),
+         Tools.checkAssertion((2 == instance.at(1).finish()),
                       Integer.valueOf((instance.at(1)).finish()));
-         Tools.Assert((2 == instance.at(2).finish()),
+         Tools.checkAssertion((2 == instance.at(2).finish()),
                       Integer.valueOf((instance.at(1)).finish()));
          instance.remove(1, 1);
          instance.checkpoint();
          //trace("instance[1] " + instance.at(1));
-         Tools.Assert(2 == instance.finish(), instance.finish());
+         Tools.checkAssertion(2 == instance.finish(), instance.finish());
          instance.undo();
 
-         //Tools.Assert(instance.finish()== 3, instance.finish());
+         //Tools.checkAssertion(instance.finish()== 3, instance.finish());
          findModified();
          instance.disposeFvc();
          trace("test executed successfully");
@@ -793,6 +799,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                         } catch (IOException | InputException e) {
                            UI.popError("Error closing file", e);
                         }
+                        break;
+                     default:
                         break;
                   }
                } while (action == UI.ReloadAction.SHOW_DIFF);
