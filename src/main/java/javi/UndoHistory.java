@@ -130,7 +130,8 @@ public final class UndoHistory<OType>
    void push(ChangeRecord<OType> cr) {
       //trace("push record type " + cr.getType() +" :"+ cr);
       //Thread.dumpStack();
-      currmark.push(current = cr);
+      current = cr;
+      currmark.push(current);
    }
 
    void checkRecord() {
@@ -141,9 +142,12 @@ public final class UndoHistory<OType>
 
       if (savewrite >= currmark.getIndex()) {
          savewrite = -1;
-         currmark.push(current = new WriteRecord(-1));
-      } else
-         currmark.push(current = new ChangeRecord.CheckRecord());
+         current = new WriteRecord(-1);
+         currmark.push(current);
+      } else {
+         current = new ChangeRecord.CheckRecord();
+         currmark.push(current);
+      }
    }
 
    void baseRecord() {
@@ -152,11 +156,15 @@ public final class UndoHistory<OType>
       //currmark.push(current) ;
       //trace("remove returned " +
 
-      if (currmark.hasNext())
-         pushend(current = new ChangeRecord.BaseRecord(currmark.getIndex()));
-      else
-         currmark.push(current =
-                          new ChangeRecord.BaseRecord(currmark.getIndex() + 1));
+      if (currmark.hasNext()) {
+         current = new ChangeRecord.BaseRecord(
+            currmark.getIndex());
+         pushend(current);
+      } else {
+         current = new ChangeRecord.BaseRecord(
+            currmark.getIndex() + 1);
+         currmark.push(current);
+      }
 
       savewrite = currmark.getIndex();
       //trace("savewrite = " + savewrite + " + hasFile = " + hasFile());
@@ -203,7 +211,8 @@ public final class UndoHistory<OType>
       do {
          chindex = current.undocr();
          //trace(" " +currmark.getIndex() + " " + current);
-      } while (!((current = currmark.previous())
+         current = currmark.previous();
+      } while (!(current
                  instanceof ChangeRecord.CheckRecord));
       //trace(" " +currmark.getIndex() + " " + current);
       return chindex;
