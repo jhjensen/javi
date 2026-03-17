@@ -167,7 +167,7 @@ class DirEditJUnitTest {
    }
 
    @Test
-   void deleteSelectedRefusesNonEmptyDirectory() throws Exception {
+   void removeFileDeletesNonEmptyDirectory() throws Exception {
       File subDir = new File(tempDir, "delete_nonempty_test");
       subDir.mkdir();
       File childDir = new File(subDir, "childdir");
@@ -177,11 +177,50 @@ class DirEditJUnitTest {
       dirEdit = makeDirEdit(subDir);
       // childdir/ should be listed; verify it exists
       assertEquals("childdir/", dirEdit.getFilename(4));
-      // Cannot delete non-empty directory
-      String[] children = childDir.list();
-      assertNotNull(children);
-      assertTrue(children.length > 0,
-         "Directory should have children");
+      // Non-empty directory can now be removed via removeFile
+      assertTrue(DirEdit.removeFile(childDir),
+         "removeFile should handle non-empty directories");
+      assertFalse(childDir.exists(),
+         "Directory should be gone after removeFile");
+   }
+
+   @Test
+   void removeFileDeletesSingleFile() throws Exception {
+      File subDir = new File(tempDir, "removefile_test");
+      subDir.mkdir();
+      File target = createTestFile(subDir, "removeme.txt");
+      assertTrue(target.exists());
+      assertTrue(DirEdit.removeFile(target),
+         "removeFile should delete a single file");
+      assertFalse(target.exists());
+   }
+
+   @Test
+   void removeFileDeletesEmptyDirectory() throws Exception {
+      File subDir = new File(tempDir, "removeemptydir_test");
+      subDir.mkdir();
+      File emptyDir = new File(subDir, "emptysubdir");
+      emptyDir.mkdir();
+      assertTrue(emptyDir.exists() && emptyDir.isDirectory());
+      assertTrue(DirEdit.removeFile(emptyDir),
+         "removeFile should delete an empty directory");
+      assertFalse(emptyDir.exists());
+   }
+
+   @Test
+   void removeFileDeletesNestedTree() throws Exception {
+      File subDir = new File(tempDir, "removetree_test");
+      subDir.mkdir();
+      File a = new File(subDir, "a");
+      a.mkdir();
+      File b = new File(a, "b");
+      b.mkdir();
+      createTestFile(b, "deep.txt");
+      createTestFile(a, "mid.txt");
+
+      assertTrue(DirEdit.removeFile(a),
+         "removeFile should recursively delete nested tree");
+      assertFalse(a.exists());
    }
 
    // --- Rename tests ---

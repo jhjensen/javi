@@ -1,5 +1,6 @@
 package javi;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -332,7 +333,7 @@ public final class DirEdit extends TextEdit<String> {
       lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort:"
          + sortMode.name().toLowerCase()
          + "  [R] refresh  [q] quit");
-      lines.add("  [dd] delete  [o] new file/dir  [S] search path"
+      lines.add("  [dd] delete/trash  [o] new file/dir  [S] search path"
          + "  [!] shell  :diredit_rename  :diredit_copy");
 
       // Insert all lines
@@ -679,7 +680,8 @@ public final class DirEdit extends TextEdit<String> {
 
    /**
     * Deletes the file or directory under the cursor.
-    * Non-empty directories are not deleted (safety guard).
+    * Uses system Trash when available; falls back to recursive delete
+    * with confirmation for non-empty directories.
     *
     * @param fvc the current FvContext
     * @throws InputException if the cursor is not on a file entry
@@ -703,28 +705,27 @@ public final class DirEdit extends TextEdit<String> {
          throw new InputException("File not found: " + name);
       }
 
-      if (target.isDirectory()) {
-         String[] children = target.list();
-         if (null != children && children.length > 0) {
-            throw new InputException("Directory not empty: " + name
-               + " (" + children.length + " entries)");
-         }
-      }
-
-      // Confirmation prompt
-      UI.reportMessage("Delete " + name + "? (y/n)");
+      // Confirmation prompt — wording depends on trash availability
+      String prompt = trashSupported()
+         ? "Move " + name + " to Trash? (y/n)"
+         : target.isDirectory() && hasChildren(target)
+            ? "Permanently delete " + name + " and all contents? (y/n)"
+            : "Delete " + name + "? (y/n)";
+      UI.reportMessage(prompt);
       char confirm = EventQueue.nextKey(fvc.vi);
       if (confirm != 'y' && confirm != 'Y') {
          UI.reportMessage("Delete cancelled");
          return;
       }
 
-      if (!target.delete()) {
+      if (!removeFile(target)) {
          throw new InputException("Failed to delete: " + name);
       }
 
-      UI.reportMessage("Deleted: " + name);
-      trace("DirEdit: deleted " + target.getAbsolutePath());
+      String verb = trashSupported() ? "Trashed" : "Deleted";
+      UI.reportMessage(verb + ": " + name);
+      trace("DirEdit: " + verb.toLowerCase() + " "
+         + target.getAbsolutePath());
       markedForDelete.remove(name);
       DirSizeCalculator.invalidate(currentDir.fh.getAbsolutePath());
       populateDirectory();
@@ -953,6 +954,7 @@ public final class DirEdit extends TextEdit<String> {
 
    /**
     * Executes all pending file operations (currently: deletions).
+    * Uses system Trash when available; falls back to recursive delete.
     * Clears marks after execution. Reports results.
     *
     * @param fvc the current FvContext
@@ -973,15 +975,7 @@ public final class DirEdit extends TextEdit<String> {
             markedForDelete.remove(name);
             continue;
          }
-         if (target.isDirectory()) {
-            String[] children = target.list();
-            if (null != children && children.length > 0) {
-               errors.add(name + " (not empty)");
-               failed++;
-               continue;
-            }
-         }
-         if (target.delete()) {
+         if (removeFile(target)) {
             markedForDelete.remove(name);
             deleted++;
             trace("DirEdit: batch deleted " + target.getAbsolutePath());
@@ -992,7 +986,8 @@ public final class DirEdit extends TextEdit<String> {
       }
 
       StringBuilder msg = new StringBuilder();
-      msg.append("Deleted ").append(deleted).append(" file(s)");
+      String verb = trashSupported() ? "Trashed" : "Deleted";
+      msg.append(verb).append(" ").append(deleted).append(" file(s)");
       if (failed > 0) {
          msg.append(", ").append(failed).append(" failed: ");
          msg.append(String.join(", ", errors));
@@ -1002,6 +997,76 @@ public final class DirEdit extends TextEdit<String> {
       populateDirectory();
       if (fvc.inserty() >= readIn()) {
          fvc.cursoryabs(readIn() - 1);
+      }
+   }
+
+   /**
+    * Checks whether the system Trash is available.
+    *
+    * @return true if Desktop.moveToTrash is supported
+    */
+   static boolean trashSupported() {
+      return Desktop.isDesktopSupported()
+         && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH);
+   }
+
+   /**
+    * Checks whether a directory has any children.
+    *
+    * @param dir the directory to check
+    * @return true if the directory is non-empty
+    */
+   private static boolean hasChildren(File dir) {
+      String[] children = dir.list();
+      return null != children && children.length > 0;
+   }
+
+   /**
+    * Removes a file or directory, using system Trash when available.
+    * Falls back to recursive delete for directories when Trash is
+    * not supported.
+    *
+    * @param target the file or directory to remove
+    * @return true if successfully removed
+    */
+   static boolean removeFile(File target) {
+      if (trashSupported()) {
+         return Desktop.getDesktop().moveToTrash(target);
+      }
+      if (target.isDirectory()) {
+         return deleteRecursively(target);
+      }
+      return target.delete();
+   }
+
+   /**
+    * Recursively deletes a directory tree.
+    *
+    * @param target the directory to delete
+    * @return true if the entire tree was deleted
+    */
+   private static boolean deleteRecursively(File target) {
+      try {
+         Files.walkFileTree(target.toPath(),
+            new SimpleFileVisitor<Path>() {
+               @Override
+               public FileVisitResult visitFile(Path file,
+                     BasicFileAttributes attrs) throws IOException {
+                  Files.delete(file);
+                  return FileVisitResult.CONTINUE;
+               }
+
+               @Override
+               public FileVisitResult postVisitDirectory(Path dir,
+                     IOException exc) throws IOException {
+                  Files.delete(dir);
+                  return FileVisitResult.CONTINUE;
+               }
+            });
+         return true;
+      } catch (IOException e) {
+         trace("DirEdit: recursive delete failed: " + e.getMessage());
+         return false;
       }
    }
 
