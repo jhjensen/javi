@@ -549,7 +549,7 @@ public class FileDescriptor implements Serializable {
    //String curdir = x.getAbsolutePath();
    static final void ntest(String iname, String shortname) {
       FileDescriptor tf = LocalFile.make(iname);
-      Tools.Assert(tf.shortName.equals(shortname), tf.shortName);
+      Tools.checkAssertion(tf.shortName.equals(shortname), tf.shortName);
    }
 
    public static void main(String[] args) {

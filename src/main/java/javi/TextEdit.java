@@ -1516,62 +1516,62 @@ final class EditTester1 {
       starttest();
       ArrayList<String> sarr = TextEdit.stringtoarray("1\n\n");
 
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
-      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+      Tools.checkAssertion(3 == sarr.size(), sarr.size());
+      Tools.checkAssertion(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.checkAssertion(0 == sarr.get(1).length(), sarr.get(1));
+      Tools.checkAssertion(0 == sarr.get(2).length(), sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n2\n");
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
-      Tools.Assert(3 == sarr.size(), sarr.size());
+      Tools.checkAssertion(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("2"), sarr.get(1));
+      Tools.checkAssertion(0 == sarr.get(2).length(), sarr.get(2));
+      Tools.checkAssertion(3 == sarr.size(), sarr.size());
 
       sarr = TextEdit.stringtoarray("\n1\n2\n");
-      Tools.Assert(4 == sarr.size(), sarr.size());
+      Tools.checkAssertion(4 == sarr.size(), sarr.size());
 
-      Tools.Assert(0  == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
-      Tools.Assert(0 == sarr.get(3).length(), sarr.get(3));
+      Tools.checkAssertion(0  == sarr.get(0).length(), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.checkAssertion(sarr.get(2).equals("2"), sarr.get(2));
+      Tools.checkAssertion(0 == sarr.get(3).length(), sarr.get(3));
 
       sarr = TextEdit.stringtoarray("\n1\n");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+      Tools.checkAssertion(3 == sarr.size(), sarr.size());
+      Tools.checkAssertion(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.checkAssertion(0 == sarr.get(2).length(), sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
+      Tools.checkAssertion(2 == sarr.size(), sarr.size());
+      Tools.checkAssertion(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.checkAssertion(0 == sarr.get(1).length(), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(0 == sarr.get(1).length(), sarr.get(1));
+      Tools.checkAssertion(2 == sarr.size(), sarr.size());
+      Tools.checkAssertion(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.checkAssertion(0 == sarr.get(1).length(), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n1");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.checkAssertion(2 == sarr.size(), sarr.size());
+      Tools.checkAssertion(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("1"), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("1\n2");
-      Tools.Assert(2 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
+      Tools.checkAssertion(2 == sarr.size(), sarr.size());
+      Tools.checkAssertion(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("2"), sarr.get(1));
 
       sarr = TextEdit.stringtoarray("\n1\n2");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(0 == sarr.get(0).length(), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("1"), sarr.get(1));
-      Tools.Assert(sarr.get(2).equals("2"), sarr.get(2));
+      Tools.checkAssertion(3 == sarr.size(), sarr.size());
+      Tools.checkAssertion(0 == sarr.get(0).length(), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("1"), sarr.get(1));
+      Tools.checkAssertion(sarr.get(2).equals("2"), sarr.get(2));
 
       sarr = TextEdit.stringtoarray("1\n2\n");
-      Tools.Assert(3 == sarr.size(), sarr.size());
-      Tools.Assert(sarr.get(0).equals("1"), sarr.get(0));
-      Tools.Assert(sarr.get(1).equals("2"), sarr.get(1));
-      Tools.Assert(0 == sarr.get(2).length(), sarr.get(2));
+      Tools.checkAssertion(3 == sarr.size(), sarr.size());
+      Tools.checkAssertion(sarr.get(0).equals("1"), sarr.get(0));
+      Tools.checkAssertion(sarr.get(1).equals("2"), sarr.get(1));
+      Tools.checkAssertion(0 == sarr.get(2).length(), sarr.get(2));
    }
 
    public static void main(String[] args) {

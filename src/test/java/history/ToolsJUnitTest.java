@@ -31,14 +31,14 @@ class ToolsJUnitTest {
 
    @Test
    void assertTrueDoesNotThrow() {
-      Tools.Assert(true, "should not throw");
+      Tools.checkAssertion(true, "should not throw");
       // No exception means success
    }
 
    @Test
    void assertFalseThrowsRuntimeException() {
       RuntimeException ex = assertThrows(RuntimeException.class,
-         () -> Tools.Assert(false, "failure info"));
+         () -> Tools.checkAssertion(false, "failure info"));
       assertTrue(ex.getMessage().contains("ASSERTION FAILURE"));
       assertTrue(ex.getMessage().contains("failure info"));
    }
@@ -46,7 +46,7 @@ class ToolsJUnitTest {
    @Test
    void assertFalseIncludesDumpObjectInMessage() {
       RuntimeException ex = assertThrows(RuntimeException.class,
-         () -> Tools.Assert(false, Integer.valueOf(42)));
+         () -> Tools.checkAssertion(false, Integer.valueOf(42)));
       assertTrue(ex.getMessage().contains("42"));
    }
 

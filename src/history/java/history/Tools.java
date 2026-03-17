@@ -42,7 +42,9 @@ import java.nio.charset.StandardCharsets;
  * <h2>Known Issues</h2>
  * <ul>
  *   <li>{@link #doGC()} uses deprecated runFinalization() - see IMPROVEMENTS.md M5</li>
- *   <li>Command execution doesn't escape arguments - potential injection (BUGS.md #24)</li>
+ *   <li>Command execution doesn't escape
+ *       arguments - potential injection
+ *       (BUGS.md #24)</li>
  * </ul>
  *
  * @see javi.UI#popError
@@ -103,7 +105,7 @@ public final class Tools {
       }
    }
 
-   public static void Assert(boolean flag, Object dump) {
+   public static void checkAssertion(boolean flag, Object dump) {
       if (!flag)
          throw new RuntimeException(" ASSERTION FAILURE " + dump.toString());
    }
