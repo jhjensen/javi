@@ -8,6 +8,7 @@
 #   make -C /Users/jjensen/javi -f ai/makefile junit.out
 #   make -C /Users/jjensen/javi -f ai/makefile cstyle.out
 #   make -C /Users/jjensen/javi -f ai/makefile cstyle-file.out FILE=src/main/java/javi/Foo.java
+#   make -C /Users/jjensen/javi -f ai/makefile validate.out   # junit + cstyle combined
 #
 # After running, read the ai/<name>.out file for results.
 # Every target uses FORCE so it re-runs unconditionally.
@@ -56,6 +57,22 @@ ai/coverage.out: FORCE
 ai/test-coverage.out: FORCE
 	$(MAKE) test-coverage > $@ 2>&1; echo "exit: $$?" >> $@
 
+# Pre-commit validation: JUnit tests + cstyle (fails if either fails)
+ai/validate.out: FORCE
+	@rc=0; \
+	echo "=== JUnit tests ===" > $@; \
+	./gradlew test >> $@ 2>&1; junit_rc=$$?; \
+	echo "exit: $$junit_rc" >> $@; \
+	echo "" >> $@; \
+	echo "=== Cstyle ===" >> $@; \
+	perl cstyle src/main/java/javi/*.java src/history/java/history/*.java >> $@ 2>&1; cstyle_rc=$$?; \
+	echo "exit: $$cstyle_rc" >> $@; \
+	echo "" >> $@; \
+	if [ $$junit_rc -ne 0 ] || [ $$cstyle_rc -ne 0 ]; then rc=1; fi; \
+	echo "=== Summary ===" >> $@; \
+	echo "junit: $$junit_rc  cstyle: $$cstyle_rc  overall: $$rc" >> $@; \
+	exit $$rc
+
 # Convenience aliases (short names)
 compile.out: ai/compile.out
 junit.out:   ai/junit.out
@@ -64,3 +81,4 @@ test.out:    ai/test.out
 cstyle.out:  ai/cstyle.out
 javadoc.out: ai/javadoc.out
 coverage.out: ai/coverage.out
+validate.out: ai/validate.out
