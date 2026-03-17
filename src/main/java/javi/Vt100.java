@@ -117,7 +117,8 @@ class Vt100 extends TextEdit<String> {
     */
    @Deprecated
    Vt100(OutputStream ostri, BufferedInputStream istr,
-         IoConverter<String> ioc) throws java.io.UnsupportedEncodingException {
+         IoConverter<String> ioc)
+         throws java.io.UnsupportedEncodingException {
       this(ostri, istr, ioc, CharsetDetector.detectTerminalCharset());
    }
 
