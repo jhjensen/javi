@@ -71,7 +71,7 @@ public final class ShellSession {
     * @throws IOException if the shell process cannot be started
     */
    ShellSession(int id, String host) throws IOException {
-      this(id, host, null);
+      this(id, host, null, null);
    }
 
    /**
@@ -83,6 +83,21 @@ public final class ShellSession {
     * @throws IOException if the shell process cannot be started
     */
    ShellSession(int id, String host, String customName) throws IOException {
+      this(id, host, customName, null);
+   }
+
+   /**
+    * Creates a new shell session with optional custom name and working
+    * directory.
+    *
+    * @param id the unique session ID
+    * @param host the SSH hostname, or null for local shell
+    * @param customName user-specified name, or null for default
+    * @param workDir initial working directory, or null for default
+    * @throws IOException if the shell process cannot be started
+    */
+   ShellSession(int id, String host, String customName, java.io.File workDir)
+         throws IOException {
       this.id = id;
       this.host = host;
       if (customName != null && !customName.isEmpty())
@@ -105,6 +120,9 @@ public final class ShellSession {
       env.put("COLUMNS", Integer.toString(cols));
       env.put("LINES", Integer.toString(rows));
       env.putAll(envVars);
+      if (null != workDir && workDir.isDirectory()) {
+         pb.directory(workDir);
+      }
       this.process = pb.start();
       trace("ShellSession " + id + ": started process with charset "
          + charset.name() + " TERM=xterm COLUMNS=" + cols + " LINES=" + rows);

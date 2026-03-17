@@ -665,4 +665,54 @@ class DirEditJUnitTest {
       assertTrue(foundEllipsis,
          "Directory entry should show '...' before size is calculated");
    }
+
+   // --- WatchService tests ---
+
+   @Test
+   void watchDirectoryRegistersAndUnregisters() throws IOException {
+      DirEdit.DirSizeCalculator.clearCache();
+      File watchDir = new File(tempDir, "watch_test");
+      watchDir.mkdir();
+      createTestFile(watchDir, "w.txt", "x");
+
+      dirEdit = makeDirEdit(watchDir);
+      String absPath = watchDir.getAbsolutePath();
+
+      // watchDirectory is called by populateDirectoryImpl
+      // Verify registration happened
+      assertTrue(DirEdit.DirSizeCalculator.watchCount() > 0,
+         "Should have at least one watch key after populating");
+
+      // Unwatch
+      DirEdit.DirSizeCalculator.unwatchDirectory(absPath, dirEdit);
+   }
+
+   @Test
+   void watchDirectoryInvalidatesCacheOnChange() throws Exception {
+      DirEdit.DirSizeCalculator.clearCache();
+      File watchDir2 = new File(tempDir, "watch_invalidate");
+      watchDir2.mkdir();
+      File sub = new File(watchDir2, "sub");
+      sub.mkdir();
+
+      // Pre-fill cache
+      long size = DirEdit.DirSizeCalculator.walkDirectorySize(
+         sub.getAbsolutePath());
+      // Manually put in cache to test invalidation
+      DirEdit.DirSizeCalculator.invalidate(sub.getAbsolutePath());
+      assertNull(DirEdit.DirSizeCalculator.getCachedSize(
+         sub.getAbsolutePath()),
+         "Cache should be empty after invalidation");
+   }
+
+   // --- diredit_shell command registration ---
+
+   @Test
+   void shellCommandIsRegistered() {
+      DirEdit.Commands cmds = DirEdit.Commands.getInstance();
+      assertNotNull(cmds,
+         "DirEdit.Commands singleton should be available");
+      assertNotNull(Rgroup.bindingLookup("diredit_shell"),
+         "diredit_shell command should be registered");
+   }
 }

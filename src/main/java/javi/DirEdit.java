@@ -2,11 +2,16 @@ package javi;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -79,6 +84,9 @@ public final class DirEdit extends TextEdit<String> {
 
    /** Current sort mode. Package-private for testing. */
    SortMode sortMode = SortMode.NAME;
+
+   /** The directory path currently being watched (for WatchService). */
+   private String watchedPath;
 
    /** Files marked for deletion. Package-private for testing. */
    final HashSet<String> markedForDelete = new HashSet<>();
@@ -157,6 +165,10 @@ public final class DirEdit extends TextEdit<String> {
             return true;
          case 'o': case 'O':
             createInline(fvc);
+            return true;
+         case '!':
+            Rgroup.doCommand("diredit_shell", null, 0, 0,
+               fvc, false);
             return true;
          default:
             break;
@@ -247,6 +259,13 @@ public final class DirEdit extends TextEdit<String> {
     * Internal implementation of directory population.
     */
    private void populateDirectoryImpl() {
+      // Unwatch previous directory if changed
+      String newPath = currentDir.fh.getAbsolutePath();
+      if (null != watchedPath && !watchedPath.equals(newPath)) {
+         DirSizeCalculator.unwatchDirectory(watchedPath, this);
+      }
+      watchedPath = newPath;
+
       // Clear existing content
       if (readIn() > 1) {
          remove(1, readIn());
@@ -302,6 +321,10 @@ public final class DirEdit extends TextEdit<String> {
             }
          }
          // Don't calculate size for parent ".." — only recurse down
+
+         // Register WatchService for auto-updates on filesystem changes
+         DirSizeCalculator.watchDirectory(
+            dirFile.getAbsolutePath(), this);
       }
 
       // Add help footer
@@ -310,7 +333,7 @@ public final class DirEdit extends TextEdit<String> {
          + sortMode.name().toLowerCase()
          + "  [R] refresh  [q] quit");
       lines.add("  [dd] delete  [o] new file/dir  [S] search path"
-         + "  :diredit_rename  :diredit_copy");
+         + "  [!] shell  :diredit_rename  :diredit_copy");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -1086,6 +1109,7 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_mark",      // 13 - toggle delete mark
          "diredit_execute",   // 14 - execute marked operations
          "dirmanager_toggle_searchpath", // 15 - toggle search path
+         "diredit_shell",    // 16 - open shell in current directory
       };
 
       /**
@@ -1242,6 +1266,18 @@ public final class DirEdit extends TextEdit<String> {
                }
                return null;
 
+            case 16: // diredit_shell
+               if (fvc.edvec instanceof DirEdit) {
+                  DirEdit de = (DirEdit) fvc.edvec;
+                  java.io.File dir = de.getCurrentDir().fh;
+                  EditContainer.registerListener(MiscCommands.fli);
+                  ShellSession session =
+                     ShellManager.getInstance().newShell(
+                        null, dir.getName(), dir);
+                  FvContext.connectFv(session.getBuffer(), fvc.vi);
+               }
+               return null;
+
             default:
                throw new RuntimeException("DirEdit.Commands: invalid rnum "
                   + rnum);
@@ -1389,6 +1425,171 @@ public final class DirEdit extends TextEdit<String> {
       /** Returns cache size (for testing). */
       static int cacheSize() {
          return sizeCache.size();
+      }
+
+      // ---- WatchService auto-invalidation ----
+
+      /** The shared WatchService instance (lazily created). */
+      private static volatile WatchService watchService;
+
+      /** Maps WatchKey -> registered directory path. */
+      private static final ConcurrentHashMap<WatchKey, String> watchKeys =
+         new ConcurrentHashMap<>();
+
+      /** Maps directory path -> WatchKey for cancellation. */
+      private static final ConcurrentHashMap<String, WatchKey> pathToKey =
+         new ConcurrentHashMap<>();
+
+      /** Maps directory path -> set of DirEdit instances watching it. */
+      private static final ConcurrentHashMap<String, HashSet<DirEdit>>
+         watchers = new ConcurrentHashMap<>();
+
+      /**
+       * Registers a directory for filesystem change monitoring.
+       * When files are created, deleted, or modified in the directory,
+       * cached sizes are invalidated and recalculated automatically.
+       *
+       * @param dirPath absolute path of the directory to watch
+       * @param requester the DirEdit instance to refresh on changes
+       */
+      static void watchDirectory(String dirPath, DirEdit requester) {
+         ensureWatchService();
+         if (null == watchService) {
+            return; // WatchService unavailable
+         }
+         watchers.computeIfAbsent(dirPath, k -> new HashSet<>())
+            .add(requester);
+         if (pathToKey.containsKey(dirPath)) {
+            return; // already watching
+         }
+         try {
+            Path path = Path.of(dirPath);
+            WatchKey key = path.register(watchService,
+               StandardWatchEventKinds.ENTRY_CREATE,
+               StandardWatchEventKinds.ENTRY_DELETE,
+               StandardWatchEventKinds.ENTRY_MODIFY);
+            watchKeys.put(key, dirPath);
+            pathToKey.put(dirPath, key);
+            trace("DirSizeCalculator: watching " + dirPath);
+         } catch (IOException e) {
+            trace("DirSizeCalculator: cannot watch " + dirPath
+               + ": " + e);
+         }
+      }
+
+      /**
+       * Unregisters a DirEdit instance from a watched directory.
+       * If no more instances are watching, the WatchKey is cancelled.
+       *
+       * @param dirPath absolute path of the directory
+       * @param requester the DirEdit instance to remove
+       */
+      static void unwatchDirectory(String dirPath, DirEdit requester) {
+         HashSet<DirEdit> set = watchers.get(dirPath);
+         if (null == set) {
+            return;
+         }
+         set.remove(requester);
+         if (set.isEmpty()) {
+            watchers.remove(dirPath);
+            WatchKey key = pathToKey.remove(dirPath);
+            if (null != key) {
+               key.cancel();
+               watchKeys.remove(key);
+               trace("DirSizeCalculator: unwatched " + dirPath);
+            }
+         }
+      }
+
+      /**
+       * Lazily creates the WatchService and starts the polling daemon.
+       */
+      private static synchronized void ensureWatchService() {
+         if (null != watchService) {
+            return;
+         }
+         try {
+            watchService = FileSystems.getDefault().newWatchService();
+            Thread watcher = new Thread(
+               DirSizeCalculator::pollWatchEvents,
+               "DirSizeWatcher");
+            watcher.setDaemon(true);
+            watcher.start();
+            trace("DirSizeCalculator: WatchService started");
+         } catch (IOException e) {
+            trace("DirSizeCalculator: cannot create WatchService: "
+               + e);
+         }
+      }
+
+      /**
+       * Polls the WatchService for filesystem events, invalidates
+       * cached sizes, and triggers re-calculation for affected
+       * DirEdit instances.
+       */
+      private static void pollWatchEvents() {
+         while (true) {
+            WatchKey key;
+            try {
+               key = watchService.take(); // blocks until event
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               return;
+            } catch (java.nio.file.ClosedWatchServiceException e) {
+               return;
+            }
+
+            String dirPath = watchKeys.get(key);
+            if (null == dirPath) {
+               key.cancel();
+               continue;
+            }
+
+            // Drain events (we only care that something changed)
+            boolean changed = false;
+            for (WatchEvent<?> event : key.pollEvents()) {
+               if (event.kind() != StandardWatchEventKinds.OVERFLOW) {
+                  changed = true;
+               }
+            }
+
+            if (changed) {
+               // Invalidate this directory and its parents
+               invalidate(dirPath);
+
+               // Re-submit calculations and refresh requesting DirEdits
+               HashSet<DirEdit> requesters = watchers.get(dirPath);
+               if (null != requesters) {
+                  for (DirEdit de : requesters) {
+                     submitCalculation(dirPath, de);
+                     // Also refresh the DirEdit listing to show new/removed
+                     // files
+                     EventQueue.insert(new EventQueue.IEvent() {
+                        @Override
+                        public void execute() {
+                           if (openInstances.contains(de)) {
+                              de.populateDirectory();
+                           }
+                        }
+                     });
+                  }
+               }
+            }
+
+            // Reset key — if invalid, directory was deleted
+            if (!key.reset()) {
+               watchKeys.remove(key);
+               if (null != dirPath) {
+                  pathToKey.remove(dirPath);
+                  watchers.remove(dirPath);
+               }
+            }
+         }
+      }
+
+      /** Returns the number of active WatchKeys (for testing). */
+      static int watchCount() {
+         return watchKeys.size();
       }
    }
 }

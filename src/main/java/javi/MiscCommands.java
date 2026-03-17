@@ -168,7 +168,7 @@ public final class MiscCommands extends Rgroup {
       }
    }
 
-   private static MyFl fli = new MyFl();
+   static final MyFl fli = new MyFl();
 
    private static void undo(FvContext fvc) throws IOException {
       int index = fvc.edvec.undo();

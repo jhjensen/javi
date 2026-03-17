@@ -109,7 +109,23 @@ public final class ShellManager {
     */
    public synchronized ShellSession newShell(String host, String customName)
          throws IOException {
-      ShellSession session = new ShellSession(nextId++, host, customName);
+      return newShell(host, customName, null);
+   }
+
+   /**
+    * Creates a new shell session with optional host, name, and working
+    * directory.
+    *
+    * @param host the hostname for SSH connection, or null for local shell
+    * @param customName user-specified name, or null for default
+    * @param workDir initial working directory, or null for default
+    * @return the new ShellSession
+    * @throws IOException if shell process cannot be started
+    */
+   public synchronized ShellSession newShell(String host, String customName,
+         java.io.File workDir) throws IOException {
+      ShellSession session = new ShellSession(nextId++, host, customName,
+         workDir);
       sessions.add(session);
       activeIndex = sessions.size() - 1;
       trace("ShellManager: created session " + session.getId()
