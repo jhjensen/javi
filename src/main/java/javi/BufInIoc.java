@@ -67,6 +67,7 @@ public class BufInIoc<OType>  extends IoConverter<OType>  {
       input = inputi;
    }
 
+   /** {@inheritDoc} Closes the input stream. */
    public void dispose() throws IOException {
       super.dispose();
       if (null != input)
