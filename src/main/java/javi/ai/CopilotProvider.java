@@ -49,15 +49,6 @@ import static history.Tools.trace;
  */
 public final class CopilotProvider implements AIProvider {
 
-   /**
-    * Path patterns to search for the Copilot agent, in order.
-    * The first match wins.
-    */
-   private static final String[] AGENT_SEARCH_PATHS = {
-      System.getProperty("user.home")
-         + "/.vscode/extensions/github.copilot-*/dist/agent.js",
-   };
-
    /** Environment variable to override the agent path. */
    private static final String AGENT_PATH_ENV = "COPILOT_AGENT_PATH";
 
@@ -187,12 +178,22 @@ public final class CopilotProvider implements AIProvider {
 
       ProcessBuilder pb = new ProcessBuilder("node", agentPath, "--stdio");
       pb.redirectErrorStream(false);
-      agentProcess = pb.start();
+      Process proc = pb.start();
 
-      agentWriter = new OutputStreamWriter(
-         agentProcess.getOutputStream(), StandardCharsets.UTF_8);
-      agentReader = new BufferedReader(new InputStreamReader(
-         agentProcess.getInputStream(), StandardCharsets.UTF_8));
+      try {
+         Writer writer = new OutputStreamWriter(
+            proc.getOutputStream(), StandardCharsets.UTF_8);
+         BufferedReader reader = new BufferedReader(new InputStreamReader(
+            proc.getInputStream(), StandardCharsets.UTF_8));
+
+         // Commit state only after everything succeeds
+         agentProcess = proc;
+         agentWriter = writer;
+         agentReader = reader;
+      } catch (Exception e) {
+         proc.destroyForcibly();
+         throw new AIException("Failed to initialize agent streams", e);
+      }
 
       trace("Copilot agent started (pid " + agentProcess.pid() + ")");
    }
@@ -222,26 +223,44 @@ public final class CopilotProvider implements AIProvider {
    }
 
    /**
-    * Send a JSON-RPC request and read the response.
+    * Send a JSON-RPC request and read the matching response.
+    *
+    * <p>Synchronized to prevent interleaving of concurrent requests
+    * on the shared stdio streams. Skips server-initiated notifications
+    * (messages without an {@code id}) while waiting for the response
+    * matching our request ID.</p>
     *
     * @param method the RPC method name
     * @param params the JSON params object
     * @param id the request id
     * @return the response body JSON
     */
-   private String sendRequest(String method, String params, int id)
-         throws IOException, AIException {
+   private synchronized String sendRequest(String method, String params,
+         int id) throws IOException, AIException {
       String body = "{\"jsonrpc\":\"2.0\",\"id\":" + id
          + ",\"method\":\"" + method + "\",\"params\":" + params + "}";
 
       sendMessage(body);
-      return readResponse();
+
+      // Read responses, skipping server notifications until we get ours
+      String idMarker = "\"id\":" + id;
+      for (int attempt = 0; attempt < 50; attempt++) {
+         String response = readResponse();
+         if (response.contains(idMarker)) {
+            return response;
+         }
+         // Not our response — likely a server notification, skip it
+         trace("Copilot: skipped notification while waiting for id "
+            + id);
+      }
+      throw new AIException(
+         "Copilot agent: no response for request id " + id);
    }
 
    /**
     * Send a JSON-RPC notification (no response expected).
     */
-   private void sendNotification(String method, String params)
+   private synchronized void sendNotification(String method, String params)
          throws IOException {
       String body = "{\"jsonrpc\":\"2.0\""
          + ",\"method\":\"" + method + "\",\"params\":" + params + "}";
@@ -335,8 +354,9 @@ public final class CopilotProvider implements AIProvider {
          return null;
       }
 
+      // Try legacy Copilot extension (github.copilot-<version>/dist/agent.js)
       try (var stream = Files.list(extDir)) {
-         return stream
+         String legacy = stream
             .filter(p -> p.getFileName().toString()
                .startsWith("github.copilot-"))
             .filter(p -> !p.getFileName().toString()
@@ -348,8 +368,28 @@ public final class CopilotProvider implements AIProvider {
             .map(Path::toString)
             .findFirst()
             .orElse(null);
+         if (null != legacy) {
+            return legacy;
+         }
       } catch (IOException e) {
-         trace("Error searching for Copilot agent: " + e);
+         trace("Error searching for legacy Copilot agent: " + e);
+      }
+
+      // Try modern Copilot Chat extension language server
+      // (github.copilot-chat-<version>/dist/cli.js)
+      try (var stream = Files.list(extDir)) {
+         return stream
+            .filter(p -> p.getFileName().toString()
+               .startsWith("github.copilot-chat-"))
+            .sorted((a, b) -> b.getFileName().toString()
+               .compareTo(a.getFileName().toString()))
+            .map(p -> p.resolve("dist").resolve("cli.js"))
+            .filter(Files::isRegularFile)
+            .map(Path::toString)
+            .findFirst()
+            .orElse(null);
+      } catch (IOException e) {
+         trace("Error searching for Copilot chat agent: " + e);
          return null;
       }
    }
