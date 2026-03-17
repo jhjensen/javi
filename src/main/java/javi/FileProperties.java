@@ -120,7 +120,9 @@ public final class FileProperties<OType> implements Serializable {
       if (fdes.exists() && fdes instanceof FileDescriptor.LocalFile) {
          FileDescriptor.LocalFile fd2 = (FileDescriptor.LocalFile) fdes;
 
-         FileDescriptor.LocalFile tempFile = FileDescriptor.LocalFile.make(fd2.canonName + ".new");
+         FileDescriptor.LocalFile tempFile =
+            FileDescriptor.LocalFile.make(
+               fd2.canonName + ".new");
 
          try {
             new FileProperties<>(this, tempFile).writeAll(strIter);
