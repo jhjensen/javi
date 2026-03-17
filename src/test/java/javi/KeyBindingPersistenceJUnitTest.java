@@ -231,4 +231,147 @@ class KeyBindingPersistenceJUnitTest {
             "Ctrl+" + expectedLetter + " should roundtrip as equal");
       }
    }
+
+   // ---- Modifier + action key roundtrip tests (F21 edge cases) ----
+
+   @Test
+   void formatKeySpecCtrlF1() {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent ev = new JeyEvent(JeyEvent.CTRL_MASK,
+         JeyEvent.VK_F1, JeyEvent.CHAR_UNDEFINED);
+      assertEquals("C-F1", kg.formatKeySpec(ev));
+   }
+
+   @Test
+   void formatKeySpecShiftLeft() {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent ev = new JeyEvent(JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_LEFT, JeyEvent.CHAR_UNDEFINED);
+      assertEquals("S-Left", kg.formatKeySpec(ev));
+   }
+
+   @Test
+   void formatKeySpecAltUp() {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent ev = new JeyEvent(JeyEvent.ALT_MASK,
+         JeyEvent.VK_UP, JeyEvent.CHAR_UNDEFINED);
+      assertEquals("A-Up", kg.formatKeySpec(ev));
+   }
+
+   @Test
+   void formatKeySpecCtrlShiftF5() {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent ev = new JeyEvent(
+         JeyEvent.CTRL_MASK | JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_F5, JeyEvent.CHAR_UNDEFINED);
+      assertEquals("C-S-F5", kg.formatKeySpec(ev));
+   }
+
+   @Test
+   void parseKeySpecCtrlF1Roundtrip() throws InputException {
+      JeyEvent expected = new JeyEvent(JeyEvent.CTRL_MASK,
+         JeyEvent.VK_F1, JeyEvent.CHAR_UNDEFINED);
+      JeyEvent parsed = MiscCommands.parseKeySpec("C-F1");
+      assertEquals(expected, parsed,
+         "C-F1 should parse to Ctrl+F1 JeyEvent");
+   }
+
+   @Test
+   void parseKeySpecShiftLeftRoundtrip() throws InputException {
+      JeyEvent expected = new JeyEvent(JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_LEFT, JeyEvent.CHAR_UNDEFINED);
+      JeyEvent parsed = MiscCommands.parseKeySpec("S-Left");
+      assertEquals(expected, parsed,
+         "S-Left should parse to Shift+Left JeyEvent");
+   }
+
+   @Test
+   void parseKeySpecAltDeleteRoundtrip() throws InputException {
+      JeyEvent expected = new JeyEvent(JeyEvent.ALT_MASK,
+         JeyEvent.VK_DELETE, JeyEvent.CHAR_UNDEFINED);
+      JeyEvent parsed = MiscCommands.parseKeySpec("A-Delete");
+      assertEquals(expected, parsed,
+         "A-Delete should parse to Alt+Delete JeyEvent");
+   }
+
+   @Test
+   void ctrlShiftF5FullRoundtrip() throws InputException {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent original = new JeyEvent(
+         JeyEvent.CTRL_MASK | JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_F5, JeyEvent.CHAR_UNDEFINED);
+      String spec = kg.formatKeySpec(original);
+      assertEquals("C-S-F5", spec);
+      JeyEvent parsed = MiscCommands.parseKeySpec(spec);
+      assertEquals(original, parsed,
+         "Ctrl+Shift+F5 should survive format -> parse roundtrip");
+   }
+
+   @Test
+   void pageUpRoundtrip() throws InputException {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent original = new JeyEvent(0,
+         JeyEvent.VK_PAGE_UP, JeyEvent.CHAR_UNDEFINED);
+      String spec = kg.formatKeySpec(original);
+      assertEquals("PgUp", spec);
+      JeyEvent parsed = MiscCommands.parseKeySpec(spec);
+      assertEquals(original, parsed,
+         "PgUp should survive format -> parse roundtrip");
+   }
+
+   @Test
+   void pageDownRoundtrip() throws InputException {
+      KeyGroup kg = new KeyGroup("test");
+      JeyEvent original = new JeyEvent(0,
+         JeyEvent.VK_PAGE_DOWN, JeyEvent.CHAR_UNDEFINED);
+      String spec = kg.formatKeySpec(original);
+      assertEquals("PgDn", spec);
+      JeyEvent parsed = MiscCommands.parseKeySpec(spec);
+      assertEquals(original, parsed,
+         "PgDn should survive format -> parse roundtrip");
+   }
+
+   @Test
+   void allFKeyRoundtrips() throws InputException {
+      KeyGroup kg = new KeyGroup("test");
+      int[] fKeys = {
+         JeyEvent.VK_F1, JeyEvent.VK_F2, JeyEvent.VK_F3,
+         JeyEvent.VK_F4, JeyEvent.VK_F5, JeyEvent.VK_F6,
+         JeyEvent.VK_F7, JeyEvent.VK_F8, JeyEvent.VK_F9,
+         JeyEvent.VK_F10, JeyEvent.VK_F11, JeyEvent.VK_F12
+      };
+      for (int i = 0; i < fKeys.length; i++) {
+         JeyEvent original = new JeyEvent(0, fKeys[i],
+            JeyEvent.CHAR_UNDEFINED);
+         String spec = kg.formatKeySpec(original);
+         assertEquals("F" + (i + 1), spec);
+         JeyEvent parsed = MiscCommands.parseKeySpec(spec);
+         assertEquals(original, parsed,
+            "F" + (i + 1) + " should roundtrip");
+      }
+   }
+
+   @Test
+   void navKeyRoundtrips() throws InputException {
+      KeyGroup kg = new KeyGroup("test");
+      String[][] cases = {
+         {"Up", String.valueOf(JeyEvent.VK_UP)},
+         {"Down", String.valueOf(JeyEvent.VK_DOWN)},
+         {"Left", String.valueOf(JeyEvent.VK_LEFT)},
+         {"Right", String.valueOf(JeyEvent.VK_RIGHT)},
+         {"Home", String.valueOf(JeyEvent.VK_HOME)},
+         {"End", String.valueOf(JeyEvent.VK_END)},
+         {"Insert", String.valueOf(JeyEvent.VK_INSERT)},
+         {"Delete", String.valueOf(JeyEvent.VK_DELETE)},
+      };
+      for (String[] c : cases) {
+         int keyCode = Integer.parseInt(c[1]);
+         JeyEvent original = new JeyEvent(0, keyCode,
+            JeyEvent.CHAR_UNDEFINED);
+         String spec = kg.formatKeySpec(original);
+         assertEquals(c[0], spec);
+         JeyEvent parsed = MiscCommands.parseKeySpec(spec);
+         assertEquals(original, parsed, c[0] + " should roundtrip");
+      }
+   }
 }

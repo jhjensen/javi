@@ -137,76 +137,33 @@ public final class DirEdit extends TextEdit<String> {
          return false; // let action keys (arrows, F-keys, etc.) through
       }
 
-      // DirEdit-specific commands
-      switch (ch) {
-         case 's':
-            cycleSortMode(fvc);
-            return true;
-         case 'S':
-            Rgroup.doCommand("dirmanager_toggle_searchpath", null, 0, 0,
-               fvc, false);
-            return true;
-         case 'R':
-            refresh(fvc);
-            return true;
-         case 'q':
-            Rgroup.doCommand("gotofilelist", null, 0, 0, fvc, false);
-            return true;
-         case '\n': case '\r':
-            openSelected(fvc);
-            return true;
-         case '-':
-            goToParent(fvc);
-            return true;
-         case '.':
-            toggleHidden(fvc);
-            return true;
-         case 'D':
-            deleteSelected(fvc);
-            return true;
-         case 'o': case 'O':
-            createInline(fvc);
-            return true;
-         case '!':
-            Rgroup.doCommand("diredit_shell", null, 0, 0,
-               fvc, false);
-            return true;
-         default:
-            break;
-      }
-
-      // Allow navigation keys through to KeyMap dispatch
-      switch (ch) {
-         case 'h': case 'j': case 'k': case 'l':
-         case 'H': case 'M': case 'L':
-         case 'w': case 'W': case 'b': case 'B': case 'e': case 'E':
-         case 'f': case 'F': case 't': case 'T':
-         case 'd':
-         case 'v': case 'V':
-         case 'n': case 'N':
-         case ';': case ',':
-         case '0': case '1': case '2': case '3': case '4':
-         case '5': case '6': case '7': case '8': case '9':
-         case '$': case '^': case '|':
-         case 'G': case '%': case '+':
-         case '(': case ')': case '{': case '}': case '[': case ']':
-         case 'm': case '\'':
-         case '/': case '?':
-         case ':': case 'z': case 'Z':
-         case ' ':
-         case 27: // Escape
-            return false;
-         default:
-            break;
-      }
 
       // Allow control characters through (Ctrl-F, Ctrl-B, etc.)
-      if (ch < 32) {
+      if (ch < 32 || ch == 27) {
          return false;
       }
 
-      // Block everything else (editing commands: i,a,o,c,d,x,p,r,~, etc.)
-      return true;
+      // Keys handled by the directory overlay keymap — let them through
+      // (s, S, R, q, Enter, -, ., D, o, O are bound in the overlay)
+      // Navigation keys (h,j,k,l, etc.) fall through to normal keymap
+
+      // Block editing commands that don't apply in directory mode
+      // (i, a, c, x, p, r, ~, etc.)
+      switch (ch) {
+         case 'i': case 'I': case 'a': case 'A':
+         case 'c': case 'C':
+         case 'x': case 'X':
+         case 'p': case 'P':
+         case 'r':
+         case 'y': case 'Y':
+         case 'J':
+         case '~':
+         case '>': case '<':
+         case '!':
+            return true;
+         default:
+            return false;
+      }
    }
 
    /**
@@ -1175,6 +1132,7 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_execute",   // 14 - execute marked operations
          "dirmanager_toggle_searchpath", // 15 - toggle search path
          "diredit_shell",    // 16 - open shell in current directory
+         "diredit_create",   // 17 - inline create (prompts file or dir)
       };
 
       /**
@@ -1340,6 +1298,13 @@ public final class DirEdit extends TextEdit<String> {
                      ShellManager.getInstance().newShell(
                         null, dir.getName(), dir);
                   FvContext.connectFv(session.getBuffer(), fvc.vi);
+               }
+               return null;
+
+            case 17: // diredit_create
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).createInline(fvc);
+               }
                }
                return null;
 

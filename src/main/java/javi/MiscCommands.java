@@ -737,26 +737,38 @@ public final class MiscCommands extends Rgroup {
    // Formats: single char (e.g. "x"), C-x for ctrl+char,
    // special names: F1-F12, Up, Down, Left, Right, Home, End, PgUp, PgDn,
    // Insert, Delete
-   private static JeyEvent parseKeySpec(String spec) throws InputException {
+   static JeyEvent parseKeySpec(String spec) throws InputException {
       if (spec.length() == 1)
          return new JeyEvent(0, 0, spec.charAt(0));
 
-      if (spec.length() == 3 && spec.charAt(1) == '-') {
-         char mod = spec.charAt(0);
-         char ch = spec.charAt(2);
-         if (mod == 'C') {
-            char ctrlChar = (char) (Character.toLowerCase(ch) - 'a' + 1);
-            return new JeyEvent(JeyEvent.CTRL_MASK, 0, ctrlChar);
+      // Extract modifier prefixes (C-, S-, A-, M-)
+      int mods = 0;
+      String rest = spec;
+      while (rest.length() >= 2 && rest.charAt(1) == '-') {
+         char mod = rest.charAt(0);
+         switch (mod) {
+            case 'C': mods |= JeyEvent.CTRL_MASK;  break;
+            case 'S': mods |= JeyEvent.SHIFT_MASK; break;
+            case 'A': mods |= JeyEvent.ALT_MASK;   break;
+            case 'M': mods |= JeyEvent.META_MASK;  break;
+            default:
+               throw new InputException("unknown modifier: " + mod);
          }
-         if (mod == 'S')
-            return new JeyEvent(JeyEvent.SHIFT_MASK, 0, ch);
-         if (mod == 'M')
-            return new JeyEvent(JeyEvent.META_MASK, 0, ch);
-         if (mod == 'A')
-            return new JeyEvent(JeyEvent.ALT_MASK, 0, ch);
+         rest = rest.substring(2);
       }
 
-      int keyCode = switch (spec) {
+      // Single char after modifiers
+      if (rest.length() == 1) {
+         char ch = rest.charAt(0);
+         if ((mods & JeyEvent.CTRL_MASK) != 0) {
+            char ctrlChar = (char) (Character.toLowerCase(ch) - 'a' + 1);
+            return new JeyEvent(mods, 0, ctrlChar);
+         }
+         return new JeyEvent(mods, 0, ch);
+      }
+
+      // Action key name lookup
+      int keyCode = switch (rest) {
          case "F1"  -> JeyEvent.VK_F1;
          case "F2"  -> JeyEvent.VK_F2;
          case "F3"  -> JeyEvent.VK_F3;
@@ -785,7 +797,7 @@ public final class MiscCommands extends Rgroup {
       if (keyCode == -1)
          throw new InputException("unknown key: " + spec);
 
-      return new JeyEvent(0, keyCode, JeyEvent.CHAR_UNDEFINED);
+      return new JeyEvent(mods, keyCode, JeyEvent.CHAR_UNDEFINED);
    }
 
    static void redraw(boolean flushFlag) throws IOException {

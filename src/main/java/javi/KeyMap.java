@@ -250,8 +250,19 @@ final class KeyMap {
       filelistMap.bindMoveKey((char) 10, "nextpos", ff);  // LF
       register(filelistMap);
 
-      // Directory overlay: for DirEdit buffer-specific bindings
+      // Directory overlay: DirEdit buffer-specific bindings
       KeyMap dirMap = createOverlay("directory", normalMap);
+      dirMap.bindEditKey('s', "diredit_sort", null);
+      dirMap.bindEditKey('S', "dirmanager_toggle_searchpath", null);
+      dirMap.bindEditKey('R', "diredit_refresh", null);
+      dirMap.bindEditKey('q', "diredit_quit", null);
+      dirMap.bindMoveKey((char) 13, "diredit_open", null);  // CR
+      dirMap.bindMoveKey((char) 10, "diredit_open", null);  // LF
+      dirMap.bindEditKey('-', "diredit_parent", null);
+      dirMap.bindEditKey('.', "diredit_hidden", null);
+      dirMap.bindEditKey('D', "diredit_delete", null);
+      dirMap.bindEditKey('o', "diredit_create", null);
+      dirMap.bindEditKey('O', "diredit_create", null);
       register(dirMap);
 
       // Shell overlay: extensibility point for shell-specific bindings

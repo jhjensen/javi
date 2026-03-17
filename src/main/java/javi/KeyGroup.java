@@ -233,7 +233,15 @@ final class KeyGroup {
       // Action key events (keyChar is CHAR_UNDEFINED, use keyCode)
       int keyCode = ev.getKeyCode();
       if (keyCode != 0) {
-         return getKeyCodeName(keyCode);
+         StringBuilder sb = new StringBuilder();
+         if ((mods & JeyEvent.CTRL_MASK) != 0)
+            sb.append("C-");
+         if ((mods & JeyEvent.SHIFT_MASK) != 0)
+            sb.append("S-");
+         if ((mods & JeyEvent.ALT_MASK) != 0)
+            sb.append("A-");
+         sb.append(getKeyCodeName(keyCode));
+         return sb.toString();
       }
       return "?";
    }
@@ -261,8 +269,8 @@ final class KeyGroup {
          case JeyEvent.VK_DOWN -> "Down";
          case JeyEvent.VK_HOME -> "Home";
          case JeyEvent.VK_END -> "End";
-         case JeyEvent.VK_PAGE_UP -> "PageUp";
-         case JeyEvent.VK_PAGE_DOWN -> "PageDown";
+         case JeyEvent.VK_PAGE_UP -> "PgUp";
+         case JeyEvent.VK_PAGE_DOWN -> "PgDn";
          case JeyEvent.VK_INSERT -> "Insert";
          case JeyEvent.VK_DELETE -> "Delete";
          default -> "Key" + keyCode;
