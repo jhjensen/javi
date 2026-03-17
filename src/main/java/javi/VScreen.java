@@ -334,6 +334,18 @@ abstract class VScreen {
    }
 
    /**
+    * Sets cursor visibility (DECTCEM, mode 25).
+    *
+    * <p>When disabled, the cursor should be hidden. This implements
+    * ESC[?25l (hide) and ESC[?25h (show).</p>
+    *
+    * @param visible true to show cursor, false to hide
+    */
+   void setCursorVisible(boolean visible) {
+      // Default no-op
+   }
+
+   /**
     * Responds to a Primary Device Attributes request (CSI c).
     *
     * @param sb pending output buffer to flush

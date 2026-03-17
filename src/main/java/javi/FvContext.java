@@ -497,6 +497,26 @@ public final class FvContext<OType> implements Serializable {
       // trace("sb " + sb);
       // trace("getCurrState " + currfvc);
       currfvc.edvec.addState(sb);
+
+      // Append shell session info if current buffer is a shell
+      ShellManager mgr = ShellManager.getInstance();
+      ShellSession session = mgr.findByBuffer(currfvc.edvec);
+      if (null != session) {
+         int total = mgr.getSessionCount();
+         sb.append(" [shell ");
+         sb.append(session.getId());
+         sb.append(':');
+         sb.append(session.getName());
+         if (total > 1) {
+            sb.append(" (");
+            sb.append(mgr.getActiveIndex() + 1);
+            sb.append('/');
+            sb.append(total);
+            sb.append(')');
+         }
+         sb.append(']');
+      }
+
       return sb.toString();
    }
 

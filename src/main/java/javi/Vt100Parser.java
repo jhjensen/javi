@@ -492,7 +492,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             window.switchAlternateScreen(enable, sb);
             break;
          case 25: // DECTCEM: show/hide cursor
-            trace("cursor visibility " + (enable ? "show" : "hide"));
+            window.setCursorVisible(enable);
             break;
 
          case 1000: // Normal mouse tracking

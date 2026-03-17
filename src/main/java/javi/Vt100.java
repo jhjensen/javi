@@ -5,7 +5,6 @@ import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
@@ -100,6 +99,9 @@ class Vt100 extends TextEdit<String> {
    /** Whether application cursor key mode (DECCKM, mode 1) is active. */
    private volatile boolean applicationCursorKeys;
 
+   /** Whether cursor is visible (DECTCEM, mode 25). Default is visible. */
+   private volatile boolean cursorVisible = true;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -110,7 +112,8 @@ class Vt100 extends TextEdit<String> {
     * @param istr input stream from the terminal process
     * @param ioc I/O converter for the terminal buffer
     * @throws java.io.UnsupportedEncodingException if charset is unsupported
-    * @deprecated Use {@link #Vt100(OutputStream, BufferedInputStream, IoConverter, Charset)}
+    * @deprecated Use {@link #Vt100(OutputStream,
+    *    BufferedInputStream, IoConverter, Charset)}
     */
    @Deprecated
    Vt100(OutputStream ostri, BufferedInputStream istr,
@@ -163,6 +166,11 @@ class Vt100 extends TextEdit<String> {
       }
 
       currfvc = fvc;
+
+      // Apply saved cursor visibility state to the new view
+      if (null != fvc && !cursorVisible)
+         fvc.vi.setCursorOff();
+
       //trace("leave setfvc readIn = " + ev.readIn());
    }
 
@@ -280,6 +288,34 @@ class Vt100 extends TextEdit<String> {
    void setApplicationCursorKeys(boolean enable) {
       applicationCursorKeys = enable;
       trace("Vt100: application cursor keys=" + applicationCursorKeys);
+   }
+
+   /**
+    * Sets cursor visibility (DECTCEM, mode 25).
+    *
+    * <p>When disabled, the cursor is hidden. When enabled, the cursor
+    * is shown. Propagates to the View if a display context is active.</p>
+    *
+    * @param visible true to show cursor, false to hide
+    */
+   void setCursorVisible(boolean visible) {
+      cursorVisible = visible;
+      trace("Vt100: cursor visible=" + cursorVisible);
+      if (null != currfvc) {
+         if (visible)
+            currfvc.vi.setCursorOn();
+         else
+            currfvc.vi.setCursorOff();
+      }
+   }
+
+   /**
+    * Checks if the cursor is visible (DECTCEM, mode 25).
+    *
+    * @return true if cursor should be displayed
+    */
+   boolean isCursorVisible() {
+      return cursorVisible;
    }
 
    /**
@@ -697,6 +733,10 @@ class Vt100 extends TextEdit<String> {
 
       void setApplicationCursorKeys(boolean enable) {
          Vt100.this.setApplicationCursorKeys(enable);
+      }
+
+      void setCursorVisible(boolean visible) {
+         Vt100.this.setCursorVisible(visible);
       }
 
       void respondDeviceAttributes(StringBuilder sb) {
