@@ -52,6 +52,12 @@ public final class CopilotProvider implements AIProvider {
    /** Environment variable to override the agent path. */
    private static final String AGENT_PATH_ENV = "COPILOT_AGENT_PATH";
 
+   /** Timeout for reading a response from the agent (seconds). */
+   static final int RESPONSE_TIMEOUT_SECS = 30;
+
+   /** Polling interval when waiting for agent data (ms). */
+   private static final long POLL_INTERVAL_MS = 50;
+
    private final AtomicInteger requestId = new AtomicInteger(1);
    private volatile Process agentProcess;
    private volatile Writer agentWriter;
@@ -242,10 +248,13 @@ public final class CopilotProvider implements AIProvider {
 
       sendMessage(body);
 
-      // Read responses, skipping server notifications until we get ours
+      long deadlineMs = System.currentTimeMillis()
+         + RESPONSE_TIMEOUT_SECS * 1000L;
+
+      // Read responses, skipping notifications until we get ours
       String idMarker = "\"id\":" + id;
       for (int attempt = 0; attempt < 50; attempt++) {
-         String response = readResponse();
+         String response = readResponse(deadlineMs);
          if (response.contains(idMarker)) {
             return response;
          }
@@ -280,38 +289,107 @@ public final class CopilotProvider implements AIProvider {
    /**
     * Read a JSON-RPC response from the agent.
     *
-    * <p>Reads the Content-Length header, then reads exactly that many
-    * bytes of body.</p>
+    * <p>Reads the Content-Length header, then reads exactly that
+    * many bytes of body. Uses the provided deadline to avoid
+    * blocking indefinitely on a hung agent.</p>
+    *
+    * @param deadlineMs absolute time (ms since epoch) by which
+    *     the read must complete
+    * @throws AIException if the deadline is exceeded
     */
-   private String readResponse() throws IOException, AIException {
+   private String readResponse(long deadlineMs)
+         throws IOException, AIException {
       // Read headers until blank line
-      String line;
       int contentLength = -1;
-      while (null != (line = agentReader.readLine())) {
-         if (line.isEmpty()) {
+      for (;;) {
+         String line = readLineWithTimeout(deadlineMs);
+         if (null == line || line.isEmpty()) {
             break;
          }
          if (line.startsWith("Content-Length:")) {
-            contentLength = Integer.parseInt(line.substring(15).trim());
+            contentLength = Integer.parseInt(
+               line.substring(15).trim());
          }
       }
 
       if (contentLength < 0) {
-         throw new AIException("Copilot agent: missing Content-Length");
+         throw new AIException(
+            "Copilot agent: missing Content-Length");
       }
 
       char[] buf = new char[contentLength];
       int read = 0;
       while (read < contentLength) {
-         int n = agentReader.read(buf, read, contentLength - read);
-         if (n < 0) {
-            throw new AIException(
-               "Copilot agent: unexpected end of stream");
-         }
+         int n = readWithTimeout(
+            buf, read, contentLength - read, deadlineMs);
          read += n;
       }
 
       return new String(buf);
+   }
+
+   /**
+    * Read a line from the agent with timeout.
+    *
+    * <p>Polls {@link BufferedReader#ready()} until the stream has
+    * data or the deadline is exceeded.</p>
+    *
+    * @param deadlineMs absolute time by which data must arrive
+    * @return the line read, or null on end-of-stream
+    * @throws AIException on timeout or interruption
+    */
+   private String readLineWithTimeout(long deadlineMs)
+         throws IOException, AIException {
+      while (System.currentTimeMillis() < deadlineMs) {
+         if (agentReader.ready()) {
+            return agentReader.readLine();
+         }
+         sleepForPoll();
+      }
+      throw new AIException(
+         "Copilot agent: response timeout after "
+         + RESPONSE_TIMEOUT_SECS + " seconds");
+   }
+
+   /**
+    * Read characters from the agent with timeout.
+    *
+    * @param buf destination buffer
+    * @param off offset into buffer
+    * @param len maximum characters to read
+    * @param deadlineMs absolute time by which data must arrive
+    * @return number of characters read
+    * @throws AIException on timeout, interruption, or EOF
+    */
+   private int readWithTimeout(char[] buf, int off, int len,
+         long deadlineMs) throws IOException, AIException {
+      while (System.currentTimeMillis() < deadlineMs) {
+         if (agentReader.ready()) {
+            int n = agentReader.read(buf, off, len);
+            if (n < 0) {
+               throw new AIException(
+                  "Copilot agent: unexpected end of stream");
+            }
+            return n;
+         }
+         sleepForPoll();
+      }
+      throw new AIException(
+         "Copilot agent: response timeout after "
+         + RESPONSE_TIMEOUT_SECS + " seconds");
+   }
+
+   /**
+    * Sleep briefly while polling for agent data.
+    */
+   private static void sleepForPoll() throws AIException {
+      try {
+         Thread.sleep(POLL_INTERVAL_MS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new AIException(
+            "Copilot agent: interrupted while reading");
+      }
    }
 
    /**
