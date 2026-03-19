@@ -399,7 +399,8 @@ public final class MiscCommands extends Rgroup {
       if (mgr.nextShell()) {
          ShellSession active = mgr.getActive();
          if (null != active) {
-            FvContext.connectFv(active.getBuffer(), fvc.vi);
+            FvContext newFvc = FvContext.connectFv(active.getBuffer(), fvc.vi);
+            ((Vt100) active.getBuffer()).handleKeys(newFvc);
          }
       }
    }
@@ -416,7 +417,8 @@ public final class MiscCommands extends Rgroup {
       if (mgr.previousShell()) {
          ShellSession active = mgr.getActive();
          if (null != active) {
-            FvContext.connectFv(active.getBuffer(), fvc.vi);
+            FvContext newFvc = FvContext.connectFv(active.getBuffer(), fvc.vi);
+            ((Vt100) active.getBuffer()).handleKeys(newFvc);
          }
       }
    }
