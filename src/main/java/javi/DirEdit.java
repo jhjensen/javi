@@ -705,17 +705,18 @@ public final class DirEdit extends TextEdit<String> {
          throw new InputException("File not found: " + name);
       }
 
-      // Confirmation prompt — wording depends on trash availability
-      String prompt = trashSupported()
-         ? "Move " + name + " to Trash? (y/n)"
-         : target.isDirectory() && hasChildren(target)
+      // Skip confirmation for trash (recoverable); prompt only for
+      // permanent delete (walkFileTree fallback)
+      if (!trashSupported()) {
+         String prompt = target.isDirectory() && hasChildren(target)
             ? "Permanently delete " + name + " and all contents? (y/n)"
             : "Delete " + name + "? (y/n)";
-      UI.reportMessage(prompt);
-      char confirm = EventQueue.nextKey(fvc.vi);
-      if (confirm != 'y' && confirm != 'Y') {
-         UI.reportMessage("Delete cancelled");
-         return;
+         UI.reportMessage(prompt);
+         char confirm = EventQueue.nextKey(fvc.vi);
+         if (confirm != 'y' && confirm != 'Y') {
+            UI.reportMessage("Delete cancelled");
+            return;
+         }
       }
 
       if (!removeFile(target)) {
@@ -1112,25 +1113,23 @@ public final class DirEdit extends TextEdit<String> {
          throw new InputException("No files in selection");
       }
 
-      UI.reportMessage("Delete " + names.size() + " file(s)? (y/n)");
-      char confirm = EventQueue.nextKey(fvc.vi);
-      if (confirm != 'y' && confirm != 'Y') {
-         UI.reportMessage("Delete cancelled");
-         return;
+      // Skip confirmation for trash (recoverable); prompt only for
+      // permanent delete (walkFileTree fallback)
+      if (!trashSupported()) {
+         UI.reportMessage(
+            "Permanently delete " + names.size() + " file(s)? (y/n)");
+         char confirm = EventQueue.nextKey(fvc.vi);
+         if (confirm != 'y' && confirm != 'Y') {
+            UI.reportMessage("Delete cancelled");
+            return;
+         }
       }
 
       int deleted = 0;
       int failed = 0;
       for (String name : names) {
          File target = new File(currentDir.fh, name);
-         if (target.isDirectory()) {
-            String[] ch = target.list();
-            if (null != ch && ch.length > 0) {
-               failed++;
-               continue;
-            }
-         }
-         if (target.delete()) {
+         if (removeFile(target)) {
             deleted++;
             trace("DirEdit: range-deleted " + target.getAbsolutePath());
          } else {
@@ -1138,7 +1137,8 @@ public final class DirEdit extends TextEdit<String> {
          }
       }
 
-      StringBuilder msg = new StringBuilder("Deleted ");
+      String verb = trashSupported() ? "Trashed" : "Deleted";
+      StringBuilder msg = new StringBuilder(verb + " ");
       msg.append(deleted).append(" file(s)");
       if (failed > 0)
          msg.append(", ").append(failed).append(" failed");
