@@ -244,7 +244,7 @@ final class Ctag {
          ctfile.seek(offset);
          line = ctfile.readLine(); // find beginning of line
          if (offset <= 0) {
-             break;
+            break;
          }
          line = ctfile.readLine(); // line up to next new line
 
