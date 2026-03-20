@@ -22,7 +22,7 @@ src/main/java/javi/InsertBuffer.java,1
 src/history/java/history/PSTest.java,2
 src/main/java/javi/Position.java,1
 src/main/java/javi/awt/AwtView.java,1
-src/main/java/javi/UndoHistory.java,6
+src/main/java/javi/UndoHistory.java,0
 src/main/java/javi/JavaCompiler.java,1
 src/main/java/javi/View.java,1
 src/main/java/javi/JS.java,1
