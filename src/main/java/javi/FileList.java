@@ -234,6 +234,23 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return 0;
    }
 
+   /**
+    * Counts the number of modified (unsaved) files.
+    *
+    * @return the count of modified files, or 0 if FileList is not initialized
+    */
+   public static int countModified() {
+      if (instance == null)
+         return 0;
+      int count = 0;
+      for (int ii = 1; ii < instance.finish(); ii++) {
+         EditContainer ef = instance.at(ii);
+         if (ef.isModified())
+            count++;
+      }
+      return count;
+   }
+
    private ArrayList<EditContainer> findfilemod(String str) {
       //trace("findfilemod " + str);
       var regex = Pattern.compile(str).matcher("");

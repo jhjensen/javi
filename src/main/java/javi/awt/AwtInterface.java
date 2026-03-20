@@ -631,6 +631,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          }
       }
 
+      DockBadge.init();
+
       lFrm.setFont(AwtFontList.getCurr(null));
       lFrm.addFocusListener(this);
       lFrm.setDropTarget(new Dropper(lFrm));
