@@ -505,7 +505,7 @@ final class MoveGroup extends Rgroup {
                                      fvc.vi.getRows(amount) - 1) + count));
    }
 
-   private static void movelinestart(Object arg, int count, FvContext fvc) 
+   private static void movelinestart(Object arg, int count, FvContext fvc)
          throws IOException, InputException {
       // In DirEdit, Enter opens files and - goes to parent
       if (fvc.edvec instanceof DirEdit) {
