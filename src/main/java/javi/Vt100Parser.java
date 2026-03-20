@@ -73,6 +73,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    /** State: Processing OSC sequence content. */
    private static final int OSCMODE3 = 7;
 
+   /** State: Discarding unrecognized CSI sequence (e.g., DA2, DA3). */
+   private static final int DISCARD = 8;
+
    /** State: Carriage return received. */
    private static final int CR = 9;
 
@@ -343,6 +346,12 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                modeNumbers[0] = 0;
                modeCount = 0;
                break;
+            case '>':
+            case '=':
+               trace1("CSI intermediate '" + (char) inc
+                  + "' - discarding sequence");
+               newstate = DISCARD;
+               break;
             case 27:
                newstate = ESC;
                break;
@@ -470,6 +479,15 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             applyMode(modeNumbers[i], enable);
          state = NORM;
       }
+   }
+
+   /** Discard characters until a CSI final byte (0x40-0x7E) ends the sequence. */
+   private void caseDiscard(int inc) {
+      if (inc >= 0x40 && inc <= 0x7E) {
+         trace1("discard sequence terminator '" + (char) inc + "'");
+         state = NORM;
+      }
+      // else: intermediate bytes/parameters — keep discarding
    }
 
    private void applyMode(int modeNum, boolean enable) {
@@ -638,6 +656,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                break;
             case MODE:
                caseMODE(inc);
+               break;
+            case DISCARD:
+               caseDiscard(inc);
                break;
             case OSCMODE3:
                caseOSCMODE3(inc);
