@@ -27,7 +27,8 @@ import java.nio.file.StandardOpenOption;
  * <ul>
  *   <li><b>Partial memory</b>: May not keep entire array in memory</li>
  *   <li><b>Truncating insert</b>: Adding in middle deletes all following elements</li>
- *   <li><b>Persistent</b>: Backed by .dmp2 file for persistant undo and crash recovery</li>
+ *   <li><b>Persistent</b>: Backed by .dmp2 file for
+ *       persistant undo and crash recovery</li>
  *   <li><b>Lazy loading</b>: Elements read from disk on demand</li>
  * </ul>
  *
@@ -96,6 +97,7 @@ public abstract class PersistantStack<E> {
          recordIndex = -1;
       }
 
+      /** {@inheritDoc} */
       public String toString() {
          return "PSIterator index = " + recordIndex + " cache.size = "
             + cache.size() + " size " + size;
@@ -380,7 +382,9 @@ public abstract class PersistantStack<E> {
     * <ul>
     *   <li>Uses {@link FileChannel#tryLock()} for non-blocking lock attempt</li>
     *   <li>Throws {@link FileLockException} if file is already locked</li>
-    *   <li>Lock is held until {@link #reset()} or {@link #invalidateFile()} is called</li>
+    *   <li>Lock is held until {@link #reset()}
+    *       or {@link #invalidateFile()}
+    *       is called</li>
     * </ul>
     *
     * @throws IOException if unable to open file channel
@@ -440,8 +444,10 @@ public abstract class PersistantStack<E> {
       Testutil.myassert(lastquit == i, Integer.valueOf(lastquit));
    }
 
+   /** {@inheritDoc} */
    public String toString() {
-      return "PersitantStack " + rfile + "\n" + dump();
+      return "PersitantStack " + rfile
+         + "\n" + dump();
    }
 
    public final boolean hasFile() {
