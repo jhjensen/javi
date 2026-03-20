@@ -200,6 +200,27 @@ public final class ShellManager {
    }
 
    /**
+    * Checks if the given buffer has VT100 mouse tracking enabled.
+    *
+    * <p>Unlike {@link #isMouseTrackingActive()}, this checks a specific
+    * buffer rather than the globally-active session. Use this when
+    * determining whether to forward mouse events from a particular view.</p>
+    *
+    * @param buffer the TextEdit buffer to check
+    * @return true if the buffer is a tracked VT100 session
+    */
+   public synchronized boolean isMouseTrackingForBuffer(
+         TextEdit<?> buffer) {
+      for (ShellSession session : sessions) {
+         if (session.getBuffer() == buffer) {
+            Vt100 vt = session.getVt100();
+            return null != vt && vt.isMouseTrackingEnabled();
+         }
+      }
+      return false;
+   }
+
+   /**
     * Forwards a mouse event to the active shell as VT100 escape sequences.
     *
     * @param button 0=left, 1=middle, 2=right, 64=scrollUp, 65=scrollDown
@@ -214,6 +235,42 @@ public final class ShellManager {
          Vt100 vt = session.getVt100();
          if (null != vt)
             vt.sendMouseEvent(button, col, row, pressed);
+      }
+   }
+
+   /**
+    * Forwards a mouse event to the shell session owning the given buffer.
+    *
+    * @param buffer the TextEdit buffer to target
+    * @param button 0=left, 1=middle, 2=right, 64=scrollUp, 65=scrollDown
+    * @param col 1-based column
+    * @param row 1-based row
+    * @param pressed true for press, false for release
+    */
+   public synchronized void forwardMouseEventToBuffer(
+         TextEdit<?> buffer, int button, int col, int row,
+         boolean pressed) {
+      for (ShellSession session : sessions) {
+         if (session.getBuffer() == buffer) {
+            Vt100 vt = session.getVt100();
+            if (null != vt)
+               vt.sendMouseEvent(button, col, row, pressed);
+            return;
+         }
+      }
+   }
+
+   /**
+    * Forwards a focus event to the active shell if focus reporting is enabled.
+    *
+    * @param focusIn true for focus gained, false for focus lost
+    */
+   public synchronized void forwardFocusEvent(boolean focusIn) {
+      ShellSession session = getActive();
+      if (null != session) {
+         Vt100 vt = session.getVt100();
+         if (null != vt)
+            vt.sendFocusEvent(focusIn);
       }
    }
 
@@ -444,6 +501,10 @@ public final class ShellManager {
       if (sessions.isEmpty()) {
          return "No active shells";
       }
+
+      // Refresh labels to show current foreground process
+      for (ShellSession s : sessions)
+         s.updateLabel();
 
       StringBuilder sb = new StringBuilder();
       sb.append("Shell Sessions:\n");

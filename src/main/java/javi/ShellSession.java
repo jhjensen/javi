@@ -415,4 +415,38 @@ public final class ShellSession {
       return String.format("ShellSession[id=%d, name=%s, alive=%s]",
          id, name, isAlive());
    }
+
+   /**
+    * Updates the session name to reflect the foreground process.
+    *
+    * <p>Uses {@code ps -o comm= -p PID} on macOS/Linux to detect
+    * what command the child process is currently running.</p>
+    */
+   void updateLabel() {
+      if (null == process || !process.isAlive())
+         return;
+      try {
+         long pid = process.pid();
+         ProcessBuilder pb = new ProcessBuilder(
+            "ps", "-o", "comm=", "-p", Long.toString(pid));
+         pb.redirectErrorStream(true);
+         Process ps = pb.start();
+         String output = new String(
+            ps.getInputStream().readAllBytes(), charset).trim();
+         if (!ps.waitFor(2, java.util.concurrent.TimeUnit.SECONDS))
+            return;
+         if (!output.isEmpty()) {
+            // Extract basename from path
+            int slash = output.lastIndexOf('/');
+            String cmd = slash >= 0 ? output.substring(slash + 1) : output;
+            if (!cmd.isEmpty() && !cmd.equals(name)) {
+               trace("ShellSession " + id + ": label update '"
+                  + name + "' -> '" + cmd + "'");
+               name = cmd;
+            }
+         }
+      } catch (Exception e) {
+         trace("ShellSession " + id + ": updateLabel failed: " + e);
+      }
+   }
 }

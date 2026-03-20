@@ -5,7 +5,6 @@ import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
@@ -61,6 +60,9 @@ class Vt100 extends TextEdit<String> {
    /** The charset used for encoding terminal I/O. */
    private final Charset charset;
 
+   /** Lock for synchronizing all writes to the PTY writer. */
+   private final Object writerLock = new Object();
+
    /** Current file-view context for display updates. */
    private FvContext currfvc = null;
 
@@ -77,10 +79,28 @@ class Vt100 extends TextEdit<String> {
    private final Vt100Parser parser;
 
    /** Mouse tracking mode: 0=off, 1000=normal, 1002=button, 1003=any. */
-   private int mouseTrackingMode;
+   private volatile int mouseTrackingMode;
 
    /** Whether SGR (1006) mouse encoding is active vs legacy X10. */
-   private boolean sgrMouseMode;
+   private volatile boolean sgrMouseMode;
+
+   /** Whether bracketed paste mode (2004) is active. */
+   private volatile boolean bracketedPasteMode;
+
+   /** Whether focus event reporting (1004) is active. */
+   private volatile boolean focusEventsMode;
+
+   /** Whether autowrap mode (mode 7) is active. */
+   private volatile boolean autowrapMode = true;
+
+   /** Whether cursor blink mode (mode 12) is active. */
+   private volatile boolean cursorBlinkMode;
+
+   /** Whether application cursor key mode (DECCKM, mode 1) is active. */
+   private volatile boolean applicationCursorKeys;
+
+   /** Whether cursor is visible (DECTCEM, mode 25). Default is visible. */
+   private volatile boolean cursorVisible = true;
 
    /**
     * Creates a VT100 terminal with auto-detected charset.
@@ -92,7 +112,8 @@ class Vt100 extends TextEdit<String> {
     * @param istr input stream from the terminal process
     * @param ioc I/O converter for the terminal buffer
     * @throws java.io.UnsupportedEncodingException if charset is unsupported
-    * @deprecated Use {@link #Vt100(OutputStream, BufferedInputStream, IoConverter, Charset)}
+    * @deprecated Use {@link #Vt100(OutputStream,
+    *    BufferedInputStream, IoConverter, Charset)}
     */
    @Deprecated
    Vt100(OutputStream ostri, BufferedInputStream istr,
@@ -145,6 +166,11 @@ class Vt100 extends TextEdit<String> {
       }
 
       currfvc = fvc;
+
+      // Apply saved cursor visibility state to the new view
+      if (null != fvc && !cursorVisible)
+         fvc.vi.setCursorOff();
+
       //trace("leave setfvc readIn = " + ev.readIn());
    }
 
@@ -156,8 +182,11 @@ class Vt100 extends TextEdit<String> {
     */
    void sendStty(int termRows, int termCols) {
       try {
-         writer.write("stty rows " + termRows + " cols " + termCols + "\n");
-         writer.flush();
+         synchronized (writerLock) {
+            writer.write("stty rows " + termRows
+               + " cols " + termCols + "\n");
+            writer.flush();
+         }
       } catch (IOException e) {
          trace("sendStty failed: " + e);
       }
@@ -219,6 +248,144 @@ class Vt100 extends TextEdit<String> {
    }
 
    /**
+    * Sets bracketed paste mode (2004) on or off.
+    */
+   void setBracketedPasteMode(boolean enable) {
+      bracketedPasteMode = enable;
+      trace("Vt100: bracketed paste mode=" + bracketedPasteMode);
+   }
+
+   /**
+    * Sets focus event reporting mode (1004) on or off.
+    */
+   void setFocusEventsMode(boolean enable) {
+      focusEventsMode = enable;
+      trace("Vt100: focus events mode=" + focusEventsMode);
+   }
+
+   /**
+    * Sets autowrap mode (mode 7) on or off.
+    */
+   void setAutowrapMode(boolean enable) {
+      autowrapMode = enable;
+      trace("Vt100: autowrap mode=" + autowrapMode);
+   }
+
+   /**
+    * Sets cursor blink mode (mode 12) on or off.
+    */
+   void setCursorBlinkMode(boolean enable) {
+      cursorBlinkMode = enable;
+      trace("Vt100: cursor blink mode=" + cursorBlinkMode);
+   }
+
+   /**
+    * Sets application cursor key mode (DECCKM, mode 1).
+    *
+    * <p>When enabled, arrow keys send ESC O A/B/C/D instead of
+    * ESC [ A/B/C/D.</p>
+    */
+   void setApplicationCursorKeys(boolean enable) {
+      applicationCursorKeys = enable;
+      trace("Vt100: application cursor keys=" + applicationCursorKeys);
+   }
+
+   /**
+    * Sets cursor visibility (DECTCEM, mode 25).
+    *
+    * <p>When disabled, the cursor is hidden. When enabled, the cursor
+    * is shown. Propagates to the View if a display context is active.</p>
+    *
+    * @param visible true to show cursor, false to hide
+    */
+   void setCursorVisible(boolean visible) {
+      cursorVisible = visible;
+      trace("Vt100: cursor visible=" + cursorVisible);
+      if (null != currfvc) {
+         if (visible)
+            currfvc.vi.setCursorOn();
+         else
+            currfvc.vi.setCursorOff();
+      }
+   }
+
+   /**
+    * Checks if the cursor is visible (DECTCEM, mode 25).
+    *
+    * @return true if cursor should be displayed
+    */
+   boolean isCursorVisible() {
+      return cursorVisible;
+   }
+
+   /**
+    * Sends a response string back to the PTY.
+    *
+    * <p>Used for terminal queries like Device Attributes (DA) and
+    * Cursor Position Report (CPR).</p>
+    *
+    * @param response the escape sequence to send
+    */
+   void sendResponse(String response) {
+      try {
+         synchronized (writerLock) {
+            writer.write(response);
+            writer.flush();
+         }
+      } catch (IOException e) {
+         trace("sendResponse failed: " + e);
+      }
+   }
+
+   /**
+    * Checks if focus event reporting is enabled.
+    *
+    * @return true if mode 1004 is active
+    */
+   boolean isFocusEventsEnabled() {
+      return focusEventsMode;
+   }
+
+   /**
+    * Sends a focus event to the shell if focus reporting is enabled.
+    *
+    * @param focusIn true for focus gained, false for focus lost
+    */
+   void sendFocusEvent(boolean focusIn) {
+      if (!focusEventsMode)
+         return;
+      try {
+         synchronized (writerLock) {
+            writer.write(focusIn ? "\033[I" : "\033[O");
+            writer.flush();
+         }
+      } catch (IOException e) {
+         trace("sendFocusEvent failed: " + e);
+      }
+   }
+
+   /**
+    * Sends text to the shell process, wrapping with bracketed paste
+    * markers if bracketed paste mode is enabled.
+    *
+    * @param text the text to send
+    */
+   void sendText(String text) {
+      try {
+         synchronized (writerLock) {
+            if (bracketedPasteMode)
+               writer.write("\033[200~");
+            writer.write(text);
+            if (bracketedPasteMode)
+               writer.write("\033[201~");
+            writer.flush();
+         }
+      } catch (IOException e) {
+         trace("sendText failed: " + e);
+      }
+   }
+
+   /**
     * Sends a mouse event to the shell process as an escape sequence.
     *
     * <p>Encodes the event using SGR (mode 1006) if active, otherwise
@@ -233,20 +400,22 @@ class Vt100 extends TextEdit<String> {
     */
    void sendMouseEvent(int button, int col, int row, boolean pressed) {
       try {
-         if (sgrMouseMode) {
-            // SGR extended mode: ESC[<button;col;rowM/m
-            writer.write("\033[<" + button + ";" + col + ";" + row
-               + (pressed ? "M" : "m"));
-         } else {
-            // Legacy X10: ESC[M cb cx cy (add 32 to each value)
-            if (col > 222 || row > 222)
-               return; // legacy encoding limited to 223
-            writer.write("\033[M");
-            writer.write((char) (button + 32));
-            writer.write((char) (col + 32));
-            writer.write((char) (row + 32));
+         synchronized (writerLock) {
+            if (sgrMouseMode) {
+               // SGR extended mode: ESC[<button;col;rowM/m
+               writer.write("\033[<" + button + ";" + col + ";"
+                  + row + (pressed ? "M" : "m"));
+            } else {
+               // Legacy X10: ESC[M cb cx cy (add 32 to each)
+               if (col > 222 || row > 222)
+                  return; // legacy encoding limited to 223
+               writer.write("\033[M");
+               writer.write((char) (button + 32));
+               writer.write((char) (col + 32));
+               writer.write((char) (row + 32));
+            }
+            writer.flush();
          }
-         writer.flush();
       } catch (IOException e) {
          trace("sendMouseEvent failed: " + e);
       }
@@ -264,42 +433,49 @@ class Vt100 extends TextEdit<String> {
             JeyEvent kev = EventQueue.nextEvent(fvc.vi);
             char ch = kev.getKeyChar();
             if (ch == JeyEvent.CHAR_UNDEFINED) {
-               switch (kev.getKeyCode()) {
-                  case JeyEvent.VK_LEFT:
-                     //writer.write("\33D");
-                     writer.write("\33[D");
-                     break;
-                  case JeyEvent.VK_RIGHT:
-                     writer.write("\33[C");
-                     //writer.write("\33C");
-                     break;
-                  case JeyEvent.VK_UP:
-                     writer.write("\33[A");
-                     //writer.write("\33A");
-                     break;
-                  case JeyEvent.VK_DOWN:
-                     writer.write("\33[B");
-                     //writer.write("\33B");
-                     break;
-                  case JeyEvent.VK_INSERT:
-                     return;
-                  case JeyEvent.VK_F8:
-                     return;  // F8 toggles back to vi-edit mode
-                  default:
-                     trace("unhandle KeyCode " + kev.getKeyCode());
+               synchronized (writerLock) {
+                  switch (kev.getKeyCode()) {
+                     case JeyEvent.VK_LEFT:
+                        writer.write(applicationCursorKeys
+                           ? "\33OD" : "\33[D");
+                        break;
+                     case JeyEvent.VK_RIGHT:
+                        writer.write(applicationCursorKeys
+                           ? "\33OC" : "\33[C");
+                        break;
+                     case JeyEvent.VK_UP:
+                        writer.write(applicationCursorKeys
+                           ? "\33OA" : "\33[A");
+                        break;
+                     case JeyEvent.VK_DOWN:
+                        writer.write(applicationCursorKeys
+                           ? "\33OB" : "\33[B");
+                        break;
+                     case JeyEvent.VK_INSERT:
+                        return;
+                     case JeyEvent.VK_F8:
+                        return;
+                     default:
+                        trace("unhandle KeyCode "
+                           + kev.getKeyCode());
+                  }
+                  writer.flush();
                }
-               writer.flush();
             } else {
+               // Cmd+V (macOS) / Ctrl+V clipboard paste
+               if (('v' == ch || 'V' == ch)
+                     && (kev.getModifiers()
+                        & JeyEvent.META_MASK) != 0) {
+                  pasteClipboard();
+                  continue;
+               }
                if ('\r' == ch
-                     && '\r' == kev.getKeyCode()) // this was really a cr
+                     && '\r' == kev.getKeyCode())
                   ch = '\n';
-               //trace ("passing through ch " + ch + " 0x" + Integer.toHexString(ch));
-               //trace ("passing through code " + Integer.toHexString(kev.getKeyCode()));
-               //trace ("passing key location " + kev.getKeyLocation());
-               //trace ("passing key Text " + kev.getKeyText(kev.getKeyCode()));
-               //trace ("key modifier " + kev.getModifiersExText(kev.getModifiersEx()));
-               writer.write(ch);
-               writer.flush();
+               synchronized (writerLock) {
+                  writer.write(ch);
+                  writer.flush();
+               }
             }
          }
       } catch (IOException e) {
@@ -308,8 +484,68 @@ class Vt100 extends TextEdit<String> {
       }
    }
 
+   /**
+    * Reads clipboard text and sends it to the shell, wrapping with
+    * bracketed paste markers if mode 2004 is active.
+    */
+   private void pasteClipboard() {
+      try {
+         java.awt.datatransfer.Clipboard clip =
+            java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+         java.awt.datatransfer.Transferable tr = clip.getContents(null);
+         if (tr != null && tr.isDataFlavorSupported(
+               java.awt.datatransfer.DataFlavor.stringFlavor)) {
+            String text = (String) tr.getTransferData(
+               java.awt.datatransfer.DataFlavor.stringFlavor);
+            if (text != null && !text.isEmpty())
+               sendText(text);
+         }
+      } catch (Exception e) {
+         trace("pasteClipboard failed: " + e);
+      }
+   }
+
    private final class ECScreen extends VScreen {
       private MovePos savecursor = new MovePos(0, 1);
+      // SGR attribute state (tracked but not yet rendered per-character)
+      private boolean attrBold;
+      private boolean attrUnderline;
+      private boolean attrReverse;
+      private int attrFgColor = -1;
+      private int attrBgColor = -1;
+
+      void setGraphicRendition(int[] params, StringBuilder sb) {
+         insertString(sb);
+         for (int i = 0; i < params.length; i++) {
+            int p = params[i];
+            switch (p) {
+               case 0: // reset all attributes
+                  attrBold = false;
+                  attrUnderline = false;
+                  attrReverse = false;
+                  attrFgColor = -1;
+                  attrBgColor = -1;
+                  break;
+               case 1: attrBold = true; break;
+               case 4: attrUnderline = true; break;
+               case 7: attrReverse = true; break;
+               case 22: attrBold = false; break;
+               case 24: attrUnderline = false; break;
+               case 27: attrReverse = false; break;
+               default:
+                  if (p >= 30 && p <= 37)
+                     attrFgColor = p - 30;
+                  else if (p >= 40 && p <= 47)
+                     attrBgColor = p - 40;
+                  else if (p == 39)
+                     attrFgColor = -1;
+                  else if (p == 49)
+                     attrBgColor = -1;
+                  break;
+            }
+         }
+      }
+
       void incX(int amount, StringBuilder sb) {
          insertString(sb);
          vtcursor.x += amount;
@@ -477,6 +713,45 @@ class Vt100 extends TextEdit<String> {
 
       void setSgrMouseMode(boolean enable) {
          Vt100.this.setSgrMouseMode(enable);
+      }
+
+      void setBracketedPasteMode(boolean enable) {
+         Vt100.this.setBracketedPasteMode(enable);
+      }
+
+      void setFocusEventsMode(boolean enable) {
+         Vt100.this.setFocusEventsMode(enable);
+      }
+
+      void setAutowrapMode(boolean enable) {
+         Vt100.this.setAutowrapMode(enable);
+      }
+
+      void setCursorBlinkMode(boolean enable) {
+         Vt100.this.setCursorBlinkMode(enable);
+      }
+
+      void setApplicationCursorKeys(boolean enable) {
+         Vt100.this.setApplicationCursorKeys(enable);
+      }
+
+      void setCursorVisible(boolean visible) {
+         Vt100.this.setCursorVisible(visible);
+      }
+
+      void respondDeviceAttributes(StringBuilder sb) {
+         insertString(sb);
+         // Identify as VT220 with ANSI color support
+         Vt100.this.sendResponse("\033[?62;22c");
+      }
+
+      void respondCursorPosition(StringBuilder sb) {
+         insertString(sb);
+         int row = vtcursor.y - readIn() + rows + 1;
+         int col = vtcursor.x + 1;
+         if (row < 1) row = 1;
+         if (col < 1) col = 1;
+         Vt100.this.sendResponse("\033[" + row + ";" + col + "R");
       }
 
    }

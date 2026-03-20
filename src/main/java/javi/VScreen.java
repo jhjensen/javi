@@ -287,4 +287,79 @@ abstract class VScreen {
    void setSgrMouseMode(boolean enable) {
       // Default no-op
    }
+
+   /**
+    * Sets bracketed paste mode (2004).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setBracketedPasteMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets focus event reporting mode (1004).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setFocusEventsMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets autowrap mode (mode 7).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setAutowrapMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets cursor blink mode (mode 12).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setCursorBlinkMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets application cursor key mode (DECCKM, mode 1).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setApplicationCursorKeys(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets cursor visibility (DECTCEM, mode 25).
+    *
+    * <p>When disabled, the cursor should be hidden. This implements
+    * ESC[?25l (hide) and ESC[?25h (show).</p>
+    *
+    * @param visible true to show cursor, false to hide
+    */
+   void setCursorVisible(boolean visible) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a Primary Device Attributes request (CSI c).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondDeviceAttributes(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a Cursor Position Report request (CSI 6 n).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondCursorPosition(StringBuilder sb) {
+      // Default no-op
+   }
 }

@@ -63,6 +63,7 @@ import javi.InputException;
 import javi.JeyEvent;
 import javi.MiscCommands;
 import javi.Rgroup;
+import javi.ShellManager;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
@@ -431,10 +432,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
             case FocusEvent.FOCUS_LOST:
                EventQueue.focusLost();
+               ShellManager.getInstance().forwardFocusEvent(false);
                break;
 
             case FocusEvent.FOCUS_GAINED:
                EventQueue.focusGained();
+               ShellManager.getInstance().forwardFocusEvent(true);
                break;
 
             case WindowEvent.WINDOW_CLOSING:

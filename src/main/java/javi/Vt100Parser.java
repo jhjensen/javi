@@ -91,8 +91,11 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    /** Highest numacc index that was explicitly set. */
    private int highestSet;
 
-   /** Mode number for private mode sequences. */
-   private int modenumber;
+   /** Mode numbers for private mode sequences (handles ; separators). */
+   private int[] modeNumbers = new int[8];
+
+   /** Count of accumulated mode numbers (0-based index). */
+   private int modeCount;
 
    /** OSC command character. */
    private char oscmode;
@@ -337,7 +340,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
             case '?':
                newstate = MODE;
-               modenumber = 0;
+               modeNumbers[0] = 0;
+               modeCount = 0;
                break;
             case 27:
                newstate = ESC;
@@ -423,12 +427,17 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                window.eraseChars(def ? 1 : numacc[currnumacc], sb);
                break;
             case 'n': // Device Status Report
-               trace1("device status report (ignored)");
-               // Would normally send response back to terminal
+               if (!def && numacc[currnumacc] == 6) {
+                  trace1("cursor position report (responding)");
+                  window.respondCursorPosition(sb);
+               } else {
+                  trace1("device status report "
+                     + numacc[currnumacc] + " (ignored)");
+               }
                break;
             case 'c': // Device Attributes
-               trace1("device attributes request (ignored)");
-               // Would normally send response back to terminal
+               trace1("device attributes request (responding)");
+               window.respondDeviceAttributes(sb);
                break;
             case 's': // Save Cursor Position (ANSI.SYS / SCO)
                trace1("save cursor (ANSI.SYS)");
@@ -449,46 +458,68 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    private void caseMODE(int inc) {
       if (inc >= '0' && inc <= '9')
-         modenumber = modenumber * 10 + inc - '0';
-      else {
-         int val = 'h' == inc ? 1 : 0;
-
-         switch (modenumber) {
-            case 1:
-               break;
-            case 2:
-               trace("vt52 mode shouldn't happen");
-               break;
-            case 3:
-               trace("132 column mode ???");
-               break;
-            case 4:
-               trace("smooth scrolling ??? inc = " + inc);
-               break;
-            case 47:
-            case 1047: // F10: use alternate screen buffer
-            case 1049: // F10: save cursor + use alternate screen buffer
-               window.switchAlternateScreen(1 == val, sb);
-               break;
-            case 25: // DECTCEM: show/hide cursor
-               trace("cursor visibility " + (1 == val ? "show" : "hide"));
-               break;
-
-            case 1000: // Normal mouse tracking
-            case 1002: // Button-event mouse tracking
-            case 1003: // Any-event mouse tracking
-               window.setMouseTracking(modenumber, 1 == val);
-               break;
-            case 1006: // SGR extended mouse mode
-               window.setSgrMouseMode(1 == val);
-               break;
-
-            default:
-               trace("setting unknown mode " + (char) modenumber
-                  + " decimal "  + modenumber + " 0x"
-                  + Integer.toHexString(modenumber) + " to " + val);
-         }
+         modeNumbers[modeCount] = modeNumbers[modeCount] * 10 + inc - '0';
+      else if (';' == inc) {
+         // Multiple mode numbers separated by ';' (e.g., ESC[?1000;1006h)
+         modeCount++;
+         if (modeCount < modeNumbers.length)
+            modeNumbers[modeCount] = 0;
+      } else {
+         boolean enable = 'h' == inc;
+         for (int i = 0; i <= modeCount && i < modeNumbers.length; i++)
+            applyMode(modeNumbers[i], enable);
          state = NORM;
+      }
+   }
+
+   private void applyMode(int modeNum, boolean enable) {
+      switch (modeNum) {
+         case 1: // Application cursor keys (DECCKM)
+            window.setApplicationCursorKeys(enable);
+            break;
+         case 2:
+            trace("vt52 mode shouldn't happen");
+            break;
+         case 3:
+            trace("132 column mode ???");
+            break;
+         case 4:
+            trace("smooth scrolling ???");
+            break;
+         case 47:
+         case 1047: // F10: use alternate screen buffer
+         case 1049: // F10: save cursor + use alternate screen buffer
+            window.switchAlternateScreen(enable, sb);
+            break;
+         case 25: // DECTCEM: show/hide cursor
+            window.setCursorVisible(enable);
+            break;
+
+         case 1000: // Normal mouse tracking
+         case 1002: // Button-event mouse tracking
+         case 1003: // Any-event mouse tracking
+            window.setMouseTracking(modeNum, enable);
+            break;
+         case 1006: // SGR extended mouse mode
+            window.setSgrMouseMode(enable);
+            break;
+         case 7: // Autowrap mode
+            window.setAutowrapMode(enable);
+            break;
+         case 12: // Cursor blink
+            window.setCursorBlinkMode(enable);
+            break;
+         case 1004: // Focus event reporting
+            window.setFocusEventsMode(enable);
+            break;
+         case 2004: // Bracketed paste mode
+            window.setBracketedPasteMode(enable);
+            break;
+
+         default:
+            trace("setting unknown mode " + modeNum
+               + " 0x" + Integer.toHexString(modeNum)
+               + " to " + (enable ? "on" : "off"));
       }
    }
 

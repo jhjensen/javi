@@ -304,6 +304,13 @@ public final class PosListList extends TextList<Position> {
          inst.setFirst(newerrs);
       }
 
+      public static TextEdit<Position> addPositionIoc(IoConverter<Position> ioc) {
+         TextEdit<Position> newList =
+            new TextEdit<>(ioc, inst, ioc.prop);
+         inst.addList(newList);
+         return newList;
+      }
+
       static void flush() throws IOException {
          tagstack.clear();
          tahash.clear();
