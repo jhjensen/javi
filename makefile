@@ -186,10 +186,15 @@ cstyle:
 cstyle-file:
 	perl cstyle $(FILE)
 
-# Run checkstyle on a specific file without filter
-# Usage: make cstyle-nofilter FILE=src/main/java/javi/Javi.java
+# Run checkstyle without filter (all violations are errors)
+# Usage: make cstyle-nofilter              (all files)
+#        make cstyle-nofilter FILE=<path>  (single file)
 cstyle-nofilter:
+ifdef FILE
 	perl cstyle --nofilter $(FILE)
+else
+	perl cstyle --nofilter src/main/java/javi/*.java src/history/java/history/*.java
+endif
 
 # Show lines longer than 90 characters in a file
 # Usage: make longlines FILE=src/main/java/javi/Javi.java

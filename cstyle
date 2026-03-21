@@ -5,6 +5,16 @@ use integer;
 use ops;
 use Cwd;
 
+my $nofilter = 0;
+my @files;
+foreach my $arg (@ARGV) {
+   if ($arg eq '--nofilter') {
+      $nofilter = 1;
+   } else {
+      push @files, $arg;
+   }
+}
+
 my %filelist;
 
 #system("printenv | sort >penv") && die;
@@ -23,7 +33,7 @@ my $rootdir =$_;
 #my $jroot="$whome\\javt";
 # Use checkstyle JAR from the local lib directory
 my $rootdir_escaped = $rootdir;
-my $cmd ="java -jar $rootdir_escaped/lib/checkstyle-10.21.4-all.jar -c checkstyle.xml @ARGV ";
+my $cmd ="java -jar $rootdir_escaped/lib/checkstyle-10.21.4-all.jar -c checkstyle.xml @files ";
 print "running $cmd\n";
 
 open(CST, "$cmd 2>&1|") || die ("$cmd failed $!");
@@ -62,7 +72,14 @@ my $size=1 + $#array;
 
 print("\nfound errors in $size files\n");
 
-if ($size != 0) {
+if ($nofilter) {
+   if ($size != 0) {
+      foreach my $key (@array) {
+         print("$key: $filelist{$key} violations\n");
+      }
+      exit 255;
+   }
+} elsif ($size != 0) {
 
    my %db;
    open(ERRLST, "cs_errcnt") || die ("$cmd failed $!");
