@@ -103,6 +103,7 @@ final class JavaCompiler extends Rgroup {
          switch (diagnostic.getKind()) {
             case ERROR, NOTE, OTHER -> errcount++;
             case MANDATORY_WARNING, WARNING -> warncount++;
+            default -> { }
          }
          mess = mess.replace('\n', ' ');
          addResult(new Position((int) diagnostic.getColumnNumber(),

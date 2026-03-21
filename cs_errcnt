@@ -12,14 +12,11 @@ src/main/java/javi/Tools.java,1
 src/main/java/javi/FvContext.java,2
 src/main/java/javi/JeyEvent.java,27
 src/main/java/javi/EditContainer.java,1
-src/main/java/javi/InsertBuffer.java,1
 src/history/java/history/PSTest.java,2
 src/main/java/javi/Position.java,1
 src/main/java/javi/awt/AwtView.java,1
-src/main/java/javi/UndoHistory.java,0
-src/main/java/javi/JavaCompiler.java,1
+src/main/java/javi/UndoHistory.java,6
 src/main/java/javi/View.java,1
-src/main/java/javi/JS.java,1
 src/main/java/javi/BackupStatus.java,1
 src/main/java/javi/XrefReader.java,1
 src/main/java/javi/Javi.java,1
