@@ -391,16 +391,8 @@ final class EditGroup extends Rgroup {
                      MiscCommands.redraw(true);
                      continue;
                   case 29:
-                     line = fvc.edvec.gettext(startx, starty, donex, doney);
-                     try {
-                        Rgroup.doCommand("gototag", line, 1, 1, fvc, false);
-                     } catch (IOException e) {
-                        throw new RuntimeException(
-                           "editgroup.markmode got unexpected ", e);
-                     } catch (InterruptedException e) {
-                        UI.popError("caught int", e);
-                     }
-
+                     gotoTagFromSelection(fvc, startx, starty,
+                        donex, doney);
                      break out;
                   default:
                      continue;
@@ -412,6 +404,21 @@ final class EditGroup extends Rgroup {
          } while (!dotmode);
       } finally {
          fvc.vi.clearMark();
+      }
+   }
+
+   private static void gotoTagFromSelection(FvContext fvc,
+         int startx, int starty, int donex, int doney) {
+      String line;
+      try {
+         line = fvc.edvec.gettext(startx, starty,
+            donex, doney);
+         Rgroup.doCommand("gototag", line, 1, 1, fvc, false);
+      } catch (IOException | InputException e) {
+         throw new RuntimeException(
+            "editgroup.markmode got unexpected ", e);
+      } catch (InterruptedException e) {
+         UI.popError("caught int", e);
       }
    }
 

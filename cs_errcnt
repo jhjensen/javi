@@ -16,9 +16,7 @@ src/main/java/javi/FileList.java,1
 src/main/java/javi/Keybinding.java,3
 src/main/java/javi/PositionIoc.java,1
 src/main/java/javi/Tools.java,1
-src/main/java/javi/FvContext.java,2
 src/main/java/javi/JeyEvent.java,27
-src/main/java/javi/EditContainer.java,1
 src/main/java/javi/InsertBuffer.java,1
 src/history/java/history/PSTest.java,2
 src/main/java/javi/Position.java,1

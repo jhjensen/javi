@@ -190,7 +190,8 @@ public final class MiscCommands extends Rgroup {
       fvc.fixCursor();
    }
 
-   private void startshell(FvContext fvc, String host) throws IOException, InputException {
+   private void startshell(FvContext fvc, String host)
+      throws IOException, InputException {
       trace("reached startshell " + host);
 
       // F8 toggle: if already viewing a shell buffer, enter passthrough mode
@@ -507,7 +508,9 @@ public final class MiscCommands extends Rgroup {
    private static String portname = "COM1";
    private static int baudrate = 38400;
 
-   private static void startcom(String arg, FvContext fvc) throws IOException, InputException {
+   private static void startcom(String arg,
+      FvContext fvc)
+      throws IOException, InputException {
       // trace("reached startcommCon");
       if (null == commCon) {
          if (null != arg)
@@ -561,8 +564,10 @@ public final class MiscCommands extends Rgroup {
       }
    };
 
-   private static String[] lastcmd = { "bash", "-i", "-c",
-         "(cd ../javitests; java -Xshare:off javitests.PerfTest )"
+   private static String[] lastcmd = {
+      "bash", "-i", "-c",
+      "(cd ../javitests;"
+         + " java -Xshare:off javitests.PerfTest )"
    };
 
    private static void startcmd(String cname, FvContext fvc) {
