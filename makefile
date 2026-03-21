@@ -137,6 +137,14 @@ test: ai.output/test.out
 # Run JUnit 5 tests via Gradle and capture output
 junit: ai.output/junit.out
 
+# Compile test sources
+compile-test:
+	./gradlew compileTestJava
+
+# Run GUI tests (AssertJ Swing — requires display/Xvfb)
+guitest:
+	./gradlew guiTest
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage
@@ -177,6 +185,16 @@ cstyle:
 # Usage: make cstyle-file FILE=src/main/java/javi/Javi.java
 cstyle-file:
 	perl cstyle $(FILE)
+
+# Run checkstyle on a specific file without filter
+# Usage: make cstyle-nofilter FILE=src/main/java/javi/Javi.java
+cstyle-nofilter:
+	perl cstyle --nofilter $(FILE)
+
+# Show lines longer than 90 characters in a file
+# Usage: make longlines FILE=src/main/java/javi/Javi.java
+longlines:
+	awk 'length > 90 {printf "%d: %d: %s\n", NR, length, $$0}' $(FILE)
 
 #==============================================================================
 # Documentation targets
