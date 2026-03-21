@@ -1,10 +1,8 @@
 src/main/java/javi/awt/OldView.java,2
-src/main/java/javi/TextEdit.java,5
 src/main/java/javi/Command.java,1
 src/main/java/javi/UI.java,1
 src/main/java/javi/MovePos.java,2
 src/main/java/javi/MapEvent.java,1
-src/main/java/javi/IoConverter.java,7
 src/main/java/javi/FileDescriptor.java,3
 src/main/java/javi/Vt100Parser.java,8
 src/main/java/javi/FileProperties.java,2
