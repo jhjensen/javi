@@ -1305,7 +1305,6 @@ public final class DirEdit extends TextEdit<String> {
                if (fvc.edvec instanceof DirEdit) {
                   ((DirEdit) fvc.edvec).createInline(fvc);
                }
-               }
                return null;
 
             default:
