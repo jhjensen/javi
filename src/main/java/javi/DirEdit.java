@@ -47,6 +47,8 @@ import static history.Tools.trace;
  *   <tr><td>s</td><td>Cycle sort mode (name/size/date/type)</td></tr>
  *   <tr><td>R</td><td>Refresh directory listing</td></tr>
  *   <tr><td>dd</td><td>Delete file under cursor</td></tr>
+ *   <tr><td>yy</td><td>Yank filename to register</td></tr>
+ *   <tr><td>Y</td><td>Yank full path to register</td></tr>
  *   <tr><td>q</td><td>Quit directory browser</td></tr>
  * </table>
  *
@@ -164,6 +166,14 @@ public final class DirEdit extends TextEdit<String> {
          case 'D':
             deleteSelected(fvc);
             return true;
+         case 'Y':
+            yankPath(fvc);
+            return true;
+         case 'y':
+            if ('y' == EventQueue.nextKey(fvc.vi)) {
+               yankFilename(fvc);
+            }
+            return true;
          case 'o': case 'O':
             createInline(fvc);
             return true;
@@ -193,6 +203,7 @@ public final class DirEdit extends TextEdit<String> {
          case 'm': case '\'':
          case '/': case '?':
          case ':': case 'z': case 'Z':
+         case 'p': case 'P':
          case ' ':
          case 27: // Escape
             return false;
@@ -335,6 +346,7 @@ public final class DirEdit extends TextEdit<String> {
          + "  [R] refresh  [q] quit");
       lines.add("  [dd] delete/trash  [o] new file/dir  [S] search path"
          + "  [!] shell  :diredit_rename  :diredit_copy");
+      lines.add("  [yy] yank filename  [Y] yank full path");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -556,6 +568,60 @@ public final class DirEdit extends TextEdit<String> {
       }
 
       return null;
+   }
+
+   /**
+    * Returns the full filesystem path for the entry at the given line.
+    *
+    * @param lineNum the line number
+    * @return the full path, or null if not a file entry line
+    */
+   String getFullPath(int lineNum) {
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         return null;
+      }
+      if ("../".equals(filename)) {
+         File parent = currentDir.fh.getAbsoluteFile().getParentFile();
+         return (null != parent) ? parent.getAbsolutePath() : null;
+      }
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      return new File(currentDir.fh, name).getAbsolutePath();
+   }
+
+   /**
+    * Yanks the full path of the file under the cursor to the yank
+    * register and system clipboard ({@code Y} key in DirEdit).
+    *
+    * @param fvc the current FvContext
+    */
+   void yankPath(FvContext fvc) {
+      String path = getFullPath(fvc.inserty());
+      if (null != path) {
+         Buffers.deleted('0', path);
+         UI.reportMessage("Yanked path: " + path);
+      }
+   }
+
+   /**
+    * Yanks just the filename (no directory) under the cursor to the
+    * yank register and system clipboard ({@code yy} in DirEdit).
+    *
+    * @param fvc the current FvContext
+    */
+   void yankFilename(FvContext fvc) {
+      String filename = getFilename(fvc.inserty());
+      if (null == filename) {
+         return;
+      }
+      // Strip trailing slash from directory names
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      Buffers.deleted('0', name);
+      UI.reportMessage("Yanked: " + name);
    }
 
    /**
