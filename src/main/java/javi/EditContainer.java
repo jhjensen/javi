@@ -24,15 +24,21 @@ import static history.Tools.trace;
  * <p>EditContainer is the fundamental data structure underlying all text editing.
  * It provides:
  * <ul>
- *   <li><b>Lazy loading</b>: Vector auto-fills from a stream, allowing editing of
- *       large/networked files without waiting for complete read</li>
- *   <li><b>Infinite undo</b>: Full history back to session start via {@link UndoHistory}</li>
- *   <li><b>Position tracking</b>: Marks that follow elements as content is added/deleted</li>
- *   <li><b>Persistence</b>: Undo history persisted to .dmp2 files via {@link history.PersistantStack}</li>
+ *   <li><b>Lazy loading</b>: Vector auto-fills from
+ *       a stream, allowing editing of large/networked
+ *       files without waiting for complete read</li>
+ *   <li><b>Infinite undo</b>: Full history back to
+ *       session start via {@link UndoHistory}</li>
+ *   <li><b>Position tracking</b>: Marks that follow
+ *       elements as content is added/deleted</li>
+ *   <li><b>Persistence</b>: Undo history persisted to
+ *       .dmp2 files via
+ *       {@link history.PersistantStack}</li>
  * </ul>
  *
  * <h2>Thread Safety</h2>
- * <p>Most operations require holding {@link EventQueue#biglock2}. Key invariants:</p>
+ * <p>Most operations require holding
+ * {@link EventQueue#biglock2}. Key invariants:</p>
  * <ul>
  *   <li>All modification methods (insert, delete, change) require biglock2</li>
  *   <li>Static collections {@code filehash} and {@code listeners} have separate sync</li>
@@ -44,9 +50,11 @@ import static history.Tools.trace;
  * <h2>Important Invariants</h2>
  * <ul>
  *   <li>Call {@link #contains(int)} before accessing elements during async read</li>
- *   <li>Call {@link #contains(int)} before calling {@link #at(int)} if not finished reading</li>
+ *   <li>Call {@link #contains(int)} before calling
+ *       {@link #at(int)} if not finished reading</li>
  *   <li>Every EditContainer except root must have a parent</li>
- *   <li>File canonical name is used as unique key (may not be unique on MS-DOS)</li>
+ *   <li>File canonical name is used as unique key
+ *       (may not be unique on MS-DOS)</li>
  * </ul>
  *
  * <h2>Key Relationships</h2>
@@ -227,7 +235,7 @@ public class EditContainer<OType> implements
       cleanup();
    }
 
-// should generally be called from FvContext
+   /** {@inheritDoc} Cleans up file resources. */
    public void disposeFvc() throws IOException {
 
       //trace("dispose " + super.toString()  + "\"" + prop.fdes.canonName+  "\" class = " + prop.conv.getClass() );
@@ -656,6 +664,7 @@ public class EditContainer<OType> implements
       prop.setReadOnly(flag);
    }
 
+   /** {@inheritDoc} Default: returns false. */
    boolean handleKey(JeyEvent jEv, FvContext fvc) throws
          InputException, InterruptedException, IOException {
       return false;

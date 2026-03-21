@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static history.Tools.trace;
 
@@ -63,7 +62,9 @@ public final class FvContext<OType> implements Serializable {
 
    private static final class FvMap implements Serializable {
       private static final long serialVersionUID = 1;
-      private LinkedHashMap<View, HashMap<TextEdit<?>, FvContext<?>>> viewhash = new LinkedHashMap<>(1);
+      private LinkedHashMap<View,
+         HashMap<TextEdit<?>, FvContext<?>>>
+         viewhash = new LinkedHashMap<>(1);
 
       FvMap() {
          EditContainer.registerListener(new FS());
@@ -154,7 +155,9 @@ public final class FvContext<OType> implements Serializable {
 
       private final class FvIterator implements Iterator<FvContext<?>> {
 
-         private Iterator<HashMap<TextEdit<?>, FvContext<?>>> viit = viewhash.values().iterator();
+         private Iterator<HashMap<TextEdit<?>,
+            FvContext<?>>> viit =
+            viewhash.values().iterator();
          private Iterator<FvContext<?>> fvit;
 
          FvIterator() {
@@ -215,11 +218,15 @@ public final class FvContext<OType> implements Serializable {
       return fvmap.viewCount();
    }
 
-   private void readObject(java.io.ObjectInputStream is) throws ClassNotFoundException, java.io.IOException {
+   private void readObject(
+      java.io.ObjectInputStream is)
+      throws ClassNotFoundException,
+      java.io.IOException {
       is.defaultReadObject();
    }
 
-   static void restoreState(ObjectInputStream is) throws IOException, ClassNotFoundException {
+   static void restoreState(ObjectInputStream is)
+      throws IOException, ClassNotFoundException {
       currfvc = ((FvContext) is.readObject());
       fvmap = (FvMap) is.readObject();
    }
@@ -399,7 +406,9 @@ public final class FvContext<OType> implements Serializable {
       currfvc = null;
    }
 
-   public static void dispose(TextEdit<?> ed, TextEdit<?> next) throws InputException, IOException {
+   public static void dispose(
+      TextEdit<?> ed, TextEdit<?> next)
+      throws InputException, IOException {
       // trace("disposing " + ed + " currfvc " + currfvc);
 
       reconnect(ed, next);
