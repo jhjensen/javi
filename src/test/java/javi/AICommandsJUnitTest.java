@@ -1,6 +1,9 @@
 package javi;
 
 import javi.ai.AICommands;
+import javi.ai.AIConfig;
+import javi.ai.AIException;
+import javi.ai.CopilotProvider;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * JUnit 5 tests for AI command registration, help screen content,
@@ -221,5 +226,63 @@ class AICommandsJUnitTest {
       String text = bufferText(HelpSystem.getHelp("nonexistent_topic_xyz"));
       assertTrue(text.contains("ai"),
          "unknown topic list should mention 'ai'");
+   }
+
+   // ── CopilotProvider Unit Tests ────────────────────────────────
+
+   @Test
+   @DisplayName("extractCompletionText with displayText")
+   void extractDisplayText() throws AIException {
+      String json = "{\"result\":{\"completions\":[{\"displayText\":"
+         + "\"hello world\",\"position\":{}}]}}";
+      assertEquals("hello world",
+         CopilotProvider.extractCompletionText(json));
+   }
+
+   @Test
+   @DisplayName("extractCompletionText with insertText fallback")
+   void extractInsertText() throws AIException {
+      String json = "{\"result\":{\"completions\":[{\"insertText\":"
+         + "\"foo bar\"}]}}";
+      assertEquals("foo bar",
+         CopilotProvider.extractCompletionText(json));
+   }
+
+   @Test
+   @DisplayName("extractCompletionText with no completion")
+   void extractNoCompletion() throws AIException {
+      String json = "{\"result\":{\"completions\":[]}}";
+      assertEquals("",
+         CopilotProvider.extractCompletionText(json));
+   }
+
+   @Test
+   @DisplayName("findAgentPath returns null without legacy extension")
+   void findAgentPathNoLegacyExtension() {
+      // On this system the legacy github.copilot extension is not
+      // installed. findAgentPath should not fall back to cli.js
+      // from copilot-chat, which is an unrelated tool.
+      String path = CopilotProvider.findAgentPath();
+      if (null != path) {
+         // If an agent IS found, it must be agent.js, not cli.js
+         assertTrue(path.endsWith("agent.js"),
+            "findAgentPath should only return agent.js, got: " + path);
+      }
+      // null is acceptable — means no standalone agent available
+   }
+
+   @Test
+   @DisplayName("AIConfig.Provider.fromId round-trips")
+   void providerFromIdRoundTrip() {
+      for (AIConfig.Provider p : AIConfig.Provider.values()) {
+         assertEquals(p, AIConfig.Provider.fromId(p.getId()));
+      }
+   }
+
+   @Test
+   @DisplayName("AIConfig.Provider.fromId rejects unknown")
+   void providerFromIdRejectsUnknown() {
+      assertThrows(IllegalArgumentException.class,
+         () -> AIConfig.Provider.fromId("bogus"));
    }
 }

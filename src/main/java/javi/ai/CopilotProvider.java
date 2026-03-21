@@ -33,7 +33,12 @@ import static history.Tools.trace;
  *
  * <h2>Agent Discovery</h2>
  * <p>The agent is found from the VS Code Copilot extension install
- * directory, typically under ~/.vscode/extensions/.</p>
+ * directory, typically under ~/.vscode/extensions/. Requires the
+ * legacy {@code github.copilot-*} extension with {@code dist/agent.js}.
+ * The modern copilot-chat extension (0.39+) does NOT include a
+ * standalone agent; it uses the VS Code Language Model API instead.
+ * Set the {@code COPILOT_AGENT_PATH} environment variable if the
+ * agent is installed elsewhere.</p>
  *
  * <h2>Authentication</h2>
  * <p>Uses GitHub device flow OAuth. On first use, displays a URL and
@@ -395,7 +400,7 @@ public final class CopilotProvider implements AIProvider {
    /**
     * Extract completion text from the Copilot agent response.
     */
-   static String extractCompletionText(String json) throws AIException {
+   public static String extractCompletionText(String json) throws AIException {
       // Look for "displayText":" or "text":" in completions
       String marker = "\"displayText\":\"";
       int idx = json.indexOf(marker);
@@ -416,7 +421,7 @@ public final class CopilotProvider implements AIProvider {
     *
     * @return the absolute path to agent.js, or null if not found
     */
-   static String findAgentPath() {
+   public static String findAgentPath() {
       // Check environment variable override first
       String envPath = System.getenv(AGENT_PATH_ENV);
       if (null != envPath && !envPath.isEmpty()) {
@@ -453,23 +458,12 @@ public final class CopilotProvider implements AIProvider {
          trace("Error searching for legacy Copilot agent: " + e);
       }
 
-      // Try modern Copilot Chat extension language server
-      // (github.copilot-chat-<version>/dist/cli.js)
-      try (var stream = Files.list(extDir)) {
-         return stream
-            .filter(p -> p.getFileName().toString()
-               .startsWith("github.copilot-chat-"))
-            .sorted((a, b) -> b.getFileName().toString()
-               .compareTo(a.getFileName().toString()))
-            .map(p -> p.resolve("dist").resolve("cli.js"))
-            .filter(Files::isRegularFile)
-            .map(Path::toString)
-            .findFirst()
-            .orElse(null);
-      } catch (IOException e) {
-         trace("Error searching for Copilot chat agent: " + e);
-         return null;
-      }
+      // The modern copilot-chat extension (0.39+) does NOT include
+      // a standalone LSP agent. Its dist/cli.js is an unrelated tool
+      // (Copilot CLI shim or Claude Code). The extension.js runs only
+      // inside the VS Code extension host via the Language Model API.
+      // Therefore no fallback search is attempted here.
+      return null;
    }
 
    /**
