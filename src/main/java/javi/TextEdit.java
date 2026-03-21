@@ -273,6 +273,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                           lineto, str.remainder());
    }
 
+   @SuppressWarnings("checkstyle:ParameterNumber")
    private int commandproc2(int linestart, int linefinish,
          Matcher rangePattern, boolean inverse, Matcher matchPattern,
          boolean globflag, char command, String subpattern, int lineto,
@@ -314,6 +315,8 @@ public class TextEdit<OType> extends EditContainer<OType> {
                   substitute(ii, matchPattern, subpattern, globflag);
             checkpoint();
             return linestart;
+         default:
+            break;
       }
 
       boolean before = lineto < linestart;
@@ -731,7 +734,9 @@ public class TextEdit<OType> extends EditContainer<OType> {
 
       String remainder() {
          //trace("remainder index " + index);
-         while (' ' == (next())) { /* skip spaces */ }
+         while (' ' == (next())) {
+            continue; // skip spaces
+         }
          return str.substring(index - 1, str.length());
       }
 
@@ -1128,6 +1133,7 @@ final class EditTester1 {
       }
    }
 
+   @SuppressWarnings("checkstyle:AvoidNestedBlocks")
    static void perftest() throws IOException, InputException {
 
       starttest();

@@ -11,7 +11,8 @@ import static history.Tools.trace;
  * <p>IoConverter defines the interface for converting input streams into
  * elements for {@link EditContainer}. It supports:
  * <ul>
- *   <li><b>Background loading</b>: Runs in separate thread for non-blocking file reads</li>
+ *   <li><b>Background loading</b>: Runs in separate
+ *       thread for non-blocking file reads</li>
  *   <li><b>Lazy expansion</b>: Content loaded on demand as user scrolls</li>
  *   <li><b>Build callbacks</b>: Notification when loading completes</li>
  * </ul>
@@ -68,14 +69,17 @@ public class IoConverter<OType> implements Runnable, Serializable {
       tstate = ThreadState.INIT;
    }
 
+   /** {@inheritDoc} Returns null by default. */
    public OType getnext() {
       return null;
    }
 
+   /** Interrupts the reader thread. */
    void stopIo() {
       rthread.interrupt();
    }
 
+   /** {@inheritDoc} Waits for reader thread. */
    public synchronized void dispose() throws IOException {
       //trace("rthread = " + rthread);
 
@@ -205,7 +209,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
     * <li>The caller (expand) reacquires biglock2 after expandLock returns 2</li>
     * </ol>
     *
-    * <p>TODO: Consider refactoring to use java.util.concurrent primitives
+    * <p>FUTURE: Consider refactoring to use
+    * java.util.concurrent primitives
     * (CountDownLatch, Condition, etc.) for clearer lock management.</p>
     *
     * @param desired the minimum number of elements needed
@@ -254,6 +259,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
                if (ioarray != mainArray)
                   ioarray.clear();
                return 1;
+            default:
+               break;
          }
       }
    }
@@ -274,6 +281,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
       ioarray.add(ob);
    }
 
+   /** Runs the main read loop. */
+   @SuppressWarnings("checkstyle:DesignForExtension")
    void dorun() throws InterruptedException {
       //trace("dorun " + tstate + this);
       OType ob;
@@ -291,6 +300,8 @@ public class IoConverter<OType> implements Runnable, Serializable {
    protected void postRun() {
    }
 
+   /** Interrupts the reader if running. */
+   @SuppressWarnings("checkstyle:DesignForExtension")
    protected void truncIo() {
       if (rthread != null)
          rthread.interrupt();

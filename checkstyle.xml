@@ -191,6 +191,11 @@
         <module name="TodoComment"/>
         <module name="UpperEll"/>
 
+        <!-- Enable @SuppressWarnings("checkstyle:X") -->
+        <module name="SuppressWarningsHolder"/>
+
     </module>
+
+    <module name="SuppressWarningsFilter"/>
 
 </module>
