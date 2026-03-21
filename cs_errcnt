@@ -4,7 +4,6 @@ src/main/java/javi/UI.java,1
 src/main/java/javi/MovePos.java,2
 src/main/java/javi/MapEvent.java,1
 src/main/java/javi/FileDescriptor.java,3
-src/main/java/javi/Vt100Parser.java,8
 src/main/java/javi/DirList.java,1
 src/main/java/javi/awt/AwtInterface.java,2
 src/main/java/javi/Keybinding.java,3

@@ -259,64 +259,13 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                window.incX(-1 * (def ? 1 :  numacc[currnumacc]), sb);
                break;
             case 'H':
-
-               switch (currnumacc + (def ? 0 : 1)) {
-                  case 0 :
-                     trace1("move to homei??: ");
-                     window.setXY(1, 1, sb);
-                     break;
-                  case 1:
-                     trace1("move to setY " + numacc[0]);
-                     window.setXY(1, numacc[0], sb);
-                     break;
-                  case 2:
-                     trace1("move XY( " + numacc[1] + "," + numacc[0] + ")");
-                     window.setXY(numacc[1], numacc[0], sb);
-                     break;
-                  default :
-                     trace("bad number accumulated: " +  currnumacc);
-               }
+               handleCursorPosition(def);
                break;
             case 'J':
-               switch (numacc[currnumacc]) {
-                  case 0:
-                     trace1("erase from cursor to end of screen");
-                     window.eraseScreenToEnd(sb);
-                     break;
-                  case 1:
-                     trace1("erase from start of screen to cursor");
-                     window.eraseScreenToBeginning(sb);
-                     break;
-                  case 2:
-                     window.eraseScreen(sb);
-                     trace1("erase entire screen ");
-                     break;
-                  case 3:
-                     // ESC[3J - erase scrollback buffer (xterm extension)
-                     trace1("erase scrollback (ignored)");
-                     break;
-                  default:
-                     trace1("unknown [J index " + numacc[currnumacc]);
-               }
+               handleEraseScreen();
                break;
             case 'K':
-               switch (numacc[currnumacc]) {
-                  case 0 :
-                     trace1("erase from cursor to end of line");
-                     window.eraseToEnd(sb);
-                     break;
-                  case 1 :
-                     trace1("erase from beginning of line to cursor");
-                     window.eraseToBeginning(sb);
-                     break;
-                  case 2 :
-                     trace1("erase entire line at cursor ");
-                     window.eraseLine(sb);
-                     break;
-                  default :
-                     trace1("unexpected erase character");
-               }
-
+               handleEraseLine();
                break;
             case 'P': // from xterm doc erase number of characters
                window.eraseChars(def ? 1 : numacc[currnumacc], sb);
@@ -352,16 +301,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                break;
             case 'h': //set mode xterm
             case 'l': //reset mode xterm
-
-               boolean val = 'h' == inc;
-               for (int ii = 0; ii <= currnumacc; ii++)
-                  switch (numacc[currnumacc]) {
-                     case 4:
-                        window.setInsertMode(val, sb);
-                        break;
-                     default:
-                        trace("unknown mode " + numacc[currnumacc]);
-                  }
+               handleModeSet('h' == inc);
                break;
 
             case 'r': // Change Attributes in Rectangular Area (DECCARA).
@@ -387,22 +327,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                window.scrollDown(def ? 1 : numacc[currnumacc], sb);
                break;
             case 'f': // Horizontal and Vertical Position (same as H)
-               switch (currnumacc + (def ? 0 : 1)) {
-                  case 0 :
-                     trace1("HVP move to home");
-                     window.setXY(1, 1, sb);
-                     break;
-                  case 1:
-                     trace1("HVP move to row " + numacc[0]);
-                     window.setXY(1, numacc[0], sb);
-                     break;
-                  case 2:
-                     trace1("HVP move to (" + numacc[1] + "," + numacc[0] + ")");
-                     window.setXY(numacc[1], numacc[0], sb);
-                     break;
-                  default :
-                     trace("bad number accumulated for HVP: " +  currnumacc);
-               }
+               handleCursorPosition(def);
                break;
             case 'G': // Cursor Character Absolute (ESC[nG) - move to column n
                trace1("cursor to column " + (def ? 1 : numacc[currnumacc]));
@@ -422,7 +347,8 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                window.incY(-(def ? 1 : numacc[currnumacc]), sb);
                window.setX(1, sb);
                break;
-            case 'X': // Erase Character (ESC[nX) - erase n characters (replace with spaces)
+            case 'X': // Erase Character (ESC[nX)
+               // erase n characters (replace with spaces)
                trace1("erase " + (def ? 1 : numacc[currnumacc]) + " characters");
                window.eraseChars(def ? 1 : numacc[currnumacc], sb);
                break;
@@ -454,6 +380,78 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
          //trace("completed [" + (char) inc);
          state = newstate;
       }
+   }
+
+   private void handleCursorPosition(boolean def) {
+      switch (currnumacc + (def ? 0 : 1)) {
+         case 0:
+            trace1("move to home");
+            window.setXY(1, 1, sb);
+            break;
+         case 1:
+            trace1("move to row " + numacc[0]);
+            window.setXY(1, numacc[0], sb);
+            break;
+         case 2:
+            trace1("move XY(" + numacc[1] + "," + numacc[0] + ")");
+            window.setXY(numacc[1], numacc[0], sb);
+            break;
+         default:
+            trace("bad number accumulated: " + currnumacc);
+      }
+   }
+
+   private void handleEraseScreen() {
+      switch (numacc[currnumacc]) {
+         case 0:
+            trace1("erase from cursor to end of screen");
+            window.eraseScreenToEnd(sb);
+            break;
+         case 1:
+            trace1("erase from start of screen to cursor");
+            window.eraseScreenToBeginning(sb);
+            break;
+         case 2:
+            window.eraseScreen(sb);
+            trace1("erase entire screen");
+            break;
+         case 3:
+            // ESC[3J - erase scrollback buffer (xterm extension)
+            trace1("erase scrollback (ignored)");
+            break;
+         default:
+            trace1("unknown [J index " + numacc[currnumacc]);
+      }
+   }
+
+   private void handleEraseLine() {
+      switch (numacc[currnumacc]) {
+         case 0:
+            trace1("erase from cursor to end of line");
+            window.eraseToEnd(sb);
+            break;
+         case 1:
+            trace1("erase from beginning of line to cursor");
+            window.eraseToBeginning(sb);
+            break;
+         case 2:
+            trace1("erase entire line at cursor");
+            window.eraseLine(sb);
+            break;
+         default:
+            trace1("unexpected erase character");
+      }
+   }
+
+   private void handleModeSet(boolean val) {
+      for (int ii = 0; ii <= currnumacc; ii++)
+         switch (numacc[currnumacc]) {
+            case 4:
+               window.setInsertMode(val, sb);
+               break;
+            default:
+               trace("unknown mode " + numacc[currnumacc]);
+         }
    }
 
    private void caseMODE(int inc) {
