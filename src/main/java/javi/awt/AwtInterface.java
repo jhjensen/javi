@@ -627,7 +627,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       if (java.awt.Taskbar.isTaskbarSupported()) {
          java.awt.Taskbar taskbar = java.awt.Taskbar.getTaskbar();
          if (taskbar.isSupported(java.awt.Taskbar.Feature.ICON_IMAGE)) {
-            taskbar.setIconImage(IconUtil.createJaviIcon(128));
+            taskbar.setIconImage(IconUtil.createJaviIcon(512));
          }
       }
 
