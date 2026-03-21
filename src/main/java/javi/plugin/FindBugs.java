@@ -83,15 +83,18 @@ public final class FindBugs extends Rgroup implements Plugin {
       }
       @SuppressWarnings({"unchecked", "rawtypes"}) FindBugRunner(String filename) throws
             FileNotFoundException, java.io.UnsupportedEncodingException {
-      //     Process proc = Runtime.getRuntime().exec(cstring);
-      //     input = new BufferedReader  (new InputStreamReader(proc.getInputStream()));
-      super(
-         new FileProperties(
-            FileDescriptor.InternalFd.make("findbug"), converter),
-            true,
-            new BufferedReader(
-               new InputStreamReader(new FileInputStream("findout"), StandardCharsets.UTF_8)));
-          //lib/findbugs-3.0.1/bin/findbugs -emacs -medium -textui -auxclasspath "..:$JAVA_HOME/lib/tools.jar:$JAVA_HOME/jre/lib/ext/RXTXcomm.jar:lib/rhino1_7R3/js.jar:lib/juniversalchardet-1.0.3.jar"  -exclude filter.xml  build > findout
+         //Process proc = Runtime.getRuntime().exec(cstring);
+         //input = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+         super(
+            new FileProperties(
+               FileDescriptor.InternalFd.make("findbug"),
+               converter),
+               true,
+               new BufferedReader(
+                  new InputStreamReader(
+                     new FileInputStream("findout"),
+                     StandardCharsets.UTF_8)));
+         //lib/findbugs-3.0.1/bin/findbugs -emacs ...
 
       }
 
