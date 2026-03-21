@@ -2,14 +2,12 @@ package javi;
 
 import java.io.IOException;
 import java.io.BufferedInputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import history.Tools;
 import static history.Tools.trace;
 
 /**
@@ -70,8 +68,8 @@ public final class ShellSession {
     * @param host the SSH hostname, or null for local shell
     * @throws IOException if the shell process cannot be started
     */
-   ShellSession(int id, String host) throws IOException {
-      this(id, host, null, null);
+   ShellSession(int sessionId, String newHost) throws IOException {
+      this(sessionId, newHost, null, null);
    }
 
    /**
@@ -82,8 +80,8 @@ public final class ShellSession {
     * @param customName user-specified name, or null for default
     * @throws IOException if the shell process cannot be started
     */
-   ShellSession(int id, String host, String customName) throws IOException {
-      this(id, host, customName, null);
+   ShellSession(int sessionId, String newHost, String customName) throws IOException {
+      this(sessionId, newHost, customName, null);
    }
 
    /**
@@ -96,10 +94,10 @@ public final class ShellSession {
     * @param workDir initial working directory, or null for default
     * @throws IOException if the shell process cannot be started
     */
-   ShellSession(int id, String host, String customName, java.io.File workDir)
+   ShellSession(int sessionId, String newHost, String customName, java.io.File workDir)
          throws IOException {
-      this.id = id;
-      this.host = host;
+      this.id = sessionId;
+      this.host = newHost;
       if (customName != null && !customName.isEmpty())
          this.name = customName;
       else
@@ -124,7 +122,7 @@ public final class ShellSession {
          pb.directory(workDir);
       }
       this.process = pb.start();
-      trace("ShellSession " + id + ": started process with charset "
+      trace("ShellSession " + sessionId + ": started process with charset "
          + charset.name() + " TERM=xterm COLUMNS=" + cols + " LINES=" + rows);
 
       // Send stty to set PTY dimensions
@@ -134,7 +132,7 @@ public final class ShellSession {
          sttyWriter.write("stty rows " + rows + " cols " + cols + "\n");
          sttyWriter.flush();
       } catch (IOException e) {
-         trace("ShellSession " + id + ": failed to send stty: " + e);
+         trace("ShellSession " + sessionId + ": failed to send stty: " + e);
       }
 
       // Create VT100 terminal
