@@ -110,6 +110,7 @@ final class OldView extends AwtView {
    private boolean boldflag;
    private AtView atIt;
    private int tabStop;
+   private Font activeFont;
    private final MyCanvas canvas = new MyCanvas();
 
    Canvas getComponent() {
@@ -148,6 +149,7 @@ final class OldView extends AwtView {
 
    void ssetFont(Font font) {
       // trace("entered " + this + font);
+      activeFont = font;
       fontm = canvas.getFontMetrics(font);
       charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
             / teststr.length();
@@ -157,6 +159,29 @@ final class OldView extends AwtView {
       boldflag = font.isBold();
       atIt = new AtView(font);
       charascent = fontm.getMaxAscent();
+   }
+
+   /**
+    * Checks if the current buffer's FvContext has a font override
+    * and switches to it if different from the active font.
+    * Called from npaint while holding biglock2.
+    */
+   private void applyOverrideFont() {
+      FvContext<?> fvc = FvContext.findContext(OldView.this, gettext());
+      Font wantedFont;
+      if (fvc != null && fvc.getOverrideFont() instanceof Font) {
+         wantedFont = (Font) fvc.getOverrideFont();
+      } else if (gettext() == AwtFontList.getList()) {
+         // Don't dynamically change view font while browsing the font
+         // list — getCurr tracks cursor position, so charheight changes
+         // on every cursor move and lines render at wrong positions.
+         return;
+      } else {
+         wantedFont = AwtFontList.getCurr(OldView.this);
+      }
+      if (null != wantedFont && !wantedFont.equals(activeFont)) {
+         ssetFont(wantedFont);
+      }
    }
 
    public int getTabStop() {
@@ -901,6 +926,7 @@ final class OldView extends AwtView {
          } else
             try {
                if (gettext().isValid()) {
+                  applyOverrideFont();
                   applyChanges();
                   copt.rpaint(gr);
                } else {

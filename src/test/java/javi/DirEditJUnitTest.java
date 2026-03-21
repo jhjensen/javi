@@ -754,4 +754,155 @@ class DirEditJUnitTest {
       assertNotNull(Rgroup.bindingLookup("diredit_shell"),
          "diredit_shell command should be registered");
    }
+
+   // --- Yank / getFullPath tests ---
+
+   @Test
+   void getFullPathReturnsAbsolutePathForFile() throws IOException {
+      File subDir = new File(tempDir, "yank_path_file");
+      subDir.mkdir();
+      File f = createTestFile(subDir, "hello.txt");
+      dirEdit = makeDirEdit(subDir);
+      // Lines: 1=header, 2=blank, 3=../, 4=hello.txt
+      String fullPath = dirEdit.getFullPath(4);
+      assertNotNull(fullPath, "Full path should not be null");
+      assertTrue(fullPath.endsWith("hello.txt"),
+         "Full path should end with filename");
+      assertTrue(fullPath.contains(subDir.getName()),
+         "Full path should contain parent directory");
+      assertEquals(f.getAbsolutePath(), fullPath);
+   }
+
+   @Test
+   void getFullPathReturnsAbsolutePathForDirectory() throws IOException {
+      File subDir = new File(tempDir, "yank_path_dir");
+      subDir.mkdir();
+      File child = new File(subDir, "childdir");
+      child.mkdir();
+      dirEdit = makeDirEdit(subDir);
+      // Lines: 1=header, 2=blank, 3=../, 4=childdir/
+      String fullPath = dirEdit.getFullPath(4);
+      assertNotNull(fullPath, "Full path should not be null");
+      assertEquals(child.getAbsolutePath(), fullPath,
+         "Full path should be absolute path without trailing slash");
+   }
+
+   @Test
+   void getFullPathReturnsParentForDotDot() throws IOException {
+      File subDir = new File(tempDir, "yank_path_parent");
+      subDir.mkdir();
+      createTestFile(subDir, "x.txt");
+      dirEdit = makeDirEdit(subDir);
+      // Line 3 is "../"
+      String fullPath = dirEdit.getFullPath(3);
+      assertNotNull(fullPath, "Parent path should not be null");
+      assertEquals(tempDir.getAbsolutePath(), fullPath,
+         "Full path of ../ should be the parent directory");
+   }
+
+   @Test
+   void getFullPathReturnsNullForNonEntryLines() throws IOException {
+      File subDir = new File(tempDir, "yank_path_null");
+      subDir.mkdir();
+      createTestFile(subDir, "x.txt");
+      dirEdit = makeDirEdit(subDir);
+      // Line 1 = header, Line 2 = blank
+      assertNull(dirEdit.getFullPath(1),
+         "Header line should return null");
+      assertNull(dirEdit.getFullPath(2),
+         "Blank line should return null");
+   }
+
+   @Test
+   void getFilenameStripsTrailingSlashForYank() throws IOException {
+      File subDir = new File(tempDir, "yank_strip_test");
+      subDir.mkdir();
+      File child = new File(subDir, "mydir");
+      child.mkdir();
+      dirEdit = makeDirEdit(subDir);
+      // getFilename returns "mydir/" for directories
+      String filename = dirEdit.getFilename(4);
+      assertEquals("mydir/", filename);
+      // But a yank of just the name should strip the slash
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      assertEquals("mydir", name,
+         "Yank of directory name should strip trailing slash");
+   }
+
+   @Test
+   void helpFooterIncludesYankInfo() throws IOException {
+      File subDir = new File(tempDir, "yank_footer_test");
+      subDir.mkdir();
+      createTestFile(subDir, "any.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundYank = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("[yy] yank") && line.contains("[Y] yank")) {
+            foundYank = true;
+            break;
+         }
+      }
+      assertTrue(foundYank,
+         "Help footer should include yank key bindings");
+   }
+
+   // --- macOS open command tests ---
+
+   @Test
+   void helpFooterShowsEditForEnterAndOpenForX() throws Exception {
+      File subDir = new File(tempDir, "help_edit_open_test");
+      subDir.mkdir();
+      createTestFile(subDir, "demo.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundEdit = false;
+      boolean foundOpen = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("[Enter] edit")) {
+            foundEdit = true;
+         }
+         if (line.contains("[x] open")) {
+            foundOpen = true;
+         }
+      }
+      assertTrue(foundEdit,
+         "Help footer should show [Enter] edit");
+      assertTrue(foundOpen,
+         "Help footer should show [x] open");
+   }
+
+   @Test
+   void helpFooterDoesNotShowEnterOpen() throws Exception {
+      File subDir = new File(tempDir, "help_no_enter_open_test");
+      subDir.mkdir();
+      createTestFile(subDir, "demo.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         assertFalse(line.contains("[Enter] open"),
+            "Help footer should NOT show [Enter] open (should be edit)");
+      }
+   }
+
+   @Test
+   void getFullPathReturnsCorrectPath() throws Exception {
+      File subDir = new File(tempDir, "fullpath_test");
+      subDir.mkdir();
+      createTestFile(subDir, "target.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      // Lines: 1=header, 2=blank, 3=../, 4=target.txt
+      String fullPath = dirEdit.getFullPath(4);
+      assertNotNull(fullPath, "getFullPath should return non-null");
+      assertTrue(fullPath.endsWith("target.txt"),
+         "Full path should end with filename");
+      assertTrue(fullPath.contains(subDir.getName()),
+         "Full path should contain parent dir name");
+   }
 }

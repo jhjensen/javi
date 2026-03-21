@@ -41,12 +41,15 @@ import static history.Tools.trace;
  * <h2>Key Bindings</h2>
  * <table>
  *   <tr><th>Key</th><th>Action</th></tr>
- *   <tr><td>Enter</td><td>Open file or enter directory</td></tr>
+ *   <tr><td>Enter</td><td>Edit file in javi or enter directory</td></tr>
+ *   <tr><td>x</td><td>Open file with OS default application</td></tr>
  *   <tr><td>-</td><td>Go to parent directory</td></tr>
  *   <tr><td>.</td><td>Toggle hidden files</td></tr>
  *   <tr><td>s</td><td>Cycle sort mode (name/size/date/type)</td></tr>
  *   <tr><td>R</td><td>Refresh directory listing</td></tr>
  *   <tr><td>dd</td><td>Delete file under cursor</td></tr>
+ *   <tr><td>yy</td><td>Yank filename to register</td></tr>
+ *   <tr><td>Y</td><td>Yank full path to register</td></tr>
  *   <tr><td>q</td><td>Quit directory browser</td></tr>
  * </table>
  *
@@ -137,6 +140,80 @@ public final class DirEdit extends TextEdit<String> {
          return false; // let action keys (arrows, F-keys, etc.) through
       }
 
+      // DirEdit-specific commands
+      switch (ch) {
+         case 's':
+            cycleSortMode(fvc);
+            return true;
+         case 'S':
+            Rgroup.doCommand("dirmanager_toggle_searchpath", null, 0, 0,
+               fvc, false);
+            return true;
+         case 'R':
+            refresh(fvc);
+            return true;
+         case 'q':
+            Rgroup.doCommand("gotofilelist", null, 0, 0, fvc, false);
+            return true;
+         case '\n': case '\r':
+            openSelected(fvc);
+            return true;
+         case '-':
+            goToParent(fvc);
+            return true;
+         case '.':
+            toggleHidden(fvc);
+            return true;
+         case 'D':
+            deleteSelected(fvc);
+            return true;
+         case 'Y':
+            yankPath(fvc);
+            return true;
+         case 'y':
+            if ('y' == EventQueue.nextKey(fvc.vi)) {
+               yankFilename(fvc);
+            }
+            return true;
+         case 'o': case 'O':
+            createInline(fvc);
+            return true;
+         case 'x':
+            openExternal(fvc);
+            return true;
+         case '!':
+            Rgroup.doCommand("diredit_shell", null, 0, 0,
+               fvc, false);
+            return true;
+         default:
+            break;
+      }
+
+      // Allow navigation keys through to mkeys/skeys dispatch
+      switch (ch) {
+         case 'h': case 'j': case 'k': case 'l':
+         case 'H': case 'M': case 'L':
+         case 'w': case 'W': case 'b': case 'B': case 'e': case 'E':
+         case 'f': case 'F': case 't': case 'T':
+         case 'd':
+         case 'v': case 'V':
+         case 'n': case 'N':
+         case ';': case ',':
+         case '0': case '1': case '2': case '3': case '4':
+         case '5': case '6': case '7': case '8': case '9':
+         case '$': case '^': case '|':
+         case 'G': case '%': case '+':
+         case '(': case ')': case '{': case '}': case '[': case ']':
+         case 'm': case '\'':
+         case '/': case '?':
+         case ':': case 'z': case 'Z':
+         case 'p': case 'P':
+         case ' ':
+         case 27: // Escape
+            return false;
+         default:
+            break;
+      }
 
       // Allow control characters through (Ctrl-F, Ctrl-B, etc.)
       if (ch < 32 || ch == 27) {
@@ -287,11 +364,13 @@ public final class DirEdit extends TextEdit<String> {
 
       // Add help footer
       lines.add("");
-      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort:"
+      lines.add("  [Enter] edit  [-] parent  [.] hidden  [s] sort:"
          + sortMode.name().toLowerCase()
          + "  [R] refresh  [q] quit");
-      lines.add("  [dd] delete/trash  [o] new file/dir  [S] search path"
-         + "  [!] shell  :diredit_rename  :diredit_copy");
+      lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
+         + "  [S] search path  [!] shell");
+      lines.add("  :diredit_rename  :diredit_copy");
+      lines.add("  [yy] yank filename  [Y] yank full path");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -516,6 +595,60 @@ public final class DirEdit extends TextEdit<String> {
    }
 
    /**
+    * Returns the full filesystem path for the entry at the given line.
+    *
+    * @param lineNum the line number
+    * @return the full path, or null if not a file entry line
+    */
+   String getFullPath(int lineNum) {
+      String filename = getFilename(lineNum);
+      if (null == filename) {
+         return null;
+      }
+      if ("../".equals(filename)) {
+         File parent = currentDir.fh.getAbsoluteFile().getParentFile();
+         return (null != parent) ? parent.getAbsolutePath() : null;
+      }
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      return new File(currentDir.fh, name).getAbsolutePath();
+   }
+
+   /**
+    * Yanks the full path of the file under the cursor to the yank
+    * register and system clipboard ({@code Y} key in DirEdit).
+    *
+    * @param fvc the current FvContext
+    */
+   void yankPath(FvContext fvc) {
+      String path = getFullPath(fvc.inserty());
+      if (null != path) {
+         Buffers.deleted('0', path);
+         UI.reportMessage("Yanked path: " + path);
+      }
+   }
+
+   /**
+    * Yanks just the filename (no directory) under the cursor to the
+    * yank register and system clipboard ({@code yy} in DirEdit).
+    *
+    * @param fvc the current FvContext
+    */
+   void yankFilename(FvContext fvc) {
+      String filename = getFilename(fvc.inserty());
+      if (null == filename) {
+         return;
+      }
+      // Strip trailing slash from directory names
+      String name = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      Buffers.deleted('0', name);
+      UI.reportMessage("Yanked: " + name);
+   }
+
+   /**
     * Opens the selected file or enters the selected directory.
     *
     * @param fvc the current FvContext
@@ -553,6 +686,26 @@ public final class DirEdit extends TextEdit<String> {
          // File - open it
          path = currentDir.shortName + File.separator + filename;
          FileList.openFileName(path, fvc.vi);
+      }
+   }
+
+   /**
+    * Opens the selected file with the OS default application.
+    * On macOS this runs the {@code open} command; on other platforms
+    * uses {@link Desktop#open}.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if no file is under the cursor or open fails
+    */
+   void openExternal(FvContext fvc) throws InputException {
+      String path = getFullPath(fvc.inserty());
+      if (null == path) {
+         throw new InputException("No file under cursor");
+      }
+      try {
+         Desktop.getDesktop().open(new File(path));
+      } catch (IOException e) {
+         throw new InputException("Failed to open: " + e.getMessage());
       }
    }
 

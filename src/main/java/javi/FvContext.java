@@ -153,6 +153,12 @@ public final class FvContext<OType> implements Serializable {
             throw new RuntimeException("fvcontext.dispose: didnt find " + vi);
       }
 
+      /** Read-only lookup: returns null if not found, no side effects. */
+      FvContext<?> findOnly(View vi, TextEdit<?> te) {
+         HashMap<TextEdit<?>, FvContext<?>> ehash = viewhash.get(vi);
+         return ehash != null ? ehash.get(te) : null;
+      }
+
       private final class FvIterator implements Iterator<FvContext<?>> {
 
          private Iterator<HashMap<TextEdit<?>,
@@ -210,6 +216,33 @@ public final class FvContext<OType> implements Serializable {
    private int fileposx = 0; // the position of the cursor in the file
    private boolean vis;
    private KeyMap keyMap; // buffer-specific keymap overlay, null for default
+   private transient Object overrideFont;
+
+   /**
+    * Callback for providing per-buffer font overrides.
+    * Registered by the AWT layer to supply fonts for buffers
+    * that need a non-default font (e.g., DirEdit monospace).
+    */
+   public interface OverrideFontProvider {
+      Object getFont(TextEdit<?> textEdit);
+   }
+
+   private static transient OverrideFontProvider overrideFontProvider;
+
+   /** Registers a provider that auto-sets override fonts for new FvContexts. */
+   public static void setOverrideFontProvider(OverrideFontProvider p) {
+      overrideFontProvider = p;
+   }
+
+   /** Returns the per-FvContext font override, or null for default font. */
+   public Object getOverrideFont() {
+      return overrideFont;
+   }
+
+   /** Sets a per-FvContext font override. Pass null to use default font. */
+   public void setOverrideFont(Object font) {
+      overrideFont = font;
+   }
 
    static void dump() {
       fvmap.dump();
@@ -511,9 +544,22 @@ public final class FvContext<OType> implements Serializable {
 
       if (null == context) {
          context = createFvc(viloc, te);
+         if (overrideFontProvider != null) {
+            Object font = overrideFontProvider.getFont(te);
+            if (font != null)
+               context.overrideFont = font;
+         }
          fvmap.put(context);
       }
       return context;
+   }
+
+   /**
+    * Read-only FvContext lookup — returns null if not found.
+    * Does not create new FvContexts. Safe for use in paint paths.
+    */
+   public static FvContext<?> findContext(View viloc, TextEdit<?> te) {
+      return fvmap.findOnly(viloc, te);
    }
 
    public static String getCurrState() {

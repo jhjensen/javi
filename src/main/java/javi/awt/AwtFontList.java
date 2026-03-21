@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import javi.ClassConverter;
 import javi.Command;
+import javi.DirEdit;
 import javi.FileDescriptor;
 import javi.FileProperties;
 import javi.FvContext;
@@ -14,6 +15,7 @@ import javi.IoConverter;
 import javi.PosListList;
 import javi.Rgroup;
 import javi.TextEdit;
+import javi.UI;
 import javi.View;
 
 //import static history.Tools.trace;
@@ -21,16 +23,34 @@ import javi.View;
 public final class AwtFontList extends TextEdit<FontEntry> {
 
    private static final long serialVersionUID = 1;
+
+   private static String monoFontName = defaultMonoName();
+
+   private static String defaultMonoName() {
+      String os = System.getProperty("os.name", "").toLowerCase();
+      if (os.contains("mac"))
+         return "Menlo";
+      if (os.contains("win"))
+         return "Consolas";
+      return "DejaVu Sans Mono";
+   }
+
    public static void restoreState(java.io.ObjectInputStream is) throws
          ClassNotFoundException, IOException {
       init();
       FontEntry fe = (FontEntry) is.readObject();
       inst.changeElementAt(fe, 1);
+      try {
+         monoFontName = (String) is.readObject();
+      } catch (Exception e) {
+         // Old session without monoFontName — use default
+      }
    }
 
    public static void saveState(java.io.ObjectOutputStream os) throws
          IOException {
       os.writeObject(inst.at(1));
+      os.writeObject(monoFontName);
    }
 
    private static final class Commands extends Rgroup {
@@ -42,6 +62,7 @@ public final class AwtFontList extends TextEdit<FontEntry> {
             "fontname",
             "fontweight",
             "gotofontlist",
+            "monofontname",
          };
          register(rnames);
       }
@@ -91,6 +112,15 @@ public final class AwtFontList extends TextEdit<FontEntry> {
                PosListList.Cmd.gotoList(fvc, getList());
                return null;
 
+            case 6: // monofontname
+               if (null == arg || arg.toString().isEmpty()) {
+                  UI.reportMessage("monofontname=" + monoFontName);
+               } else {
+                  monoFontName = arg.toString();
+                  UI.reportMessage("monofontname=" + monoFontName);
+               }
+               return null;
+
             default:
                throw new RuntimeException("doroutine called with " + rnum);
          }
@@ -104,6 +134,11 @@ public final class AwtFontList extends TextEdit<FontEntry> {
    public static void init() {
       inst = new AwtFontList(new FontParser());
       Command.execCmdList(); // pickup font commands
+      FvContext.setOverrideFontProvider(te -> {
+         if (te instanceof DirEdit)
+            return getMonoFont(null);
+         return null;
+      });
    }
 
    private static FontEntry[] getdefarray() {
@@ -165,6 +200,15 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       FontEntry fe = (FontEntry) (FvContext.getcontext(vi, inst).at());
       //trace("font.getCurr " + fe);
       return  fe.getFont();
+   }
+
+   /**
+    * Returns a monospace font using the configured monoFontName
+    * and the current font size.
+    */
+   public static Font getMonoFont(View vi) {
+      Font curr = getCurr(vi);
+      return new Font(monoFontName, Font.PLAIN, curr.getSize());
    }
 
    public static TextEdit getList() {
