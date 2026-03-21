@@ -41,7 +41,8 @@ import static history.Tools.trace;
  * <h2>Key Bindings</h2>
  * <table>
  *   <tr><th>Key</th><th>Action</th></tr>
- *   <tr><td>Enter</td><td>Open file or enter directory</td></tr>
+ *   <tr><td>Enter</td><td>Edit file in javi or enter directory</td></tr>
+ *   <tr><td>x</td><td>Open file with OS default application</td></tr>
  *   <tr><td>-</td><td>Go to parent directory</td></tr>
  *   <tr><td>.</td><td>Toggle hidden files</td></tr>
  *   <tr><td>s</td><td>Cycle sort mode (name/size/date/type)</td></tr>
@@ -176,6 +177,9 @@ public final class DirEdit extends TextEdit<String> {
             return true;
          case 'o': case 'O':
             createInline(fvc);
+            return true;
+         case 'x':
+            openExternal(fvc);
             return true;
          case '!':
             Rgroup.doCommand("diredit_shell", null, 0, 0,
@@ -341,11 +345,12 @@ public final class DirEdit extends TextEdit<String> {
 
       // Add help footer
       lines.add("");
-      lines.add("  [Enter] open  [-] parent  [.] hidden  [s] sort:"
+      lines.add("  [Enter] edit  [-] parent  [.] hidden  [s] sort:"
          + sortMode.name().toLowerCase()
          + "  [R] refresh  [q] quit");
-      lines.add("  [dd] delete/trash  [o] new file/dir  [S] search path"
-         + "  [!] shell  :diredit_rename  :diredit_copy");
+      lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
+         + "  [S] search path  [!] shell");
+      lines.add("  :diredit_rename  :diredit_copy");
       lines.add("  [yy] yank filename  [Y] yank full path");
 
       // Insert all lines
@@ -662,6 +667,26 @@ public final class DirEdit extends TextEdit<String> {
          // File - open it
          path = currentDir.shortName + File.separator + filename;
          FileList.openFileName(path, fvc.vi);
+      }
+   }
+
+   /**
+    * Opens the selected file with the OS default application.
+    * On macOS this runs the {@code open} command; on other platforms
+    * uses {@link Desktop#open}.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if no file is under the cursor or open fails
+    */
+   void openExternal(FvContext fvc) throws InputException {
+      String path = getFullPath(fvc.inserty());
+      if (null == path) {
+         throw new InputException("No file under cursor");
+      }
+      try {
+         Desktop.getDesktop().open(new File(path));
+      } catch (IOException e) {
+         throw new InputException("Failed to open: " + e.getMessage());
       }
    }
 

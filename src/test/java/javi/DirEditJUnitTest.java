@@ -849,4 +849,60 @@ class DirEditJUnitTest {
       assertTrue(foundYank,
          "Help footer should include yank key bindings");
    }
+
+   // --- macOS open command tests ---
+
+   @Test
+   void helpFooterShowsEditForEnterAndOpenForX() throws Exception {
+      File subDir = new File(tempDir, "help_edit_open_test");
+      subDir.mkdir();
+      createTestFile(subDir, "demo.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      boolean foundEdit = false;
+      boolean foundOpen = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         if (line.contains("[Enter] edit")) {
+            foundEdit = true;
+         }
+         if (line.contains("[x] open")) {
+            foundOpen = true;
+         }
+      }
+      assertTrue(foundEdit,
+         "Help footer should show [Enter] edit");
+      assertTrue(foundOpen,
+         "Help footer should show [x] open");
+   }
+
+   @Test
+   void helpFooterDoesNotShowEnterOpen() throws Exception {
+      File subDir = new File(tempDir, "help_no_enter_open_test");
+      subDir.mkdir();
+      createTestFile(subDir, "demo.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String line = dirEdit.at(i).toString();
+         assertFalse(line.contains("[Enter] open"),
+            "Help footer should NOT show [Enter] open (should be edit)");
+      }
+   }
+
+   @Test
+   void getFullPathReturnsCorrectPath() throws Exception {
+      File subDir = new File(tempDir, "fullpath_test");
+      subDir.mkdir();
+      createTestFile(subDir, "target.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      // Lines: 1=header, 2=blank, 3=../, 4=target.txt
+      String fullPath = dirEdit.getFullPath(4);
+      assertNotNull(fullPath, "getFullPath should return non-null");
+      assertTrue(fullPath.endsWith("target.txt"),
+         "Full path should end with filename");
+      assertTrue(fullPath.contains(subDir.getName()),
+         "Full path should contain parent dir name");
+   }
 }

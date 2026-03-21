@@ -165,6 +165,11 @@ final class OldView extends AwtView {
       Font wantedFont;
       if (fvc != null && fvc.getOverrideFont() instanceof Font) {
          wantedFont = (Font) fvc.getOverrideFont();
+      } else if (gettext() == AwtFontList.getList()) {
+         // Don't dynamically change view font while browsing the font
+         // list — getCurr tracks cursor position, so charheight changes
+         // on every cursor move and lines render at wrong positions.
+         return;
       } else {
          wantedFont = AwtFontList.getCurr(OldView.this);
       }
