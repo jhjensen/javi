@@ -35,8 +35,9 @@ public final class FileProperties<OType> implements Serializable {
    private transient String fileString;
    private transient boolean readonly = false;
 
-   /** Last known modification time of the file on disk. */
-   private transient long lastModifiedTime = 0;
+   /** Last known modification time of the file on disk.
+    *  -1 = uninitialized, 0 = file didn't exist at init time. */
+   private transient long lastModifiedTime = -1;
 
    /** Last known file size on disk (bytes). */
    private transient long lastFileSize = 0;
@@ -91,7 +92,15 @@ public final class FileProperties<OType> implements Serializable {
          return false;
       }
       long currentModTime = lf.lastModified();
-      return lastModifiedTime != 0 && currentModTime != lastModifiedTime;
+      // Not yet initialized (initFile not called) — don't report
+      if (lastModifiedTime < 0) {
+         return false;
+      }
+      // File didn't exist when opened but now exists — external creation
+      if (lastModifiedTime == 0) {
+         return true;
+      }
+      return currentModTime != lastModifiedTime;
    }
 
    /**
@@ -108,6 +117,8 @@ public final class FileProperties<OType> implements Serializable {
          if (lf.exists()) {
             lastModifiedTime = lf.lastModified();
             lastFileSize = lf.length();
+         } else {
+            lastModifiedTime = 0;
          }
       }
    }

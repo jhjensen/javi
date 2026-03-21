@@ -185,4 +185,63 @@ class IsContentUnchangedJUnitTest {
 
       deleteTestFiles(fname);
    }
+
+   /**
+    * When a non-existent file is opened and then created externally,
+    * checkModified should detect the creation.
+    */
+   @Test
+   void newFileCreatedExternallyDetected() throws IOException {
+      String fname = "b9_newfile";
+      deleteTestFiles(fname);
+      // Do NOT create the file — simulate opening a new (non-existent) file
+      FileDescriptor.LocalFile fh =
+         FileDescriptor.LocalFile.make(testPath(fname));
+      FileProperties<String> fp =
+         new FileProperties<>(fh, StringIoc.converter);
+      // Simulate what javi does when opening a file: initFile reads
+      // file content (empty for non-existent) and sets lastModifiedTime
+      fp.initFile();
+
+      // checkModified should return false when file doesn't exist
+      assertFalse(fp.checkModified(),
+         "non-existent file should not report as modified");
+
+      // Now create the file externally
+      writeRawFile(fname, "external content\n");
+
+      // checkModified should detect the external creation
+      assertTrue(fp.checkModified(),
+         "newly created file should be detected as modified");
+
+      deleteTestFiles(fname);
+   }
+
+   /**
+    * When a non-existent file is opened and then created externally
+    * with content, isContentUnchanged should return false (buffer is
+    * empty but disk has content).
+    */
+   @Test
+   void newFileCreatedWithContentIsChanged() throws IOException {
+      String fname = "b9_newcontent";
+      deleteTestFiles(fname);
+      // Open non-existent file — buffer will be empty
+      FileDescriptor.LocalFile fh =
+         FileDescriptor.LocalFile.make(testPath(fname));
+      FileProperties<String> fp =
+         new FileProperties<>(fh, StringIoc.converter);
+      TextEdit<String> ev = new TextEdit<>(new FileInput(fp), fp);
+      ev.finish(); // force read — will be empty since file doesn't exist
+
+      // Create the file externally with content
+      writeRawFile(fname, "external content\n");
+
+      // isContentUnchanged should return false (size mismatch: 0 vs >0)
+      assertFalse(
+         FileList.TestAccess.isContentUnchanged(ev, fp),
+         "new file with content should not be considered unchanged");
+
+      deleteTestFiles(fname);
+   }
 }
