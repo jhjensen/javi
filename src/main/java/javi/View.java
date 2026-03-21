@@ -1,7 +1,13 @@
 package javi;
 
 import static history.Tools.trace;
-import static javi.ChangeOpt.Opcode.*;
+import static javi.ChangeOpt.Opcode.BLINKCURSOR;
+import static javi.ChangeOpt.Opcode.CHANGE;
+import static javi.ChangeOpt.Opcode.DELETE;
+import static javi.ChangeOpt.Opcode.INSERT;
+import static javi.ChangeOpt.Opcode.MSCREEN;
+import static javi.ChangeOpt.Opcode.NOOP;
+import static javi.ChangeOpt.Opcode.REDRAW;
 
 /**
  * Abstract base class for editor display views.

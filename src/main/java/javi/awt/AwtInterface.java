@@ -1537,7 +1537,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             replab2.setForeground(Color.black);
             okbut.setVisible(true);
          } else {
-            l1 = s1 = s2 = "";
+            l1 = "";
+            s1 = "";
+            s2 = "";
             if (null == filevers) {
                l1 = "backup version has extra lines at end";
                s2 = backupvers.toString();

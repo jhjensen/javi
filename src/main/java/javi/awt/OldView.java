@@ -20,7 +20,13 @@ import java.awt.Shape;
 
 import java.util.concurrent.TimeUnit;
 
-import static javi.ChangeOpt.Opcode.*;
+import static javi.ChangeOpt.Opcode.BLINKCURSOR;
+import static javi.ChangeOpt.Opcode.CHANGE;
+import static javi.ChangeOpt.Opcode.DELETE;
+import static javi.ChangeOpt.Opcode.INSERT;
+import static javi.ChangeOpt.Opcode.MSCREEN;
+import static javi.ChangeOpt.Opcode.NOOP;
+import static javi.ChangeOpt.Opcode.REDRAW;
 import javi.DeTabber;
 import javi.EventQueue;
 import javi.FileList;
@@ -570,7 +576,7 @@ final class OldView extends AwtView {
           * new HashSet<AWTKeyStroke>(getFocusTraversalKeys(
           * KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS)
           * );
-          * 
+          *
           * for (Iterator it = keyset.iterator();it.hasNext();) {
           * AWTKeyStroke key = (AWTKeyStroke)(it.next());
           * if (key.getKeyCode()== KeyEvent.VK_TAB
@@ -579,7 +585,7 @@ final class OldView extends AwtView {
           * }
           * setFocusTraversalKeys(KeyboardFocusManager.
           * FORWARD_TRAVERSAL_KEYS, keyset);
-          * 
+          *
           * enableInputMethods(false);
           */
          enableEvents(AWTEvent.MOUSE_EVENT_MASK
@@ -587,7 +593,10 @@ final class OldView extends AwtView {
                | AWTEvent.MOUSE_WHEEL_EVENT_MASK);
       }
 
-      private void readObject(java.io.ObjectInputStream is) throws ClassNotFoundException, java.io.IOException {
+      private void readObject(
+            java.io.ObjectInputStream is)
+            throws ClassNotFoundException,
+            java.io.IOException {
 
          is.defaultReadObject();
          setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
@@ -900,7 +909,9 @@ final class OldView extends AwtView {
                }
             } catch (Throwable e) {
                // Log error but don't pop dialog - this is called frequently during paint
-               trace("npaint caught: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+               trace("npaint caught: "
+                  + e.getClass().getSimpleName()
+                  + ": " + e.getMessage());
             } finally {
                EventQueue.biglock2.unlock();
             }
@@ -925,7 +936,9 @@ final class OldView extends AwtView {
          end = filltrailer(gr, end);
 
          // trace("paint2 end = " + end + " firstline = " + screenFirstLine());
-         for (int index = start, tindex = index + screenFirstLine(); index < end; index++, tindex++) {
+         for (int index = start,
+               tindex = index + screenFirstLine();
+               index < end; index++, tindex++) {
             imageg.setColor(AtView.background);
             imageg.fillRect(0, 0, pixelWidth, charheight);
             // trace("setting text " + gettext().at(tindex).toString());
@@ -1003,6 +1016,8 @@ final class OldView extends AwtView {
 
                case NOOP:
                case BLINKCURSOR:
+                  break;
+               default:
                   break;
             }
             if (currop != BLINKCURSOR)
