@@ -1442,6 +1442,15 @@ public final class HelpSystem {
       append("  - API key can also be set via environment variable");
       append("    (OPENAI_API_KEY or ANTHROPIC_API_KEY).");
       append("");
+      append("KEYBINDINGS");
+      append("-----------");
+      append("  F9               AI chat (:ai)");
+      append("  Shift-F9         Explain code (:ai explain)");
+      append("  Ctrl-F9          Review code (:ai review)");
+      append("  F12              Code completion (:ai complete)");
+      append("  Shift-F12        Generate docs (:ai doc)");
+      append("  Ctrl-F12         Cancel AI request (:ai cancel)");
+      append("");
       append("Type :help for index.");
    }
 }

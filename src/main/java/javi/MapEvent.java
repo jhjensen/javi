@@ -152,6 +152,28 @@ public final class MapEvent {
          sectionRegex);
       bindEditKeys(normalKeyMap);
 
+      // AI and buffer keymaps (extracted to keep bindCommands under limit)
+      bindAiAndBufferKeys();
+   }
+
+   /**
+    * Bind AI command keys and initialize buffer-type overlay keymaps.
+    * Extracted from bindCommands to stay within method-length limit.
+    */
+   private static void bindAiAndBufferKeys() {
+      // AI commands (F9 family = interactive, F12 family = inline)
+      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
+      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
+         null, SHIFT_MASK);
+      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
+         null, CTRL_MASK);
+      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
+         null, 0);
+      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
+         null, SHIFT_MASK);
+      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
+         null, CTRL_MASK);
+
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
    }

@@ -12,9 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -284,5 +282,100 @@ class AICommandsJUnitTest {
    void providerFromIdRejectsUnknown() {
       assertThrows(IllegalArgumentException.class,
          () -> AIConfig.Provider.fromId("bogus"));
+   }
+
+   // ── Keybinding Tests ──────────────────────────────────────────
+
+   /**
+    * Helper: create a test KeyMap and bind an action key to a command.
+    * Uses the same API as MapEvent.bindCommands() production code.
+    */
+   private KeyMap createTestKeyMapWithBinding(int keyCode,
+         String command, Object arg, int modifiers) {
+      KeyGroup moveKeys = new KeyGroup("test-move");
+      KeyGroup editKeys = new KeyGroup("test-edit");
+      KeyMap km = new KeyMap("test-ai", moveKeys, editKeys);
+      km.addEditBinding(
+         new JeyEvent(modifiers, keyCode, JeyEvent.CHAR_UNDEFINED),
+         command, arg);
+      return km;
+   }
+
+   @Test
+   @DisplayName("F9 resolves to 'ai' command")
+   void f9ResolvesToAi() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F9, "ai", null, 0);
+      JeyEvent f9 = new JeyEvent(0, JeyEvent.VK_F9,
+         JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(f9),
+         "F9 should resolve to ai command");
+   }
+
+   @Test
+   @DisplayName("Shift-F9 resolves to 'ai.explain' command")
+   void shiftF9ResolvesToAiExplain() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F9, "ai.explain", null, JeyEvent.SHIFT_MASK);
+      JeyEvent sf9 = new JeyEvent(JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_F9, JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(sf9),
+         "Shift-F9 should resolve to ai.explain command");
+   }
+
+   @Test
+   @DisplayName("Ctrl-F9 resolves to 'ai.review' command")
+   void ctrlF9ResolvesToAiReview() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F9, "ai.review", null, JeyEvent.CTRL_MASK);
+      JeyEvent cf9 = new JeyEvent(JeyEvent.CTRL_MASK,
+         JeyEvent.VK_F9, JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(cf9),
+         "Ctrl-F9 should resolve to ai.review command");
+   }
+
+   @Test
+   @DisplayName("F12 resolves to 'ai.complete' command")
+   void f12ResolvesToAiComplete() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F12, "ai.complete", null, 0);
+      JeyEvent f12 = new JeyEvent(0, JeyEvent.VK_F12,
+         JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(f12),
+         "F12 should resolve to ai.complete command");
+   }
+
+   @Test
+   @DisplayName("Shift-F12 resolves to 'ai.doc' command")
+   void shiftF12ResolvesToAiDoc() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F12, "ai.doc", null, JeyEvent.SHIFT_MASK);
+      JeyEvent sf12 = new JeyEvent(JeyEvent.SHIFT_MASK,
+         JeyEvent.VK_F12, JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(sf12),
+         "Shift-F12 should resolve to ai.doc command");
+   }
+
+   @Test
+   @DisplayName("Ctrl-F12 resolves to 'ai.cancel' command")
+   void ctrlF12ResolvesToAiCancel() {
+      KeyMap km = createTestKeyMapWithBinding(
+         JeyEvent.VK_F12, "ai.cancel", null, JeyEvent.CTRL_MASK);
+      JeyEvent cf12 = new JeyEvent(JeyEvent.CTRL_MASK,
+         JeyEvent.VK_F12, JeyEvent.CHAR_UNDEFINED);
+      assertNotNull(km.lookupEdit(cf12),
+         "Ctrl-F12 should resolve to ai.cancel command");
+   }
+
+   @Test
+   @DisplayName("AI help documents keybindings")
+   void helpDocumentsKeybindings() {
+      String text = bufferText(HelpSystem.getHelp("ai"));
+      assertTrue(text.contains("KEYBINDINGS"),
+         "AI help should have KEYBINDINGS section");
+      assertTrue(text.contains("F9"),
+         "AI help should document F9");
+      assertTrue(text.contains("F12"),
+         "AI help should document F12");
    }
 }

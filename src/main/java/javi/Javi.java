@@ -92,13 +92,13 @@ public final class Javi {
       } catch (ClassNotFoundException e) {
          UI.reportError("git plugin not found: " + e);
       }
+      new javi.ai.AICommands();
       MapEvent.bindCommands();
       KeyBindingPersistence.load();
 
       //new v8();
       //new msvc();
       //new FindBugs();
-      new javi.ai.AICommands();
       new JavaCompiler();
       new CheckStyle();
       new FormatDispatch();
