@@ -62,8 +62,10 @@ public abstract class UI {
     * <ul>
     *   <li>{@link #RELOAD} - Reload the file from disk, discarding buffer changes</li>
     *   <li>{@link #IGNORE} - Ignore this change, keep buffer contents</li>
-    *   <li>{@link #IGNORE_ALWAYS} - Permanently ignore external changes for this file</li>
-    *   <li>{@link #SHOW_DIFF} - Show diff between buffer and disk version</li>
+    *   <li>{@link #IGNORE_ALWAYS} - Permanently ignore
+    *       external changes for this file</li>
+    *   <li>{@link #SHOW_DIFF} - Show diff between
+    *       buffer and disk version</li>
     *   <li>{@link #STOP_EDITING} - Close this buffer</li>
     * </ul>
     */
