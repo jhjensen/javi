@@ -53,7 +53,7 @@ public final class IconUtil {
       new Color(160, 180, 200);
 
    /** Orange colour for saucer and "Vi" text. */
-   static final Color ORANGE = new Color(212, 123, 42);
+   static final Color ORANGE = new Color(250, 140, 42);
 
    /** Translucent white steam. */
    private static final Color STEAM =
@@ -289,7 +289,7 @@ public final class IconUtil {
 
    /** Draws bold orange "Vi" text beneath the saucer. */
    private static void drawViLabel(Graphics2D g, int size) {
-      g.setColor(ORANGE);
+      g.setColor(COFFEE_FILL);
       int fontSize = Math.max(8, (int) (size * 0.30));
       g.setFont(new Font(Font.SERIF, Font.BOLD, fontSize));
       java.awt.FontMetrics fm = g.getFontMetrics();
