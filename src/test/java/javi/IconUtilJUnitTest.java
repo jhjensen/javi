@@ -62,11 +62,11 @@ class IconUtilJUnitTest {
    }
 
    @Test
-   @DisplayName("icon has tan/brown background, not transparent")
-   void iconBackgroundIsTanBrown() {
+   @DisplayName("icon has reddish-orange background")
+   void iconBackgroundIsOrangeRed() {
       BufferedImage img = IconUtil.createJaviIcon(128);
       int cornerRgb = img.getRGB(64, 4) & 0x00FFFFFF;
-      // Background is tan #D2A66A — red channel should be > 180
+      // Background is reddish-orange — red channel should be > 150
       int red = (cornerRgb >> 16) & 0xFF;
       assertTrue(red > 150,
          "background red channel should be > 150, got " + red);
@@ -83,7 +83,7 @@ class IconUtilJUnitTest {
    }
 
    @Test
-   @DisplayName("icon contains orange pixels for stem/saucer")
+   @DisplayName("icon contains orange pixels for saucer/text")
    void iconContainsOrangePixels() {
       BufferedImage img = IconUtil.createJaviIcon(128);
       // Scan the lower half for orange-ish pixels

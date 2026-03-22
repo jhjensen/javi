@@ -6,7 +6,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
-import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -17,17 +16,18 @@ import java.util.List;
 /**
  * Utility class for creating application icons for the Javi editor.
  *
- * <p>Generates a programmatic icon with a light brown background,
- * a stylized glass coffee cup with an orange stem/saucer, and a
- * small orange "vi" label beneath the cup.</p>
+ * <p>Generates a programmatic icon with a warm reddish-orange
+ * background, a translucent glass coffee cup with dark brown
+ * coffee, an orange saucer, and a bold "Vi" label.</p>
  *
  * <h2>Icon Design</h2>
  * <ul>
- *   <li><b>Background</b>: Light brown/tan (#D2A66A)</li>
- *   <li><b>Cup body</b>: Cream/white glass shape with a handle</li>
- *   <li><b>Stem/saucer</b>: Orange (#D47B2A)</li>
- *   <li><b>Steam</b>: Translucent white wisps above the cup</li>
- *   <li><b>Text</b>: Orange "vi" beneath the cup</li>
+ *   <li><b>Background</b>: Warm reddish-orange</li>
+ *   <li><b>Cup body</b>: Translucent glass with handle</li>
+ *   <li><b>Coffee</b>: Dark brown fill visible through glass</li>
+ *   <li><b>Saucer</b>: Orange (#D47B2A)</li>
+ *   <li><b>Steam</b>: Translucent white wisps</li>
+ *   <li><b>Text</b>: Bold orange "Vi" beneath the saucer</li>
  * </ul>
  *
  * <h2>Usage</h2>
@@ -41,25 +41,26 @@ import java.util.List;
  */
 public final class IconUtil {
 
-   /** Light brown/tan background. */
-   static final Color BACKGROUND = new Color(210, 166, 106);
+   /** Warm reddish-orange background. */
+   static final Color BACKGROUND = new Color(205, 75, 35);
 
-   /** Cup body fill — off-white / cream glass. */
-   static final Color CUP_FILL = new Color(245, 238, 225);
+   /** Translucent glass cup fill. */
+   static final Color CUP_FILL =
+      new Color(200, 225, 245, 70);
 
-   /** Cup outline / edge highlight. */
-   private static final Color CUP_EDGE = new Color(180, 140, 90);
+   /** Cup outline / glass edge highlight. */
+   private static final Color CUP_EDGE =
+      new Color(160, 180, 200);
 
-   /** Orange colour for stem, saucer and "vi" text. */
+   /** Orange colour for saucer and "Vi" text. */
    static final Color ORANGE = new Color(212, 123, 42);
 
    /** Translucent white steam. */
    private static final Color STEAM =
       new Color(255, 255, 255, 120);
 
-   /** Darker orange for cup rim accent. */
-   private static final Color COFFEE_RIM =
-      new Color(160, 90, 30, 100);
+   /** Dark brown coffee fill. */
+   static final Color COFFEE_FILL = new Color(55, 25, 10);
 
    private IconUtil() {
    }
@@ -78,10 +79,10 @@ public final class IconUtil {
          enableAntialiasing(g);
          drawBackground(g, size);
          drawSteam(g, size);
+         drawCoffeeFill(g, size);
          drawCupBody(g, size);
          drawHandle(g, size);
-         drawCoffeeRim(g, size);
-         drawStemAndSaucer(g, size);
+         drawSaucer(g, size);
          drawViLabel(g, size);
       } finally {
          g.dispose();
@@ -204,67 +205,98 @@ public final class IconUtil {
       float ew = Math.max(1f, size / 60f);
       g.setStroke(new BasicStroke(ew));
       g.draw(cup);
+
+      // Glass highlight reflection
+      g.setColor(new Color(255, 255, 255, 60));
+      float hlX = cupL + cupW * 0.12f;
+      float hlW = cupW * 0.10f;
+      float hlY = cupT + cupH * 0.15f;
+      float hlH = cupH * 0.55f;
+      g.fill(new RoundRectangle2D.Float(
+         hlX, hlY, hlW, hlH, hlW, hlW));
    }
 
-   /** Draws a C-shaped handle on the right side of the cup. */
+   /** Draws a C-shaped handle attached to the cup body. */
    private static void drawHandle(Graphics2D g, int size) {
-      float hx = size * 0.68f;
-      float hy = size * 0.30f;
-      float hw = size * 0.14f;
-      float hh = size * 0.22f;
-      float sw = Math.max(1.5f, size / 40f);
-      g.setStroke(new BasicStroke(sw, BasicStroke.CAP_ROUND,
+      float cupR = size * 0.68f;
+      float topY = size * 0.30f;
+      float botY = size * 0.52f;
+      float bulgX = size * 0.84f;
+      float sw = Math.max(1.5f, size / 32f);
+
+      GeneralPath p = new GeneralPath();
+      p.moveTo(cupR, topY);
+      p.curveTo(bulgX, topY, bulgX, botY, cupR, botY);
+
+      g.setStroke(new BasicStroke(sw,
+         BasicStroke.CAP_ROUND,
          BasicStroke.JOIN_ROUND));
       g.setColor(CUP_FILL);
-      g.draw(new Arc2D.Float(hx, hy, hw, hh, -90, 180,
-         Arc2D.OPEN));
+      g.draw(p);
       g.setColor(CUP_EDGE);
       g.setStroke(new BasicStroke(
          Math.max(1f, size / 60f)));
-      g.draw(new Arc2D.Float(hx, hy, hw, hh, -90, 180,
-         Arc2D.OPEN));
+      g.draw(p);
    }
 
-   /** Fills a thin ellipse at the cup rim to suggest coffee. */
-   private static void drawCoffeeRim(Graphics2D g, int size) {
-      g.setColor(COFFEE_RIM);
-      float rimL = size * 0.22f;
-      float rimW = size * 0.44f;
-      float rimY = size * 0.23f;
-      float rimH = size * 0.06f;
-      g.fill(new Ellipse2D.Float(rimL, rimY, rimW, rimH));
+   /** Fills dark-brown coffee visible through the glass cup. */
+   private static void drawCoffeeFill(Graphics2D g, int size) {
+      float cupL = size * 0.20f;
+      float cupR = size * 0.68f;
+      float cupB = size * 0.62f;
+      float cupW = cupR - cupL;
+      float taper = cupW * 0.06f;
+      float inset = size * 0.02f;
+      float coffeeTop = size * 0.34f;
+      float rad = cupW * 0.10f;
+
+      float cL = cupL + inset;
+      float cR = cupR - inset;
+      float cB = cupB - inset;
+
+      GeneralPath p = new GeneralPath();
+      p.moveTo(cL, coffeeTop);
+      p.lineTo(cR, coffeeTop);
+      p.lineTo(cR - taper, cB - rad);
+      p.quadTo(cR - taper, cB,
+         cR - taper - rad, cB);
+      p.lineTo(cL + taper + rad, cB);
+      p.quadTo(cL + taper, cB,
+         cL + taper, cB - rad);
+      p.lineTo(cL, coffeeTop);
+      p.closePath();
+
+      g.setColor(COFFEE_FILL);
+      g.fill(p);
+
+      // Lighter coffee surface ellipse
+      g.setColor(new Color(90, 50, 20));
+      g.fill(new Ellipse2D.Float(
+         cL, coffeeTop - size * 0.02f,
+         cR - cL, size * 0.045f));
    }
 
-   /** Draws the narrow stem and small saucer below the cup. */
-   private static void drawStemAndSaucer(Graphics2D g, int size) {
+   /** Draws an orange saucer directly below the cup. */
+   private static void drawSaucer(Graphics2D g, int size) {
       g.setColor(ORANGE);
-      // stem: narrow rectangle
-      float stemW = size * 0.06f;
-      float stemH = size * 0.07f;
-      float stemX = size * 0.44f - stemW / 2;
-      float stemY = size * 0.62f;
-      g.fill(new RoundRectangle2D.Float(
-         stemX, stemY, stemW, stemH, stemW * 0.3f, stemW * 0.3f));
-
-      // saucer: flattened ellipse
       float saucerW = size * 0.38f;
       float saucerH = size * 0.06f;
       float saucerX = size * 0.44f - saucerW / 2;
-      float saucerY = stemY + stemH - saucerH * 0.3f;
+      float saucerY = size * 0.625f;
       g.fill(new Ellipse2D.Float(
          saucerX, saucerY, saucerW, saucerH));
    }
 
-   /** Draws small orange "vi" text beneath the saucer. */
+   /** Draws bold orange "Vi" text beneath the saucer. */
    private static void drawViLabel(Graphics2D g, int size) {
       g.setColor(ORANGE);
-      int fontSize = Math.max(6, (int) (size * 0.18));
+      int fontSize = Math.max(8, (int) (size * 0.30));
       g.setFont(new Font(Font.SERIF, Font.BOLD, fontSize));
       java.awt.FontMetrics fm = g.getFontMetrics();
-      String text = "vi";
+      String text = "Vi";
       int tw = fm.stringWidth(text);
       int x = (int) (size * 0.44f) - tw / 2;
-      int y = (int) (size * 0.78f) + fm.getAscent() / 2;
+      int y = (int) (size * 0.82f) + fm.getAscent() / 2;
       g.drawString(text, x, y);
    }
 }
