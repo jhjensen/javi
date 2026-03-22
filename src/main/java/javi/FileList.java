@@ -733,6 +733,10 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       static void reset() {
          instance = null;
       }
+      static boolean isContentUnchanged(TextEdit<String> ev,
+            FileProperties fp) {
+         return FileList.isContentUnchanged(ev, fp);
+      }
    }
 
    /**
@@ -778,6 +782,13 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             // Check for external file modifications
             FileProperties fp = ev.getFileProperties();
             if (fp.checkModified()) {
+               // Skip dialog if file content is unchanged (e.g., file was
+               // touched or saved with identical content by external tool)
+               if (FileList.isContentUnchanged(ev, fp)) {
+                  fp.updateModifiedTime();
+                  continue;
+               }
+
                // Check if this file is currently being viewed
                FvContext currFvc = FvContext.getCurrFvc();
                boolean isCurrentlyViewed = currFvc != null && currFvc.edvec == ev;
@@ -827,6 +838,41 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                }
             }
          }
+      }
+
+   }
+
+   /**
+    * Check if the disk file content matches the in-memory buffer.
+    *
+    * <p>When file size hasn't changed, reads the file and compares with
+    * the buffer content reconstructed using the file's line separator.
+    * Returns false (assume changed) if sizes differ or on any error.</p>
+    */
+   static boolean isContentUnchanged(TextEdit<String> ev,
+         FileProperties fp) {
+      if (!(fp.fdes instanceof FileDescriptor.LocalFile)) {
+         return false;
+      }
+      FileDescriptor.LocalFile lf = (FileDescriptor.LocalFile) fp.fdes;
+      if (lf.length() != fp.getLastFileSize()) {
+         return false;
+      }
+      if (lf.length() == 0) {
+         return true; // empty file, size unchanged
+      }
+      try {
+         String diskContent = lf.getString();
+         String lsep = fp.getLineSeparator();
+         int lineCount = ev.finish();
+         StringBuilder bufContent = new StringBuilder();
+         for (int i = 1; i < lineCount; i++) { // skip root element
+            bufContent.append(ev.at(i));
+            bufContent.append(lsep);
+         }
+         return diskContent.equals(bufContent.toString());
+      } catch (IOException e) {
+         return false;
       }
    }
 }
