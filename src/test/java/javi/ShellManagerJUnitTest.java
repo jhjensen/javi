@@ -176,5 +176,132 @@ class ShellManagerJUnitTest {
       // Should not throw even with no sessions
       mgr.notifyResize(24, 80);
    }
+
+   // ================================================================
+   // isShellBuffer — empty manager
+   // ================================================================
+
+   @Test
+   @DisplayName("isShellBuffer returns false for null buffer")
+   void isShellBufferNullFalse() {
+      assertFalse(mgr.isShellBuffer(null));
+   }
+
+   // ================================================================
+   // extractBufferText — text extraction for shell clipboard
+   // ================================================================
+
+   private static int bufSeq;
+
+   private TextEdit<String> makeBuffer(String contents)
+         throws java.io.IOException {
+      String fname = "shellmgr_ext_" + (++bufSeq) + ".txt";
+      String path = history.Testutil.testFile(fname).getPath();
+      FileDescriptor.LocalFile.make(
+         history.Testutil.testFile(fname)).delete();
+      try (java.io.OutputStreamWriter w =
+            new java.io.OutputStreamWriter(
+               new java.io.FileOutputStream(path),
+               java.nio.charset.StandardCharsets.UTF_8)) {
+         w.write(contents);
+      }
+      FileDescriptor fd = FileDescriptor.make(path);
+      FileProperties<String> fp =
+         new FileProperties<>(fd, StringIoc.converter);
+      FileInput fi = new FileInput(fp);
+      TextEdit<String> te = new TextEdit<>(fi, fp);
+      te.finish();
+      return te;
+   }
+
+   @Test
+   @DisplayName("extractBufferText: single line partial")
+   void extractSingleLinePartial() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("Hello World\n");
+         Position start = new Position(0, 1, "", "");
+         Position end = new Position(5, 1, "", "");
+         assertEquals("Hello",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: full single line")
+   void extractFullSingleLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("Hello World\n");
+         Position start = new Position(0, 1, "", "");
+         Position end = new Position(11, 1, "", "");
+         assertEquals("Hello World",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: multi line")
+   void extractMultiLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf =
+            makeBuffer("aaa\nbbb\nccc\n");
+         Position start = new Position(1, 1, "", "");
+         Position end = new Position(2, 3, "", "");
+         assertEquals("aa\nbbb\ncc",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: reversed selection")
+   void extractReversedSelection() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("Hello World\n");
+         Position start = new Position(5, 1, "", "");
+         Position end = new Position(0, 1, "", "");
+         assertEquals("Hello",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: same position returns empty")
+   void extractSamePositionEmpty() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("Hello\n");
+         Position pos = new Position(3, 1, "", "");
+         assertEquals("",
+            ShellManager.extractBufferText(buf, pos, pos));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: x beyond line length clamps")
+   void extractClampsBeyondLineLength() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("Hi\n");
+         Position start = new Position(0, 1, "", "");
+         Position end = new Position(99, 1, "", "");
+         assertEquals("Hi",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
 }
 

@@ -591,6 +591,8 @@ final class OldView extends AwtView {
    final class MyCanvas extends Canvas {
 
       private int mousePressed = 0;
+      /** Start position of a shell-mode mouse selection, or null. */
+      private Position shellDragStart;
       private transient Graphics oldgr;
       private transient Image dbuf;
       private transient Graphics2D imageg;
@@ -743,6 +745,17 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_PRESSED:
                if (forwardVt100Mouse((MouseEvent) ev, true))
                   return;
+               if (((MouseEvent) ev).getButton() == MouseEvent.BUTTON1
+                     && isShellBufferNoTracking()) {
+                  EventQueue.biglock2.lock();
+                  try {
+                     shellDragStart = mousepos((MouseEvent) ev);
+                  } finally {
+                     EventQueue.biglock2.unlock();
+                  }
+               } else {
+                  shellDragStart = null;
+               }
                mousepress((MouseEvent) ev);
                mousePressed = ((MouseEvent) ev).getButton();
                break;
@@ -750,7 +763,13 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_RELEASED:
                if (forwardVt100Mouse((MouseEvent) ev, false))
                   return;
-               mouserelease((MouseEvent) ev);
+               if (null != shellDragStart
+                     && ((MouseEvent) ev).getButton()
+                        == MouseEvent.BUTTON1) {
+                  copyShellSelection((MouseEvent) ev);
+               } else {
+                  mouserelease((MouseEvent) ev);
+               }
                mousePressed = 0;
                break;
 
@@ -816,6 +835,59 @@ final class OldView extends AwtView {
       private int cellRow(MouseEvent event) {
          int y = event.getY() / charheight + 1;
          return y < 1 ? 1 : y;
+      }
+
+      /**
+       * Checks if the current buffer is a shell buffer without mouse
+       * tracking — i.e. the terminal app (bash) has not enabled
+       * mouse reporting modes 1000/1002/1003.
+       */
+      private boolean isShellBufferNoTracking() {
+         ShellManager sm = ShellManager.getInstance();
+         javi.TextEdit<?> file = getCurrFile();
+         return null != sm && null != file
+            && sm.isShellBuffer(file)
+            && !sm.isMouseTrackingForBuffer(file);
+      }
+
+      /**
+       * Copies the mouse-selected text from a shell buffer to the
+       * system clipboard and clears the visual mark.
+       */
+      private void copyShellSelection(MouseEvent event) {
+         EventQueue.biglock2.lock();
+         try {
+            Position end = mousepos(event);
+            Position start = shellDragStart;
+            shellDragStart = null;
+            // Clear visual mark by passing cursor pos — when
+            // evPos matches (fileX,fileY), updateTempMarkPos
+            // invokes clearMark internally.
+            FvContext fvc = FvContext.getCurrFvc();
+            updateTempMarkPos(new Position(
+               fvc.insertx(), fvc.inserty(), "", ""));
+            if (start.y == end.y && start.x == end.x)
+               return;
+            javi.TextEdit<?> buf = gettext();
+            if (null == buf)
+               return;
+            String text = ShellManager.extractBufferText(
+               buf, start, end);
+            if (text.isEmpty())
+               return;
+            java.awt.datatransfer.Clipboard clip =
+               java.awt.Toolkit.getDefaultToolkit()
+                  .getSystemClipboard();
+            clip.setContents(
+               new java.awt.datatransfer.StringSelection(text),
+               null);
+            trace("shell selection copied: "
+               + text.length() + " chars");
+         } catch (Exception e) {
+            trace("copyShellSelection failed: " + e);
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
       }
 
       /**

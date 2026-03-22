@@ -197,6 +197,20 @@ public final class ShellManager {
    }
 
    /**
+    * Checks if the given buffer belongs to any shell session.
+    *
+    * @param buffer the TextEdit buffer to check
+    * @return true if the buffer is a shell session buffer
+    */
+   public synchronized boolean isShellBuffer(TextEdit<?> buffer) {
+      for (ShellSession session : sessions) {
+         if (session.getBuffer() == buffer)
+            return true;
+      }
+      return false;
+   }
+
+   /**
     * Checks if the given buffer has VT100 mouse tracking enabled.
     *
     * <p>Unlike {@link #isMouseTrackingActive()}, this checks a specific
@@ -516,6 +530,45 @@ public final class ShellManager {
             marker, s.getId(), s.getName(),
             s.isAlive() ? "running" : "stopped",
             envInfo));
+      }
+      return sb.toString();
+   }
+
+   /**
+    * Extracts text between two positions from a buffer, handling
+    * reversed selection (end before start) and clamping to buffer
+    * bounds.
+    *
+    * @param buf the buffer to read from
+    * @param start one endpoint of the selection
+    * @param end the other endpoint of the selection
+    * @return the selected text, or empty string if range is empty
+    */
+   public static String extractBufferText(TextEdit<?> buf,
+         Position start, Position end) {
+      int sy = start.y;
+      int sx = start.x;
+      int ey = end.y;
+      int ex = end.x;
+      if (sy > ey || (sy == ey && sx > ex)) {
+         int tmp = sy; sy = ey; ey = tmp;
+         tmp = sx; sx = ex; ex = tmp;
+      }
+      int lastLine = buf.readIn() - 1;
+      if (sy < 1) sy = 1;
+      if (ey > lastLine) ey = lastLine;
+      StringBuilder sb = new StringBuilder();
+      for (int y = sy; y <= ey; y++) {
+         if (!buf.containsNow(y))
+            break;
+         String line = buf.at(y).toString();
+         int from = (y == sy) ? Math.min(sx, line.length()) : 0;
+         int to = (y == ey) ? Math.min(ex, line.length())
+                            : line.length();
+         if (from > to) from = to;
+         sb.append(line, from, to);
+         if (y < ey)
+            sb.append('\n');
       }
       return sb.toString();
    }
