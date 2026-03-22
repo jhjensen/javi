@@ -25,8 +25,8 @@ final class KeyGroup {
    private final HashMap<JeyEvent, String> userBindings =
       new HashMap<>();
 
-   KeyGroup(String name) {
-      this.name = name;
+   KeyGroup(String groupName) {
+      this.name = groupName;
    }
 
    KeyGroup() {
@@ -43,31 +43,31 @@ final class KeyGroup {
       return kb.proto(arg); // use default bind if arguments the same
    }
 
-   void keybind(char c, String name, Object arg, int modifiers) {
+   void keybind(char c, String cmdName, Object arg, int modifiers) {
       JeyEvent binding = new JeyEvent(modifiers, 0, c);
-      //trace("keybind " + c + " name:" + name + " modifiers " + modifiers
+      //trace("keybind " + c + " name:" + cmdName + " modifiers " + modifiers
       //    + " binding " + binding);
-      if (null != bindingMap.put(binding, getkb(name, arg)))
+      if (null != bindingMap.put(binding, getkb(cmdName, arg)))
          throw new RuntimeException("mapping identical keymaps: " + binding);
-      commandNames.put(binding, name);
+      commandNames.put(binding, cmdName);
    }
 
-   void keybind(char c, String name, Object arg) {
+   void keybind(char c, String cmdName, Object arg) {
       JeyEvent binding = new JeyEvent(0, 0, c);
-      //trace("keybind " + c + " name:" + name  + " binding " + binding
+      //trace("keybind " + c + " name:" + cmdName  + " binding " + binding
       //    + " binding hash " + binding.hashCode());
-      if (null != bindingMap.put(binding, getkb(name, arg)))
+      if (null != bindingMap.put(binding, getkb(cmdName, arg)))
          throw new RuntimeException("mapping identical keymaps: " + binding);
-      commandNames.put(binding, name);
+      commandNames.put(binding, cmdName);
    }
 
-   void keyactionbind(int c, String name, Object arg, int modifiers)  {
+   void keyactionbind(int c, String cmdName, Object arg, int modifiers)  {
       JeyEvent binding = new JeyEvent(modifiers, c, JeyEvent.CHAR_UNDEFINED);
 
-      //trace("keyactionbind " + c + " name:" + name + " binding " + binding);
-      if (null != bindingMap.put(binding, getkb(name, arg)))
+      //trace("keyactionbind " + c + " name:" + cmdName + " binding " + binding);
+      if (null != bindingMap.put(binding, getkb(cmdName, arg)))
          throw new RuntimeException("mapping identical keymaps: " + binding);
-      commandNames.put(binding, name);
+      commandNames.put(binding, cmdName);
    }
 
    Rgroup.KeyBinding get(JeyEvent e) {

@@ -1400,47 +1400,7 @@ public final class DirEdit extends TextEdit<String> {
                return null;
 
             case 15: // dirmanager_toggle_searchpath
-               if (fvc.edvec instanceof DirEdit) {
-                  DirEdit de = (DirEdit) fvc.edvec;
-                  int lineNum = fvc.inserty();
-                  String filename = de.getFilename(lineNum);
-
-                  if (null == filename) {
-                     UI.reportMessage("Not a file entry");
-                     return null;
-                  }
-
-                  if (!filename.endsWith("/")) {
-                     UI.reportMessage("Not a directory: " + filename);
-                     return null;
-                  }
-
-                  // Build full path for the directory
-                  String dirName;
-                  if ("../".equals(filename)) {
-                     File parentFile = de.getCurrentDir().fh.getParentFile();
-                     if (null == parentFile) {
-                        UI.reportMessage(
-                           "Cannot add root parent to search path");
-                        return null;
-                     }
-                     dirName = parentFile.getPath();
-                  } else {
-                     dirName = de.getCurrentDir().shortName
-                        + File.separator
-                        + filename.substring(0, filename.length() - 1);
-                  }
-
-                  FileDescriptor.LocalDir dir =
-                     FileDescriptor.LocalDir.make(dirName);
-                  boolean nowIn =
-                     DirManager.getInstance().toggleSearchPath(dir);
-                  de.populateDirectory();
-                  UI.reportMessage(nowIn
-                     ? "Added to search path: " + dirName
-                     : "Removed from search path: " + dirName);
-               }
-               return null;
+               return handleToggleSearchPath(fvc);
 
             case 16: // diredit_shell
                if (fvc.edvec instanceof DirEdit) {
@@ -1464,6 +1424,50 @@ public final class DirEdit extends TextEdit<String> {
                throw new RuntimeException("DirEdit.Commands: invalid rnum "
                   + rnum);
          }
+      }
+
+      private Object handleToggleSearchPath(FvContext fvc) {
+         if (fvc.edvec instanceof DirEdit) {
+            DirEdit de = (DirEdit) fvc.edvec;
+            int lineNum = fvc.inserty();
+            String filename = de.getFilename(lineNum);
+
+            if (null == filename) {
+               UI.reportMessage("Not a file entry");
+               return null;
+            }
+
+            if (!filename.endsWith("/")) {
+               UI.reportMessage("Not a directory: " + filename);
+               return null;
+            }
+
+            // Build full path for the directory
+            String dirName;
+            if ("../".equals(filename)) {
+               File parentFile = de.getCurrentDir().fh.getParentFile();
+               if (null == parentFile) {
+                  UI.reportMessage(
+                     "Cannot add root parent to search path");
+                  return null;
+               }
+               dirName = parentFile.getPath();
+            } else {
+               dirName = de.getCurrentDir().shortName
+                  + File.separator
+                  + filename.substring(0, filename.length() - 1);
+            }
+
+            FileDescriptor.LocalDir dir =
+               FileDescriptor.LocalDir.make(dirName);
+            boolean nowIn =
+               DirManager.getInstance().toggleSearchPath(dir);
+            de.populateDirectory();
+            UI.reportMessage(nowIn
+               ? "Added to search path: " + dirName
+               : "Removed from search path: " + dirName);
+         }
+         return null;
       }
    }
 

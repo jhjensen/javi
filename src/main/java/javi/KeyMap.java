@@ -36,15 +36,16 @@ final class KeyMap {
    private final KeyGroup editKeys;
    private final KeyMap parent; // null for root keymaps
 
-   KeyMap(String name, KeyGroup moveKeys, KeyGroup editKeys, KeyMap parent) {
-      this.name = name;
-      this.moveKeys = moveKeys;
-      this.editKeys = editKeys;
-      this.parent = parent;
+   KeyMap(String keyMapName, KeyGroup moveGroup, KeyGroup editGroup,
+         KeyMap parentMap) {
+      this.name = keyMapName;
+      this.moveKeys = moveGroup;
+      this.editKeys = editGroup;
+      this.parent = parentMap;
    }
 
-   KeyMap(String name, KeyGroup moveKeys, KeyGroup editKeys) {
-      this(name, moveKeys, editKeys, null);
+   KeyMap(String keyMapName, KeyGroup moveGroup, KeyGroup editGroup) {
+      this(keyMapName, moveGroup, editGroup, null);
    }
 
    String getName() {

@@ -148,203 +148,208 @@ public final class MapEvent {
       normalKeyMap = new KeyMap("normal", moveKeys, editKeys);
       KeyMap.register(normalKeyMap);
 
-      // --- Movement keys via KeyMap API ---
-
-      // Screen scrolling
-      normalKeyMap.bindMoveKey((char) 2, "movescreen", mf1, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 6, "movescreen", f1, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 4, "movescreen", half, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 21, "movescreen", mhalf, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 25, "movescreenline", mone, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 5, "movescreenline", one, CTRL_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_PAGE_UP, "movescreen", mf1, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_PAGE_DOWN, "movescreen", f1, 0);
-
-      // Character and word motion
-      normalKeyMap.bindMoveKey('h', "movechar", FALSE);
-      normalKeyMap.bindMoveKey((char) 8, "movechar", FALSE, 0);
-      normalKeyMap.bindMoveKey('l', "movechar", TRUE);
-      normalKeyMap.bindMoveKey('^', "starttext", null);
-      normalKeyMap.bindMoveKey('W', "forwardWord", null);
-      normalKeyMap.bindMoveKey('w', "forwardword", null);
-      normalKeyMap.bindMoveKey('b', "backwardword", null);
-      normalKeyMap.bindMoveKey('B', "backwardWord", null);
-      normalKeyMap.bindMoveKey('E', "endWord", null);
-      normalKeyMap.bindMoveKey('e', "endword", null);
-      normalKeyMap.bindMoveKey('%', "balancechar", null);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_LEFT, "backwardword",
-         null, CTRL_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_LEFT, "movechar", FALSE, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_RIGHT, "movechar", TRUE, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_RIGHT, "forwardword",
-         null, CTRL_MASK);
-
-      // Line motion
-      normalKeyMap.bindMoveKey('k', "moveline", FALSE);
-      normalKeyMap.bindMoveKey('j', "moveline", TRUE);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_UP, "moveline", FALSE, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_UP, "shiftmoveline",
-         FALSE, SHIFT_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_UP, "movescreenline",
-         mone, CTRL_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_DOWN, "moveline", TRUE, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_DOWN, "shiftmoveline",
-         TRUE, SHIFT_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_DOWN, "movescreenline",
-         one, CTRL_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_END, "linepos", MAX_VALUE, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_END, "gotoline",
-         MAX_VALUE, SHIFT_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_HOME, "linepos", zero, 0);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_HOME, "gotoline",
-         one, SHIFT_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_HOME, "gotoline",
-         one, CTRL_MASK);
-      normalKeyMap.bindMoveAction(JeyEvent.VK_END, "gotoline",
-         null, CTRL_MASK);
-      normalKeyMap.bindMoveKey('+', "movelinestart", one);
-      normalKeyMap.bindMoveKey((char) 13, "movelinestart", one);
-      normalKeyMap.bindMoveKey((char) 10, "moveline", TRUE, CTRL_MASK);
-      normalKeyMap.bindMoveKey((char) 10, "movelinestart", one, 0);
-      normalKeyMap.bindMoveKey('-', "movelinestart", mone);
-
-      // Screen position
-      normalKeyMap.bindMoveKey('H', "screenmove", 0.f);
-      normalKeyMap.bindMoveKey('M', "screenmove", .5f);
-      normalKeyMap.bindMoveKey('L', "screenmove", .999999f);
-
-      // Find/search
-      normalKeyMap.bindMoveKey('f', "findchar", tt);
-      normalKeyMap.bindMoveKey('F', "findchar", ft);
-      normalKeyMap.bindMoveKey('t', "findchar", tf);
-      normalKeyMap.bindMoveKey('T', "findchar", ff);
-      normalKeyMap.bindMoveKey(';', "repeatfind", tt);
-      normalKeyMap.bindMoveKey(',', "repeatfind", ff);
-      normalKeyMap.bindMoveKey('n', "regsearch", FALSE);
-      normalKeyMap.bindMoveKey('N', "regsearch", TRUE);
-      normalKeyMap.bindMoveKey('/', "searchcommand", FALSE);
-      normalKeyMap.bindMoveKey('?', "searchcommand", TRUE);
-
-      // Line positioning and goto
-      normalKeyMap.bindMoveKey('0', "linepos", zero);
-      normalKeyMap.bindMoveKey('$', "linepos", MAX_VALUE);
-      normalKeyMap.bindMoveKey('|', "linepos", null); //diff '0' ???
-      normalKeyMap.bindMoveKey('G', "gotoline", null);
-
-      // Marks
-      normalKeyMap.bindMoveKey('\'', "findmark", null);
-      normalKeyMap.bindMoveKey('m', "mark", null);
-
-      // Regex-based motion (sentences, paragraphs, sections)
-      normalKeyMap.bindMoveKey(')', "forwardregex", sentenceRegex);
-      normalKeyMap.bindMoveKey('(', "backwardregex", sentenceRegex);
-      normalKeyMap.bindMoveKey('}', "forwardregex", paragraphRegex);
-      normalKeyMap.bindMoveKey('{', "backwardregex", paragraphRegex); //}
-      normalKeyMap.bindMoveKey(']', "forwardregex", sectionRegex);
-      normalKeyMap.bindMoveKey('[', "backwardregex", sectionRegex);
-
-      // --- Edit/command keys via KeyMap API ---
-
-      // UI / mode switching
-      normalKeyMap.bindEditKey('z', "zprocess", null);
-      normalKeyMap.bindEditKey((char) 12, "redraw", null, CTRL_MASK);
-      normalKeyMap.bindEditKey((char) 7, "togglestatus", null, CTRL_MASK);
-      normalKeyMap.bindEditKey(':', "commandproc", null);
-      normalKeyMap.bindEditKey('Z', "Zprocess", null);
-
-      // Function keys
-      normalKeyMap.bindEditAction(JeyEvent.VK_F1, "nextposwait",
-         ff, CTRL_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F1, "nextpos", ff, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F2, "gotofilelist", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F3, "gotodirlist", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F4, "gotofontlist", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F5, "gotopositionlist",
-         null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F6, "gotopllist", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F7, "mk", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F8, "vt", null, 0);
-      //normalKeyMap.bindEditAction(JeyEvent.VK_F9, "startcon", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F10, "comm", null, 0);
-      //normalKeyMap.bindEditAction(JeyEvent.VK_F11, "exec", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F11, "fullscreen", null, 0);
-
-      // Search (Ctrl-F3 in edit group)
-      normalKeyMap.bindEditAction(JeyEvent.VK_F3, "regsearch",
-         FALSE, CTRL_MASK);
-
-      // Tags and file switching
-      normalKeyMap.bindEditKey((char) 29, "gototag", null, CTRL_MASK); //^]
-      normalKeyMap.bindEditKey((char) 20, "poptag", null, CTRL_MASK); //^t
-      normalKeyMap.bindEditKey('^', "nextfile",
-         null, CTRL_MASK | SHIFT_MASK);
-      normalKeyMap.bindEditKey('\036', "nextfile",
-         null, CTRL_MASK | SHIFT_MASK);
-
-      // Space
-      normalKeyMap.bindEditKey(' ', "moveover", TRUE, SHIFT_MASK);
-      normalKeyMap.bindEditKey(' ', "moveover", FALSE, 0);
-
-      // Undo / redo
-      normalKeyMap.bindEditKey((char) 2, "movescreen", mone, CTRL_MASK);
-      normalKeyMap.bindEditKey((char) 18, "redo", null, CTRL_MASK);
-      normalKeyMap.bindEditKey((char) 26, "redo",
-         null, CTRL_MASK | SHIFT_MASK);
-      normalKeyMap.bindEditKey('Y', "redo", null, CTRL_MASK);
-      normalKeyMap.bindEditKey((char) 8, "redo",
-         null, SHIFT_MASK | JeyEvent.ALT_MASK);
-      normalKeyMap.bindEditKey('U', "undoline", null);
-      normalKeyMap.bindEditKey('u', "undo", null);
-      normalKeyMap.bindEditKey((char) 8, "undo", null, JeyEvent.ALT_MASK);
-      normalKeyMap.bindEditKey((char) 26, "undo", null, CTRL_MASK);
-
-      // Insert / append / open
-      normalKeyMap.bindEditKey('i', "insert", ff);
-      normalKeyMap.bindEditKey('I', "Insert", ff);
-      normalKeyMap.bindEditKey('a', "append", ft);
-      normalKeyMap.bindEditKey('A', "Append", ft);
-      normalKeyMap.bindEditKey('o', "openline", ft);
-      normalKeyMap.bindEditKey('O', "Openline", ft);
-      normalKeyMap.bindEditKey('s', "substitute", ft);
-
-      // Yank / put
-      normalKeyMap.bindEditKey('p', "putafter", null);
-      normalKeyMap.bindEditKey('P', "putbefore", null);
-      normalKeyMap.bindEditKey('y', "yankmode", null);
-      normalKeyMap.bindEditKey('Y', "yank", null);
-
-      // Delete / change
-      normalKeyMap.bindEditKey('S', "Substitute", null);
-      normalKeyMap.bindEditKey('X', "deletechars", ff);
-      normalKeyMap.bindEditKey((char) 127, "deletechars", ff);
-      normalKeyMap.bindEditKey('x', "deletechars", tt);
-      normalKeyMap.bindEditKey('D', "deletetoend", tt);
-      normalKeyMap.bindEditKey('C', "deletetoendi", null);
-      normalKeyMap.bindEditKey('c', "changemode", null);
-      normalKeyMap.bindEditKey('d', "deletemode", null);
-
-      // Visual mode
-      normalKeyMap.bindEditKey('v', "markmode", zero);
-      normalKeyMap.bindEditKey('V', "markmode", one);
-
-      // Miscellaneous editing
-      normalKeyMap.bindEditKey('J', "joinlines", null);
-      normalKeyMap.bindEditKey('r', "subchar", null);
-      normalKeyMap.bindEditKey('~', "changecase", null);
-      normalKeyMap.bindEditKey('R', "insert", tf);
-      normalKeyMap.bindEditKey('.', "doover", tt);
-      normalKeyMap.bindEditKey('"', "qmode", null);
-      normalKeyMap.bindEditKey('<', "shiftmode", one);
-      normalKeyMap.bindEditKey('>', "shiftmode", mone);
-      normalKeyMap.bindEditAction(JeyEvent.VK_DELETE, "deletechars", one, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_DELETE, "deletetoend",
-         null, SHIFT_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_INSERT, "insert", ft, 0);
-      normalKeyMap.bindEditKey('j', "jsevalfile", null, JeyEvent.ALT_MASK);
+      bindMovementKeys(normalKeyMap, sentenceRegex, paragraphRegex,
+         sectionRegex);
+      bindEditKeys(normalKeyMap);
 
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
+   }
+
+   private static void bindMovementKeys(KeyMap km, Matcher sentenceRegex,
+         Matcher paragraphRegex, Matcher sectionRegex) {
+      // Screen scrolling
+      km.bindMoveKey((char) 2, "movescreen", mf1, CTRL_MASK);
+      km.bindMoveKey((char) 6, "movescreen", f1, CTRL_MASK);
+      km.bindMoveKey((char) 4, "movescreen", half, CTRL_MASK);
+      km.bindMoveKey((char) 21, "movescreen", mhalf, CTRL_MASK);
+      km.bindMoveKey((char) 25, "movescreenline", mone, CTRL_MASK);
+      km.bindMoveKey((char) 5, "movescreenline", one, CTRL_MASK);
+      km.bindMoveAction(JeyEvent.VK_PAGE_UP, "movescreen", mf1, 0);
+      km.bindMoveAction(JeyEvent.VK_PAGE_DOWN, "movescreen", f1, 0);
+
+      // Character and word motion
+      km.bindMoveKey('h', "movechar", FALSE);
+      km.bindMoveKey((char) 8, "movechar", FALSE, 0);
+      km.bindMoveKey('l', "movechar", TRUE);
+      km.bindMoveKey('^', "starttext", null);
+      km.bindMoveKey('W', "forwardWord", null);
+      km.bindMoveKey('w', "forwardword", null);
+      km.bindMoveKey('b', "backwardword", null);
+      km.bindMoveKey('B', "backwardWord", null);
+      km.bindMoveKey('E', "endWord", null);
+      km.bindMoveKey('e', "endword", null);
+      km.bindMoveKey('%', "balancechar", null);
+      km.bindMoveAction(JeyEvent.VK_LEFT, "backwardword",
+         null, CTRL_MASK);
+      km.bindMoveAction(JeyEvent.VK_LEFT, "movechar", FALSE, 0);
+      km.bindMoveAction(JeyEvent.VK_RIGHT, "movechar", TRUE, 0);
+      km.bindMoveAction(JeyEvent.VK_RIGHT, "forwardword",
+         null, CTRL_MASK);
+
+      // Line motion
+      km.bindMoveKey('k', "moveline", FALSE);
+      km.bindMoveKey('j', "moveline", TRUE);
+      km.bindMoveAction(JeyEvent.VK_UP, "moveline", FALSE, 0);
+      km.bindMoveAction(JeyEvent.VK_UP, "shiftmoveline",
+         FALSE, SHIFT_MASK);
+      km.bindMoveAction(JeyEvent.VK_UP, "movescreenline",
+         mone, CTRL_MASK);
+      km.bindMoveAction(JeyEvent.VK_DOWN, "moveline", TRUE, 0);
+      km.bindMoveAction(JeyEvent.VK_DOWN, "shiftmoveline",
+         TRUE, SHIFT_MASK);
+      km.bindMoveAction(JeyEvent.VK_DOWN, "movescreenline",
+         one, CTRL_MASK);
+      km.bindMoveAction(JeyEvent.VK_END, "linepos", MAX_VALUE, 0);
+      km.bindMoveAction(JeyEvent.VK_END, "gotoline",
+         MAX_VALUE, SHIFT_MASK);
+      km.bindMoveAction(JeyEvent.VK_HOME, "linepos", zero, 0);
+      km.bindMoveAction(JeyEvent.VK_HOME, "gotoline",
+         one, SHIFT_MASK);
+      km.bindMoveAction(JeyEvent.VK_HOME, "gotoline",
+         one, CTRL_MASK);
+      km.bindMoveAction(JeyEvent.VK_END, "gotoline",
+         null, CTRL_MASK);
+      km.bindMoveKey('+', "movelinestart", one);
+      km.bindMoveKey((char) 13, "movelinestart", one);
+      km.bindMoveKey((char) 10, "moveline", TRUE, CTRL_MASK);
+      km.bindMoveKey((char) 10, "movelinestart", one, 0);
+      km.bindMoveKey('-', "movelinestart", mone);
+
+      // Screen position
+      km.bindMoveKey('H', "screenmove", 0.f);
+      km.bindMoveKey('M', "screenmove", .5f);
+      km.bindMoveKey('L', "screenmove", .999999f);
+
+      // Find/search
+      km.bindMoveKey('f', "findchar", tt);
+      km.bindMoveKey('F', "findchar", ft);
+      km.bindMoveKey('t', "findchar", tf);
+      km.bindMoveKey('T', "findchar", ff);
+      km.bindMoveKey(';', "repeatfind", tt);
+      km.bindMoveKey(',', "repeatfind", ff);
+      km.bindMoveKey('n', "regsearch", FALSE);
+      km.bindMoveKey('N', "regsearch", TRUE);
+      km.bindMoveKey('/', "searchcommand", FALSE);
+      km.bindMoveKey('?', "searchcommand", TRUE);
+
+      // Line positioning and goto
+      km.bindMoveKey('0', "linepos", zero);
+      km.bindMoveKey('$', "linepos", MAX_VALUE);
+      km.bindMoveKey('|', "linepos", null); //diff '0' ???
+      km.bindMoveKey('G', "gotoline", null);
+
+      // Marks
+      km.bindMoveKey('\'', "findmark", null);
+      km.bindMoveKey('m', "mark", null);
+
+      // Regex-based motion (sentences, paragraphs, sections)
+      km.bindMoveKey(')', "forwardregex", sentenceRegex);
+      km.bindMoveKey('(', "backwardregex", sentenceRegex);
+      km.bindMoveKey('}', "forwardregex", paragraphRegex);
+      km.bindMoveKey('{', "backwardregex", paragraphRegex); //}
+      km.bindMoveKey(']', "forwardregex", sectionRegex);
+      km.bindMoveKey('[', "backwardregex", sectionRegex);
+   }
+
+   private static void bindEditKeys(KeyMap km) {
+      // UI / mode switching
+      km.bindEditKey('z', "zprocess", null);
+      km.bindEditKey((char) 12, "redraw", null, CTRL_MASK);
+      km.bindEditKey((char) 7, "togglestatus", null, CTRL_MASK);
+      km.bindEditKey(':', "commandproc", null);
+      km.bindEditKey('Z', "Zprocess", null);
+
+      // Function keys
+      km.bindEditAction(JeyEvent.VK_F1, "nextposwait",
+         ff, CTRL_MASK);
+      km.bindEditAction(JeyEvent.VK_F1, "nextpos", ff, 0);
+      km.bindEditAction(JeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
+      km.bindEditAction(JeyEvent.VK_F2, "gotofilelist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F3, "gotodirlist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F4, "gotofontlist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F5, "gotopositionlist",
+         null, 0);
+      km.bindEditAction(JeyEvent.VK_F6, "gotopllist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F7, "mk", null, 0);
+      km.bindEditAction(JeyEvent.VK_F8, "vt", null, 0);
+      //km.bindEditAction(JeyEvent.VK_F9, "startcon", null, 0);
+      km.bindEditAction(JeyEvent.VK_F10, "comm", null, 0);
+      //km.bindEditAction(JeyEvent.VK_F11, "exec", null, 0);
+      km.bindEditAction(JeyEvent.VK_F11, "fullscreen", null, 0);
+
+      // Search (Ctrl-F3 in edit group)
+      km.bindEditAction(JeyEvent.VK_F3, "regsearch",
+         FALSE, CTRL_MASK);
+
+      // Tags and file switching
+      km.bindEditKey((char) 29, "gototag", null, CTRL_MASK); //^]
+      km.bindEditKey((char) 20, "poptag", null, CTRL_MASK); //^t
+      km.bindEditKey('^', "nextfile",
+         null, CTRL_MASK | SHIFT_MASK);
+      km.bindEditKey('\036', "nextfile",
+         null, CTRL_MASK | SHIFT_MASK);
+
+      // Space
+      km.bindEditKey(' ', "moveover", TRUE, SHIFT_MASK);
+      km.bindEditKey(' ', "moveover", FALSE, 0);
+
+      // Undo / redo
+      km.bindEditKey((char) 2, "movescreen", mone, CTRL_MASK);
+      km.bindEditKey((char) 18, "redo", null, CTRL_MASK);
+      km.bindEditKey((char) 26, "redo",
+         null, CTRL_MASK | SHIFT_MASK);
+      km.bindEditKey('Y', "redo", null, CTRL_MASK);
+      km.bindEditKey((char) 8, "redo",
+         null, SHIFT_MASK | JeyEvent.ALT_MASK);
+      km.bindEditKey('U', "undoline", null);
+      km.bindEditKey('u', "undo", null);
+      km.bindEditKey((char) 8, "undo", null, JeyEvent.ALT_MASK);
+      km.bindEditKey((char) 26, "undo", null, CTRL_MASK);
+
+      // Insert / append / open
+      km.bindEditKey('i', "insert", ff);
+      km.bindEditKey('I', "Insert", ff);
+      km.bindEditKey('a', "append", ft);
+      km.bindEditKey('A', "Append", ft);
+      km.bindEditKey('o', "openline", ft);
+      km.bindEditKey('O', "Openline", ft);
+      km.bindEditKey('s', "substitute", ft);
+
+      // Yank / put
+      km.bindEditKey('p', "putafter", null);
+      km.bindEditKey('P', "putbefore", null);
+      km.bindEditKey('y', "yankmode", null);
+      km.bindEditKey('Y', "yank", null);
+
+      // Delete / change
+      km.bindEditKey('S', "Substitute", null);
+      km.bindEditKey('X', "deletechars", ff);
+      km.bindEditKey((char) 127, "deletechars", ff);
+      km.bindEditKey('x', "deletechars", tt);
+      km.bindEditKey('D', "deletetoend", tt);
+      km.bindEditKey('C', "deletetoendi", null);
+      km.bindEditKey('c', "changemode", null);
+      km.bindEditKey('d', "deletemode", null);
+
+      // Visual mode
+      km.bindEditKey('v', "markmode", zero);
+      km.bindEditKey('V', "markmode", one);
+
+      // Miscellaneous editing
+      km.bindEditKey('J', "joinlines", null);
+      km.bindEditKey('r', "subchar", null);
+      km.bindEditKey('~', "changecase", null);
+      km.bindEditKey('R', "insert", tf);
+      km.bindEditKey('.', "doover", tt);
+      km.bindEditKey('"', "qmode", null);
+      km.bindEditKey('<', "shiftmode", one);
+      km.bindEditKey('>', "shiftmode", mone);
+      km.bindEditAction(JeyEvent.VK_DELETE, "deletechars", one, 0);
+      km.bindEditAction(JeyEvent.VK_DELETE, "deletetoend",
+         null, SHIFT_MASK);
+      km.bindEditAction(JeyEvent.VK_INSERT, "insert", ft, 0);
+      km.bindEditKey('j', "jsevalfile", null, JeyEvent.ALT_MASK);
    }
 
    /**
