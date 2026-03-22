@@ -344,6 +344,10 @@ final class EditGroup extends Rgroup {
                   case 'y':
                      deletetext(bufid, fvc, true, startx, starty, donex, doney);
                      break out;
+                  case 'Y':
+                     Buffers.deleted(bufid,
+                        fvc.edvec.getElementsAt(starty, markamount));
+                     break out;
                   case 'v': case 'V': case 27: // esc
                      break out;
                   case 'D':

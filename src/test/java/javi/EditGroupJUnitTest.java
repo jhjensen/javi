@@ -534,4 +534,49 @@ class EditGroupJUnitTest {
       ex.disposeFvc();
       deleteTestFiles(fname);
    }
+
+   // ============================================================
+   // B10 regression: visual yank (VY) must store lines in buffer
+   // ============================================================
+
+   /**
+    * Regression test for B10: VY (visual yank) was broken because
+    * the 'Y' case was accidentally removed from markmode's switch.
+    * This verifies the underlying yank primitive: getElementsAt
+    * copies lines into a Buffers register without modifying the
+    * source text.
+    */
+   @Test
+   void visualYankCopiesLinesWithoutModifying() throws Exception {
+      String fname = "ju_eg_vy";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      ex.inserttext("alpha\nbeta\ngamma\n", 0, 1);
+      ex.checkpoint();
+
+      // Yank two lines starting at line 1 — same path as VY
+      var yanked = ex.getElementsAt(1, 2);
+      Buffers.deleted('a', yanked);
+
+      // Source text must be unmodified
+      assertEquals("alpha", ex.at(1).toString());
+      assertEquals("beta", ex.at(2).toString());
+      assertEquals("gamma", ex.at(3).toString());
+
+      // Buffer 'a' must contain the yanked lines
+      Object buf = Buffers.getbuf('a');
+      assertNotNull(buf, "yank buffer should not be null");
+      assertTrue(buf instanceof java.util.ArrayList,
+         "yank buffer should be an ArrayList of lines");
+      @SuppressWarnings("unchecked")
+      var lines = (java.util.ArrayList<String>) buf;
+      assertEquals(2, lines.size());
+      assertEquals("alpha", lines.get(0));
+      assertEquals("beta", lines.get(1));
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
 }
