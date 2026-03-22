@@ -207,7 +207,9 @@ public class TextEdit<OType> extends EditContainer<OType> {
          }
       }
       c = str.peek();
-      if ('g' == c) {
+      if ('g' == c || 'v' == c) {
+         if ('v' == c)
+            inverse = true;
          str.next();
          if (linestart == linefinish && linestart == ypos) {
             linestart = 1;
@@ -215,7 +217,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
          }
          c = str.peek();
          if  ('!' == c) {
-            inverse = true;
+            inverse = !inverse;
             str.next();
          }
          rangePattern = str.getpattern();

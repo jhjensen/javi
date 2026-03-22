@@ -501,6 +501,117 @@ class StreamInterfaceJUnitTest {
         }
     }
 
+    // --- T3 workflow: search-navigate-edit sequence ---
+
+    /**
+     * Workflow test: create a multi-line source file, use
+     * search-based addressing to target specific lines, apply
+     * multiple transformations, and verify the combined result.
+     */
+    @Test
+    void searchAndEditWorkflow() throws Exception {
+        EventQueue.biglock2.lock();
+        try {
+            String fname = "ju_si_workflow";
+            UI.setStream(new StringReader(""));
+            deleteTestFiles(fname);
+
+            TextEdit<String> ex = openTestFile(fname);
+            ex.inserttext(
+                "INFO  startup complete\n"
+                + "ERROR connection refused\n"
+                + "INFO  request handled\n"
+                + "WARN  slow query 1200ms\n"
+                + "ERROR timeout expired\n"
+                + "INFO  shutdown initiated\n",
+                0, 1);
+            ex.checkpoint();
+            assertEquals(8, ex.finish()); // 6 lines + sentinel
+
+            // Step 1: substitute on ERROR lines — mark them as FIXED
+            int result = ex.processCommand("g/ERROR/s/ERROR/FIXED/", 1);
+            assertTrue(result >= 0, "global substitute should succeed");
+            assertEquals("FIXED connection refused", ex.at(2).toString());
+            assertEquals("FIXED timeout expired", ex.at(5).toString());
+
+            // Step 2: delete all INFO lines (noise removal)
+            result = ex.processCommand("g/INFO/d", 1);
+            assertTrue(result >= 0, "global delete should succeed");
+            // Remaining: FIXED connection refused, WARN slow query, FIXED timeout
+            assertEquals("FIXED connection refused", ex.at(1).toString());
+            assertEquals("WARN  slow query 1200ms", ex.at(2).toString());
+            assertEquals("FIXED timeout expired", ex.at(3).toString());
+            assertEquals(5, ex.finish());
+
+            // Step 3: ranged substitute — fix WARN prefix on line 2
+            result = ex.processCommand("2s/WARN /ALERT/", 1);
+            assertTrue(result >= 0);
+            assertEquals("ALERT slow query 1200ms", ex.at(2).toString());
+
+            // Step 4: write and verify round-trip
+            ex.checkpoint();
+            ex.printout();
+            ex.disposeFvc();
+
+            ex = openTestFile(fname);
+            assertEquals("FIXED connection refused", ex.at(1).toString());
+            assertEquals("ALERT slow query 1200ms", ex.at(2).toString());
+            assertEquals("FIXED timeout expired", ex.at(3).toString());
+            assertFalse(ex.isModified());
+            ex.disposeFvc();
+
+            deleteTestFiles(fname);
+        } finally {
+            EventQueue.biglock2.unlock();
+        }
+    }
+
+    /**
+     * Workflow test: inverse global command (v/pattern/) to keep only
+     * lines matching a pattern and discard everything else.
+     *
+     * <p>Simulates a "filter log to errors only" workflow.</p>
+     */
+    @Test
+    void inverseGlobalFilterWorkflow() throws Exception {
+        EventQueue.biglock2.lock();
+        try {
+            String fname = "ju_si_invg";
+            UI.setStream(new StringReader(""));
+            deleteTestFiles(fname);
+
+            TextEdit<String> ex = openTestFile(fname);
+            ex.inserttext(
+                "DEBUG trace point A\n"
+                + "ERROR null pointer\n"
+                + "DEBUG trace point B\n"
+                + "DEBUG trace point C\n"
+                + "ERROR out of memory\n",
+                0, 1);
+            ex.checkpoint();
+            assertEquals(7, ex.finish());
+
+            // v/ERROR/d — delete lines NOT matching ERROR
+            int result = ex.processCommand("v/ERROR/d", 1);
+            assertTrue(result >= 0, "inverse global delete should succeed");
+            assertEquals("ERROR null pointer", ex.at(1).toString());
+            assertEquals("ERROR out of memory", ex.at(2).toString());
+            assertEquals(3, ex.finish()); // 2 ERROR lines + sentinel
+
+            // Copy line 1 after line 2 (duplicate for reporting)
+            result = ex.processCommand("1t2", 1);
+            assertTrue(result >= 0);
+            assertEquals("ERROR null pointer", ex.at(1).toString());
+            assertEquals("ERROR out of memory", ex.at(2).toString());
+            assertEquals("ERROR null pointer", ex.at(3).toString());
+
+            ex.disposeFvc();
+            deleteTestFiles(fname);
+        } finally {
+            EventQueue.biglock2.unlock();
+        }
+    }
+
     // --- Helpers ---
 
     private static String testPath(String name) {
