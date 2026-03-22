@@ -265,8 +265,11 @@ final class KeyMap {
       dirMap.bindEditKey('O', "diredit_create", null);
       register(dirMap);
 
-      // Shell overlay: extensibility point for shell-specific bindings
+      // Shell overlay: shell-specific bindings when viewing a Vt100 buffer
       KeyMap shellMap = createOverlay("shell", normalMap);
+      shellMap.bindEditKey('i', "vt", null);           // enter passthrough
+      shellMap.bindEditAction(JeyEvent.VK_INSERT,
+         "vt", null, 0);                               // Insert key
       register(shellMap);
    }
 
