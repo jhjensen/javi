@@ -860,12 +860,6 @@ final class OldView extends AwtView {
             Position end = mousepos(event);
             Position start = shellDragStart;
             shellDragStart = null;
-            // Clear visual mark by passing cursor pos — when
-            // evPos matches (fileX,fileY), updateTempMarkPos
-            // invokes clearMark internally.
-            FvContext fvc = FvContext.getCurrFvc();
-            updateTempMarkPos(new Position(
-               fvc.insertx(), fvc.inserty(), "", ""));
             if (start.y == end.y && start.x == end.x)
                return;
             javi.TextEdit<?> buf = gettext();

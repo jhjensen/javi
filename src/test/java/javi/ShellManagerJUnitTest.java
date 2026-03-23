@@ -303,5 +303,64 @@ class ShellManagerJUnitTest {
          EventQueue.biglock2.unlock();
       }
    }
+
+   @Test
+   @DisplayName("extractBufferText: empty line returns empty")
+   void extractEmptyLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("\n");
+         Position start = new Position(0, 1, "", "");
+         Position end = new Position(0, 1, "", "");
+         assertEquals("",
+            ShellManager.extractBufferText(buf, start, end));
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   @DisplayName("extractBufferText: multi-line end beyond last line")
+   void extractBeyondLastLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         TextEdit<String> buf = makeBuffer("abc\ndef\n");
+         Position start = new Position(0, 1, "", "");
+         Position end = new Position(3, 99, "", "");
+         String text = ShellManager.extractBufferText(
+            buf, start, end);
+         assertTrue(text.contains("abc"),
+            "should contain first line, got: " + text);
+         assertTrue(text.contains("def"),
+            "should contain second line, got: " + text);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ================================================================
+   // Clipboard round-trip (skipped in headless environments)
+   // ================================================================
+
+   @Test
+   @DisplayName("clipboard copy/read round-trip")
+   void clipboardRoundTrip() throws Exception {
+      if (java.awt.GraphicsEnvironment.isHeadless()) {
+         return; // skip in headless CI
+      }
+      String testText = "javi-clipboard-test-" + System.nanoTime();
+      java.awt.datatransfer.Clipboard clip =
+         java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
+      clip.setContents(
+         new java.awt.datatransfer.StringSelection(testText),
+         null);
+      java.awt.datatransfer.Transferable tr = clip.getContents(null);
+      assertNotNull(tr);
+      assertTrue(tr.isDataFlavorSupported(
+         java.awt.datatransfer.DataFlavor.stringFlavor));
+      String result = (String) tr.getTransferData(
+         java.awt.datatransfer.DataFlavor.stringFlavor);
+      assertEquals(testText, result);
+   }
 }
 

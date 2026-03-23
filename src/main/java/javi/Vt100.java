@@ -463,6 +463,13 @@ class Vt100 extends TextEdit<String> {
                   writer.flush();
                }
             } else {
+               // Cmd+C (macOS) clipboard copy of selection
+               if (('c' == ch || 'C' == ch)
+                     && (kev.getModifiers()
+                        & JeyEvent.META_MASK) != 0) {
+                  copySelection(fvc);
+                  continue;
+               }
                // Cmd+V (macOS) / Ctrl+V clipboard paste
                if (('v' == ch || 'V' == ch)
                      && (kev.getModifiers()
@@ -482,6 +489,40 @@ class Vt100 extends TextEdit<String> {
       } catch (IOException e) {
          trace("caught IOException " + e);
          return;
+      }
+   }
+
+   /**
+    * Copies the current visual selection (mark) to the system
+    * clipboard. Called when Cmd+C is pressed in a shell session.
+    *
+    * @param fvc the current file-view context
+    */
+   private void copySelection(FvContext fvc) {
+      EventQueue.biglock2.lock();
+      try {
+         MovePos mark = fvc.vi.getMark();
+         if (null == mark)
+            return;
+         int cx = fvc.vi.getfileX();
+         int cy = fvc.vi.getfileY();
+         Position start = new Position(mark.x, mark.y, "", "");
+         Position end = new Position(cx, cy, "", "");
+         String text = ShellManager.extractBufferText(
+            this, start, end);
+         if (text.isEmpty())
+            return;
+         java.awt.datatransfer.Clipboard clip =
+            java.awt.Toolkit.getDefaultToolkit()
+               .getSystemClipboard();
+         clip.setContents(
+            new java.awt.datatransfer.StringSelection(text),
+            null);
+         trace("Cmd+C copied: " + text.length() + " chars");
+      } catch (Exception e) {
+         trace("copySelection failed: " + e);
+      } finally {
+         EventQueue.biglock2.unlock();
       }
    }
 
