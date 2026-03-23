@@ -23,6 +23,7 @@ public abstract class InsertBuffer extends View.Inserter {
    private int currline;
    private Object original;
    private boolean singleline;
+   private int promptBoundary;
    private FvContext myfvc;
 
    static final boolean[] ff = {false, false};
@@ -196,9 +197,9 @@ public abstract class InsertBuffer extends View.Inserter {
                break;
             case BACKSPACE:
                if (0 == buffer.length()) {
-                  // B10: Prevent deleting the prompt character in command line mode
-                  if (singleline && fvc.insertx() <= 1) {
-                     // At or before prompt position, don't delete
+                  // Prevent deleting the prompt in command line mode
+                  if (singleline
+                        && fvc.insertx() <= promptBoundary) {
                      break;
                   }
                   fvc.cursorx(-1);
@@ -209,6 +210,10 @@ public abstract class InsertBuffer extends View.Inserter {
                }
                break;
             case DELETE:
+               if (singleline
+                     && fvc.insertx() < promptBoundary) {
+                  break;
+               }
                fvc.deleteChars('0', false, true, 1);
                break;
             case COMPLETE:
@@ -340,6 +345,7 @@ public abstract class InsertBuffer extends View.Inserter {
                dotbuffer = "";
 
             original =  fvc.at();
+            promptBoundary = singleline ? fvc.insertx() : 0;
             KeyGroup activekeys =  singleline ? commandikeys : ikeys;
             while  (true) {
                JeyEvent ke = EventQueue.nextEvent(viewer);
