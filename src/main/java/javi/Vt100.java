@@ -78,6 +78,9 @@ class Vt100 extends TextEdit<String> {
    /** Parser for VT100 escape sequences. */
    private final Vt100Parser parser;
 
+   /** The ECScreen instance (kept for attribute recording). */
+   private final ECScreen ecscreen;
+
    /** Mouse tracking mode: 0=off, 1000=normal, 1002=button, 1003=any. */
    private volatile int mouseTrackingMode;
 
@@ -134,7 +137,8 @@ class Vt100 extends TextEdit<String> {
          IoConverter<String> ioc, Charset charsetToUse) {
       super(ioc, ioc.prop);
       this.charset = charsetToUse;
-      parser = new Vt100Parser(new ECScreen(), istr, charset);
+      this.ecscreen = new ECScreen();
+      parser = new Vt100Parser(ecscreen, istr, charset);
       writer = new OutputStreamWriter(ostri, charset);
       trace("Vt100: initialized with charset " + charset.name());
    }
@@ -146,6 +150,18 @@ class Vt100 extends TextEdit<String> {
     */
    public Charset getCharset() {
       return charset;
+   }
+
+   /**
+    * Returns the per-character attribute grid for this terminal.
+    *
+    * <p>Used by the rendering layer to query attributes for each
+    * cell on the visible screen.</p>
+    *
+    * @return the screen attribute grid (never null)
+    */
+   public ScreenAttributes getScreenAttributes() {
+      return ecscreen.screenAttrs;
    }
 
    public final void startHandle(FvContext fvc) {
@@ -549,12 +565,28 @@ class Vt100 extends TextEdit<String> {
 
    private final class ECScreen extends VScreen {
       private MovePos savecursor = new MovePos(0, 1);
-      // SGR attribute state (tracked but not yet rendered per-character)
+      // SGR attribute state
       private boolean attrBold;
       private boolean attrUnderline;
       private boolean attrReverse;
       private int attrFgColor = -1;
       private int attrBgColor = -1;
+
+      /** Packed attribute computed from the current SGR state. */
+      private int currentAttr = CellAttr.DEFAULT;
+
+      /** Per-character attribute grid for the terminal screen. */
+      final ScreenAttributes screenAttrs = new ScreenAttributes();
+
+      /** Saved attribute grid for the alternate screen buffer. */
+      private ScreenAttributes savedScreenAttrs;
+
+      /** Recomputes {@link #currentAttr} from the SGR fields. */
+      private void refreshCurrentAttr() {
+         currentAttr = CellAttr.pack(
+            attrBold, attrUnderline, attrReverse,
+            attrFgColor, attrBgColor);
+      }
 
       void setGraphicRendition(int[] params, StringBuilder sb) {
          insertString(sb);
@@ -586,6 +618,7 @@ class Vt100 extends TextEdit<String> {
                   break;
             }
          }
+         refreshCurrentAttr();
       }
 
       void incX(int amount, StringBuilder sb) {
@@ -633,7 +666,7 @@ class Vt100 extends TextEdit<String> {
             start = 1;
          for (int ii = start; ii < end; ii++)
             changeElementAt("", ii);
-
+         screenAttrs.eraseScreen(start, end);
          //???vtcursor.x=0;
          //???vtcursor.y=ev.readIn()-1;
       }
@@ -643,12 +676,14 @@ class Vt100 extends TextEdit<String> {
          if (vtcursor.y < readIn()) {
             int lend = at(vtcursor.y).length();
             deletetext(false, vtcursor.x, vtcursor.y, lend, vtcursor.y);
+            screenAttrs.eraseToEnd(vtcursor.y, vtcursor.x);
          }
       }
 
       void eraseLine(StringBuilder sb) {
          insertString(sb);
          changeElementAt("", vtcursor.y);
+         screenAttrs.eraseLine(vtcursor.y);
       }
 
       void eraseChars(int count, StringBuilder sb) {
@@ -661,6 +696,7 @@ class Vt100 extends TextEdit<String> {
                + delto + " strlen " + strlen);
          }
          deletetext(false, vtcursor.x, vtcursor.y, delto, vtcursor.y);
+         screenAttrs.eraseToEnd(vtcursor.y, vtcursor.x);
       }
 
       void insertLines(int count, StringBuilder sb) {
@@ -709,7 +745,7 @@ class Vt100 extends TextEdit<String> {
       void switchAlternateScreen(boolean enable, StringBuilder sb) {
          insertString(sb);
          if (enable && !inAlternateScreen) {
-            // Save main screen content
+            // Save main screen content and attributes
             int end = readIn();
             int start = end - rows - 1;
             if (start < 1)
@@ -718,6 +754,7 @@ class Vt100 extends TextEdit<String> {
             for (int ii = start; ii < end; ii++)
                savedScreen.add(at(ii).toString());
             savedAltCursor = new MovePos(vtcursor.x, vtcursor.y);
+            savedScreenAttrs = screenAttrs;
             // Clear screen for alternate buffer
             for (int ii = start; ii < end; ii++)
                changeElementAt("", ii);
@@ -726,7 +763,7 @@ class Vt100 extends TextEdit<String> {
             inAlternateScreen = true;
             trace("switched to alternate screen buffer");
          } else if (!enable && inAlternateScreen) {
-            // Restore main screen content
+            // Restore main screen content and attributes
             if (savedScreen != null) {
                int end = readIn();
                int start = end - rows - 1;
@@ -737,6 +774,11 @@ class Vt100 extends TextEdit<String> {
                      ii++)
                   changeElementAt(savedScreen.get(ii), start + ii);
                savedScreen = null;
+            }
+            if (savedScreenAttrs != null) {
+               screenAttrs.clear();
+               // screenAttrs is final; copy data back in future
+               savedScreenAttrs = null;
             }
             if (savedAltCursor != null) {
                vtcursor.x = savedAltCursor.x;
@@ -815,6 +857,17 @@ class Vt100 extends TextEdit<String> {
       vtcursor.x = val - 1;
    }
 
+   /**
+    * Records the current SGR attribute for a range of cells
+    * starting at (line, col) for {@code len} characters.
+    */
+   private void recordAttrs(int line, int col, int len) {
+      if (len > 0) {
+         ecscreen.screenAttrs.fillAttr(line, col, col + len,
+            ecscreen.currentAttr);
+      }
+   }
+
    private void insertString(StringBuilder sb) {
       //trace("insertString " + this);
       if (vtcursor.y > readIn() - 1) {
@@ -863,6 +916,9 @@ class Vt100 extends TextEdit<String> {
 
                inserttext(text.substring(sbused),
                   vtcursor.x, vtcursor.y).posMove(vtcursor);
+               recordAttrs(vtcursor.y,
+                  vtcursor.x - (text.length() - sbused),
+                  text.length() - sbused);
                sbused = text.length();
 
             } else if (nindex == sbused) {
@@ -886,6 +942,8 @@ class Vt100 extends TextEdit<String> {
                      vtcursor.y);
                String newinfo = text.substring(sbused, nindex);
                inserttext(newinfo, vtcursor.x, vtcursor.y).posMove(vtcursor);
+               recordAttrs(vtcursor.y, vtcursor.x - newinfo.length(),
+                  newinfo.length());
                vtcursor.y++;
                vtcursor.x = 0; //???
                sbused = nindex + 1;
@@ -900,7 +958,10 @@ class Vt100 extends TextEdit<String> {
          String itext = text.substring(sbused);
          //trace("sbprocess insert at end text:"  + itext  );
          //vtcursor = ((extext)ev).inserttext (itext,currlinelen,ev.readIn()-1);
+         int startCol = vtcursor.x;
+         int startLine = vtcursor.y;
          inserttext(itext, vtcursor.x, vtcursor.y).posMove(vtcursor);
+         recordAttrs(startLine, startCol, itext.length());
       }
       if (setxflag)
          setXmy(1, sb);
