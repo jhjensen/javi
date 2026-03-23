@@ -273,16 +273,35 @@ public final class PosListList extends TextList<Position> {
 
             case GOTO_DIR_LIST:
                // F3: Open directory editor for current file's directory
+               // with cursor positioned on the current file.
                String dirPath = ".";
-               FileDescriptor fd = fvc.edvec.fdes();
-               if (fd instanceof FileDescriptor.LocalFile) {
-                  File parentDir = ((FileDescriptor.LocalFile) fd).fh
-                     .getParentFile();
-                  if (null != parentDir && parentDir.isDirectory()) {
-                     dirPath = parentDir.getPath();
+               String targetFile = null;
+               if (fvc.edvec instanceof FileList) {
+                  // In FileList: use the file under cursor
+                  Object item = fvc.at();
+                  if (item instanceof EditContainer) {
+                     FileDescriptor ifd = ((EditContainer) item).fdes();
+                     if (ifd instanceof FileDescriptor.LocalFile) {
+                        File f = ((FileDescriptor.LocalFile) ifd).fh;
+                        File p = f.getParentFile();
+                        if (null != p && p.isDirectory()) {
+                           dirPath = p.getPath();
+                        }
+                        targetFile = f.getName();
+                     }
+                  }
+               } else {
+                  FileDescriptor fd = fvc.edvec.fdes();
+                  if (fd instanceof FileDescriptor.LocalFile) {
+                     File f = ((FileDescriptor.LocalFile) fd).fh;
+                     File parentDir = f.getParentFile();
+                     if (null != parentDir && parentDir.isDirectory()) {
+                        dirPath = parentDir.getPath();
+                     }
+                     targetFile = f.getName();
                   }
                }
-               return DirEdit.openDirectory(dirPath, fvc.vi);
+               return DirEdit.openDirectory(dirPath, fvc.vi, targetFile);
             case GOTO_ROOT:
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;

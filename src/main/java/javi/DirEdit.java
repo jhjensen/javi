@@ -13,11 +13,13 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -184,6 +186,15 @@ public final class DirEdit extends TextEdit<String> {
             Rgroup.doCommand("diredit_shell", null, 0, 0,
                fvc, false);
             return true;
+         case 'r':
+            promptRename(fvc);
+            return true;
+         case 'c':
+            promptCopy(fvc);
+            return true;
+         case 'p':
+            togglePermission(fvc);
+            return true;
          default:
             break;
       }
@@ -206,7 +217,7 @@ public final class DirEdit extends TextEdit<String> {
          case 'm': case '\'':
          case '/': case '?':
          case ':': case 'z': case 'Z':
-         case 'p': case 'P':
+         case 'P':
          case ' ':
          case 27: // Escape
             return false;
@@ -227,10 +238,9 @@ public final class DirEdit extends TextEdit<String> {
       // (i, a, c, x, p, r, ~, etc.)
       switch (ch) {
          case 'i': case 'I': case 'a': case 'A':
-         case 'c': case 'C':
-         case 'x': case 'X':
-         case 'p': case 'P':
-         case 'r':
+         case 'C':
+         case 'X':
+         case 'P':
          case 'y': case 'Y':
          case 'J':
          case '~':
@@ -253,12 +263,35 @@ public final class DirEdit extends TextEdit<String> {
     */
    public static FvContext openDirectory(String path, View vi) throws
          IOException, InputException {
+      return openDirectory(path, vi, null);
+   }
+
+   /**
+    * Opens a directory browser and optionally positions the cursor
+    * on a specific file.
+    *
+    * @param path the directory path to open
+    * @param vi the view to display in
+    * @param targetFile filename to position cursor on, or null
+    * @return the FvContext for the directory browser
+    * @throws IOException if the directory cannot be accessed
+    * @throws InputException if the path is invalid
+    */
+   public static FvContext openDirectory(String path, View vi,
+         String targetFile) throws IOException, InputException {
       FileDescriptor.LocalDir dir = FileDescriptor.LocalDir.make(path);
       if (!dir.exists() || !dir.isDirectory()) {
          throw new InputException("Not a directory: " + path);
       }
       DirEdit dirEdit = new DirEdit(dir);
-      return FvContext.connectFv(dirEdit, vi);
+      FvContext fvc = FvContext.connectFv(dirEdit, vi);
+      if (null != targetFile) {
+         int line = dirEdit.findLineForFilename(targetFile);
+         if (line > 0) {
+            fvc.cursoryabs(line);
+         }
+      }
+      return fvc;
    }
 
    /**
@@ -368,8 +401,8 @@ public final class DirEdit extends TextEdit<String> {
          + "  [R] refresh  [q] quit");
       lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
          + "  [S] search path  [!] shell");
-      lines.add("  :diredit_rename  :diredit_copy");
-      lines.add("  [yy] yank filename  [Y] yank full path");
+      lines.add("  [r] rename  [c] copy  [p] permissions"
+         + "  [yy] yank name  [Y] yank path");
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -615,6 +648,36 @@ public final class DirEdit extends TextEdit<String> {
    }
 
    /**
+    * Finds the line number displaying the given filename.
+    * Matches against the bare name (without trailing slash for dirs).
+    *
+    * @param targetFile the filename to find
+    * @return the 1-based line number, or -1 if not found
+    */
+   int findLineForFilename(String targetFile) {
+      if (null == targetFile) {
+         return -1;
+      }
+      String target = targetFile.endsWith("/")
+         ? targetFile.substring(0, targetFile.length() - 1)
+         : targetFile;
+      int size = readIn();
+      for (int i = 1; i < size; i++) {
+         String fn = getFilename(i);
+         if (null == fn) {
+            continue;
+         }
+         String bare = fn.endsWith("/")
+            ? fn.substring(0, fn.length() - 1)
+            : fn;
+         if (bare.equals(target)) {
+            return i;
+         }
+      }
+      return -1;
+   }
+
+   /**
     * Yanks the full path of the file under the cursor to the yank
     * register and system clipboard ({@code Y} key in DirEdit).
     *
@@ -784,6 +847,133 @@ public final class DirEdit extends TextEdit<String> {
          createDirectory(fvc, name.substring(0, name.length() - 1));
       } else {
          createFile(fvc, name);
+      }
+   }
+
+   /**
+    * Prompts for a new name and renames the file under the cursor.
+    * Bound to 'r' key in the directory browser.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if the cursor is not on a file entry
+    * @throws IOException if I/O fails
+    */
+   void promptRename(FvContext fvc) throws InputException, IOException {
+      String filename = getFilename(fvc.inserty());
+      if (null == filename || "../".equals(filename)) {
+         return;
+      }
+      String base = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      String prompt = "Rename " + base + " to: ";
+      String input = InsertBuffer.getcomline(prompt);
+      String newName = input.substring(prompt.length()).trim();
+      if (!newName.isEmpty()) {
+         renameSelected(fvc, newName);
+      }
+   }
+
+   /**
+    * Prompts for a destination and copies the file under the cursor.
+    * Bound to 'c' key in the directory browser.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if the cursor is not on a file entry
+    * @throws IOException if I/O fails
+    */
+   void promptCopy(FvContext fvc) throws InputException, IOException {
+      String filename = getFilename(fvc.inserty());
+      if (null == filename || "../".equals(filename)) {
+         return;
+      }
+      String base = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      String prompt = "Copy " + base + " to: ";
+      String input = InsertBuffer.getcomline(prompt);
+      String dest = input.substring(prompt.length()).trim();
+      if (!dest.isEmpty()) {
+         copySelected(fvc, dest);
+      }
+   }
+
+   /**
+    * Cycles through permission toggles for the file under the cursor.
+    * Shows current permissions and lets user select which to toggle.
+    * Bound to 'p' key in the directory browser.
+    *
+    * @param fvc the current FvContext
+    * @throws InputException if the cursor is not on a file entry
+    */
+   void togglePermission(FvContext fvc) throws InputException {
+      String filename = getFilename(fvc.inserty());
+      if (null == filename || "../".equals(filename)) {
+         return;
+      }
+      String base = filename.endsWith("/")
+         ? filename.substring(0, filename.length() - 1)
+         : filename;
+      File target = new File(currentDir.fh, base);
+      if (!target.exists()) {
+         throw new InputException("File not found: " + base);
+      }
+      Path path = target.toPath();
+      try {
+         Set<PosixFilePermission> perms = Files.getPosixFilePermissions(path);
+         String current = permString(perms);
+         String prompt = base + " [" + current + "] toggle (r/w/x/R/W/X): ";
+         String input = InsertBuffer.getcomline(prompt);
+         String choice = input.substring(prompt.length()).trim();
+         if (choice.isEmpty()) {
+            return;
+         }
+         applyPermissionToggle(perms, choice.charAt(0));
+         Files.setPosixFilePermissions(path, perms);
+         populateDirectory();
+         String updated = permString(
+            Files.getPosixFilePermissions(path));
+         UI.reportMessage(base + ": " + updated);
+      } catch (UnsupportedOperationException e) {
+         throw new InputException("Permissions not supported");
+      } catch (IOException e) {
+         throw new InputException("Cannot change permissions: "
+            + e.getMessage());
+      }
+   }
+
+   /** Permission bits in standard rwxrwxrwx order. */
+   private static final PosixFilePermission[] PERM_ORDER = {
+      PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+      PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_READ,
+      PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+      PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE,
+      PosixFilePermission.OTHERS_EXECUTE,
+   };
+   private static final String PERM_CHARS = "rwxrwxrwx";
+
+   /** Builds a Unix-style permission string (e.g. "rwxr-xr--"). */
+   private static String permString(Set<PosixFilePermission> perms) {
+      char[] buf = new char[9];
+      for (int i = 0; i < 9; i++)
+         buf[i] = perms.contains(PERM_ORDER[i]) ? PERM_CHARS.charAt(i) : '-';
+      return new String(buf);
+   }
+
+   /** Toggle key mapping: r/w/x = owner, R/W/X = group, +/- = all exec. */
+   private static void applyPermissionToggle(
+         Set<PosixFilePermission> perms, char ch) {
+      String keys = "rwxRWX";
+      int idx = keys.indexOf(ch);
+      if (idx >= 0) {
+         PosixFilePermission p = PERM_ORDER[idx];
+         if (perms.contains(p)) perms.remove(p); else perms.add(p);
+      } else if (ch == '+') {
+         perms.add(PERM_ORDER[2]); perms.add(PERM_ORDER[5]);
+         perms.add(PERM_ORDER[8]);
+      } else if (ch == '-') {
+         perms.remove(PERM_ORDER[2]); perms.remove(PERM_ORDER[5]);
+         perms.remove(PERM_ORDER[8]);
       }
    }
 

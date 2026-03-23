@@ -416,8 +416,8 @@ class DirEditJUnitTest {
       boolean foundOps = false;
       for (int i = 1; i < dirEdit.readIn(); i++) {
          String line = dirEdit.at(i).toString();
-         if (line.contains("diredit_rename")
-               && line.contains("diredit_copy")) {
+         if (line.contains("[r] rename")
+               && line.contains("[c] copy")) {
             foundOps = true;
             break;
          }
@@ -940,5 +940,46 @@ class DirEditJUnitTest {
       // DirEdit.trashSupported() should delegate to UI.trashSupported()
       assertEquals(UI.trashSupported(), DirEdit.trashSupported(),
          "DirEdit.trashSupported should match UI.trashSupported");
+   }
+
+   @Test
+   void findLineForFilenameFindsExistingFile() throws Exception {
+      File subDir = new File(tempDir, "findline_test");
+      subDir.mkdir();
+      createTestFile(subDir, "alpha.txt");
+      createTestFile(subDir, "beta.txt");
+      createTestFile(subDir, "gamma.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      int line = dirEdit.findLineForFilename("beta.txt");
+      assertTrue(line > 0, "Should find beta.txt in listing");
+      String fn = dirEdit.getFilename(line);
+      assertEquals("beta.txt", fn);
+   }
+
+   @Test
+   void findLineForFilenameMissingReturnsNegative() throws Exception {
+      File subDir = new File(tempDir, "findline_miss");
+      subDir.mkdir();
+      createTestFile(subDir, "only.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      int line = dirEdit.findLineForFilename("nonexistent.txt");
+      assertEquals(-1, line);
+   }
+
+   @Test
+   void findLineForFilenameHandlesDirectories() throws Exception {
+      File subDir = new File(tempDir, "findline_dir");
+      subDir.mkdir();
+      new File(subDir, "mydir").mkdir();
+      createTestFile(subDir, "file.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      // Search without trailing slash
+      int line = dirEdit.findLineForFilename("mydir");
+      assertTrue(line > 0, "Should find mydir/ in listing");
+      String fn = dirEdit.getFilename(line);
+      assertEquals("mydir/", fn);
    }
 }
