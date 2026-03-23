@@ -316,6 +316,7 @@ public final class MiscCommands extends Rgroup {
       @Override
       void dorun() {
          for (ShellSession s : sessions) {
+            s.invalidateLabelCache();
             s.updateLabel();
             String comment = String.format("Shell %d: %s [%s]%s",
                s.getId(), s.getName(),

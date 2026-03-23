@@ -575,6 +575,7 @@ public final class FvContext<OType> implements Serializable {
       ShellManager mgr = ShellManager.getInstance();
       ShellSession session = mgr.findByBuffer(currfvc.edvec);
       if (null != session) {
+         session.updateLabel();
          int total = mgr.getSessionCount();
          sb.append(" [shell ");
          sb.append(session.getId());

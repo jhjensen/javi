@@ -514,8 +514,10 @@ public final class ShellManager {
       }
 
       // Refresh labels to show current foreground process
-      for (ShellSession s : sessions)
+      for (ShellSession s : sessions) {
+         s.invalidateLabelCache();
          s.updateLabel();
+      }
 
       StringBuilder sb = new StringBuilder();
       sb.append("Shell Sessions:\n");

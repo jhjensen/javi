@@ -362,6 +362,25 @@ class ShellManagerJUnitTest {
          "should be null/empty for non-existent PID, got: " + name);
    }
 
+   @Test
+   @DisplayName("LABEL_UPDATE_INTERVAL_MS is positive")
+   void labelUpdateIntervalIsPositive() {
+      assertTrue(ShellSession.LABEL_UPDATE_INTERVAL_MS > 0,
+         "label update interval must be positive");
+   }
+
+   @Test
+   @DisplayName("getLeafProcessName strips path prefix from comm output")
+   void leafProcessStripsPath() {
+      // getLeafProcessName for our own JVM should return a bare name
+      // (no '/' characters) because it strips the path prefix
+      long myPid = ProcessHandle.current().pid();
+      String name = ShellSession.getLeafProcessName(myPid);
+      assertNotNull(name);
+      assertFalse(name.contains("/"),
+         "name should not contain path separators: " + name);
+   }
+
    // ================================================================
    // Clipboard round-trip (skipped in headless environments)
    // ================================================================

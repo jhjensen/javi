@@ -61,6 +61,12 @@ public final class ShellSession {
    /** Per-session environment variables. */
    private final Map<String, String> envVars = new LinkedHashMap<>();
 
+   /** Minimum interval between label updates in milliseconds. */
+   static final long LABEL_UPDATE_INTERVAL_MS = 3000;
+
+   /** Timestamp of last label update (for cache). */
+   private long lastLabelUpdate;
+
    /**
     * Creates a new shell session.
     *
@@ -421,10 +427,19 @@ public final class ShellSession {
     * the leaf process, so that when the user runs e.g. {@code ssh rdesk}
     * inside the shell, the label shows "ssh" rather than "script" or
     * "bash".</p>
+    *
+    * <p>Because this method spawns external processes ({@code pgrep},
+    * {@code ps}), results are cached for
+    * {@link #LABEL_UPDATE_INTERVAL_MS} milliseconds.  Calling this
+    * method from the status-bar repaint path is therefore safe.</p>
     */
    void updateLabel() {
       if (null == process || !process.isAlive())
          return;
+      long now = System.currentTimeMillis();
+      if (now - lastLabelUpdate < LABEL_UPDATE_INTERVAL_MS)
+         return;
+      lastLabelUpdate = now;
       try {
          String cmd = getLeafProcessName(process.pid());
          if (null != cmd && !cmd.isEmpty()) {
@@ -442,6 +457,14 @@ public final class ShellSession {
       } catch (Exception e) {
          trace("ShellSession " + id + ": updateLabel failed: " + e);
       }
+   }
+
+   /**
+    * Forces the next {@link #updateLabel()} call to re-query the
+    * process tree, bypassing the time-based cache.
+    */
+   void invalidateLabelCache() {
+      lastLabelUpdate = 0;
    }
 
    /**
