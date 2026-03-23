@@ -417,34 +417,83 @@ public final class ShellSession {
    /**
     * Updates the session name to reflect the foreground process.
     *
-    * <p>Uses {@code ps -o comm= -p PID} on macOS/Linux to detect
-    * what command the child process is currently running.</p>
+    * <p>Walks the process tree from the shell's direct child down to
+    * the leaf process, so that when the user runs e.g. {@code ssh rdesk}
+    * inside the shell, the label shows "ssh" rather than "script" or
+    * "bash".</p>
     */
    void updateLabel() {
       if (null == process || !process.isAlive())
          return;
       try {
-         long pid = process.pid();
-         ProcessBuilder pb = new ProcessBuilder(
-            "ps", "-o", "comm=", "-p", Long.toString(pid));
-         pb.redirectErrorStream(true);
-         Process ps = pb.start();
-         String output = new String(
-            ps.getInputStream().readAllBytes(), charset).trim();
-         if (!ps.waitFor(2, java.util.concurrent.TimeUnit.SECONDS))
-            return;
-         if (!output.isEmpty()) {
-            // Extract basename from path
-            int slash = output.lastIndexOf('/');
-            String cmd = slash >= 0 ? output.substring(slash + 1) : output;
-            if (!cmd.isEmpty() && !cmd.equals(name)) {
+         String cmd = getLeafProcessName(process.pid());
+         if (null != cmd && !cmd.isEmpty()) {
+            String base = (null == host) ? "local" : host;
+            String newName = cmd.equals("bash") || cmd.equals("zsh")
+               || cmd.equals("sh") || cmd.equals("script")
+               ? base
+               : base + " (" + cmd + ")";
+            if (!newName.equals(name)) {
                trace("ShellSession " + id + ": label update '"
-                  + name + "' -> '" + cmd + "'");
-               name = cmd;
+                  + name + "' -> '" + newName + "'");
+               name = newName;
             }
          }
       } catch (Exception e) {
          trace("ShellSession " + id + ": updateLabel failed: " + e);
       }
+   }
+
+   /**
+    * Finds the leaf (deepest descendant) process name starting from
+    * the given PID by repeatedly querying for child processes.
+    *
+    * @param startPid the PID to start from
+    * @return the leaf process command name, or null on failure
+    */
+   static String getLeafProcessName(long startPid) {
+      long pid = startPid;
+      // Walk down up to 10 levels to avoid infinite loops
+      for (int depth = 0; depth < 10; depth++) {
+         try {
+            // Find child process(es) of current pid
+            ProcessBuilder childPb = new ProcessBuilder(
+               "pgrep", "-P", Long.toString(pid));
+            childPb.redirectErrorStream(true);
+            Process childPs = childPb.start();
+            String childOut = new String(
+               childPs.getInputStream().readAllBytes(),
+               java.nio.charset.StandardCharsets.UTF_8).trim();
+            if (!childPs.waitFor(2,
+                  java.util.concurrent.TimeUnit.SECONDS))
+               break;
+            if (childOut.isEmpty())
+               break; // pid is the leaf
+            // Take the first child PID (foreground process)
+            String firstChild = childOut.split("\\s+")[0];
+            pid = Long.parseLong(firstChild);
+         } catch (Exception e) {
+            break;
+         }
+      }
+      // Now get the command name of the leaf pid
+      try {
+         ProcessBuilder pb = new ProcessBuilder(
+            "ps", "-o", "comm=", "-p", Long.toString(pid));
+         pb.redirectErrorStream(true);
+         Process ps = pb.start();
+         String output = new String(
+            ps.getInputStream().readAllBytes(),
+            java.nio.charset.StandardCharsets.UTF_8).trim();
+         if (!ps.waitFor(2, java.util.concurrent.TimeUnit.SECONDS))
+            return null;
+         if (!output.isEmpty()) {
+            int slash = output.lastIndexOf('/');
+            return slash >= 0 ? output.substring(slash + 1) : output;
+         }
+      } catch (Exception e) {
+         // fall through
+      }
+      return null;
    }
 }

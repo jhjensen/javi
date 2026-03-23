@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,11 +25,12 @@ class PosListListJUnitTest {
    @BeforeAll
    static void initOnce() throws Exception {
       TestInit.initCommands();
-      // Force PosListList.Cmd class loading under biglock2, since its
-      // static initializer creates TextEdit instances that assert lock.
+      // Force PosListList.Cmd class loading and construction under
+      // biglock2, since its static initializer and constructor
+      // create TextEdit instances and register commands.
       EventQueue.biglock2.lock();
       try {
-         Class.forName("javi.PosListList$Cmd");
+         new PosListList.Cmd();
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -245,7 +247,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("enum has expected number of values")
       void enumCount() {
-         assertEquals(16, PosListList.Cmd.PCmd.values().length);
+         assertEquals(18, PosListList.Cmd.PCmd.values().length);
       }
 
       @Test
@@ -261,9 +263,22 @@ class PosListListJUnitTest {
       }
 
       @Test
-      @DisplayName("GOTO_DIR_LIST_DEFAULT is last at ordinal 15")
+      @DisplayName("GOTO_DIR_LIST_DEFAULT is at ordinal 15")
       void gotoDirListDefaultOrdinal() {
-         assertEquals(15, PosListList.Cmd.PCmd.GOTO_DIR_LIST_DEFAULT.ordinal());
+         assertEquals(15,
+            PosListList.Cmd.PCmd.GOTO_DIR_LIST_DEFAULT.ordinal());
+      }
+
+      @Test
+      @DisplayName("CN is at ordinal 16")
+      void cnOrdinal() {
+         assertEquals(16, PosListList.Cmd.PCmd.CN.ordinal());
+      }
+
+      @Test
+      @DisplayName("CP is at ordinal 17")
+      void cpOrdinal() {
+         assertEquals(17, PosListList.Cmd.PCmd.CP.ordinal());
       }
 
       @Test
@@ -304,6 +319,29 @@ class PosListListJUnitTest {
             () -> PosListList.Cmd.myassert(false, "bad"));
          assertTrue(ex.getMessage().contains("ASSERTION FAILURE"));
          assertTrue(ex.getMessage().contains("bad"));
+      }
+   }
+
+   // ================================================================
+   // cn/cp command registration
+   // ================================================================
+
+   @Nested
+   @DisplayName("cn/cp commands")
+   class CnCpTests {
+
+      @Test
+      @DisplayName("cn is a registered command")
+      void cnRegistered() {
+         assertNotNull(Rgroup.bindingLookup("cn"),
+            ":cn should be a registered command");
+      }
+
+      @Test
+      @DisplayName("cp is a registered command")
+      void cpRegistered() {
+         assertNotNull(Rgroup.bindingLookup("cp"),
+            ":cp should be a registered command");
       }
    }
 

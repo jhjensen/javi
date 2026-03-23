@@ -339,6 +339,30 @@ class ShellManagerJUnitTest {
    }
 
    // ================================================================
+   // getLeafProcessName — process tree walking
+   // ================================================================
+
+   @Test
+   @DisplayName("getLeafProcessName returns name for current PID")
+   void leafProcessCurrentPid() {
+      long myPid = ProcessHandle.current().pid();
+      String name = ShellSession.getLeafProcessName(myPid);
+      // The current process is java — should return something
+      assertNotNull(name, "should resolve current PID");
+      assertFalse(name.isEmpty(), "name should not be empty");
+   }
+
+   @Test
+   @DisplayName("getLeafProcessName returns null for invalid PID")
+   void leafProcessInvalidPid() {
+      // Use a valid-sized PID that is unlikely to exist
+      String name = ShellSession.getLeafProcessName(99998L);
+      // Either null or empty is acceptable for a non-existent PID
+      assertTrue(null == name || name.isEmpty(),
+         "should be null/empty for non-existent PID, got: " + name);
+   }
+
+   // ================================================================
    // Clipboard round-trip (skipped in headless environments)
    // ================================================================
 

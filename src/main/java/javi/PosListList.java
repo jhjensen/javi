@@ -205,6 +205,8 @@ public final class PosListList extends TextList<Position> {
          GOTO_ROOT,           // 13: go to root
          NEXT_POS_WAIT,       // 14: next position (wait)
          GOTO_DIR_LIST_DEFAULT, // 15: go to default dir list
+         CN,                  // 16: :cn (cnext)
+         CP,                  // 17: :cp (cprev)
       }
 
       private static final PCmd[] CMDS = PCmd.values();
@@ -227,6 +229,8 @@ public final class PosListList extends TextList<Position> {
             "gotoroot",
             "nextposwait",
             "gotosearchpath",
+            "cn",
+            "cp",
          };
          register(rnames);
          flush();
@@ -311,6 +315,12 @@ public final class PosListList extends TextList<Position> {
             case GOTO_DIR_LIST_DEFAULT:
                DirManager.getInstance().showSearchPath();
                FvContext.connectFv(DirManager.getInstance(), fvc.vi);
+               return null;
+            case CN:
+               inst.gotoNextPos(fvc, new boolean[]{false}, false);
+               return null;
+            case CP:
+               inst.gotoNextPos(fvc, new boolean[]{true}, false);
                return null;
             default:
                throw new RuntimeException("vigroup:default");
