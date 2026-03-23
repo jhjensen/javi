@@ -905,4 +905,40 @@ class DirEditJUnitTest {
       assertTrue(fullPath.contains(subDir.getName()),
          "Full path should contain parent dir name");
    }
+
+   // --- Desktop abstraction tests (Bug 1) ---
+
+   @Test
+   void trashSupportedReturnsFalseInStreamInterface() {
+      // StreamInterface stubs always return false
+      assertFalse(UI.trashSupported(),
+         "StreamInterface should report trash as unsupported");
+   }
+
+   @Test
+   void moveToTrashReturnsFalseInStreamInterface() throws IOException {
+      File subDir = new File(tempDir, "trash_stub_test");
+      subDir.mkdir();
+      File target = createTestFile(subDir, "trashme.txt");
+      assertFalse(UI.moveToTrash(target),
+         "StreamInterface moveToTrash stub should return false");
+      assertTrue(target.exists(),
+         "File should still exist after stub moveToTrash");
+   }
+
+   @Test
+   void openFileDoesNotThrowInStreamInterface() throws IOException {
+      File subDir = new File(tempDir, "open_stub_test");
+      subDir.mkdir();
+      File target = createTestFile(subDir, "openme.txt");
+      // StreamInterface.iopenFile is a no-op — should not throw
+      UI.openFile(target);
+   }
+
+   @Test
+   void dirEditTrashSupportedDelegatesToUI() {
+      // DirEdit.trashSupported() should delegate to UI.trashSupported()
+      assertEquals(UI.trashSupported(), DirEdit.trashSupported(),
+         "DirEdit.trashSupported should match UI.trashSupported");
+   }
 }

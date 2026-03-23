@@ -1787,4 +1787,18 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       stpinst.getStopChoice(commandname);
       return diaflag;
    }
+
+   public void iopenFile(java.io.File file) throws java.io.IOException {
+      java.awt.Desktop.getDesktop().open(file);
+   }
+
+   public boolean itrashSupported() {
+      return java.awt.Desktop.isDesktopSupported()
+         && java.awt.Desktop.getDesktop()
+               .isSupported(java.awt.Desktop.Action.MOVE_TO_TRASH);
+   }
+
+   public boolean imoveToTrash(java.io.File file) {
+      return java.awt.Desktop.getDesktop().moveToTrash(file);
+   }
 }

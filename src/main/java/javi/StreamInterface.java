@@ -1,6 +1,7 @@
 package javi;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -223,5 +224,17 @@ public final class StreamInterface extends UI {
 
    public Buttons istopConverter(String commandname) {
       return Buttons.WAITPROC;
+   }
+
+   public void iopenFile(File file) throws IOException {
+      trace("StreamInterface: openFile not supported: " + file);
+   }
+
+   public boolean itrashSupported() {
+      return false;
+   }
+
+   public boolean imoveToTrash(File file) {
+      return false;
    }
 }

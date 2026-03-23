@@ -1,6 +1,7 @@
 package javi;
 
 //cycle MapEvent InsertBuffer?
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
@@ -140,6 +141,29 @@ public abstract class UI {
     * @return the user's chosen action
     */
    public abstract ReloadAction iconfirmReload(String filename, boolean isModified);
+
+   /**
+    * Open a file with the OS default application.
+    *
+    * @param file the file to open
+    * @throws IOException if the file cannot be opened
+    */
+   public abstract void iopenFile(File file) throws IOException;
+
+   /**
+    * Check whether the OS trash/recycle bin is available.
+    *
+    * @return true if moveToTrash is supported
+    */
+   public abstract boolean itrashSupported();
+
+   /**
+    * Move a file to the OS trash/recycle bin.
+    *
+    * @param file the file to trash
+    * @return true if successfully moved to trash
+    */
+   public abstract boolean imoveToTrash(File file);
 
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
@@ -378,5 +402,36 @@ public abstract class UI {
 
    static final void sizeChange() {
       instance.isizeChange();
+   }
+
+   /**
+    * Open a file with the OS default application.
+    *
+    * @param file the file to open
+    * @throws IOException if the file cannot be opened
+    */
+   public static final void openFile(File file) throws IOException {
+      instance.iopenFile(file);
+   }
+
+   /**
+    * Check whether the OS trash/recycle bin is available.
+    *
+    * @return true if moveToTrash is supported
+    */
+   public static boolean trashSupported() {
+      return null != instance && instance.itrashSupported();
+   }
+
+   /**
+    * Move a file to the OS trash/recycle bin.
+    *
+    * @param file the file to trash
+    * @return true if successfully moved to trash
+    */
+   public static boolean moveToTrash(File file) {
+      if (null != instance)
+         return instance.imoveToTrash(file);
+      return false;
    }
 }

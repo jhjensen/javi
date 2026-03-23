@@ -1,6 +1,5 @@
 package javi;
 
-import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -691,8 +690,8 @@ public final class DirEdit extends TextEdit<String> {
 
    /**
     * Opens the selected file with the OS default application.
-    * On macOS this runs the {@code open} command; on other platforms
-    * uses {@link Desktop#open}.
+    * Delegates to the {@link UI} abstraction so that non-GUI
+    * environments can provide a stub implementation.
     *
     * @param fvc the current FvContext
     * @throws InputException if no file is under the cursor or open fails
@@ -703,7 +702,7 @@ public final class DirEdit extends TextEdit<String> {
          throw new InputException("No file under cursor");
       }
       try {
-         Desktop.getDesktop().open(new File(path));
+         UI.openFile(new File(path));
       } catch (IOException e) {
          throw new InputException("Failed to open: " + e.getMessage());
       }
@@ -1114,11 +1113,10 @@ public final class DirEdit extends TextEdit<String> {
    /**
     * Checks whether the system Trash is available.
     *
-    * @return true if Desktop.moveToTrash is supported
+    * @return true if the OS trash/recycle bin is supported
     */
    static boolean trashSupported() {
-      return Desktop.isDesktopSupported()
-         && Desktop.getDesktop().isSupported(Desktop.Action.MOVE_TO_TRASH);
+      return UI.trashSupported();
    }
 
    /**
@@ -1142,7 +1140,7 @@ public final class DirEdit extends TextEdit<String> {
     */
    static boolean removeFile(File target) {
       if (trashSupported()) {
-         return Desktop.getDesktop().moveToTrash(target);
+         return UI.moveToTrash(target);
       }
       if (target.isDirectory()) {
          return deleteRecursively(target);
