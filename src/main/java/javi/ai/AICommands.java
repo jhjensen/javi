@@ -67,6 +67,8 @@ public final class AICommands extends Rgroup implements Plugin {
    private static final int CMD_DISMISS  = 11;
    private static final int CMD_CANCEL   = 12;
    private static final int CMD_REFACTOR = 13;
+   private static final int CMD_AUTH     = 14;
+   private static final int CMD_MODELS   = 15;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -100,6 +102,8 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.dismiss",     // 11 - dismiss ghost text completion
          "ai.cancel",      // 12 - cancel in-flight AI request
          "ai.refactor",   // 13 - refactor code with instruction
+         "ai.auth",       // 14 - device flow auth
+         "ai.models",     // 15 - list available models
       };
       register(rnames);
    }
@@ -135,6 +139,10 @@ public final class AICommands extends Rgroup implements Plugin {
             return doCancel();
          case CMD_REFACTOR:
             return doRefactor((String) arg, fvc);
+         case CMD_AUTH:
+            return doAuth(fvc);
+         case CMD_MODELS:
+            return doModels(fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -194,6 +202,10 @@ public final class AICommands extends Rgroup implements Plugin {
             return doCancel();
          case "refactor":
             return doRefactor(subarg, fvc);
+         case "auth":
+            return doAuth(fvc);
+         case "models":
+            return doModels(fvc);
          case "help":
             showAiHelp(fvc);
             return null;
@@ -641,6 +653,138 @@ public final class AICommands extends Rgroup implements Plugin {
    }
 
    /**
+    * Authenticate with GitHub Copilot via device flow.
+    *
+    * <p>Initiates GitHub Device Flow OAuth. Displays a URL and
+    * user code in the chat buffer for the user to authorize
+    * in their browser. Polls for completion on a background
+    * thread.</p>
+    *
+    * @param fvc the current file-view context
+    * @return null
+    */
+   private Object doAuth(FvContext fvc) {
+      ensureChatBuffer();
+
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               CopilotRestClient client =
+                  new CopilotRestClient();
+               if (client.hasToken()) {
+                  return "Already authenticated. "
+                     + "Token loaded from apps.json.";
+               }
+               CopilotRestClient.DeviceFlowInfo info =
+                  client.startDeviceFlow();
+               // Show info immediately, then poll
+               final String msg =
+                  "COPILOT AUTH\n"
+                  + "Open: " + info.verificationUri()
+                  + "\nCode: " + info.userCode()
+                  + "\nWaiting for authorization...";
+               javi.EventQueue.insert(
+                  new javi.EventQueue.IEvent() {
+                     public void execute() {
+                        appendToChatBuffer(msg);
+                        try {
+                           FvContext.connectFv(
+                              chatBuffer, fvc.vi);
+                        } catch (InputException e) {
+                           UI.reportMessage(
+                              e.getMessage());
+                        }
+                     }
+                  });
+               boolean ok = client.pollDeviceFlow(
+                  info.deviceCode());
+               if (ok) {
+                  AIClient.getInstance()
+                     .resetProvider();
+                  return "Copilot auth successful!";
+               }
+               return "Auth timed out. Try again.";
+            } catch (Exception e) {
+               return "Auth failed: " + e.getMessage();
+            }
+         },
+         response -> {
+            appendToChatBuffer((String) response);
+            try {
+               FvContext.connectFv(chatBuffer, fvc.vi);
+            } catch (InputException e) {
+               UI.reportMessage(e.getMessage());
+            }
+         },
+         error -> UI.reportMessage(
+            "AI auth error: " + error.getMessage())
+      );
+      return null;
+   }
+
+   /**
+    * List available Copilot models.
+    *
+    * <p>Queries the Copilot API for available models and
+    * displays them in the chat buffer. Requires Copilot
+    * provider to be configured.</p>
+    *
+    * @param fvc the current file-view context
+    * @return null
+    */
+   private Object doModels(FvContext fvc) {
+      ensureChatBuffer();
+
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               AIProvider p =
+                  AIClient.getInstance().getProvider();
+               if (p instanceof CopilotProvider cp) {
+                  java.util.List<String> models =
+                     cp.listModels();
+                  StringBuilder sb =
+                     new StringBuilder(256);
+                  sb.append("COPILOT MODELS\n");
+                  sb.append("==============\n");
+                  String current =
+                     AIConfig.getInstance().getModel();
+                  for (String m : models) {
+                     if (m.equals(current))
+                        sb.append("* ");
+                     else
+                        sb.append("  ");
+                     sb.append(m).append('\n');
+                  }
+                  sb.append("\nCurrent: ")
+                     .append(current);
+                  sb.append("\nUse :set ai.model=<name>"
+                     + " to change");
+                  return sb.toString();
+               }
+               return "Models command requires Copilot "
+                  + "provider. Current: "
+                  + p.getName();
+            } catch (Exception e) {
+               return "Error listing models: "
+                  + e.getMessage();
+            }
+         },
+         response -> {
+            appendToChatBuffer((String) response);
+            try {
+               FvContext.connectFv(chatBuffer, fvc.vi);
+            } catch (InputException e) {
+               UI.reportMessage(e.getMessage());
+            }
+         },
+         error -> UI.reportMessage(
+            "Models error: " + error.getMessage())
+      );
+      return null;
+   }
+
+   /**
     * Show AI help in the status area.
     *
     * @param fvc the current file-view context
@@ -660,6 +804,8 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  :ai clear           Clear chat history");
       appendToChatBuffer("  :ai test            Test provider connection");
       appendToChatBuffer("  :ai cancel          Cancel in-flight request");
+      appendToChatBuffer("  :ai auth            Copilot device flow auth");
+      appendToChatBuffer("  :ai models          List Copilot models");
       appendToChatBuffer("  :ai help            Show this help");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");

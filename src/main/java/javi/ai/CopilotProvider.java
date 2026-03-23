@@ -1,109 +1,85 @@
 package javi.ai;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static history.Tools.trace;
 
 /**
- * GitHub Copilot provider implementation using the Copilot LSP agent.
+ * GitHub Copilot provider using the REST API.
  *
- * <p>Connects to the GitHub Copilot agent (a Node.js process bundled
- * with the VS Code Copilot extension) via JSON-RPC over stdio. This
- * enables javi to use the same Copilot backend as VS Code.</p>
- *
- * <h2>Architecture</h2>
- * <p>The Copilot agent is a Language Server Protocol (LSP) server
- * extended with Copilot-specific methods:</p>
- * <ol>
- *   <li>{@code initialize} — LSP initialization handshake</li>
- *   <li>{@code setEditorInfo} — identify our editor to the agent</li>
- *   <li>{@code getCompletions} — request inline code completions</li>
- *   <li>{@code signInInitiate} / {@code signInConfirm} — GitHub
- *       device flow OAuth authentication</li>
- * </ol>
- *
- * <h2>Agent Discovery</h2>
- * <p>The agent is found from the VS Code Copilot extension install
- * directory, typically under ~/.vscode/extensions/. Requires the
- * legacy {@code github.copilot-*} extension with {@code dist/agent.js}.
- * The modern copilot-chat extension (0.39+) does NOT include a
- * standalone agent; it uses the VS Code Language Model API instead.
- * Set the {@code COPILOT_AGENT_PATH} environment variable if the
- * agent is installed elsewhere.</p>
+ * <p>Communicates with the GitHub Copilot REST API at
+ * {@code https://api.githubcopilot.com/chat/completions}
+ * using OpenAI-compatible request format. Delegates HTTP
+ * communication and token management to
+ * {@link CopilotRestClient}.</p>
  *
  * <h2>Authentication</h2>
- * <p>Uses GitHub device flow OAuth. On first use, displays a URL and
- * user code for the user to authorize in their browser. The OAuth token
- * is cached locally.</p>
+ * <p>Uses GitHub OAuth token cached in
+ * {@code ~/.config/github-copilot/apps.json} (written by
+ * Neovim copilot.lua, copilot.vim, or javi's own device
+ * flow auth via {@code :ai auth}). The token is exchanged
+ * for a short-lived Copilot session token automatically.</p>
  *
- * <h2>Thread Safety</h2>
- * <p>The agent process is managed with synchronized access. JSON-RPC
- * requests use atomic sequence IDs for safe concurrent usage.</p>
+ * <h2>Model Selection</h2>
+ * <p>Model can be configured via {@link AIConfig}. Use
+ * {@link #listModels()} to discover available models.
+ * Default model is {@code gpt-4o}.</p>
  *
  * @see AIProvider
+ * @see CopilotRestClient
  * @see AIConfig
  */
 public final class CopilotProvider implements AIProvider {
 
-   /** Environment variable to override the agent path. */
-   private static final String AGENT_PATH_ENV = "COPILOT_AGENT_PATH";
+   /** Default model when none is explicitly configured. */
+   static final String DEFAULT_MODEL = "gpt-4o";
 
-   /** Timeout for reading a response from the agent (seconds). */
-   static final int RESPONSE_TIMEOUT_SECS = 30;
-
-   /** Polling interval when waiting for agent data (ms). */
-   private static final long POLL_INTERVAL_MS = 50;
-
-   private final AtomicInteger requestId = new AtomicInteger(1);
-   private volatile Process agentProcess;
-   private volatile Writer agentWriter;
-   private volatile BufferedReader agentReader;
-   private volatile boolean initialized;
+   private final CopilotRestClient client;
+   private final String model;
 
    /**
-    * Create a Copilot provider.
+    * Create a Copilot provider with default configuration.
     *
-    * <p>Does not start the agent immediately — it is lazily started
-    * on first use.</p>
+    * <p>Loads the OAuth token from {@code apps.json} or the
+    * {@code GH_COPILOT_TOKEN} environment variable.</p>
     *
-    * @throws AIException if the Copilot agent cannot be found
+    * @throws AIException if no OAuth token is available
     */
    public CopilotProvider() throws AIException {
-      if (null == findAgentPath()) {
-         throw new AIException("GitHub Copilot agent not found. "
-            + "Install the GitHub Copilot extension in VS Code, or set "
-            + AGENT_PATH_ENV + " environment variable.");
+      this.client = new CopilotRestClient();
+      String cfgModel = AIConfig.getInstance().getModel();
+      this.model = "copilot".equals(cfgModel)
+         ? DEFAULT_MODEL : cfgModel;
+      if (!client.hasToken()) {
+         throw new AIException(
+            "GitHub Copilot not authenticated. "
+            + "Run :ai auth to authenticate via "
+            + "device flow, or set "
+            + CopilotRestClient.TOKEN_ENV
+            + " environment variable.");
       }
    }
 
+   /**
+    * Create a Copilot provider with an explicit client.
+    *
+    * @param restClient the REST client to use
+    * @param modelName the model identifier
+    */
+   public CopilotProvider(CopilotRestClient restClient,
+         String modelName) {
+      this.client = restClient;
+      this.model = modelName;
+   }
+
    @Override
-   public String chatCompletion(List<Message> messages, int maxTokens)
+   public String chatCompletion(
+         List<Message> messages, int maxTokens)
          throws IOException, AIException {
-      ensureAgent();
-
-      // Build prompt from messages — Copilot is completion-focused,
-      // so we concatenate messages into a prompt for the completions API
-      StringBuilder prompt = new StringBuilder(1024);
-      for (Message msg : messages) {
-         if ("system".equals(msg.role())) {
-            prompt.append("// ").append(msg.content()).append('\n');
-         } else if ("user".equals(msg.role())) {
-            prompt.append(msg.content()).append('\n');
-         } else if ("assistant".equals(msg.role())) {
-            prompt.append(msg.content()).append('\n');
-         }
-      }
-
-      return getCompletion(prompt.toString(), "chat.txt");
+      String responseJson = client.chatCompletion(
+         messages, model, maxTokens);
+      return OpenAIProvider.extractContent(responseJson);
    }
 
    @Override
@@ -113,420 +89,43 @@ public final class CopilotProvider implements AIProvider {
 
    @Override
    public String getModel() {
-      return "copilot";
+      return model;
    }
 
    @Override
    public boolean testConnection() {
       try {
-         ensureAgent();
-         // Send a minimal completion request
-         String result = getCompletion("// test\n", "test.java");
-         return null != result;
+         List<Message> test = List.of(
+            new Message("user", "Reply with OK"));
+         chatCompletion(test, 5);
+         return true;
       } catch (IOException | AIException e) {
-         trace("Copilot connection test failed: " + e.getMessage());
+         trace("Copilot test failed: " + e.getMessage());
          return false;
       }
    }
 
    /**
-    * Request a code completion from the Copilot agent.
+    * List available models from the Copilot API.
     *
-    * @param codePrefix the code before the cursor
-    * @param fileName the file name (for language detection)
-    * @return the completion text, or empty string if none
-    * @throws IOException if communication fails
-    * @throws AIException if the agent returns an error
+    * @return list of model identifier strings
+    * @throws IOException if a network error occurs
+    * @throws AIException if the request fails
     */
-   private String getCompletion(String codePrefix, String fileName)
+   public List<String> listModels()
          throws IOException, AIException {
-      int id = requestId.getAndIncrement();
-
-      // Build the getCompletions JSON-RPC request
-      String params = "{\"doc\":{\"source\":\""
-         + OpenAIProvider.escapeJson(codePrefix)
-         + "\",\"tabSize\":3,\"indentSize\":3,"
-         + "\"insertSpaces\":true,\"path\":\""
-         + OpenAIProvider.escapeJson(fileName)
-         + "\",\"relativePath\":\""
-         + OpenAIProvider.escapeJson(fileName)
-         + "\",\"uri\":\"file:///"
-         + OpenAIProvider.escapeJson(fileName)
-         + "\",\"languageId\":\""
-         + guessLanguageId(fileName)
-         + "\",\"position\":{\"line\":"
-         + countLines(codePrefix)
-         + ",\"character\":0}}}";
-
-      String response = sendRequest("getCompletions", params, id);
-
-      // Parse completions from response
-      return extractCompletionText(response);
+      return client.listModels();
    }
 
    /**
-    * Ensure the Copilot agent process is running and initialized.
-    */
-   private synchronized void ensureAgent() throws IOException, AIException {
-      if (null != agentProcess && agentProcess.isAlive() && initialized) {
-         return;
-      }
-      startAgent();
-      initializeAgent();
-      initialized = true;
-   }
-
-   /**
-    * Start the Copilot agent Node.js process.
-    */
-   private void startAgent() throws IOException, AIException {
-      String agentPath = findAgentPath();
-      if (null == agentPath) {
-         throw new AIException("GitHub Copilot agent not found");
-      }
-
-      trace("Starting Copilot agent: " + agentPath);
-
-      ProcessBuilder pb = new ProcessBuilder("node", agentPath, "--stdio");
-      pb.redirectErrorStream(false);
-      Process proc = pb.start();
-
-      try {
-         Writer writer = new OutputStreamWriter(
-            proc.getOutputStream(), StandardCharsets.UTF_8);
-         BufferedReader reader = new BufferedReader(new InputStreamReader(
-            proc.getInputStream(), StandardCharsets.UTF_8));
-
-         // Commit state only after everything succeeds
-         agentProcess = proc;
-         agentWriter = writer;
-         agentReader = reader;
-      } catch (Exception e) {
-         proc.destroyForcibly();
-         throw new AIException("Failed to initialize agent streams", e);
-      }
-
-      trace("Copilot agent started (pid " + agentProcess.pid() + ")");
-   }
-
-   /**
-    * Send the LSP initialize and setEditorInfo handshake.
-    */
-   private void initializeAgent() throws IOException, AIException {
-      int id = requestId.getAndIncrement();
-
-      // LSP initialize
-      String initParams =
-         "{\"capabilities\":{},\"processId\":"
-         + ProcessHandle.current().pid() + "}";
-      sendRequest("initialize", initParams, id);
-
-      // Notify initialized
-      sendNotification("initialized", "{}");
-
-      // Set editor info so Copilot knows who we are
-      id = requestId.getAndIncrement();
-      String editorInfo =
-         "{\"editorInfo\":{\"name\":\"javi\",\"version\":\"1.0\"},"
-         + "\"editorPluginInfo\":"
-         + "{\"name\":\"javi-copilot\",\"version\":\"1.0\"}}";
-      sendRequest("setEditorInfo", editorInfo, id);
-   }
-
-   /**
-    * Send a JSON-RPC request and read the matching response.
+    * Get the underlying REST client.
     *
-    * <p>Synchronized to prevent interleaving of concurrent requests
-    * on the shared stdio streams. Skips server-initiated notifications
-    * (messages without an {@code id}) while waiting for the response
-    * matching our request ID.</p>
+    * <p>Provides access to device flow auth and other
+    * low-level operations.</p>
     *
-    * @param method the RPC method name
-    * @param params the JSON params object
-    * @param id the request id
-    * @return the response body JSON
+    * @return the CopilotRestClient instance
     */
-   private synchronized String sendRequest(String method, String params,
-         int id) throws IOException, AIException {
-      String body = "{\"jsonrpc\":\"2.0\",\"id\":" + id
-         + ",\"method\":\"" + method + "\",\"params\":" + params + "}";
-
-      sendMessage(body);
-
-      long deadlineMs = System.currentTimeMillis()
-         + RESPONSE_TIMEOUT_SECS * 1000L;
-
-      // Read responses, skipping notifications until we get ours
-      String idMarker = "\"id\":" + id;
-      for (int attempt = 0; attempt < 50; attempt++) {
-         String response = readResponse(deadlineMs);
-         if (response.contains(idMarker)) {
-            return response;
-         }
-         // Not our response — likely a server notification, skip it
-         trace("Copilot: skipped notification while waiting for id "
-            + id);
-      }
-      throw new AIException(
-         "Copilot agent: no response for request id " + id);
-   }
-
-   /**
-    * Send a JSON-RPC notification (no response expected).
-    */
-   private synchronized void sendNotification(String method, String params)
-         throws IOException {
-      String body = "{\"jsonrpc\":\"2.0\""
-         + ",\"method\":\"" + method + "\",\"params\":" + params + "}";
-      sendMessage(body);
-   }
-
-   /**
-    * Write a JSON-RPC message with Content-Length header.
-    */
-   private void sendMessage(String body) throws IOException {
-      String message = "Content-Length: " + body.getBytes(
-         StandardCharsets.UTF_8).length + "\r\n\r\n" + body;
-      agentWriter.write(message);
-      agentWriter.flush();
-   }
-
-   /**
-    * Read a JSON-RPC response from the agent.
-    *
-    * <p>Reads the Content-Length header, then reads exactly that
-    * many bytes of body. Uses the provided deadline to avoid
-    * blocking indefinitely on a hung agent.</p>
-    *
-    * @param deadlineMs absolute time (ms since epoch) by which
-    *     the read must complete
-    * @throws AIException if the deadline is exceeded
-    */
-   private String readResponse(long deadlineMs)
-         throws IOException, AIException {
-      // Read headers until blank line
-      int contentLength = -1;
-      for (;;) {
-         String line = readLineWithTimeout(deadlineMs);
-         if (null == line || line.isEmpty()) {
-            break;
-         }
-         if (line.startsWith("Content-Length:")) {
-            contentLength = Integer.parseInt(
-               line.substring(15).trim());
-         }
-      }
-
-      if (contentLength < 0) {
-         throw new AIException(
-            "Copilot agent: missing Content-Length");
-      }
-
-      char[] buf = new char[contentLength];
-      int read = 0;
-      while (read < contentLength) {
-         int n = readWithTimeout(
-            buf, read, contentLength - read, deadlineMs);
-         read += n;
-      }
-
-      return new String(buf);
-   }
-
-   /**
-    * Read a line from the agent with timeout.
-    *
-    * <p>Polls {@link BufferedReader#ready()} until the stream has
-    * data or the deadline is exceeded.</p>
-    *
-    * @param deadlineMs absolute time by which data must arrive
-    * @return the line read, or null on end-of-stream
-    * @throws AIException on timeout or interruption
-    */
-   private String readLineWithTimeout(long deadlineMs)
-         throws IOException, AIException {
-      while (System.currentTimeMillis() < deadlineMs) {
-         if (agentReader.ready()) {
-            return agentReader.readLine();
-         }
-         sleepForPoll();
-      }
-      throw new AIException(
-         "Copilot agent: response timeout after "
-         + RESPONSE_TIMEOUT_SECS + " seconds");
-   }
-
-   /**
-    * Read characters from the agent with timeout.
-    *
-    * @param buf destination buffer
-    * @param off offset into buffer
-    * @param len maximum characters to read
-    * @param deadlineMs absolute time by which data must arrive
-    * @return number of characters read
-    * @throws AIException on timeout, interruption, or EOF
-    */
-   private int readWithTimeout(char[] buf, int off, int len,
-         long deadlineMs) throws IOException, AIException {
-      while (System.currentTimeMillis() < deadlineMs) {
-         if (agentReader.ready()) {
-            int n = agentReader.read(buf, off, len);
-            if (n < 0) {
-               throw new AIException(
-                  "Copilot agent: unexpected end of stream");
-            }
-            return n;
-         }
-         sleepForPoll();
-      }
-      throw new AIException(
-         "Copilot agent: response timeout after "
-         + RESPONSE_TIMEOUT_SECS + " seconds");
-   }
-
-   /**
-    * Sleep briefly while polling for agent data.
-    */
-   private static void sleepForPoll() throws AIException {
-      try {
-         Thread.sleep(POLL_INTERVAL_MS);
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new AIException(
-            "Copilot agent: interrupted while reading");
-      }
-   }
-
-   /**
-    * Extract completion text from the Copilot agent response.
-    */
-   public static String extractCompletionText(String json) throws AIException {
-      // Look for "displayText":" or "text":" in completions
-      String marker = "\"displayText\":\"";
-      int idx = json.indexOf(marker);
-      if (idx < 0) {
-         marker = "\"insertText\":\"";
-         idx = json.indexOf(marker);
-      }
-      if (idx < 0) {
-         // No completion available
-         return "";
-      }
-      idx += marker.length();
-      return OpenAIProvider.unescapeJsonString(json, idx);
-   }
-
-   /**
-    * Find the Copilot agent.js path.
-    *
-    * @return the absolute path to agent.js, or null if not found
-    */
-   public static String findAgentPath() {
-      // Check environment variable override first
-      String envPath = System.getenv(AGENT_PATH_ENV);
-      if (null != envPath && !envPath.isEmpty()) {
-         if (Files.isRegularFile(Path.of(envPath))) {
-            return envPath;
-         }
-      }
-
-      // Search VS Code extension directories
-      String home = System.getProperty("user.home");
-      Path extDir = Path.of(home, ".vscode", "extensions");
-      if (!Files.isDirectory(extDir)) {
-         return null;
-      }
-
-      // Try legacy Copilot extension (github.copilot-<version>/dist/agent.js)
-      try (var stream = Files.list(extDir)) {
-         String legacy = stream
-            .filter(p -> p.getFileName().toString()
-               .startsWith("github.copilot-"))
-            .filter(p -> !p.getFileName().toString()
-               .contains("copilot-chat"))
-            .sorted((a, b) -> b.getFileName().toString()
-               .compareTo(a.getFileName().toString()))
-            .map(p -> p.resolve("dist").resolve("agent.js"))
-            .filter(Files::isRegularFile)
-            .map(Path::toString)
-            .findFirst()
-            .orElse(null);
-         if (null != legacy) {
-            return legacy;
-         }
-      } catch (IOException e) {
-         trace("Error searching for legacy Copilot agent: " + e);
-      }
-
-      // The modern copilot-chat extension (0.39+) does NOT include
-      // a standalone LSP agent. Its dist/cli.js is an unrelated tool
-      // (Copilot CLI shim or Claude Code). The extension.js runs only
-      // inside the VS Code extension host via the Language Model API.
-      // Therefore no fallback search is attempted here.
-      return null;
-   }
-
-   /**
-    * Guess the LSP languageId from a filename.
-    */
-   private static String guessLanguageId(String fileName) {
-      if (null == fileName) {
-         return "plaintext";
-      }
-      int dot = fileName.lastIndexOf('.');
-      if (dot < 0) {
-         return "plaintext";
-      }
-      String ext = fileName.substring(dot + 1).toLowerCase();
-      return switch (ext) {
-         case "java" -> "java";
-         case "py" -> "python";
-         case "js" -> "javascript";
-         case "ts" -> "typescript";
-         case "c", "h" -> "c";
-         case "cpp", "cc", "cxx", "hpp" -> "cpp";
-         case "rb" -> "ruby";
-         case "go" -> "go";
-         case "rs" -> "rust";
-         case "pl", "pm" -> "perl";
-         case "sh", "bash" -> "shellscript";
-         case "md" -> "markdown";
-         case "json" -> "json";
-         case "xml" -> "xml";
-         case "html", "htm" -> "html";
-         case "css" -> "css";
-         default -> "plaintext";
-      };
-   }
-
-   /**
-    * Count newlines in a string.
-    */
-   private static int countLines(String text) {
-      int count = 0;
-      for (int i = 0; i < text.length(); i++) {
-         if ('\n' == text.charAt(i)) {
-            count++;
-         }
-      }
-      return count;
-   }
-
-   /**
-    * Shut down the Copilot agent process.
-    */
-   public void shutdown() {
-      initialized = false;
-      Process p = agentProcess;
-      if (null != p && p.isAlive()) {
-         try {
-            sendNotification("shutdown", "null");
-            sendNotification("exit", "null");
-         } catch (IOException e) {
-            trace("Error shutting down Copilot agent: " + e);
-         }
-         p.destroyForcibly();
-         agentProcess = null;
-      }
+   public CopilotRestClient getRestClient() {
+      return client;
    }
 }

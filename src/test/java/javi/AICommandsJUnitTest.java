@@ -2,8 +2,8 @@ package javi;
 
 import javi.ai.AICommands;
 import javi.ai.AIConfig;
-import javi.ai.AIException;
 import javi.ai.CopilotProvider;
+import javi.ai.CopilotRestClient;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -226,47 +227,36 @@ class AICommandsJUnitTest {
          "unknown topic list should mention 'ai'");
    }
 
-   // ── CopilotProvider Unit Tests ────────────────────────────────
+   // ── CopilotProvider / CopilotRestClient Tests ───────────────
 
    @Test
-   @DisplayName("extractCompletionText with displayText")
-   void extractDisplayText() throws AIException {
-      String json = "{\"result\":{\"completions\":[{\"displayText\":"
-         + "\"hello world\",\"position\":{}}]}}";
-      assertEquals("hello world",
-         CopilotProvider.extractCompletionText(json));
+   @DisplayName("CopilotProvider getName returns GitHub Copilot")
+   void copilotProviderName() {
+      CopilotRestClient client = new CopilotRestClient("test");
+      CopilotProvider cp = new CopilotProvider(client, "gpt-4o");
+      assertEquals("GitHub Copilot", cp.getName());
    }
 
    @Test
-   @DisplayName("extractCompletionText with insertText fallback")
-   void extractInsertText() throws AIException {
-      String json = "{\"result\":{\"completions\":[{\"insertText\":"
-         + "\"foo bar\"}]}}";
-      assertEquals("foo bar",
-         CopilotProvider.extractCompletionText(json));
+   @DisplayName("CopilotProvider getModel returns configured model")
+   void copilotProviderModel() {
+      CopilotRestClient client = new CopilotRestClient("test");
+      CopilotProvider cp = new CopilotProvider(client, "gpt-4o");
+      assertEquals("gpt-4o", cp.getModel());
    }
 
    @Test
-   @DisplayName("extractCompletionText with no completion")
-   void extractNoCompletion() throws AIException {
-      String json = "{\"result\":{\"completions\":[]}}";
-      assertEquals("",
-         CopilotProvider.extractCompletionText(json));
+   @DisplayName("CopilotRestClient hasToken with valid token")
+   void restClientHasToken() {
+      CopilotRestClient client = new CopilotRestClient("gho_test");
+      assertTrue(client.hasToken());
    }
 
    @Test
-   @DisplayName("findAgentPath returns null without legacy extension")
-   void findAgentPathNoLegacyExtension() {
-      // On this system the legacy github.copilot extension is not
-      // installed. findAgentPath should not fall back to cli.js
-      // from copilot-chat, which is an unrelated tool.
-      String path = CopilotProvider.findAgentPath();
-      if (null != path) {
-         // If an agent IS found, it must be agent.js, not cli.js
-         assertTrue(path.endsWith("agent.js"),
-            "findAgentPath should only return agent.js, got: " + path);
-      }
-      // null is acceptable — means no standalone agent available
+   @DisplayName("CopilotRestClient hasToken without token")
+   void restClientNoToken() {
+      CopilotRestClient client = new CopilotRestClient(null);
+      assertFalse(client.hasToken());
    }
 
    @Test

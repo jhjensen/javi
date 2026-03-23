@@ -23,7 +23,8 @@ import static history.Tools.trace;
  * <ol>
  *   <li>Explicit config value from {@code :set ai.apikey=...}</li>
  *   <li>Environment variable: {@code OPENAI_API_KEY} or {@code ANTHROPIC_API_KEY}</li>
- *   <li>UNCLEAR: GitHub Copilot token from copilot CLI auth</li>
+ *   <li>GitHub Copilot token from {@code apps.json}
+ *       (managed by {@link CopilotRestClient})</li>
  * </ol>
  *
  * <h2>Thread Safety</h2>
@@ -136,7 +137,7 @@ public final class AIConfig {
       return switch (provider) {
          case OPENAI -> "gpt-4o";
          case ANTHROPIC -> "claude-sonnet-4-20250514";
-         case COPILOT -> "copilot";
+         case COPILOT -> "gpt-4o";
       };
    }
 
@@ -192,7 +193,7 @@ public final class AIConfig {
       return switch (provider) {
          case OPENAI -> System.getenv("OPENAI_API_KEY");
          case ANTHROPIC -> System.getenv("ANTHROPIC_API_KEY");
-         case COPILOT -> "copilot"; // Copilot handles its own auth
+         case COPILOT -> "copilot-oauth"; // managed by CopilotRestClient
       };
    }
 
