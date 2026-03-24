@@ -192,7 +192,9 @@ public final class MiscCommands extends Rgroup {
          if (ev == debugfile)
             debugfile = null;
          // Clean up shell session when its buffer is closed (e.g., via ZZ)
-         ShellManager.getInstance().closeByBuffer(ev);
+         ShellManager mgr = ShellManager.getInstance();
+         if (mgr.closeByBuffer(ev))
+            refreshShellPositionList(mgr);
          if (ev == commCon)
             commCon = null;
          return false;
@@ -276,6 +278,10 @@ public final class MiscCommands extends Rgroup {
       // Create new shell session
       EditContainer.registerListener(fli);
       ShellSession session = mgr.newShell(host);
+
+      // Auto-register/refresh shell list in F6 position list
+      refreshShellPositionList(mgr);
+
       FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
       session.getVt100().startHandle(newFvc);
       ((Vt100) session.getBuffer()).handleKeys(newFvc);
@@ -296,9 +302,23 @@ public final class MiscCommands extends Rgroup {
          return;
       }
       ShellListIoc ioc = new ShellListIoc(mgr);
-      TextEdit<Position> list = PosListList.Cmd.addPositionIoc(ioc);
+      TextEdit<Position> list =
+         PosListList.Cmd.replacePositionIoc("shells", ioc);
       list.finish(); // wait for data before navigating
       FvContext.connectFv(list, fvc.vi);
+   }
+
+   /**
+    * Registers or refreshes the shell position list in the F6
+    * position list display. Replaces any existing "shells" entry.
+    *
+    * @param mgr the ShellManager instance
+    */
+   static void refreshShellPositionList(ShellManager mgr) {
+      if (mgr.getSessionCount() == 0)
+         return;
+      ShellListIoc ioc = new ShellListIoc(mgr);
+      PosListList.Cmd.replacePositionIoc("shells", ioc);
    }
 
    private static final class ShellListIoc extends PositionIoc {
@@ -385,6 +405,9 @@ public final class MiscCommands extends Rgroup {
          throw new InputException("No shell with ID " + targetId);
       }
 
+      // Refresh shell list in F6
+      refreshShellPositionList(mgr);
+
       if (null != nextShell) {
          UI.reportMessage("Shell closed. Switched to shell "
             + nextShell.getId());
@@ -406,6 +429,7 @@ public final class MiscCommands extends Rgroup {
       ShellManager mgr = ShellManager.getInstance();
       EditContainer.registerListener(fli);
       ShellSession session = mgr.newShell(host);
+      refreshShellPositionList(mgr);
       FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
       // Initialize the Vt100's currfvc so screen updates and scrolling work
       session.getVt100().startHandle(newFvc);

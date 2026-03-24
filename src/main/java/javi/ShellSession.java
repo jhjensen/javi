@@ -444,8 +444,9 @@ public final class ShellSession {
          String cmd = getLeafProcessName(process.pid());
          if (null != cmd && !cmd.isEmpty()) {
             String base = (null == host) ? "local" : host;
-            String newName = cmd.equals("bash") || cmd.equals("zsh")
-               || cmd.equals("sh") || cmd.equals("script")
+            // Only filter out "script" (PTY wrapper); show actual
+            // shell name (bash/zsh) so the process is always visible
+            String newName = cmd.equals("script")
                ? base
                : base + " (" + cmd + ")";
             if (!newName.equals(name)) {
