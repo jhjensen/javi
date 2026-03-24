@@ -446,7 +446,7 @@ public final class ShellSession {
             String base = (null == host) ? "local" : host;
             // Only filter out "script" (PTY wrapper); show actual
             // shell name (bash/zsh) so the process is always visible
-            String newName = cmd.equals("script")
+            String newName = cmd.startsWith("script")
                ? base
                : base + " (" + cmd + ")";
             if (!newName.equals(name)) {
@@ -503,7 +503,7 @@ public final class ShellSession {
       // Now get the command name of the leaf pid
       try {
          ProcessBuilder pb = new ProcessBuilder(
-            "ps", "-o", "comm=", "-p", Long.toString(pid));
+            "ps", "-o", "args=", "-p", Long.toString(pid));
          pb.redirectErrorStream(true);
          Process ps = pb.start();
          String output = new String(
@@ -511,10 +511,8 @@ public final class ShellSession {
             java.nio.charset.StandardCharsets.UTF_8).trim();
          if (!ps.waitFor(2, java.util.concurrent.TimeUnit.SECONDS))
             return null;
-         if (!output.isEmpty()) {
-            int slash = output.lastIndexOf('/');
-            return slash >= 0 ? output.substring(slash + 1) : output;
-         }
+         if (!output.isEmpty())
+            return output;
       } catch (Exception e) {
          // fall through
       }

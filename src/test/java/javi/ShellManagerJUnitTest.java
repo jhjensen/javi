@@ -370,15 +370,14 @@ class ShellManagerJUnitTest {
    }
 
    @Test
-   @DisplayName("getLeafProcessName strips path prefix from comm output")
-   void leafProcessStripsPath() {
-      // getLeafProcessName for our own JVM should return a bare name
-      // (no '/' characters) because it strips the path prefix
+   @DisplayName("getLeafProcessName returns full command with args")
+   void leafProcessShowsFullCommand() {
+      // getLeafProcessName uses ps -o args= so result may include
+      // path and arguments — just verify it returns something non-empty
       long myPid = ProcessHandle.current().pid();
       String name = ShellSession.getLeafProcessName(myPid);
       assertNotNull(name);
-      assertFalse(name.contains("/"),
-         "name should not contain path separators: " + name);
+      assertFalse(name.isEmpty(), "name should not be empty");
    }
 
    // ================================================================

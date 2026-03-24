@@ -229,6 +229,7 @@ public final class MiscCommands extends Rgroup {
          if (null != session)
             mgr.switchToId(session.getId());
          ((Vt100) fvc.edvec).handleKeys(fvc);
+         refreshShellPositionList(mgr);
          return;
       }
 
@@ -245,6 +246,7 @@ public final class MiscCommands extends Rgroup {
                FvContext newFvc =
                   FvContext.connectFv(active.getBuffer(), fvc.vi);
                ((Vt100) active.getBuffer()).handleKeys(newFvc);
+               refreshShellPositionList(mgr);
                return;
             }
          }
@@ -259,6 +261,7 @@ public final class MiscCommands extends Rgroup {
                FvContext newFvc =
                   FvContext.connectFv(session.getBuffer(), fvc.vi);
                ((Vt100) session.getBuffer()).handleKeys(newFvc);
+               refreshShellPositionList(mgr);
                return;
             }
             // Fall through to create new shell if not found
@@ -269,6 +272,7 @@ public final class MiscCommands extends Rgroup {
                FvContext newFvc =
                   FvContext.connectFv(session.getBuffer(), fvc.vi);
                ((Vt100) session.getBuffer()).handleKeys(newFvc);
+               refreshShellPositionList(mgr);
                return;
             }
             // Not found by name — treat as SSH hostname
@@ -285,6 +289,7 @@ public final class MiscCommands extends Rgroup {
       FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
       session.getVt100().startHandle(newFvc);
       ((Vt100) session.getBuffer()).handleKeys(newFvc);
+      refreshShellPositionList(mgr);
    }
 
    /**
@@ -338,8 +343,8 @@ public final class MiscCommands extends Rgroup {
          for (ShellSession s : sessions) {
             s.invalidateLabelCache();
             s.updateLabel();
-            String comment = String.format("Shell %d: %s [%s]%s",
-               s.getId(), s.getName(),
+            String comment = String.format("%s [%s]%s",
+               s.getName(),
                s.isAlive() ? "running" : "stopped",
                s.getId() == activeId ? " *" : "");
             addResult(new Position(0, 1,
