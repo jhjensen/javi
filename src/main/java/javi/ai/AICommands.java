@@ -2,6 +2,8 @@ package javi.ai;
 
 import java.io.IOException;
 
+import static history.Tools.trace;
+
 import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
@@ -677,6 +679,16 @@ public final class AICommands extends Rgroup implements Plugin {
                }
                CopilotRestClient.DeviceFlowInfo info =
                   client.startDeviceFlow();
+               // Open browser to verification URL
+               try {
+                  java.awt.Desktop.getDesktop().browse(
+                     java.net.URI.create(
+                        info.verificationUri()));
+               } catch (Exception ignore) {
+                  // Browser open is best-effort
+                  trace("Could not open browser: "
+                     + ignore.getMessage());
+               }
                // Show info immediately, then poll
                final String msg =
                   "COPILOT AUTH\n"

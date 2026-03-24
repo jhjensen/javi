@@ -24,7 +24,7 @@ import static history.Tools.trace;
  * <h2>Model Selection</h2>
  * <p>Model can be configured via {@link AIConfig}. Use
  * {@link #listModels()} to discover available models.
- * Default model is {@code gpt-4o}.</p>
+ * Default model is {@code gpt-4.1}.</p>
  *
  * @see AIProvider
  * @see CopilotRestClient
@@ -33,7 +33,7 @@ import static history.Tools.trace;
 public final class CopilotProvider implements AIProvider {
 
    /** Default model when none is explicitly configured. */
-   static final String DEFAULT_MODEL = "gpt-4o";
+   static final String DEFAULT_MODEL = "gpt-4.1";
 
    private final CopilotRestClient client;
    private final String model;

@@ -326,7 +326,7 @@ class CopilotRestClientJUnitTest {
    // ── AIConfig copilot defaults ────────────────────────────
 
    @Test
-   @DisplayName("Copilot default model is gpt-4o")
+   @DisplayName("Copilot default model is gpt-4.1")
    void copilotDefaultModel() {
       AIConfig config = AIConfig.getInstance();
       String origModel = config.getModel();
@@ -335,7 +335,7 @@ class CopilotRestClientJUnitTest {
       try {
          config.setProvider("copilot");
          config.setModel(null);
-         assertEquals("gpt-4o", config.getModel());
+         assertEquals("gpt-4.1", config.getModel());
       } finally {
          config.setProvider(origProvider.getId());
          if (null != origModel)

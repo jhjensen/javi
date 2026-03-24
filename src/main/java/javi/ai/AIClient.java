@@ -285,6 +285,18 @@ public final class AIClient {
       trace("Creating AI provider: " + config.getProvider().getId()
          + " model: " + model);
 
+      // Auto-detect Copilot when configured provider has no API key
+      // but a Copilot OAuth token is available
+      if (null == apiKey || apiKey.isEmpty()) {
+         if (config.getProvider() != AIConfig.Provider.COPILOT
+               && CopilotRestClient.loadOAuthToken() != null) {
+            trace("No API key for " + config.getProvider().getId()
+               + " — auto-switching to Copilot (OAuth token found)");
+            config.setProvider("copilot");
+            return new CopilotProvider();
+         }
+      }
+
       return switch (config.getProvider()) {
          case OPENAI -> new OpenAIProvider(apiKey, model);
          case ANTHROPIC -> new AnthropicProvider(apiKey, model);

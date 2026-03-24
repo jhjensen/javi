@@ -137,7 +137,7 @@ public final class AIConfig {
       return switch (provider) {
          case OPENAI -> "gpt-4o";
          case ANTHROPIC -> "claude-sonnet-4-20250514";
-         case COPILOT -> "gpt-4o";
+         case COPILOT -> "gpt-4.1";
       };
    }
 
