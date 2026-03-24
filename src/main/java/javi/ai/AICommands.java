@@ -53,7 +53,8 @@ import javi.View;
 public final class AICommands extends Rgroup implements Plugin {
 
    /** Plugin descriptor. */
-   public static final String pluginInfo = "AI assistant — chat, explain, review, complete";
+   public static final String pluginInfo =
+      "AI assistant: chat, explain, review, complete";
 
    /** Index constants for registered commands. */
    private static final int CMD_AI       = 1;
@@ -242,56 +243,44 @@ public final class AICommands extends Rgroup implements Plugin {
          }
       }
 
+      // Capture context before switching to chat buffer
+      String ctxName = fvc.edvec.getName();
+      String ctxCode = null;
+      if (!"*ai-chat*".equals(ctxName)) {
+         ctxCode = getContextCode(fvc);
+      }
+
       ensureChatBuffer();
       appendToChatBuffer("YOU: " + message);
       appendToChatBuffer("");
+      logRequest("chat", ctxName, ctxCode);
 
-      // Show chat buffer immediately so user sees their message
+      // Show chat buffer immediately
       FvContext.connectFv(chatBuffer, fvc.vi);
 
-      // Capture view for the async callback
       final View vi = fvc.vi;
       final String msg = message;
+      final String fileCtx = ctxCode;
+      final String fileName = ctxName;
 
       AIAsyncExecutor.submit(
          () -> {
             try {
-               return AIClient.getInstance().chat(msg);
+               AIClient client = AIClient.getInstance();
+               if (null != fileCtx) {
+                  return client.chatWithContext(
+                     msg, fileName, fileCtx);
+               }
+               return client.chat(msg);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
          response -> {
-            appendToChatBuffer("AI: " + response);
-            appendToChatBuffer("");
-            appendToChatBuffer("---");
-            appendToChatBuffer("");
-            try {
-               FvContext.connectFv(chatBuffer, vi);
-            } catch (InputException e) {
-               UI.reportMessage("Input Error: " + e.getMessage());
-            }
-            vi.repaint();
+            appendResponse("AI: " + response, vi);
             UI.reportMessage("AI: response received");
          },
-         error -> {
-            Throwable cause = error.getCause() != null
-               ? error.getCause() : error;
-            String errMsg = "AI Error: " + cause.getMessage();
-            if (cause instanceof AIException ae && ae.isAuthError()) {
-               errMsg += "\nSet API key with :set ai.apikey=<key> "
-                  + "or set environment variable.";
-            }
-            appendToChatBuffer(errMsg);
-            appendToChatBuffer("");
-            try {
-               FvContext.connectFv(chatBuffer, vi);
-            } catch (InputException e) {
-               UI.reportMessage("Input Error: " + e.getMessage());
-            }
-            vi.repaint();
-            UI.reportMessage(errMsg);
-         }
+         error -> handleAsyncError(error, vi)
       );
       return null;
    }
@@ -314,23 +303,34 @@ public final class AICommands extends Rgroup implements Plugin {
          return null;
       }
 
+      String name = fvc.edvec.getName();
       ensureChatBuffer();
-      appendToChatBuffer("EXPLAIN: " + fvc.edvec.getName());
+      appendToChatBuffer("EXPLAIN: " + name);
       appendToChatBuffer("");
-
+      logRequest("explain", name, code);
       try {
-         AIClient client = AIClient.getInstance();
-         String response = client.explain(code);
-         appendToChatBuffer(response);
-         appendToChatBuffer("");
-         appendToChatBuffer("---");
-         appendToChatBuffer("");
          FvContext.connectFv(chatBuffer, fvc.vi);
-      } catch (AIException e) {
-         UI.reportMessage("AI Error: " + e.getMessage());
       } catch (InputException e) {
-         UI.reportMessage("Input Error: " + e.getMessage());
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
       }
+
+      final View vi = fvc.vi;
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance()
+                  .explain(code);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         response -> {
+            appendResponse(response, vi);
+            UI.reportMessage("AI: explain complete");
+         },
+         error -> handleAsyncError(error, vi)
+      );
       return null;
    }
 
@@ -348,23 +348,34 @@ public final class AICommands extends Rgroup implements Plugin {
          return null;
       }
 
+      String name = fvc.edvec.getName();
       ensureChatBuffer();
-      appendToChatBuffer("REVIEW: " + fvc.edvec.getName());
+      appendToChatBuffer("REVIEW: " + name);
       appendToChatBuffer("");
-
+      logRequest("review", name, code);
       try {
-         AIClient client = AIClient.getInstance();
-         String response = client.review(code);
-         appendToChatBuffer(response);
-         appendToChatBuffer("");
-         appendToChatBuffer("---");
-         appendToChatBuffer("");
          FvContext.connectFv(chatBuffer, fvc.vi);
-      } catch (AIException e) {
-         UI.reportMessage("AI Error: " + e.getMessage());
       } catch (InputException e) {
-         UI.reportMessage("Input Error: " + e.getMessage());
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
       }
+
+      final View vi = fvc.vi;
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance()
+                  .review(code);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         response -> {
+            appendResponse(response, vi);
+            UI.reportMessage("AI: review complete");
+         },
+         error -> handleAsyncError(error, vi)
+      );
       return null;
    }
 
@@ -382,23 +393,34 @@ public final class AICommands extends Rgroup implements Plugin {
          return null;
       }
 
+      String name = fvc.edvec.getName();
       ensureChatBuffer();
-      appendToChatBuffer("DOCUMENT: " + fvc.edvec.getName());
+      appendToChatBuffer("DOCUMENT: " + name);
       appendToChatBuffer("");
-
+      logRequest("doc", name, code);
       try {
-         AIClient client = AIClient.getInstance();
-         String response = client.document(code);
-         appendToChatBuffer(response);
-         appendToChatBuffer("");
-         appendToChatBuffer("---");
-         appendToChatBuffer("");
          FvContext.connectFv(chatBuffer, fvc.vi);
-      } catch (AIException e) {
-         UI.reportMessage("AI Error: " + e.getMessage());
       } catch (InputException e) {
-         UI.reportMessage("Input Error: " + e.getMessage());
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
       }
+
+      final View vi = fvc.vi;
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance()
+                  .document(code);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         response -> {
+            appendResponse(response, vi);
+            UI.reportMessage("AI: doc complete");
+         },
+         error -> handleAsyncError(error, vi)
+      );
       return null;
    }
 
@@ -424,7 +446,8 @@ public final class AICommands extends Rgroup implements Plugin {
       }
 
       if (null == instruction || instruction.isEmpty()) {
-         String line = InsertBuffer.getcomline("refactor> ");
+         String line =
+            InsertBuffer.getcomline("refactor> ");
          if (line.length() <= 10) {
             return null;
          }
@@ -434,24 +457,36 @@ public final class AICommands extends Rgroup implements Plugin {
          }
       }
 
+      String name = fvc.edvec.getName();
       ensureChatBuffer();
-      appendToChatBuffer("REFACTOR: " + fvc.edvec.getName());
+      appendToChatBuffer("REFACTOR: " + name);
       appendToChatBuffer("Instruction: " + instruction);
       appendToChatBuffer("");
-
+      logRequest("refactor", name, code);
       try {
-         AIClient client = AIClient.getInstance();
-         String response = client.refactor(code, instruction);
-         appendToChatBuffer(response);
-         appendToChatBuffer("");
-         appendToChatBuffer("---");
-         appendToChatBuffer("");
          FvContext.connectFv(chatBuffer, fvc.vi);
-      } catch (AIException e) {
-         UI.reportMessage("AI Error: " + e.getMessage());
       } catch (InputException e) {
-         UI.reportMessage("Input Error: " + e.getMessage());
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
       }
+
+      final View vi = fvc.vi;
+      final String inst = instruction;
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               return AIClient.getInstance()
+                  .refactor(code, inst);
+            } catch (IOException | AIException e) {
+               throw new RuntimeException(e);
+            }
+         },
+         response -> {
+            appendResponse(response, vi);
+            UI.reportMessage("AI: refactor complete");
+         },
+         error -> handleAsyncError(error, vi)
+      );
       return null;
    }
 
@@ -831,6 +866,79 @@ public final class AICommands extends Rgroup implements Plugin {
       } catch (InputException e) {
          UI.reportMessage("Input Error: " + e.getMessage());
       }
+   }
+
+   /**
+    * Log AI request details to the chat buffer and trace.
+    *
+    * @param command the AI command name
+    * @param source the source buffer name
+    * @param context the context code, or null
+    */
+   private static void logRequest(String command,
+         String source, String context) {
+      AIConfig config = AIConfig.getInstance();
+      String model = config.getModel();
+      String prov = config.getProvider().getId();
+      int ctxLines = 0;
+      if (null != context) {
+         ctxLines = context.split("\n", -1).length;
+      }
+      String info = "[" + prov + "/" + model + "] :"
+         + command + " — source: " + source
+         + ", context: " + ctxLines + " lines";
+      trace("AI request: " + info);
+      appendToChatBuffer(info);
+   }
+
+   /**
+    * Append AI response text and separator to the chat buffer,
+    * then refresh the view.
+    *
+    * @param text the response text
+    * @param vi the view to refresh
+    */
+   private static void appendResponse(
+         String text, View vi) {
+      appendToChatBuffer(text);
+      appendToChatBuffer("");
+      appendToChatBuffer("---");
+      appendToChatBuffer("");
+      try {
+         FvContext.connectFv(chatBuffer, vi);
+      } catch (InputException e) {
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
+      }
+      vi.repaint();
+   }
+
+   /**
+    * Handle an async AI error by logging to chat buffer
+    * and reporting to the user.
+    *
+    * @param error the exception from the async task
+    * @param vi the view to refresh
+    */
+   private static void handleAsyncError(
+         Exception error, View vi) {
+      Throwable cause = error.getCause() != null
+         ? error.getCause() : error;
+      String errMsg = "AI Error: " + cause.getMessage();
+      if (cause instanceof AIException ae
+            && ae.isAuthError()) {
+         errMsg += " — Run :ai auth to authenticate.";
+      }
+      appendToChatBuffer(errMsg);
+      appendToChatBuffer("");
+      try {
+         FvContext.connectFv(chatBuffer, vi);
+      } catch (InputException e) {
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
+      }
+      vi.repaint();
+      UI.reportMessage(errMsg);
    }
 
    /**

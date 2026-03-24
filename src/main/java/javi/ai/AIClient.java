@@ -133,6 +133,50 @@ public final class AIClient {
    }
 
    /**
+    * Send a chat message with file context included.
+    *
+    * <p>The file content is sent to the API for context but only
+    * the short user message is stored in conversation history,
+    * avoiding history bloat from repeated file inclusions.</p>
+    *
+    * @param userMessage the user's message text
+    * @param fileName the source file name for context
+    * @param fileContent the source file content
+    * @return the AI response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   public String chatWithContext(String userMessage,
+         String fileName, String fileContent)
+         throws IOException, AIException {
+      AIConfig config = AIConfig.getInstance();
+      AIProvider p = getProvider();
+
+      String enriched = "Current file: " + fileName
+         + "\n\n" + fileContent + "\n\n" + userMessage;
+
+      List<AIProvider.Message> messages = new ArrayList<>();
+      messages.add(new AIProvider.Message(
+         "system", config.getSystemPrompt()));
+      synchronized (history) {
+         messages.addAll(history);
+      }
+      messages.add(
+         new AIProvider.Message("user", enriched));
+
+      String response = p.chatCompletion(
+         messages, config.getMaxTokens());
+
+      // Store only the short message in history
+      history.add(
+         new AIProvider.Message("user", userMessage));
+      history.add(
+         new AIProvider.Message("assistant", response));
+
+      return response;
+   }
+
+   /**
     * Explain the given code snippet.
     *
     * <p>This is a one-shot request and does NOT modify conversation
