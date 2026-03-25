@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -349,8 +352,7 @@ public final class DirManager extends TextEdit<String> {
 
    /**
     * Populate the buffer with the search path directory list.
-    * Used by the "gotosearchpath" command to display the search path
-    * as an editable list in the DirManager view.
+    * Uses compressed display to abbreviate shared prefixes.
     */
    void showSearchPath() {
       currentDir = null;
@@ -358,11 +360,86 @@ public final class DirManager extends TextEdit<String> {
       if (size > 1)
          remove(1, size - 1);
 
+      ArrayList<String> paths = new ArrayList<>(searchPath.size());
+      for (FileDescriptor.LocalDir dir : searchPath)
+         paths.add(dir.toString());
+
+      List<String> display = compressPaths(paths);
       int line = 1;
-      for (FileDescriptor.LocalDir dir : searchPath) {
-         insertOne(dir.toString(), line++);
-      }
+      for (String s : display)
+         insertOne(s, line++);
       checkpoint();
+   }
+
+   /**
+    * Compress a list of directory paths for display by replacing
+    * the user's home directory with {@code ~} and grouping paths
+    * that share a common parent directory.
+    *
+    * <p>Example input:</p>
+    * <pre>
+    * /Users/jjensen/gtools/blbrd_mitigate
+    * /Users/jjensen/gtools/blbrd_common
+    * /Users/jjensen/gtools/blbrd_ng
+    * /Users/jjensen/javi
+    * </pre>
+    *
+    * <p>Example output:</p>
+    * <pre>
+    * ~/gtools/{blbrd_mitigate, blbrd_common, blbrd_ng}
+    * ~/javi
+    * </pre>
+    *
+    * @param paths list of absolute directory paths
+    * @return compressed display strings
+    */
+   static List<String> compressPaths(List<String> paths) {
+      if (paths == null || paths.isEmpty())
+         return new ArrayList<>();
+
+      String home = System.getProperty("user.home");
+
+      // Replace home prefix with ~
+      ArrayList<String> tilded = new ArrayList<>(paths.size());
+      for (String p : paths) {
+         if (home != null && p.startsWith(home))
+            tilded.add("~" + p.substring(home.length()));
+         else
+            tilded.add(p);
+      }
+
+      // Group by parent directory, preserving order of first appearance
+      LinkedHashMap<String, ArrayList<String>> groups =
+         new LinkedHashMap<>();
+      ArrayList<String> ungrouped = new ArrayList<>();
+      for (String p : tilded) {
+         int lastSlash = p.lastIndexOf('/');
+         if (lastSlash > 0) {
+            String parent = p.substring(0, lastSlash);
+            String leaf = p.substring(lastSlash + 1);
+            groups.computeIfAbsent(parent, k -> new ArrayList<>())
+               .add(leaf);
+         } else {
+            ungrouped.add(p);
+         }
+      }
+
+      // Build display lines
+      ArrayList<String> result = new ArrayList<>();
+      for (Map.Entry<String, ArrayList<String>> e : groups.entrySet()) {
+         ArrayList<String> leaves = e.getValue();
+         if (leaves.size() == 1) {
+            result.add(e.getKey() + "/" + leaves.get(0));
+         } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append(e.getKey()).append("/{")
+              .append(String.join(", ", leaves))
+              .append("}");
+            result.add(sb.toString());
+         }
+      }
+      result.addAll(ungrouped);
+      return result;
    }
 
    // ---------------------------------------------------------------

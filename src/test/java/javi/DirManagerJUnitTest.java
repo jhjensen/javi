@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -325,5 +326,79 @@ class DirManagerJUnitTest {
       assertEquals(before + 1, dm.searchPathSize());
       dm.removeSearchDir(dir);
       assertEquals(before, dm.searchPathSize());
+   }
+
+   // --- compressPaths tests ---
+
+   @Test
+   void compressPathsEmpty() {
+      assertTrue(DirManager.compressPaths(new ArrayList<>()).isEmpty());
+      assertTrue(DirManager.compressPaths(null).isEmpty());
+   }
+
+   @Test
+   void compressPathsSinglePath() {
+      String home = System.getProperty("user.home");
+      List<String> result = DirManager.compressPaths(
+         List.of(home + "/projects/myapp"));
+      assertEquals(1, result.size());
+      assertEquals("~/projects/myapp", result.get(0));
+   }
+
+   @Test
+   void compressPathsGroupsSameParent() {
+      String home = System.getProperty("user.home");
+      List<String> paths = List.of(
+         home + "/gtools/blbrd_mitigate",
+         home + "/gtools/blbrd_common",
+         home + "/gtools/blbrd_ng");
+      List<String> result = DirManager.compressPaths(paths);
+      assertEquals(1, result.size());
+      assertEquals(
+         "~/gtools/{blbrd_mitigate, blbrd_common, blbrd_ng}",
+         result.get(0));
+   }
+
+   @Test
+   void compressPathsMixedParents() {
+      String home = System.getProperty("user.home");
+      List<String> paths = List.of(
+         home + "/gtools/blbrd_mitigate",
+         home + "/gtools/blbrd_common",
+         home + "/javi");
+      List<String> result = DirManager.compressPaths(paths);
+      assertEquals(2, result.size());
+      assertEquals(
+         "~/gtools/{blbrd_mitigate, blbrd_common}",
+         result.get(0));
+      assertEquals("~/javi", result.get(1));
+   }
+
+   @Test
+   void compressPathsNonHomePaths() {
+      List<String> paths = List.of(
+         "/opt/tools/a",
+         "/opt/tools/b",
+         "/var/log");
+      List<String> result = DirManager.compressPaths(paths);
+      assertEquals(2, result.size());
+      assertEquals("/opt/tools/{a, b}", result.get(0));
+      assertEquals("/var/log", result.get(1));
+   }
+
+   @Test
+   void compressPathsPreservesOrder() {
+      String home = System.getProperty("user.home");
+      List<String> paths = List.of(
+         home + "/alpha",
+         home + "/gtools/one",
+         home + "/beta",
+         home + "/gtools/two");
+      List<String> result = DirManager.compressPaths(paths);
+      // alpha and beta are under ~ (different parents from gtools)
+      // Order: ~/{alpha, beta} then ~/gtools/{one, two}
+      assertEquals(2, result.size());
+      assertEquals("~/{alpha, beta}", result.get(0));
+      assertEquals("~/gtools/{one, two}", result.get(1));
    }
 }
