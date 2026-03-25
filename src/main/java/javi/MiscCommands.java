@@ -38,6 +38,7 @@ public final class MiscCommands extends Rgroup {
       SHOW_KEYMAP, // 23: :keymap - show current keymap
       SAVE_MAP_KEYS, // 24: :savemapkeys - persist user bindings
       LOAD_MAP_KEYS, // 25: :loadmapkeys - load user bindings
+      FOLD,          // 26: :fold - detect/manage folds
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -70,6 +71,7 @@ public final class MiscCommands extends Rgroup {
          "keymap",           // 23
          "savemapkeys",      // 24
          "loadmapkeys",      // 25
+         "fold",             // 26
       };
       register(rnames);
    }
@@ -161,6 +163,10 @@ public final class MiscCommands extends Rgroup {
             return null;
          case LOAD_MAP_KEYS:
             loadMapKeys();
+            return null;
+         case FOLD:
+            doFold(fvc,
+               arg instanceof String ? (String) arg : null);
             return null;
 
          default:
@@ -645,7 +651,8 @@ public final class MiscCommands extends Rgroup {
       }
    }
 
-   private void zprocess(int rcount, FvContext fvc) throws InputException {
+   private void zprocess(int rcount, FvContext fvc)
+         throws InputException {
       int scchange = 0;
       float scrpos = 0.f;
 
@@ -654,7 +661,6 @@ public final class MiscCommands extends Rgroup {
          if (key >= '0' && key <= '9')
             scchange = scchange * 10 + (key & 0x0f);
          else {
-            // trace("scchange " + scchange);
             if (0 != scchange) {
                defheight = scchange;
                fvc.vi.setSizebyChar(-1, scchange);
@@ -673,6 +679,10 @@ public final class MiscCommands extends Rgroup {
                case '-':
                   scrpos = .99999f;
                   break outloop;
+               case 'o': case 'c': case 'a':
+               case 'R': case 'M':
+                  handleFoldCommand(key, fvc);
+                  return;
                default:
                   return;
             }
@@ -682,7 +692,64 @@ public final class MiscCommands extends Rgroup {
       fvc.placeline(fvc.inserty(), scrpos);
    }
 
+   private static void handleFoldCommand(
+         int key, FvContext fvc) {
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null || fm.isEmpty()) {
+         UI.reportMessage("no folds defined");
+         return;
+      }
+      int line = fvc.inserty();
+      switch (key) {
+         case 'o':
+            FoldModel.FoldRange fo = fm.openFold(line);
+            if (fo != null)
+               UI.reportMessage("opened fold at "
+                  + fo.startLine);
+            else
+               UI.reportMessage("no fold at line " + line);
+            break;
+         case 'c':
+            FoldModel.FoldRange fc = fm.closeFold(line);
+            if (fc != null)
+               UI.reportMessage("closed fold at "
+                  + fc.startLine);
+            else
+               UI.reportMessage("no fold at line " + line);
+            break;
+         case 'a':
+            FoldModel.FoldRange fa = fm.toggleFold(line);
+            if (fa != null)
+               UI.reportMessage("toggled fold at "
+                  + fa.startLine + " → "
+                  + (fa.collapsed ? "closed" : "open"));
+            else
+               UI.reportMessage("no fold at line " + line);
+            break;
+         case 'R':
+            fm.openAll();
+            UI.reportMessage("opened all folds");
+            break;
+         case 'M':
+            fm.closeAll();
+            UI.reportMessage("closed all folds");
+            break;
+         default:
+            break;
+      }
+   }
+
    private static Date lastredraw = new Date();
+
+   private static void doFold(FvContext fvc, String arg) {
+      FoldDetector.LineFetcher fetcher = lineNum ->
+         fvc.edvec.at(lineNum).toString();
+      int lineCount = fvc.edvec.readIn();
+      FoldModel fm =
+         FoldDetector.detectJsonFolds(fetcher, lineCount);
+      fvc.setFoldModel(fm);
+      UI.reportMessage(fm.statusSummary());
+   }
 
    // :mapkey <group> <key> <command> — bind a key in a keygroup at runtime
    // group: "move", "edit", or "keymap.move"/"keymap.edit" for overlays

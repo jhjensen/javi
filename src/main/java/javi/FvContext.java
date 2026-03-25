@@ -217,6 +217,7 @@ public final class FvContext<OType> implements Serializable {
    private boolean vis;
    private KeyMap keyMap; // buffer-specific keymap overlay, null for default
    private transient Object overrideFont;
+   private transient FoldModel foldModel;
 
    /**
     * Callback for providing per-buffer font overrides.
@@ -263,6 +264,16 @@ public final class FvContext<OType> implements Serializable {
     */
    void setKeyMap(KeyMap km) {
       this.keyMap = km;
+   }
+
+   /** Get the fold model for this context, or null if none. */
+   FoldModel getFoldModel() {
+      return foldModel;
+   }
+
+   /** Set the fold model for this context. */
+   void setFoldModel(FoldModel fm) {
+      this.foldModel = fm;
    }
 
    static int viewCount() {
