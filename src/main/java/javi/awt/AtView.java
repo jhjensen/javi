@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 
+import javi.CellAttr;
 import javi.DeTabber;
 
 final class AtView implements
@@ -33,6 +34,9 @@ final class AtView implements
 //private AttributedCharacterIterator aci;
 //private int aciOffset;
 //private int aciEnd;
+
+   private int[] termAttrs;
+   private HashMap<Attribute, Object> termMap;
 
    private static final long serialVersionUID = 1;
 
@@ -67,6 +71,7 @@ final class AtView implements
       olineStart = -1;
       olineEnd = -1;
       line2start = Integer.MAX_VALUE;
+      termAttrs = null;
       //aci = null;
    }
 
@@ -139,6 +144,15 @@ final class AtView implements
       emphFlag = flag;
    }
 
+   /**
+    * Sets the terminal attribute row for the current line.
+    *
+    * @param attrs packed CellAttr array, or null
+    */
+   void setTerminalAttrs(int[] attrs) {
+      termAttrs = attrs;
+   }
+
    int length() {
       return text.length();
    }
@@ -158,6 +172,30 @@ final class AtView implements
 //static final Color cursorColor  = Color.cyan;
 
    private static final Color lightBlue = new Color(0, 0, 128);
+
+   /** Standard ANSI 8-colour palette. */
+   private static final Color[] ANSI_COLORS = {
+      new Color(0, 0, 0),       // 0: black
+      new Color(205, 0, 0),     // 1: red
+      new Color(0, 205, 0),     // 2: green
+      new Color(205, 205, 0),   // 3: yellow
+      new Color(0, 0, 238),     // 4: blue
+      new Color(205, 0, 205),   // 5: magenta
+      new Color(0, 205, 205),   // 6: cyan
+      new Color(229, 229, 229), // 7: white
+   };
+
+   /** Bright ANSI 8-colour palette (used with bold). */
+   private static final Color[] ANSI_BRIGHT = {
+      new Color(127, 127, 127), // 0: bright black
+      new Color(255, 0, 0),     // 1: bright red
+      new Color(0, 255, 0),     // 2: bright green
+      new Color(255, 255, 0),   // 3: bright yellow
+      new Color(92, 92, 255),   // 4: bright blue
+      new Color(255, 0, 255),   // 5: bright magenta
+      new Color(0, 255, 255),   // 6: bright cyan
+      new Color(255, 255, 255), // 7: bright white
+   };
 
    AtView(Font font) {
       //trace("this = " + this + " font = " + font);
@@ -181,6 +219,7 @@ final class AtView implements
       gyu.put(TextAttribute.BACKGROUND, paraBackground);
       gy = new HashMap<>(by);
       gy.put(TextAttribute.BACKGROUND, paraBackground);
+      termMap = new HashMap<>(by);
       text = "";
 
    }
@@ -251,6 +290,11 @@ final class AtView implements
    }
 
    public Map<Attribute,  Object> getAttributes() {
+      if (termAttrs != null) {
+         int attr = pos < termAttrs.length
+            ? termAttrs[pos] : CellAttr.DEFAULT;
+         return buildTermMap(attr);
+      }
       return
          olineEnd == -1
          ? pos  <  highStart
@@ -280,6 +324,8 @@ final class AtView implements
    }
 
    public int getRunLimit() {
+      if (termAttrs != null)
+         return termRunLimit();
       int retval = leastgtpos(text.length(), olineEnd, pos);
       retval = leastgtpos(retval, highStart, pos);
       retval = leastgtpos(retval, highFinish, pos);
@@ -291,6 +337,8 @@ final class AtView implements
 
 //        Returns the index of the first character following the run with respect to all attributes containing the current character.
    public int getRunLimit(AttributedCharacterIterator.Attribute attribute) {
+      if (termAttrs != null)
+         return termRunLimit();
       if (attribute == TextAttribute.BACKGROUND) {
          int retval = leastgtpos(text.length(), olineEnd, pos);
          retval = leastgtpos(retval, highStart, pos);
@@ -318,6 +366,62 @@ final class AtView implements
 
    public int getRunStart(Set attributes) {
       throw new RuntimeException("getRunStart unimplemented");
+   }
+
+   /**
+    * Builds the terminal attribute map for the current CellAttr.
+    *
+    * @param attr packed CellAttr value
+    * @return reusable attribute map for AWT rendering
+    */
+   private Map<Attribute, Object> buildTermMap(int attr) {
+      boolean bold = CellAttr.isBold(attr);
+      boolean rev = CellAttr.isReverse(attr);
+      int fg = CellAttr.fgColor(attr);
+      int bg = CellAttr.bgColor(attr);
+
+      Color fgc = fg >= 0 && fg < ANSI_COLORS.length
+         ? (bold ? ANSI_BRIGHT[fg] : ANSI_COLORS[fg])
+         : (bold ? Color.white : foreground);
+      Color bgc = bg >= 0 && bg < ANSI_COLORS.length
+         ? ANSI_COLORS[bg] : background;
+
+      if (rev) {
+         Color tmp = fgc;
+         fgc = bgc;
+         bgc = tmp;
+      }
+
+      termMap.put(TextAttribute.FOREGROUND, fgc);
+      termMap.put(TextAttribute.BACKGROUND, bgc);
+
+      if (CellAttr.isUnderline(attr) || emphFlag)
+         termMap.put(TextAttribute.UNDERLINE,
+            TextAttribute.UNDERLINE_LOW_DOTTED);
+      else
+         termMap.remove(TextAttribute.UNDERLINE);
+
+      return termMap;
+   }
+
+   /**
+    * Returns the end of the current terminal attribute run.
+    *
+    * @return next position where the CellAttr changes
+    */
+   private int termRunLimit() {
+      int cur = pos < termAttrs.length
+         ? termAttrs[pos] : CellAttr.DEFAULT;
+      int limit = pos + 1;
+      int maxLen = text.length();
+      while (limit < maxLen) {
+         int next = limit < termAttrs.length
+            ? termAttrs[limit] : CellAttr.DEFAULT;
+         if (next != cur)
+            break;
+         limit++;
+      }
+      return limit;
    }
 
 }

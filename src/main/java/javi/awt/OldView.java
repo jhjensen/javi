@@ -35,6 +35,7 @@ import javi.MarkEvent;
 import javi.PosEvent;
 import javi.Position;
 import javi.ShellManager;
+import javi.ScreenAttributes;
 import javi.UI;
 import javi.View;
 import javi.ChangeOpt;
@@ -1027,6 +1028,9 @@ final class OldView extends AwtView {
          start = fillheader(gr, start);
          end = filltrailer(gr, end);
 
+         ScreenAttributes scrAttrs =
+            gettext().getTerminalAttributes();
+
          // trace("paint2 end = " + end + " firstline = " + screenFirstLine());
          for (int index = start,
                tindex = index + screenFirstLine();
@@ -1035,6 +1039,10 @@ final class OldView extends AwtView {
             imageg.fillRect(0, 0, pixelWidth, charheight);
             // trace("setting text " + gettext().at(tindex).toString());
             atIt.setText(gettext().at(tindex).toString());
+
+            if (scrAttrs != null)
+               atIt.setTerminalAttrs(
+                  scrAttrs.getRow(tindex));
 
             if ((index == screenposy)) {
                atIt.emphasize(true);

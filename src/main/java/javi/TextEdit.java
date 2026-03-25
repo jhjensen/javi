@@ -94,6 +94,16 @@ public class TextEdit<OType> extends EditContainer<OType> {
       super(e, inarr, root, prop);
    }
 
+   /**
+    * Returns the per-character terminal attribute grid, or null
+    * if this buffer is not a terminal emulator.
+    *
+    * @return screen attributes, or null for non-terminal buffers
+    */
+   public ScreenAttributes getTerminalAttributes() {
+      return null;
+   }
+
    final Position inserttext(String iStr, int xstart, int ystart) {
       //trace("adding text:"+iStr);
       //trace("xstart = " + xstart + " ystart = " +ystart);

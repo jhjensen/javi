@@ -175,6 +175,11 @@ class Vt100 extends TextEdit<String> {
       return ecscreen.screenAttrs;
    }
 
+   @Override
+   public ScreenAttributes getTerminalAttributes() {
+      return ecscreen.screenAttrs;
+   }
+
    public final void startHandle(FvContext fvc) {
       //trace("startHandle " + fvc);
       if (null != fvc) {
