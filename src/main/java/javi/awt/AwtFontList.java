@@ -8,6 +8,7 @@ import javi.ClassConverter;
 import javi.Command;
 import javi.DirEdit;
 import javi.FileDescriptor;
+import javi.ShellManager;
 import javi.FileProperties;
 import javi.FvContext;
 import javi.InputException;
@@ -136,6 +137,8 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       Command.execCmdList(); // pickup font commands
       FvContext.setOverrideFontProvider(te -> {
          if (te instanceof DirEdit)
+            return getMonoFont(null);
+         if (ShellManager.getInstance().isShellBuffer(te))
             return getMonoFont(null);
          return null;
       });

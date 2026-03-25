@@ -105,6 +105,9 @@ class Vt100 extends TextEdit<String> {
    /** Whether cursor is visible (DECTCEM, mode 25). Default is visible. */
    private volatile boolean cursorVisible = true;
 
+   /** Last OSC title set by the terminal (e.g. bash prompt). */
+   private volatile String oscTitle;
+
    /**
     * Creates a VT100 terminal with auto-detected charset.
     *
@@ -150,6 +153,14 @@ class Vt100 extends TextEdit<String> {
     */
    public Charset getCharset() {
       return charset;
+   }
+
+   /**
+    * Returns the last OSC title set by the terminal process,
+    * or null if no title has been set.
+    */
+   String getOscTitle() {
+      return oscTitle;
    }
 
    /**
@@ -821,6 +832,11 @@ class Vt100 extends TextEdit<String> {
 
       void setCursorVisible(boolean visible) {
          Vt100.this.setCursorVisible(visible);
+      }
+
+      @Override
+      void setTitle(String title) {
+         oscTitle = title;
       }
 
       void respondDeviceAttributes(StringBuilder sb) {

@@ -440,6 +440,17 @@ public final class ShellSession {
       if (now - lastLabelUpdate < LABEL_UPDATE_INTERVAL_MS)
          return;
       lastLabelUpdate = now;
+      // Prefer OSC title from terminal escape sequences (bash, zsh,
+      // etc. set this via ESC]0;title BEL)
+      String title = vt100.getOscTitle();
+      if (null != title && !title.isEmpty()) {
+         if (!title.equals(name)) {
+            trace("ShellSession " + id + ": OSC title update '"
+               + name + "' -> '" + title + "'");
+            name = title;
+         }
+         return;
+      }
       try {
          String cmd = getLeafProcessName(process.pid());
          if (null != cmd && !cmd.isEmpty()) {
