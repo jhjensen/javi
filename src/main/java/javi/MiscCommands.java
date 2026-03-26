@@ -320,8 +320,10 @@ public final class MiscCommands extends Rgroup {
     * @param mgr the ShellManager instance
     */
    static void refreshShellPositionList(ShellManager mgr) {
-      if (mgr.getSessionCount() == 0)
+      if (mgr.getSessionCount() == 0) {
+         PosListList.Cmd.removePositionIoc("shells");
          return;
+      }
       ShellListIoc ioc = new ShellListIoc(mgr);
       PosListList.Cmd.replacePositionIoc("shells", ioc);
    }

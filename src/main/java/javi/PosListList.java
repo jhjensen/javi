@@ -349,20 +349,28 @@ public final class PosListList extends TextList<Position> {
        */
       public static TextEdit<Position> replacePositionIoc(
             String name, IoConverter<Position> ioc) {
-         // Remove existing entry with matching name
+         removePositionIoc(name);
+         return addPositionIoc(ioc);
+      }
+
+      /**
+       * Removes a named position list entry if it exists.
+       *
+       * @param name the name to match
+       */
+      public static void removePositionIoc(String name) {
          for (int i = 1; i < inst.finish(); i++) {
             TextEdit<Position> entry = inst.at(i);
             if (name.equals(entry.getName())) {
                try {
                   FvContext.dispose(entry, inst);
                } catch (Exception e) {
-                  trace("replacePositionIoc dispose: " + e);
+                  trace("removePositionIoc: " + e);
                }
                inst.remove(i, 1);
                break;
             }
          }
-         return addPositionIoc(ioc);
       }
 
       static void flush() throws IOException {

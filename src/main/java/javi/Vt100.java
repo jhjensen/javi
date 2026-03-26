@@ -622,11 +622,21 @@ class Vt100 extends TextEdit<String> {
                case 22: attrBold = false; break;
                case 24: attrUnderline = false; break;
                case 27: attrReverse = false; break;
+               case 38: // Extended foreground color
+                  i = parseExtendedColor(params, i, true);
+                  break;
+               case 48: // Extended background color
+                  i = parseExtendedColor(params, i, false);
+                  break;
                default:
                   if (p >= 30 && p <= 37)
                      attrFgColor = p - 30;
                   else if (p >= 40 && p <= 47)
                      attrBgColor = p - 40;
+                  else if (p >= 90 && p <= 97)
+                     attrFgColor = p - 90 + 8;
+                  else if (p >= 100 && p <= 107)
+                     attrBgColor = p - 100 + 8;
                   else if (p == 39)
                      attrFgColor = -1;
                   else if (p == 49)
@@ -635,6 +645,68 @@ class Vt100 extends TextEdit<String> {
             }
          }
          refreshCurrentAttr();
+      }
+
+      /**
+       * Parses extended color sequences (256-color and true color).
+       *
+       * <p>Handles SGR 38;5;N (256-color FG), 48;5;N (256-color BG),
+       * 38;2;R;G;B (true color FG), 48;2;R;G;B (true color BG).</p>
+       *
+       * @param params the SGR parameter array
+       * @param idx current index (pointing to 38 or 48)
+       * @param isFg true for foreground, false for background
+       * @return the updated index past consumed params
+       */
+      private int parseExtendedColor(int[] params, int idx,
+            boolean isFg) {
+         if (idx + 2 < params.length && params[idx + 1] == 5) {
+            // 256-color: 38;5;N or 48;5;N
+            int color = params[idx + 2];
+            if (color >= 0 && color <= 254) {
+               if (isFg)
+                  attrFgColor = color;
+               else
+                  attrBgColor = color;
+            }
+            return idx + 2;
+         } else if (idx + 4 < params.length
+               && params[idx + 1] == 2) {
+            // True color: 38;2;R;G;B or 48;2;R;G;B
+            // Approximate to nearest 256-color palette entry
+            int r = params[idx + 2];
+            int g = params[idx + 3];
+            int b = params[idx + 4];
+            int approx = approxTrueColor(r, g, b);
+            if (isFg)
+               attrFgColor = approx;
+            else
+               attrBgColor = approx;
+            return idx + 4;
+         }
+         return idx;
+      }
+
+      /**
+       * Approximates an RGB true color to the nearest 256-color
+       * palette index. Uses the 6x6x6 color cube (indices 16-231)
+       * or the grayscale ramp (indices 232-254).
+       */
+      private static int approxTrueColor(int r, int g, int b) {
+         r = Math.max(0, Math.min(255, r));
+         g = Math.max(0, Math.min(255, g));
+         b = Math.max(0, Math.min(255, b));
+         // Check if grayscale (r ~= g ~= b)
+         if (r == g && g == b) {
+            if (r < 8) return 16;  // black in cube
+            if (r > 248) return 231;  // white in cube
+            return 232 + (r - 8) / 10;
+         }
+         // Map to 6x6x6 color cube
+         int ri = (r * 5 + 127) / 255;
+         int gi = (g * 5 + 127) / 255;
+         int bi = (b * 5 + 127) / 255;
+         return 16 + 36 * ri + 6 * gi + bi;
       }
 
       void incX(int amount, StringBuilder sb) {

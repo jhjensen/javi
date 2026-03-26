@@ -380,11 +380,8 @@ final class AtView implements
       int fg = CellAttr.fgColor(attr);
       int bg = CellAttr.bgColor(attr);
 
-      Color fgc = fg >= 0 && fg < ANSI_COLORS.length
-         ? (bold ? ANSI_BRIGHT[fg] : ANSI_COLORS[fg])
-         : (bold ? Color.white : foreground);
-      Color bgc = bg >= 0 && bg < ANSI_COLORS.length
-         ? ANSI_COLORS[bg] : background;
+      Color fgc = resolveColor(fg, bold, true);
+      Color bgc = resolveColor(bg, false, false);
 
       if (rev) {
          Color tmp = fgc;
@@ -402,6 +399,37 @@ final class AtView implements
          termMap.remove(TextAttribute.UNDERLINE);
 
       return termMap;
+   }
+
+   /**
+    * Resolves a 256-color palette index to an AWT Color.
+    *
+    * @param color ANSI color index (-1=default, 0-255=palette)
+    * @param bold true if bold attribute is active
+    * @param isFg true for foreground, false for background
+    * @return the resolved Color
+    */
+   private Color resolveColor(int color, boolean bold, boolean isFg) {
+      if (color < 0)
+         return isFg ? (bold ? Color.white : foreground) : background;
+      if (color < 8)
+         return bold && isFg ? ANSI_BRIGHT[color]
+            : ANSI_COLORS[color];
+      if (color < 16)
+         return ANSI_BRIGHT[color - 8];
+      if (color < 232) {
+         // 6x6x6 color cube (indices 16-231)
+         int idx = color - 16;
+         int ri = idx / 36;
+         int gi = (idx % 36) / 6;
+         int bi = idx % 6;
+         return new Color(ri > 0 ? 55 + ri * 40 : 0,
+            gi > 0 ? 55 + gi * 40 : 0,
+            bi > 0 ? 55 + bi * 40 : 0);
+      }
+      // Grayscale ramp (indices 232-255)
+      int gray = 8 + (color - 232) * 10;
+      return new Color(gray, gray, gray);
    }
 
    /**
