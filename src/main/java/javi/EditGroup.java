@@ -591,6 +591,15 @@ final class EditGroup extends Rgroup {
 
          case 'd':
             fvc.edvec.finish();
+            FoldModel ddFm = fvc.getFoldModel();
+            if (ddFm != null) {
+               FoldModel.FoldRange ddFold =
+                  ddFm.findFoldAtStart(fvc.inserty());
+               if (ddFold != null && ddFold.collapsed) {
+                  count = ddFold.span();
+                  ddFm.removeFold(fvc.inserty());
+               }
+            }
             if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
                count = fvc.edvec.finish() - 1;
             Buffers.deleted(bufid, fvc.edvec.remove(fvc.inserty(), count));

@@ -485,4 +485,92 @@ class FoldModelJUnitTest {
       // From 2 → prev is 1
       assertEquals(1, model.prevVisible(2));
    }
+
+   // --- Fold span for dd support ---
+
+   @Test
+   void foldSpanCoversEntireRange() {
+      model.addFold(5, 15);
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertEquals(11, f.span()); // lines 5-15 inclusive
+   }
+
+   @Test
+   void removeFoldOnDeletedRange() {
+      model.addFold(5, 15);
+      model.addFold(20, 30);
+      model.closeAll();
+      // Simulate dd on fold: get span, remove fold
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertTrue(f.collapsed);
+      assertEquals(11, f.span());
+      model.removeFold(5);
+      assertEquals(1, model.size());
+      assertNull(model.findFoldAtStart(5));
+      assertNotNull(model.findFoldAtStart(20));
+   }
+
+   @Test
+   void findFoldAtStartReturnsNullForInterior() {
+      model.addFold(5, 15);
+      assertNull(model.findFoldAtStart(10));
+      assertNotNull(model.findFoldAtStart(5));
+   }
+
+   @Test
+   void ddOnNonFoldLineNoExpansion() {
+      model.addFold(5, 15);
+      // Line 3 is not a fold start
+      assertNull(model.findFoldAtStart(3));
+   }
+
+   @Test
+   void ddOnOpenFoldNoExpansion() {
+      model.addFold(5, 15);
+      // Fold is open (not collapsed)
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertFalse(f.collapsed);
+   }
+
+   // --- Visible traversal for screeny support ---
+
+   @Test
+   void nextVisibleWalkCountMatchesVisibleLines() {
+      // 30-line file, fold at 5-15 (collapsed), fold at 20-25 (collapsed)
+      model.addFold(5, 15);
+      model.addFold(20, 25);
+      model.closeAll();
+
+      // Walk forward from line 1, counting visible steps
+      int line = 1;
+      int steps = 0;
+      while (line < 30) {
+         line = model.nextVisible(line);
+         steps++;
+      }
+      // Lines: 1,2,3,4, 5(fold), 16,17,18,19, 20(fold), 26,27,28,29
+      assertEquals(14, steps);
+   }
+
+   @Test
+   void prevVisibleWalkCountMatchesVisibleLines() {
+      model.addFold(5, 15);
+      model.addFold(20, 25);
+      model.closeAll();
+
+      // Walk backward from line 29, counting visible steps
+      int line = 29;
+      int steps = 0;
+      while (line > 1) {
+         line = model.prevVisible(line);
+         if (line < 1)
+            break;
+         steps++;
+      }
+      // 29,28,27,26, 20(fold), 19,18,17,16, 5(fold), 4,3,2,1
+      assertEquals(13, steps);
+   }
 }

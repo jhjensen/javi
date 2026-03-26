@@ -647,8 +647,11 @@ final class OldView extends AwtView {
    // returns amount cursor needs to be adjusted
    public int screeny(int amount) {
       // trace("screeny " + amount);
-      // move the screen and if necessary the cursor
+      FoldModel fm = getActiveFoldModel();
+      if (fm != null)
+         return screenyFolded(amount, fm);
 
+      // move the screen and if necessary the cursor
       if (screenFirstLine() + amount <= -screenSize + 1)
          if (screenFirstLine() <= 1)
             amount = 0;
@@ -669,8 +672,42 @@ final class OldView extends AwtView {
             return amount;
       }
       return 0;
-      // trace("exit screensize = " + screenSize + " fcontext.screenFirstLine()= " +
-      // fcontext.screenFirstLine());
+   }
+
+   /**
+    * Fold-aware scrolling. Walks visible lines instead of
+    * raw buffer lines for boundary checks and scroll amount.
+    */
+   private int screenyFolded(int amount, FoldModel fm) {
+      int topBuf = computeTopBufLine(fm);
+      int numlines = gettext().readIn();
+      int newTop = topBuf;
+
+      if (amount > 0) {
+         for (int i = 0; i < amount; i++) {
+            int next = fm.nextVisible(newTop);
+            if (next >= numlines)
+               break;
+            newTop = next;
+         }
+      } else {
+         for (int i = 0; i > amount; i--) {
+            int prev = fm.prevVisible(newTop);
+            if (prev < 1)
+               break;
+            newTop = prev;
+         }
+      }
+
+      if (newTop == topBuf)
+         return 0;
+
+      int visAmount =
+         visualLineDelta(topBuf, newTop, fm);
+      moveScreen(visAmount);
+      if (screenposy >= screenSize || screenposy < 0)
+         return visAmount;
+      return 0;
    }
 
    public void setSizebyChar(int xchar, int ychar) {
