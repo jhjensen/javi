@@ -267,7 +267,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    /** Get the fold model for this context, or null if none. */
-   FoldModel getFoldModel() {
+   public FoldModel getFoldModel() {
       return foldModel;
    }
 
@@ -681,18 +681,50 @@ public final class FvContext<OType> implements Serializable {
    }
 
    void cursoryabs(int y) {
-      cursory(y - fileposy);
+      FoldModel fm = foldModel;
+      if (fm != null && !fm.isEmpty() && fm.isFolded(y)) {
+         FoldModel.FoldRange f = fm.findFold(y);
+         if (f != null && f.collapsed)
+            y = f.startLine;
+      }
+      int newy = inrange(y, 1, edvec.readIn() - 1);
+      fileposy = newy;
+      if (vis) {
+         int newx = vi.yCursorChanged(newy);
+         fileposx = inrange(newx,
+            0, edvec.at(fileposy).toString().length());
+         if (fileposx != newx)
+            UI.popError("cursor wrong permission fileposx "
+               + fileposx + " newx " + newx, null);
+      }
    }
 
    void cursory(int yoffset) {
       // trace("cursory yoffset = " + yoffset + " fvc " + this);
-      // cursor(0,yoffset);
-
-      int newy = inrange(yoffset + fileposy, 1, edvec.readIn() - 1);
+      FoldModel fm = foldModel;
+      int newy;
+      if (fm != null && !fm.isEmpty()) {
+         newy = fileposy;
+         int dir = yoffset > 0 ? 1 : -1;
+         int remaining = Math.abs(yoffset);
+         while (remaining > 0) {
+            int next = dir > 0
+               ? fm.nextVisible(newy)
+               : fm.prevVisible(newy);
+            if (next < 1 || next >= edvec.readIn())
+               break;
+            newy = next;
+            remaining--;
+         }
+      } else {
+         newy = yoffset + fileposy;
+      }
+      newy = inrange(newy, 1, edvec.readIn() - 1);
       fileposy = newy;
       if (vis) {
          int newx = vi.yCursorChanged(newy);
-         fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
+         fileposx = inrange(newx,
+            0, edvec.at(fileposy).toString().length());
          if (fileposx != newx)
             UI.popError("cursor wrong permission fileposx "
                   + fileposx + " newx " + newx, null);

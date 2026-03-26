@@ -377,4 +377,112 @@ class FoldModelJUnitTest {
          FoldDetector.detectJsonFolds(fetcher, 1);
       assertTrue(fm.isEmpty());
    }
+
+   // --- nextVisible / prevVisible ---
+
+   @Test
+   void nextVisibleNoFolds() {
+      assertEquals(6, model.nextVisible(5));
+   }
+
+   @Test
+   void nextVisibleAtCollapsedFoldStart() {
+      model.addFold(5, 10);
+      model.closeAll();
+      // At fold start → skip to endLine + 1
+      assertEquals(11, model.nextVisible(5));
+   }
+
+   @Test
+   void nextVisibleBeforeCollapsedFold() {
+      model.addFold(5, 10);
+      model.closeAll();
+      // Line 4 → next is 5 (fold start, visible)
+      assertEquals(5, model.nextVisible(4));
+   }
+
+   @Test
+   void nextVisibleAtOpenFoldStart() {
+      model.addFold(5, 10);
+      // Open fold → normal increment
+      assertEquals(6, model.nextVisible(5));
+   }
+
+   @Test
+   void nextVisiblePastCollapsedFold() {
+      model.addFold(5, 10);
+      model.closeAll();
+      // Line after fold
+      assertEquals(12, model.nextVisible(11));
+   }
+
+   @Test
+   void prevVisibleNoFolds() {
+      assertEquals(4, model.prevVisible(5));
+   }
+
+   @Test
+   void prevVisibleIntoCollapsedFold() {
+      model.addFold(5, 10);
+      model.closeAll();
+      // Line 11 → prev is 10, inside fold → snap to 5
+      assertEquals(5, model.prevVisible(11));
+   }
+
+   @Test
+   void prevVisibleAtFoldStart() {
+      model.addFold(5, 10);
+      model.closeAll();
+      // Line 5 → prev is 4 (not in fold)
+      assertEquals(4, model.prevVisible(5));
+   }
+
+   @Test
+   void prevVisibleBeforeStart() {
+      assertEquals(0, model.prevVisible(1));
+   }
+
+   @Test
+   void prevVisibleOpenFold() {
+      model.addFold(5, 10);
+      // Not collapsed → normal prev
+      assertEquals(9, model.prevVisible(10));
+   }
+
+   // --- foldSummaryText ---
+
+   @Test
+   void foldSummaryTextFormat() {
+      String s = FoldModel.foldSummaryText(
+         5, 15, "   function foo() {");
+      assertEquals("+--  10 lines: function foo() {", s);
+   }
+
+   // --- Navigation through multiple folds ---
+
+   @Test
+   void nextVisibleSkipsTwoConsecutiveFolds() {
+      model.addFold(2, 5);
+      model.addFold(6, 9);
+      model.closeAll();
+      // From line 1 → 2 (fold start)
+      assertEquals(2, model.nextVisible(1));
+      // From fold1 start → fold1 end+1 = 6 (fold2 start)
+      assertEquals(6, model.nextVisible(2));
+      // From fold2 start → fold2 end+1 = 10
+      assertEquals(10, model.nextVisible(6));
+   }
+
+   @Test
+   void prevVisibleThroughTwoFolds() {
+      model.addFold(2, 5);
+      model.addFold(6, 9);
+      model.closeAll();
+      // From 10 → prev is 9, inside fold2 → snap to 6
+      assertEquals(6, model.prevVisible(10));
+      // From 6 → prev is 5, inside fold1 → snap to 2
+      assertEquals(2, model.prevVisible(6));
+      // From 2 → prev is 1
+      assertEquals(1, model.prevVisible(2));
+   }
 }

@@ -22,9 +22,9 @@ public final class FoldModel {
     */
    public static final class FoldRange
          implements Comparable<FoldRange> {
-      final int startLine;
-      final int endLine;
-      boolean collapsed;
+      public final int startLine;
+      public final int endLine;
+      public boolean collapsed;
 
       FoldRange(int start, int end) {
          this.startLine = start;
@@ -189,6 +189,51 @@ public final class FoldModel {
          visible++;
       }
       return visible;
+   }
+
+   /**
+    * Return the next visible buffer line after bufLine.
+    * If bufLine is the start of a collapsed fold, skips to
+    * endLine + 1. If the next line is inside a collapsed
+    * fold, skips past it.
+    */
+   public int nextVisible(int bufLine) {
+      FoldRange f = findFoldAtStart(bufLine);
+      if (f != null && f.collapsed)
+         return f.endLine + 1;
+      int next = bufLine + 1;
+      FoldRange enc = findFold(next);
+      if (enc != null && enc.collapsed && next > enc.startLine)
+         return enc.endLine + 1;
+      return next;
+   }
+
+   /**
+    * Return the previous visible buffer line before bufLine.
+    * If the previous line is inside a collapsed fold, jumps
+    * to the fold's start line.
+    *
+    * @return previous visible line, or 0 if before start
+    */
+   public int prevVisible(int bufLine) {
+      int prev = bufLine - 1;
+      if (prev < 1)
+         return 0;
+      FoldRange f = findFold(prev);
+      if (f != null && f.collapsed && prev > f.startLine)
+         return f.startLine;
+      return prev;
+   }
+
+   /**
+    * Build fold summary text for display when a fold is
+    * collapsed. Format: "+--  N lines: first-line-text".
+    */
+   public static String foldSummaryText(
+         int startLine, int endLine, String firstLineText) {
+      int count = endLine - startLine;
+      String trimmed = firstLineText.trim();
+      return "+--  " + count + " lines: " + trimmed;
    }
 
    /** Returns unmodifiable view of all folds. */

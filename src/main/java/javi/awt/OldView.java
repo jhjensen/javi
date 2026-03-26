@@ -30,6 +30,7 @@ import static javi.ChangeOpt.Opcode.REDRAW;
 import javi.DeTabber;
 import javi.EventQueue;
 import javi.FileList;
+import javi.FoldModel;
 import javi.FvContext;
 import javi.MarkEvent;
 import javi.PosEvent;
@@ -297,7 +298,16 @@ final class OldView extends AwtView {
       // trace(" newY " + newY);
 
       int yChange = newY - getfileY();
-      screenposy += yChange;
+      FoldModel fm = getActiveFoldModel();
+      int visYChange;
+      if (fm != null) {
+         visYChange =
+            visualLineDelta(getfileY(), newY, fm);
+         screenposy += visYChange;
+      } else {
+         visYChange = yChange;
+         screenposy += yChange;
+      }
 
       // trace("cursorchanged " + yChange + " screenSaveX " + saveScreenX);
       String oline = gettext().at(newY).toString();
@@ -334,7 +344,7 @@ final class OldView extends AwtView {
 
       // trace("nXchange = " + nXchange + " charoff " + charoff + " newx " + newx);
       setFilePos(nXchange + getfileX(), newY);
-      fixcursor(nXchange, yChange, newx);
+      fixcursor(nXchange, visYChange, newx);
       return getfileX();
    }
 
@@ -342,7 +352,16 @@ final class OldView extends AwtView {
 
       // trace(" newX " + newX + " newY " + newY);
       int yChange = newY - getfileY();
-      screenposy += yChange;
+      FoldModel fm = getActiveFoldModel();
+      int visYChange;
+      if (fm != null) {
+         visYChange =
+            visualLineDelta(getfileY(), newY, fm);
+         screenposy += visYChange;
+      } else {
+         visYChange = yChange;
+         screenposy += yChange;
+      }
 
       int newx = 0;
 
@@ -368,7 +387,7 @@ final class OldView extends AwtView {
       setFilePos(newX, newY);
       // trace(" saveScreenX changed " + saveScreenX);
 
-      fixcursor(0, yChange, newx);
+      fixcursor(0, visYChange, newx);
    }
 
    public void refresh(Graphics gr) {
@@ -433,6 +452,65 @@ final class OldView extends AwtView {
    public int screenFirstLine() {
       // trace( "sfl " + fileposy + " screenposy " + screenposy);
       return getfileY() - screenposy;
+   }
+
+   /**
+    * Compute the buffer line at the top of the screen when
+    * folds are active. Walks backward from the cursor by
+    * screenposy visible lines.
+    */
+   private int computeTopBufLine(FoldModel fm) {
+      int line = getfileY();
+      int rows = screenposy;
+      while (rows > 0 && line > 1) {
+         line = fm.prevVisible(line);
+         if (line < 1)
+            break;
+         rows--;
+      }
+      return Math.max(1, line);
+   }
+
+   /**
+    * Count visible lines between two buffer positions using
+    * fold-aware iteration. Returns positive when toLine is
+    * below fromLine, negative when above.
+    */
+   private static int visualLineDelta(
+         int fromLine, int toLine, FoldModel fm) {
+      if (fromLine == toLine)
+         return 0;
+      int delta = 0;
+      if (toLine > fromLine) {
+         int line = fromLine;
+         while (line < toLine) {
+            line = fm.nextVisible(line);
+            delta++;
+            if (line >= toLine)
+               break;
+         }
+      } else {
+         int line = fromLine;
+         while (line > toLine) {
+            line = fm.prevVisible(line);
+            delta--;
+            if (line <= toLine)
+               break;
+         }
+      }
+      return delta;
+   }
+
+   /** Get the fold model for the current view context. */
+   private FoldModel getActiveFoldModel() {
+      FvContext<?> fvc =
+         FvContext.findContext(OldView.this, gettext());
+      if (fvc == null)
+         return null;
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null || fm.isEmpty())
+         return null;
+      return fm;
    }
 
    private void moveScreen(int amount) {
@@ -536,12 +614,26 @@ final class OldView extends AwtView {
    }
 
    Position mousepos(MouseEvent event) {
-      int ypos = event.getY() / charheight;
-      ypos = ypos - screenposy + getfileY();
-      if (ypos < 1)
-         ypos = 1;
-      else if (!gettext().containsNow(ypos))
-         ypos = gettext().readIn() - 1;
+      int screenRow = event.getY() / charheight;
+      int ypos;
+      FoldModel fm = getActiveFoldModel();
+      if (fm != null) {
+         int topBuf = computeTopBufLine(fm);
+         int tindex = topBuf;
+         int numlines = gettext().readIn();
+         for (int row = 0; row < screenRow
+               && tindex < numlines; row++)
+            tindex = fm.nextVisible(tindex);
+         ypos = Math.min(tindex, numlines - 1);
+         if (ypos < 1)
+            ypos = 1;
+      } else {
+         ypos = screenRow - screenposy + getfileY();
+         if (ypos < 1)
+            ypos = 1;
+         else if (!gettext().containsNow(ypos))
+            ypos = gettext().readIn() - 1;
+      }
       // figure out where in the line x is
       String line = gettext().at(ypos).toString();
       // trace("xoffset " + xoffset + " getX " + event.getX());
@@ -1032,61 +1124,130 @@ final class OldView extends AwtView {
       }
 
       void paintLines(Graphics gr, int start, int end) {
-         // trace("paintLines start = " + start + " end " + end);
-         // Thread.dumpStack();
-         // trace("imageg " + imageg);
          assert start >= 0 && end <= screenSize && start < end;
          if (start < 0 || end > screenSize || start >= end)
-            throw new RuntimeException("start = " + start + " end = " + end
-                  + " screenSize = " + screenSize); // should never happen
+            throw new RuntimeException("start = " + start
+               + " end = " + end
+               + " screenSize = " + screenSize);
+
+         FoldModel fm = getActiveFoldModel();
+         if (fm != null) {
+            paintLinesFolded(gr, start, end, fm);
+            return;
+         }
 
          start = fillheader(gr, start);
          end = filltrailer(gr, end);
 
-         ScreenAttributes scrAttrs =
-            gettext().getTerminalAttributes();
-
-         // trace("paint2 end = " + end + " firstline = " + screenFirstLine());
          for (int index = start,
                tindex = index + screenFirstLine();
                index < end; index++, tindex++) {
-            imageg.setColor(AtView.background);
-            imageg.fillRect(0, 0, pixelWidth, charheight);
-            // trace("setting text " + gettext().at(tindex).toString());
-            atIt.setText(gettext().at(tindex).toString());
+            paintOneLine(gr, index, tindex);
+         }
+      }
 
-            if (scrAttrs != null)
-               atIt.setTerminalAttrs(
-                  scrAttrs.getRow(tindex));
+      /**
+       * Render a single buffer line at the given screen row.
+       * Handles cursor emphasis, marks, detab, and blit.
+       */
+      private void paintOneLine(
+            Graphics gr, int index, int tindex) {
+         imageg.setColor(AtView.background);
+         imageg.fillRect(0, 0, pixelWidth, charheight);
+         atIt.setText(gettext().at(tindex).toString());
 
-            if ((index == screenposy)) {
-               atIt.emphasize(true);
-               String iString = getInsertString();
-               if (null != iString)
-                  atIt.addOlineText(iString, getfileX(), isOverwrite());
-            }
+         ScreenAttributes scrAttrs =
+            gettext().getTerminalAttributes();
+         if (scrAttrs != null)
+            atIt.setTerminalAttrs(
+               scrAttrs.getRow(tindex));
 
-            if (0 != atIt.length()) {
-               MarkInfo mpmark = getPmark();
-               if (null != mpmark.getMark()) {
-                  // trace("highlight tindex = " + tindex + " pmark " + pmark);
-                  // trace("hilight " + pmark.starth(tindex) + "," + pmark.endh(tindex));
-                  atIt.setHighlight(mpmark.starth(tindex), mpmark.endh(tindex));
-               }
-               if (0 != tabStop)
-                  atIt.deTab(tabStop);
-               imageg.drawString(atIt, xoffset, charascent);
-            }
-            // gr.setColor(Color.cyan);
-            // gr.fillRect(xoffset, index * charheight, pixelWidth , charheight);
-            // gr.setColor(atIt.lightYellow);
-            // if (atIt.length() != 0) {
-            // gr.drawString(atIt, xoffset, charascent + index * charheight);
-            // }
-            gr.drawImage(dbuf, 0, index * charheight, null);
-            // try {Thread.sleep(100);} catch (InterruptedException e) {/*Ignore*/}
+         if (index == screenposy) {
+            atIt.emphasize(true);
+            String iString = getInsertString();
+            if (null != iString)
+               atIt.addOlineText(
+                  iString, getfileX(), isOverwrite());
          }
 
+         if (0 != atIt.length()) {
+            MarkInfo mpmark = getPmark();
+            if (null != mpmark.getMark())
+               atIt.setHighlight(
+                  mpmark.starth(tindex),
+                  mpmark.endh(tindex));
+            if (0 != tabStop)
+               atIt.deTab(tabStop);
+            imageg.drawString(atIt, xoffset, charascent);
+         }
+         gr.drawImage(dbuf, 0, index * charheight, null);
+      }
+
+      /**
+       * Fold-aware line painting. Computes the buffer line
+       * at screen top using fold model, then iterates visible
+       * lines, rendering collapsed folds as summary lines.
+       */
+      private void paintLinesFolded(
+            Graphics gr, int start, int end,
+            FoldModel fm) {
+         int numlines = gettext().readIn();
+         int topBuf = computeTopBufLine(fm);
+
+         // Advance from topBuf to the buffer line at row start
+         int tindex = topBuf;
+         for (int skip = 0; skip < start
+               && tindex < numlines; skip++)
+            tindex = fm.nextVisible(tindex);
+
+         for (int index = start; index < end; index++) {
+            if (tindex >= numlines) {
+               // Past end of file
+               if (!gettext().donereading()) {
+                  gr.setColor(AtView.unFinished);
+                  needMoreText(tindex);
+               } else {
+                  gr.setColor(AtView.noFile);
+               }
+               gr.fillRect(0, index * charheight,
+                  pixelWidth,
+                  (end - index) * charheight);
+               break;
+            }
+            FoldModel.FoldRange fold =
+               fm.findFoldAtStart(tindex);
+            if (fold != null && fold.collapsed) {
+               paintFoldSummary(gr, index, fold);
+               tindex = fold.endLine + 1;
+            } else {
+               paintOneLine(gr, index, tindex);
+               tindex++;
+            }
+         }
+      }
+
+      /**
+       * Render a fold summary line at screen row index.
+       * Shows "+--  N lines: first-line-text".
+       */
+      private void paintFoldSummary(
+            Graphics gr, int index,
+            FoldModel.FoldRange fold) {
+         imageg.setColor(AtView.background);
+         imageg.fillRect(0, 0, pixelWidth, charheight);
+         String firstLine =
+            gettext().at(fold.startLine).toString();
+         String summary = FoldModel.foldSummaryText(
+            fold.startLine, fold.endLine, firstLine);
+         atIt.setText(summary);
+         if (index == screenposy)
+            atIt.emphasize(true);
+         if (0 != atIt.length()) {
+            if (0 != tabStop)
+               atIt.deTab(tabStop);
+            imageg.drawString(atIt, xoffset, charascent);
+         }
+         gr.drawImage(dbuf, 0, index * charheight, null);
       }
 
       public boolean isFocusable() {
@@ -1105,6 +1266,16 @@ final class OldView extends AwtView {
             // cursor must be off before other drawing is done, or it messes up XOR
             if (currop == BLINKCURSOR || isCursorOn()) {
                bcursor(gr);
+            }
+
+            // When folds are active, optimized draw paths
+            // assume linear screen↔buffer mapping.
+            // Fall back to full redraw for correctness.
+            if (currop != REDRAW
+                  && currop != BLINKCURSOR
+                  && currop != NOOP
+                  && getActiveFoldModel() != null) {
+               currop = REDRAW;
             }
 
             switch (currop) {

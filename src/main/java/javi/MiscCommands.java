@@ -682,6 +682,7 @@ public final class MiscCommands extends Rgroup {
                case 'o': case 'c': case 'a':
                case 'R': case 'M':
                   handleFoldCommand(key, fvc);
+                  fvc.vi.redraw();
                   return;
                default:
                   return;
