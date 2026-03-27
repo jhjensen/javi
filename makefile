@@ -101,7 +101,7 @@ build: compile jar
 # Test targets
 #==============================================================================
 
-.PHONY: FORCE
+.PHONY: FORCE docs
 FORCE:
 
 ai.output:
@@ -205,6 +205,11 @@ longlines:
 # Documentation targets
 #==============================================================================
 
+# Build Typst documentation (PDF)
+docs:
+	typst compile docs/javi_manual.typ docs/javi_manual.pdf
+	@echo "PDF generated: docs/javi_manual.pdf"
+
 # Generate Javadoc documentation
 javadoc:
 	mkdir -p build/docs/javadoc
@@ -295,6 +300,7 @@ help:
 	@echo "  make cstyle-file FILE=path - Run checkstyle on specific file"
 	@echo ""
 	@echo "Documentation:"
+	@echo "  make docs         - Build Typst manual (PDF)"
 	@echo "  make javadoc      - Generate Javadoc documentation"
 	@echo ""
 	@echo "Development:"
