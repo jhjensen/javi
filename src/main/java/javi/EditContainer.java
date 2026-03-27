@@ -929,15 +929,16 @@ public class EditContainer<OType> implements
    }
 
    private static FileChangeListener[] changeListeners =
-      new FileChangeListener[2];
+      new FileChangeListener[3];
 
    static final void registerChangeListen(FileChangeListener fl) {
-      if (null == changeListeners[0])
-         changeListeners[0] = fl;
-      else if (null == changeListeners[1])
-         changeListeners[1] = fl;
-      else
-         throw new RuntimeException("register to many changeListenerss");
+      for (int i = 0; i < changeListeners.length; i++)
+         if (null == changeListeners[i]) {
+            changeListeners[i] = fl;
+            return;
+         }
+      throw new RuntimeException(
+         "register too many changeListeners");
    }
 
 // should only be called by changerecords.

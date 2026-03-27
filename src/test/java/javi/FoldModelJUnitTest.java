@@ -573,4 +573,112 @@ class FoldModelJUnitTest {
       // 29,28,27,26, 20(fold), 19,18,17,16, 5(fold), 4,3,2,1
       assertEquals(13, steps);
    }
+
+   // --- adjustForEdit: line-shift tracking ---
+
+   @Test
+   void adjustForEditInsertShiftsFoldsAfter() {
+      model.addFold(10, 20);
+      model.closeFold(10);
+      // Insert 5 lines at 0-based index 5 (before fold)
+      model.adjustForEdit(5, 5);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(15, f.startLine);
+      assertEquals(25, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditInsertBeforeFoldNoChange() {
+      model.addFold(10, 20);
+      // Insert 3 lines at 0-based index 25 (after fold)
+      model.adjustForEdit(25, 3);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(10, f.startLine);
+      assertEquals(20, f.endLine);
+   }
+
+   @Test
+   void adjustForEditInsertInsideFoldExpands() {
+      model.addFold(5, 15);
+      model.closeFold(5);
+      // Insert 3 lines at 0-based index 10 (inside fold)
+      model.adjustForEdit(10, 3);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(5, f.startLine);
+      assertEquals(18, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditDeleteShiftsFoldsAfter() {
+      model.addFold(10, 20);
+      model.closeFold(10);
+      // Delete 3 lines at 0-based index 2 (before fold)
+      model.adjustForEdit(2, -3);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(7, f.startLine);
+      assertEquals(17, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditDeleteRemovesFoldEntirely() {
+      model.addFold(5, 10);
+      // Delete 10 lines at 0-based index 3 (covers fold)
+      model.adjustForEdit(3, -10);
+      assertTrue(model.isEmpty());
+   }
+
+   @Test
+   void adjustForEditDeleteShrinksFold() {
+      model.addFold(5, 20);
+      model.closeFold(5);
+      // Delete lines 8-12 (0-based index 7, count -5)
+      model.adjustForEdit(7, -5);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(5, f.startLine);
+      assertEquals(15, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditDeleteAfterFoldNoChange() {
+      model.addFold(5, 10);
+      // Delete 3 lines starting at 0-based index 15
+      model.adjustForEdit(15, -3);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(5, f.startLine);
+      assertEquals(10, f.endLine);
+   }
+
+   @Test
+   void adjustForEditMultipleFolds() {
+      model.addFold(3, 8);
+      model.addFold(15, 25);
+      model.closeAll();
+      // Insert 4 lines at 0-based index 10 (between folds)
+      model.adjustForEdit(10, 4);
+      FoldModel.FoldRange f1 = model.getFolds().get(0);
+      FoldModel.FoldRange f2 = model.getFolds().get(1);
+      assertEquals(3, f1.startLine);
+      assertEquals(8, f1.endLine);
+      assertEquals(19, f2.startLine);
+      assertEquals(29, f2.endLine);
+   }
+
+   @Test
+   void adjustForEditZeroDeltaNoChange() {
+      model.addFold(5, 15);
+      model.adjustForEdit(10, 0);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(5, f.startLine);
+      assertEquals(15, f.endLine);
+   }
+
+   @Test
+   void adjustForEditEmptyModelNoError() {
+      model.adjustForEdit(5, 3);
+      assertTrue(model.isEmpty());
+   }
 }

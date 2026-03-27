@@ -319,6 +319,9 @@ final class MoveGroup extends Rgroup {
 //      startpos.comment="mark " + exp;
       lastmark2 = lastmark;
       lastmark = startpos;
+      FoldModel fm = fvc.getFoldModel();
+      if (fm != null && fm.isFolded(startpos.y))
+         fm.openFold(startpos.y);
       fvc.cursorabs(startpos);
 
    }

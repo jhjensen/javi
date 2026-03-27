@@ -256,6 +256,43 @@ public final class FoldModel {
       folds.clear();
    }
 
+   /**
+    * Adjust all fold ranges after lines are inserted or
+    * deleted. Called from the FileChangeListener mechanism.
+    *
+    * @param index 0-based position from EditContainer
+    * @param count positive for insert, negative for delete
+    */
+   public void adjustForEdit(int index, int count) {
+      if (folds.isEmpty() || count == 0)
+         return;
+      List<FoldRange> newFolds = new ArrayList<>();
+      for (FoldRange f : folds) {
+         int ns = adjustLine(f.startLine, index, count);
+         int ne = adjustLine(f.endLine, index, count);
+         if (ne > ns) {
+            FoldRange nf = new FoldRange(ns, ne);
+            nf.collapsed = f.collapsed;
+            newFolds.add(nf);
+         }
+      }
+      folds.clear();
+      folds.addAll(newFolds);
+   }
+
+   private static int adjustLine(
+         int line, int index, int count) {
+      if (count > 0)
+         return line > index ? line + count : line;
+      int delStart = index + 1;
+      int delEnd = index - count;
+      if (line < delStart)
+         return line;
+      if (line > delEnd)
+         return line + count;
+      return delStart;
+   }
+
    /** Summary string for status bar display. */
    public String statusSummary() {
       if (folds.isEmpty())

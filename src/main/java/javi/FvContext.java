@@ -309,9 +309,23 @@ public final class FvContext<OType> implements Serializable {
       }
    }
 
+   private static final class FoldChangeListener
+         extends EditContainer.FileChangeListener {
+      void addedLines(FileDescriptor fd, int count, int index) {
+         for (Iterator<FvContext<?>> fit = fvmap.iterator();
+               fit.hasNext();) {
+            FvContext<?> fvc = fit.next();
+            if (fvc.foldModel != null
+                  && fvc.edvec.fdes().equals(fd))
+               fvc.foldModel.adjustForEdit(index, count);
+         }
+      }
+   }
+
    static {
 
       EditContainer.init(new FmListener());
+      EditContainer.registerChangeListen(new FoldChangeListener());
 
       StringIoc str = new StringIoc("FvContext.defaultText",
             "deleted buffer without viewing a different one");
