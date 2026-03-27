@@ -40,6 +40,7 @@ public final class MiscCommands extends Rgroup {
       LOAD_MAP_KEYS, // 25: :loadmapkeys - load user bindings
       FOLD,          // 26: :fold - detect/manage folds
       FOLD_INDENT,   // 27: :foldindent - indent-based folds
+      FOLD_MARKER,   // 28: :foldmarker - marker-based folds
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -74,6 +75,7 @@ public final class MiscCommands extends Rgroup {
          "loadmapkeys",      // 25
          "fold",             // 26
          "foldindent",       // 27
+         "foldmarker",       // 28
       };
       register(rnames);
    }
@@ -173,6 +175,9 @@ public final class MiscCommands extends Rgroup {
          case FOLD_INDENT:
             doFoldIndent(fvc,
                arg instanceof String ? (String) arg : null);
+            return null;
+         case FOLD_MARKER:
+            doFoldMarker(fvc);
             return null;
 
          default:
@@ -775,6 +780,16 @@ public final class MiscCommands extends Rgroup {
       int lineCount = fvc.edvec.readIn();
       FoldModel fm = FoldDetector.detectIndentFolds(
          fetcher, lineCount, tabSize);
+      fvc.setFoldModel(fm);
+      UI.reportMessage(fm.statusSummary());
+   }
+
+   private static void doFoldMarker(FvContext fvc) {
+      FoldDetector.LineFetcher fetcher = lineNum ->
+         fvc.edvec.at(lineNum).toString();
+      int lineCount = fvc.edvec.readIn();
+      FoldModel fm = FoldDetector.detectMarkerFolds(
+         fetcher, lineCount);
       fvc.setFoldModel(fm);
       UI.reportMessage(fm.statusSummary());
    }

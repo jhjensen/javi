@@ -1004,4 +1004,216 @@ class FoldModelJUnitTest {
       assertEquals(2,
          FoldDetector.indentLevel("\t    x", 4));
    }
+
+   // --- Marker-based fold detection ---
+
+   @Test
+   void detectMarkerSimplePair() {
+      String[] lines = {
+         "",
+         "// {{{",
+         "int x = 1;",
+         "int y = 2;",
+         "// }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange fr = fm.getFolds().get(0);
+      assertEquals(1, fr.startLine);
+      assertEquals(4, fr.endLine);
+   }
+
+   @Test
+   void detectMarkerNestedPairs() {
+      String[] lines = {
+         "",
+         "// {{{",
+         "// {{{",
+         "inner",
+         "// }}}",
+         "outer tail",
+         "// }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(2, fm.size());
+      // Outer fold (sorted by startLine)
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(6, fm.getFolds().get(0).endLine);
+      // Inner fold
+      assertEquals(2, fm.getFolds().get(1).startLine);
+      assertEquals(4, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectMarkerLeveledPairs() {
+      String[] lines = {
+         "",
+         "// {{{1",
+         "section 1",
+         "// {{{2",
+         "section 2",
+         "// }}}2",
+         "// }}}1",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(2, fm.size());
+      // Level 1 fold (outer, sorted first)
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(6, fm.getFolds().get(0).endLine);
+      // Level 2 fold (inner)
+      assertEquals(3, fm.getFolds().get(1).startLine);
+      assertEquals(5, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectMarkerUnmatchedExtendsToEof() {
+      String[] lines = {
+         "",
+         "// {{{",
+         "no closing marker",
+         "more lines",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange fr = fm.getFolds().get(0);
+      assertEquals(1, fr.startLine);
+      assertEquals(3, fr.endLine);
+   }
+
+   @Test
+   void detectMarkerNoMarkers() {
+      String[] lines = {
+         "",
+         "plain line 1",
+         "plain line 2",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertTrue(fm.isEmpty());
+   }
+
+   @Test
+   void detectMarkerEmptyBuffer() {
+      FoldDetector.LineFetcher f = i -> "";
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, 1);
+      assertTrue(fm.isEmpty());
+   }
+
+   @Test
+   void detectMarkerAllFoldsOpen() {
+      String[] lines = {
+         "",
+         "// {{{",
+         "content",
+         "// }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      for (FoldModel.FoldRange fr : fm.getFolds())
+         assertFalse(fr.collapsed);
+   }
+
+   @Test
+   void detectMarkerMultipleSections() {
+      String[] lines = {
+         "",
+         "// {{{",
+         "section A",
+         "// }}}",
+         "gap",
+         "// {{{",
+         "section B",
+         "// }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(2, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(3, fm.getFolds().get(0).endLine);
+      assertEquals(5, fm.getFolds().get(1).startLine);
+      assertEquals(7, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectMarkerInlineComment() {
+      // Markers embedded in code comments
+      String[] lines = {
+         "",
+         "int x = 0; // {{{",
+         "int y = 1;",
+         "int z = 2; // }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(1, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(3, fm.getFolds().get(0).endLine);
+   }
+
+   @Test
+   void detectMarkerSameLineStartEndNoFold() {
+      // {{{ and }}} on same line: start is processed after
+      // end, so }}} has nothing to close, then {{{ opens.
+      // The {{{ is left unmatched -> extends to EOF.
+      String[] lines = {
+         "",
+         "// }}} {{{",
+         "tail",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(1, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(2, fm.getFolds().get(0).endLine);
+   }
+
+   @Test
+   void parseMarkerLevelDigit() {
+      assertEquals(1,
+         FoldDetector.parseMarkerLevel("{{{1", 3));
+      assertEquals(0,
+         FoldDetector.parseMarkerLevel("{{{0", 3));
+      assertEquals(9,
+         FoldDetector.parseMarkerLevel("{{{9", 3));
+   }
+
+   @Test
+   void parseMarkerLevelNoDigit() {
+      assertEquals(-1,
+         FoldDetector.parseMarkerLevel("{{{ ", 3));
+      assertEquals(-1,
+         FoldDetector.parseMarkerLevel("{{{", 3));
+   }
+
+   @Test
+   void detectMarkerExtraEndIgnored() {
+      // Extra }}} with no matching {{{ is ignored
+      String[] lines = {
+         "",
+         "// {{{",
+         "content",
+         "// }}}",
+         "// }}}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectMarkerFolds(f, lines.length);
+      assertEquals(1, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(3, fm.getFolds().get(0).endLine);
+   }
 }

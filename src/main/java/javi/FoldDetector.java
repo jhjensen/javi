@@ -155,6 +155,137 @@ public final class FoldDetector {
    }
 
    /**
+    * Detect foldable regions by vim-style markers
+    * ({@code {{{} / {@code }}}}). Supports optional level
+    * numbers: {@code {{{1} matches {@code }}}1}.
+    *
+    * <p>Unmatched {@code {{{} markers extend to end of file.
+    * Markers are found anywhere on a line (typically in
+    * comments).</p>
+    *
+    * @param buffer text buffer to scan (1-based lines)
+    * @param lineCount total lines in file (readIn())
+    * @return FoldModel with detected folds
+    */
+   public static FoldModel detectMarkerFolds(
+         LineFetcher buffer, int lineCount) {
+      FoldModel model = new FoldModel();
+      if (lineCount <= 2)
+         return model;
+
+      int lastLine = lineCount - 1;
+      // Stack of [level, startLine]. Level -1 means unleveled.
+      Deque<int[]> stack = new ArrayDeque<>();
+
+      for (int line = 1; line < lineCount; line++) {
+         String text = buffer.getLine(line);
+         if (text == null)
+            continue;
+         // Check for end marker first so a line with both
+         // close and open is handled correctly.
+         int endIdx = text.indexOf("}}}");
+         if (endIdx >= 0) {
+            int endLevel = parseMarkerLevel(
+               text, endIdx + 3);
+            closeMarker(model, stack, endLevel, line);
+         }
+         int startIdx = indexOfStartMarker(text);
+         if (startIdx >= 0) {
+            int startLevel = parseMarkerLevel(
+               text, startIdx + 3);
+            stack.push(new int[]{startLevel, line});
+         }
+      }
+
+      // Close any unmatched start markers at EOF
+      while (!stack.isEmpty()) {
+         int[] top = stack.pop();
+         if (lastLine > top[1])
+            model.addFold(top[1], lastLine);
+      }
+      return model;
+   }
+
+   /**
+    * Find "{{{" that is NOT preceded by "}" (which would
+    * make it part of "}}}{"). Returns -1 if not found.
+    */
+   private static int indexOfStartMarker(String text) {
+      int pos = 0;
+      while (pos < text.length()) {
+         int idx = text.indexOf("{{{", pos);
+         if (idx < 0)
+            return -1;
+         // Reject if this is actually "}}}" + "{{{"
+         // overlapping — the "}}}" at idx-1 already ended.
+         // But a real concern: "}}}{{{". The "}}}" is at
+         // idx-1 but that's fine — they are separate tokens.
+         // We only need to avoid finding "{{{" inside
+         // "}}}" — but that can't happen since "}" != "{".
+         return idx;
+      }
+      return -1;
+   }
+
+   /**
+    * Parse an optional level number immediately after the
+    * 3-char marker. Returns -1 if no level specified.
+    */
+   static int parseMarkerLevel(
+         String text, int afterMarker) {
+      if (afterMarker >= text.length())
+         return -1;
+      char ch = text.charAt(afterMarker);
+      if (ch >= '0' && ch <= '9')
+         return ch - '0';
+      return -1;
+   }
+
+   /**
+    * Close the most recent matching start marker on the
+    * stack and add the fold. Leveled end markers match
+    * the nearest start marker with the same level;
+    * unlabeled end markers match the nearest start marker.
+    */
+   private static void closeMarker(
+         FoldModel model, Deque<int[]> stack,
+         int endLevel, int line) {
+      if (stack.isEmpty())
+         return;
+      if (endLevel < 0) {
+         // Unlabeled end: match nearest start
+         int[] top = stack.pop();
+         if (line > top[1])
+            model.addFold(top[1], line);
+      } else {
+         // Leveled end: find matching level
+         Deque<int[]> temp = new ArrayDeque<>();
+         boolean found = false;
+         while (!stack.isEmpty()) {
+            int[] top = stack.pop();
+            if (!found && top[0] == endLevel) {
+               if (line > top[1])
+                  model.addFold(top[1], line);
+               found = true;
+               break;
+            }
+            temp.push(top);
+         }
+         // Restore unmatched entries
+         while (!temp.isEmpty())
+            stack.push(temp.pop());
+         if (!found) {
+            // No matching level — treat as unlabeled
+            if (!stack.isEmpty()) {
+               int[] top = stack.pop();
+               if (line > top[1])
+                  model.addFold(top[1], line);
+            }
+         }
+      }
+   }
+
+   /**
     * Abstraction so we can test without depending on TextEdit.
     */
    public interface LineFetcher {
