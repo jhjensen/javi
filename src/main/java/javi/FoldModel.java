@@ -293,6 +293,28 @@ public final class FoldModel {
       return delStart;
    }
 
+   /**
+    * Return the fold gutter indicator character for the given
+    * buffer line, or '\0' if no indicator should be shown.
+    *
+    * <ul>
+    * <li>{@code '+'} — start of a collapsed fold</li>
+    * <li>{@code '-'} — start of an open fold</li>
+    * <li>{@code '|'} — inside the body of an open fold</li>
+    * </ul>
+    */
+   public char getFoldIndicator(int bufLine) {
+      for (FoldRange f : folds) {
+         if (bufLine == f.startLine)
+            return f.collapsed ? '+' : '-';
+         if (!f.collapsed
+               && bufLine > f.startLine
+               && bufLine <= f.endLine)
+            return '|';
+      }
+      return '\0';
+   }
+
    /** Summary string for status bar display. */
    public String statusSummary() {
       if (folds.isEmpty())

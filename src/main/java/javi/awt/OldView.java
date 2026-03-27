@@ -1251,6 +1251,7 @@ final class OldView extends AwtView {
                   (end - index) * charheight);
                break;
             }
+            int displayedBufLine = tindex;
             FoldModel.FoldRange fold =
                fm.findFoldAtStart(tindex);
             if (fold != null && fold.collapsed) {
@@ -1260,7 +1261,25 @@ final class OldView extends AwtView {
                paintOneLine(gr, index, tindex);
                tindex++;
             }
+            paintFoldIndicator(
+               gr, index, displayedBufLine, fm);
          }
+      }
+
+      /**
+       * Draw a fold gutter indicator character at the left
+       * edge of the given screen row. The indicator is drawn
+       * in the inset area, overlaying the line content.
+       */
+      private void paintFoldIndicator(
+            Graphics gr, int screenRow,
+            int bufLine, FoldModel fm) {
+         char ch = fm.getFoldIndicator(bufLine);
+         if (ch == '\0')
+            return;
+         gr.setColor(AtView.foldGutter);
+         int y = screenRow * charheight + charascent;
+         gr.drawString(String.valueOf(ch), 0, y);
       }
 
       /**

@@ -681,4 +681,71 @@ class FoldModelJUnitTest {
       model.adjustForEdit(5, 3);
       assertTrue(model.isEmpty());
    }
+
+   // --- getFoldIndicator ---
+
+   @Test
+   void foldIndicatorCollapsedStartShowsPlus() {
+      model.addFold(5, 15);
+      model.closeFold(5);
+      assertEquals('+', model.getFoldIndicator(5));
+   }
+
+   @Test
+   void foldIndicatorOpenStartShowsMinus() {
+      model.addFold(5, 15);
+      assertEquals('-', model.getFoldIndicator(5));
+   }
+
+   @Test
+   void foldIndicatorOpenBodyShowsBar() {
+      model.addFold(5, 15);
+      assertEquals('|', model.getFoldIndicator(6));
+      assertEquals('|', model.getFoldIndicator(10));
+      assertEquals('|', model.getFoldIndicator(15));
+   }
+
+   @Test
+   void foldIndicatorOutsideFoldReturnsNul() {
+      model.addFold(5, 15);
+      assertEquals('\0', model.getFoldIndicator(4));
+      assertEquals('\0', model.getFoldIndicator(16));
+   }
+
+   @Test
+   void foldIndicatorCollapsedBodyHidden() {
+      // When collapsed, interior lines are hidden so only
+      // the start line indicator matters. Interior lines
+      // should not be queried in practice, but if they are,
+      // they return '\0' because they are not inside an
+      // open fold.
+      model.addFold(5, 15);
+      model.closeFold(5);
+      assertEquals('+', model.getFoldIndicator(5));
+      // Interior of collapsed fold returns '\0'
+      assertEquals('\0', model.getFoldIndicator(10));
+   }
+
+   @Test
+   void foldIndicatorMultipleFolds() {
+      model.addFold(3, 8);
+      model.addFold(12, 20);
+      model.closeFold(12);
+      // First fold is open
+      assertEquals('-', model.getFoldIndicator(3));
+      assertEquals('|', model.getFoldIndicator(5));
+      assertEquals('|', model.getFoldIndicator(8));
+      // Between folds
+      assertEquals('\0', model.getFoldIndicator(9));
+      // Second fold is collapsed
+      assertEquals('+', model.getFoldIndicator(12));
+      // After all folds
+      assertEquals('\0', model.getFoldIndicator(21));
+   }
+
+   @Test
+   void foldIndicatorNoFolds() {
+      assertEquals('\0', model.getFoldIndicator(1));
+      assertEquals('\0', model.getFoldIndicator(10));
+   }
 }
