@@ -215,16 +215,25 @@ Vi requires you to leave the editor to run shell commands (`:!cmd`
 executes and returns). Javi includes a full VT100 terminal emulator
 inside the editor. See @sec-shell for details.
 
-== Tags
+== Tags and ID Lookup
 
-Javi supports ctags-based navigation like vi:
+Javi supports ctags-based navigation for jumping to definitions, and
+mkid (GNU ID Utils) for finding references:
 
 #cmd-table(
-  ([#key("Ctrl-]")], [Jump to tag under cursor]),
+  ([#key("Ctrl-]")], [Jump to tag definition under cursor (ctags)]),
   ([#key("Ctrl-T")], [Pop tag stack (return to previous location)]),
   ([#cmd("tagsauto")], [Toggle auto-regenerate ctags on file save]),
   ([#cmd("tagfiles")], [List registered tag files]),
   ([#cmd("tagadd _path_")], [Add an additional tag file]),
+)
+
+For finding references (where a symbol is _used_, rather than where it
+is _defined_), Javi integrates with `mkid` from GNU ID Utils. Run
+`mkid` in your source directory to build an ID database, then use:
+
+#cmd-table(
+  ([#cmd("gid _symbol_")], [Find all references to _symbol_ (uses `lid`)]),
 )
 
 == Key Binding Customization
@@ -250,10 +259,10 @@ Bindings are saved to `~/.javi/keybindings`. To auto-load on startup, add
 
 == File List (F2)
 
-Pressing #key("F2") opens the file list, showing all open buffers. The
-file list uses an overlay keymap where #key("Enter") opens the file at
-the cursor instead of moving down a line. All other normal-mode keys
-work as usual.
+Pressing #key("F2") opens the file list, showing all files in the
+editor. The file list uses an overlay keymap where #key("Enter") opens
+the file at the cursor instead of moving down a line. All other
+normal-mode keys work as usual.
 
 #cmd-table(
   ([#key("Enter") / #key("F1")], [Open file at cursor]),
@@ -337,10 +346,14 @@ commands. For the full reference, use #cmd("help _topic_") within Javi.
   ([#cmd("q!")], [Quit without saving]),
   ([#cmd("r _file_")], [Read file contents into buffer]),
   ([#key("Ctrl-G")], [Show file status information]),
-  ([#key("Ctrl-^")], [Switch to alternate file]),
+  ([#key("Ctrl-^")], [Switch to next file in file list]),
 )
 
 == Ex Commands
+
+Javi implements a subset of POSIX ex commands. For a complete reference
+to traditional ex/vi commands, see the
+#link("https://pubs.opengroup.org/onlinepubs/9699919799/utilities/ex.html")[POSIX ex specification].
 
 #cmd-table(
   ([#cmd("_n_")], [Go to line _n_]),
@@ -352,6 +365,19 @@ commands. For the full reference, use #cmd("help _topic_") within Javi.
   ([#cmd("!_cmd_")], [Run external shell command]),
   ([#cmd("mk")], [Run make (build)]),
 )
+
+*Differences from POSIX ex:*
+
+- Regular expressions use Java syntax (see @sec-differences) instead of
+  POSIX BRE.
+- The `global` command (`g/pattern/cmd`) supports only `d` (delete);
+  arbitrary ex commands after the pattern are not supported.
+- The `open` and `visual` mode transitions from ex are not implemented ---
+  Javi always starts in visual (normal) mode.
+- Address forms `.` (current line) and `$` (last line) are supported;
+  `'a` (mark) addresses and relative offsets (`+n`, `-n`) are not.
+- The `set` command uses `=` syntax (#cmd("set option=value")) rather
+  than the POSIX toggle form.
 
 // ============================================================================
 // 4. SHELL / TERMINAL
@@ -383,7 +409,8 @@ terminal runs under `script` for PTY support, with `TERM=xterm`,
 In a shell buffer, #key("F8") toggles *passthrough mode*:
 
 - *Normal mode* --- vi keybindings are active over the shell output.
-  You can scroll, search, and yank text.
+  You can scroll, search, yank text, and use editing commands (delete,
+  change, etc.) to modify the scrollback buffer.
 - *Passthrough mode* --- all keystrokes go directly to the shell. Use
   this for interactive programs (vim, top, etc.). Press #key("F8") again
   to return to normal mode.
@@ -1061,7 +1088,7 @@ modifier-key variants.
   [*Key*], [*Action*],
   [#key("Ctrl-]")], [Jump to tag under cursor (ctags)],
   [#key("Ctrl-T")], [Pop tag stack (return to previous location)],
-  [#key("Ctrl-^")], [Switch to alternate (previous) file],
+  [#key("Ctrl-^")], [Switch to next file in file list],
 )
 
 == Insert Mode Keys
