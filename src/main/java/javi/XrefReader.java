@@ -2,6 +2,8 @@ package javi;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,6 +13,7 @@ import static history.Tools.trace;
 final class XrefReader extends PositionIoc {
    private static final int maxLine = 80;
    private static final long serialVersionUID = 1;
+   private final Set<String> ctagKeys;
 
       //trace("greader");
         //static final String[] commandline =  {
@@ -50,6 +53,47 @@ final class XrefReader extends PositionIoc {
 
    XrefReader(String s) throws IOException {
       super(s, getIn(s), xconverter);
+      ctagKeys = null;
+   }
+
+   /**
+    * Creates an XrefReader that filters out mkid entries matching
+    * ctag positions. Entries sharing the same file and line as a
+    * ctag result are considered duplicates and excluded.
+    *
+    * @param s the symbol to look up
+    * @param ctagPositions ctag positions to deduplicate against
+    * @throws IOException if the lid command cannot be started
+    */
+   XrefReader(String s, Position[] ctagPositions) throws IOException {
+      super(s, getIn(s), xconverter);
+      ctagKeys = buildCtagKeys(ctagPositions);
+   }
+
+   static Set<String> buildCtagKeys(Position[] positions) {
+      if (positions == null || positions.length == 0)
+         return null;
+      Set<String> keys = new HashSet<>();
+      for (Position p : positions)
+         keys.add(makeDedupKey(p));
+      return keys;
+   }
+
+   static String makeDedupKey(Position p) {
+      return p.filename.canonName + ":" + p.y;
+   }
+
+   @Override
+   void dorun() throws InterruptedException {
+      if (ctagKeys == null) {
+         super.dorun();
+         return;
+      }
+      Position ob;
+      while ((ob = getnext()) != null) {
+         if (!ctagKeys.contains(makeDedupKey(ob)))
+            addElement(ob);
+      }
    }
 
    private static final Matcher linepat = Pattern.compile(

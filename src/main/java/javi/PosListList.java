@@ -450,10 +450,25 @@ public final class PosListList extends TextList<Position> {
             str = getLastSym(str, fvc.insertx());
          }
 
-         // Search for matching directories across the search path
+         // Ctags + mkid combined lookup
+         TextEdit templist = taglookup(str, fvc.vi);
+
+         // Directory matching
          ArrayList<Position> dirMatches = findDirectories(str);
-         if (!dirMatches.isEmpty()) {
-            tagstack.add(porig);
+
+         boolean foundAnything = false;
+
+         if (null != templist) {
+            inst.setLastList(templist);
+            foundAnything = true;
+            // Merge directory entries into the tag list
+            @SuppressWarnings("unchecked")
+            TextEdit<Position> tlist = templist;
+            for (Position dp : dirMatches) {
+               if (!containsPosition(tlist, dp))
+                  tlist.insertOne(dp, tlist.readIn());
+            }
+         } else if (!dirMatches.isEmpty()) {
             Position[] parray = dirMatches.toArray(new Position[0]);
             PositionIoc ioc = new PositionIoc(
                "dir:" + str, null, PositionIoc.pconverter);
@@ -463,15 +478,28 @@ public final class PosListList extends TextList<Position> {
             inst.insertOne(dirList, inst.finish());
             inst.setLastList(dirList);
             FileList.gotoposition(parray[0], true, fvc.vi);
-            return;
+            foundAnything = true;
          }
 
-         TextEdit templist = taglookup(str, fvc.vi);
-         if (null != templist) {
-            inst.setLastList(templist);
-            //trace("add stack porig = "  + porig);
+         if (foundAnything) {
             tagstack.add(porig);
          }
+      }
+
+      /**
+       * Check whether a TextEdit already contains a Position.
+       * Used to prevent duplicate directory entries on repeated
+       * lookups of the same symbol.
+       */
+      @SuppressWarnings("unchecked")
+      private static boolean containsPosition(
+            TextEdit<Position> list, Position pos) {
+         int count = list.readIn();
+         for (int i = 1; i < count; i++) {
+            if (pos.equals(list.at(i)))
+               return true;
+         }
+         return false;
       }
 
       private TextEdit<Position> createtags(String sym) throws IOException {
@@ -487,7 +515,7 @@ public final class PosListList extends TextList<Position> {
                   if (parray.length == 0)
                      parray = null;
             }
-            xf = new XrefReader(sym);
+            xf = new XrefReader(sym, parray);
          } else {
             xf = new GlobalReader(sym);
          }

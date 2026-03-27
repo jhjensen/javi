@@ -12,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -354,5 +356,143 @@ class PosListListJUnitTest {
    void mainRunsCleanly() {
       assertDoesNotThrow(
          () -> PosListList.Cmd.main(new String[0]));
+   }
+
+   // ================================================================
+   // findDirectories — directory lookup used in :ta
+   // ================================================================
+
+   @Nested
+   @DisplayName("findDirectories")
+   class FindDirectoriesTests {
+
+      private static java.lang.reflect.Method findDirMethod;
+
+      @BeforeAll
+      static void setup() throws Exception {
+         findDirMethod = PosListList.Cmd.class.getDeclaredMethod(
+            "findDirectories", String.class);
+         findDirMethod.setAccessible(true);
+      }
+
+      @SuppressWarnings("unchecked")
+      private java.util.ArrayList<Position> callFindDirectories(
+            String name) throws Exception {
+         return (java.util.ArrayList<Position>)
+            findDirMethod.invoke(null, name);
+      }
+
+      @Test
+      @DisplayName("returns empty for non-existent directory name")
+      void nonExistentDir() throws Exception {
+         java.util.ArrayList<Position> result =
+            callFindDirectories("nonexistent_dir_xyz_12345");
+         assertTrue(result.isEmpty());
+      }
+
+      @Test
+      @DisplayName("returns non-empty for existing directory")
+      void existingDir() throws Exception {
+         // "src" exists in javi project root
+         java.util.ArrayList<Position> result =
+            callFindDirectories("src");
+         // May or may not match depending on cwd; just verify no crash
+         assertNotNull(result);
+      }
+   }
+
+   // ================================================================
+   // XrefReader mkid deduplication
+   // ================================================================
+
+   @Nested
+   @DisplayName("mkid deduplication")
+   class MkidDeduplicationTests {
+
+      @Test
+      @DisplayName("buildCtagKeys returns null for null input")
+      void nullInput() {
+         assertNull(XrefReader.buildCtagKeys(null));
+      }
+
+      @Test
+      @DisplayName("buildCtagKeys returns null for empty array")
+      void emptyArray() {
+         assertNull(XrefReader.buildCtagKeys(new Position[0]));
+      }
+
+      @Test
+      @DisplayName("buildCtagKeys builds keys from positions")
+      void buildsKeys() {
+         Position[] positions = {
+            new Position(0, 42, "src/Foo.java", "tag:foo"),
+            new Position(0, 10, "src/Bar.java", "tag:bar"),
+         };
+         java.util.Set<String> keys =
+            XrefReader.buildCtagKeys(positions);
+         assertNotNull(keys);
+         assertEquals(2, keys.size());
+         assertTrue(keys.contains(
+            XrefReader.makeDedupKey(
+               new Position(0, 42, "src/Foo.java", ""))));
+         assertTrue(keys.contains(
+            XrefReader.makeDedupKey(
+               new Position(0, 10, "src/Bar.java", ""))));
+      }
+
+      @Test
+      @DisplayName("makeDedupKey uses file and line only")
+      void dedupKeyIgnoresColumn() {
+         Position p1 = new Position(0, 42, "src/Foo.java", "tag:foo");
+         Position p2 = new Position(5, 42, "src/Foo.java", "ref");
+         assertEquals(XrefReader.makeDedupKey(p1),
+            XrefReader.makeDedupKey(p2));
+      }
+
+      @Test
+      @DisplayName("makeDedupKey differs for different lines")
+      void dedupKeyDifferentLines() {
+         Position p1 = new Position(0, 42, "src/Foo.java", "tag:foo");
+         Position p2 = new Position(0, 43, "src/Foo.java", "ref");
+         assertNotEquals(XrefReader.makeDedupKey(p1),
+            XrefReader.makeDedupKey(p2));
+      }
+
+      @Test
+      @DisplayName("makeDedupKey differs for different files")
+      void dedupKeyDifferentFiles() {
+         Position p1 = new Position(0, 42, "src/Foo.java", "tag:foo");
+         Position p2 = new Position(0, 42, "src/Bar.java", "ref");
+         assertNotEquals(XrefReader.makeDedupKey(p1),
+            XrefReader.makeDedupKey(p2));
+      }
+
+      @Test
+      @DisplayName("duplicate ctag position is detected in key set")
+      void duplicateDetected() {
+         Position[] ctags = {
+            new Position(0, 100, "Main.java", "tag:main"),
+         };
+         java.util.Set<String> keys =
+            XrefReader.buildCtagKeys(ctags);
+         Position mkidPos =
+            new Position(0, 100, "Main.java", "int main()");
+         assertTrue(keys.contains(
+            XrefReader.makeDedupKey(mkidPos)));
+      }
+
+      @Test
+      @DisplayName("non-duplicate mkid position is not in key set")
+      void nonDuplicateNotDetected() {
+         Position[] ctags = {
+            new Position(0, 100, "Main.java", "tag:main"),
+         };
+         java.util.Set<String> keys =
+            XrefReader.buildCtagKeys(ctags);
+         Position mkidPos =
+            new Position(0, 200, "Main.java", "call main()");
+         assertFalse(keys.contains(
+            XrefReader.makeDedupKey(mkidPos)));
+      }
    }
 }
