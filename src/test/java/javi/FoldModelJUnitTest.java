@@ -748,4 +748,260 @@ class FoldModelJUnitTest {
       assertEquals('\0', model.getFoldIndicator(1));
       assertEquals('\0', model.getFoldIndicator(10));
    }
+
+   // --- Indent-based fold detection ---
+
+   @Test
+   void detectIndentSimpleBlock() {
+      // 3-space indent, one indented block
+      String[] lines = {
+         "",
+         "def foo():",
+         "   x = 1",
+         "   y = 2",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange fr = fm.getFolds().get(0);
+      assertEquals(1, fr.startLine);
+      assertEquals(3, fr.endLine);
+   }
+
+   @Test
+   void detectIndentTwoBlocks() {
+      String[] lines = {
+         "",
+         "def foo():",
+         "   x = 1",
+         "def bar():",
+         "   y = 2",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertEquals(2, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(2, fm.getFolds().get(0).endLine);
+      assertEquals(3, fm.getFolds().get(1).startLine);
+      assertEquals(4, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectIndentNestedFolds() {
+      String[] lines = {
+         "",
+         "class Foo:",
+         "   def method():",
+         "      x = 1",
+         "      y = 2",
+         "   def other():",
+         "      z = 3",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      // Expect 3 folds: method body (2,4), other body (5,6),
+      // and class body (1,6)
+      assertEquals(3, fm.size());
+      // Folds are sorted by startLine
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(6, fm.getFolds().get(0).endLine);
+      assertEquals(2, fm.getFolds().get(1).startLine);
+      assertEquals(4, fm.getFolds().get(1).endLine);
+      assertEquals(5, fm.getFolds().get(2).startLine);
+      assertEquals(6, fm.getFolds().get(2).endLine);
+   }
+
+   @Test
+   void detectIndentBlankLineInMiddle() {
+      // Blank line should not break a fold
+      String[] lines = {
+         "",
+         "def foo():",
+         "   x = 1",
+         "",
+         "   y = 2",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange fr = fm.getFolds().get(0);
+      assertEquals(1, fr.startLine);
+      assertEquals(4, fr.endLine);
+   }
+
+   @Test
+   void detectIndentBlankLineAtEnd() {
+      // Trailing blank line between blocks
+      String[] lines = {
+         "",
+         "def foo():",
+         "   x = 1",
+         "",
+         "def bar():",
+         "   y = 2",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      // Two separate folds (blank line is boundary)
+      assertEquals(2, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(2, fm.getFolds().get(0).endLine);
+      assertEquals(4, fm.getFolds().get(1).startLine);
+      assertEquals(5, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectIndentTabsOnly() {
+      // Tab-indented file with tabSize=4
+      String[] lines = {
+         "",
+         "if (true) {",
+         "\tx = 1;",
+         "\ty = 2;",
+         "}",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 4);
+      assertEquals(1, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(3, fm.getFolds().get(0).endLine);
+   }
+
+   @Test
+   void detectIndentMixedTabsSpaces() {
+      // Tab = 4 spaces; "\t" = level 1, "\t\t" = level 2
+      String[] lines = {
+         "",
+         "outer:",
+         "\tinner:",
+         "\t\tdeep",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 4);
+      // outer(1,3), inner(2,3)
+      assertEquals(2, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(3, fm.getFolds().get(0).endLine);
+      assertEquals(2, fm.getFolds().get(1).startLine);
+      assertEquals(3, fm.getFolds().get(1).endLine);
+   }
+
+   @Test
+   void detectIndentNoIndentation() {
+      String[] lines = {
+         "",
+         "line 1",
+         "line 2",
+         "line 3",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertTrue(fm.isEmpty());
+   }
+
+   @Test
+   void detectIndentEmptyBuffer() {
+      FoldDetector.LineFetcher f = i -> "";
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, 1, 3);
+      assertTrue(fm.isEmpty());
+   }
+
+   @Test
+   void detectIndentSingleLine() {
+      String[] lines = {"", "only line"};
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertTrue(fm.isEmpty());
+   }
+
+   @Test
+   void detectIndentAllFoldsStartOpen() {
+      String[] lines = {
+         "",
+         "a:",
+         "   b",
+         "   c",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      for (FoldModel.FoldRange fr : fm.getFolds())
+         assertFalse(fr.collapsed);
+   }
+
+   @Test
+   void detectIndentMultipleBlanks() {
+      // Multiple consecutive blank lines
+      String[] lines = {
+         "",
+         "a:",
+         "   x",
+         "",
+         "",
+         "   y",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      assertEquals(1, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(5, fm.getFolds().get(0).endLine);
+   }
+
+   @Test
+   void detectIndentThreeLevels() {
+      String[] lines = {
+         "",
+         "L0",
+         "   L1",
+         "      L2",
+         "         L3",
+         "   back to L1",
+      };
+      FoldDetector.LineFetcher f = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectIndentFolds(f, lines.length, 3);
+      // Folds: (1,5) for L0, (2,4) for L1, (3,4) for L2
+      // Outer fold includes "back to L1" since level 1 > 0
+      assertEquals(3, fm.size());
+      assertEquals(1, fm.getFolds().get(0).startLine);
+      assertEquals(5, fm.getFolds().get(0).endLine);
+      assertEquals(2, fm.getFolds().get(1).startLine);
+      assertEquals(4, fm.getFolds().get(1).endLine);
+      assertEquals(3, fm.getFolds().get(2).startLine);
+      assertEquals(4, fm.getFolds().get(2).endLine);
+   }
+
+   // --- indentLevel unit tests ---
+
+   @Test
+   void indentLevelSpaces() {
+      assertEquals(0, FoldDetector.indentLevel("hello", 3));
+      assertEquals(1, FoldDetector.indentLevel("   x", 3));
+      assertEquals(2,
+         FoldDetector.indentLevel("      x", 3));
+   }
+
+   @Test
+   void indentLevelTabs() {
+      assertEquals(1, FoldDetector.indentLevel("\tx", 4));
+      assertEquals(2, FoldDetector.indentLevel("\t\tx", 4));
+   }
+
+   @Test
+   void indentLevelMixed() {
+      // tab=4, then 4 spaces = 2 levels
+      assertEquals(2,
+         FoldDetector.indentLevel("\t    x", 4));
+   }
 }

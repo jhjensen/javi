@@ -39,6 +39,7 @@ public final class MiscCommands extends Rgroup {
       SAVE_MAP_KEYS, // 24: :savemapkeys - persist user bindings
       LOAD_MAP_KEYS, // 25: :loadmapkeys - load user bindings
       FOLD,          // 26: :fold - detect/manage folds
+      FOLD_INDENT,   // 27: :foldindent - indent-based folds
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -72,6 +73,7 @@ public final class MiscCommands extends Rgroup {
          "savemapkeys",      // 24
          "loadmapkeys",      // 25
          "fold",             // 26
+         "foldindent",       // 27
       };
       register(rnames);
    }
@@ -166,6 +168,10 @@ public final class MiscCommands extends Rgroup {
             return null;
          case FOLD:
             doFold(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         case FOLD_INDENT:
+            doFoldIndent(fvc,
                arg instanceof String ? (String) arg : null);
             return null;
 
@@ -748,6 +754,27 @@ public final class MiscCommands extends Rgroup {
       int lineCount = fvc.edvec.readIn();
       FoldModel fm =
          FoldDetector.detectJsonFolds(fetcher, lineCount);
+      fvc.setFoldModel(fm);
+      UI.reportMessage(fm.statusSummary());
+   }
+
+   private static void doFoldIndent(
+         FvContext fvc, String arg) {
+      int tabSize = 3;
+      if (arg != null && !arg.isBlank()) {
+         try {
+            tabSize = Integer.parseInt(arg.trim());
+         } catch (NumberFormatException e) {
+            UI.reportMessage("foldindent: bad tabsize: "
+               + arg);
+            return;
+         }
+      }
+      FoldDetector.LineFetcher fetcher = lineNum ->
+         fvc.edvec.at(lineNum).toString();
+      int lineCount = fvc.edvec.readIn();
+      FoldModel fm = FoldDetector.detectIndentFolds(
+         fetcher, lineCount, tabSize);
       fvc.setFoldModel(fm);
       UI.reportMessage(fm.statusSummary());
    }
