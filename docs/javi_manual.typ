@@ -223,18 +223,20 @@ mkid (GNU ID Utils) for finding references:
 #cmd-table(
   ([#key("Ctrl-]")], [Jump to tag definition under cursor (ctags)]),
   ([#key("Ctrl-T")], [Pop tag stack (return to previous location)]),
-  ([#cmd("tagsauto")], [Toggle auto-regenerate ctags on file save]),
-  ([#cmd("tagfiles")], [List registered tag files]),
-  ([#cmd("tagadd _path_")], [Add an additional tag file]),
+  ([#cmd("ta _tag_")], [Jump to named tag]),
 )
 
-For finding references (where a symbol is _used_, rather than where it
-is _defined_), Javi integrates with `mkid` from GNU ID Utils. Run
-`mkid` in your source directory to build an ID database, then use:
+When looking up a tag with #key("Ctrl-]") or #cmd("ta"), Javi also
+automatically searches the `mkid` ID database (built with GNU ID Utils)
+to find references. Both ctag definitions and `lid` cross-references
+are combined in the tag results buffer.
 
-#cmd-table(
-  ([#cmd("gid _symbol_")], [Find all references to _symbol_ (uses `lid`)]),
-)
+#warning-box[
+  *Not yet implemented:* The commands #cmd("tagsauto"), #cmd("tagfiles"),
+  #cmd("tagadd"), and #cmd("gid") are planned but do not exist in the
+  current codebase. Tag files are loaded from the default `tags` file
+  in the project directory.
+]
 
 == Key Binding Customization
 
@@ -386,6 +388,13 @@ to traditional ex/vi commands, see the
 = Folding
 <sec-folding>
 
+#warning-box[
+  *Branch availability:* Folding is implemented on the
+  `feature/F25-vim-folding` branch and is not yet available on master.
+  The commands and key bindings described below will work once that
+  branch is merged.
+]
+
 Folding lets you collapse regions of text into a single summary line,
 reducing visual clutter when working with large files. Collapsed regions
 hide their contents from view but remain in the buffer --- unfolding
@@ -517,9 +526,7 @@ etc.) without leaving the editor.
 
 #cmd-table(
   ([#key("F8")], [Open or toggle to shell]),
-  ([#cmd("shell")], [Alias for F8]),
-  ([#cmd("shell _host_")], [Open SSH session to _host_]),
-  ([#cmd("shell _n_")], [Switch to shell by ID]),
+  ([#cmd("vt")], [Open or toggle to shell (same as F8)]),
   ([#cmd("shellnew")], [Create a new shell session]),
 )
 
@@ -1361,9 +1368,7 @@ These commands accept line number ranges (e.g., #cmd("3,7d")):
 === Shell / Terminal Commands
 
 #cmd-table(
-  ([#cmd("shell") / #cmd("vt")], [Open or toggle to shell]),
-  ([#cmd("shell _host_")], [Open SSH session to _host_]),
-  ([#cmd("shell _n_")], [Switch to shell by ID]),
+  ([#cmd("vt")], [Open or toggle to shell (same as F8)]),
   ([#cmd("shellnew")], [Create a new shell session]),
   ([#cmd("shells")], [List all active shells]),
   ([#cmd("shellnext")], [Switch to next shell]),
@@ -1381,12 +1386,14 @@ These commands accept line number ranges (e.g., #cmd("3,7d")):
   ([#cmd("ta _tag_")], [Jump to tag]),
   ([#cmd("gototag")], [Jump to tag under cursor]),
   ([#cmd("poptag")], [Pop tag stack]),
-  ([#cmd("tagsauto")], [Toggle auto-regenerate ctags on file save]),
-  ([#cmd("tagfiles")], [List registered tag files]),
-  ([#cmd("tagadd _path_")], [Add an additional tag file]),
-  ([#cmd("cn")], [Go to next position in position list],),
-  ([#cmd("cp")], [Go to previous position in position list],),
+  ([#cmd("cn")], [Go to next position in position list]),
+  ([#cmd("cp")], [Go to previous position in position list]),
 )
+
+#warning-box[
+  *Not yet implemented:* #cmd("tagsauto"), #cmd("tagfiles"), and
+  #cmd("tagadd") are planned but not yet available.
+]
 
 === Directory Editor Commands
 
@@ -1483,7 +1490,7 @@ Available topics: `index`, `movement`, `editing`, `search`, `files`,
 
 The following features described in this manual are planned but *not yet
 implemented* in the codebase as of March 2026. The corresponding
-sections (6, 7, 8) describe the intended design:
+sections describe the intended design:
 
 - *AI Integration* (Section 6) --- The `:ai` commands, Copilot
   authentication, and chat buffer are not yet implemented. No
@@ -1499,9 +1506,21 @@ sections (6, 7, 8) describe the intended design:
   client, F12/Shift-F12/F9/Ctrl-K bindings for LSP, or language
   server configuration system exist in the source code.
 
-- *Folding* (Section 4) --- The folding feature is implemented on the
-  `feature/F25-vim-folding` branch and will be available once merged
-  to master.
+- *Folding* (Section 4) --- The folding feature (`:fold`, `:foldindent`,
+  `:foldmarker`, and `zo`/`zc`/`za`/`zR`/`zM` key bindings) is
+  implemented on the `feature/F25-vim-folding` branch and will be
+  available once merged to master.
+
+- *Tag management commands* --- The commands `:tagsauto` (auto-regenerate
+  ctags), `:tagfiles` (list tag files), `:tagadd` (add tag file), and
+  `:gid` (find references via mkid) are planned but not yet registered
+  as commands. Basic tag lookup (`:ta`, `Ctrl-]`, `Ctrl-T`) and
+  automatic mkid cross-referencing work.
+
+- *`:shell` alias* --- The `:shell` command documented in help text is
+  not registered as a colon command. Use `:vt` or press F8 to access
+  the terminal. All other shell management commands (`:shellnew`,
+  `:shells`, `:shellnext`, etc.) work as documented.
 
 These sections document the planned feature design for future
 implementation. All other sections accurately reflect the current
