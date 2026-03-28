@@ -293,6 +293,26 @@ class DirManagerJUnitTest {
    }
 
    @Test
+   void fileListHandlesNonExistentDirectory() {
+      // B10: listDes() returns null for non-existent dirs — should not NPE
+      File ghost = new File(tempDir, "nonexistent_dir_xyz");
+      FileDescriptor.LocalDir dir =
+         FileDescriptor.LocalDir.make(ghost.getAbsolutePath());
+
+      dm.addSearchDir(dir);
+      try {
+         FilenameFilter anyFilter = (d, name) -> true;
+         ArrayList<FileDescriptor.LocalFile> result =
+            dm.fileList(anyFilter);
+         assertNotNull(result, "fileList should return non-null");
+         assertTrue(result.isEmpty(),
+            "fileList should return empty for non-existent dir");
+      } finally {
+         dm.removeSearchDir(dir);
+      }
+   }
+
+   @Test
    void globalgrepReturnsTextEdit() throws IOException {
       File sub = new File(tempDir, "greptest");
       sub.mkdirs();
@@ -353,10 +373,11 @@ class DirManagerJUnitTest {
          home + "/gtools/blbrd_common",
          home + "/gtools/blbrd_ng");
       List<String> result = DirManager.compressPaths(paths);
-      assertEquals(1, result.size());
-      assertEquals(
-         "~/gtools/{blbrd_mitigate, blbrd_common, blbrd_ng}",
-         result.get(0));
+      assertEquals(4, result.size());
+      assertEquals("~/gtools/", result.get(0));
+      assertEquals("  blbrd_common/", result.get(1));
+      assertEquals("  blbrd_mitigate/", result.get(2));
+      assertEquals("  blbrd_ng/", result.get(3));
    }
 
    @Test
@@ -367,11 +388,11 @@ class DirManagerJUnitTest {
          home + "/gtools/blbrd_common",
          home + "/javi");
       List<String> result = DirManager.compressPaths(paths);
-      assertEquals(2, result.size());
-      assertEquals(
-         "~/gtools/{blbrd_mitigate, blbrd_common}",
-         result.get(0));
-      assertEquals("~/javi", result.get(1));
+      assertEquals(4, result.size());
+      assertEquals("~/javi", result.get(0));
+      assertEquals("~/gtools/", result.get(1));
+      assertEquals("  blbrd_common/", result.get(2));
+      assertEquals("  blbrd_mitigate/", result.get(3));
    }
 
    @Test
@@ -381,9 +402,11 @@ class DirManagerJUnitTest {
          "/opt/tools/b",
          "/var/log");
       List<String> result = DirManager.compressPaths(paths);
-      assertEquals(2, result.size());
-      assertEquals("/opt/tools/{a, b}", result.get(0));
-      assertEquals("/var/log", result.get(1));
+      assertEquals(4, result.size());
+      assertEquals("/opt/tools/", result.get(0));
+      assertEquals("  a/", result.get(1));
+      assertEquals("  b/", result.get(2));
+      assertEquals("/var/log", result.get(3));
    }
 
    @Test
@@ -395,10 +418,28 @@ class DirManagerJUnitTest {
          home + "/beta",
          home + "/gtools/two");
       List<String> result = DirManager.compressPaths(paths);
-      // alpha and beta are under ~ (different parents from gtools)
-      // Order: ~/{alpha, beta} then ~/gtools/{one, two}
-      assertEquals(2, result.size());
-      assertEquals("~/{alpha, beta}", result.get(0));
-      assertEquals("~/gtools/{one, two}", result.get(1));
+      // Sorted: ~/alpha, ~/beta under ~; ~/gtools/one, ~/gtools/two
+      assertEquals(6, result.size());
+      assertEquals("~/", result.get(0));
+      assertEquals("  alpha/", result.get(1));
+      assertEquals("  beta/", result.get(2));
+      assertEquals("~/gtools/", result.get(3));
+      assertEquals("  one/", result.get(4));
+      assertEquals("  two/", result.get(5));
+   }
+
+   @Test
+   void compressPathsSortsOutput() {
+      String home = System.getProperty("user.home");
+      List<String> paths = List.of(
+         home + "/gtools/zebra",
+         home + "/gtools/alpha",
+         home + "/abc");
+      List<String> result = DirManager.compressPaths(paths);
+      assertEquals(4, result.size());
+      assertEquals("~/abc", result.get(0));
+      assertEquals("~/gtools/", result.get(1));
+      assertEquals("  alpha/", result.get(2));
+      assertEquals("  zebra/", result.get(3));
    }
 }

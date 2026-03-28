@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -283,8 +283,10 @@ public final class DirManager extends TextEdit<String> {
    ArrayList<FileDescriptor.LocalFile> fileList(FilenameFilter fl) {
       ArrayList<FileDescriptor.LocalFile> result = new ArrayList<>(100);
       for (FileDescriptor.LocalDir dir : searchPath) {
-         for (FileDescriptor.LocalFile f : dir.listDes(fl))
-            result.add(f);
+         ArrayList<FileDescriptor.LocalFile> files = dir.listDes(fl);
+         if (files != null)
+            for (FileDescriptor.LocalFile f : files)
+               result.add(f);
       }
       return result;
    }
@@ -383,8 +385,8 @@ public final class DirManager extends TextEdit<String> {
 
    /**
     * Compress a list of directory paths for display by replacing
-    * the user's home directory with {@code ~} and grouping paths
-    * that share a common parent directory.
+    * the user's home directory with {@code ~}, sorting, and
+    * grouping paths that share a common parent as a tree.
     *
     * <p>Example input:</p>
     * <pre>
@@ -396,7 +398,10 @@ public final class DirManager extends TextEdit<String> {
     *
     * <p>Example output:</p>
     * <pre>
-    * ~/gtools/{blbrd_mitigate, blbrd_common, blbrd_ng}
+    * ~/gtools/
+    *   blbrd_common/
+    *   blbrd_mitigate/
+    *   blbrd_ng/
     * ~/javi
     * </pre>
     *
@@ -409,7 +414,7 @@ public final class DirManager extends TextEdit<String> {
 
       String home = System.getProperty("user.home");
 
-      // Replace home prefix with ~
+      // Replace home prefix with ~ and sort
       ArrayList<String> tilded = new ArrayList<>(paths.size());
       for (String p : paths) {
          if (home != null && p.startsWith(home))
@@ -417,10 +422,10 @@ public final class DirManager extends TextEdit<String> {
          else
             tilded.add(p);
       }
+      Collections.sort(tilded);
 
-      // Group by parent directory, preserving order of first appearance
-      LinkedHashMap<String, ArrayList<String>> groups =
-         new LinkedHashMap<>();
+      // Group by parent directory using sorted map
+      TreeMap<String, ArrayList<String>> groups = new TreeMap<>();
       ArrayList<String> ungrouped = new ArrayList<>();
       for (String p : tilded) {
          int lastSlash = p.lastIndexOf('/');
@@ -434,18 +439,16 @@ public final class DirManager extends TextEdit<String> {
          }
       }
 
-      // Build display lines
+      // Build tree-style display lines
       ArrayList<String> result = new ArrayList<>();
-      for (Map.Entry<String, ArrayList<String>> e : groups.entrySet()) {
+      for (var e : groups.entrySet()) {
          ArrayList<String> leaves = e.getValue();
          if (leaves.size() == 1) {
             result.add(e.getKey() + "/" + leaves.get(0));
          } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append(e.getKey()).append("/{")
-              .append(String.join(", ", leaves))
-              .append("}");
-            result.add(sb.toString());
+            result.add(e.getKey() + "/");
+            for (String leaf : leaves)
+               result.add("  " + leaf + "/");
          }
       }
       result.addAll(ungrouped);
