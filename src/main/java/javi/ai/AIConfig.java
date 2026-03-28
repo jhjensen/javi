@@ -84,6 +84,7 @@ public final class AIConfig {
    private volatile String model = null; // null means use provider default
    private volatile int maxTokens = 2048;
    private volatile String apiKey = null;
+   private volatile int timeoutSeconds = 30;
    private volatile String systemPrompt = DEFAULT_SYSTEM_PROMPT;
 
    /** Default system prompt for code assistance. */
@@ -212,6 +213,28 @@ public final class AIConfig {
    }
 
    /**
+    * Get the HTTP timeout for AI requests in seconds.
+    *
+    * @return timeout in seconds
+    */
+   public int getTimeoutSeconds() {
+      return timeoutSeconds;
+   }
+
+   /**
+    * Set the HTTP timeout for AI requests.
+    *
+    * @param seconds timeout in seconds (must be positive)
+    */
+   public void setTimeoutSeconds(int seconds) {
+      if (seconds <= 0) {
+         throw new IllegalArgumentException(
+            "timeout must be positive");
+      }
+      this.timeoutSeconds = seconds;
+   }
+
+   /**
     * Get the system prompt for AI conversations.
     *
     * @return the system prompt string
@@ -271,6 +294,9 @@ public final class AIConfig {
          case "prompt":
             setSystemPrompt(value);
             return true;
+         case "timeout":
+            setTimeoutSeconds(Integer.parseInt(value));
+            return true;
          default:
             return false;
       }
@@ -288,6 +314,7 @@ public final class AIConfig {
       return "AI Config: provider=" + provider.getId()
          + " model=" + getModel()
          + " maxTokens=" + maxTokens
+         + " timeout=" + timeoutSeconds + "s"
          + " apiKey=" + keyStatus;
    }
 }

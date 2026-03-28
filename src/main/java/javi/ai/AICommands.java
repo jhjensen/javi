@@ -881,12 +881,17 @@ public final class AICommands extends Rgroup implements Plugin {
       String model = config.getModel();
       String prov = config.getProvider().getId();
       int ctxLines = 0;
+      int ctxChars = 0;
       if (null != context) {
          ctxLines = context.split("\n", -1).length;
+         ctxChars = context.length();
       }
+      int estTokens = ctxChars / 4; // rough estimate
       String info = "[" + prov + "/" + model + "] :"
          + command + " — source: " + source
-         + ", context: " + ctxLines + " lines";
+         + ", context: " + ctxLines + " lines"
+         + ", ~" + estTokens + " tokens"
+         + ", timeout: " + config.getTimeoutSeconds() + "s";
       trace("AI request: " + info);
       appendToChatBuffer(info);
    }

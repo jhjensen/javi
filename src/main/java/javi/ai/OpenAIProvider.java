@@ -37,7 +37,6 @@ public final class OpenAIProvider implements AIProvider {
 
    private static final String API_URL =
       "https://api.openai.com/v1/chat/completions";
-   private static final Duration TIMEOUT = Duration.ofSeconds(60);
 
    private final HttpClient httpClient;
    private final String apiKey;
@@ -58,8 +57,10 @@ public final class OpenAIProvider implements AIProvider {
       }
       this.apiKey = key;
       this.model = modelName;
+      Duration timeout = Duration.ofSeconds(
+         AIConfig.getInstance().getTimeoutSeconds());
       this.httpClient = HttpClient.newBuilder()
-         .connectTimeout(TIMEOUT)
+         .connectTimeout(timeout)
          .build();
    }
 
@@ -69,11 +70,13 @@ public final class OpenAIProvider implements AIProvider {
       String requestBody = buildRequestJson(messages, maxTokens);
       trace("OpenAI request to model: " + model);
 
+      Duration timeout = Duration.ofSeconds(
+         AIConfig.getInstance().getTimeoutSeconds());
       HttpRequest request = HttpRequest.newBuilder()
          .uri(URI.create(API_URL))
          .header("Content-Type", "application/json")
          .header("Authorization", "Bearer " + apiKey)
-         .timeout(TIMEOUT)
+         .timeout(timeout)
          .POST(HttpRequest.BodyPublishers.ofString(requestBody))
          .build();
 

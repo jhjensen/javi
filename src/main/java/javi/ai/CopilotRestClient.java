@@ -72,10 +72,6 @@ public final class CopilotRestClient {
    /** Environment variable for OAuth token override. */
    public static final String TOKEN_ENV = "GH_COPILOT_TOKEN";
 
-   /** HTTP request timeout. */
-   private static final Duration TIMEOUT =
-      Duration.ofSeconds(60);
-
    /** Renew session token 5 minutes before expiry. */
    private static final long REFRESH_MARGIN_SECS = 300;
 
@@ -93,6 +89,16 @@ public final class CopilotRestClient {
    /** Cached Copilot session token (from exchange). */
    private volatile String sessionToken;
 
+   /**
+    * Get the current request timeout from configuration.
+    *
+    * @return timeout duration
+    */
+   private static Duration getTimeout() {
+      return Duration.ofSeconds(
+         AIConfig.getInstance().getTimeoutSeconds());
+   }
+
    /** Copilot API base URL (from token exchange). */
    private volatile String apiUrl = DEFAULT_API_URL;
 
@@ -107,8 +113,10 @@ public final class CopilotRestClient {
     * {@code GH_COPILOT_TOKEN} environment variable.</p>
     */
    public CopilotRestClient() {
+      Duration timeout = Duration.ofSeconds(
+         AIConfig.getInstance().getTimeoutSeconds());
       this.httpClient = HttpClient.newBuilder()
-         .connectTimeout(TIMEOUT)
+         .connectTimeout(timeout)
          .build();
       this.oauthToken = loadOAuthToken();
    }
@@ -119,8 +127,10 @@ public final class CopilotRestClient {
     * @param token the GitHub OAuth token
     */
    public CopilotRestClient(String token) {
+      Duration timeout = Duration.ofSeconds(
+         AIConfig.getInstance().getTimeoutSeconds());
       this.httpClient = HttpClient.newBuilder()
-         .connectTimeout(TIMEOUT)
+         .connectTimeout(timeout)
          .build();
       this.oauthToken = token;
    }
@@ -194,7 +204,7 @@ public final class CopilotRestClient {
          .header("Authorization", "Bearer " + sessionToken)
          .header("Editor-Version", "Javi/1.0")
          .header("Copilot-Integration-Id", "vscode-chat")
-         .timeout(TIMEOUT)
+         .timeout(getTimeout())
          .GET()
          .build();
 
@@ -238,7 +248,7 @@ public final class CopilotRestClient {
          .uri(URI.create(DEVICE_CODE_URL))
          .header("Content-Type", "application/json")
          .header("Accept", "application/json")
-         .timeout(TIMEOUT)
+         .timeout(getTimeout())
          .POST(HttpRequest.BodyPublishers.ofString(body))
          .build();
 
@@ -291,7 +301,7 @@ public final class CopilotRestClient {
             .uri(URI.create(DEVICE_TOKEN_URL))
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
-            .timeout(TIMEOUT)
+            .timeout(getTimeout())
             .POST(HttpRequest.BodyPublishers.ofString(body))
             .build();
 
@@ -363,7 +373,7 @@ public final class CopilotRestClient {
          .header("Editor-Version", "Javi/1.0")
          .header("Editor-Plugin-Version",
             "javi-copilot/1.0")
-         .timeout(TIMEOUT)
+         .timeout(getTimeout())
          .GET()
          .build();
 
@@ -452,7 +462,7 @@ public final class CopilotRestClient {
             "vscode-chat")
          .header("OpenAI-Intent",
             "conversation-panel")
-         .timeout(TIMEOUT)
+         .timeout(getTimeout())
          .POST(HttpRequest.BodyPublishers.ofString(body))
          .build();
 
