@@ -749,6 +749,7 @@ public final class MiscCommands extends Rgroup {
          default:
             break;
       }
+      saveFoldState(fvc);
    }
 
    private static Date lastredraw = new Date();
@@ -760,6 +761,7 @@ public final class MiscCommands extends Rgroup {
       FoldModel fm =
          FoldDetector.detectJsonFolds(fetcher, lineCount);
       fvc.setFoldModel(fm);
+      saveFoldState(fvc);
       UI.reportMessage(fm.statusSummary());
    }
 
@@ -781,6 +783,7 @@ public final class MiscCommands extends Rgroup {
       FoldModel fm = FoldDetector.detectIndentFolds(
          fetcher, lineCount, tabSize);
       fvc.setFoldModel(fm);
+      saveFoldState(fvc);
       UI.reportMessage(fm.statusSummary());
    }
 
@@ -791,7 +794,24 @@ public final class MiscCommands extends Rgroup {
       FoldModel fm = FoldDetector.detectMarkerFolds(
          fetcher, lineCount);
       fvc.setFoldModel(fm);
+      saveFoldState(fvc);
       UI.reportMessage(fm.statusSummary());
+   }
+
+   /** Persist fold state for the given context's file. */
+   private static void saveFoldState(FvContext fvc) {
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null)
+         return;
+      FileDescriptor fd = fvc.edvec.fdes();
+      if (fd instanceof FileDescriptor.LocalFile) {
+         String canonPath =
+            ((FileDescriptor.LocalFile) fd).canonName;
+         if (fm.isEmpty())
+            FoldModel.deleteFoldState(canonPath);
+         else
+            fm.saveFolds(canonPath);
+      }
    }
 
    // :mapkey <group> <key> <command> — bind a key in a keygroup at runtime

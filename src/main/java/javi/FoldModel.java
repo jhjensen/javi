@@ -1,5 +1,11 @@
 package javi;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -322,5 +328,97 @@ public final class FoldModel {
       long closed = folds.stream()
          .filter(f -> f.collapsed).count();
       return folds.size() + " folds (" + closed + " closed)";
+   }
+
+   /**
+    * Save fold state to a .foldstate file alongside the
+    * source file. Format: one fold per line as
+    * {@code startLine:endLine:collapsed}.
+    *
+    * @param canonPath canonical path of the source file
+    */
+   public void saveFolds(String canonPath) {
+      if (canonPath == null || folds.isEmpty())
+         return;
+      File foldFile = foldStateFile(canonPath);
+      try (BufferedWriter bw =
+            new BufferedWriter(new FileWriter(foldFile))) {
+         for (FoldRange f : folds) {
+            bw.write(f.startLine + ":"
+               + f.endLine + ":" + f.collapsed);
+            bw.newLine();
+         }
+      } catch (IOException e) {
+         // best-effort — fold persistence is non-critical
+      }
+   }
+
+   /**
+    * Load fold state from a .foldstate file. Returns null
+    * if no fold state file exists or it cannot be read.
+    *
+    * @param canonPath canonical path of the source file
+    * @return loaded FoldModel, or null
+    */
+   public static FoldModel loadFolds(String canonPath) {
+      if (canonPath == null)
+         return null;
+      File foldFile = foldStateFile(canonPath);
+      if (!foldFile.exists() || !foldFile.canRead())
+         return null;
+      FoldModel model = new FoldModel();
+      try (BufferedReader br =
+            new BufferedReader(new FileReader(foldFile))) {
+         String line;
+         while ((line = br.readLine()) != null) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty())
+               continue;
+            String[] parts = trimmed.split(":");
+            if (parts.length != 3)
+               continue;
+            try {
+               int start = Integer.parseInt(parts[0]);
+               int end = Integer.parseInt(parts[1]);
+               boolean collapsed =
+                  Boolean.parseBoolean(parts[2]);
+               if (end > start) {
+                  model.addFold(start, end);
+                  if (collapsed) {
+                     FoldRange fr =
+                        model.findFoldAtStart(start);
+                     if (fr != null)
+                        fr.collapsed = true;
+                  }
+               }
+            } catch (NumberFormatException e) {
+               continue; // skip malformed line
+            }
+         }
+      } catch (IOException e) {
+         return null;
+      }
+      return model.isEmpty() ? null : model;
+   }
+
+   /**
+    * Delete the fold state file for the given source file.
+    *
+    * @param canonPath canonical path of the source file
+    */
+   public static void deleteFoldState(String canonPath) {
+      if (canonPath == null)
+         return;
+      File foldFile = foldStateFile(canonPath);
+      if (foldFile.exists())
+         foldFile.delete();
+   }
+
+   /**
+    * Derive the fold state file path from a source file's
+    * canonical path.
+    */
+   static File foldStateFile(String canonPath) {
+      return new File(canonPath + ".foldstate");
    }
 }

@@ -2,6 +2,12 @@ package javi;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -1215,5 +1221,128 @@ class FoldModelJUnitTest {
       assertEquals(1, fm.size());
       assertEquals(1, fm.getFolds().get(0).startLine);
       assertEquals(3, fm.getFolds().get(0).endLine);
+   }
+
+   // --- Fold persistence tests ---
+
+   @Test
+   void saveAndLoadFoldsRoundTrip(@TempDir Path tmpDir) {
+      String fakePath = tmpDir.resolve("test.txt")
+         .toString();
+      model.addFold(5, 20);
+      model.addFold(30, 50);
+      model.closeFold(5);
+      model.saveFolds(fakePath);
+
+      File stateFile = FoldModel.foldStateFile(fakePath);
+      assertTrue(stateFile.exists(),
+         "fold state file should exist");
+
+      FoldModel loaded = FoldModel.loadFolds(fakePath);
+      assertNotNull(loaded);
+      assertEquals(2, loaded.size());
+
+      FoldModel.FoldRange f1 = loaded.findFoldAtStart(5);
+      assertNotNull(f1);
+      assertEquals(20, f1.endLine);
+      assertTrue(f1.collapsed);
+
+      FoldModel.FoldRange f2 = loaded.findFoldAtStart(30);
+      assertNotNull(f2);
+      assertEquals(50, f2.endLine);
+      assertFalse(f2.collapsed);
+   }
+
+   @Test
+   void loadFoldsReturnsNullWhenNoFile(@TempDir Path tmp) {
+      String noFile = tmp.resolve("nonexistent.txt")
+         .toString();
+      assertNull(FoldModel.loadFolds(noFile));
+   }
+
+   @Test
+   void loadFoldsReturnsNullForNullPath() {
+      assertNull(FoldModel.loadFolds(null));
+   }
+
+   @Test
+   void saveFoldsNullPathDoesNotThrow() {
+      model.addFold(1, 10);
+      model.saveFolds(null); // should be a no-op
+   }
+
+   @Test
+   void saveFoldsEmptyModelDoesNotWrite(
+         @TempDir Path tmpDir) {
+      String fakePath = tmpDir.resolve("empty.txt")
+         .toString();
+      model.saveFolds(fakePath);
+      File stateFile = FoldModel.foldStateFile(fakePath);
+      assertFalse(stateFile.exists(),
+         "empty model should not create file");
+   }
+
+   @Test
+   void deleteFoldStateRemovesFile(@TempDir Path tmpDir) {
+      String fakePath = tmpDir.resolve("del.txt")
+         .toString();
+      model.addFold(1, 10);
+      model.saveFolds(fakePath);
+      File stateFile = FoldModel.foldStateFile(fakePath);
+      assertTrue(stateFile.exists());
+
+      FoldModel.deleteFoldState(fakePath);
+      assertFalse(stateFile.exists());
+   }
+
+   @Test
+   void deleteFoldStateNullPathDoesNotThrow() {
+      FoldModel.deleteFoldState(null); // no-op
+   }
+
+   @Test
+   void loadFoldsSkipsMalformedLines(
+         @TempDir Path tmpDir)
+         throws IOException {
+      String fakePath = tmpDir.resolve("bad.txt")
+         .toString();
+      File stateFile = FoldModel.foldStateFile(fakePath);
+      try (FileWriter fw = new FileWriter(stateFile)) {
+         fw.write("5:20:true\n");
+         fw.write("badline\n");
+         fw.write("not:a:number\n");
+         fw.write("30:50:false\n");
+         fw.write("\n");
+      }
+      FoldModel loaded = FoldModel.loadFolds(fakePath);
+      assertNotNull(loaded);
+      assertEquals(2, loaded.size());
+      assertTrue(loaded.findFoldAtStart(5).collapsed);
+      assertFalse(loaded.findFoldAtStart(30).collapsed);
+   }
+
+   @Test
+   void foldStateFileDerived() {
+      File f = FoldModel.foldStateFile("/tmp/test.java");
+      assertEquals("/tmp/test.java.foldstate",
+         f.getPath());
+   }
+
+   @Test
+   void loadFoldsRejectsInvalidRanges(
+         @TempDir Path tmpDir)
+         throws IOException {
+      String fakePath = tmpDir.resolve("inv.txt")
+         .toString();
+      File stateFile = FoldModel.foldStateFile(fakePath);
+      try (FileWriter fw = new FileWriter(stateFile)) {
+         fw.write("10:5:true\n");   // inverted
+         fw.write("3:3:false\n");   // same line
+         fw.write("1:20:true\n");   // valid
+      }
+      FoldModel loaded = FoldModel.loadFolds(fakePath);
+      assertNotNull(loaded);
+      assertEquals(1, loaded.size());
+      assertEquals(1, loaded.findFoldAtStart(1).startLine);
    }
 }

@@ -326,6 +326,7 @@ public final class FvContext<OType> implements Serializable {
 
       EditContainer.init(new FmListener());
       EditContainer.registerChangeListen(new FoldChangeListener());
+      EditContainer.registerListener(new FoldSaveListener());
 
       StringIoc str = new StringIoc("FvContext.defaultText",
             "deleted buffer without viewing a different one");
@@ -334,6 +335,39 @@ public final class FvContext<OType> implements Serializable {
             new Thread(new QuitClass(), "vic.quit thread"));
       EventQueue.registerIdle(new Idler());
 
+   }
+
+   /** Saves fold state when a file is written to disk. */
+   private static final class FoldSaveListener
+         implements EditContainer.FileStatusListener {
+      public void fileAdded(EditContainer ev) {
+      }
+      public void fileWritten(EditContainer ev) {
+         saveFoldsForFile(ev);
+      }
+      public boolean fileDisposed(EditContainer ev) {
+         return false;
+      }
+   }
+
+   /** Save fold state for all FvContexts viewing the file. */
+   static void saveFoldsForFile(EditContainer ev) {
+      FileDescriptor fd = ev.fdes();
+      if (!(fd instanceof FileDescriptor.LocalFile))
+         return;
+      String canonPath =
+         ((FileDescriptor.LocalFile) fd).canonName;
+      for (Iterator<FvContext<?>> fit = fvmap.iterator();
+            fit.hasNext();) {
+         FvContext<?> fvc = fit.next();
+         if (fvc.edvec == ev && fvc.foldModel != null) {
+            if (fvc.foldModel.isEmpty())
+               FoldModel.deleteFoldState(canonPath);
+            else
+               fvc.foldModel.saveFolds(canonPath);
+            return; // one save is enough per file
+         }
+      }
    }
 
    private static final class Idler implements EventQueue.Idler {
@@ -573,6 +607,18 @@ public final class FvContext<OType> implements Serializable {
             Object font = overrideFontProvider.getFont(te);
             if (font != null)
                context.overrideFont = font;
+         }
+         // Restore persisted fold state for local files
+         if (context.foldModel == null) {
+            FileDescriptor fd = te.fdes();
+            if (fd instanceof FileDescriptor.LocalFile) {
+               String canonPath =
+                  ((FileDescriptor.LocalFile) fd).canonName;
+               FoldModel fm =
+                  FoldModel.loadFolds(canonPath);
+               if (fm != null)
+                  context.foldModel = fm;
+            }
          }
          fvmap.put(context);
       }
