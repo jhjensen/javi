@@ -982,4 +982,72 @@ class DirEditJUnitTest {
       String fn = dirEdit.getFilename(line);
       assertEquals("mydir/", fn);
    }
+
+   // --- filter tests ---
+
+   @Test
+   void filterShowsOnlyMatchingEntries() throws Exception {
+      File subDir = new File(tempDir, "filter_test");
+      subDir.mkdir();
+      createTestFile(subDir, "alpha.java");
+      createTestFile(subDir, "beta.txt");
+      createTestFile(subDir, "gamma.java");
+      dirEdit = makeDirEdit(subDir);
+
+      dirEdit.setFilter("\\.java$");
+
+      // Verify only .java files appear (not .txt)
+      boolean foundJava = false;
+      boolean foundTxt = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String name = dirEdit.getFilename(i);
+         if (null == name)
+            continue;
+         if (name.endsWith(".java"))
+            foundJava = true;
+         if (name.endsWith(".txt"))
+            foundTxt = true;
+      }
+      assertTrue(foundJava, "Should show .java files");
+      assertFalse(foundTxt, "Should hide .txt files");
+   }
+
+   @Test
+   void filterClearRestoresAllEntries() throws Exception {
+      File subDir = new File(tempDir, "filter_clear");
+      subDir.mkdir();
+      createTestFile(subDir, "one.java");
+      createTestFile(subDir, "two.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      dirEdit.setFilter("\\.java$");
+      dirEdit.setFilter(null); // clear
+
+      boolean foundTxt = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String name = dirEdit.getFilename(i);
+         if (null != name && name.endsWith(".txt"))
+            foundTxt = true;
+      }
+      assertTrue(foundTxt, "After clear, .txt should be visible");
+   }
+
+   @Test
+   void filterInvalidPatternDoesNotCrash() throws Exception {
+      File subDir = new File(tempDir, "filter_invalid");
+      subDir.mkdir();
+      createTestFile(subDir, "file.txt");
+      dirEdit = makeDirEdit(subDir);
+
+      // Invalid regex should report error, not throw
+      dirEdit.setFilter("[invalid");
+      // Directory content should remain unchanged
+      boolean foundFile = false;
+      for (int i = 1; i < dirEdit.readIn(); i++) {
+         String name = dirEdit.getFilename(i);
+         if ("file.txt".equals(name))
+            foundFile = true;
+      }
+      assertTrue(foundFile, "Invalid filter should not hide files");
+   }
 }

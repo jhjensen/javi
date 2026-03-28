@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.PatternSyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -95,6 +96,9 @@ public final class DirEdit extends TextEdit<String> {
 
    /** Files marked for deletion. Package-private for testing. */
    final HashSet<String> markedForDelete = new HashSet<>();
+
+   /** Filter pattern for directory listing. Null means no filter. */
+   private String filterPattern;
 
    /** Date formatter for file dates. */
    private static final SimpleDateFormat dateFormat =
@@ -353,10 +357,24 @@ public final class DirEdit extends TextEdit<String> {
       } else {
          // Filter and sort
          ArrayList<File> fileList = new ArrayList<>();
-         for (File f : files) {
-            if (showHidden || !f.getName().startsWith(".")) {
-               fileList.add(f);
+         java.util.regex.Matcher filterMatcher = null;
+         if (null != filterPattern) {
+            try {
+               filterMatcher = java.util.regex.Pattern.compile(
+                  filterPattern,
+                  java.util.regex.Pattern.CASE_INSENSITIVE)
+                  .matcher("");
+            } catch (PatternSyntaxException e) {
+               filterMatcher = null;
             }
+         }
+         for (File f : files) {
+            if (!showHidden && f.getName().startsWith("."))
+               continue;
+            if (null != filterMatcher
+                  && !filterMatcher.reset(f.getName()).find())
+               continue;
+            fileList.add(f);
          }
 
          // Sort the files
@@ -396,9 +414,12 @@ public final class DirEdit extends TextEdit<String> {
 
       // Add help footer
       lines.add("");
-      lines.add("  [Enter] edit  [-] parent  [.] hidden  [s] sort:"
-         + sortMode.name().toLowerCase()
-         + "  [R] refresh  [q] quit");
+      String sortInfo = "  [Enter] edit  [-] parent  [.] hidden"
+         + "  [s] sort:" + sortMode.name().toLowerCase()
+         + "  [R] refresh  [q] quit";
+      if (null != filterPattern)
+         sortInfo += "  filter:" + filterPattern;
+      lines.add(sortInfo);
       lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
          + "  [S] search path  [!] shell");
       lines.add("  [r] rename  [c] copy  [p] permissions"
@@ -802,6 +823,32 @@ public final class DirEdit extends TextEdit<String> {
       showHidden = !showHidden;
       populateDirectory();
       UI.reportMessage("Hidden files: " + (showHidden ? "shown" : "hidden"));
+   }
+
+   /**
+    * Set or clear the filename filter pattern.
+    * When set, only entries matching the regex are displayed.
+    * Call with null or empty string to clear.
+    *
+    * @param pattern regex pattern, or null to clear
+    */
+   void setFilter(String pattern) {
+      if (null == pattern || pattern.isEmpty()) {
+         filterPattern = null;
+         populateDirectory();
+         UI.reportMessage("Filter cleared");
+      } else {
+         try {
+            java.util.regex.Pattern.compile(pattern,
+               java.util.regex.Pattern.CASE_INSENSITIVE);
+            filterPattern = pattern;
+            populateDirectory();
+            UI.reportMessage("Filter: " + pattern);
+         } catch (PatternSyntaxException e) {
+            UI.reportMessage("Invalid filter pattern: "
+               + e.getDescription());
+         }
+      }
    }
 
    /**
@@ -1474,6 +1521,7 @@ public final class DirEdit extends TextEdit<String> {
          "dirmanager_toggle_searchpath", // 15 - toggle search path
          "diredit_shell",    // 16 - open shell in current directory
          "diredit_create",   // 17 - inline create (prompts file or dir)
+         "dirfilter",        // 18 - filter directory listing
       };
 
       /**
@@ -1605,6 +1653,14 @@ public final class DirEdit extends TextEdit<String> {
             case 17: // diredit_create
                if (fvc.edvec instanceof DirEdit) {
                   ((DirEdit) fvc.edvec).createInline(fvc);
+               }
+               return null;
+
+            case 18: // dirfilter
+               if (fvc.edvec instanceof DirEdit) {
+                  String pat = (null != arg)
+                     ? arg.toString() : null;
+                  ((DirEdit) fvc.edvec).setFilter(pat);
                }
                return null;
 

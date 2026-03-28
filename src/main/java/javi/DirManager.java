@@ -360,14 +360,24 @@ public final class DirManager extends TextEdit<String> {
       if (size > 1)
          remove(1, size - 1);
 
-      ArrayList<String> paths = new ArrayList<>(searchPath.size());
-      for (FileDescriptor.LocalDir dir : searchPath)
-         paths.add(dir.toString());
-
-      List<String> display = compressPaths(paths);
       int line = 1;
-      for (String s : display)
-         insertOne(s, line++);
+      insertOne("Search Path (" + searchPath.size()
+         + " directories):", line++);
+      insertOne("", line++);
+
+      if (searchPath.isEmpty()) {
+         insertOne("  (empty — use S in DirEdit to add"
+            + " directories)", line++);
+      } else {
+         ArrayList<String> paths =
+            new ArrayList<>(searchPath.size());
+         for (FileDescriptor.LocalDir dir : searchPath)
+            paths.add(dir.toString());
+
+         List<String> display = compressPaths(paths);
+         for (String s : display)
+            insertOne("  " + s, line++);
+      }
       checkpoint();
    }
 
