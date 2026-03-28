@@ -380,7 +380,130 @@ to traditional ex/vi commands, see the
   than the POSIX toggle form.
 
 // ============================================================================
-// 4. SHELL / TERMINAL
+// 4. FOLDING
+// ============================================================================
+
+= Folding
+<sec-folding>
+
+Folding lets you collapse regions of text into a single summary line,
+reducing visual clutter when working with large files. Collapsed regions
+hide their contents from view but remain in the buffer --- unfolding
+restores the full text. Fold state is preserved across sessions via
+`.foldstate` files.
+
+== Fold Detection Methods
+
+Before using fold commands, you must detect folds using one of the three
+detection methods. Each creates a set of fold regions based on different
+heuristics.
+
+=== Syntax-Based Folding (`:fold`)
+
+The #cmd("fold") command detects folds by matching braces and brackets.
+Every matched `{`...`}` or `[`...`]` pair that spans multiple lines
+becomes a foldable region. This works well for JSON, Java, C, and other
+brace-delimited languages.
+
+```
+:fold
+```
+
+=== Indent-Based Folding (`:foldindent`)
+
+The #cmd("foldindent") command creates folds based on indentation level,
+similar to vim's `foldmethod=indent`. Lines at deeper indentation are
+folded under lines at shallower indentation. Blank lines inherit the
+minimum indent level of their surrounding non-blank lines so they do not
+break folds.
+
+```
+:foldindent           " use default tab size (3)
+:foldindent 4         " use 4-space indent levels
+```
+
+=== Marker-Based Folding (`:foldmarker`)
+
+The #cmd("foldmarker") command detects explicit fold markers in the text.
+Place `\{\{\{` to start a fold region and `\}\}\}` to end it. Markers
+can include an optional level number (e.g., `\{\{\{1`, `\}\}\}1`) for
+nested folds. This gives you precise control over which regions are
+foldable.
+
+```
+:foldmarker
+```
+
+Example in source code:
+```
+// Section A {{{1
+... code ...
+// Section B {{{1
+... code ...
+// }}}1
+```
+
+== Fold Commands (Normal Mode)
+
+Once folds are detected, use `z`-prefixed commands in normal mode to
+manipulate them:
+
+#cmd-table(
+  ([#key("zo")], [Open the fold at the cursor]),
+  ([#key("zc")], [Close the fold at the cursor]),
+  ([#key("za")], [Toggle the fold at the cursor (open ↔ close)]),
+  ([#key("zR")], [Open all folds in the buffer]),
+  ([#key("zM")], [Close all folds in the buffer]),
+)
+
+These commands operate on the fold that contains the current cursor
+line. If the cursor is not inside a fold, a message is displayed.
+
+== Fold Gutter Indicators
+
+When folds are active, the left gutter displays indicators showing fold
+state at a glance:
+
+#cmd-table(
+  ([#key("+")], [Start of a collapsed (closed) fold]),
+  ([#key("-")], [Start of an open fold]),
+  ([#key("|")], [Body of an open fold]),
+)
+
+A `+` in the gutter means that fold is collapsed --- the lines between
+the fold start and end are hidden. Use #key("zo") or #key("za") on that
+line to expand it.
+
+== Fold Persistence
+
+Fold state is automatically saved to `.foldstate` files in the same
+directory as the source file. When you reopen a file, Javi restores
+the previous fold state (which regions were collapsed or open).
+
+The `.foldstate` file is a plain-text file with one fold per line in the
+format `startLine:endLine:collapsed`. These files can be safely deleted
+to reset fold state, and they are regenerated the next time you run a
+fold detection command.
+
+== Search and Folds
+
+When you search (`/pattern` or `?pattern`), Javi automatically opens
+any collapsed folds that contain match results. This ensures search
+hits are always visible, even in heavily folded files.
+
+== Tips
+
+- Start with #cmd("fold") for brace-delimited files (JSON, Java, C)
+  and #cmd("foldindent") for indentation-structured files (Python, YAML).
+- Use #key("zM") to collapse everything, then #key("zo") to selectively
+  open regions of interest --- this provides a quick overview of large
+  files.
+- Fold markers (`\{\{\{`/`\}\}\}`) are ideal for hand-curated sections
+  in configuration files or documentation.
+- Delete the `.foldstate` file to reset folds for a file.
+
+// ============================================================================
+// 5. SHELL / TERMINAL
 // ============================================================================
 
 = Shell / Terminal
@@ -442,7 +565,7 @@ shell has been created.
 ]
 
 // ============================================================================
-// 5. AI INTEGRATION
+// 6. AI INTEGRATION
 // ============================================================================
 
 = AI Integration (Copilot)
@@ -535,7 +658,7 @@ remains responsive while waiting for a response.
 ]
 
 // ============================================================================
-// 6. GIT INTEGRATION
+// 7. GIT INTEGRATION
 // ============================================================================
 
 = Git Integration
@@ -612,7 +735,7 @@ normal vi keys.
 ]
 
 // ============================================================================
-// 7. LSP INTEGRATION
+// 8. LSP INTEGRATION
 // ============================================================================
 
 = LSP Integration (Language Server Protocol)
@@ -1044,12 +1167,27 @@ operators like #key("d"), #key("c"), #key("y"), and #key(">")/#key("<").
   [*Key*], [*Action*],
   [#key(".")], [Repeat last editing command],
   [#key("J")], [Join current line with next],
-  [#key("z")], [Z-position scroll (`zt`, `zz`, `zb`)],
+  [#key("z")], [Z-position scroll (`zt`, `zz`, `zb`) and fold commands (`zo`, `zc`, `za`, `zR`, `zM`)],
   [#key("Z")], [Z-process (ZZ = save and quit, ZQ = quit)],
   [#key("Ctrl-L")], [Redraw screen],
   [#key("Ctrl-G")], [Show file status information],
   [#key(":")], [Enter ex command line],
   [#key("Alt-J")], [Evaluate current file as JavaScript],
+)
+
+=== Folding
+
+#table(
+  columns: (auto, 1fr),
+  inset: (x: 6pt, y: 4pt),
+  stroke: 0.5pt + gray.lighten(70%),
+  fill: (_, row) => if row == 0 { gray.lighten(85%) } else { none },
+  [*Key*], [*Action*],
+  [#key("zo")], [Open fold at cursor],
+  [#key("zc")], [Close fold at cursor],
+  [#key("za")], [Toggle fold at cursor],
+  [#key("zR")], [Open all folds],
+  [#key("zM")], [Close all folds],
 )
 
 == Function Keys
@@ -1293,6 +1431,18 @@ character, `C-x` (Ctrl), `S-x` (Shift), or names like `F1`--`F12`,
   ([#cmd("cstyle")], [Run Checkstyle on current file]),
 )
 
+=== Folding Commands
+
+#cmd-table(
+  ([#cmd("fold")], [Detect folds by brace/bracket matching (syntax-based)]),
+  ([#cmd("foldindent")], [Detect folds by indentation level]),
+  ([#cmd("foldindent _n_")], [Detect folds with _n_-space indent levels]),
+  ([#cmd("foldmarker")], [Detect folds by `\{\{\{`/`\}\}\}` markers]),
+)
+
+See @sec-folding for details on fold detection methods and normal-mode
+fold commands.
+
 === Help System
 
 #cmd-table(
@@ -1333,21 +1483,25 @@ Available topics: `index`, `movement`, `editing`, `search`, `files`,
 
 The following features described in this manual are planned but *not yet
 implemented* in the codebase as of March 2026. The corresponding
-sections (5, 6, 7) describe the intended design:
+sections (6, 7, 8) describe the intended design:
 
-- *AI Integration* (Section 5) --- The `:ai` commands, Copilot
+- *AI Integration* (Section 6) --- The `:ai` commands, Copilot
   authentication, and chat buffer are not yet implemented. No
   `AiCommands` class or related command registrations exist in the
   source code.
 
-- *Git Integration* (Section 6) --- The `:git_status`, `:git_stage`,
+- *Git Integration* (Section 7) --- The `:git_status`, `:git_stage`,
   `:git_commit`, and related commands are not yet implemented. No
   `GitCommands` class or related command registrations exist.
 
-- *LSP Integration* (Section 7) --- The `:lspdef`, `:lspref`,
+- *LSP Integration* (Section 8) --- The `:lspdef`, `:lspref`,
   `:lsphover`, and related commands are not yet implemented. No LSP
   client, F12/Shift-F12/F9/Ctrl-K bindings for LSP, or language
   server configuration system exist in the source code.
+
+- *Folding* (Section 4) --- The folding feature is implemented on the
+  `feature/F25-vim-folding` branch and will be available once merged
+  to master.
 
 These sections document the planned feature design for future
 implementation. All other sections accurately reflect the current
