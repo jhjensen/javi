@@ -155,4 +155,32 @@ public final class CellAttr {
          sb.append("bg=").append(bg).append(' ');
       return sb.toString().trim();
    }
+
+   /**
+    * Approximates an RGB true color to the nearest 256-color
+    * palette index.  Uses the 6x6x6 color cube (indices 16-231)
+    * or the grayscale ramp (indices 232-254).
+    *
+    * @param r red component (0-255, clamped)
+    * @param g green component (0-255, clamped)
+    * @param b blue component (0-255, clamped)
+    * @return palette index in the range 16-254
+    */
+   static int approxTrueColor(int r, int g, int b) {
+      r = Math.max(0, Math.min(255, r));
+      g = Math.max(0, Math.min(255, g));
+      b = Math.max(0, Math.min(255, b));
+      // Check if grayscale (r == g == b)
+      if (r == g && g == b) {
+         if (r < 8) return 16;   // black in cube
+         if (r > 248) return 231; // white in cube
+         int idx = 232 + (r - 8) / 10;
+         return Math.min(idx, 254);
+      }
+      // Map to 6x6x6 color cube
+      int ri = (r * 5 + 127) / 255;
+      int gi = (g * 5 + 127) / 255;
+      int bi = (b * 5 + 127) / 255;
+      return 16 + 36 * ri + 6 * gi + bi;
+   }
 }

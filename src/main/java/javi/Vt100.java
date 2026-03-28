@@ -693,20 +693,7 @@ class Vt100 extends TextEdit<String> {
        * or the grayscale ramp (indices 232-254).
        */
       private static int approxTrueColor(int r, int g, int b) {
-         r = Math.max(0, Math.min(255, r));
-         g = Math.max(0, Math.min(255, g));
-         b = Math.max(0, Math.min(255, b));
-         // Check if grayscale (r ~= g ~= b)
-         if (r == g && g == b) {
-            if (r < 8) return 16;  // black in cube
-            if (r > 248) return 231;  // white in cube
-            return 232 + (r - 8) / 10;
-         }
-         // Map to 6x6x6 color cube
-         int ri = (r * 5 + 127) / 255;
-         int gi = (g * 5 + 127) / 255;
-         int bi = (b * 5 + 127) / 255;
-         return 16 + 36 * ri + 6 * gi + bi;
+         return CellAttr.approxTrueColor(r, g, b);
       }
 
       void incX(int amount, StringBuilder sb) {

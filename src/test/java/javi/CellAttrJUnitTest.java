@@ -204,4 +204,144 @@ class CellAttrJUnitTest {
       assertEquals(254, CellAttr.fgColor(attr));
       assertEquals(254, CellAttr.bgColor(attr));
    }
+
+   @Test
+   @DisplayName("colour 255 cannot be stored (8-bit limit)")
+   void colour255OverflowsToDefault() {
+      // encodeColor(255) = 256, which wraps to 0 in 8 bits
+      // This is a known limitation — 255 maps to default
+      int attr = CellAttr.pack(false, false, false, 255, -1);
+      assertEquals(-1, CellAttr.fgColor(attr),
+         "color 255 overflows 8-bit storage to default");
+   }
+
+   // ── true-color approximation tests ────────────────────────
+
+   @Test
+   @DisplayName("approxTrueColor: pure black → palette 16")
+   void approxBlack() {
+      assertEquals(16, CellAttr.approxTrueColor(0, 0, 0));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: pure white → palette 231")
+   void approxWhite() {
+      assertEquals(231, CellAttr.approxTrueColor(255, 255, 255));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: pure red → palette 196")
+   void approxRed() {
+      // Pure red (255,0,0) → cube(5,0,0) = 16 + 180 = 196
+      assertEquals(196, CellAttr.approxTrueColor(255, 0, 0));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: pure green → palette 46")
+   void approxGreen() {
+      // Pure green (0,255,0) → cube(0,5,0) = 16 + 30 = 46
+      assertEquals(46, CellAttr.approxTrueColor(0, 255, 0));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: pure blue → palette 21")
+   void approxBlue() {
+      // Pure blue (0,0,255) → cube(0,0,5) = 16 + 5 = 21
+      assertEquals(21, CellAttr.approxTrueColor(0, 0, 255));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: orange (255,128,0) → cube")
+   void approxOrange() {
+      // r=5, g≈2.5→3, b=0 → 16 + 180 + 18 = 214
+      int result = CellAttr.approxTrueColor(255, 128, 0);
+      assertEquals(214, result);
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: mid-gray → grayscale ramp")
+   void approxMidGray() {
+      // Gray(128,128,128) → 232 + (128-8)/10 = 232 + 12 = 244
+      assertEquals(244, CellAttr.approxTrueColor(128, 128, 128));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: dark gray → grayscale ramp")
+   void approxDarkGray() {
+      // Gray(50,50,50) → 232 + (50-8)/10 = 232 + 4 = 236
+      assertEquals(236, CellAttr.approxTrueColor(50, 50, 50));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: near-black gray → palette 16")
+   void approxNearBlack() {
+      // Gray(5,5,5) → r<8, return 16 (black in cube)
+      assertEquals(16, CellAttr.approxTrueColor(5, 5, 5));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: near-white gray → palette 231")
+   void approxNearWhite() {
+      // Gray(250,250,250) → r>248, return 231 (white in cube)
+      assertEquals(231, CellAttr.approxTrueColor(250, 250, 250));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor clamps negative values")
+   void approxClampsNegative() {
+      // Should clamp to (0,0,0) → grayscale → black → 16
+      assertEquals(16, CellAttr.approxTrueColor(-10, -5, -1));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor clamps values above 255")
+   void approxClampsHigh() {
+      // Should clamp to (255,255,255) → white → 231
+      assertEquals(231, CellAttr.approxTrueColor(300, 400, 500));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: yellow (255,255,0) → cube")
+   void approxYellow() {
+      // r=5, g=5, b=0 → 16 + 180 + 30 = 226
+      assertEquals(226, CellAttr.approxTrueColor(255, 255, 0));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: cyan (0,255,255) → cube")
+   void approxCyan() {
+      // r=0, g=5, b=5 → 16 + 30 + 5 = 51
+      assertEquals(51, CellAttr.approxTrueColor(0, 255, 255));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: magenta (255,0,255) → cube")
+   void approxMagenta() {
+      // r=5, g=0, b=5 → 16 + 180 + 5 = 201
+      assertEquals(201, CellAttr.approxTrueColor(255, 0, 255));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: gray boundary at 8")
+   void approxGrayBoundary8() {
+      // Gray(8,8,8) → 232 + (8-8)/10 = 232
+      assertEquals(232, CellAttr.approxTrueColor(8, 8, 8));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: gray boundary at 248")
+   void approxGrayBoundary248() {
+      // Gray(248,248,248) → 232 + (248-8)/10 = 256 → capped to 254
+      assertEquals(254, CellAttr.approxTrueColor(248, 248, 248));
+   }
+
+   @Test
+   @DisplayName("approxTrueColor: non-gray similar channels → cube")
+   void approxAlmostGray() {
+      // (100,101,100) → r != g, so NOT grayscale path
+      // Maps to cube instead
+      int result = CellAttr.approxTrueColor(100, 101, 100);
+      assertTrue(result >= 16 && result <= 231,
+         "near-gray with unequal channels uses cube: " + result);
+   }
 }

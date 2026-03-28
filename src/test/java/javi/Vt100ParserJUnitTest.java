@@ -4,10 +4,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.reflect.Field;
@@ -818,6 +823,136 @@ class Vt100ParserJUnitTest {
       feed("\u001b[m");
       assertNotNull(screen.lastSGR);
       assertArrayEquals(new int[]{0}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrDimAttribute() throws Exception {
+      // ESC[2m — dim/faint (should pass through as param 2)
+      feed("\u001b[2m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{2}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrItalicAttribute() throws Exception {
+      // ESC[3m — italic
+      feed("\u001b[3m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{3}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrReverseAttribute() throws Exception {
+      // ESC[7m — reverse video
+      feed("\u001b[7m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{7}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrResetBold() throws Exception {
+      // ESC[22m — reset bold
+      feed("\u001b[22m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{22}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrTrueColorFgBgCombined() throws Exception {
+      // ESC[38;2;255;0;0;48;2;0;0;255m — truecolor fg red + bg blue
+      feed("\u001b[38;2;255;0;0;48;2;0;0;255m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(
+         new int[]{38, 2, 255, 0, 0, 48, 2, 0, 0, 255},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrBoldReverseWithBrightFg() throws Exception {
+      // ESC[1;7;93m — bold + reverse + bright yellow fg
+      feed("\u001b[1;7;93m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{1, 7, 93}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrAllBrightFgRange() throws Exception {
+      // Test all bright foreground codes 90-97
+      for (int code = 90; code <= 97; code++) {
+         screen.lastSGR = null;
+         feed("\u001b[" + code + "m");
+         assertNotNull(screen.lastSGR,
+            "SGR " + code + " should be dispatched");
+         assertEquals(code, screen.lastSGR[0],
+            "SGR param for bright fg " + code);
+      }
+   }
+
+   @Test
+   void sgrAllBrightBgRange() throws Exception {
+      // Test all bright background codes 100-107
+      for (int code = 100; code <= 107; code++) {
+         screen.lastSGR = null;
+         feed("\u001b[" + code + "m");
+         assertNotNull(screen.lastSGR,
+            "SGR " + code + " should be dispatched");
+         assertEquals(code, screen.lastSGR[0],
+            "SGR param for bright bg " + code);
+      }
+   }
+
+   @Test
+   void sgr256BoundaryColor0() throws Exception {
+      // ESC[38;5;0m — 256-color index 0 (black)
+      feed("\u001b[38;5;0m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{38, 5, 0}, screen.lastSGR);
+   }
+
+   @Test
+   void sgr256BoundaryColor254() throws Exception {
+      // ESC[38;5;254m — 256-color index 254 (max storable)
+      feed("\u001b[38;5;254m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{38, 5, 254}, screen.lastSGR);
+   }
+
+   @Test
+   void sgr256BoundaryColor255() throws Exception {
+      // ESC[38;5;255m — 256-color index 255 (known overflow)
+      feed("\u001b[38;5;255m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{38, 5, 255}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrMultipleResetsInSequence() throws Exception {
+      // ESC[0;1;0m — reset, bold, reset again
+      feed("\u001b[0;1;0m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{0, 1, 0}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrResetFgAndBg() throws Exception {
+      // ESC[39;49m — reset fg and bg to defaults
+      feed("\u001b[39;49m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{39, 49}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrSequentialSgrSequences() throws Exception {
+      // Two separate SGR sequences in a row
+      feed("\u001b[1m\u001b[31m");
+      assertNotNull(screen.lastSGR);
+      // Last SGR should be [31] (the second one)
+      assertArrayEquals(new int[]{31}, screen.lastSGR);
+      // But both should have been dispatched
+      long sgrCount = screen.calls.stream()
+         .filter(c -> c.equals("setGraphicRendition")).count();
+      assertEquals(2, sgrCount,
+         "two SGR sequences should produce two calls");
    }
 
    // ── OSC title tests ──────────────────────────────────────
