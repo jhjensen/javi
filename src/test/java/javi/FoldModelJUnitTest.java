@@ -1345,4 +1345,71 @@ class FoldModelJUnitTest {
       assertEquals(1, loaded.size());
       assertEquals(1, loaded.findFoldAtStart(1).startLine);
    }
+
+   // --- Innermost fold selection ---
+
+   @Test
+   void findFoldReturnsInnermostNested() {
+      model.addFold(1, 20);
+      model.addFold(5, 10);
+      FoldModel.FoldRange f = model.findFold(7);
+      assertNotNull(f);
+      assertEquals(5, f.startLine);
+      assertEquals(10, f.endLine);
+   }
+
+   @Test
+   void findFoldReturnsOuterWhenNotInInner() {
+      model.addFold(1, 20);
+      model.addFold(5, 10);
+      FoldModel.FoldRange f = model.findFold(15);
+      assertNotNull(f);
+      assertEquals(1, f.startLine);
+      assertEquals(20, f.endLine);
+   }
+
+   @Test
+   void closeFoldClosesInnermost() {
+      model.addFold(1, 20);
+      model.addFold(5, 10);
+      FoldModel.FoldRange fc = model.closeFold(7);
+      assertNotNull(fc);
+      assertEquals(5, fc.startLine);
+      assertTrue(fc.collapsed);
+      // Outer fold should remain open
+      FoldModel.FoldRange outer = model.findFoldAtStart(1);
+      assertFalse(outer.collapsed);
+   }
+
+   @Test
+   void openFoldOpensInnermost() {
+      model.addFold(1, 20);
+      model.addFold(5, 10);
+      model.closeFold(7);
+      FoldModel.FoldRange fo = model.openFold(5);
+      assertNotNull(fo);
+      assertFalse(fo.collapsed);
+   }
+
+   @Test
+   void closeFoldAtStartLineClosesInnermost() {
+      model.addFold(1, 20);
+      model.addFold(5, 10);
+      FoldModel.FoldRange fc = model.closeFold(5);
+      assertNotNull(fc);
+      assertEquals(5, fc.startLine);
+      assertTrue(fc.collapsed);
+      assertFalse(model.findFoldAtStart(1).collapsed);
+   }
+
+   @Test
+   void findFoldTripleNesting() {
+      model.addFold(1, 30);
+      model.addFold(5, 20);
+      model.addFold(8, 12);
+      FoldModel.FoldRange f = model.findFold(10);
+      assertNotNull(f);
+      assertEquals(8, f.startLine);
+      assertEquals(12, f.endLine);
+   }
 }

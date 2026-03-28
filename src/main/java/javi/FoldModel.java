@@ -130,15 +130,19 @@ public final class FoldModel {
    }
 
    /**
-    * Find the fold containing the given line (either at the
-    * start line or inside the range). Returns null if none.
+    * Find the innermost fold containing the given line
+    * (either at the start line or inside the range).
+    * Returns null if none.
     */
    public FoldRange findFold(int line) {
+      FoldRange best = null;
       for (FoldRange f : folds) {
-         if (line >= f.startLine && line <= f.endLine)
-            return f;
+         if (line >= f.startLine && line <= f.endLine) {
+            if (best == null || f.span() < best.span())
+               best = f;
+         }
       }
-      return null;
+      return best;
    }
 
    /**

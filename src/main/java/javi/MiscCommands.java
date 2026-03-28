@@ -723,11 +723,14 @@ public final class MiscCommands extends Rgroup {
             break;
          case 'c':
             FoldModel.FoldRange fc = fm.closeFold(line);
-            if (fc != null)
+            if (fc != null) {
+               if (line > fc.startLine)
+                  fvc.cursoryabs(fc.startLine);
                UI.reportMessage("closed fold at "
                   + fc.startLine);
-            else
+            } else {
                UI.reportMessage("no fold at line " + line);
+            }
             break;
          case 'a':
             FoldModel.FoldRange fa = fm.toggleFold(line);
@@ -799,7 +802,7 @@ public final class MiscCommands extends Rgroup {
    }
 
    /** Persist fold state for the given context's file. */
-   private static void saveFoldState(FvContext fvc) {
+   public static void saveFoldState(FvContext fvc) {
       FoldModel fm = fvc.getFoldModel();
       if (fm == null)
          return;

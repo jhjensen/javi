@@ -33,6 +33,7 @@ import javi.FileList;
 import javi.FoldModel;
 import javi.FvContext;
 import javi.MarkEvent;
+import javi.MiscCommands;
 import javi.PosEvent;
 import javi.Position;
 import javi.ShellManager;
@@ -816,6 +817,12 @@ final class OldView extends AwtView {
       private void mousepress(MouseEvent event) {
          // trace("modifiers = " +Integer.toHexString( event.getModifiers()));
 
+         if (event.getButton() == MouseEvent.BUTTON1
+               && event.getX() < xoffset + charwidth) {
+            if (handleFoldGutterClick(event))
+               return;
+         }
+
          EventQueue.biglock2.lock();
 
          // trace("Position " + pos + " event vi " + vi);
@@ -1024,6 +1031,45 @@ final class OldView extends AwtView {
                + text.length() + " chars");
          } catch (Exception e) {
             trace("copyShellSelection failed: " + e);
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
+      }
+
+      /**
+       * Handle a click in the fold gutter area. Determines the
+       * buffer line for the clicked screen row and toggles the
+       * fold if one starts at that line.
+       *
+       * @return true if a fold was toggled
+       */
+      private boolean handleFoldGutterClick(MouseEvent event) {
+         EventQueue.biglock2.lock();
+         try {
+            FoldModel fm = getActiveFoldModel();
+            if (fm == null)
+               return false;
+            int screenRow = event.getY() / charheight;
+            int topBuf = computeTopBufLine(fm);
+            int numlines = gettext().readIn();
+            int tindex = topBuf;
+            for (int row = 0; row < screenRow
+                  && tindex < numlines; row++)
+               tindex = fm.nextVisible(tindex);
+            if (tindex < 1 || tindex >= numlines)
+               return false;
+            char ind = fm.getFoldIndicator(tindex);
+            if (ind == '+' || ind == '-') {
+               fm.toggleFold(tindex);
+               FvContext fvc = FvContext.getcontext(
+                  OldView.this, getCurrFile());
+               if (fvc != null) {
+                  MiscCommands.saveFoldState(fvc);
+                  fvc.vi.redraw();
+               }
+               return true;
+            }
+            return false;
          } finally {
             EventQueue.biglock2.unlock();
          }
