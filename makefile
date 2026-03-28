@@ -145,6 +145,48 @@ compile-test:
 guitest:
 	./gradlew guiTest
 
+#==============================================================================
+# Remote GUI testing (rdesk + Docker)
+#==============================================================================
+
+RDESK_GUITEST_DIR = /tmp/javi-guitest
+GUITEST_IMAGE = javi-guitest
+
+GUITEST_EXCLUDE = --exclude=build --exclude=.gradle --exclude=.git \
+   --exclude='*.dmp2' --exclude=ai.output --exclude=ai/*.out \
+   --exclude=bin --exclude=oldstuff --exclude=tmp
+
+# Full pipeline: sync, build Docker image, run GUI tests, fetch results
+rdesk-guitest: rdesk-guitest-sync rdesk-guitest-build rdesk-guitest-run rdesk-guitest-fetch
+
+# Sync javi source to rdesk
+rdesk-guitest-sync:
+	rsync -az $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_GUITEST_DIR)/
+
+# Build Docker image on rdesk
+rdesk-guitest-build: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker build -f Dockerfile.guitest -t $(GUITEST_IMAGE) .'
+
+# Run GUI tests on rdesk via Docker
+rdesk-guitest-run: rdesk-guitest-build
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker run --rm \
+	      -v $$(pwd)/build:/app/build \
+	      $(GUITEST_IMAGE)'
+
+# Fetch test results from rdesk
+rdesk-guitest-fetch:
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/reports/ \
+	   build/reports-rdesk/ 2>/dev/null || true
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/test-results/ \
+	   build/test-results-rdesk/ 2>/dev/null || true
+
+# Clean remote Docker image and files
+rdesk-guitest-clean:
+	ssh -n -T rdesk 'docker rmi $(GUITEST_IMAGE) 2>/dev/null; \
+	   rm -rf $(RDESK_GUITEST_DIR)'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage
