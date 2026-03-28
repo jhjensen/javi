@@ -680,4 +680,175 @@ class Vt100ParserJUnitTest {
       assertTrue(screen.calls.contains("incY:-5"));
       assertTrue(screen.calls.contains("incY:3"));
    }
+
+   // ── SGR 256-colour tests ─────────────────────────────────
+
+   @Test
+   void sgr256FgColor() throws Exception {
+      // ESC[38;5;196m — 256-color foreground (red)
+      feed("\u001b[38;5;196m");
+      assertNotNull(screen.lastSGR, "SGR should be called");
+      assertArrayEquals(new int[]{38, 5, 196},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgr256BgColor() throws Exception {
+      // ESC[48;5;21m — 256-color background (blue)
+      feed("\u001b[48;5;21m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{48, 5, 21},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrTrueColorFg() throws Exception {
+      // ESC[38;2;255;128;0m — true color foreground (orange)
+      feed("\u001b[38;2;255;128;0m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{38, 2, 255, 128, 0},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrTrueColorBg() throws Exception {
+      // ESC[48;2;0;128;255m — true color background
+      feed("\u001b[48;2;0;128;255m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{48, 2, 0, 128, 255},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrBrightFgColors() throws Exception {
+      // ESC[90m — bright black (dark gray) foreground
+      feed("\u001b[90m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{90}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrBrightFg97() throws Exception {
+      // ESC[97m — bright white foreground
+      feed("\u001b[97m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{97}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrBrightBgColors() throws Exception {
+      // ESC[100m — bright black (dark gray) background
+      feed("\u001b[100m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{100}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrBrightBg107() throws Exception {
+      // ESC[107m — bright white background
+      feed("\u001b[107m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{107}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrBoldWith256Color() throws Exception {
+      // ESC[1;38;5;196m — bold + 256-color fg
+      feed("\u001b[1;38;5;196m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{1, 38, 5, 196},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrResetSequence() throws Exception {
+      // ESC[0m — reset all attributes
+      feed("\u001b[0m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{0}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrMultipleAttrsInSingleSequence() throws Exception {
+      // ESC[1;4;38;5;82m — bold + underline + 256-fg
+      feed("\u001b[1;4;38;5;82m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{1, 4, 38, 5, 82},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrDefaultFg() throws Exception {
+      // ESC[39m — default foreground
+      feed("\u001b[39m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{39}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrDefaultBg() throws Exception {
+      // ESC[49m — default background
+      feed("\u001b[49m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{49}, screen.lastSGR);
+   }
+
+   @Test
+   void sgrStandardFgAndBg() throws Exception {
+      // ESC[31;42m — red fg, green bg
+      feed("\u001b[31;42m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{31, 42},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrFgBg256Combined() throws Exception {
+      // ESC[38;5;196;48;5;21m — fg 196 + bg 21
+      feed("\u001b[38;5;196;48;5;21m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(
+         new int[]{38, 5, 196, 48, 5, 21},
+         screen.lastSGR);
+   }
+
+   @Test
+   void sgrNoParamDefaultsToReset() throws Exception {
+      // ESC[m — no params, defaults to 0 (reset)
+      feed("\u001b[m");
+      assertNotNull(screen.lastSGR);
+      assertArrayEquals(new int[]{0}, screen.lastSGR);
+   }
+
+   // ── OSC title tests ──────────────────────────────────────
+
+   @Test
+   void oscSetTitleWithSTTerminator() throws Exception {
+      // ESC ] 0 ; title ESC BACKSLASH (ST terminator)
+      feed("\u001b]0;Test Title\u001b\\");
+      assertEquals("Test Title", screen.lastTitle);
+   }
+
+   @Test
+   void oscEmptyTitle() throws Exception {
+      // ESC ] 0 ; BEL (empty title)
+      feed("\u001b]0;\u0007");
+      assertEquals("", screen.lastTitle);
+   }
+
+   @Test
+   void oscTitleWithSpecialChars() throws Exception {
+      // ESC ] 0 ; title with spaces and symbols BEL
+      feed("\u001b]0;user@host: ~/dir\u0007");
+      assertEquals("user@host: ~/dir", screen.lastTitle);
+   }
+
+   @Test
+   void oscIgnoredSequence() throws Exception {
+      // ESC ] 7 ; unused-data BEL — code 7 sets working dir
+      feed("\u001b]7;file:///path\u0007");
+      // Code 7 is "set working directory" — ignored, no title
+      assertNull(screen.lastTitle);
+      assertEquals(NORM, state());
+   }
 }

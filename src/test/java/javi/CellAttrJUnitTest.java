@@ -108,4 +108,100 @@ class CellAttrJUnitTest {
       assertTrue(desc.contains("REV"), desc);
       assertTrue(desc.contains("fg=2"), desc);
    }
+
+   // ── 256-colour support tests ──────────────────────────────
+
+   @Test
+   @DisplayName("256-colour fg round-trip for standard ANSI (0-7)")
+   void colour256StandardAnsi() {
+      for (int c = 0; c <= 7; c++) {
+         int attr = CellAttr.pack(false, false, false, c, -1);
+         assertEquals(c, CellAttr.fgColor(attr),
+            "fg colour " + c);
+         assertEquals(-1, CellAttr.bgColor(attr));
+      }
+   }
+
+   @Test
+   @DisplayName("256-colour fg round-trip for bright ANSI (8-15)")
+   void colour256BrightAnsi() {
+      for (int c = 8; c <= 15; c++) {
+         int attr = CellAttr.pack(false, false, false, c, -1);
+         assertEquals(c, CellAttr.fgColor(attr),
+            "fg colour " + c);
+      }
+   }
+
+   @Test
+   @DisplayName("256-colour fg round-trip for 6x6x6 cube (16-231)")
+   void colour256Cube() {
+      for (int c = 16; c <= 231; c++) {
+         int attr = CellAttr.pack(false, false, false, c, -1);
+         assertEquals(c, CellAttr.fgColor(attr),
+            "fg colour " + c);
+      }
+   }
+
+   @Test
+   @DisplayName("256-colour fg round-trip for grayscale (232-254)")
+   void colour256Grayscale() {
+      for (int c = 232; c <= 254; c++) {
+         int attr = CellAttr.pack(false, false, false, c, -1);
+         assertEquals(c, CellAttr.fgColor(attr),
+            "fg colour " + c);
+      }
+   }
+
+   @Test
+   @DisplayName("256-colour bg round-trip full range")
+   void colour256BgFullRange() {
+      for (int c = 0; c <= 254; c++) {
+         int attr = CellAttr.pack(false, false, false, -1, c);
+         assertEquals(c, CellAttr.bgColor(attr),
+            "bg colour " + c);
+         assertEquals(-1, CellAttr.fgColor(attr));
+      }
+   }
+
+   @Test
+   @DisplayName("fg and bg 256-colours coexist without overlap")
+   void colour256FgBgCoexist() {
+      int attr = CellAttr.pack(false, false, false, 196, 21);
+      assertEquals(196, CellAttr.fgColor(attr));
+      assertEquals(21, CellAttr.bgColor(attr));
+   }
+
+   @Test
+   @DisplayName("256-colour with bold flag preserved")
+   void colour256WithBold() {
+      int attr = CellAttr.pack(true, false, false, 196, 21);
+      assertTrue(CellAttr.isBold(attr));
+      assertEquals(196, CellAttr.fgColor(attr));
+      assertEquals(21, CellAttr.bgColor(attr));
+   }
+
+   @Test
+   @DisplayName("describe shows 256-colour values")
+   void describe256Colour() {
+      int attr = CellAttr.pack(false, false, false, 196, 21);
+      String desc = CellAttr.describe(attr);
+      assertTrue(desc.contains("fg=196"), desc);
+      assertTrue(desc.contains("bg=21"), desc);
+   }
+
+   @Test
+   @DisplayName("boundary colour 0 round-trips correctly")
+   void colourBoundaryZero() {
+      int attr = CellAttr.pack(false, false, false, 0, 0);
+      assertEquals(0, CellAttr.fgColor(attr));
+      assertEquals(0, CellAttr.bgColor(attr));
+   }
+
+   @Test
+   @DisplayName("boundary colour 254 round-trips correctly")
+   void colourBoundary254() {
+      int attr = CellAttr.pack(false, false, false, 254, 254);
+      assertEquals(254, CellAttr.fgColor(attr));
+      assertEquals(254, CellAttr.bgColor(attr));
+   }
 }
