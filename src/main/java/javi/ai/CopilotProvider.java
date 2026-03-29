@@ -2,6 +2,7 @@ package javi.ai;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static history.Tools.trace;
 
@@ -80,6 +81,27 @@ public final class CopilotProvider implements AIProvider {
       String responseJson = client.chatCompletion(
          messages, model, maxTokens);
       return OpenAIProvider.extractContent(responseJson);
+   }
+
+   /**
+    * Send a streaming chat completion request.
+    *
+    * <p>Tokens are passed to the callback as they arrive.
+    * Returns the full concatenated response.</p>
+    *
+    * @param messages the conversation messages
+    * @param maxTokens max response tokens
+    * @param onToken callback for each content delta
+    * @return the full response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the API call fails
+    */
+   public String chatCompletionStreaming(
+         List<Message> messages, int maxTokens,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      return client.chatCompletionStreaming(
+         messages, model, maxTokens, onToken);
    }
 
    @Override

@@ -72,6 +72,7 @@ public final class AICommands extends Rgroup implements Plugin {
    private static final int CMD_REFACTOR = 13;
    private static final int CMD_AUTH     = 14;
    private static final int CMD_MODELS   = 15;
+   private static final int CMD_STATUS   = 16;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -82,6 +83,17 @@ public final class AICommands extends Rgroup implements Plugin {
    private static int pendingGhostLine;
    /** Column offset where ghost text starts. */
    private static int pendingGhostCol;
+
+   /** Last non-chat source buffer for context capture. */
+   private static EditContainer lastSourceBuffer;
+   /** Name of the last source buffer. */
+   private static String lastSourceName;
+
+   /** Request tracking for premium awareness. */
+   private static int totalRequests;
+   private static int streamingRequests;
+   private static long totalInputChars;
+   private static long totalOutputChars;
 
    /**
     * Create and register all AI commands.
@@ -107,6 +119,7 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.refactor",   // 13 - refactor code with instruction
          "ai.auth",       // 14 - device flow auth
          "ai.models",     // 15 - list available models
+         "ai.status",     // 16 - request history/tracking
       };
       register(rnames);
    }
@@ -146,6 +159,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doAuth(fvc);
          case CMD_MODELS:
             return doModels(fvc);
+         case CMD_STATUS:
+            return doStatus(fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -209,6 +224,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doAuth(fvc);
          case "models":
             return doModels(fvc);
+         case "status":
+            return doStatus(fvc);
          case "help":
             showAiHelp(fvc);
             return null;
@@ -248,6 +265,11 @@ public final class AICommands extends Rgroup implements Plugin {
       String ctxCode = null;
       if (!"*ai-chat*".equals(ctxName)) {
          ctxCode = getContextCode(fvc);
+         lastSourceBuffer = fvc.edvec;
+         lastSourceName = ctxName;
+      } else if (null != lastSourceBuffer) {
+         ctxCode = getBufferContent(lastSourceBuffer);
+         ctxName = lastSourceName;
       }
 
       ensureChatBuffer();
@@ -263,21 +285,27 @@ public final class AICommands extends Rgroup implements Plugin {
       final String fileCtx = ctxCode;
       final String fileName = ctxName;
 
-      AIAsyncExecutor.submit(
-         () -> {
+      appendToChatBuffer("AI: ");
+      AIAsyncExecutor.submitStreaming(
+         onToken -> {
             try {
                AIClient client = AIClient.getInstance();
                if (null != fileCtx) {
-                  return client.chatWithContext(
-                     msg, fileName, fileCtx);
+                  client.chatWithContextStreaming(
+                     msg, fileName, fileCtx, onToken);
+               } else {
+                  client.chatStreaming(msg, onToken);
                }
-               return client.chat(msg);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
-         response -> {
-            appendResponse("AI: " + response, vi);
+         token -> {
+            appendStreamToken(token);
+            vi.repaint();
+         },
+         () -> {
+            finishStreamResponse(vi);
             UI.reportMessage("AI: response received");
          },
          error -> handleAsyncError(error, vi)
@@ -297,13 +325,13 @@ public final class AICommands extends Rgroup implements Plugin {
     * @throws IOException if an I/O error occurs
     */
    private Object doExplain(FvContext fvc) throws IOException {
-      String code = getContextCode(fvc);
+      String code = getSourceContext(fvc);
       if (null == code) {
          UI.reportMessage("No code to explain");
          return null;
       }
 
-      String name = fvc.edvec.getName();
+      String name = getSourceName(fvc);
       ensureChatBuffer();
       appendToChatBuffer("EXPLAIN: " + name);
       appendToChatBuffer("");
@@ -316,17 +344,22 @@ public final class AICommands extends Rgroup implements Plugin {
       }
 
       final View vi = fvc.vi;
-      AIAsyncExecutor.submit(
-         () -> {
+      final String codeCtx = code;
+      AIAsyncExecutor.submitStreaming(
+         onToken -> {
             try {
-               return AIClient.getInstance()
-                  .explain(code);
+               AIClient.getInstance()
+                  .explainStreaming(codeCtx, onToken);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
-         response -> {
-            appendResponse(response, vi);
+         token -> {
+            appendStreamToken(token);
+            vi.repaint();
+         },
+         () -> {
+            finishStreamResponse(vi);
             UI.reportMessage("AI: explain complete");
          },
          error -> handleAsyncError(error, vi)
@@ -342,13 +375,13 @@ public final class AICommands extends Rgroup implements Plugin {
     * @throws IOException if an I/O error occurs
     */
    private Object doReview(FvContext fvc) throws IOException {
-      String code = getContextCode(fvc);
+      String code = getSourceContext(fvc);
       if (null == code) {
          UI.reportMessage("No code to review");
          return null;
       }
 
-      String name = fvc.edvec.getName();
+      String name = getSourceName(fvc);
       ensureChatBuffer();
       appendToChatBuffer("REVIEW: " + name);
       appendToChatBuffer("");
@@ -361,17 +394,22 @@ public final class AICommands extends Rgroup implements Plugin {
       }
 
       final View vi = fvc.vi;
-      AIAsyncExecutor.submit(
-         () -> {
+      final String codeCtx = code;
+      AIAsyncExecutor.submitStreaming(
+         onToken -> {
             try {
-               return AIClient.getInstance()
-                  .review(code);
+               AIClient.getInstance()
+                  .reviewStreaming(codeCtx, onToken);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
-         response -> {
-            appendResponse(response, vi);
+         token -> {
+            appendStreamToken(token);
+            vi.repaint();
+         },
+         () -> {
+            finishStreamResponse(vi);
             UI.reportMessage("AI: review complete");
          },
          error -> handleAsyncError(error, vi)
@@ -387,13 +425,13 @@ public final class AICommands extends Rgroup implements Plugin {
     * @throws IOException if an I/O error occurs
     */
    private Object doDoc(FvContext fvc) throws IOException {
-      String code = getContextCode(fvc);
+      String code = getSourceContext(fvc);
       if (null == code) {
          UI.reportMessage("No code to document");
          return null;
       }
 
-      String name = fvc.edvec.getName();
+      String name = getSourceName(fvc);
       ensureChatBuffer();
       appendToChatBuffer("DOCUMENT: " + name);
       appendToChatBuffer("");
@@ -406,17 +444,22 @@ public final class AICommands extends Rgroup implements Plugin {
       }
 
       final View vi = fvc.vi;
-      AIAsyncExecutor.submit(
-         () -> {
+      final String codeCtx = code;
+      AIAsyncExecutor.submitStreaming(
+         onToken -> {
             try {
-               return AIClient.getInstance()
-                  .document(code);
+               AIClient.getInstance()
+                  .documentStreaming(codeCtx, onToken);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
-         response -> {
-            appendResponse(response, vi);
+         token -> {
+            appendStreamToken(token);
+            vi.repaint();
+         },
+         () -> {
+            finishStreamResponse(vi);
             UI.reportMessage("AI: doc complete");
          },
          error -> handleAsyncError(error, vi)
@@ -439,7 +482,7 @@ public final class AICommands extends Rgroup implements Plugin {
     */
    private Object doRefactor(String instruction, FvContext fvc)
          throws IOException, InputException {
-      String code = getContextCode(fvc);
+      String code = getSourceContext(fvc);
       if (null == code) {
          UI.reportMessage("No code to refactor");
          return null;
@@ -457,7 +500,7 @@ public final class AICommands extends Rgroup implements Plugin {
          }
       }
 
-      String name = fvc.edvec.getName();
+      String name = getSourceName(fvc);
       ensureChatBuffer();
       appendToChatBuffer("REFACTOR: " + name);
       appendToChatBuffer("Instruction: " + instruction);
@@ -472,17 +515,23 @@ public final class AICommands extends Rgroup implements Plugin {
 
       final View vi = fvc.vi;
       final String inst = instruction;
-      AIAsyncExecutor.submit(
-         () -> {
+      final String codeCtx = code;
+      AIAsyncExecutor.submitStreaming(
+         onToken -> {
             try {
-               return AIClient.getInstance()
-                  .refactor(code, inst);
+               AIClient.getInstance()
+                  .refactorStreaming(codeCtx, inst,
+                     onToken);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
-         response -> {
-            appendResponse(response, vi);
+         token -> {
+            appendStreamToken(token);
+            vi.repaint();
+         },
+         () -> {
+            finishStreamResponse(vi);
             UI.reportMessage("AI: refactor complete");
          },
          error -> handleAsyncError(error, vi)
@@ -525,19 +574,28 @@ public final class AICommands extends Rgroup implements Plugin {
     */
    private Object doTest() {
       UI.reportMessage("Testing AI connection...");
-      try {
-         AIClient client = AIClient.getInstance();
-         AIProvider provider = client.getProvider();
-         boolean ok = provider.testConnection();
-         if (ok) {
-            UI.reportMessage("AI connection OK: " + provider.getName()
-               + " / " + provider.getModel());
-         } else {
-            UI.reportMessage("AI connection FAILED: " + provider.getName());
-         }
-      } catch (AIException e) {
-         UI.reportMessage("AI configuration error: " + e.getMessage());
-      }
+      AIAsyncExecutor.submit(
+         () -> {
+            try {
+               AIClient client = AIClient.getInstance();
+               AIProvider provider = client.getProvider();
+               boolean ok = provider.testConnection();
+               if (ok) {
+                  return "AI connection OK: "
+                     + provider.getName() + " / "
+                     + provider.getModel();
+               }
+               return "AI connection FAILED: "
+                  + provider.getName();
+            } catch (AIException e) {
+               return "AI config error: "
+                  + e.getMessage();
+            }
+         },
+         msg -> UI.reportMessage((String) msg),
+         error -> UI.reportMessage(
+            "AI test error: " + error.getMessage())
+      );
       return null;
    }
 
@@ -853,6 +911,7 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  :ai cancel          Cancel in-flight request");
       appendToChatBuffer("  :ai auth            Copilot device flow auth");
       appendToChatBuffer("  :ai models          List Copilot models");
+      appendToChatBuffer("  :ai status          Show request tracking");
       appendToChatBuffer("  :ai help            Show this help");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
@@ -887,11 +946,18 @@ public final class AICommands extends Rgroup implements Plugin {
          ctxChars = context.length();
       }
       int estTokens = ctxChars / 4; // rough estimate
-      String info = "[" + prov + "/" + model + "] :"
+      boolean premium = isPremiumModel(model);
+      totalRequests++;
+      totalInputChars += ctxChars;
+
+      String info = "[" + prov + "/" + model
+         + (premium ? " PREMIUM" : "") + "] :"
          + command + " — source: " + source
-         + ", context: " + ctxLines + " lines"
+         + ", context: " + ctxLines + " lines/"
+         + ctxChars + " chars"
          + ", ~" + estTokens + " tokens"
-         + ", timeout: " + config.getTimeoutSeconds() + "s";
+         + ", timeout: " + config.getTimeoutSeconds()
+         + "s, req #" + totalRequests;
       trace("AI request: " + info);
       appendToChatBuffer(info);
    }
@@ -947,18 +1013,63 @@ public final class AICommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Get code from the current buffer for AI operations.
+    * Get source code context, preferring the source buffer over
+    * the chat buffer. When the current view is *ai-chat*, falls
+    * back to the last source buffer.
     *
-    * <p>Extracts text from the current buffer. Currently returns all
-    * content up to a reasonable limit. UNCLEAR: Should integrate with
-    * visual selection mode to allow selecting specific code regions.</p>
+    * @param fvc the current file-view context
+    * @return the source code text, or null if unavailable
+    */
+   private String getSourceContext(FvContext fvc) {
+      String name = fvc.edvec.getName();
+      if (!"*ai-chat*".equals(name)) {
+         lastSourceBuffer = fvc.edvec;
+         lastSourceName = name;
+         return getContextCode(fvc);
+      }
+      if (null != lastSourceBuffer) {
+         return getBufferContent(lastSourceBuffer);
+      }
+      return null;
+   }
+
+   /**
+    * Get the source buffer name, preferring the real source over
+    * the chat buffer.
+    *
+    * @param fvc the current file-view context
+    * @return the source buffer name
+    */
+   private String getSourceName(FvContext fvc) {
+      String name = fvc.edvec.getName();
+      if (!"*ai-chat*".equals(name)) {
+         lastSourceBuffer = fvc.edvec;
+         lastSourceName = name;
+         return name;
+      }
+      return null != lastSourceName
+         ? lastSourceName : "*ai-chat*";
+   }
+
+   /**
+    * Get code from the current buffer for AI operations.
     *
     * @param fvc the current file-view context
     * @return the code text, or null if buffer is empty
     */
    @SuppressWarnings("unchecked")
    private String getContextCode(FvContext fvc) {
-      EditContainer<String> ec = fvc.edvec;
+      return getBufferContent(fvc.edvec);
+   }
+
+   /**
+    * Extract text content from a buffer.
+    *
+    * @param ec the edit container to read
+    * @return the text, or null if buffer is empty
+    */
+   @SuppressWarnings("unchecked")
+   private static String getBufferContent(EditContainer ec) {
       int lines = ec.readIn();
       if (lines <= 1) {
          return null;
@@ -1018,5 +1129,139 @@ public final class AICommands extends Rgroup implements Plugin {
       for (String line : lines) {
          chatBuffer.insertOne(line, chatBuffer.finish());
       }
+   }
+
+   /** Accumulates partial streaming text for current line. */
+   private static StringBuilder streamLineAccum =
+      new StringBuilder();
+
+   /**
+    * Append a streaming token to the chat buffer.
+    *
+    * <p>Tokens can contain partial lines or multiple lines.
+    * This method accumulates text and creates new buffer lines
+    * at each newline boundary, so the user sees text flowing in
+    * progressively.</p>
+    *
+    * @param token the token chunk from streaming
+    */
+   private static void appendStreamToken(String token) {
+      ensureChatBuffer();
+      for (int i = 0; i < token.length(); i++) {
+         char c = token.charAt(i);
+         if ('\n' == c) {
+            // Finalize current line, start a new one
+            int lastLine = chatBuffer.finish();
+            Object existing = chatBuffer.at(lastLine);
+            String line = (null != existing
+               ? existing.toString() : "")
+               + streamLineAccum.toString();
+            chatBuffer.changeElementAtStr(
+               line, lastLine);
+            chatBuffer.insertOne("",
+               chatBuffer.finish());
+            streamLineAccum.setLength(0);
+         } else {
+            streamLineAccum.append(c);
+         }
+      }
+      // Update the current (last) line with accumulated text
+      if (streamLineAccum.length() > 0) {
+         int lastLine = chatBuffer.finish();
+         Object existing = chatBuffer.at(lastLine);
+         String base = null != existing
+            ? existing.toString() : "";
+         chatBuffer.changeElementAtStr(
+            base + streamLineAccum.toString(), lastLine);
+         streamLineAccum.setLength(0);
+      }
+   }
+
+   /**
+    * Finalize a streaming response: add separator, refresh view.
+    *
+    * @param vi the view to refresh
+    */
+   private static void finishStreamResponse(View vi) {
+      appendToChatBuffer("");
+      appendToChatBuffer("---");
+      appendToChatBuffer("");
+      try {
+         FvContext.connectFv(chatBuffer, vi);
+      } catch (InputException e) {
+         UI.reportMessage(
+            "Input Error: " + e.getMessage());
+      }
+      vi.repaint();
+   }
+
+   /**
+    * Show AI request tracking status.
+    *
+    * @param fvc the current file-view context
+    * @return null
+    */
+   private Object doStatus(FvContext fvc) {
+      AIConfig config = AIConfig.getInstance();
+      ensureChatBuffer();
+      appendToChatBuffer("AI STATUS");
+      appendToChatBuffer("=========");
+      appendToChatBuffer("Provider: "
+         + config.getProvider().getId());
+      appendToChatBuffer("Model: " + config.getModel());
+      appendToChatBuffer("Timeout: "
+         + config.getTimeoutSeconds() + "s");
+      appendToChatBuffer("Max tokens: "
+         + config.getMaxTokens());
+      appendToChatBuffer("");
+      appendToChatBuffer("REQUEST HISTORY");
+      appendToChatBuffer("Total requests: "
+         + totalRequests);
+      appendToChatBuffer("Streaming requests: "
+         + streamingRequests);
+      long estInputTokens = totalInputChars / 4;
+      long estOutputTokens = totalOutputChars / 4;
+      appendToChatBuffer("Est. input tokens: ~"
+         + estInputTokens);
+      appendToChatBuffer("Est. output tokens: ~"
+         + estOutputTokens);
+      appendToChatBuffer("");
+      appendToChatBuffer("PREMIUM REQUESTS");
+      appendToChatBuffer("Copilot premium models: "
+         + "claude-sonnet-4-20250514, gpt-4o, o1, o3-mini");
+      String currentModel = config.getModel();
+      boolean isPremium = isPremiumModel(currentModel);
+      appendToChatBuffer("Current model ("
+         + currentModel + "): "
+         + (isPremium ? "PREMIUM" : "standard"));
+      appendToChatBuffer("History size: "
+         + AIClient.getInstance().getHistorySize()
+         + " messages");
+      appendToChatBuffer("");
+      try {
+         FvContext.connectFv(chatBuffer, fvc.vi);
+      } catch (InputException e) {
+         UI.reportMessage("Error: " + e.getMessage());
+      }
+      return null;
+   }
+
+   /**
+    * Check if a model is considered premium by Copilot.
+    *
+    * <p>Premium models consume more of the user's rate limit
+    * or subscription quota.</p>
+    *
+    * @param model the model identifier
+    * @return true if the model is premium
+    */
+   static boolean isPremiumModel(String model) {
+      if (null == model) {
+         return false;
+      }
+      return model.startsWith("o1")
+         || model.startsWith("o3")
+         || model.startsWith("claude")
+         || model.contains("gpt-4o");
    }
 }

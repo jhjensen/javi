@@ -149,6 +149,75 @@ public final class AIAsyncExecutor {
    }
 
    /**
+    * Submit a streaming AI operation for background execution.
+    *
+    * <p>The {@code task} accepts a token callback that it should
+    * invoke for each content chunk. The {@code onToken} callback
+    * is dispatched to the event thread for each chunk, enabling
+    * progressive display of results. When the task completes,
+    * {@code onComplete} is called on the event thread.</p>
+    *
+    * @param task the streaming operation (receives token callback)
+    * @param onToken callback for each token (runs on event thread)
+    * @param onComplete callback when streaming finishes
+    *        (runs on event thread)
+    * @param onError callback for errors (runs on event thread)
+    */
+   public static void submitStreaming(
+         java.util.function.Consumer<
+            java.util.function.Consumer<String>> task,
+         Consumer<String> onToken,
+         Runnable onComplete,
+         Consumer<Exception> onError) {
+      cancelCurrent();
+      UI.reportMessage("AI: streaming...");
+
+      Future<?> future = executor.submit(() -> {
+         try {
+            task.accept(token ->
+               postToEventThread(() -> {
+                  try {
+                     onToken.accept(token);
+                  } catch (Exception e) {
+                     trace("AI stream onToken err: "
+                        + e);
+                  }
+               })
+            );
+            postToEventThread(() -> {
+               try {
+                  onComplete.run();
+               } catch (Exception e) {
+                  trace("AI stream onComplete err: "
+                     + e);
+                  UI.reportMessage(
+                     "AI Error: " + e.getMessage());
+               }
+            });
+         } catch (Exception e) {
+            if (Thread.currentThread().isInterrupted()) {
+               postToEventThread(()
+                  -> UI.reportMessage(
+                     "AI: request cancelled"));
+               return;
+            }
+            trace("AI streaming task error: " + e);
+            postToEventThread(() -> {
+               try {
+                  onError.accept(e);
+               } catch (Exception e2) {
+                  trace("AI stream onError err: "
+                     + e2);
+                  UI.reportMessage(
+                     "AI Error: " + e2.getMessage());
+               }
+            });
+         }
+      });
+      currentTask.set(future);
+   }
+
+   /**
     * Post a runnable to the editor event thread via EventQueue.
     *
     * @param action the action to run on the event thread

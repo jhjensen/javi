@@ -1,6 +1,9 @@
 package javi.ai;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,6 +14,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static history.Tools.trace;
 
@@ -186,6 +190,196 @@ public final class CopilotRestClient {
             status);
       }
       return response.body();
+   }
+
+   /**
+    * Send a streaming chat completion request.
+    *
+    * <p>Uses SSE (Server-Sent Events) to receive tokens as they
+    * are generated. Each content delta is passed to the callback
+    * immediately. Returns the concatenated full response.</p>
+    *
+    * @param messages the conversation messages
+    * @param model the model identifier
+    * @param maxTokens max response tokens (0 for default)
+    * @param onToken callback for each content token chunk
+    * @return the full concatenated response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if auth or API call fails
+    */
+   public String chatCompletionStreaming(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      ensureSessionToken();
+
+      String body = buildStreamingChatJson(
+         messages, model, maxTokens);
+      trace("Copilot streaming request to model: " + model);
+
+      HttpRequest request = HttpRequest.newBuilder()
+         .uri(URI.create(apiUrl + "/chat/completions"))
+         .header("Content-Type", "application/json")
+         .header("Authorization",
+            "Bearer " + sessionToken)
+         .header("Editor-Version", "Javi/1.0")
+         .header("Copilot-Integration-Id",
+            "vscode-chat")
+         .header("OpenAI-Intent",
+            "conversation-panel")
+         .timeout(getTimeout())
+         .POST(HttpRequest.BodyPublishers.ofString(body))
+         .build();
+
+      try {
+         HttpResponse<InputStream> response =
+            httpClient.send(request,
+               HttpResponse.BodyHandlers.ofInputStream());
+
+         int status = response.statusCode();
+         if (401 == status) {
+            trace("Copilot: 401 streaming — refresh");
+            invalidateSession();
+            ensureSessionToken();
+            request = HttpRequest.newBuilder()
+               .uri(URI.create(
+                  apiUrl + "/chat/completions"))
+               .header("Content-Type",
+                  "application/json")
+               .header("Authorization",
+                  "Bearer " + sessionToken)
+               .header("Editor-Version", "Javi/1.0")
+               .header("Copilot-Integration-Id",
+                  "vscode-chat")
+               .header("OpenAI-Intent",
+                  "conversation-panel")
+               .timeout(getTimeout())
+               .POST(HttpRequest.BodyPublishers
+                  .ofString(body))
+               .build();
+            response = httpClient.send(request,
+               HttpResponse.BodyHandlers
+                  .ofInputStream());
+            status = response.statusCode();
+         }
+
+         if (status < 200 || status >= 300) {
+            String errorBody = new String(
+               response.body().readAllBytes(),
+               StandardCharsets.UTF_8);
+            throw new AIException(
+               "Copilot streaming error (HTTP "
+               + status + "): "
+               + OpenAIProvider.extractError(errorBody),
+               status);
+         }
+
+         return readSSEStream(response.body(), onToken);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new IOException(
+            "Streaming request interrupted", e);
+      }
+   }
+
+   /**
+    * Read an SSE stream and extract content deltas.
+    *
+    * <p>SSE format: lines starting with {@code data: } contain
+    * JSON chunks. Stream ends with {@code data: [DONE]}.</p>
+    *
+    * @param input the response input stream
+    * @param onToken callback for each content token
+    * @return the full concatenated response
+    * @throws IOException if a read error occurs
+    */
+   static String readSSEStream(InputStream input,
+         Consumer<String> onToken) throws IOException {
+      StringBuilder full = new StringBuilder(1024);
+      try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(
+               input, StandardCharsets.UTF_8))) {
+         String line;
+         while (null != (line = reader.readLine())) {
+            if (!line.startsWith("data: ")) {
+               continue;
+            }
+            String data = line.substring(6).trim();
+            if ("[DONE]".equals(data)) {
+               break;
+            }
+            String delta = extractStreamDelta(data);
+            if (null != delta && !delta.isEmpty()) {
+               full.append(delta);
+               onToken.accept(delta);
+            }
+         }
+      }
+      return full.toString();
+   }
+
+   /**
+    * Extract content delta from a streaming chunk JSON.
+    *
+    * <p>Looks for {@code "delta":{"content":"..."}} in the
+    * chunk JSON.</p>
+    *
+    * @param json the chunk JSON
+    * @return the content delta, or null
+    */
+   static String extractStreamDelta(String json) {
+      String marker = "\"delta\":{\"content\":\"";
+      int idx = json.indexOf(marker);
+      if (idx < 0) {
+         marker = "\"delta\": {\"content\": \"";
+         idx = json.indexOf(marker);
+      }
+      if (idx < 0) {
+         marker = "\"delta\":{\"content\": \"";
+         idx = json.indexOf(marker);
+      }
+      if (idx < 0) {
+         return null;
+      }
+      idx += marker.length();
+      try {
+         return OpenAIProvider.unescapeJsonString(
+            json, idx);
+      } catch (AIException e) {
+         return null;
+      }
+   }
+
+   /**
+    * Build streaming chat completion request JSON.
+    */
+   public static String buildStreamingChatJson(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens) {
+      StringBuilder sb = new StringBuilder(512);
+      sb.append("{\"model\":\"")
+         .append(OpenAIProvider.escapeJson(model))
+         .append("\",\"stream\":true,\"messages\":[");
+      for (int i = 0; i < messages.size(); i++) {
+         if (i > 0)
+            sb.append(',');
+         AIProvider.Message msg = messages.get(i);
+         sb.append("{\"role\":\"")
+            .append(OpenAIProvider.escapeJson(
+               msg.role()))
+            .append("\",\"content\":\"")
+            .append(OpenAIProvider.escapeJson(
+               msg.content()))
+            .append("\"}");
+      }
+      sb.append(']');
+      if (maxTokens > 0) {
+         sb.append(",\"max_tokens\":")
+            .append(maxTokens);
+      }
+      sb.append('}');
+      return sb.toString();
    }
 
    /**

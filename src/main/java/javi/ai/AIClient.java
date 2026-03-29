@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static history.Tools.trace;
 
@@ -285,6 +286,206 @@ public final class AIClient {
          new AIProvider.Message("user", prompt));
 
       return p.chatCompletion(messages, config.getMaxTokens());
+   }
+
+   /**
+    * Send a streaming one-shot request.
+    *
+    * <p>If the current provider supports streaming (Copilot),
+    * tokens are delivered to the callback as they arrive.
+    * Otherwise falls back to non-streaming.</p>
+    *
+    * @param prompt the complete user prompt
+    * @param onToken callback for each token chunk
+    * @return the full response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String oneShotStreaming(String prompt,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      AIConfig config = AIConfig.getInstance();
+      AIProvider p = getProvider();
+
+      List<AIProvider.Message> messages = List.of(
+         new AIProvider.Message("system",
+            config.getSystemPrompt()),
+         new AIProvider.Message("user", prompt));
+
+      if (p instanceof CopilotProvider cp) {
+         return cp.chatCompletionStreaming(
+            messages, config.getMaxTokens(), onToken);
+      }
+      // Fallback: non-streaming, deliver all at once
+      String result = p.chatCompletion(
+         messages, config.getMaxTokens());
+      onToken.accept(result);
+      return result;
+   }
+
+   /**
+    * Send a streaming chat message with file context.
+    *
+    * @param userMessage the user's message
+    * @param fileName the source file name
+    * @param fileContent the source file content
+    * @param onToken callback for each token chunk
+    * @return the full response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String chatWithContextStreaming(String userMessage,
+         String fileName, String fileContent,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      AIConfig config = AIConfig.getInstance();
+      AIProvider p = getProvider();
+
+      String enriched = "Current file: " + fileName
+         + "\n\n" + fileContent + "\n\n" + userMessage;
+
+      List<AIProvider.Message> messages = new ArrayList<>();
+      messages.add(new AIProvider.Message(
+         "system", config.getSystemPrompt()));
+      synchronized (history) {
+         messages.addAll(history);
+      }
+      messages.add(
+         new AIProvider.Message("user", enriched));
+
+      String response;
+      if (p instanceof CopilotProvider cp) {
+         response = cp.chatCompletionStreaming(
+            messages, config.getMaxTokens(), onToken);
+      } else {
+         response = p.chatCompletion(
+            messages, config.getMaxTokens());
+         onToken.accept(response);
+      }
+
+      history.add(
+         new AIProvider.Message("user", userMessage));
+      history.add(
+         new AIProvider.Message("assistant", response));
+      return response;
+   }
+
+   /**
+    * Send a streaming chat message without file context.
+    *
+    * @param userMessage the user's message
+    * @param onToken callback for each token chunk
+    * @return the full response text
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String chatStreaming(String userMessage,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      AIConfig config = AIConfig.getInstance();
+      AIProvider p = getProvider();
+
+      List<AIProvider.Message> messages = new ArrayList<>();
+      messages.add(new AIProvider.Message(
+         "system", config.getSystemPrompt()));
+      synchronized (history) {
+         messages.addAll(history);
+      }
+      messages.add(new AIProvider.Message(
+         "user", userMessage));
+
+      String response;
+      if (p instanceof CopilotProvider cp) {
+         response = cp.chatCompletionStreaming(
+            messages, config.getMaxTokens(), onToken);
+      } else {
+         response = p.chatCompletion(
+            messages, config.getMaxTokens());
+         onToken.accept(response);
+      }
+
+      history.add(
+         new AIProvider.Message("user", userMessage));
+      history.add(
+         new AIProvider.Message("assistant", response));
+      return response;
+   }
+
+   /**
+    * Streaming explain: explain code with streaming output.
+    *
+    * @param code the code to explain
+    * @param onToken callback for each token
+    * @return full explanation
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String explainStreaming(String code,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      return oneShotStreaming(
+         "Explain this code concisely. Focus on what "
+         + "it does, not how. Mention any notable "
+         + "patterns or potential issues.\n\n" + code,
+         onToken);
+   }
+
+   /**
+    * Streaming review: review code with streaming output.
+    *
+    * @param code the code to review
+    * @param onToken callback for each token
+    * @return full review
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String reviewStreaming(String code,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      return oneShotStreaming(
+         "Review this code for bugs, potential issues, "
+         + "and improvements. Be concise and "
+         + "actionable.\n\n" + code, onToken);
+   }
+
+   /**
+    * Streaming document: generate docs with streaming output.
+    *
+    * @param code the code to document
+    * @param onToken callback for each token
+    * @return full documentation
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String documentStreaming(String code,
+         Consumer<String> onToken)
+         throws IOException, AIException {
+      return oneShotStreaming(
+         "Generate Javadoc documentation for this code."
+         + " Return only the doc comments, ready to "
+         + "paste.\n\n" + code, onToken);
+   }
+
+   /**
+    * Streaming refactor: refactor code with streaming output.
+    *
+    * @param code the code to refactor
+    * @param instruction the refactoring instruction
+    * @param onToken callback for each token
+    * @return refactored code
+    * @throws IOException if a network error occurs
+    * @throws AIException if the AI provider returns an error
+    */
+   String refactorStreaming(String code,
+         String instruction, Consumer<String> onToken)
+         throws IOException, AIException {
+      return oneShotStreaming(
+         "Refactor the following code according to the "
+         + "instruction. Return ONLY the refactored "
+         + "code, ready to paste. Do NOT include "
+         + "explanation or markdown fences.\n\n"
+         + "Instruction: " + instruction
+         + "\n\nCode:\n" + code, onToken);
    }
 
    /**
