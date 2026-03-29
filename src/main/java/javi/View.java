@@ -306,6 +306,13 @@ public abstract class View  extends
       fileY = fy;
    }
 
+   /**
+    * Recompute cursor screen row for current fold state.
+    * Default no-op; overridden in OldView.
+    */
+   public void recalcScreenRow() {
+   }
+
    public final void applyChanges() {
       chmark.applyChanges(op);
    }

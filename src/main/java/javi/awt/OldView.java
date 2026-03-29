@@ -502,6 +502,26 @@ final class OldView extends AwtView {
       return delta;
    }
 
+   /**
+    * Recompute screenposy based on current fold state.
+    * Counts visible lines from line 1 to current fileY.
+    */
+   public void recalcScreenRow() {
+      FoldModel fm = getActiveFoldModel();
+      if (fm == null)
+         return;
+      int target = getfileY();
+      int visLine = 0;
+      int line = 1;
+      while (line < target) {
+         line = fm.nextVisible(line);
+         visLine++;
+         if (line >= target)
+            break;
+      }
+      screenposy = Math.min(visLine, screenSize / 2);
+   }
+
    /** Get the fold model for the current view context. */
    private FoldModel getActiveFoldModel() {
       FvContext<?> fvc =
@@ -1064,6 +1084,7 @@ final class OldView extends AwtView {
                FvContext fvc = FvContext.getcontext(
                   OldView.this, getCurrFile());
                if (fvc != null) {
+                  recalcScreenRow();
                   MiscCommands.saveFoldState(fvc);
                   fvc.vi.redraw();
                }
@@ -1341,14 +1362,12 @@ final class OldView extends AwtView {
             gettext().at(fold.startLine).toString();
          String summary = FoldModel.foldSummaryText(
             fold.startLine, fold.endLine, firstLine);
-         atIt.setText(summary);
-         if (index == screenposy)
-            atIt.emphasize(true);
-         if (0 != atIt.length()) {
-            if (0 != tabStop)
-               atIt.deTab(tabStop);
-            imageg.drawString(atIt, xoffset, charascent);
-         }
+         summary = summary.replace('\t', ' ');
+         imageg.setFont(activeFont);
+         imageg.setColor(index == screenposy
+            ? AtView.cursorColor
+            : AtView.foldSummaryColor);
+         imageg.drawString(summary, xoffset, charascent);
          gr.drawImage(dbuf, 0, index * charheight, null);
       }
 

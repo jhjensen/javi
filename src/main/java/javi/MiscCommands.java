@@ -715,17 +715,20 @@ public final class MiscCommands extends Rgroup {
       switch (key) {
          case 'o':
             FoldModel.FoldRange fo = fm.openFold(line);
-            if (fo != null)
+            if (fo != null) {
+               fvc.vi.recalcScreenRow();
                UI.reportMessage("opened fold at "
                   + fo.startLine);
-            else
+            } else {
                UI.reportMessage("no fold at line " + line);
+            }
             break;
          case 'c':
             FoldModel.FoldRange fc = fm.closeFold(line);
             if (fc != null) {
                if (line > fc.startLine)
                   fvc.cursoryabs(fc.startLine);
+               fvc.vi.recalcScreenRow();
                UI.reportMessage("closed fold at "
                   + fc.startLine);
             } else {
@@ -734,19 +737,44 @@ public final class MiscCommands extends Rgroup {
             break;
          case 'a':
             FoldModel.FoldRange fa = fm.toggleFold(line);
-            if (fa != null)
+            if (fa != null) {
+               if (fa.collapsed && line > fa.startLine)
+                  fvc.cursoryabs(fa.startLine);
+               fvc.vi.recalcScreenRow();
                UI.reportMessage("toggled fold at "
-                  + fa.startLine + " → "
+                  + fa.startLine + " \u2192 "
                   + (fa.collapsed ? "closed" : "open"));
-            else
+            } else {
                UI.reportMessage("no fold at line " + line);
+            }
             break;
          case 'R':
-            fm.openAll();
-            UI.reportMessage("opened all folds");
+            boolean allOpen = fm.getFolds().stream()
+               .noneMatch(f -> f.collapsed);
+            if (allOpen) {
+               fvc.setFoldModel(null);
+               FileDescriptor fd = fvc.edvec.fdes();
+               if (fd instanceof FileDescriptor.LocalFile)
+                  FoldModel.deleteFoldState(
+                     ((FileDescriptor.LocalFile) fd)
+                        .canonName);
+               UI.reportMessage("cleared all folds");
+            } else {
+               fm.openAll();
+               fvc.vi.recalcScreenRow();
+               UI.reportMessage("opened all folds");
+            }
             break;
          case 'M':
             fm.closeAll();
+            int curLine = line;
+            if (fm.isFolded(curLine)) {
+               FoldModel.FoldRange cf = fm.findFold(curLine);
+               if (cf != null && cf.collapsed)
+                  curLine = cf.startLine;
+            }
+            fvc.cursoryabs(curLine);
+            fvc.vi.recalcScreenRow();
             UI.reportMessage("closed all folds");
             break;
          default:

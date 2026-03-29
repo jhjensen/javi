@@ -168,7 +168,8 @@ final class AtView implements
    static final Color unFinished = new Color(75, 15, 15);
    static final Color insertCursor = Color.pink;
    static final Color interFrame = Color.gray;
-   static final Color foldGutter = Color.YELLOW;
+   static final Color foldGutter = Color.DARK_GRAY;
+   static final Color foldSummaryColor = Color.YELLOW;
    static final Color emphasize = Color.red;
 //static final Color cursorColor  = Color.cyan;
 
