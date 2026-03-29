@@ -203,6 +203,38 @@ test-coverage:
 	@echo "Coverage report: build/reports/jacoco/test/html/index.html"
 
 #==============================================================================
+# T3: GUI Coverage Targets (JaCoCo agent + tcpserver)
+#==============================================================================
+
+# Resolve JaCoCo agent JAR path from Gradle
+JACOCO_AGENT = $(shell ./gradlew -q jacocoAgentPath 2>/dev/null)
+
+# Launch javi with JaCoCo agent (coverage via tcpserver on port 6300)
+# Usage: make run-coverage [FILE=myfile.txt]
+# After exercising the GUI, run: make coverage-dump
+run-coverage: compile
+	@echo "Starting javi with JaCoCo coverage agent (port 6300)..."
+	@echo "Use the editor, then run 'make coverage-dump' before quitting."
+	java -javaagent:$(JACOCO_AGENT)=output=tcpserver,port=6300,address=127.0.0.1 \
+	   -cp $(CLASSPATH) javi.Javi $(FILE)
+
+# Dump coverage from running javi (must be started with run-coverage)
+coverage-dump:
+	./gradlew jacocoDump
+	@echo "Coverage dumped to build/jacoco/gui.exec"
+
+# Merge all .exec files (JUnit + legacy + GUI) and generate report
+coverage-merge:
+	./gradlew mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+# Full coverage workflow: JUnit + legacy tests + merge report
+# If gui.exec exists (from prior run-coverage + coverage-dump), it's included
+full-coverage: compile
+	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+#==============================================================================
 # Run targets
 #==============================================================================
 

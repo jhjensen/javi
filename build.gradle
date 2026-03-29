@@ -52,6 +52,7 @@ repositories {
 // Configuration for standalone JaCoCo agent (PSTest, IntArrayTest)
 configurations {
     jacocoManualAgent
+    jacocoCli
 }
 
 dependencies {
@@ -76,6 +77,8 @@ dependencies {
     
     // JaCoCo agent for coverage
     jacocoManualAgent 'org.jacoco:org.jacoco.agent:0.8.13:runtime'
+    // JaCoCo CLI for dump/merge operations
+    jacocoCli 'org.jacoco:org.jacoco.cli:0.8.13'
 }
 
 sourceSets {
@@ -262,6 +265,75 @@ tasks.register('intArrayTestCoverage', JavaExec) {
         execFile.parentFile.mkdirs()
         def agentJar = configurations.jacocoManualAgent.singleFile
         jvmArgs "-javaagent:${agentJar}=destfile=${execFile}", '-ea'
+    }
+}
+
+// T3: Print the JaCoCo agent JAR path for use by Makefile/shell scripts
+tasks.register('jacocoAgentPath') {
+    group = 'verification'
+    description = 'Print the JaCoCo agent JAR path'
+    doLast {
+        println configurations.jacocoManualAgent.singleFile.absolutePath
+    }
+}
+
+// T3: Dump coverage from a running JaCoCo tcpserver agent
+tasks.register('jacocoDump', JavaExec) {
+    group = 'verification'
+    description = 'Dump coverage from running javi (JaCoCo tcpserver on port 6300)'
+    mainClass = 'org.jacoco.cli.internal.Main'
+    classpath = configurations.jacocoCli
+    def destFile = file("${layout.buildDirectory.get()}/jacoco/gui.exec")
+    args = ['dump', '--address', 'localhost', '--port', '6300',
+            '--destfile', destFile.absolutePath, '--reset']
+    doFirst {
+        destFile.parentFile.mkdirs()
+    }
+}
+
+// T3: Merge all .exec files into one merged.exec
+tasks.register('jacocoMerge', JavaExec) {
+    group = 'verification'
+    description = 'Merge all JaCoCo .exec files into merged.exec'
+    mainClass = 'org.jacoco.cli.internal.Main'
+    classpath = configurations.jacocoCli
+    def jacocoDir = file("${layout.buildDirectory.get()}/jacoco")
+    def destFile = file("${jacocoDir}/merged.exec")
+    doFirst {
+        def execFiles = fileTree(jacocoDir).include('*.exec')
+            .findAll { it.name != 'merged.exec' }
+        if (execFiles.isEmpty()) {
+            throw new GradleException('No .exec files found in build/jacoco/')
+        }
+        // Build args: merge --destfile merged.exec file1.exec file2.exec ...
+        def mergeArgs = ['merge', '--destfile', destFile.absolutePath]
+        execFiles.each { mergeArgs.add(it.absolutePath) }
+        args = mergeArgs
+    }
+}
+
+// T3: Generate merged coverage report from all .exec files
+// Usage: ./gradlew mergedCoverageReport
+// Produces: build/reports/jacoco/merged/html/index.html
+tasks.register('mergedCoverageReport', JacocoReport) {
+    dependsOn compileJava, test
+    group = 'verification'
+    description = 'Generate merged coverage report from all .exec files'
+    executionData.from(
+        fileTree(dir: "${layout.buildDirectory.get()}/jacoco")
+            .include('*.exec')
+    )
+    sourceDirectories.from(files('src/main/java', 'src/history/java'))
+    classDirectories.from(files("${layout.buildDirectory.get()}/classes/java/main"))
+    reports {
+        html {
+            required = true
+            outputLocation = layout.buildDirectory.dir('reports/jacoco/merged/html')
+        }
+        xml {
+            required = true
+            outputLocation = layout.buildDirectory.file('reports/jacoco/merged/merged.xml')
+        }
     }
 }
 
