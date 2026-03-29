@@ -440,8 +440,28 @@ public final class ShellSession {
       if (now - lastLabelUpdate < LABEL_UPDATE_INTERVAL_MS)
          return;
       lastLabelUpdate = now;
-      // Prefer OSC title from terminal escape sequences (bash, zsh,
-      // etc. set this via ESC]0;title BEL)
+      String base = (null == host) ? "local" : host;
+      // Check the foreground process so running commands (vim, htop)
+      // appear in the shell name even when an OSC title is set.
+      String cmd = null;
+      try {
+         cmd = getLeafProcessName(process.pid());
+      } catch (Exception e) {
+         trace("ShellSession " + id + ": updateLabel failed: " + e);
+      }
+      if (null != cmd && !cmd.isEmpty()
+            && !cmd.startsWith("script")
+            && !isShellName(cmd)) {
+         // A foreground command is running — show it
+         String newName = base + " (" + cmd + ")";
+         if (!newName.equals(name)) {
+            trace("ShellSession " + id + ": label update '"
+               + name + "' -> '" + newName + "'");
+            name = newName;
+         }
+         return;
+      }
+      // No foreground command — use OSC title if available
       String title = vt100.getOscTitle();
       if (null != title && !title.isEmpty()) {
          if (!title.equals(name)) {
@@ -451,24 +471,29 @@ public final class ShellSession {
          }
          return;
       }
-      try {
-         String cmd = getLeafProcessName(process.pid());
-         if (null != cmd && !cmd.isEmpty()) {
-            String base = (null == host) ? "local" : host;
-            // Only filter out "script" (PTY wrapper); show actual
-            // shell name (bash/zsh) so the process is always visible
-            String newName = cmd.startsWith("script")
-               ? base
-               : base + " (" + cmd + ")";
-            if (!newName.equals(name)) {
-               trace("ShellSession " + id + ": label update '"
-                  + name + "' -> '" + newName + "'");
-               name = newName;
-            }
+      // Fallback: show whatever process info we have
+      if (null != cmd && !cmd.isEmpty()) {
+         String newName = cmd.startsWith("script")
+            ? base
+            : base + " (" + cmd + ")";
+         if (!newName.equals(name)) {
+            trace("ShellSession " + id + ": label update '"
+               + name + "' -> '" + newName + "'");
+            name = newName;
          }
-      } catch (Exception e) {
-         trace("ShellSession " + id + ": updateLabel failed: " + e);
       }
+   }
+
+   /**
+    * Checks if a command name is a shell (bash, zsh, sh, etc.)
+    * so that we can distinguish foreground commands from the shell
+    * itself.
+    */
+   private static boolean isShellName(String cmd) {
+      return cmd.equals("bash") || cmd.equals("-bash")
+         || cmd.equals("zsh") || cmd.equals("-zsh")
+         || cmd.equals("sh") || cmd.equals("-sh")
+         || cmd.equals("fish") || cmd.equals("-fish");
    }
 
    /**
@@ -514,7 +539,7 @@ public final class ShellSession {
       // Now get the command name of the leaf pid
       try {
          ProcessBuilder pb = new ProcessBuilder(
-            "ps", "-o", "args=", "-p", Long.toString(pid));
+            "ps", "-o", "comm=", "-p", Long.toString(pid));
          pb.redirectErrorStream(true);
          Process ps = pb.start();
          String output = new String(

@@ -796,8 +796,12 @@ class Vt100 extends TextEdit<String> {
             currfvc.cursorabs(vtcursor.x, vtcursor.y);
             currfvc.placeline(readIn() - 1, .99999f);
          }
-         //trace("leaving update screen vtcursor = " + vtcursor + " readIn  " + ev.readIn());
-
+         // Evict offscreen attribute rows to prevent unbounded memory
+         // growth (e.g. htop refreshing rapidly). Keep 2x visible rows
+         // as scrollback margin.
+         int minVisible = readIn() - rows * 3;
+         if (minVisible > 1)
+            screenAttrs.evictBefore(minVisible);
       }
 
       void saveCursor(StringBuilder sb) {

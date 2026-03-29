@@ -76,6 +76,9 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
    /** State: Discarding unrecognized CSI sequence (e.g., DA2, DA3). */
    private static final int DISCARD = 8;
 
+   /** State: Designate character set (ESC ( or ESC ) + final byte). */
+   private static final int CHARSET_DESIGNATE = 10;
+
    /** State: Carriage return received. */
    private static final int CR = 9;
 
@@ -598,9 +601,16 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
             state = NORM;
             break;
 
+         case '(':
+         case ')':
+            // ESC ( X = Designate G0 charset
+            // ESC ) X = Designate G1 charset
+            // Next byte is the charset identifier; consume and ignore
+            state = CHARSET_DESIGNATE;
+            break;
          case ' ':
-            trace("what does escape ' ' mean?");
-            state = NORM;
+            // ESC SP F or ESC SP G — consume next byte
+            state = CHARSET_DESIGNATE;
             break;
 
          case 27:
@@ -666,6 +676,12 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                break;
             case OSCMODE:
                caseOSCMODE(inc);
+               break;
+            case CHARSET_DESIGNATE:
+               // Consume the charset identifier byte and return
+               // to normal mode (e.g. ESC ( B = USASCII)
+               trace1("charset designate: " + (char) inc);
+               state = NORM;
                break;
             case ESC:
                caseESC(inc);
