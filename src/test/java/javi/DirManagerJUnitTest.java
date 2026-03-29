@@ -144,70 +144,57 @@ class DirManagerJUnitTest {
       dm.removeSearchDir(dir);
    }
 
-   // --- formatEntry / display tests ---
+   // --- Search path display tests ---
 
    @Test
-   void populateDirectoryShowsEntries() {
-      File sub = new File(tempDir, "populate");
+   void showSearchPathIncludesDirectories() {
+      File sub = new File(tempDir, "showsp");
       sub.mkdirs();
-      new File(sub, "child").mkdirs();
       FileDescriptor.LocalDir dir =
          FileDescriptor.LocalDir.make(sub.getAbsolutePath());
 
-      dm.openDir(dir);
-      int size = dm.readIn();
-      assertTrue(size > 1, "buffer should have entries after populate");
+      dm.addSearchDir(dir);
+      try {
+         dm.showSearchPath();
+         int size = dm.readIn();
+         assertTrue(size > 1,
+            "buffer should have content after showSearchPath");
+         boolean found = false;
+         for (int i = 1; i < size; i++) {
+            String line = dm.at(i).toString();
+            if (line.contains(sub.getName())) {
+               found = true;
+               break;
+            }
+         }
+         assertTrue(found,
+            "showSearchPath should include the added directory");
+      } finally {
+         dm.removeSearchDir(dir);
+      }
    }
 
    @Test
-   void formatEntryShowsSearchPathMarker() {
-      File sub = new File(tempDir, "marker");
-      sub.mkdirs();
-      File child = new File(sub, "spdir");
-      child.mkdirs();
+   void showSearchPathEmptyMessage() {
+      // Clear all search dirs for this test
+      ArrayList<FileDescriptor.LocalDir> saved = dm.getSearchPath();
+      for (FileDescriptor.LocalDir d : saved)
+         dm.removeSearchDir(d);
 
-      FileDescriptor.LocalDir dir =
-         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
-      FileDescriptor.LocalDir childDir =
-         FileDescriptor.LocalDir.make(child.getAbsolutePath());
-
-      // Show without search path marker
-      dm.removeSearchDir(childDir);
-      dm.openDir(dir);
-      boolean hasS = false;
+      dm.showSearchPath();
+      boolean foundEmpty = false;
       for (int i = 1; i < dm.readIn(); i++) {
-         String line = dm.at(i).toString();
-         if (line.contains("spdir/") && line.startsWith("S ")) {
-            hasS = true;
+         if (dm.at(i).toString().contains("empty")) {
+            foundEmpty = true;
+            break;
          }
       }
-      assertFalse(hasS, "should not show S marker when not in path");
+      assertTrue(foundEmpty,
+         "showSearchPath with no dirs should show empty message");
 
-      // Add to search path and re-populate
-      dm.addSearchDir(childDir);
-      dm.openDir(dir);
-      hasS = false;
-      for (int i = 1; i < dm.readIn(); i++) {
-         String line = dm.at(i).toString();
-         if (line.contains("spdir/") && line.startsWith("S ")) {
-            hasS = true;
-         }
-      }
-      assertTrue(hasS, "should show S marker for search path dir");
-
-      dm.removeSearchDir(childDir);
-   }
-
-   @Test
-   void getCurrentDirAfterOpen() {
-      File sub = new File(tempDir, "curdir");
-      sub.mkdirs();
-      FileDescriptor.LocalDir dir =
-         FileDescriptor.LocalDir.make(sub.getAbsolutePath());
-
-      dm.openDir(dir);
-      assertNotNull(dm.getCurrentDir());
-      assertEquals(dir, dm.getCurrentDir());
+      // Restore
+      for (FileDescriptor.LocalDir d : saved)
+         dm.addSearchDir(d);
    }
 
    // --- File-find backend tests ---

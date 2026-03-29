@@ -13,15 +13,18 @@ import java.util.regex.PatternSyntaxException;
 import static history.Tools.trace;
 
 /**
- * F5: Unified Directory Manager — replaces both DirList and DirEdit.
+ * F5: Search path manager — singleton that manages file-find and
+ * grep search directories.
  *
- * <p>DirManager combines the interactive directory browsing UI of DirEdit
- * with the search-path management role of DirList. It is a
- * {@code TextEdit<String>} that displays directory contents as formatted
- * strings, while maintaining an internal list of directories marked for
- * the search path.</p>
+ * <p>DirManager maintains the list of search path directories and
+ * provides backend APIs for file finding, grep, and directory
+ * listing. It is a {@code TextEdit<String>} that displays the
+ * search path when connected to a view via {@code gotosearchpath}.</p>
  *
- * <h2>Migrated Callers</h2>
+ * <p>DirEdit handles the interactive directory browsing UI
+ * separately.</p>
+ *
+ * <h2>Callers</h2>
  * <ul>
  *   <li>FileList — search, addSearchDir</li>
  *   <li>PosListList — globalgrep, gotosearchpath</li>
@@ -32,31 +35,14 @@ import static history.Tools.trace;
  * </ul>
  *
  * <h2>Persistence</h2>
- * <p>DirManager persists the search path independently via a
- * private {@code TextEdit<String>} store ("searchpath" internal file).
- * DirList is no longer referenced.</p>
+ * <p>DirManager persists the search path via a private
+ * {@code TextEdit<String>} store ("searchpath" internal file).</p>
  *
- * @see DirEdit the legacy directory browser (to be replaced)
+ * @see DirEdit the interactive directory browser
  */
 public final class DirManager extends TextEdit<String> {
 
    private static final long serialVersionUID = 1;
-
-   // ---------------------------------------------------------------
-   // Directory browsing state (from DirEdit)
-   // ---------------------------------------------------------------
-
-   /** The directory currently being displayed. */
-   private FileDescriptor.LocalDir currentDir;
-
-   /** Whether to show hidden (dot) files. */
-   private boolean showHidden;
-
-   /** Current sort order. */
-   private SortMode sortMode = SortMode.NAME;
-
-   /** Available sort modes for the directory listing. */
-   public enum SortMode { NAME, SIZE, DATE, TYPE }
 
    // ---------------------------------------------------------------
    // Search-path state
@@ -156,88 +142,6 @@ public final class DirManager extends TextEdit<String> {
    }
 
    // ---------------------------------------------------------------
-   // Directory browsing API (Phase 5 — skeleton)
-   // ---------------------------------------------------------------
-
-   /**
-    * Open and display a directory in this manager.
-    *
-    * @param dir the directory to display
-    */
-   void openDir(FileDescriptor.LocalDir dir) {
-      this.currentDir = dir;
-      populateDirectory();
-   }
-
-   /**
-    * Populate the buffer with the contents of {@link #currentDir}.
-    * Clears existing content and re-reads the directory.
-    */
-   void populateDirectory() {
-      if (currentDir == null)
-         return;
-
-      // Clear existing content
-      int size = readIn();
-      if (size > 1)
-         remove(1, size - 1);
-
-      File dir = currentDir.fh;
-      File[] entries = dir.listFiles();
-      if (entries == null)
-         return;
-
-      // Sort
-      java.util.Arrays.sort(entries,
-         java.util.Comparator.comparing(File::getName));
-
-      // Header line
-      insertOne(currentDir.shortName + ":", 1);
-
-      int line = 2;
-      for (File f : entries) {
-         if (!showHidden && f.isHidden())
-            continue;
-         String display = formatEntry(f);
-         insertOne(display, line++);
-      }
-
-      checkpoint();
-   }
-
-   /**
-    * Format a single file/directory entry for display.
-    * Directories in the search path get an [S] indicator.
-    *
-    * @param f the file to format
-    * @return formatted display string
-    */
-   private String formatEntry(File f) {
-      String name = f.getName();
-      boolean isDir = f.isDirectory();
-      if (isDir)
-         name += "/";
-      long size = f.length();
-
-      // Search path indicator for directories
-      String marker = "  ";
-      if (isDir && isInSearchPath(f)) {
-         marker = "S ";
-      }
-
-      return String.format("%s%-40s %8d", marker, name, size);
-   }
-
-   /**
-    * Get the current directory being displayed.
-    *
-    * @return the current directory, or null if none
-    */
-   public FileDescriptor.LocalDir getCurrentDir() {
-      return currentDir;
-   }
-
-   // ---------------------------------------------------------------
    // Search-path management API (Phase 6 — skeleton)
    // ---------------------------------------------------------------
 
@@ -253,7 +157,7 @@ public final class DirManager extends TextEdit<String> {
       searchPath.add(dir);
       saveSearchPath();
       trace("DirManager: added search dir " + dir);
-      populateDirectory(); // refresh display so [S] marker appears
+      showSearchPath();
       DirEdit.notifySearchPathChanged();
       return true;
    }
@@ -268,7 +172,7 @@ public final class DirManager extends TextEdit<String> {
       boolean removed = searchPath.remove(dir);
       if (removed) {
          saveSearchPath();
-         populateDirectory(); // refresh display so [S] marker disappears
+         showSearchPath();
          DirEdit.notifySearchPathChanged();
       }
       return removed;
@@ -303,7 +207,6 @@ public final class DirManager extends TextEdit<String> {
 
    /**
     * Check whether a file (directory) is in the search path.
-    * Convenience method for DirEdit's formatEntry display.
     *
     * @param file the file to check
     * @return true if the file's directory is in the search path
@@ -357,7 +260,6 @@ public final class DirManager extends TextEdit<String> {
     * Uses compressed display to abbreviate shared prefixes.
     */
    void showSearchPath() {
-      currentDir = null;
       int size = readIn();
       if (size > 1)
          remove(1, size - 1);
@@ -574,8 +476,8 @@ public final class DirManager extends TextEdit<String> {
    void flushCache() {
       // DirManager search path uses FileDescriptor.LocalDir which
       // reads from disk on each access — no persistent cache to flush.
-      // Re-populate the current directory view if one is open.
-      populateDirectory();
+      // Refresh the search path display.
+      showSearchPath();
    }
 
    /**
@@ -699,24 +601,4 @@ public final class DirManager extends TextEdit<String> {
    }
 
 
-   /**
-    * Open a directory in the DirManager, connecting it to a view.
-    *
-    * @param path directory path
-    * @param vi the view to display in
-    * @return the FvContext for the directory view
-    * @throws IOException on I/O error
-    * @throws InputException on invalid path
-    */
-   public static FvContext openDirectory(String path, View vi)
-         throws IOException, InputException {
-      File dir = new File(path);
-      if (!dir.isDirectory())
-         throw new InputException("Not a directory: " + path);
-      DirManager dm = getInstance();
-      FileDescriptor.LocalDir localDir =
-         FileDescriptor.LocalDir.make(dir.getPath());
-      dm.openDir(localDir);
-      return FvContext.connectFv(dm, vi);
-   }
 }
