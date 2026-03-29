@@ -428,8 +428,8 @@ public final class ShellSession {
     * inside the shell, the label shows "ssh" rather than "script" or
     * "bash".</p>
     *
-    * <p>Because this method spawns external processes ({@code pgrep},
-    * {@code ps}), results are cached for
+    * <p>Uses the {@link ProcessHandle} API to walk the process tree,
+    * so no external processes are spawned.  Results are cached for
     * {@link #LABEL_UPDATE_INTERVAL_MS} milliseconds.  Calling this
     * method from the status-bar repaint path is therefore safe.</p>
     */
@@ -441,59 +441,45 @@ public final class ShellSession {
          return;
       lastLabelUpdate = now;
       String base = (null == host) ? "local" : host;
-      // Check the foreground process so running commands (vim, htop)
-      // appear in the shell name even when an OSC title is set.
       String cmd = null;
       try {
          cmd = getLeafProcessName(process.pid());
       } catch (Exception e) {
          trace("ShellSession " + id + ": updateLabel failed: " + e);
       }
-      if (null != cmd && !cmd.isEmpty()
-            && !cmd.startsWith("script")
-            && !isShellName(cmd)) {
-         // A foreground command is running — show it
-         String newName = base + " (" + cmd + ")";
-         if (!newName.equals(name)) {
-            trace("ShellSession " + id + ": label update '"
-               + name + "' -> '" + newName + "'");
-            name = newName;
-         }
-         return;
+
+      String newName;
+      if (null != cmd && !cmd.isEmpty() && !isShellOrWrapper(cmd)) {
+         // A foreground command is running (vim, htop, ssh, etc.)
+         newName = base + " (" + cmd + ")";
+      } else {
+         // No foreground command — prefer OSC title, fallback to base
+         String title = vt100.getOscTitle();
+         newName = (null != title && !title.isEmpty()) ? title : base;
       }
-      // No foreground command — use OSC title if available
-      String title = vt100.getOscTitle();
-      if (null != title && !title.isEmpty()) {
-         if (!title.equals(name)) {
-            trace("ShellSession " + id + ": OSC title update '"
-               + name + "' -> '" + title + "'");
-            name = title;
-         }
-         return;
-      }
-      // Fallback: show whatever process info we have
-      if (null != cmd && !cmd.isEmpty()) {
-         String newName = cmd.startsWith("script")
-            ? base
-            : base + " (" + cmd + ")";
-         if (!newName.equals(name)) {
-            trace("ShellSession " + id + ": label update '"
-               + name + "' -> '" + newName + "'");
-            name = newName;
-         }
+      if (!newName.equals(name)) {
+         trace("ShellSession " + id + ": label '"
+            + name + "' -> '" + newName + "'");
+         name = newName;
       }
    }
 
    /**
-    * Checks if a command name is a shell (bash, zsh, sh, etc.)
-    * so that we can distinguish foreground commands from the shell
-    * itself.
+    * Checks if a command name is a shell or PTY wrapper process
+    * that should not appear in the shell label.  Handles both
+    * bare names ({@code bash}) and full paths ({@code /bin/bash}).
     */
-   private static boolean isShellName(String cmd) {
-      return cmd.equals("bash") || cmd.equals("-bash")
-         || cmd.equals("zsh") || cmd.equals("-zsh")
-         || cmd.equals("sh") || cmd.equals("-sh")
-         || cmd.equals("fish") || cmd.equals("-fish");
+   private static boolean isShellOrWrapper(String cmd) {
+      String base = cmd;
+      int slash = cmd.lastIndexOf('/');
+      if (slash >= 0)
+         base = cmd.substring(slash + 1);
+      // Strip leading dash (login shell convention: -bash)
+      if (base.startsWith("-"))
+         base = base.substring(1);
+      return base.equals("bash") || base.equals("zsh")
+         || base.equals("sh") || base.equals("fish")
+         || base.equals("script") || base.equals("login");
    }
 
    /**
@@ -506,52 +492,34 @@ public final class ShellSession {
 
    /**
     * Finds the leaf (deepest descendant) process name starting from
-    * the given PID by repeatedly querying for child processes.
+    * the given PID by walking the process tree via
+    * {@link ProcessHandle}.
+    *
+    * <p>Returns the basename of the executable (path stripped) so
+    * callers get {@code "htop"} rather than {@code "/usr/bin/htop"}.
     *
     * @param startPid the PID to start from
     * @return the leaf process command name, or null on failure
     */
    static String getLeafProcessName(long startPid) {
-      long pid = startPid;
+      java.util.Optional<ProcessHandle> opt =
+         ProcessHandle.of(startPid);
+      if (opt.isEmpty())
+         return null;
+      ProcessHandle current = opt.get();
       // Walk down up to 10 levels to avoid infinite loops
       for (int depth = 0; depth < 10; depth++) {
-         try {
-            // Find child process(es) of current pid
-            ProcessBuilder childPb = new ProcessBuilder(
-               "pgrep", "-P", Long.toString(pid));
-            childPb.redirectErrorStream(true);
-            Process childPs = childPb.start();
-            String childOut = new String(
-               childPs.getInputStream().readAllBytes(),
-               java.nio.charset.StandardCharsets.UTF_8).trim();
-            if (!childPs.waitFor(2,
-                  java.util.concurrent.TimeUnit.SECONDS))
-               break;
-            if (childOut.isEmpty())
-               break; // pid is the leaf
-            // Take the first child PID (foreground process)
-            String firstChild = childOut.split("\\s+")[0];
-            pid = Long.parseLong(firstChild);
-         } catch (Exception e) {
+         java.util.Optional<ProcessHandle> child =
+            current.children().findFirst();
+         if (child.isEmpty())
             break;
-         }
+         current = child.get();
       }
-      // Now get the command name of the leaf pid
-      try {
-         ProcessBuilder pb = new ProcessBuilder(
-            "ps", "-o", "comm=", "-p", Long.toString(pid));
-         pb.redirectErrorStream(true);
-         Process ps = pb.start();
-         String output = new String(
-            ps.getInputStream().readAllBytes(),
-            java.nio.charset.StandardCharsets.UTF_8).trim();
-         if (!ps.waitFor(2, java.util.concurrent.TimeUnit.SECONDS))
-            return null;
-         if (!output.isEmpty())
-            return output;
-      } catch (Exception e) {
-         // fall through
-      }
-      return null;
+      return current.info().command()
+         .map(cmd -> {
+            int slash = cmd.lastIndexOf('/');
+            return slash >= 0 ? cmd.substring(slash + 1) : cmd;
+         })
+         .orElse(null);
    }
 }

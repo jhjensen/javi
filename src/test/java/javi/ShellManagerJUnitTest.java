@@ -370,10 +370,10 @@ class ShellManagerJUnitTest {
    }
 
    @Test
-   @DisplayName("getLeafProcessName returns full command with args")
+   @DisplayName("getLeafProcessName returns basename without path")
    void leafProcessShowsFullCommand() {
-      // getLeafProcessName uses ps -o args= so result may include
-      // path and arguments — just verify it returns something non-empty
+      // getLeafProcessName uses ProcessHandle and strips the path,
+      // so the result is just the basename (e.g. "java" not "/usr/bin/java")
       long myPid = ProcessHandle.current().pid();
       String name = ShellSession.getLeafProcessName(myPid);
       assertNotNull(name);
