@@ -41,6 +41,7 @@ public final class MiscCommands extends Rgroup {
       FOLD,          // 26: :fold - detect/manage folds
       FOLD_INDENT,   // 27: :foldindent - indent-based folds
       FOLD_MARKER,   // 28: :foldmarker - marker-based folds
+      LOAD_PLUGIN,   // 29: :loadplugin - load a plugin JAR
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -76,6 +77,7 @@ public final class MiscCommands extends Rgroup {
          "fold",             // 26
          "foldindent",       // 27
          "foldmarker",       // 28
+         "loadplugin",       // 29
       };
       register(rnames);
    }
@@ -178,6 +180,10 @@ public final class MiscCommands extends Rgroup {
             return null;
          case FOLD_MARKER:
             doFoldMarker(fvc);
+            return null;
+         case LOAD_PLUGIN:
+            loadPlugin(arg instanceof String
+               ? (String) arg : null);
             return null;
 
          default:
@@ -924,6 +930,49 @@ public final class MiscCommands extends Rgroup {
             + KeyBindingPersistence.getConfigPath());
       else
          UI.reportMessage("Loaded " + count + " keybinding(s)");
+   }
+
+   /** Load a plugin JAR by name or path.
+     * Bare names resolve to build/libs/javi-NAME.jar or dist/javi-NAME.jar.
+     * Full paths are used directly.
+     */
+   private static void loadPlugin(String arg)
+         throws InputException {
+      if (arg == null || arg.isEmpty())
+         throw new InputException("loadplugin requires a plugin name"
+            + " or JAR path");
+
+      java.io.File jarFile;
+      if (arg.contains("/") || arg.endsWith(".jar")) {
+         jarFile = new java.io.File(arg);
+      } else {
+         // Search standard locations for javi-<name>.jar
+         jarFile = findPluginJar(arg);
+      }
+
+      if (!jarFile.exists())
+         throw new InputException("Plugin JAR not found: " + jarFile);
+
+      try {
+         Plugin.Loader.load(jarFile.getPath());
+         UI.reportMessage("Loaded plugin: " + jarFile.getName());
+      } catch (Throwable e) {
+         throw new InputException("Failed to load plugin "
+            + jarFile + ": " + e.getMessage());
+      }
+   }
+
+   private static java.io.File findPluginJar(String name) {
+      String jarName = "javi-" + name + ".jar";
+      // Check build/libs/ first (development), then dist/
+      java.io.File f = new java.io.File("build/libs/" + jarName);
+      if (f.exists())
+         return f;
+      f = new java.io.File("dist/" + jarName);
+      if (f.exists())
+         return f;
+      // Return build/libs path for the error message
+      return new java.io.File("build/libs/" + jarName);
    }
 
    // Parse a key specification string into a JeyEvent.

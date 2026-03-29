@@ -202,6 +202,11 @@ tasks.named('jacocoTestCoverageVerification') {
 // I3: Version from project property or git describe
 def projectVersion = project.findProperty('version') ?: 'dev'
 
+// F29: Capture git describe for JAR manifest
+def gitDescribe = providers.exec {
+    commandLine 'git', 'describe', '--always', '--dirty'
+}.standardOutput.asText.map { it.trim() }.getOrElse('unknown')
+
 tasks.named('jar') {
     manifest {
         attributes(
@@ -209,7 +214,8 @@ tasks.named('jar') {
             'Implementation-Version': projectVersion,
             'Build-Date': new Date().format('yyyy-MM-dd HH:mm:ss'),
             'Main-Class': 'javi.Javi',
-            'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' ')
+            'Class-Path': configurations.runtimeClasspath.files.collect { it.getName() }.join(' '),
+            'Git-Describe': gitDescribe
         )
     }
     archiveBaseName.set('javi')

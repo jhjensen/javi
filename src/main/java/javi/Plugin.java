@@ -228,26 +228,41 @@ abstract class MultiClassLoader extends ClassLoader {
 public interface Plugin {
    final class Loader {
       private Loader() { }
+
+      /** Load a plugin JAR. Discovers plugin classes by scanning
+        * the JAR manifest for a Plugin-Class attribute, or by
+        * finding classes that implement Plugin.
+        */
       static void load(final String jarFile) throws
          IOException, ClassNotFoundException,
          NoSuchFieldException, IllegalAccessException {
 
-         // AccessController.doPrivileged deprecated - run directly
-         // (Security Manager is being removed from Java)
          try {
             final JarLoader jarLoader = new JarLoader(jarFile);
 
-            /* Load the class from the jar file and resolve it. */
-            Class c = jarLoader.loadClass(
-               "javi.plugin.FindBugs", true);
-            //trace("class loaded");
+            // Try manifest Plugin-Class attribute first
+            String pluginClassName = null;
+            try (java.util.jar.JarFile jf =
+                  new java.util.jar.JarFile(jarFile)) {
+               java.util.jar.Manifest mf = jf.getManifest();
+               if (mf != null) {
+                  pluginClassName = mf.getMainAttributes()
+                     .getValue("Plugin-Class");
+               }
+            }
+
+            if (pluginClassName == null) {
+               // Fallback: scan for classes implementing Plugin
+               pluginClassName = scanForPlugin(jarFile, jarLoader);
+            }
+
+            if (pluginClassName == null) {
+               trace("no Plugin class found in " + jarFile);
+               return;
+            }
+
+            Class c = jarLoader.loadClass(pluginClassName, true);
             if (Plugin.class.isAssignableFrom(c)) {
-               // Yep, lets call a method  we know about.  */
-               //java.lang.reflect.Method m = c.getDeclaredMethod("init");
-               //m.invoke(c);
-
-               //c.toString();
-
                java.lang.reflect.Field rf =
                   c.getDeclaredField("pluginInfo");
                trace("plugin info " + rf.get(null));
@@ -258,7 +273,34 @@ public interface Plugin {
             trace("no plugins to load " + e);
          }
       }
-   }   // End of nested Class Test.
+
+      private static String scanForPlugin(String jarFile,
+            JarLoader loader) {
+         try (java.util.zip.ZipFile zf =
+               new java.util.zip.ZipFile(jarFile)) {
+            java.util.Enumeration<?> entries = zf.entries();
+            while (entries.hasMoreElements()) {
+               java.util.zip.ZipEntry ze =
+                  (java.util.zip.ZipEntry) entries.nextElement();
+               String name = ze.getName();
+               if (!name.endsWith(".class") || name.contains("$"))
+                  continue;
+               String className = name.replace('/', '.')
+                  .replace(".class", "");
+               try {
+                  Class c = loader.loadClass(className, true);
+                  if (Plugin.class.isAssignableFrom(c))
+                     return className;
+               } catch (Throwable ignore) {
+                  // skip classes that can't be loaded
+               }
+            }
+         } catch (IOException e) {
+            trace("error scanning JAR: " + e);
+         }
+         return null;
+      }
+   }
 }
 
 final class JarLoader extends MultiClassLoader {
