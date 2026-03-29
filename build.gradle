@@ -202,8 +202,8 @@ tasks.named('jacocoTestCoverageVerification') {
 // I3: Version from project property or git describe
 def projectVersion = project.findProperty('version') ?: 'dev'
 
-// F29: Capture git describe for JAR manifest
-def gitDescribe = providers.exec {
+// F29: Capture git describe for JAR manifest (ext for plugin access)
+ext.gitDescribe = providers.exec {
     commandLine 'git', 'describe', '--always', '--dirty'
 }.standardOutput.asText.map { it.trim() }.getOrElse('unknown')
 
@@ -343,3 +343,108 @@ tasks.register('mergedCoverageReport', JacocoReport) {
     }
 }
 
+// =============================================================================
+// F29: Plugin Build Architecture
+// =============================================================================
+
+// Discover plugin directories under plugins/
+def pluginsDir = file("$projectDir/plugins")
+
+// Helper: write a manifest file and build a JAR for a plugin
+def buildPluginJar(String pName, File srcDir) {
+    def bdir = layout.buildDirectory.get().asFile
+    def classesDir = new File(bdir, "plugin-classes/$pName")
+    classesDir.mkdirs()
+
+    // Compile plugin sources against javi main classes
+    project.exec {
+        executable = 'javac'
+        args = ['-d', classesDir.path,
+                '-cp', (sourceSets.main.output.classesDirs.asPath
+                        + File.pathSeparator
+                        + sourceSets.main.compileClasspath.asPath),
+                '--release', '22',
+                '-encoding', 'UTF-8']
+        args += project.fileTree(srcDir) {
+            include '**/*.java'
+        }.files.collect { it.path }
+    }
+
+    // Discover Plugin-Class from source
+    def pluginClass = ''
+    project.fileTree(srcDir).matching { include '**/*.java' }.each { f ->
+        if (f.text.contains('implements Plugin')) {
+            def pkg = ''
+            f.text.eachLine { line ->
+                def m = (line =~ /^\s*package\s+([\w.]+)\s*;/)
+                if (m) pkg = m[0][1]
+            }
+            def cls = f.name.replace('.java', '')
+            pluginClass = pkg ? "${pkg}.${cls}" : cls
+        }
+    }
+
+    // Write manifest to temp file
+    def mfDir = new File(bdir, "plugin-manifest/$pName")
+    mfDir.mkdirs()
+    def mfFile = new File(mfDir, 'MANIFEST.MF')
+    mfFile.text = [
+        'Manifest-Version: 1.0',
+        "Plugin-Class: $pluginClass",
+        "Implementation-Title: javi-$pName",
+        "Git-Describe: $gitDescribe",
+        '' // trailing newline
+    ].join('\n')
+
+    // Build the JAR
+    def jarPath = new File(bdir, "libs/javi-${pName}.jar")
+    ant.jar(destfile: jarPath.path, basedir: classesDir,
+            manifest: mfFile.path)
+    logger.lifecycle("Built plugin: $jarPath")
+}
+
+// Build a single plugin JAR: pluginJar -PpluginName=hello
+tasks.register('pluginJar') {
+    dependsOn compileJava
+    group = 'build'
+    description = 'Build a single plugin JAR (use -PpluginName=NAME)'
+
+    doLast {
+        def pName = project.findProperty('pluginName')
+        if (!pName) throw new GradleException('Set -PpluginName=NAME')
+        def srcDir = file("$pluginsDir/$pName/src")
+        if (!srcDir.exists())
+            throw new GradleException("Plugin source not found: $srcDir")
+        buildPluginJar(pName, srcDir)
+    }
+}
+
+// Build all plugin JARs
+tasks.register('plugins') {
+    dependsOn compileJava
+    group = 'build'
+    description = 'Build all plugin JARs'
+
+    doLast {
+        if (!pluginsDir.exists()) {
+            logger.lifecycle('No plugins/ directory found')
+            return
+        }
+        pluginsDir.eachDir { dir ->
+            def srcDir = new File(dir, 'src')
+            if (!srcDir.exists()) return
+            buildPluginJar(dir.name, srcDir)
+        }
+    }
+}
+
+// F29: Enhanced dist — copies main JAR and all plugin JARs
+tasks.register('distAll', Copy) {
+    dependsOn jar, 'plugins'
+    from(jar.archiveFile)
+    from(layout.buildDirectory.dir("libs")) {
+        include 'javi-*.jar'
+        exclude jar.archiveFileName.get()
+    }
+    into "$projectDir/dist"
+}

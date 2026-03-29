@@ -45,8 +45,12 @@ fatjar:
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 
 # Copy JAR to dist directory
-dist: jar
-	./gradlew dist
+dist: jar plugins
+	./gradlew distAll
+
+# Build all plugin JARs
+plugins: compile
+	./gradlew plugins
 
 # Copy fat JAR to dist directory  
 dist-fat: fatjar

@@ -226,6 +226,29 @@ abstract class MultiClassLoader extends ClassLoader {
 } // End class
 
 public interface Plugin {
+
+   /**
+    * Bind a key to a command in a key group. Plugins call this to
+    * register keybindings after their commands are registered.
+    *
+    * @param group key group name: "move", "edit", or overlay
+    *        names like "keymap.move"/"keymap.edit"
+    * @param keySpec key specification: single char, "C-x" for
+    *        ctrl+char, or special names (F1-F12, Up, Down, etc.)
+    * @param command registered command name
+    * @throws InputException if keySpec or command is invalid
+    */
+   static void bindKey(String group, String keySpec, String command)
+         throws InputException {
+      KeyGroup kg = MapEvent.getKeyGroup(group);
+      if (kg == null)
+         throw new InputException("unknown keygroup: " + group);
+      JeyEvent key = MiscCommands.parseKeySpec(keySpec);
+      if (Rgroup.bindingLookup(command) == null)
+         throw new InputException("unknown command: " + command);
+      kg.bind(key, command, null);
+   }
+
    final class Loader {
       private Loader() { }
 
@@ -263,9 +286,12 @@ public interface Plugin {
 
             Class c = jarLoader.loadClass(pluginClassName, true);
             if (Plugin.class.isAssignableFrom(c)) {
-               java.lang.reflect.Field rf =
-                  c.getDeclaredField("pluginInfo");
-               trace("plugin info " + rf.get(null));
+               // Instantiate the plugin — constructor registers
+               // commands and keybindings
+               @SuppressWarnings("unchecked")
+               var ctor = c.getDeclaredConstructor();
+               ctor.newInstance();
+               trace("loaded plugin: " + pluginClassName);
             } else {
                trace("unable to run class " + c);
             }
