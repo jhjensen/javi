@@ -406,6 +406,13 @@ public final class FvContext<OType> implements Serializable {
          fileposx = 0;
       } else {
          fileposy = inrange(fileposy, 1, edvec.readIn() - 1);
+         // If cursor is inside a collapsed fold, move to fold start
+         if (foldModel != null && !foldModel.isEmpty()
+               && foldModel.isFolded(fileposy)) {
+            FoldModel.FoldRange f = foldModel.findFold(fileposy);
+            if (f != null && f.collapsed)
+               fileposy = f.startLine;
+         }
          fileposx = inrange(fileposx, 0,
                edvec.at(fileposy).toString().length());
       }
