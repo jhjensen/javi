@@ -396,6 +396,8 @@ public final class PosListList extends TextList<Position> {
 
       private static ArrayList<Position> findDirectories(String name) {
          ArrayList<Position> results = new ArrayList<>();
+         if (name.isEmpty())
+            return results;
          // Check if literal path is a directory
          File dirCheck = new File(name);
          if (dirCheck.isDirectory()) {
@@ -458,6 +460,9 @@ public final class PosListList extends TextList<Position> {
             str = getLastSym(str, fvc.insertx());
          }
 
+         if (str.isEmpty())
+            return;
+
          // Ctags + mkid combined lookup
          TextEdit templist = taglookup(str, fvc.vi);
 
@@ -466,7 +471,7 @@ public final class PosListList extends TextList<Position> {
 
          boolean foundAnything = false;
 
-         if (null != templist) {
+         if (null != templist && templist.readIn() > 1) {
             inst.setLastList(templist);
             foundAnything = true;
             // Merge directory entries into the tag list

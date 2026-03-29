@@ -399,6 +399,15 @@ class PosListListJUnitTest {
          // May or may not match depending on cwd; just verify no crash
          assertNotNull(result);
       }
+
+      @Test
+      @DisplayName("returns empty for empty string")
+      void emptyString() throws Exception {
+         java.util.ArrayList<Position> result =
+            callFindDirectories("");
+         assertTrue(result.isEmpty(),
+            "empty name must not match any directory");
+      }
    }
 
    // ================================================================
