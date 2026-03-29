@@ -199,8 +199,8 @@ pstest-coverage:
 
 # Run all tests with coverage and generate merged report
 test-coverage:
-	./gradlew jacocoTestReport
-	@echo "Coverage report: build/reports/jacoco/test/html/index.html"
+	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
 
 #==============================================================================
 # T3: GUI Coverage Targets (JaCoCo agent + tcpserver)
