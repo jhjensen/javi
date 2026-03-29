@@ -489,7 +489,7 @@ public final class HelpSystem {
       append("");
       append("FILE MOVEMENT");
       append("-------------");
-      append("  gg, Shift-Home   Go to first line");
+      append("  1G, Shift-Home   Go to first line");
       append("  G, Shift-End     Go to last line");
       append("  <n>G             Go to line n");
       append("");
