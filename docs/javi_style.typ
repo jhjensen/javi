@@ -193,6 +193,27 @@
 }
 
 // ============================================================================
+// SCREENSHOT PLACEHOLDER
+// ============================================================================
+
+// Placeholder for a future screenshot or diagram.
+// Replace with: #figure(image("path.png", width: 80%), caption: [...])
+#let screenshot-placeholder(caption) = {
+  block(
+    fill: gray.lighten(93%),
+    inset: theme-spacing.medium,
+    radius: 4pt,
+    stroke: (dash: "dashed") + gray.lighten(60%) + theme-strokes.thin,
+    width: 100%,
+    align(center)[
+      #text(size: theme-font-sizes.small, fill: gray.darken(30%), style: "italic")[
+        _Screenshot:_ #caption
+      ]
+    ],
+  )
+}
+
+// ============================================================================
 // SECTION FORMATTING
 // ============================================================================
 

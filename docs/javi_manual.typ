@@ -56,6 +56,8 @@ All vi conventions apply: #key("h")#key("j")#key("k")#key("l") for
 movement, #key("d")#key("d") to delete a line, #key("y")#key("y") to
 yank, #key("p") to paste, and so on.
 
+#screenshot-placeholder[Javi main editor window showing a Java source file in command mode]
+
 == Help System
 
 Javi has a built-in help system accessible from command mode:
@@ -199,6 +201,8 @@ directory editor:
   ([#key("S")], [Toggle directory in/out of search path]),
   ([#key("q")], [Quit directory browser]),
 )
+
+#screenshot-placeholder[Directory editor showing a file listing with sort and hidden-file indicators]
 
 File operations via colon commands:
 
@@ -483,6 +487,8 @@ A `+` in the gutter means that fold is collapsed --- the lines between
 the fold start and end are hidden. Use #key("zo") or #key("za") on that
 line to expand it.
 
+#screenshot-placeholder[Fold gutter showing +/\-/| indicators next to collapsed and open folds in a Java file]
+
 == Fold Persistence
 
 Fold state is automatically saved to `.foldstate` files in the same
@@ -533,6 +539,8 @@ etc.) without leaving the editor.
 The first time you press #key("F8"), a new shell session starts. The
 terminal runs under `script` for PTY support, with `TERM=xterm`,
 `COLUMNS`, and `LINES` sent automatically.
+
+#screenshot-placeholder[Integrated terminal showing a shell session inside the Javi editor window]
 
 == Passthrough Mode
 
@@ -727,6 +735,8 @@ Untracked files (2)
 Output buffers (`*git-status*`, `*git-diff*`, `*git-log*`,
 `*git-branch*`) are standard read-only editor buffers navigable with
 normal vi keys.
+
+#screenshot-placeholder[Git status buffer showing staged, unstaged, and untracked files]
 
 == Workflow Example
 
