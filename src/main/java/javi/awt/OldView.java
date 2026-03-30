@@ -858,6 +858,25 @@ final class OldView extends AwtView {
          // trace("fvc " + fvc + " newfvc " + newfvc);
          switch (event.getButton()) {
             case MouseEvent.BUTTON1:
+               // Click on collapsed fold summary toggles it
+               FoldModel clickFm = getActiveFoldModel();
+               if (clickFm != null) {
+                  FoldModel.FoldRange clickFold =
+                     clickFm.findFoldAtStart(pos.y);
+                  if (clickFold != null
+                        && clickFold.collapsed) {
+                     EventQueue.biglock2.lock();
+                     try {
+                        clickFm.toggleFold(pos.y);
+                        recalcScreenRow();
+                        MiscCommands.saveFoldState(newfvc);
+                        newfvc.vi.redraw();
+                     } finally {
+                        EventQueue.biglock2.unlock();
+                     }
+                     return;
+                  }
+               }
                EventQueue.insert(new PosEvent(newfvc, pos));
                break;
 
@@ -1291,12 +1310,17 @@ final class OldView extends AwtView {
        * Fold-aware line painting. Computes the buffer line
        * at screen top using fold model, then iterates visible
        * lines, rendering collapsed folds as summary lines.
+       * Shifts text right to make room for fold gutter.
        */
       private void paintLinesFolded(
             Graphics gr, int start, int end,
             FoldModel fm) {
          int numlines = gettext().readIn();
          int topBuf = computeTopBufLine(fm);
+
+         // Widen xoffset to make room for fold gutter column
+         int savedXoffset = xoffset;
+         xoffset = inset + charwidth;
 
          // Advance from topBuf to the buffer line at row start
          int tindex = topBuf;
@@ -1331,12 +1355,13 @@ final class OldView extends AwtView {
             paintFoldIndicator(
                gr, index, displayedBufLine, fm);
          }
+         xoffset = savedXoffset;
       }
 
       /**
        * Draw a fold gutter indicator character at the left
        * edge of the given screen row. The indicator is drawn
-       * in the inset area, overlaying the line content.
+       * in the fold gutter column (between inset and text).
        */
       private void paintFoldIndicator(
             Graphics gr, int screenRow,
@@ -1344,9 +1369,12 @@ final class OldView extends AwtView {
          char ch = fm.getFoldIndicator(bufLine);
          if (ch == '\0')
             return;
+         Shape savedClip = gr.getClip();
+         gr.setClip(null);
          gr.setColor(AtView.foldGutter);
          int y = screenRow * charheight + charascent;
-         gr.drawString(String.valueOf(ch), 0, y);
+         gr.drawString(String.valueOf(ch), inset, y);
+         gr.setClip(savedClip);
       }
 
       /**

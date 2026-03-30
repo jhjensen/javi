@@ -89,6 +89,24 @@ final class EditGroup extends Rgroup {
          InterruptedException, IOException, InputException {
       //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
       Cmd cmd = CMDS[rnum];
+
+      // Block editing on collapsed fold lines
+      if (cmd != Cmd.YANK_MODE && cmd != Cmd.YANK
+            && cmd != Cmd.MARK_MODE
+            && cmd != Cmd.Q_MODE
+            && cmd != Cmd.DO_OVER) {
+         FoldModel fm = fvc.getFoldModel();
+         if (fm != null) {
+            FoldModel.FoldRange fr =
+               fm.findFoldAtStart(fvc.inserty());
+            if (fr != null && fr.collapsed) {
+               UI.reportMessage(
+                  "cannot edit collapsed fold");
+               return null;
+            }
+         }
+      }
+
       try {
          if (!dotmode && !(cmd == Cmd.YANK_MODE || cmd == Cmd.YANK
                || cmd == Cmd.DO_OVER)) {
