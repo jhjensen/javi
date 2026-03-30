@@ -537,7 +537,8 @@ public final class PosListList extends TextList<Position> {
             xf, parray, inst, xf.prop);
          taglist.contains(2);
          tahash.put(sym, taglist);
-         inst.insertOne(taglist, inst.finish());
+         if (parray != null)
+            inst.insertOne(taglist, inst.finish());
          return taglist;
       }
       private static final Pattern spl = Pattern.compile("\\.");
