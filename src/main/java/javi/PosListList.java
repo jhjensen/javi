@@ -466,37 +466,21 @@ public final class PosListList extends TextList<Position> {
          // Ctags + mkid combined lookup
          TextEdit templist = taglookup(str, fvc.vi);
 
-         // Directory matching
+         if (null == templist || templist.readIn() <= 1)
+            throw new InputException("tag not found: " + str);
+
+         inst.setLastList(templist);
+
+         // Merge any matching directories into the tag list
          ArrayList<Position> dirMatches = findDirectories(str);
-
-         boolean foundAnything = false;
-
-         if (null != templist && templist.readIn() > 1) {
-            inst.setLastList(templist);
-            foundAnything = true;
-            // Merge directory entries into the tag list
-            @SuppressWarnings("unchecked")
-            TextEdit<Position> tlist = templist;
-            for (Position dp : dirMatches) {
-               if (!containsPosition(tlist, dp))
-                  tlist.insertOne(dp, tlist.readIn());
-            }
-         } else if (!dirMatches.isEmpty()) {
-            Position[] parray = dirMatches.toArray(new Position[0]);
-            PositionIoc ioc = new PositionIoc(
-               "dir:" + str, null, PositionIoc.pconverter);
-            TextEdit<Position> dirList = new TextEdit<Position>(
-               ioc, parray, inst, ioc.prop);
-            dirList.contains(2);
-            inst.insertOne(dirList, inst.finish());
-            inst.setLastList(dirList);
-            FileList.gotoposition(parray[0], true, fvc.vi);
-            foundAnything = true;
+         @SuppressWarnings("unchecked")
+         TextEdit<Position> tlist = templist;
+         for (Position dp : dirMatches) {
+            if (!containsPosition(tlist, dp))
+               tlist.insertOne(dp, tlist.readIn());
          }
 
-         if (foundAnything) {
-            tagstack.add(porig);
-         }
+         tagstack.add(porig);
       }
 
       /**

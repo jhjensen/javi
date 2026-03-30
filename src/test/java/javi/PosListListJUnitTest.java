@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class PosListListJUnitTest {
 
+   private static PosListList.Cmd pllCmd;
+
    @BeforeAll
    static void initOnce() throws Exception {
       TestInit.initCommands();
@@ -32,7 +34,7 @@ class PosListListJUnitTest {
       // create TextEdit instances and register commands.
       EventQueue.biglock2.lock();
       try {
-         new PosListList.Cmd();
+         pllCmd = new PosListList.Cmd();
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -502,6 +504,59 @@ class PosListListJUnitTest {
             new Position(0, 200, "Main.java", "call main()");
          assertFalse(keys.contains(
             XrefReader.makeDedupKey(mkidPos)));
+      }
+   }
+
+   // ================================================================
+   // gototag — :ta command non-existent tag behavior
+   // ================================================================
+
+   @Nested
+   @DisplayName("gototag non-existent tag")
+   class GotoTagNotFoundTests {
+
+      private static Method gototagMethod;
+
+      @BeforeAll
+      static void setup() throws Exception {
+         gototagMethod = PosListList.Cmd.class.getDeclaredMethod(
+            "gototag", String.class, FvContext.class);
+         gototagMethod.setAccessible(true);
+      }
+
+      @Test
+      @DisplayName(":ta nonexistent throws InputException")
+      void taNotFoundThrowsInputException() throws Exception {
+         EventQueue.biglock2.lock();
+         try {
+            TestView view = new TestView(true);
+            FileDescriptor fd =
+               FileDescriptor.InternalFd.make("ta-test");
+            FileProperties<String> fp =
+               new FileProperties<>(fd, StringIoc.converter);
+            TextEdit<String> te = new TextEdit<>(
+               new IoConverter<>(fp, false), fp);
+            te.insertOne("some test content", 1);
+            FvContext fvc = FvContext.connectFv(te, view);
+
+            java.lang.reflect.InvocationTargetException ex =
+               assertThrows(
+                  java.lang.reflect.InvocationTargetException.class,
+                  () -> gototagMethod.invoke(
+                     pllCmd, "nonexistent_tag_xyz_99", fvc));
+            assertTrue(
+               ex.getCause() instanceof InputException,
+               "cause must be InputException, got: "
+                  + ex.getCause().getClass().getName());
+            assertTrue(
+               ex.getCause().getMessage().contains("tag not found"),
+               "message must contain 'tag not found': "
+                  + ex.getCause().getMessage());
+
+            te.disposeFvc();
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
       }
    }
 }
