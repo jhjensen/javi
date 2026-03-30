@@ -79,7 +79,9 @@ public class PositionIoc extends BufInIoc<Position> {
             trace("should exit immediatly");
          } else if (line.length() != 0)
             try {
-               return prop.conv.fromString(line);
+               Position pos = prop.conv.fromString(line);
+               if (pos != defpos)
+                  return pos;
             } catch (final Exception e) {
                //trace("line len " + line.length());
                //trace("positionioc.parsefile line =:" + line + ": exception = " + e + this);

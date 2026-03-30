@@ -612,9 +612,12 @@ public final class PosListList extends TextList<Position> {
                      }
                   }
                }
-            } else {
-               if (FileList.gotoposition(taglist.at(1), false, vi)) {
-                  FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+            } else if (taglist.readIn() > 1) {
+               Position p = taglist.at(1);
+               if (null != p.filename
+                     && !p.filename.shortName.isEmpty()
+                     && FileList.gotoposition(p, false, vi)) {
+                  FvContext tagfvc = FvContext.getcontext(vi, taglist);
                   if (tagfvc.edvec.contains(1))
                      tagfvc.cursoryabs(1);
                }
