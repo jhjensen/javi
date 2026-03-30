@@ -80,9 +80,14 @@ Git-Describe: v1.0-3-gabcdef
 1. [x] Add `git describe` to JAR manifest in build.gradle
 2. [x] Add `:loadplugin` command to MiscCommands
 3. [x] Update Plugin.Loader to support flexible class discovery
-4. [ ] Create Gradle task template for building a plugin JAR (proof of concept)
-5. [ ] Create `plugins/` directory structure with a template plugin
-6. [ ] Add `make plugins` target to makefile
+4. [x] Create Gradle task template for building a plugin JAR (proof of concept)
+5. [x] Create `plugins/` directory structure with a template plugin
+6. [x] Add `make plugins` target to makefile
+7. [x] Plugin.bindKey() API for keybinding registration
+8. [ ] Plugin.Loader classloader delegation — plugins currently can't reference main javi classes at runtime (isolated classloader). URLClassLoader with parent delegation needed.
+9. [ ] Test `:loadplugin hello` end-to-end in running javi instance
+10. [ ] Verify `.javini` `loadplugin` works at startup
+11. [ ] Move existing plugin sources (F4/F7/F8/F9) to plugins/ directories (future — per-branch)
 
 ## Risks
 
@@ -92,3 +97,4 @@ Git-Describe: v1.0-3-gabcdef
 ## Progress
 
 - 2026-03-28: Initial plan created. Investigation complete.
+- 2026-03-29: Implemented plugin build architecture — Gradle tasks (plugins, pluginJar, distAll), makefile targets, Plugin.bindKey() API, HelloPlugin template. Fixed ant.jar manifest issue (Gradle 8.14 compat) and distAll duplicate entry. Compile + junit pass. Commit bae0caf.
