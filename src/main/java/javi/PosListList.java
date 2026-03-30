@@ -438,41 +438,55 @@ public final class PosListList extends TextList<Position> {
                        ? fvc.at().toString()
                        : str;
 
-         //trace("gototag " + fstr);
+         trace("gototag entry str="
+            + (str == null ? "null" : "'" + str + "'")
+            + " fstr='" + fstr + "'");
 
          if (filereg.reset(fstr).find()) {
-            //trace("filreg matched " + filereg.group(0) + "filename = " + filereg.group(1));
-            //Position pos = new Position(0,Integer.parseInt(filereg.group(4)),filereg.group(1),"taglookup");
-            //if (FileList.gotoposition(pos,false,fvc.vi))
-            FvContext nfvc = FileList.openFileName(filereg.group(1), fvc.vi);
+            trace("gototag filereg matched file="
+               + filereg.group(1) + " line=" + filereg.group(4));
+            FvContext nfvc = FileList.openFileName(
+               filereg.group(1), fvc.vi);
             if (null != nfvc) {
                int ypos = Integer.parseInt(filereg.group(4));
                nfvc.edvec.contains(ypos);
                nfvc.cursoryabs(ypos);
-               //trace("add stack porig = "  + porig);
                tagstack.add(porig);
+               trace("gototag filereg navigated, return");
                return;
             }
+            trace("gototag filereg openFileName returned null");
          }
 
          if (null == str) {
             str = fvc.at().toString();
             str = getLastSym(str, fvc.insertx());
+            trace("gototag extracted sym='" + str + "'");
          }
 
-         if (str.isEmpty())
+         if (str.isEmpty()) {
+            trace("gototag empty str, return");
             return;
+         }
 
          // Ctags + mkid combined lookup
          TextEdit templist = taglookup(str, fvc.vi);
 
-         if (null == templist || templist.readIn() <= 1)
+         int tagFinish = (null == templist)
+            ? 0
+            : templist.finish();
+         trace("gototag taglookup done templist="
+            + (templist == null ? "null" : templist.toString())
+            + " finish=" + tagFinish);
+
+         if (null == templist || tagFinish <= 1)
             throw new InputException("tag not found: " + str);
 
          inst.setLastList(templist);
 
          // Merge any matching directories into the tag list
          ArrayList<Position> dirMatches = findDirectories(str);
+         trace("gototag dirMatches=" + dirMatches.size());
          @SuppressWarnings("unchecked")
          TextEdit<Position> tlist = templist;
          for (Position dp : dirMatches) {
@@ -481,6 +495,8 @@ public final class PosListList extends TextList<Position> {
          }
 
          tagstack.add(porig);
+         trace("gototag done, pushed tagstack size="
+            + tagstack.size());
       }
 
       /**
@@ -540,28 +556,38 @@ public final class PosListList extends TextList<Position> {
       }
       private FDL fdl = new FDL();
 
-      private TextEdit taglookup(String str, View vi) throws InputException {
-         //trace("taglookup " + str);
+      private TextEdit taglookup(String str, View vi)
+            throws InputException {
+         trace("taglookup str='" + str + "'");
          String[]symlist = spl.split(str);
 
-         if (0 == symlist.length)
+         if (0 == symlist.length) {
+            trace("taglookup empty symlist, return null");
             return null;
+         }
 
          String sym = symlist[symlist.length - 1];
          @SuppressWarnings("unchecked") // raw TextEdit from HashMap
          TextEdit<Position> taglist = tahash.get(sym);
+         trace("taglookup sym='" + sym
+            + "' cached=" + (taglist != null));
          try {
             if (null == taglist) {
                taglist = createtags(sym);
                taglist.addDisposeNotify(fdl);
             }
 
+            int tagFinish = taglist.finish();
+            trace("taglookup taglist.finish()=" + tagFinish
+               + " donereading=" + taglist.donereading());
+
             int tagcount = 1;
-            for (; taglist.readIn() > tagcount; tagcount++) {
+            for (; tagcount < tagFinish; tagcount++) {
                Position  ctagpos = taglist.at(tagcount);
                if (!Ctag.getTagName(ctagpos).equals(sym))
                   break;
             }
+            trace("taglookup tagcount=" + tagcount);
 
             if (tagcount > 1) {
                int[] scores = new int[tagcount];
