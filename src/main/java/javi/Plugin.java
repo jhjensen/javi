@@ -145,6 +145,7 @@ abstract class MultiClassLoader extends ClassLoader {
    private char      classNameReplacementChar;
 
    MultiClassLoader() {
+      super(MultiClassLoader.class.getClassLoader());
    }
 //---------- Superclass Overrides ------------------------
    /**
@@ -169,12 +170,11 @@ abstract class MultiClassLoader extends ClassLoader {
          return result;
       }
 
-      //----- Check with the primordial class loader
+      //----- Delegate to parent classloader (app classpath)
       try {
-         return super.findSystemClass(className);
-         //trace(">> returning system class (in CLASSPATH).");
+         return getParent().loadClass(className);
       } catch (ClassNotFoundException e) {
-         trace(">> Not a system class.");
+         trace(">> Not in parent classloader.");
       }
 
       //----- Try to load it from preferred source

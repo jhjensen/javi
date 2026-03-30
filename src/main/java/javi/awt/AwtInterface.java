@@ -896,16 +896,24 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void iclearStatus()  {
+      if (statusBar == null)
+         return;
       statusBar.clearlines();
       new Validate();
    }
 
    public void istatusaddline(String str) {
+      if (statusBar == null) {
+         trace("statusBar not ready: " + str);
+         return;
+      }
       statusBar.addline(str);
       new Validate();
    }
 
    public void istatusSetline(String str) {
+      if (statusBar == null)
+         return;
       statusBar.setline(str);
       new Validate();
    }
