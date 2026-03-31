@@ -182,6 +182,17 @@ final class OldView extends AwtView {
       }
       if (null != wantedFont && !wantedFont.equals(activeFont)) {
          ssetFont(wantedFont);
+         // Force dbuf recreation — old buffer has wrong charheight
+         canvas.imageg = null;
+         // Recalculate screen metrics for new font dimensions
+         Dimension d = canvas.getSize();
+         if (d.height > 0 && charheight > 0) {
+            screenSize = d.height / charheight;
+            minColumns = (d.width - 2 * inset) / charwidth;
+            pixelWidth = minColumns * charwidth + 2 * inset;
+            cliprect.width = pixelWidth - 2 * inset + 1;
+            cliprect.height = screenSize * charheight;
+         }
       }
    }
 

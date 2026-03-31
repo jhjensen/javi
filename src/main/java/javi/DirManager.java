@@ -276,7 +276,7 @@ public final class DirManager extends TextEdit<String> {
          ArrayList<String> paths =
             new ArrayList<>(searchPath.size());
          for (FileDescriptor.LocalDir dir : searchPath)
-            paths.add(dir.toString());
+            paths.add(dir.fh.getAbsolutePath());
 
          List<String> display = compressPaths(paths);
          for (String s : display)
