@@ -242,13 +242,17 @@ public final class PosListList extends TextList<Position> {
          //trace("rnum = " + rnum );
          switch (CMDS[rnum]) {
             case TA:
+               trace("ta command arg="
+                  + (arg == null ? "null" : "'" + arg + "'"));
                if (null != arg)
                   gototag(arg.toString().trim(), fvc);
                return null;
             case GOTO_TAG:
+               trace("gototag command (^])");
                gototag(null, fvc);
                return null;
             case POP_TAG:
+               trace("poptag command (^T)");
                poptag(fvc.vi);
                return null;
             case FL:
@@ -471,14 +475,26 @@ public final class PosListList extends TextList<Position> {
 
          // Ctags + mkid combined lookup
          TextEdit templist = taglookup(str, fvc.vi);
+         if (null == templist) {
+            trace("gototag taglookup returned null");
+            throw new InputException("tag not found: " + str);
+         }
          trace("gototag taglookup done templist="
             + templist.toString() + " finish=" + templist.finish());
 
-         if (templist.finish() <= 1 || templist.at(1) == PositionIoc.defpos)
+         // Check for any non-defpos entries in the result
+         boolean hasResults = false;
+         for (int i = 1; i < templist.readIn(); i++) {
+            if (templist.at(i) != PositionIoc.defpos) {
+               hasResults = true;
+               break;
+            }
+         }
+         trace("gototag hasResults=" + hasResults);
+         if (templist.finish() <= 1 || !hasResults)
             throw new InputException("tag not found: " + str);
 
          tagstack.add(porig);
-trace("setLastList", templist);
          inst.setLastList(templist);
          trace("gototag done, pushed tagstack size="
             + tagstack.size());
@@ -624,9 +640,9 @@ trace("setLastList", templist);
                }
             } else if (taglist.readIn() > 1) {
 
-                // Merge any matching directories into the tag list
+               // Merge any matching directories into the tag list
                ArrayList<Position> dirMatches = findDirectories(str);
-               trace("gototag dirMatches=" + dirMatches.size());
+               trace("taglookup dirMatches=" + dirMatches.size());
                @SuppressWarnings("unchecked")
                TextEdit<Position> tlist = taglist;
                for (Position dp : dirMatches) {
@@ -634,14 +650,18 @@ trace("setLastList", templist);
                      tlist.insertOne(dp, tlist.readIn());
                }
 
-
-               Position p = taglist.at(1);
-trace("~~~~~~~~~~~gotopos p", p);
-                          
-               if (p != PositionIoc.defpos && FileList.gotoposition(p, false, vi)) {
-                  FvContext tagfvc = FvContext.getcontext(vi, taglist);
-                  if (tagfvc.edvec.contains(1))
-                     tagfvc.cursoryabs(1);
+               // Navigate to first non-defpos entry
+               for (int i = 1; i < taglist.readIn(); i++) {
+                  Position p = taglist.at(i);
+                  trace("taglookup trying entry " + i + " p=" + p);
+                  if (p != PositionIoc.defpos
+                        && FileList.gotoposition(p, false, vi)) {
+                     FvContext tagfvc =
+                        FvContext.getcontext(vi, taglist);
+                     if (tagfvc.edvec.contains(i))
+                        tagfvc.cursoryabs(i);
+                     break;
+                  }
                }
             }
          } catch (IOException e) {

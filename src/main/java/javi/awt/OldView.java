@@ -182,8 +182,6 @@ final class OldView extends AwtView {
       }
       if (null != wantedFont && !wantedFont.equals(activeFont)) {
          ssetFont(wantedFont);
-         // Force dbuf recreation — old buffer has wrong charheight
-         canvas.imageg = null;
          // Recalculate screen metrics for new font dimensions
          Dimension d = canvas.getSize();
          if (d.height > 0 && charheight > 0) {
@@ -193,6 +191,12 @@ final class OldView extends AwtView {
             cliprect.width = pixelWidth - 2 * inset + 1;
             cliprect.height = screenSize * charheight;
          }
+         // Recreate dbuf with correct dimensions for new font
+         // so the current paint cycle can use it immediately
+         canvas.dbuf = canvas.createImage(
+            pixelWidth * 2, charheight);
+         canvas.imageg =
+            (Graphics2D) canvas.dbuf.getGraphics();
       }
    }
 
