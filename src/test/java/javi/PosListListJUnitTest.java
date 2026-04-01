@@ -32,9 +32,18 @@ class PosListListJUnitTest {
       // Force PosListList.Cmd class loading and construction under
       // biglock2, since its static initializer and constructor
       // create TextEdit instances and register commands.
+      // Guard against double-registration when other PLL test
+      // classes run first in the same JVM.
       EventQueue.biglock2.lock();
       try {
-         pllCmd = new PosListList.Cmd();
+         try {
+            pllCmd = new PosListList.Cmd();
+            PosListListCoverageJUnitTest.sharedCmd = pllCmd;
+         } catch (RuntimeException e) {
+            // Commands already registered by another test class.
+            // Static inst is already initialized.
+            pllCmd = PosListListCoverageJUnitTest.sharedCmd;
+         }
       } finally {
          EventQueue.biglock2.unlock();
       }
