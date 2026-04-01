@@ -92,7 +92,12 @@ public final class Javi {
       } catch (ClassNotFoundException e) {
          UI.reportError("git plugin not found: " + e);
       }
-      new javi.ai.AICommands();
+      // F8: AI plugin — load via reflection (compiled as separate plugin JAR)
+      try {
+         Class.forName("javi.ai.AICommands").getDeclaredConstructor().newInstance();
+      } catch (Exception e) {
+         trace("AI plugin not available: " + e.getMessage());
+      }
       MapEvent.bindCommands();
       KeyBindingPersistence.load();
 

@@ -156,11 +156,21 @@ sourceSets {
             srcDirs = ['src/main/resources']
         }
     }
+    // F8: AI plugin sources — compiled separately for plugin JAR,
+    // but included in test classpath so AI unit tests can run
+    ai {
+        java {
+            srcDirs = ['plugins/ai/src']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
     test {
         java {
             // Include plugin sources so Server tests can compile
             srcDirs += ['plugins/Server/src']
         }
+        compileClasspath += ai.output
+        runtimeClasspath += ai.output
     }
 }
 
@@ -176,6 +186,18 @@ tasks.named('compileJava') {
         '-Xlint:-this-escape',  // Ignore this-escape in constructors (existing pattern)
         '-Xmaxwarns', '500',    // Limit warning output
         '-Werror'               // Treat warnings as errors
+    ]
+    options.deprecation = true
+    options.encoding = 'UTF-8'
+}
+
+// F8: AI plugin source set uses same compiler settings
+tasks.named('compileAiJava') {
+    options.compilerArgs += [
+        '-Xlint:all', '-Xlint:-serial', '-Xlint:-processing',
+        '-Xlint:-rawtypes', '-Xlint:-static', '-Xlint:-cast',
+        '-Xlint:-dangling-doc-comments', '-Xlint:-this-escape',
+        '-Xmaxwarns', '500', '-Werror'
     ]
     options.deprecation = true
     options.encoding = 'UTF-8'
@@ -542,7 +564,7 @@ def buildPluginJar(String pName, File srcDir) {
     logger.lifecycle("Built plugin: $jarPath")
 }
 
-// Build a single plugin JAR: pluginJar -PpluginName=hello
+// Build a single plugin JAR: pluginJar -PpluginName=ai
 tasks.register('pluginJar') {
     dependsOn compileJava
     group = 'build'

@@ -85,7 +85,13 @@ public final class TestInit {
          Command.init();
          MoveGroup.init();
          FileList.initDescriptions();
-         new javi.ai.AICommands();
+         // F8: AI plugin — load via reflection (compiled separately)
+         try {
+            Class.forName("javi.ai.AICommands")
+               .getDeclaredConstructor().newInstance();
+         } catch (Exception e) {
+            // AI plugin not available during tests — OK
+         }
       } finally {
          EventQueue.biglock2.unlock();
       }
