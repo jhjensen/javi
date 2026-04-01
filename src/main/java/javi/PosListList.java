@@ -21,17 +21,18 @@ public final class PosListList extends TextList<Position> {
       super(ioc, ioc.prop);
       //plist=this;
       finish();
-      EditContainer.registerChangeListen(new FCH());
+      EditContainer.registerChangeListen(new FileChangeHandler());
    }
 
-   private final class FCH extends EditContainer.FileChangeListener  {
+   private final class FileChangeHandler
+         extends EditContainer.FileChangeListener  {
 
       void addedLines(FileDescriptor fd, int count, int index) {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
          // fix up the line numbers
          EditContainer<Position> errlist = at(1);
-         for (int ii = 1; ii < errlist.readIn(); ii++) {
-            Position pos = errlist.at(ii);
+         for (int i = 1; i < errlist.readIn(); i++) {
+            Position pos = errlist.at(i);
             if (pos.filename.equals(fd) && pos.y > index) {
                Position npos = new Position(pos.x,
                    (index > 0 || pos.y > index + count
@@ -39,7 +40,7 @@ public final class PosListList extends TextList<Position> {
                      : index
                    ),
                    pos.filename, pos.comment);
-               errlist.changeElementAt(npos, ii);
+               errlist.changeElementAt(npos, i);
             }
          }
       }
@@ -163,10 +164,10 @@ public final class PosListList extends TextList<Position> {
    public static final class Cmd extends Rgroup {
 
       private static ArrayList<Position> tagstack = new ArrayList<>();
-      private static PosListList inst;
+      private static PosListList instance;
 
       @SuppressWarnings({"unchecked", "rawtypes"})
-      private static PosListList createInst() {
+      private static PosListList createInstance() {
          IoConverter io = new IoConverter(new FileProperties(
             FileDescriptor.InternalFd.make("position list list"), converter),
             true);
@@ -174,18 +175,18 @@ public final class PosListList extends TextList<Position> {
       }
 
       static {
-         inst = createInst();
+         instance = createInstance();
       }
 
       private static final Matcher filereg = Pattern.compile(
             "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
       private static Ctag ctagFinder;
-      private static HashMap<String, TextEdit> tahash =
+      private static HashMap<String, TextEdit> tagCache =
          new HashMap<>(100);
 
       public static void gotoList(FvContext fvc, TextEdit list) throws
             InputException  {
-         inst.gotoList(fvc, list);
+         instance.gotoList(fvc, list);
       }
 
       enum PCmd {
@@ -260,21 +261,21 @@ public final class PosListList extends TextList<Position> {
                return null;
             case REP:
                if (null != arg)
-                  inst.addList(DirManager.getInstance().globalgrep(
+                  instance.addList(DirManager.getInstance().globalgrep(
                      arg.toString()));
                return null;
             case TE:
                return null; //markex(new extext(new testr()),fvc); return null;
             case GOTO_PL_LIST:
-               inst.gotoList(fvc, inst);
+               instance.gotoList(fvc, instance);
                return null; // fallthrough
             case DUMMY1:
                return null; //jlintcommand();return null;
             case NEXT_POS:
-               inst.gotoNextPos(fvc, (boolean[]) arg, false);
+               instance.gotoNextPos(fvc, (boolean[]) arg, false);
                return null;
             case GOTO_POSITION_LIST:
-               inst.gotoList(fvc, null);
+               instance.gotoList(fvc, null);
                return null;
             case DUMMY_PLL:
                throw new InputException("bad command");
@@ -314,17 +315,17 @@ public final class PosListList extends TextList<Position> {
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
             case NEXT_POS_WAIT:
-               inst.gotoNextPos(fvc, (boolean[]) arg, true);
+               instance.gotoNextPos(fvc, (boolean[]) arg, true);
                return null;
             case GOTO_DIR_LIST_DEFAULT:
                DirManager.getInstance().showSearchPath();
                FvContext.connectFv(DirManager.getInstance(), fvc.vi);
                return null;
             case CN:
-               inst.gotoNextPos(fvc, new boolean[]{false}, false);
+               instance.gotoNextPos(fvc, new boolean[]{false}, false);
                return null;
             case CP:
-               inst.gotoNextPos(fvc, new boolean[]{true}, false);
+               instance.gotoNextPos(fvc, new boolean[]{true}, false);
                return null;
             default:
                throw new RuntimeException("vigroup:default");
@@ -333,14 +334,14 @@ public final class PosListList extends TextList<Position> {
 
       public static void setErrors(IoConverter<Position> newerrs) {
          //trace("setErrors" + newerrs);
-         //trace("inst" + inst);
-         inst.setFirst(newerrs);
+         //trace("instance" + instance);
+         instance.setFirst(newerrs);
       }
 
       public static TextEdit<Position> addPositionIoc(IoConverter<Position> ioc) {
          TextEdit<Position> newList =
-            new TextEdit<>(ioc, inst, ioc.prop);
-         inst.addList(newList);
+            new TextEdit<>(ioc, instance, ioc.prop);
+         instance.addList(newList);
          return newList;
       }
 
@@ -363,15 +364,15 @@ public final class PosListList extends TextList<Position> {
        * @param name the name to match
        */
       public static void removePositionIoc(String name) {
-         for (int i = 1; i < inst.finish(); i++) {
-            TextEdit<Position> entry = inst.at(i);
+         for (int i = 1; i < instance.finish(); i++) {
+            TextEdit<Position> entry = instance.at(i);
             if (name.equals(entry.getName())) {
                try {
-                  FvContext.dispose(entry, inst);
+                  FvContext.dispose(entry, instance);
                } catch (Exception e) {
                   trace("removePositionIoc: " + e);
                }
-               inst.remove(i, 1);
+               instance.remove(i, 1);
                break;
             }
          }
@@ -379,8 +380,8 @@ public final class PosListList extends TextList<Position> {
 
       static void flush() throws IOException {
          tagstack.clear();
-         tahash.clear();
-         inst.flush();
+         tagCache.clear();
+         instance.flush();
          try {
             ctagFinder = new Ctag("tags");
          } catch (IOException e) {
@@ -436,26 +437,26 @@ public final class PosListList extends TextList<Position> {
 
       private void gototag(String str, FvContext fvc) throws
             InputException, IOException {
-         Position porig = fvc.getPosition(null);
+         Position originalPosition = fvc.getPosition(null);
 
-         String fstr = null == str
+         String searchText = null == str
                        ? fvc.at().toString()
                        : str;
 
          trace("gototag entry str="
             + (str == null ? "null" : "'" + str + "'")
-            + " fstr='" + fstr + "'");
+            + " searchText='" + searchText + "'");
 
-         if (filereg.reset(fstr).find()) {
+         if (filereg.reset(searchText).find()) {
             trace("gototag filereg matched file="
                + filereg.group(1) + " line=" + filereg.group(4));
-            FvContext nfvc = FileList.openFileName(
+            FvContext fileContext = FileList.openFileName(
                filereg.group(1), fvc.vi);
-            if (null != nfvc) {
+            if (null != fileContext) {
                int ypos = Integer.parseInt(filereg.group(4));
-               nfvc.edvec.contains(ypos);
-               nfvc.cursoryabs(ypos);
-               tagstack.add(porig);
+               fileContext.edvec.contains(ypos);
+               fileContext.cursoryabs(ypos);
+               tagstack.add(originalPosition);
                trace("gototag filereg navigated, return");
                return;
             }
@@ -494,8 +495,8 @@ public final class PosListList extends TextList<Position> {
          if (templist.finish() <= 1 || !hasResults)
             throw new InputException("tag not found: " + str);
 
-         tagstack.add(porig);
-         inst.setLastList(templist);
+         tagstack.add(originalPosition);
+         instance.setLastList(templist);
          trace("gototag done, pushed tagstack size="
             + tagstack.size());
       }
@@ -516,33 +517,35 @@ public final class PosListList extends TextList<Position> {
          return false;
       }
 
-      private TextEdit<Position> createtags(String sym) throws IOException {
-         Position[] parray = null;
+      private TextEdit<Position> createtags(String sym)
+            throws IOException {
+         Position[] tagPositions = null;
 
-         PositionIoc xf;
+         PositionIoc reader;
          if (true) {
             trace("create tags ctagFinder" + ctagFinder);
             if (null != ctagFinder) {
-               parray = ctagFinder.taglookup(sym);
-               if ((parray != null))
-                  if (parray.length == 0)
-                     parray = null;
+               tagPositions = ctagFinder.taglookup(sym);
+               if ((tagPositions != null))
+                  if (tagPositions.length == 0)
+                     tagPositions = null;
             }
-            xf = new XrefReader(sym, parray);
+            reader = new XrefReader(sym, tagPositions);
          } else {
-            xf = new GlobalReader(sym);
+            reader = new GlobalReader(sym);
          }
 
          TextEdit<Position> taglist = new TextEdit<Position>(
-            xf, parray, inst, xf.prop);
+            reader, tagPositions, instance, reader.prop);
          taglist.contains(2);
-         tahash.put(sym, taglist);
+         tagCache.put(sym, taglist);
          if (taglist.at(1) != PositionIoc.defpos)
-            inst.insertOne(taglist, inst.finish());
+            instance.insertOne(taglist, instance.finish());
          return taglist;
       }
 
-      private static final Pattern spl = Pattern.compile("\\.");
+      private static final Pattern DOT_PATTERN =
+         Pattern.compile("\\.");
       private static final Matcher classmatcher = Pattern.compile(
          "\\bclass:(\\S*)\\b").matcher("");
       private static final Matcher filematcher = Pattern.compile(
@@ -552,15 +555,15 @@ public final class PosListList extends TextList<Position> {
             implements EditContainer.FileDisposeListener {
          public void fileDisposed(EditContainer ev) {
             trace("file disposed " + ev);
-            tahash.remove(ev.getName());
+            tagCache.remove(ev.getName());
          }
       }
-      private FDL fdl = new FDL();
+      private FDL disposeListener = new FDL();
 
       private TextEdit taglookup(String str, View vi)
             throws InputException {
          trace("taglookup str='" + str + "'");
-         String[]symlist = spl.split(str);
+         String[]symlist = DOT_PATTERN.split(str);
 
          if (0 == symlist.length) {
             throw new InputException("invalid tag target" + str);
@@ -568,13 +571,13 @@ public final class PosListList extends TextList<Position> {
 
          String sym = symlist[symlist.length - 1];
          @SuppressWarnings("unchecked") // raw TextEdit from HashMap
-         TextEdit<Position> taglist = tahash.get(sym);
+         TextEdit<Position> taglist = tagCache.get(sym);
          trace("taglookup sym='" + sym
             + "' cached=" + (taglist != null));
          try {
             if (null == taglist) {
                taglist = createtags(sym);
-               taglist.addDisposeNotify(fdl);
+               taglist.addDisposeNotify(disposeListener);
             }
 
             int tagFinish = taglist.finish();
@@ -591,8 +594,8 @@ public final class PosListList extends TextList<Position> {
 
             if (tagcount > 1) {
                int[] scores = new int[tagcount];
-               for (int ii = 1; ii < tagcount; ii++)
-                  scores[ii] = 0;
+               for (int i = 1; i < tagcount; i++)
+                  scores[i] = 0;
                int maxscore = 0;
 
                for (int symIndex = symlist.length - 2;
@@ -600,40 +603,40 @@ public final class PosListList extends TextList<Position> {
                      symIndex--) {
                   String currsym = symlist[symIndex];
 
-                  for (int ii = 1; ii < tagcount; ii++) {
-                     Position pos = taglist.at(ii);
+                  for (int i = 1; i < tagcount; i++) {
+                     Position pos = taglist.at(i);
 
                      if (classmatcher.reset(pos.comment).find()) {
                         String clss =  classmatcher.group(1);
                         //trace("classmatcher class = " + clss + " currsym = " + currsym);
                         if (str.indexOf(clss) != -1) {
-                           scores[ii] += clss.length();
+                           scores[i] += clss.length();
                         }
 
                         if (clss.equals(currsym)) {
-                           scores[ii] += 2;
+                           scores[i] += 2;
                         }
                      }
 
                      if (filematcher.reset(pos.filename.shortName).find()
                            && filematcher.group(1).equals(currsym)) {
-                        scores[ii] += 1;
+                        scores[i] += 1;
                      }
-                     if (scores[ii] > maxscore)
-                        maxscore = scores[ii];
-                     else if (scores[ii] < maxscore)
-                        scores[ii] = Integer.MIN_VALUE;
+                     if (scores[i] > maxscore)
+                        maxscore = scores[i];
+                     else if (scores[i] < maxscore)
+                        scores[i] = Integer.MIN_VALUE;
                   }
                }
                //for (int i=1;i<tagcount;i++)
                //   trace("symlist[i] " + symlist[i] + " tagscore[" + i + "] = " + scores[i]);
-               for (int ii = 1; ii < tagcount; ii++) {
+               for (int i = 1; i < tagcount; i++) {
 
-                  if (scores[ii] == maxscore) {
-                     if (FileList.gotoposition(taglist.at(ii), false, vi)) {
+                  if (scores[i] == maxscore) {
+                     if (FileList.gotoposition(taglist.at(i), false, vi)) {
                         FvContext tagfvc =  FvContext.getcontext(vi, taglist);
-                        if (tagfvc.edvec.contains(ii))
-                           tagfvc.cursoryabs(ii);
+                        if (tagfvc.edvec.contains(i))
+                           tagfvc.cursoryabs(i);
                         break;
                      }
                   }

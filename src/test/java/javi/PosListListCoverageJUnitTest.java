@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Comprehensive coverage tests for {@link PosListList}.
  *
  * <p>Exercises code paths not covered by PosListListJUnitTest:
- * FCH.addedLines position adjustment, list management
+ * FileChangeHandler.addedLines position adjustment, list management
  * (setFirst, addList, setLastList), containsPosition,
  * PllConverter, addPositionIoc/replacePositionIoc/removePositionIoc,
  * poptag edge cases, and doroutine command dispatch.</p>
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PosListListCoverageJUnitTest {
 
    private static PosListList.Cmd pllCmd;
-   private static PosListList inst;
+   private static PosListList pllInstance;
 
    @BeforeAll
    static void initOnce() throws Exception {
@@ -45,7 +45,7 @@ class PosListListCoverageJUnitTest {
          } catch (RuntimeException e) {
             // Commands already registered by another test class.
             // Create minimal Cmd via Unsafe/allocateInstance to
-            // get a doroutine-callable handle. Since static inst
+            // get a doroutine-callable handle. Since static instance
             // is already initialized, this is safe.
          }
          if (pllCmd == null) {
@@ -60,7 +60,7 @@ class PosListListCoverageJUnitTest {
          } else {
             sharedCmd = pllCmd;
          }
-         inst = getInst();
+         pllInstance = getInstance();
       } finally {
          EventQueue.biglock2.unlock();
       }
@@ -69,8 +69,8 @@ class PosListListCoverageJUnitTest {
    // Shared across PLL test classes in the same JVM
    static PosListList.Cmd sharedCmd;
 
-   private static PosListList getInst() throws Exception {
-      Field f = PosListList.Cmd.class.getDeclaredField("inst");
+   private static PosListList getInstance() throws Exception {
+      Field f = PosListList.Cmd.class.getDeclaredField("instance");
       f.setAccessible(true);
       return (PosListList) f.get(null);
    }
@@ -86,25 +86,25 @@ class PosListListCoverageJUnitTest {
    private static TextEdit getLastList() throws Exception {
       Field f = PosListList.class.getDeclaredField("lastlist");
       f.setAccessible(true);
-      return (TextEdit) f.get(inst);
+      return (TextEdit) f.get(pllInstance);
    }
 
    private static TextEdit getLastList2() throws Exception {
       Field f = PosListList.class.getDeclaredField("lastlist2");
       f.setAccessible(true);
-      return (TextEdit) f.get(inst);
+      return (TextEdit) f.get(pllInstance);
    }
 
    private static void setLastList(TextEdit val) throws Exception {
       Field f = PosListList.class.getDeclaredField("lastlist");
       f.setAccessible(true);
-      f.set(inst, val);
+      f.set(pllInstance, val);
    }
 
    private static void setLastList2(TextEdit val) throws Exception {
       Field f = PosListList.class.getDeclaredField("lastlist2");
       f.setAccessible(true);
-      f.set(inst, val);
+      f.set(pllInstance, val);
    }
 
    private static Method getContainsPositionMethod() throws Exception {
@@ -340,11 +340,11 @@ class PosListListCoverageJUnitTest {
             FileProperties<Position> fp =
                new FileProperties<>(fd, PositionIoc.pconverter);
             IoConverter<Position> ioc = new IoConverter<>(fp, false);
-            int beforeSize = inst.finish();
+            int beforeSize = pllInstance.finish();
             TextEdit<Position> result =
                PosListList.Cmd.addPositionIoc(ioc);
             assertNotNull(result);
-            assertTrue(inst.finish() > beforeSize,
+            assertTrue(pllInstance.finish() > beforeSize,
                "PLL size should increase after addPositionIoc");
          } finally {
             EventQueue.biglock2.unlock();
@@ -360,10 +360,10 @@ class PosListListCoverageJUnitTest {
       void removeNonexistent() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            int sizeBefore = inst.finish();
+            int sizeBefore = pllInstance.finish();
             PosListList.Cmd.removePositionIoc(
                "no-such-position-list-999");
-            assertEquals(sizeBefore, inst.finish(),
+            assertEquals(sizeBefore, pllInstance.finish(),
                "PLL size should not change for missing name");
          } finally {
             EventQueue.biglock2.unlock();
@@ -390,7 +390,7 @@ class PosListListCoverageJUnitTest {
          try {
             PosListList.Cmd.setErrors(null);
             // Should not throw; first list is emptied
-            assertNotNull(inst.at(1),
+            assertNotNull(pllInstance.at(1),
                "first list still exists after setErrors(null)");
          } finally {
             EventQueue.biglock2.unlock();
@@ -408,7 +408,7 @@ class PosListListCoverageJUnitTest {
                new FileProperties<>(fd, PositionIoc.pconverter);
             IoConverter<Position> ioc = new IoConverter<>(fp, false);
             PosListList.Cmd.setErrors(ioc);
-            TextEdit<Position> first = inst.at(1);
+            TextEdit<Position> first = pllInstance.at(1);
             assertNotNull(first);
          } finally {
             EventQueue.biglock2.unlock();
@@ -456,7 +456,7 @@ class PosListListCoverageJUnitTest {
          EventQueue.biglock2.lock();
          try {
             // Get the ACTUAL error list that FCH reads
-            TextEdit<Position> errList = inst.at(1);
+            TextEdit<Position> errList = pllInstance.at(1);
             FileDescriptor testFd =
                FileDescriptor.InternalFd.make(
                   "fch-sfwd-" + System.nanoTime());
@@ -472,8 +472,8 @@ class PosListListCoverageJUnitTest {
             // Verify FCH uses the same error list
             EditContainer.FileChangeListener fch = findFCH();
             assertNotNull(fch);
-            assertSame(errList, inst.at(1),
-               "errList should be same object as inst.at(1)");
+            assertSame(errList, pllInstance.at(1),
+               "errList should be same object as pllInstance.at(1)");
             fch.addedLines(testFd, 5, 5);
 
             Position adjusted = errList.at(insertAt);
@@ -494,7 +494,7 @@ class PosListListCoverageJUnitTest {
       void noShiftBefore() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            TextEdit<Position> errList = inst.at(1);
+            TextEdit<Position> errList = pllInstance.at(1);
             FileDescriptor testFd =
                FileDescriptor.InternalFd.make(
                   "fch-nsb-" + System.nanoTime());
@@ -521,7 +521,7 @@ class PosListListCoverageJUnitTest {
       void differentFile() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            TextEdit<Position> errList = inst.at(1);
+            TextEdit<Position> errList = pllInstance.at(1);
             FileDescriptor fileFd =
                FileDescriptor.InternalFd.make(
                   "fch-of-" + System.nanoTime());
@@ -549,7 +549,7 @@ class PosListListCoverageJUnitTest {
       void deletedLines() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            TextEdit<Position> errList = inst.at(1);
+            TextEdit<Position> errList = pllInstance.at(1);
             FileDescriptor testFd =
                FileDescriptor.InternalFd.make(
                   "fch-del-" + System.nanoTime());
@@ -574,7 +574,7 @@ class PosListListCoverageJUnitTest {
       void snapToIndex() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            TextEdit<Position> errList = inst.at(1);
+            TextEdit<Position> errList = pllInstance.at(1);
             FileDescriptor testFd =
                FileDescriptor.InternalFd.make(
                   "fch-snap-" + System.nanoTime());
@@ -620,10 +620,10 @@ class PosListListCoverageJUnitTest {
             setLastList(null);
             setLastList2(null);
 
-            setLL.invoke(inst, te1);
+            setLL.invoke(pllInstance, te1);
             assertSame(te1, getLastList());
 
-            setLL.invoke(inst, te2);
+            setLL.invoke(pllInstance, te2);
             assertSame(te2, getLastList());
             assertSame(te1, getLastList2());
          } finally {
@@ -643,7 +643,7 @@ class PosListListCoverageJUnitTest {
             TextEdit<String> te1 = makeStringEdit("ll-noop1");
             setLastList(te1);
 
-            setLL.invoke(inst, (TextEdit) null);
+            setLL.invoke(pllInstance, (TextEdit) null);
             assertSame(te1, getLastList(),
                "null should not overwrite lastlist");
          } finally {
@@ -1276,16 +1276,16 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("PosListList is a TextList of Position TextEdits")
       void pllIsTextList() {
-         assertTrue(inst instanceof TextList,
+         assertTrue(pllInstance instanceof TextList,
             "PosListList should extend TextList");
       }
 
       @Test
-      @DisplayName("inst has at least one entry (error list)")
+      @DisplayName("pllInstance has at least one entry (error list)")
       void instHasEntries() throws Exception {
          EventQueue.biglock2.lock();
          try {
-            assertTrue(inst.finish() >= 1,
+            assertTrue(pllInstance.finish() >= 1,
                "PLL should always have at least element 1");
          } finally {
             EventQueue.biglock2.unlock();
