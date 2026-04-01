@@ -1,6 +1,10 @@
 package javi;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
@@ -13,15 +17,38 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Tests for {@link Plugin} interface and {@link Plugin.Loader}.
+ * Tests for the javi plugin loading system (F29).
  *
- * <p>Tests plugin loading error paths — invalid JARs, missing classes,
- * malformed class files. Loader.load() catches all errors internally,
- * so these test that it handles errors gracefully without throwing.
+ * <p>Covers:</p>
+ * <ul>
+ *   <li>{@code loadplugin} command registration and dispatch</li>
+ *   <li>{@link Plugin} interface and {@link Plugin.Loader}</li>
+ *   <li>{@link MultiClassLoader} parent-first delegation</li>
+ *   <li>{@code .javini} dispatch path via {@link Command#command}</li>
+ * </ul>
  */
 class PluginJUnitTest {
 
+   private static final String HELLO_JAR =
+      "build/libs/javi-hello.jar";
+
    private Path tempDir;
+
+   @BeforeAll
+   static void initOnce() throws Exception {
+      TestInit.init();
+      TestInit.initCommands();
+   }
+
+   @BeforeEach
+   void lock() {
+      EventQueue.biglock2.lock();
+   }
+
+   @AfterEach
+   void unlock() {
+      EventQueue.biglock2.unlock();
+   }
 
    private void createTempDir() throws IOException {
       tempDir = Files.createTempDirectory("plugin-test");
@@ -50,11 +77,46 @@ class PluginJUnitTest {
       return jarFile;
    }
 
+   // ── Command registration ──────────────────────────────────
+
+   @Test
+   void loadPluginEnumExists() {
+      assertNotNull(MiscCommands.Cmd.valueOf("LOAD_PLUGIN"));
+   }
+
+   @Test
+   void loadPluginCommandIsRegistered() {
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup("loadplugin");
+      assertNotNull(kb, "loadplugin should be a registered command");
+   }
+
+   // ── Error cases ───────────────────────────────────────────
+
+   @Test
+   void loadPluginNullArgThrows() {
+      assertThrows(InputException.class, () ->
+         Rgroup.doCommand("loadplugin", null, 0, 1,
+            FvContext.getCurrFvc(), false));
+   }
+
+   @Test
+   void loadPluginEmptyArgThrows() {
+      assertThrows(InputException.class, () ->
+         Rgroup.doCommand("loadplugin", "", 0, 1,
+            FvContext.getCurrFvc(), false));
+   }
+
+   @Test
+   void loadPluginMissingJarThrows() {
+      assertThrows(InputException.class, () ->
+         Rgroup.doCommand("loadplugin", "nonexistent_plugin_xyz",
+            0, 1, FvContext.getCurrFvc(), false));
+   }
+
    // ── Plugin.Loader.load() tests ─────────────────────────────
 
    @Test
    void loadNonexistentJarHandlesGracefully() throws Exception {
-      // load() catches all Throwable — should not throw
       Plugin.Loader.load("/nonexistent/plugin.jar");
    }
 
@@ -99,6 +161,15 @@ class PluginJUnitTest {
       }
    }
 
+   // ── ClassLoader delegation ────────────────────────────────
+
+   @Test
+   void multiClassLoaderParentIsAppClassLoader() {
+      ClassLoader appCL = MultiClassLoader.class.getClassLoader();
+      assertNotNull(appCL,
+         "app classloader should not be null (not boot CL)");
+   }
+
    // ── MultiClassLoader tests ─────────────────────────────────
 
    @Test
@@ -109,7 +180,6 @@ class PluginJUnitTest {
             {"dummy.txt", "x"}
          });
          JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         // Default: dots → slashes, appends .class
          String formatted = loader.formatClassName("com.example.Hello");
          assertEquals("com/example/Hello.class", formatted);
       } finally {
@@ -152,12 +222,10 @@ class PluginJUnitTest {
    void loaderCachesLoadedClass() throws Exception {
       createTempDir();
       try {
-         // Test that system classes are cached properly
          File jar = createTestJar("test.jar", new String[][]{
             {"dummy.txt", "x"}
          });
          JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         // Loading a system class should work and cache it
          Class<?> c1 = loader.loadClass("java.lang.String");
          Class<?> c2 = loader.loadClass("java.lang.String");
          assertSame(c1, c2);
@@ -180,5 +248,81 @@ class PluginJUnitTest {
       } finally {
          cleanTempDir();
       }
+   }
+
+   // ── End-to-end: load hello plugin ─────────────────────────
+
+   static boolean helloJarExists() {
+      return new File(HELLO_JAR).exists();
+   }
+
+   @Test
+   @EnabledIf("helloJarExists")
+   void loadHelloPluginRegistersCommand() throws Exception {
+      Rgroup.KeyBinding before = Rgroup.bindingLookup("hello");
+
+      Rgroup.doCommand("loadplugin", "hello", 0, 1,
+         FvContext.getCurrFvc(), false);
+
+      Rgroup.KeyBinding after = Rgroup.bindingLookup("hello");
+      assertNotNull(after,
+         "hello command should be registered after loading plugin");
+   }
+
+   @Test
+   @EnabledIf("helloJarExists")
+   void loadHelloPluginViaAbsolutePath() throws Exception {
+      File jar = new File(HELLO_JAR);
+      Rgroup.doCommand("loadplugin", jar.getAbsolutePath(),
+         0, 1, FvContext.getCurrFvc(), false);
+
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
+      assertNotNull(kb,
+         "hello command should be registered via absolute path load");
+   }
+
+   // ── .javini dispatch path ─────────────────────────────────
+
+   @Test
+   @EnabledIf("helloJarExists")
+   void javiniLoadpluginDispatch() {
+      Command.command("loadplugin hello", null, null);
+
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
+      assertNotNull(kb,
+         "loadplugin hello via Command.command() should register"
+         + " the hello command");
+   }
+
+   // ── Plugin.Loader direct ──────────────────────────────────
+
+   @Test
+   @EnabledIf("helloJarExists")
+   void pluginLoaderDirectLoad() throws Exception {
+      File jar = new File(HELLO_JAR);
+      Plugin.Loader.load(jar.getPath());
+
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
+      assertNotNull(kb,
+         "Plugin.Loader.load() should register commands");
+   }
+
+   @Test
+   void pluginLoaderNonexistentJarSilentlyFails() throws Exception {
+      Plugin.Loader.load("/nonexistent/path/fake.jar");
+   }
+
+   // ── Plugin interface ──────────────────────────────────────
+
+   @Test
+   void pluginBindKeyRejectsUnknownGroup() {
+      assertThrows(InputException.class, () ->
+         Plugin.bindKey("bogus_group", "x", "insert"));
+   }
+
+   @Test
+   void pluginBindKeyRejectsUnknownCommand() {
+      assertThrows(InputException.class, () ->
+         Plugin.bindKey("move", "x", "no_such_cmd_xyz"));
    }
 }

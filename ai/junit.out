@@ -6,11 +6,63 @@ WARNING: Restricted methods will be blocked in a future release unless native ac
 > Task :compileJava UP-TO-DATE
 > Task :processResources NO-SOURCE
 > Task :classes UP-TO-DATE
-> Task :compileTestJava UP-TO-DATE
+> Task :compileTestJava
 > Task :processTestResources NO-SOURCE
-> Task :testClasses UP-TO-DATE
+> Task :testClasses
 
 > Task :test
+
+PluginJUnitTest > pluginLoaderDirectLoad() STARTED
+
+PluginJUnitTest > pluginLoaderDirectLoad() PASSED
+
+PluginJUnitTest > loadPluginEnumExists() STARTED
+
+PluginJUnitTest > loadPluginEnumExists() PASSED
+
+PluginJUnitTest > pluginBindKeyRejectsUnknownCommand() STARTED
+
+PluginJUnitTest > pluginBindKeyRejectsUnknownCommand() PASSED
+
+PluginJUnitTest > loadPluginMissingJarThrows() STARTED
+
+PluginJUnitTest > loadPluginMissingJarThrows() PASSED
+
+PluginJUnitTest > pluginLoaderNonexistentJarSilentlyFails() STARTED
+
+PluginJUnitTest > pluginLoaderNonexistentJarSilentlyFails() PASSED
+
+PluginJUnitTest > loadHelloPluginViaAbsolutePath() STARTED
+
+PluginJUnitTest > loadHelloPluginViaAbsolutePath() PASSED
+
+PluginJUnitTest > loadHelloPluginRegistersCommand() STARTED
+
+PluginJUnitTest > loadHelloPluginRegistersCommand() PASSED
+
+PluginJUnitTest > javiniLoadpluginDispatch() STARTED
+
+PluginJUnitTest > javiniLoadpluginDispatch() PASSED
+
+PluginJUnitTest > pluginBindKeyRejectsUnknownGroup() STARTED
+
+PluginJUnitTest > pluginBindKeyRejectsUnknownGroup() PASSED
+
+PluginJUnitTest > loadPluginNullArgThrows() STARTED
+
+PluginJUnitTest > loadPluginNullArgThrows() PASSED
+
+PluginJUnitTest > loadPluginEmptyArgThrows() STARTED
+
+PluginJUnitTest > loadPluginEmptyArgThrows() PASSED
+
+PluginJUnitTest > loadPluginCommandIsRegistered() STARTED
+
+PluginJUnitTest > loadPluginCommandIsRegistered() PASSED
+
+PluginJUnitTest > multiClassLoaderParentIsAppClassLoader() STARTED
+
+PluginJUnitTest > multiClassLoaderParentIsAppClassLoader() PASSED
 
 ByteInputJUnitTest > readDouble reads IEEE 754 double STARTED
 
@@ -404,13 +456,69 @@ BuffersJUnitTest > deletedUppercaseAppendsToExistingString() STARTED
 
 BuffersJUnitTest > deletedUppercaseAppendsToExistingString() PASSED
 
+CellAttrJUnitTest > fg and bg 256-colours coexist without overlap STARTED
+
+CellAttrJUnitTest > fg and bg 256-colours coexist without overlap PASSED
+
 CellAttrJUnitTest > pack and extract background colour STARTED
 
 CellAttrJUnitTest > pack and extract background colour PASSED
 
+CellAttrJUnitTest > approxTrueColor: pure red → palette 196 STARTED
+
+CellAttrJUnitTest > approxTrueColor: pure red → palette 196 PASSED
+
+CellAttrJUnitTest > 256-colour bg round-trip full range STARTED
+
+CellAttrJUnitTest > 256-colour bg round-trip full range PASSED
+
+CellAttrJUnitTest > 256-colour fg round-trip for grayscale (232-254) STARTED
+
+CellAttrJUnitTest > 256-colour fg round-trip for grayscale (232-254) PASSED
+
+CellAttrJUnitTest > approxTrueColor: near-black gray → palette 16 STARTED
+
+CellAttrJUnitTest > approxTrueColor: near-black gray → palette 16 PASSED
+
+CellAttrJUnitTest > approxTrueColor: near-white gray → palette 231 STARTED
+
+CellAttrJUnitTest > approxTrueColor: near-white gray → palette 231 PASSED
+
 CellAttrJUnitTest > encode/decode palette colour round-trip STARTED
 
 CellAttrJUnitTest > encode/decode palette colour round-trip PASSED
+
+CellAttrJUnitTest > boundary colour 0 round-trips correctly STARTED
+
+CellAttrJUnitTest > boundary colour 0 round-trips correctly PASSED
+
+CellAttrJUnitTest > 256-colour fg round-trip for standard ANSI (0-7) STARTED
+
+CellAttrJUnitTest > 256-colour fg round-trip for standard ANSI (0-7) PASSED
+
+CellAttrJUnitTest > approxTrueColor: gray boundary at 248 STARTED
+
+CellAttrJUnitTest > approxTrueColor: gray boundary at 248 PASSED
+
+CellAttrJUnitTest > colour 255 cannot be stored (8-bit limit) STARTED
+
+CellAttrJUnitTest > colour 255 cannot be stored (8-bit limit) PASSED
+
+CellAttrJUnitTest > 256-colour with bold flag preserved STARTED
+
+CellAttrJUnitTest > 256-colour with bold flag preserved PASSED
+
+CellAttrJUnitTest > 256-colour fg round-trip for 6x6x6 cube (16-231) STARTED
+
+CellAttrJUnitTest > 256-colour fg round-trip for 6x6x6 cube (16-231) PASSED
+
+CellAttrJUnitTest > describe shows 256-colour values STARTED
+
+CellAttrJUnitTest > describe shows 256-colour values PASSED
+
+CellAttrJUnitTest > approxTrueColor clamps values above 255 STARTED
+
+CellAttrJUnitTest > approxTrueColor clamps values above 255 PASSED
 
 CellAttrJUnitTest > describe includes flag names STARTED
 
@@ -424,13 +532,57 @@ CellAttrJUnitTest > pack and extract underline flag STARTED
 
 CellAttrJUnitTest > pack and extract underline flag PASSED
 
+CellAttrJUnitTest > approxTrueColor: gray boundary at 8 STARTED
+
+CellAttrJUnitTest > approxTrueColor: gray boundary at 8 PASSED
+
 CellAttrJUnitTest > DEFAULT has no flags and default colours STARTED
 
 CellAttrJUnitTest > DEFAULT has no flags and default colours PASSED
 
+CellAttrJUnitTest > approxTrueColor: pure black → palette 16 STARTED
+
+CellAttrJUnitTest > approxTrueColor: pure black → palette 16 PASSED
+
+CellAttrJUnitTest > approxTrueColor: pure green → palette 46 STARTED
+
+CellAttrJUnitTest > approxTrueColor: pure green → palette 46 PASSED
+
+CellAttrJUnitTest > approxTrueColor: pure white → palette 231 STARTED
+
+CellAttrJUnitTest > approxTrueColor: pure white → palette 231 PASSED
+
+CellAttrJUnitTest > approxTrueColor: pure blue → palette 21 STARTED
+
+CellAttrJUnitTest > approxTrueColor: pure blue → palette 21 PASSED
+
+CellAttrJUnitTest > approxTrueColor: cyan (0,255,255) → cube STARTED
+
+CellAttrJUnitTest > approxTrueColor: cyan (0,255,255) → cube PASSED
+
+CellAttrJUnitTest > approxTrueColor: magenta (255,0,255) → cube STARTED
+
+CellAttrJUnitTest > approxTrueColor: magenta (255,0,255) → cube PASSED
+
+CellAttrJUnitTest > approxTrueColor: mid-gray → grayscale ramp STARTED
+
+CellAttrJUnitTest > approxTrueColor: mid-gray → grayscale ramp PASSED
+
+CellAttrJUnitTest > boundary colour 254 round-trips correctly STARTED
+
+CellAttrJUnitTest > boundary colour 254 round-trips correctly PASSED
+
 CellAttrJUnitTest > describe returns DEFAULT for zero STARTED
 
 CellAttrJUnitTest > describe returns DEFAULT for zero PASSED
+
+CellAttrJUnitTest > approxTrueColor: orange (255,128,0) → cube STARTED
+
+CellAttrJUnitTest > approxTrueColor: orange (255,128,0) → cube PASSED
+
+CellAttrJUnitTest > approxTrueColor clamps negative values STARTED
+
+CellAttrJUnitTest > approxTrueColor clamps negative values PASSED
 
 CellAttrJUnitTest > pack and extract reverse flag STARTED
 
@@ -440,13 +592,29 @@ CellAttrJUnitTest > encode/decode default colour round-trip STARTED
 
 CellAttrJUnitTest > encode/decode default colour round-trip PASSED
 
+CellAttrJUnitTest > approxTrueColor: yellow (255,255,0) → cube STARTED
+
+CellAttrJUnitTest > approxTrueColor: yellow (255,255,0) → cube PASSED
+
 CellAttrJUnitTest > pack all flags and colours together STARTED
 
 CellAttrJUnitTest > pack all flags and colours together PASSED
 
+CellAttrJUnitTest > approxTrueColor: dark gray → grayscale ramp STARTED
+
+CellAttrJUnitTest > approxTrueColor: dark gray → grayscale ramp PASSED
+
 CellAttrJUnitTest > pack and extract bold flag STARTED
 
 CellAttrJUnitTest > pack and extract bold flag PASSED
+
+CellAttrJUnitTest > 256-colour fg round-trip for bright ANSI (8-15) STARTED
+
+CellAttrJUnitTest > 256-colour fg round-trip for bright ANSI (8-15) PASSED
+
+CellAttrJUnitTest > approxTrueColor: non-gray similar channels → cube STARTED
+
+CellAttrJUnitTest > approxTrueColor: non-gray similar channels → cube PASSED
 
 ChangeOptJUnitTest > invalidValueOfThrows() STARTED
 
@@ -864,6 +1032,10 @@ DirEditJUnitTest > trashSupportedReturnsFalseInStreamInterface() STARTED
 
 DirEditJUnitTest > trashSupportedReturnsFalseInStreamInterface() PASSED
 
+DirEditJUnitTest > filterShowsOnlyMatchingEntries() STARTED
+
+DirEditJUnitTest > filterShowsOnlyMatchingEntries() PASSED
+
 DirEditJUnitTest > getFullPathReturnsNullForNonEntryLines() STARTED
 
 DirEditJUnitTest > getFullPathReturnsNullForNonEntryLines() PASSED
@@ -988,6 +1160,10 @@ DirEditJUnitTest > copyFileWorks() STARTED
 
 DirEditJUnitTest > copyFileWorks() PASSED
 
+DirEditJUnitTest > filterInvalidPatternDoesNotCrash() STARTED
+
+DirEditJUnitTest > filterInvalidPatternDoesNotCrash() PASSED
+
 DirEditJUnitTest > unmarkedFilesShowSpacePrefix() STARTED
 
 DirEditJUnitTest > unmarkedFilesShowSpacePrefix() PASSED
@@ -1016,6 +1192,10 @@ DirEditJUnitTest > hiddenFilesRespectedInListing() STARTED
 
 DirEditJUnitTest > hiddenFilesRespectedInListing() PASSED
 
+DirEditJUnitTest > filterClearRestoresAllEntries() STARTED
+
+DirEditJUnitTest > filterClearRestoresAllEntries() PASSED
+
 DirEditJUnitTest > typeSortPutsDirectoriesFirst() STARTED
 
 DirEditJUnitTest > typeSortPutsDirectoriesFirst() PASSED
@@ -1036,6 +1216,10 @@ DirManagerJUnitTest > isInSearchPathFileNotDir() STARTED
 
 DirManagerJUnitTest > isInSearchPathFileNotDir() PASSED
 
+DirManagerJUnitTest > compressPathsNonHomePaths() STARTED
+
+DirManagerJUnitTest > compressPathsNonHomePaths() PASSED
+
 DirManagerJUnitTest > singletonNotNull() STARTED
 
 DirManagerJUnitTest > singletonNotNull() PASSED
@@ -1048,6 +1232,10 @@ DirManagerJUnitTest > initSearchRFailsOnBadPattern() STARTED
 
 DirManagerJUnitTest > initSearchRFailsOnBadPattern() PASSED
 
+DirManagerJUnitTest > compressPathsSinglePath() STARTED
+
+DirManagerJUnitTest > compressPathsSinglePath() PASSED
+
 DirManagerJUnitTest > addAndRemoveSearchDir() STARTED
 
 DirManagerJUnitTest > addAndRemoveSearchDir() PASSED
@@ -1056,13 +1244,21 @@ DirManagerJUnitTest > findNextFileReturnsNullForMissing() STARTED
 
 DirManagerJUnitTest > findNextFileReturnsNullForMissing() PASSED
 
-DirManagerJUnitTest > formatEntryShowsSearchPathMarker() STARTED
+DirManagerJUnitTest > showSearchPathIncludesDirectories() STARTED
 
-DirManagerJUnitTest > formatEntryShowsSearchPathMarker() PASSED
+DirManagerJUnitTest > showSearchPathIncludesDirectories() PASSED
 
-DirManagerJUnitTest > populateDirectoryShowsEntries() STARTED
+DirManagerJUnitTest > compressPathsMixedParents() STARTED
 
-DirManagerJUnitTest > populateDirectoryShowsEntries() PASSED
+DirManagerJUnitTest > compressPathsMixedParents() PASSED
+
+DirManagerJUnitTest > showSearchPathEmptyMessage() STARTED
+
+DirManagerJUnitTest > showSearchPathEmptyMessage() PASSED
+
+DirManagerJUnitTest > compressPathsSortsOutput() STARTED
+
+DirManagerJUnitTest > compressPathsSortsOutput() PASSED
 
 DirManagerJUnitTest > initSearchFindsFileInSearchPath() STARTED
 
@@ -1072,17 +1268,25 @@ DirManagerJUnitTest > searchPathSizeTracksAddRemove() STARTED
 
 DirManagerJUnitTest > searchPathSizeTracksAddRemove() PASSED
 
+DirManagerJUnitTest > fileListHandlesNonExistentDirectory() STARTED
+
+DirManagerJUnitTest > fileListHandlesNonExistentDirectory() PASSED
+
 DirManagerJUnitTest > flushCacheDoesNotThrow() STARTED
 
 DirManagerJUnitTest > flushCacheDoesNotThrow() PASSED
+
+DirManagerJUnitTest > compressPathsEmpty() STARTED
+
+DirManagerJUnitTest > compressPathsEmpty() PASSED
 
 DirManagerJUnitTest > getSearchPathReturnsDefensiveCopy() STARTED
 
 DirManagerJUnitTest > getSearchPathReturnsDefensiveCopy() PASSED
 
-DirManagerJUnitTest > getCurrentDirAfterOpen() STARTED
+DirManagerJUnitTest > compressPathsPreservesOrder() STARTED
 
-DirManagerJUnitTest > getCurrentDirAfterOpen() PASSED
+DirManagerJUnitTest > compressPathsPreservesOrder() PASSED
 
 DirManagerJUnitTest > toggleSearchPath() STARTED
 
@@ -1099,6 +1303,10 @@ DirManagerJUnitTest > isInSearchPathFile() PASSED
 DirManagerJUnitTest > fileListReturnsMatchingFiles() STARTED
 
 DirManagerJUnitTest > fileListReturnsMatchingFiles() PASSED
+
+DirManagerJUnitTest > compressPathsGroupsSameParent() STARTED
+
+DirManagerJUnitTest > compressPathsGroupsSameParent() PASSED
 
 DockBadgeCountJUnitTest > countModified returns 0 when FileList not initialized STARTED
 
@@ -3428,6 +3636,10 @@ PosListListJUnitTest > main() runs without exception STARTED
 
 PosListListJUnitTest > main() runs without exception PASSED
 
+PosListListJUnitTest > gototag non-existent tag > :ta nonexistent throws InputException STARTED
+
+PosListListJUnitTest > gototag non-existent tag > :ta nonexistent throws InputException PASSED
+
 PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for empty array STARTED
 
 PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for empty array PASSED
@@ -3463,6 +3675,10 @@ PosListListJUnitTest > mkid deduplication > makeDedupKey uses file and line only
 PosListListJUnitTest > findDirectories > returns empty for non-existent directory name STARTED
 
 PosListListJUnitTest > findDirectories > returns empty for non-existent directory name PASSED
+
+PosListListJUnitTest > findDirectories > returns empty for empty string STARTED
+
+PosListListJUnitTest > findDirectories > returns empty for empty string PASSED
 
 PosListListJUnitTest > findDirectories > returns non-empty for existing directory STARTED
 
@@ -4160,9 +4376,9 @@ ShellManagerJUnitTest > extractBufferText: reversed selection STARTED
 
 ShellManagerJUnitTest > extractBufferText: reversed selection PASSED
 
-ShellManagerJUnitTest > getLeafProcessName returns full command with args STARTED
+ShellManagerJUnitTest > getLeafProcessName returns basename without path STARTED
 
-ShellManagerJUnitTest > getLeafProcessName returns full command with args PASSED
+ShellManagerJUnitTest > getLeafProcessName returns basename without path PASSED
 
 ShellManagerJUnitTest > getShellList reports no active shells STARTED
 
@@ -4788,6 +5004,18 @@ ViewJUnitTest > setCursorOnEnablesBlink() STARTED
 
 ViewJUnitTest > setCursorOnEnablesBlink() PASSED
 
+Vt100ParserJUnitTest > sgr256BoundaryColor254() STARTED
+
+Vt100ParserJUnitTest > sgr256BoundaryColor254() PASSED
+
+Vt100ParserJUnitTest > sgr256BoundaryColor255() STARTED
+
+Vt100ParserJUnitTest > sgr256BoundaryColor255() PASSED
+
+Vt100ParserJUnitTest > sgrSequentialSgrSequences() STARTED
+
+Vt100ParserJUnitTest > sgrSequentialSgrSequences() PASSED
+
 Vt100ParserJUnitTest > normalCharAppendedToBuffer() STARTED
 
 Vt100ParserJUnitTest > normalCharAppendedToBuffer() PASSED
@@ -4800,6 +5028,10 @@ Vt100ParserJUnitTest > csiCursorLeftDefault() STARTED
 
 Vt100ParserJUnitTest > csiCursorLeftDefault() PASSED
 
+Vt100ParserJUnitTest > sgrMultipleResetsInSequence() STARTED
+
+Vt100ParserJUnitTest > sgrMultipleResetsInSequence() PASSED
+
 Vt100ParserJUnitTest > csiRowAbsolute() STARTED
 
 Vt100ParserJUnitTest > csiRowAbsolute() PASSED
@@ -4807,6 +5039,10 @@ Vt100ParserJUnitTest > csiRowAbsolute() PASSED
 Vt100ParserJUnitTest > csiDeleteLinesDefault() STARTED
 
 Vt100ParserJUnitTest > csiDeleteLinesDefault() PASSED
+
+Vt100ParserJUnitTest > sgrAllBrightFgRange() STARTED
+
+Vt100ParserJUnitTest > sgrAllBrightFgRange() PASSED
 
 Vt100ParserJUnitTest > csiCursorRightWithCount() STARTED
 
@@ -4823,6 +5059,10 @@ Vt100ParserJUnitTest > csiEraseEntireScreen() PASSED
 Vt100ParserJUnitTest > csiInsertLinesDefault() STARTED
 
 Vt100ParserJUnitTest > csiInsertLinesDefault() PASSED
+
+Vt100ParserJUnitTest > oscEmptyTitle() STARTED
+
+Vt100ParserJUnitTest > oscEmptyTitle() PASSED
 
 Vt100ParserJUnitTest > csiCursorLeftWithCount() STARTED
 
@@ -4856,6 +5096,10 @@ Vt100ParserJUnitTest > csiDeleteLinesWithCount() STARTED
 
 Vt100ParserJUnitTest > csiDeleteLinesWithCount() PASSED
 
+Vt100ParserJUnitTest > sgrNoParamDefaultsToReset() STARTED
+
+Vt100ParserJUnitTest > sgrNoParamDefaultsToReset() PASSED
+
 Vt100ParserJUnitTest > hvpHomeDefault() STARTED
 
 Vt100ParserJUnitTest > hvpHomeDefault() PASSED
@@ -4876,6 +5120,22 @@ Vt100ParserJUnitTest > csiScrollUpWithCount() STARTED
 
 Vt100ParserJUnitTest > csiScrollUpWithCount() PASSED
 
+Vt100ParserJUnitTest > sgrAllBrightBgRange() STARTED
+
+Vt100ParserJUnitTest > sgrAllBrightBgRange() PASSED
+
+Vt100ParserJUnitTest > sgrItalicAttribute() STARTED
+
+Vt100ParserJUnitTest > sgrItalicAttribute() PASSED
+
+Vt100ParserJUnitTest > sgrTrueColorBg() STARTED
+
+Vt100ParserJUnitTest > sgrTrueColorBg() PASSED
+
+Vt100ParserJUnitTest > sgrTrueColorFg() STARTED
+
+Vt100ParserJUnitTest > sgrTrueColorFg() PASSED
+
 Vt100ParserJUnitTest > csiPrevLine() STARTED
 
 Vt100ParserJUnitTest > csiPrevLine() PASSED
@@ -4888,6 +5148,10 @@ Vt100ParserJUnitTest > csiEraseLineToBeginning() STARTED
 
 Vt100ParserJUnitTest > csiEraseLineToBeginning() PASSED
 
+Vt100ParserJUnitTest > sgrStandardFgAndBg() STARTED
+
+Vt100ParserJUnitTest > sgrStandardFgAndBg() PASSED
+
 Vt100ParserJUnitTest > csiEraseScreenToEnd() STARTED
 
 Vt100ParserJUnitTest > csiEraseScreenToEnd() PASSED
@@ -4899,6 +5163,14 @@ Vt100ParserJUnitTest > csiCursorDownDefault() PASSED
 Vt100ParserJUnitTest > csiEraseCharsDefault() STARTED
 
 Vt100ParserJUnitTest > csiEraseCharsDefault() PASSED
+
+Vt100ParserJUnitTest > sgrBrightBg107() STARTED
+
+Vt100ParserJUnitTest > sgrBrightBg107() PASSED
+
+Vt100ParserJUnitTest > oscIgnoredSequence() STARTED
+
+Vt100ParserJUnitTest > oscIgnoredSequence() PASSED
 
 Vt100ParserJUnitTest > csiCursorUpDefault() STARTED
 
@@ -4928,6 +5200,18 @@ Vt100ParserJUnitTest > delCharIgnored() STARTED
 
 Vt100ParserJUnitTest > delCharIgnored() PASSED
 
+Vt100ParserJUnitTest > sgr256FgColor() STARTED
+
+Vt100ParserJUnitTest > sgr256FgColor() PASSED
+
+Vt100ParserJUnitTest > sgrFgBg256Combined() STARTED
+
+Vt100ParserJUnitTest > sgrFgBg256Combined() PASSED
+
+Vt100ParserJUnitTest > sgrDimAttribute() STARTED
+
+Vt100ParserJUnitTest > sgrDimAttribute() PASSED
+
 Vt100ParserJUnitTest > crFollowedByNewlineReturnsToNorm() STARTED
 
 Vt100ParserJUnitTest > crFollowedByNewlineReturnsToNorm() PASSED
@@ -4935,6 +5219,18 @@ Vt100ParserJUnitTest > crFollowedByNewlineReturnsToNorm() PASSED
 Vt100ParserJUnitTest > escSwitchesToEscState() STARTED
 
 Vt100ParserJUnitTest > escSwitchesToEscState() PASSED
+
+Vt100ParserJUnitTest > oscSetTitleWithSTTerminator() STARTED
+
+Vt100ParserJUnitTest > oscSetTitleWithSTTerminator() PASSED
+
+Vt100ParserJUnitTest > sgrResetBold() STARTED
+
+Vt100ParserJUnitTest > sgrResetBold() PASSED
+
+Vt100ParserJUnitTest > sgrBrightFgColors() STARTED
+
+Vt100ParserJUnitTest > sgrBrightFgColors() PASSED
 
 Vt100ParserJUnitTest > csiScrollUpDefault() STARTED
 
@@ -4948,6 +5244,10 @@ Vt100ParserJUnitTest > crFollowedByCharSetsXAndProcesses() STARTED
 
 Vt100ParserJUnitTest > crFollowedByCharSetsXAndProcesses() PASSED
 
+Vt100ParserJUnitTest > sgrResetFgAndBg() STARTED
+
+Vt100ParserJUnitTest > sgrResetFgAndBg() PASSED
+
 Vt100ParserJUnitTest > escSevenSavesCursor() STARTED
 
 Vt100ParserJUnitTest > escSevenSavesCursor() PASSED
@@ -4960,6 +5260,10 @@ Vt100ParserJUnitTest > nullCharIgnored() STARTED
 
 Vt100ParserJUnitTest > nullCharIgnored() PASSED
 
+Vt100ParserJUnitTest > sgrBrightFg97() STARTED
+
+Vt100ParserJUnitTest > sgrBrightFg97() PASSED
+
 Vt100ParserJUnitTest > multipleSequencesInRow() STARTED
 
 Vt100ParserJUnitTest > multipleSequencesInRow() PASSED
@@ -4968,9 +5272,25 @@ Vt100ParserJUnitTest > escBracketEntersGetnum() STARTED
 
 Vt100ParserJUnitTest > escBracketEntersGetnum() PASSED
 
+Vt100ParserJUnitTest > oscTitleWithSpecialChars() STARTED
+
+Vt100ParserJUnitTest > oscTitleWithSpecialChars() PASSED
+
+Vt100ParserJUnitTest > sgrBoldWith256Color() STARTED
+
+Vt100ParserJUnitTest > sgrBoldWith256Color() PASSED
+
+Vt100ParserJUnitTest > sgr256BgColor() STARTED
+
+Vt100ParserJUnitTest > sgr256BgColor() PASSED
+
 Vt100ParserJUnitTest > multipleNormalCharsAccumulate() STARTED
 
 Vt100ParserJUnitTest > multipleNormalCharsAccumulate() PASSED
+
+Vt100ParserJUnitTest > sgr256BoundaryColor0() STARTED
+
+Vt100ParserJUnitTest > sgr256BoundaryColor0() PASSED
 
 Vt100ParserJUnitTest > csiEraseScreenToBeginning() STARTED
 
@@ -4988,6 +5308,22 @@ Vt100ParserJUnitTest > escBracketRightEntersOSC() STARTED
 
 Vt100ParserJUnitTest > escBracketRightEntersOSC() PASSED
 
+Vt100ParserJUnitTest > sgrDefaultBg() STARTED
+
+Vt100ParserJUnitTest > sgrDefaultBg() PASSED
+
+Vt100ParserJUnitTest > sgrDefaultFg() STARTED
+
+Vt100ParserJUnitTest > sgrDefaultFg() PASSED
+
+Vt100ParserJUnitTest > sgrResetSequence() STARTED
+
+Vt100ParserJUnitTest > sgrResetSequence() PASSED
+
+Vt100ParserJUnitTest > sgrTrueColorFgBgCombined() STARTED
+
+Vt100ParserJUnitTest > sgrTrueColorFgBgCombined() PASSED
+
 Vt100ParserJUnitTest > csiPrivateMode47On() STARTED
 
 Vt100ParserJUnitTest > csiPrivateMode47On() PASSED
@@ -5003,6 +5339,10 @@ Vt100ParserJUnitTest > escGreaterReturnsToNorm() PASSED
 Vt100ParserJUnitTest > csiColumnAbsolute() STARTED
 
 Vt100ParserJUnitTest > csiColumnAbsolute() PASSED
+
+Vt100ParserJUnitTest > sgrBoldReverseWithBrightFg() STARTED
+
+Vt100ParserJUnitTest > sgrBoldReverseWithBrightFg() PASSED
 
 Vt100ParserJUnitTest > csiInsertLinesWithCount() STARTED
 
@@ -5039,6 +5379,18 @@ Vt100ParserJUnitTest > csiCursorRightDefault() PASSED
 Vt100ParserJUnitTest > csiEraseCharX() STARTED
 
 Vt100ParserJUnitTest > csiEraseCharX() PASSED
+
+Vt100ParserJUnitTest > sgrMultipleAttrsInSingleSequence() STARTED
+
+Vt100ParserJUnitTest > sgrMultipleAttrsInSingleSequence() PASSED
+
+Vt100ParserJUnitTest > sgrReverseAttribute() STARTED
+
+Vt100ParserJUnitTest > sgrReverseAttribute() PASSED
+
+Vt100ParserJUnitTest > sgrBrightBgColors() STARTED
+
+Vt100ParserJUnitTest > sgrBrightBgColors() PASSED
 
 Vt100ParserJUnitTest > csiNextLine() STARTED
 
@@ -5108,6 +5460,8 @@ XrefReaderJUnitTest > linpatMatchesStandardGrepFormat() STARTED
 
 XrefReaderJUnitTest > linpatMatchesStandardGrepFormat() PASSED
 
+PosListList.java:554 file disposed nonexistent_tag_xyz_99 nonexistent_tag_xyz_99 150
+
 [Incubating] Problems report is available at: file:///Users/jjensen/gtools/myai/ai/javi-wt-F29/build/reports/problems/problems-report.html
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
@@ -5116,6 +5470,6 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 8s
-3 actionable tasks: 1 executed, 2 up-to-date
+BUILD SUCCESSFUL in 7s
+3 actionable tasks: 2 executed, 1 up-to-date
 exit: 0
