@@ -84,9 +84,9 @@ Git-Describe: v1.0-3-gabcdef
 5. [x] Create `plugins/` directory structure with a template plugin
 6. [x] Add `make plugins` target to makefile
 7. [x] Plugin.bindKey() API for keybinding registration
-8. [ ] Plugin.Loader classloader delegation — plugins currently can't reference main javi classes at runtime (isolated classloader). URLClassLoader with parent delegation needed.
+8. [x] Plugin.Loader classloader delegation — MultiClassLoader now delegates to app classloader
 9. [ ] Test `:loadplugin hello` end-to-end in running javi instance
-10. [ ] Verify `.javini` `loadplugin` works at startup
+10. [ ] Verify `.javini` `loadplugin` works at startup (NPE fixed, needs manual test)
 11. [ ] Move existing plugin sources (F4/F7/F8/F9) to plugins/ directories (future — per-branch)
 
 ## Risks
@@ -97,4 +97,4 @@ Git-Describe: v1.0-3-gabcdef
 ## Progress
 
 - 2026-03-28: Initial plan created. Investigation complete.
-- 2026-03-29: Implemented plugin build architecture — Gradle tasks (plugins, pluginJar, distAll), makefile targets, Plugin.bindKey() API, HelloPlugin template. Fixed ant.jar manifest issue (Gradle 8.14 compat) and distAll duplicate entry. Compile + junit pass. Commit bae0caf.
+- 2026-03-29: Fixed two bugs. (1) NPE: guarded statusBar access in AwtInterface.istatusaddline/iclearStatus/istatusSetline against null during early init — statusBar is created in Initer.doAwt() but .javini commands execute from AwtFontList.init() in the constructor, before Initer runs. (2) ClassCastException: MultiClassLoader.loadClass() was using findSystemClass() which only checks the boot classpath; changed to delegate to the app classloader (MultiClassLoader.class.getClassLoader()) so plugin JAR classes can see javi classes like Plugin, Rgroup, etc. Commit a78452b.

@@ -1,0 +1,5121 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/Users/jjensen/.gradle/wrapper/dists/gradle-8.14-bin/38aieal9i53h9rfe7vjup95b9/gradle-8.14/lib/native-platform-0.22-milestone-28.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :compileJava UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+
+> Task :test
+
+ByteInputJUnitTest > readDouble reads IEEE 754 double STARTED
+
+ByteInputJUnitTest > readDouble reads IEEE 754 double PASSED
+
+ByteInputJUnitTest > sequential reads consume data correctly STARTED
+
+ByteInputJUnitTest > sequential reads consume data correctly PASSED
+
+ByteInputJUnitTest > slice constructor throws when length exceeds parent STARTED
+
+ByteInputJUnitTest > slice constructor throws when length exceeds parent PASSED
+
+ByteInputJUnitTest > readLong reads big-endian 8-byte long STARTED
+
+ByteInputJUnitTest > readLong reads big-endian 8-byte long PASSED
+
+ByteInputJUnitTest > readShort reads big-endian 2-byte short STARTED
+
+ByteInputJUnitTest > readShort reads big-endian 2-byte short PASSED
+
+ByteInputJUnitTest > skipBytes clamps to available bytes STARTED
+
+ByteInputJUnitTest > skipBytes clamps to available bytes PASSED
+
+ByteInputJUnitTest > toString includes buf size and hex dump STARTED
+
+ByteInputJUnitTest > toString includes buf size and hex dump PASSED
+
+ByteInputJUnitTest > readInt reads big-endian 4-byte integer STARTED
+
+ByteInputJUnitTest > readInt reads big-endian 4-byte integer PASSED
+
+ByteInputJUnitTest > readInt handles Integer.MIN_VALUE STARTED
+
+ByteInputJUnitTest > readInt handles Integer.MIN_VALUE PASSED
+
+ByteInputJUnitTest > readUnsignedByte reads single unsigned byte STARTED
+
+ByteInputJUnitTest > readUnsignedByte reads single unsigned byte PASSED
+
+ByteInputJUnitTest > readChar reads 2-byte character STARTED
+
+ByteInputJUnitTest > readChar reads 2-byte character PASSED
+
+ByteInputJUnitTest > seek to negative offset throws STARTED
+
+ByteInputJUnitTest > seek to negative offset throws PASSED
+
+ByteInputJUnitTest > readUTF reads string with non-ASCII characters STARTED
+
+ByteInputJUnitTest > readUTF reads string with non-ASCII characters PASSED
+
+ByteInputJUnitTest > readUTF reads modified UTF-8 string STARTED
+
+ByteInputJUnitTest > readUTF reads modified UTF-8 string PASSED
+
+ByteInputJUnitTest > readUTF reads empty string STARTED
+
+ByteInputJUnitTest > readUTF reads empty string PASSED
+
+ByteInputJUnitTest > readFloat reads IEEE 754 float STARTED
+
+ByteInputJUnitTest > readFloat reads IEEE 754 float PASSED
+
+ByteInputJUnitTest > seek past limit throws STARTED
+
+ByteInputJUnitTest > seek past limit throws PASSED
+
+ByteInputJUnitTest > readByte reads single signed byte STARTED
+
+ByteInputJUnitTest > readByte reads single signed byte PASSED
+
+ByteInputJUnitTest > readByte throws on empty input STARTED
+
+ByteInputJUnitTest > readByte throws on empty input PASSED
+
+ByteInputJUnitTest > slice constructor creates view of parent ByteInput STARTED
+
+ByteInputJUnitTest > slice constructor creates view of parent ByteInput PASSED
+
+ByteInputJUnitTest > readInt handles Integer.MAX_VALUE STARTED
+
+ByteInputJUnitTest > readInt handles Integer.MAX_VALUE PASSED
+
+ByteInputJUnitTest > skipBytes advances offset and returns count STARTED
+
+ByteInputJUnitTest > skipBytes advances offset and returns count PASSED
+
+ByteInputJUnitTest > seek sets offset, available reports remaining STARTED
+
+ByteInputJUnitTest > seek sets offset, available reports remaining PASSED
+
+ByteInputJUnitTest > readFully copies bytes into target array STARTED
+
+ByteInputJUnitTest > readFully copies bytes into target array PASSED
+
+ByteInputJUnitTest > readFully throws on insufficient data STARTED
+
+ByteInputJUnitTest > readFully throws on insufficient data PASSED
+
+ByteInputJUnitTest > readInt handles negative values STARTED
+
+ByteInputJUnitTest > readInt handles negative values PASSED
+
+ByteInputJUnitTest > readLong handles negative values STARTED
+
+ByteInputJUnitTest > readLong handles negative values PASSED
+
+ByteInputJUnitTest > readBoolean reads non-zero as false (inverted convention) STARTED
+
+ByteInputJUnitTest > readBoolean reads non-zero as false (inverted convention) PASSED
+
+ByteInputJUnitTest > readInt throws on insufficient data STARTED
+
+ByteInputJUnitTest > readInt throws on insufficient data PASSED
+
+ByteInputJUnitTest > readBoolean reads 0 as true (inverted convention) STARTED
+
+ByteInputJUnitTest > readBoolean reads 0 as true (inverted convention) PASSED
+
+ByteInputJUnitTest > readUnsignedShort reads 2-byte unsigned value STARTED
+
+ByteInputJUnitTest > readUnsignedShort reads 2-byte unsigned value PASSED
+
+IntArrayJUnitTest > growthBeyondInitialCapacity() STARTED
+
+IntArrayJUnitTest > growthBeyondInitialCapacity() PASSED
+
+IntArrayJUnitTest > getOutOfBoundsThrows() STARTED
+
+IntArrayJUnitTest > getOutOfBoundsThrows() PASSED
+
+IntArrayJUnitTest > setModifiesValueAtIndex() STARTED
+
+IntArrayJUnitTest > setModifiesValueAtIndex() PASSED
+
+IntArrayJUnitTest > addAndGetMaintainsOrder() STARTED
+
+IntArrayJUnitTest > addAndGetMaintainsOrder() PASSED
+
+IntArrayJUnitTest > removeRangeFromFrontReducesSize() STARTED
+
+IntArrayJUnitTest > removeRangeFromFrontReducesSize() PASSED
+
+IntArrayJUnitTest > removeRangeRemovesMiddleSlice() STARTED
+
+IntArrayJUnitTest > removeRangeRemovesMiddleSlice() PASSED
+
+PersistantStackJUnitTest > iteratingPastEndThrows(File) STARTED
+
+PersistantStackJUnitTest > iteratingPastEndThrows(File) PASSED
+
+PersistantStackJUnitTest > decrementThenPushReplacesTopRecord(File) STARTED
+
+PersistantStackJUnitTest > decrementThenPushReplacesTopRecord(File) PASSED
+
+PersistantStackJUnitTest > pushAndIterateRoundTrip(File) STARTED
+
+PersistantStackJUnitTest > pushAndIterateRoundTrip(File) PASSED
+
+ToolsJUnitTest > traceDoesNotThrowWithNullArg() STARTED
+
+ToolsJUnitTest > traceDoesNotThrowWithNullArg() PASSED
+
+ToolsJUnitTest > traceDoesNotThrowWithNoArgs() STARTED
+
+ToolsJUnitTest > traceDoesNotThrowWithNoArgs() PASSED
+
+ToolsJUnitTest > runcmdReturnsBufferedReader() STARTED
+
+ToolsJUnitTest > runcmdReturnsBufferedReader() PASSED
+
+ToolsJUnitTest > executeEchoReturnsOutput() STARTED
+
+ToolsJUnitTest > executeEchoReturnsOutput() PASSED
+
+ToolsJUnitTest > traceDoesNotThrowWithSingleString() STARTED
+
+ToolsJUnitTest > traceDoesNotThrowWithSingleString() PASSED
+
+ToolsJUnitTest > traceHandlesObjectArray() STARTED
+
+ToolsJUnitTest > traceHandlesObjectArray() PASSED
+
+ToolsJUnitTest > callerReturnsCallingMethodName() STARTED
+
+ToolsJUnitTest > callerReturnsCallingMethodName() PASSED
+
+ToolsJUnitTest > assertFalseThrowsRuntimeException() STARTED
+
+ToolsJUnitTest > assertFalseThrowsRuntimeException() PASSED
+
+ToolsJUnitTest > traceDoesNotThrowWithMixedTypes() STARTED
+
+ToolsJUnitTest > traceDoesNotThrowWithMixedTypes() PASSED
+
+ToolsJUnitTest > assertFalseIncludesDumpObjectInMessage() STARTED
+
+ToolsJUnitTest > assertFalseIncludesDumpObjectInMessage() PASSED
+
+ToolsJUnitTest > doGCDoesNotThrow() STARTED
+
+ToolsJUnitTest > doGCDoesNotThrow() PASSED
+
+ToolsJUnitTest > executeMultiLineOutput() STARTED
+
+ToolsJUnitTest > executeMultiLineOutput() PASSED
+
+ToolsJUnitTest > assertTrueDoesNotThrow() STARTED
+
+ToolsJUnitTest > assertTrueDoesNotThrow() PASSED
+
+ToolsJUnitTest > traceDoesNotThrowWithMultipleArgs() STARTED
+
+ToolsJUnitTest > traceDoesNotThrowWithMultipleArgs() PASSED
+
+ToolsJUnitTest > traceHandlesIntArray() STARTED
+
+ToolsJUnitTest > traceHandlesIntArray() PASSED
+
+BackupStatusJUnitTest > fieldsAccessible() STARTED
+
+BackupStatusJUnitTest > fieldsAccessible() PASSED
+
+BackupStatusJUnitTest > toStringContainsAllFields() STARTED
+
+BackupStatusJUnitTest > toStringContainsAllFields() PASSED
+
+BackupStatusJUnitTest > notCleanAllFalseWithError() STARTED
+
+BackupStatusJUnitTest > notCleanAllFalseWithError() PASSED
+
+BackupStatusJUnitTest > cleanQuitAndQuitAtEndAndNoError() STARTED
+
+BackupStatusJUnitTest > cleanQuitAndQuitAtEndAndNoError() PASSED
+
+BackupStatusJUnitTest > notCleanWhenNotQuitAtEnd() STARTED
+
+BackupStatusJUnitTest > notCleanWhenNotQuitAtEnd() PASSED
+
+BackupStatusJUnitTest > toStringWithError() STARTED
+
+BackupStatusJUnitTest > toStringWithError() PASSED
+
+BackupStatusJUnitTest > notCleanWhenNotCleanQuit() STARTED
+
+BackupStatusJUnitTest > notCleanWhenNotCleanQuit() PASSED
+
+BackupStatusJUnitTest > notCleanWhenErrorPresent() STARTED
+
+BackupStatusJUnitTest > notCleanWhenErrorPresent() PASSED
+
+BufInIocJUnitTest > disposeWhenAlreadyNull() STARTED
+
+BufInIocJUnitTest > disposeWhenAlreadyNull() PASSED
+
+BufInIocJUnitTest > getLineHandlesNoTrailingNewline() STARTED
+
+BufInIocJUnitTest > getLineHandlesNoTrailingNewline() PASSED
+
+BufInIocJUnitTest > getLineReadsMultipleLines() STARTED
+
+BufInIocJUnitTest > getLineReadsMultipleLines() PASSED
+
+BufInIocJUnitTest > constructorSetsProperties() STARTED
+
+BufInIocJUnitTest > constructorSetsProperties() PASSED
+
+BufInIocJUnitTest > getLineAfterNullKeepsReturningNull() STARTED
+
+BufInIocJUnitTest > getLineAfterNullKeepsReturningNull() PASSED
+
+BufInIocJUnitTest > getLineReturnsNullForEmptyContent() STARTED
+
+BufInIocJUnitTest > getLineReturnsNullForEmptyContent() PASSED
+
+BufInIocJUnitTest > getLineReturnsNullAtEOF() STARTED
+
+BufInIocJUnitTest > getLineReturnsNullAtEOF() PASSED
+
+BufInIocJUnitTest > getLineHandlesLongLine() STARTED
+
+BufInIocJUnitTest > getLineHandlesLongLine() PASSED
+
+BufInIocJUnitTest > getLineHandlesBlankLines() STARTED
+
+BufInIocJUnitTest > getLineHandlesBlankLines() PASSED
+
+BufInIocJUnitTest > getLineReadsSingleLine() STARTED
+
+BufInIocJUnitTest > getLineReadsSingleLine() PASSED
+
+BufInIocJUnitTest > disposeClosesInput() STARTED
+
+BufInIocJUnitTest > disposeClosesInput() PASSED
+
+BufInIocJUnitTest > toStringNotNull() STARTED
+
+BufInIocJUnitTest > toStringNotNull() PASSED
+
+BufInIocJUnitTest > constructorWithNullReader() STARTED
+
+BufInIocJUnitTest > constructorWithNullReader() PASSED
+
+BuffersJUnitTest > myToStringConvertsArrayList() STARTED
+
+BuffersJUnitTest > myToStringConvertsArrayList() PASSED
+
+BuffersJUnitTest > deletedUppercaseArrayListAppendsToExistingList() STARTED
+
+BuffersJUnitTest > deletedUppercaseArrayListAppendsToExistingList() PASSED
+
+BuffersJUnitTest > appendCurrBufAppendsStringContent() STARTED
+
+BuffersJUnitTest > appendCurrBufAppendsStringContent() PASSED
+
+BuffersJUnitTest > deletedOverwritesLowercaseBuffer() STARTED
+
+BuffersJUnitTest > deletedOverwritesLowercaseBuffer() PASSED
+
+BuffersJUnitTest > deletedStoresStringInLowercaseBuffer() STARTED
+
+BuffersJUnitTest > deletedStoresStringInLowercaseBuffer() PASSED
+
+BuffersJUnitTest > appendCurrBufSingleLineUsesSpace() STARTED
+
+BuffersJUnitTest > appendCurrBufSingleLineUsesSpace() PASSED
+
+BuffersJUnitTest > deletedNullArrayListIsIgnored() STARTED
+
+BuffersJUnitTest > deletedNullArrayListIsIgnored() PASSED
+
+BuffersJUnitTest > appendCurrBufEmptyBufferAppendsNothing() STARTED
+
+BuffersJUnitTest > appendCurrBufEmptyBufferAppendsNothing() PASSED
+
+BuffersJUnitTest > appendCurrBufAppendsArrayListWithNewlines() STARTED
+
+BuffersJUnitTest > appendCurrBufAppendsArrayListWithNewlines() PASSED
+
+BuffersJUnitTest > circBufferFlushClearsAllEntries() STARTED
+
+BuffersJUnitTest > circBufferFlushClearsAllEntries() PASSED
+
+BuffersJUnitTest > myToStringConvertsGenericObject() STARTED
+
+BuffersJUnitTest > myToStringConvertsGenericObject() PASSED
+
+BuffersJUnitTest > deleteBufferStacksMultipleDeletes() STARTED
+
+BuffersJUnitTest > deleteBufferStacksMultipleDeletes() PASSED
+
+BuffersJUnitTest > myToStringConvertsString() STARTED
+
+BuffersJUnitTest > myToStringConvertsString() PASSED
+
+BuffersJUnitTest > getbufUnsetBufferReturnsNull() STARTED
+
+BuffersJUnitTest > getbufUnsetBufferReturnsNull() PASSED
+
+BuffersJUnitTest > deleteBufferStoresAndRetrievesViaDigitZero() STARTED
+
+BuffersJUnitTest > deleteBufferStoresAndRetrievesViaDigitZero() PASSED
+
+BuffersJUnitTest > deletedUppercaseCreatesNewWhenEmpty() STARTED
+
+BuffersJUnitTest > deletedUppercaseCreatesNewWhenEmpty() PASSED
+
+BuffersJUnitTest > circBufferWrapsAroundCapacity() STARTED
+
+BuffersJUnitTest > circBufferWrapsAroundCapacity() PASSED
+
+BuffersJUnitTest > getbufUppercaseLookupNormalizesToLowercase() STARTED
+
+BuffersJUnitTest > getbufUppercaseLookupNormalizesToLowercase() PASSED
+
+BuffersJUnitTest > deletedNullStringIsIgnored() STARTED
+
+BuffersJUnitTest > deletedNullStringIsIgnored() PASSED
+
+BuffersJUnitTest > deletedArrayListStoresInLowercaseBuffer() STARTED
+
+BuffersJUnitTest > deletedArrayListStoresInLowercaseBuffer() PASSED
+
+BuffersJUnitTest > deletedUppercaseArrayListAppendsToExistingString() STARTED
+
+BuffersJUnitTest > deletedUppercaseArrayListAppendsToExistingString() PASSED
+
+BuffersJUnitTest > deletedUppercaseAppendsToExistingString() STARTED
+
+BuffersJUnitTest > deletedUppercaseAppendsToExistingString() PASSED
+
+CellAttrJUnitTest > pack and extract background colour STARTED
+
+CellAttrJUnitTest > pack and extract background colour PASSED
+
+CellAttrJUnitTest > encode/decode palette colour round-trip STARTED
+
+CellAttrJUnitTest > encode/decode palette colour round-trip PASSED
+
+CellAttrJUnitTest > describe includes flag names STARTED
+
+CellAttrJUnitTest > describe includes flag names PASSED
+
+CellAttrJUnitTest > pack and extract foreground colour STARTED
+
+CellAttrJUnitTest > pack and extract foreground colour PASSED
+
+CellAttrJUnitTest > pack and extract underline flag STARTED
+
+CellAttrJUnitTest > pack and extract underline flag PASSED
+
+CellAttrJUnitTest > DEFAULT has no flags and default colours STARTED
+
+CellAttrJUnitTest > DEFAULT has no flags and default colours PASSED
+
+CellAttrJUnitTest > describe returns DEFAULT for zero STARTED
+
+CellAttrJUnitTest > describe returns DEFAULT for zero PASSED
+
+CellAttrJUnitTest > pack and extract reverse flag STARTED
+
+CellAttrJUnitTest > pack and extract reverse flag PASSED
+
+CellAttrJUnitTest > encode/decode default colour round-trip STARTED
+
+CellAttrJUnitTest > encode/decode default colour round-trip PASSED
+
+CellAttrJUnitTest > pack all flags and colours together STARTED
+
+CellAttrJUnitTest > pack all flags and colours together PASSED
+
+CellAttrJUnitTest > pack and extract bold flag STARTED
+
+CellAttrJUnitTest > pack and extract bold flag PASSED
+
+ChangeOptJUnitTest > invalidValueOfThrows() STARTED
+
+ChangeOptJUnitTest > invalidValueOfThrows() PASSED
+
+ChangeOptJUnitTest > opcodeContainsChange() STARTED
+
+ChangeOptJUnitTest > opcodeContainsChange() PASSED
+
+ChangeOptJUnitTest > opcodeContainsDelete() STARTED
+
+ChangeOptJUnitTest > opcodeContainsDelete() PASSED
+
+ChangeOptJUnitTest > opcodeContainsInsert() STARTED
+
+ChangeOptJUnitTest > opcodeContainsInsert() PASSED
+
+ChangeOptJUnitTest > opcodeContainsNoop() STARTED
+
+ChangeOptJUnitTest > opcodeContainsNoop() PASSED
+
+ChangeOptJUnitTest > opcodeContainsRedraw() STARTED
+
+ChangeOptJUnitTest > opcodeContainsRedraw() PASSED
+
+ChangeOptJUnitTest > opcodeValuesExist() STARTED
+
+ChangeOptJUnitTest > opcodeValuesExist() PASSED
+
+ChangeOptJUnitTest > opcodeContainsBlinkCursor() STARTED
+
+ChangeOptJUnitTest > opcodeContainsBlinkCursor() PASSED
+
+ChangeOptJUnitTest > valueOfRoundTrips() STARTED
+
+ChangeOptJUnitTest > valueOfRoundTrips() PASSED
+
+ChangeOptJUnitTest > opcodeOrdinals() STARTED
+
+ChangeOptJUnitTest > opcodeOrdinals() PASSED
+
+ChangeOptJUnitTest > opcodeCount() STARTED
+
+ChangeOptJUnitTest > opcodeCount() PASSED
+
+ChangeOptJUnitTest > opcodeContainsMscreen() STARTED
+
+ChangeOptJUnitTest > opcodeContainsMscreen() PASSED
+
+CharsetDetectorJUnitTest > normalizeIso8859StripsAllNonDigits() STARTED
+
+CharsetDetectorJUnitTest > normalizeIso8859StripsAllNonDigits() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleCLocale() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleCLocale() PASSED
+
+CharsetDetectorJUnitTest > getDetectionSourceNeverNull() STARTED
+
+CharsetDetectorJUnitTest > getDetectionSourceNeverNull() PASSED
+
+CharsetDetectorJUnitTest > normalizeNullReturnsUtf8() STARTED
+
+CharsetDetectorJUnitTest > normalizeNullReturnsUtf8() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleIso88591ReturnsNullDueToNormQuirk() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleIso88591ReturnsNullDueToNormQuirk() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleUnsupportedCharsetReturnsNull() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleUnsupportedCharsetReturnsNull() PASSED
+
+CharsetDetectorJUnitTest > normalizeEucJp() STARTED
+
+CharsetDetectorJUnitTest > normalizeEucJp() PASSED
+
+CharsetDetectorJUnitTest > normalizeUtf8Variants() STARTED
+
+CharsetDetectorJUnitTest > normalizeUtf8Variants() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleWithModifierReturnsNullDueToNormQuirk() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleWithModifierReturnsNullDueToNormQuirk() PASSED
+
+CharsetDetectorJUnitTest > getDetectionSourceContainsArrow() STARTED
+
+CharsetDetectorJUnitTest > getDetectionSourceContainsArrow() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleUtf8() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleUtf8() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleUtf8Lowercase() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleUtf8Lowercase() PASSED
+
+CharsetDetectorJUnitTest > detectTerminalCharsetIsCacheable() STARTED
+
+CharsetDetectorJUnitTest > detectTerminalCharsetIsCacheable() PASSED
+
+CharsetDetectorJUnitTest > normalizeShiftJis() STARTED
+
+CharsetDetectorJUnitTest > normalizeShiftJis() PASSED
+
+CharsetDetectorJUnitTest > normalizeIso8859NoSuffixFallsBack() STARTED
+
+CharsetDetectorJUnitTest > normalizeIso8859NoSuffixFallsBack() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleNullReturnsNull() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleNullReturnsNull() PASSED
+
+CharsetDetectorJUnitTest > normalizeAsciiVariants() STARTED
+
+CharsetDetectorJUnitTest > normalizeAsciiVariants() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleLatinPassthrough() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleLatinPassthrough() PASSED
+
+CharsetDetectorJUnitTest > clearCacheForceRedetection() STARTED
+
+CharsetDetectorJUnitTest > clearCacheForceRedetection() PASSED
+
+CharsetDetectorJUnitTest > normalizeUnknownPassedThrough() STARTED
+
+CharsetDetectorJUnitTest > normalizeUnknownPassedThrough() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleEmptyReturnsNull() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleEmptyReturnsNull() PASSED
+
+CharsetDetectorJUnitTest > parseLocaleNoDotReturnsNull() STARTED
+
+CharsetDetectorJUnitTest > parseLocaleNoDotReturnsNull() PASSED
+
+CharsetDetectorJUnitTest > parseLocalePosixLocale() STARTED
+
+CharsetDetectorJUnitTest > parseLocalePosixLocale() PASSED
+
+CharsetDetectorJUnitTest > detectTerminalCharsetNeverNull() STARTED
+
+CharsetDetectorJUnitTest > detectTerminalCharsetNeverNull() PASSED
+
+ClassConverterJUnitTest > getTagNameNullPosition() STARTED
+
+ClassConverterJUnitTest > getTagNameNullPosition() PASSED
+
+ClassConverterJUnitTest > fromStringIdentity() STARTED
+
+ClassConverterJUnitTest > fromStringIdentity() PASSED
+
+ClassConverterJUnitTest > getTagNameWithTabExtras() STARTED
+
+ClassConverterJUnitTest > getTagNameWithTabExtras() PASSED
+
+ClassConverterJUnitTest > saveExternalEmptyString() STARTED
+
+ClassConverterJUnitTest > saveExternalEmptyString() PASSED
+
+ClassConverterJUnitTest > getTagNameNullComment() STARTED
+
+ClassConverterJUnitTest > getTagNameNullComment() PASSED
+
+ClassConverterJUnitTest > ctagLookupLastEntry(Path) STARTED
+
+ClassConverterJUnitTest > ctagLookupLastEntry(Path) PASSED
+
+ClassConverterJUnitTest > saveExternalSpecialChars() STARTED
+
+ClassConverterJUnitTest > saveExternalSpecialChars() PASSED
+
+ClassConverterJUnitTest > fromStringEmpty() STARTED
+
+ClassConverterJUnitTest > fromStringEmpty() PASSED
+
+ClassConverterJUnitTest > getTagNameNoTagPrefix() STARTED
+
+ClassConverterJUnitTest > getTagNameNoTagPrefix() PASSED
+
+ClassConverterJUnitTest > saveExternalWritesUTF() STARTED
+
+ClassConverterJUnitTest > saveExternalWritesUTF() PASSED
+
+ClassConverterJUnitTest > saveExternalUsesToString() STARTED
+
+ClassConverterJUnitTest > saveExternalUsesToString() PASSED
+
+ClassConverterJUnitTest > ctagLookupBeforeFirstReturnsNull(Path) STARTED
+
+ClassConverterJUnitTest > ctagLookupBeforeFirstReturnsNull(Path) PASSED
+
+ClassConverterJUnitTest > fromStringTransform() STARTED
+
+ClassConverterJUnitTest > fromStringTransform() PASSED
+
+ClassConverterJUnitTest > ctagLookupFirstEntry(Path) STARTED
+
+ClassConverterJUnitTest > ctagLookupFirstEntry(Path) PASSED
+
+ClassConverterJUnitTest > ctagLookupAfterLastReturnsNull(Path) STARTED
+
+ClassConverterJUnitTest > ctagLookupAfterLastReturnsNull(Path) PASSED
+
+CommandJUnitTest > checkoutIsRegistered() STARTED
+
+CommandJUnitTest > checkoutIsRegistered() PASSED
+
+CommandJUnitTest > commandDispatchesTabstopToView() STARTED
+
+CommandJUnitTest > commandDispatchesTabstopToView() PASSED
+
+CommandJUnitTest > commandLineSplittingWithLeadingArgSpaces() STARTED
+
+CommandJUnitTest > commandLineSplittingWithLeadingArgSpaces() PASSED
+
+CommandJUnitTest > setIsRegistered() STARTED
+
+CommandJUnitTest > setIsRegistered() PASSED
+
+CommandJUnitTest > commandWithExplicitArgs() STARTED
+
+CommandJUnitTest > commandWithExplicitArgs() PASSED
+
+CommandJUnitTest > commandBindingMatchesItsOwnInstance() STARTED
+
+CommandJUnitTest > commandBindingMatchesItsOwnInstance() PASSED
+
+CommandJUnitTest > commandWithNullFvcUsesCurrent() STARTED
+
+CommandJUnitTest > commandWithNullFvcUsesCurrent() PASSED
+
+CommandJUnitTest > helpIsRegistered() STARTED
+
+CommandJUnitTest > helpIsRegistered() PASSED
+
+CommandJUnitTest > commandprocIsRegistered() STARTED
+
+CommandJUnitTest > commandprocIsRegistered() PASSED
+
+CommandJUnitTest > rCommandIsRegistered() STARTED
+
+CommandJUnitTest > rCommandIsRegistered() PASSED
+
+CommandJUnitTest > tabstopIsRegistered() STARTED
+
+CommandJUnitTest > tabstopIsRegistered() PASSED
+
+CommandJUnitTest > commandLineSplittingEmptyArgsAfterSpace() STARTED
+
+CommandJUnitTest > commandLineSplittingEmptyArgsAfterSpace() PASSED
+
+CommandJUnitTest > commandUnknownReportsError() STARTED
+
+CommandJUnitTest > commandUnknownReportsError() PASSED
+
+CommandJUnitTest > commandDispatchesSetTabstop() STARTED
+
+CommandJUnitTest > commandDispatchesSetTabstop() PASSED
+
+CommandJUnitTest > commandDispatchesExSubstitute() STARTED
+
+CommandJUnitTest > commandDispatchesExSubstitute() PASSED
+
+CommandJUnitTest > eBangIsRegistered() STARTED
+
+CommandJUnitTest > eBangIsRegistered() PASSED
+
+CommandJUnitTest > commandLineSplittingMultiWordArgs() STARTED
+
+CommandJUnitTest > commandLineSplittingMultiWordArgs() PASSED
+
+CommandJUnitTest > commandGlobalDelete() STARTED
+
+CommandJUnitTest > commandGlobalDelete() PASSED
+
+CommandJUnitTest > mapIsRegistered() STARTED
+
+CommandJUnitTest > mapIsRegistered() PASSED
+
+CommandJUnitTest > commandLineSplittingNoArgsIsJustCommand() STARTED
+
+CommandJUnitTest > commandLineSplittingNoArgsIsJustCommand() PASSED
+
+CommandJUnitTest > commandLineSplittingExtractsArgs() STARTED
+
+CommandJUnitTest > commandLineSplittingExtractsArgs() PASSED
+
+CommandJUnitTest > terminatewepIsRegistered() STARTED
+
+CommandJUnitTest > terminatewepIsRegistered() PASSED
+
+CommandJUnitTest > commandDispatchesGotoLine() STARTED
+
+CommandJUnitTest > commandDispatchesGotoLine() PASSED
+
+CtagJUnitTest > lookupSingleEntry(Path) STARTED
+
+CtagJUnitTest > lookupSingleEntry(Path) PASSED
+
+CtagJUnitTest > lookupUnknownTagReturnsNull(Path) STARTED
+
+CtagJUnitTest > lookupUnknownTagReturnsNull(Path) PASSED
+
+CtagJUnitTest > getTagNameExtractsFromComment() STARTED
+
+CtagJUnitTest > getTagNameExtractsFromComment() PASSED
+
+CtagJUnitTest > getTagNameReturnsEmptyForNonTagPosition() STARTED
+
+CtagJUnitTest > getTagNameReturnsEmptyForNonTagPosition() PASSED
+
+CtagJUnitTest > lookupReturnsCorrectPosition(Path) STARTED
+
+CtagJUnitTest > lookupReturnsCorrectPosition(Path) PASSED
+
+CtagJUnitTest > lookupFindsKnownTag(Path) STARTED
+
+CtagJUnitTest > lookupFindsKnownTag(Path) PASSED
+
+DeTabberJUnitTest > tabFindInMiddleOfLineAtTabStop() STARTED
+
+DeTabberJUnitTest > tabFindInMiddleOfLineAtTabStop() PASSED
+
+DeTabberJUnitTest > tabFindInStackTraceLineWithTabs() STARTED
+
+DeTabberJUnitTest > tabFindInStackTraceLineWithTabs() PASSED
+
+DeTabberJUnitTest > tabFindAtTabBoundarySmallTabStop() STARTED
+
+DeTabberJUnitTest > tabFindAtTabBoundarySmallTabStop() PASSED
+
+DeTabberJUnitTest > tabFindAfterLeadingTab() STARTED
+
+DeTabberJUnitTest > tabFindAfterLeadingTab() PASSED
+
+DeTabberJUnitTest > tabFindAtStartOfLineWithLeadingTab() STARTED
+
+DeTabberJUnitTest > tabFindAtStartOfLineWithLeadingTab() PASSED
+
+DeTabberJUnitTest > tabFindWithSmallTabStopInsideTabbed() STARTED
+
+DeTabberJUnitTest > tabFindWithSmallTabStopInsideTabbed() PASSED
+
+DeTabberJUnitTest > tabFindAtEndOfLineWithTabs() STARTED
+
+DeTabberJUnitTest > tabFindAtEndOfLineWithTabs() PASSED
+
+DeTabberJUnitTest > tabFindAtLineStart() STARTED
+
+DeTabberJUnitTest > tabFindAtLineStart() PASSED
+
+DirEditJUnitTest > helpFooterIncludesYankInfo() STARTED
+
+DirEditJUnitTest > helpFooterIncludesYankInfo() PASSED
+
+DirEditJUnitTest > helpFooterShowsEditForEnterAndOpenForX() STARTED
+
+DirEditJUnitTest > helpFooterShowsEditForEnterAndOpenForX() PASSED
+
+DirEditJUnitTest > removeFileDeletesNestedTree() STARTED
+
+DirEditJUnitTest > removeFileDeletesNestedTree() PASSED
+
+DirEditJUnitTest > getFilenameReturnsNullForOutOfRange() STARTED
+
+DirEditJUnitTest > getFilenameReturnsNullForOutOfRange() PASSED
+
+DirEditJUnitTest > removeFileDeletesEmptyDirectory() STARTED
+
+DirEditJUnitTest > removeFileDeletesEmptyDirectory() PASSED
+
+DirEditJUnitTest > clearCacheRemovesAllEntries() STARTED
+
+DirEditJUnitTest > clearCacheRemovesAllEntries() PASSED
+
+DirEditJUnitTest > walkDirectorySizeCountsFileBytes() STARTED
+
+DirEditJUnitTest > walkDirectorySizeCountsFileBytes() PASSED
+
+DirEditJUnitTest > cacheStoresAndReturnsSize() STARTED
+
+DirEditJUnitTest > cacheStoresAndReturnsSize() PASSED
+
+DirEditJUnitTest > searchPathDirShowsSMarker() STARTED
+
+DirEditJUnitTest > searchPathDirShowsSMarker() PASSED
+
+DirEditJUnitTest > walkDirectorySizeEmptyDirReturnsZero() STARTED
+
+DirEditJUnitTest > walkDirectorySizeEmptyDirReturnsZero() PASSED
+
+DirEditJUnitTest > helpFooterIncludesFileOperations() STARTED
+
+DirEditJUnitTest > helpFooterIncludesFileOperations() PASSED
+
+DirEditJUnitTest > findLineForFilenameHandlesDirectories() STARTED
+
+DirEditJUnitTest > findLineForFilenameHandlesDirectories() PASSED
+
+DirEditJUnitTest > getFullPathReturnsCorrectPath() STARTED
+
+DirEditJUnitTest > getFullPathReturnsCorrectPath() PASSED
+
+DirEditJUnitTest > walkDirectorySizeIncludesSubdirectories() STARTED
+
+DirEditJUnitTest > walkDirectorySizeIncludesSubdirectories() PASSED
+
+DirEditJUnitTest > getFullPathReturnsAbsolutePathForFile() STARTED
+
+DirEditJUnitTest > getFullPathReturnsAbsolutePathForFile() PASSED
+
+DirEditJUnitTest > trashSupportedReturnsFalseInStreamInterface() STARTED
+
+DirEditJUnitTest > trashSupportedReturnsFalseInStreamInterface() PASSED
+
+DirEditJUnitTest > getFullPathReturnsNullForNonEntryLines() STARTED
+
+DirEditJUnitTest > getFullPathReturnsNullForNonEntryLines() PASSED
+
+DirEditJUnitTest > removeFileDeletesSingleFile() STARTED
+
+DirEditJUnitTest > removeFileDeletesSingleFile() PASSED
+
+DirEditJUnitTest > getFilenameReturnsNullForHelpFooter() STARTED
+
+DirEditJUnitTest > getFilenameReturnsNullForHelpFooter() PASSED
+
+DirEditJUnitTest > findLineForFilenameFindsExistingFile() STARTED
+
+DirEditJUnitTest > findLineForFilenameFindsExistingFile() PASSED
+
+DirEditJUnitTest > helpFooterDoesNotShowEnterOpen() STARTED
+
+DirEditJUnitTest > helpFooterDoesNotShowEnterOpen() PASSED
+
+DirEditJUnitTest > createDirectoryWorks() STARTED
+
+DirEditJUnitTest > createDirectoryWorks() PASSED
+
+DirEditJUnitTest > watchDirectoryRegistersAndUnregisters() STARTED
+
+DirEditJUnitTest > watchDirectoryRegistersAndUnregisters() PASSED
+
+DirEditJUnitTest > watchDirectoryInvalidatesCacheOnChange() STARTED
+
+DirEditJUnitTest > watchDirectoryInvalidatesCacheOnChange() PASSED
+
+DirEditJUnitTest > getFilenameReturnsFileEntry() STARTED
+
+DirEditJUnitTest > getFilenameReturnsFileEntry() PASSED
+
+DirEditJUnitTest > sortModeDefaultsToName() STARTED
+
+DirEditJUnitTest > sortModeDefaultsToName() PASSED
+
+DirEditJUnitTest > renameRejectsExistingDestination() STARTED
+
+DirEditJUnitTest > renameRejectsExistingDestination() PASSED
+
+DirEditJUnitTest > removeFileDeletesNonEmptyDirectory() STARTED
+
+DirEditJUnitTest > removeFileDeletesNonEmptyDirectory() PASSED
+
+DirEditJUnitTest > helpFooterShowsSortMode() STARTED
+
+DirEditJUnitTest > helpFooterShowsSortMode() PASSED
+
+DirEditJUnitTest > createDirectoryRejectsExistingName() STARTED
+
+DirEditJUnitTest > createDirectoryRejectsExistingName() PASSED
+
+DirEditJUnitTest > getFullPathReturnsAbsolutePathForDirectory() STARTED
+
+DirEditJUnitTest > getFullPathReturnsAbsolutePathForDirectory() PASSED
+
+DirEditJUnitTest > dirEditTrashSupportedDelegatesToUI() STARTED
+
+DirEditJUnitTest > dirEditTrashSupportedDelegatesToUI() PASSED
+
+DirEditJUnitTest > toggleDeleteMarkAddsAndRemoves() STARTED
+
+DirEditJUnitTest > toggleDeleteMarkAddsAndRemoves() PASSED
+
+DirEditJUnitTest > openFileDoesNotThrowInStreamInterface() STARTED
+
+DirEditJUnitTest > openFileDoesNotThrowInStreamInterface() PASSED
+
+DirEditJUnitTest > nameSortMixedAlphabetically() STARTED
+
+DirEditJUnitTest > nameSortMixedAlphabetically() PASSED
+
+DirEditJUnitTest > getFilenameReturnsNullForHeaderLine() STARTED
+
+DirEditJUnitTest > getFilenameReturnsNullForHeaderLine() PASSED
+
+DirEditJUnitTest > createNewFileWorks() STARTED
+
+DirEditJUnitTest > createNewFileWorks() PASSED
+
+DirEditJUnitTest > markedFilesShowDFlag() STARTED
+
+DirEditJUnitTest > markedFilesShowDFlag() PASSED
+
+DirEditJUnitTest > findLineForFilenameMissingReturnsNegative() STARTED
+
+DirEditJUnitTest > findLineForFilenameMissingReturnsNegative() PASSED
+
+DirEditJUnitTest > getFilenameStripsTrailingSlashForYank() STARTED
+
+DirEditJUnitTest > getFilenameStripsTrailingSlashForYank() PASSED
+
+DirEditJUnitTest > shellCommandIsRegistered() STARTED
+
+DirEditJUnitTest > shellCommandIsRegistered() PASSED
+
+DirEditJUnitTest > nonSearchPathDirShowsSpacePrefix() STARTED
+
+DirEditJUnitTest > nonSearchPathDirShowsSpacePrefix() PASSED
+
+DirEditJUnitTest > deleteSelectedRemovesFile() STARTED
+
+DirEditJUnitTest > deleteSelectedRemovesFile() PASSED
+
+DirEditJUnitTest > sizeSortUniform() STARTED
+
+DirEditJUnitTest > sizeSortUniform() PASSED
+
+DirEditJUnitTest > getFilenameReturnsDirectoryWithSlash() STARTED
+
+DirEditJUnitTest > getFilenameReturnsDirectoryWithSlash() PASSED
+
+DirEditJUnitTest > executeDeletesMarkedFiles() STARTED
+
+DirEditJUnitTest > executeDeletesMarkedFiles() PASSED
+
+DirEditJUnitTest > copyFileWorks() STARTED
+
+DirEditJUnitTest > copyFileWorks() PASSED
+
+DirEditJUnitTest > unmarkedFilesShowSpacePrefix() STARTED
+
+DirEditJUnitTest > unmarkedFilesShowSpacePrefix() PASSED
+
+DirEditJUnitTest > dirEntriesShowEllipsisBeforeCalculation() STARTED
+
+DirEditJUnitTest > dirEntriesShowEllipsisBeforeCalculation() PASSED
+
+DirEditJUnitTest > moveToTrashReturnsFalseInStreamInterface() STARTED
+
+DirEditJUnitTest > moveToTrashReturnsFalseInStreamInterface() PASSED
+
+DirEditJUnitTest > getFilenameReturnsNullForEmptyLine() STARTED
+
+DirEditJUnitTest > getFilenameReturnsNullForEmptyLine() PASSED
+
+DirEditJUnitTest > dateSortUniform() STARTED
+
+DirEditJUnitTest > dateSortUniform() PASSED
+
+DirEditJUnitTest > getFullPathReturnsParentForDotDot() STARTED
+
+DirEditJUnitTest > getFullPathReturnsParentForDotDot() PASSED
+
+DirEditJUnitTest > hiddenFilesRespectedInListing() STARTED
+
+DirEditJUnitTest > hiddenFilesRespectedInListing() PASSED
+
+DirEditJUnitTest > typeSortPutsDirectoriesFirst() STARTED
+
+DirEditJUnitTest > typeSortPutsDirectoriesFirst() PASSED
+
+DirEditJUnitTest > renameFileWorks() STARTED
+
+DirEditJUnitTest > renameFileWorks() PASSED
+
+DirEditJUnitTest > getFilenameReturnsParentDirectoryEntry() STARTED
+
+DirEditJUnitTest > getFilenameReturnsParentDirectoryEntry() PASSED
+
+DirManagerJUnitTest > globalgrepReturnsTextEdit() STARTED
+
+DirManagerJUnitTest > globalgrepReturnsTextEdit() PASSED
+
+DirManagerJUnitTest > isInSearchPathFileNotDir() STARTED
+
+DirManagerJUnitTest > isInSearchPathFileNotDir() PASSED
+
+DirManagerJUnitTest > singletonNotNull() STARTED
+
+DirManagerJUnitTest > singletonNotNull() PASSED
+
+DirManagerJUnitTest > isInSearchPathLocalDir() STARTED
+
+DirManagerJUnitTest > isInSearchPathLocalDir() PASSED
+
+DirManagerJUnitTest > initSearchRFailsOnBadPattern() STARTED
+
+DirManagerJUnitTest > initSearchRFailsOnBadPattern() PASSED
+
+DirManagerJUnitTest > addAndRemoveSearchDir() STARTED
+
+DirManagerJUnitTest > addAndRemoveSearchDir() PASSED
+
+DirManagerJUnitTest > findNextFileReturnsNullForMissing() STARTED
+
+DirManagerJUnitTest > findNextFileReturnsNullForMissing() PASSED
+
+DirManagerJUnitTest > formatEntryShowsSearchPathMarker() STARTED
+
+DirManagerJUnitTest > formatEntryShowsSearchPathMarker() PASSED
+
+DirManagerJUnitTest > populateDirectoryShowsEntries() STARTED
+
+DirManagerJUnitTest > populateDirectoryShowsEntries() PASSED
+
+DirManagerJUnitTest > initSearchFindsFileInSearchPath() STARTED
+
+DirManagerJUnitTest > initSearchFindsFileInSearchPath() PASSED
+
+DirManagerJUnitTest > searchPathSizeTracksAddRemove() STARTED
+
+DirManagerJUnitTest > searchPathSizeTracksAddRemove() PASSED
+
+DirManagerJUnitTest > flushCacheDoesNotThrow() STARTED
+
+DirManagerJUnitTest > flushCacheDoesNotThrow() PASSED
+
+DirManagerJUnitTest > getSearchPathReturnsDefensiveCopy() STARTED
+
+DirManagerJUnitTest > getSearchPathReturnsDefensiveCopy() PASSED
+
+DirManagerJUnitTest > getCurrentDirAfterOpen() STARTED
+
+DirManagerJUnitTest > getCurrentDirAfterOpen() PASSED
+
+DirManagerJUnitTest > toggleSearchPath() STARTED
+
+DirManagerJUnitTest > toggleSearchPath() PASSED
+
+DirManagerJUnitTest > initSearchRFindsRegexMatch() STARTED
+
+DirManagerJUnitTest > initSearchRFindsRegexMatch() PASSED
+
+DirManagerJUnitTest > isInSearchPathFile() STARTED
+
+DirManagerJUnitTest > isInSearchPathFile() PASSED
+
+DirManagerJUnitTest > fileListReturnsMatchingFiles() STARTED
+
+DirManagerJUnitTest > fileListReturnsMatchingFiles() PASSED
+
+DockBadgeCountJUnitTest > countModified returns 0 when FileList not initialized STARTED
+
+DockBadgeCountJUnitTest > countModified returns 0 when FileList not initialized PASSED
+
+DockBadgeCountJUnitTest > getSessionCount is non-negative STARTED
+
+DockBadgeCountJUnitTest > getSessionCount is non-negative PASSED
+
+DockBadgeCountJUnitTest > getSessionCount returns 0 with no active shells STARTED
+
+DockBadgeCountJUnitTest > getSessionCount returns 0 with no active shells PASSED
+
+DockBadgeCountJUnitTest > countModified is non-negative STARTED
+
+DockBadgeCountJUnitTest > countModified is non-negative PASSED
+
+DockBadgeCountJUnitTest > badge count is sum of modified files and shell sessions STARTED
+
+DockBadgeCountJUnitTest > badge count is sum of modified files and shell sessions PASSED
+
+EditCacheJUnitTest > clear(start) removes from start to end STARTED
+
+EditCacheJUnitTest > clear(start) removes from start to end PASSED
+
+EditCacheJUnitTest > add array of elements STARTED
+
+EditCacheJUnitTest > add array of elements PASSED
+
+EditCacheJUnitTest > getArr returns Object array of elements STARTED
+
+EditCacheJUnitTest > getArr returns Object array of elements PASSED
+
+EditCacheJUnitTest > new cache is empty STARTED
+
+EditCacheJUnitTest > new cache is empty PASSED
+
+EditCacheJUnitTest > indexOf returns correct position STARTED
+
+EditCacheJUnitTest > indexOf returns correct position PASSED
+
+EditCacheJUnitTest > iterator traverses all elements STARTED
+
+EditCacheJUnitTest > iterator traverses all elements PASSED
+
+EditCacheJUnitTest > rangeAsStrings returns string list for range STARTED
+
+EditCacheJUnitTest > rangeAsStrings returns string list for range PASSED
+
+EditCacheJUnitTest > clear on empty cache is safe STARTED
+
+EditCacheJUnitTest > clear on empty cache is safe PASSED
+
+EditCacheJUnitTest > clear(start, end) removes range STARTED
+
+EditCacheJUnitTest > clear(start, end) removes range PASSED
+
+EditCacheJUnitTest > get throws on out of bounds index STARTED
+
+EditCacheJUnitTest > get throws on out of bounds index PASSED
+
+EditCacheJUnitTest > contains returns true for same reference STARTED
+
+EditCacheJUnitTest > contains returns true for same reference PASSED
+
+EditCacheJUnitTest > addSome copies from offset of another cache STARTED
+
+EditCacheJUnitTest > addSome copies from offset of another cache PASSED
+
+EditCacheJUnitTest > add single element and retrieve it STARTED
+
+EditCacheJUnitTest > add single element and retrieve it PASSED
+
+EditCacheJUnitTest > add multiple elements preserves order STARTED
+
+EditCacheJUnitTest > add multiple elements preserves order PASSED
+
+EditCacheJUnitTest > for-each loop works via Iterable STARTED
+
+EditCacheJUnitTest > for-each loop works via Iterable PASSED
+
+EditCacheJUnitTest > getElementsAt returns string list for range STARTED
+
+EditCacheJUnitTest > getElementsAt returns string list for range PASSED
+
+EditCacheJUnitTest > addAll with index inserts array at position STARTED
+
+EditCacheJUnitTest > addAll with index inserts array at position PASSED
+
+EditCacheJUnitTest > indexOf returns -1 for missing element STARTED
+
+EditCacheJUnitTest > indexOf returns -1 for missing element PASSED
+
+EditCacheJUnitTest > clear() removes all elements STARTED
+
+EditCacheJUnitTest > clear() removes all elements PASSED
+
+EditCacheJUnitTest > contains returns false when not present STARTED
+
+EditCacheJUnitTest > contains returns false when not present PASSED
+
+EditCacheJUnitTest > addAll with EditCache inserts at index STARTED
+
+EditCacheJUnitTest > addAll with EditCache inserts at index PASSED
+
+EditCacheJUnitTest > set replaces element at index STARTED
+
+EditCacheJUnitTest > set replaces element at index PASSED
+
+EditCacheJUnitTest > addAll with Collection appends to end STARTED
+
+EditCacheJUnitTest > addAll with Collection appends to end PASSED
+
+EditContainerJUnitTest > moveLineBackward() STARTED
+
+EditContainerJUnitTest > moveLineBackward() PASSED
+
+EditContainerJUnitTest > changeElementAtStrModifiesLine() STARTED
+
+EditContainerJUnitTest > changeElementAtStrModifiesLine() PASSED
+
+EditContainerJUnitTest > finishIncludesSentinel() STARTED
+
+EditContainerJUnitTest > finishIncludesSentinel() PASSED
+
+EditContainerJUnitTest > findfileReturnsOpenedFile() STARTED
+
+EditContainerJUnitTest > findfileReturnsOpenedFile() PASSED
+
+EditContainerJUnitTest > removeReturnsDeletedLines() STARTED
+
+EditContainerJUnitTest > removeReturnsDeletedLines() PASSED
+
+EditContainerJUnitTest > multiOperationUndoRedo() STARTED
+
+EditContainerJUnitTest > multiOperationUndoRedo() PASSED
+
+EditContainerJUnitTest > atIndexZeroReturnsSentinel() STARTED
+
+EditContainerJUnitTest > atIndexZeroReturnsSentinel() PASSED
+
+EditContainerJUnitTest > readOnlyPreventsInsert() STARTED
+
+EditContainerJUnitTest > readOnlyPreventsInsert() PASSED
+
+EditContainerJUnitTest > insertOneAtFinishAppendsLine() STARTED
+
+EditContainerJUnitTest > insertOneAtFinishAppendsLine() PASSED
+
+EditContainerJUnitTest > readOnlyPreventsRemove() STARTED
+
+EditContainerJUnitTest > readOnlyPreventsRemove() PASSED
+
+EditContainerJUnitTest > removeRange() STARTED
+
+EditContainerJUnitTest > removeRange() PASSED
+
+EditContainerJUnitTest > removeAndUndo() STARTED
+
+EditContainerJUnitTest > removeAndUndo() PASSED
+
+EditContainerJUnitTest > readOnlyPreventsChangeElement() STARTED
+
+EditContainerJUnitTest > readOnlyPreventsChangeElement() PASSED
+
+EditContainerJUnitTest > grepfileMatchesSuffix() STARTED
+
+EditContainerJUnitTest > grepfileMatchesSuffix() PASSED
+
+EditContainerJUnitTest > findfileReturnsNullForUnknown() STARTED
+
+EditContainerJUnitTest > findfileReturnsNullForUnknown() PASSED
+
+EditContainerJUnitTest > containsReturnsFalseForPastEnd() STARTED
+
+EditContainerJUnitTest > containsReturnsFalseForPastEnd() PASSED
+
+EditContainerJUnitTest > copyLineDuplicates() STARTED
+
+EditContainerJUnitTest > copyLineDuplicates() PASSED
+
+EditContainerJUnitTest > removeAllLinesLeavesEmpty() STARTED
+
+EditContainerJUnitTest > removeAllLinesLeavesEmpty() PASSED
+
+EditContainerJUnitTest > getNameReturnsDescriptorName() STARTED
+
+EditContainerJUnitTest > getNameReturnsDescriptorName() PASSED
+
+EditContainerJUnitTest > getElementsAtReturnsRange() STARTED
+
+EditContainerJUnitTest > getElementsAtReturnsRange() PASSED
+
+EditContainerJUnitTest > removeSingleLine() STARTED
+
+EditContainerJUnitTest > removeSingleLine() PASSED
+
+EditContainerJUnitTest > grepfileReturnsNullForNoMatch() STARTED
+
+EditContainerJUnitTest > grepfileReturnsNullForNoMatch() PASSED
+
+EditContainerJUnitTest > readOnlyPreventsUndo() STARTED
+
+EditContainerJUnitTest > readOnlyPreventsUndo() PASSED
+
+EditContainerJUnitTest > isModifiedTracking() STARTED
+
+EditContainerJUnitTest > isModifiedTracking() PASSED
+
+EditContainerJUnitTest > moveLineForward() STARTED
+
+EditContainerJUnitTest > moveLineForward() PASSED
+
+EditGroupJUnitTest > deletetextMultiLine() STARTED
+
+EditGroupJUnitTest > deletetextMultiLine() PASSED
+
+EditGroupJUnitTest > tabfixWithTabstop8() STARTED
+
+EditGroupJUnitTest > tabfixWithTabstop8() PASSED
+
+EditGroupJUnitTest > deletetextPreserveModeYanks() STARTED
+
+EditGroupJUnitTest > deletetextPreserveModeYanks() PASSED
+
+EditGroupJUnitTest > deletetextSingleLinePartial() STARTED
+
+EditGroupJUnitTest > deletetextSingleLinePartial() PASSED
+
+EditGroupJUnitTest > joinLinesWithTrailingSpace() STARTED
+
+EditGroupJUnitTest > joinLinesWithTrailingSpace() PASSED
+
+EditGroupJUnitTest > deletemodeIsRegistered() STARTED
+
+EditGroupJUnitTest > deletemodeIsRegistered() PASSED
+
+EditGroupJUnitTest > changecaseMultiLine() STARTED
+
+EditGroupJUnitTest > changecaseMultiLine() PASSED
+
+EditGroupJUnitTest > shiftrightAddsLeadingSpaces() STARTED
+
+EditGroupJUnitTest > shiftrightAddsLeadingSpaces() PASSED
+
+EditGroupJUnitTest > shiftrightNoopWhenNoAlignment() STARTED
+
+EditGroupJUnitTest > shiftrightNoopWhenNoAlignment() PASSED
+
+EditGroupJUnitTest > insertIsRegistered() STARTED
+
+EditGroupJUnitTest > insertIsRegistered() PASSED
+
+EditGroupJUnitTest > changecasePartialLine() STARTED
+
+EditGroupJUnitTest > changecasePartialLine() PASSED
+
+EditGroupJUnitTest > joinlinesIsRegistered() STARTED
+
+EditGroupJUnitTest > joinlinesIsRegistered() PASSED
+
+EditGroupJUnitTest > percentSubstituteAppliesToAllLines() STARTED
+
+EditGroupJUnitTest > percentSubstituteAppliesToAllLines() PASSED
+
+EditGroupJUnitTest > yankmodeIsRegistered() STARTED
+
+EditGroupJUnitTest > yankmodeIsRegistered() PASSED
+
+EditGroupJUnitTest > changecaseSingleLine() STARTED
+
+EditGroupJUnitTest > changecaseSingleLine() PASSED
+
+EditGroupJUnitTest > joinTwoLines() STARTED
+
+EditGroupJUnitTest > joinTwoLines() PASSED
+
+EditGroupJUnitTest > changecaseIdempotentTwice() STARTED
+
+EditGroupJUnitTest > changecaseIdempotentTwice() PASSED
+
+EditGroupJUnitTest > joinMultipleLines() STARTED
+
+EditGroupJUnitTest > joinMultipleLines() PASSED
+
+EditGroupJUnitTest > changecaseIsRegistered() STARTED
+
+EditGroupJUnitTest > changecaseIsRegistered() PASSED
+
+EditGroupJUnitTest > substituteWithRanges() STARTED
+
+EditGroupJUnitTest > substituteWithRanges() PASSED
+
+EditGroupJUnitTest > tabfixThrowsOnZeroTabstop() STARTED
+
+EditGroupJUnitTest > tabfixThrowsOnZeroTabstop() PASSED
+
+EditGroupJUnitTest > shiftleftRemovesLeadingSpaces() STARTED
+
+EditGroupJUnitTest > shiftleftRemovesLeadingSpaces() PASSED
+
+EditGroupJUnitTest > joinLineTrimsLeadingWhitespace() STARTED
+
+EditGroupJUnitTest > joinLineTrimsLeadingWhitespace() PASSED
+
+EditGroupJUnitTest > tabfixIsRegistered() STARTED
+
+EditGroupJUnitTest > tabfixIsRegistered() PASSED
+
+EditGroupJUnitTest > tabfixReplacesTabWithSpaces() STARTED
+
+EditGroupJUnitTest > tabfixReplacesTabWithSpaces() PASSED
+
+EditGroupJUnitTest > visualYankCopiesLinesWithoutModifying() STARTED
+
+EditGroupJUnitTest > visualYankCopiesLinesWithoutModifying() PASSED
+
+EditGroupJUnitTest > shiftmodeIsRegistered() STARTED
+
+EditGroupJUnitTest > shiftmodeIsRegistered() PASSED
+
+EditGroupJUnitTest > tabfixNoTabs() STARTED
+
+EditGroupJUnitTest > tabfixNoTabs() PASSED
+
+EditTester1WrapperJUnitTest > test1() STARTED
+
+EditTester1WrapperJUnitTest > test1() PASSED
+
+EditTester1WrapperJUnitTest > test18() STARTED
+
+EditTester1WrapperJUnitTest > test18() PASSED
+
+EditTester1WrapperJUnitTest > test2() STARTED
+
+EditTester1WrapperJUnitTest > test2() PASSED
+
+EditTester1WrapperJUnitTest > test3() STARTED
+
+EditTester1WrapperJUnitTest > test3() PASSED
+
+EditTester1WrapperJUnitTest > test4() STARTED
+
+EditTester1WrapperJUnitTest > test4() PASSED
+
+EditTester1WrapperJUnitTest > test5() STARTED
+
+EditTester1WrapperJUnitTest > test5() PASSED
+
+EditTester1WrapperJUnitTest > test6() STARTED
+
+EditTester1WrapperJUnitTest > test6() PASSED
+
+EditTester1WrapperJUnitTest > test7() STARTED
+
+EditTester1WrapperJUnitTest > test7() PASSED
+
+EditTester1WrapperJUnitTest > test8() STARTED
+
+EditTester1WrapperJUnitTest > test8() PASSED
+
+EditTester1WrapperJUnitTest > test9() STARTED
+
+EditTester1WrapperJUnitTest > test9() PASSED
+
+EditTester1WrapperJUnitTest > test10() STARTED
+
+EditTester1WrapperJUnitTest > test10() PASSED
+
+EditTester1WrapperJUnitTest > test11() STARTED
+
+EditTester1WrapperJUnitTest > test11() PASSED
+
+EditTester1WrapperJUnitTest > test13() STARTED
+
+EditTester1WrapperJUnitTest > test13() PASSED
+
+EditTester1WrapperJUnitTest > test14() STARTED
+
+EditTester1WrapperJUnitTest > test14() PASSED
+
+EditTester1WrapperJUnitTest > test15() STARTED
+
+EditTester1WrapperJUnitTest > test15() PASSED
+
+EditTester1WrapperJUnitTest > test16() STARTED
+
+EditTester1WrapperJUnitTest > test16() PASSED
+
+EditTester1WrapperJUnitTest > test17() STARTED
+
+EditTester1WrapperJUnitTest > test17() PASSED
+
+EditTester1WrapperJUnitTest > perftest() STARTED
+
+EditTester1WrapperJUnitTest > perftest() PASSED
+
+EventClassesJUnitTest > commandEventUnknownCommandDoesNotThrow() STARTED
+
+EventClassesJUnitTest > commandEventUnknownCommandDoesNotThrow() PASSED
+
+EventClassesJUnitTest > scrollEventVerticalClampsToStart() STARTED
+
+EventClassesJUnitTest > scrollEventVerticalClampsToStart() PASSED
+
+EventClassesJUnitTest > posEventSameFvcDoesNotSwitchView() STARTED
+
+EventClassesJUnitTest > posEventSameFvcDoesNotSwitchView() PASSED
+
+EventClassesJUnitTest > commandEventExecutesKnownCommand() STARTED
+
+EventClassesJUnitTest > commandEventExecutesKnownCommand() PASSED
+
+EventClassesJUnitTest > scrollEventHorizontalMovesCursorX() STARTED
+
+EventClassesJUnitTest > scrollEventHorizontalMovesCursorX() PASSED
+
+EventClassesJUnitTest > scrollEventVerticalMovesCursorY() STARTED
+
+EventClassesJUnitTest > scrollEventVerticalMovesCursorY() PASSED
+
+EventClassesJUnitTest > posEventMovesCursorToPosition() STARTED
+
+EventClassesJUnitTest > posEventMovesCursorToPosition() PASSED
+
+EventClassesJUnitTest > exitEventThrowsExitException() STARTED
+
+EventClassesJUnitTest > exitEventThrowsExitException() PASSED
+
+EventClassesJUnitTest > scrollEventVerticalNegative() STARTED
+
+EventClassesJUnitTest > scrollEventVerticalNegative() PASSED
+
+EventClassesJUnitTest > commandEventConstructionStoresCommand() STARTED
+
+EventClassesJUnitTest > commandEventConstructionStoresCommand() PASSED
+
+EventClassesJUnitTest > posEventConstructionStoresFields() STARTED
+
+EventClassesJUnitTest > posEventConstructionStoresFields() PASSED
+
+EventClassesJUnitTest > scrollEventConstructionStoresFields() STARTED
+
+EventClassesJUnitTest > scrollEventConstructionStoresFields() PASSED
+
+EventClassesJUnitTest > scrollEventVerticalClampsToEnd() STARTED
+
+EventClassesJUnitTest > scrollEventVerticalClampsToEnd() PASSED
+
+EventQueueJUnitTest > Idler > registerIdle does not throw STARTED
+
+EventQueueJUnitTest > Idler > registerIdle does not throw PASSED
+
+EventQueueJUnitTest > IEvent subclasses > InputException with cause STARTED
+
+EventQueueJUnitTest > IEvent subclasses > InputException with cause PASSED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException message STARTED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException message PASSED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException with cause STARTED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException with cause PASSED
+
+EventQueueJUnitTest > IEvent subclasses > ScrollEvent constructs without error STARTED
+
+EventQueueJUnitTest > IEvent subclasses > ScrollEvent constructs without error PASSED
+
+EventQueueJUnitTest > IEvent subclasses > InputException message STARTED
+
+EventQueueJUnitTest > IEvent subclasses > InputException message PASSED
+
+EventQueueJUnitTest > IEvent subclasses > ExitEvent.execute throws ExitException STARTED
+
+EventQueueJUnitTest > IEvent subclasses > ExitEvent.execute throws ExitException PASSED
+
+EventQueueJUnitTest > IEvent subclasses > CommandEvent constructs without error STARTED
+
+EventQueueJUnitTest > IEvent subclasses > CommandEvent constructs without error PASSED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException is InputException STARTED
+
+EventQueueJUnitTest > IEvent subclasses > ExitException is InputException PASSED
+
+EventQueueJUnitTest > DebugLock > lock is reentrant STARTED
+
+EventQueueJUnitTest > DebugLock > lock is reentrant PASSED
+
+EventQueueJUnitTest > DebugLock > assertOwned throws when lock not held STARTED
+
+EventQueueJUnitTest > DebugLock > assertOwned throws when lock not held PASSED
+
+EventQueueJUnitTest > DebugLock > biglock2 singleton exists STARTED
+
+EventQueueJUnitTest > DebugLock > biglock2 singleton exists PASSED
+
+EventQueueJUnitTest > DebugLock > tryLock succeeds when uncontested STARTED
+
+EventQueueJUnitTest > DebugLock > tryLock succeeds when uncontested PASSED
+
+EventQueueJUnitTest > DebugLock > assertUnOwned throws when lock held STARTED
+
+EventQueueJUnitTest > DebugLock > assertUnOwned throws when lock held PASSED
+
+EventQueueJUnitTest > DebugLock > assertOwned passes when lock is held STARTED
+
+EventQueueJUnitTest > DebugLock > assertOwned passes when lock is held PASSED
+
+EventQueueJUnitTest > DebugLock > lock and unlock succeed on same thread STARTED
+
+EventQueueJUnitTest > DebugLock > lock and unlock succeed on same thread PASSED
+
+EventQueueJUnitTest > DebugLock > assertUnOwned passes when lock not held STARTED
+
+EventQueueJUnitTest > DebugLock > assertUnOwned passes when lock not held PASSED
+
+ExitExceptionJUnitTest > causeConstructorPreservesCause() STARTED
+
+ExitExceptionJUnitTest > causeConstructorPreservesCause() PASSED
+
+ExitExceptionJUnitTest > isException() STARTED
+
+ExitExceptionJUnitTest > isException() PASSED
+
+ExitExceptionJUnitTest > isInputException() STARTED
+
+ExitExceptionJUnitTest > isInputException() PASSED
+
+ExitExceptionJUnitTest > defaultConstructorHasNullCause() STARTED
+
+ExitExceptionJUnitTest > defaultConstructorHasNullCause() PASSED
+
+ExitExceptionJUnitTest > causeConstructorHasMessage() STARTED
+
+ExitExceptionJUnitTest > causeConstructorHasMessage() PASSED
+
+ExitExceptionJUnitTest > inputExceptionSingleArgMessage() STARTED
+
+ExitExceptionJUnitTest > inputExceptionSingleArgMessage() PASSED
+
+ExitExceptionJUnitTest > inputExceptionTwoArgPreservesCause() STARTED
+
+ExitExceptionJUnitTest > inputExceptionTwoArgPreservesCause() PASSED
+
+ExitExceptionJUnitTest > defaultMessageContainsExiting() STARTED
+
+ExitExceptionJUnitTest > defaultMessageContainsExiting() PASSED
+
+ExitExceptionJUnitTest > canBeCaughtAsInputException() STARTED
+
+ExitExceptionJUnitTest > canBeCaughtAsInputException() PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > createTempFile produces existing file STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > createTempFile produces existing file PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > equals is identity-based on canonName STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > equals is identity-based on canonName PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > getOutputStream writes data STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > getOutputStream writes data PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > toPath returns valid Path STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > toPath returns valid Path PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > getPersistantFd returns dmp2 descriptor STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > getPersistantFd returns dmp2 descriptor PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > hashCode consistent with equals STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > hashCode consistent with equals PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > canWrite on temp file STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > canWrite on temp file PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > delete removes file STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > delete removes file PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > lastModified is positive for existing file STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > lastModified is positive for existing file PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > length of temp file matches written bytes STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > length of temp file matches written bytes PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > make for nonexistent file still creates descriptor STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > make for nonexistent file still creates descriptor PASSED
+
+FileDescriptorExtraJUnitTest > LocalFile > getString reads file content STARTED
+
+FileDescriptorExtraJUnitTest > LocalFile > getString reads file content PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > canWrite returns false STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > canWrite returns false PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > toPath throws IOException STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > toPath throws IOException PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > getOutputStream throws IOException STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > getOutputStream throws IOException PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > delete throws IOException STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > delete throws IOException PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > getPersistantFd returns null STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > getPersistantFd returns null PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > make returns non-null STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > make returns non-null PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > shortName matches input STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > shortName matches input PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > canonName contains shortName STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > canonName contains shortName PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > exists returns false STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > exists returns false PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > isFile returns false STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > isFile returns false PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > two InternalFds have different canonNames STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > two InternalFds have different canonNames PASSED
+
+FileDescriptorExtraJUnitTest > InternalFd > getString throws IOException STARTED
+
+FileDescriptorExtraJUnitTest > InternalFd > getString throws IOException PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > plain filename is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > plain filename is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > relative path without ./ is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > relative path without ./ is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > dotslash prefix is special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > dotslash prefix is special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > single char filename is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > single char filename is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > non-letter first char with colon is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > non-letter first char with colon is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > absolute path starting with / is special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > absolute path starting with / is special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > dot alone is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > dot alone is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > dotdot prefix is not special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > dotdot prefix is not special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > lowercase drive letter is special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > lowercase drive letter is special PASSED
+
+FileDescriptorExtraJUnitTest > isSpecial > drive letter C: is special STARTED
+
+FileDescriptorExtraJUnitTest > isSpecial > drive letter C: is special PASSED
+
+FileDescriptorJUnitTest > canonicalizeDotDotSegments() STARTED
+
+FileDescriptorJUnitTest > canonicalizeDotDotSegments() PASSED
+
+FileDescriptorJUnitTest > dotDotFlattened() STARTED
+
+FileDescriptorJUnitTest > dotDotFlattened() PASSED
+
+FileDescriptorJUnitTest > dotSegmentRemoved() STARTED
+
+FileDescriptorJUnitTest > dotSegmentRemoved() PASSED
+
+FileDescriptorJUnitTest > filePatternUnchanged() STARTED
+
+FileDescriptorJUnitTest > filePatternUnchanged() PASSED
+
+FileDescriptorJUnitTest > bareColonIsDot() STARTED
+
+FileDescriptorJUnitTest > bareColonIsDot() SKIPPED
+
+FileDescriptorJUnitTest > backslashNormalized() STARTED
+
+FileDescriptorJUnitTest > backslashNormalized() SKIPPED
+
+FileDescriptorJUnitTest > manyDotDotSegmentsPreserved() STARTED
+
+FileDescriptorJUnitTest > manyDotDotSegmentsPreserved() PASSED
+
+FileDescriptorJUnitTest > relativePathWithSubDir() STARTED
+
+FileDescriptorJUnitTest > relativePathWithSubDir() PASSED
+
+FileDescriptorJUnitTest > relativePathUnchanged() STARTED
+
+FileDescriptorJUnitTest > relativePathUnchanged() PASSED
+
+FileDescriptorJUnitTest > trailingSlashOnRootDotRemoved() STARTED
+
+FileDescriptorJUnitTest > trailingSlashOnRootDotRemoved() PASSED
+
+FileDescriptorJUnitTest > leadingDotSlashRemoved() STARTED
+
+FileDescriptorJUnitTest > leadingDotSlashRemoved() PASSED
+
+FileDescriptorJUnitTest > dotDotWithSubPath() STARTED
+
+FileDescriptorJUnitTest > dotDotWithSubPath() PASSED
+
+FileDescriptorJUnitTest > driveLetterNormalized() STARTED
+
+FileDescriptorJUnitTest > driveLetterNormalized() SKIPPED
+
+FileDescriptorJUnitTest > rootBackslashToCurrentDrive() STARTED
+
+FileDescriptorJUnitTest > rootBackslashToCurrentDrive() SKIPPED
+
+FileDescriptorJUnitTest > dotSlashPrefixStripped() STARTED
+
+FileDescriptorJUnitTest > dotSlashPrefixStripped() PASSED
+
+FileDescriptorJUnitTest > trailingSlashRemoved() STARTED
+
+FileDescriptorJUnitTest > trailingSlashRemoved() PASSED
+
+FileDescriptorJUnitTest > simpleNameUnchanged() STARTED
+
+FileDescriptorJUnitTest > simpleNameUnchanged() PASSED
+
+FileInputJUnitTest > emptyFileProducesSentinelOnly() STARTED
+
+FileInputJUnitTest > emptyFileProducesSentinelOnly() PASSED
+
+FileInputJUnitTest > manyLinesReadCorrectly() STARTED
+
+FileInputJUnitTest > manyLinesReadCorrectly() PASSED
+
+FileInputJUnitTest > unixSingleLineNoTrailingNewline() STARTED
+
+FileInputJUnitTest > unixSingleLineNoTrailingNewline() PASSED
+
+FileInputJUnitTest > msLineEndingsProduceCorrectLines() STARTED
+
+FileInputJUnitTest > msLineEndingsProduceCorrectLines() PASSED
+
+FileInputJUnitTest > singleNewlineFile() STARTED
+
+FileInputJUnitTest > singleNewlineFile() PASSED
+
+FileInputJUnitTest > longLineReadCorrectly() STARTED
+
+FileInputJUnitTest > longLineReadCorrectly() PASSED
+
+FileInputJUnitTest > msSingleLineWithCRLF() STARTED
+
+FileInputJUnitTest > msSingleLineWithCRLF() PASSED
+
+FileInputJUnitTest > unixLineEndingsProduceCorrectLines() STARTED
+
+FileInputJUnitTest > unixLineEndingsProduceCorrectLines() PASSED
+
+FileInputJUnitTest > msEmptyLinesPreserved() STARTED
+
+FileInputJUnitTest > msEmptyLinesPreserved() PASSED
+
+FileInputJUnitTest > unixEmptyLinesPreserved() STARTED
+
+FileInputJUnitTest > unixEmptyLinesPreserved() PASSED
+
+FileInputMemoryJUnitTest > testEmptyFileLoad() STARTED
+
+FileInputMemoryJUnitTest > testEmptyFileLoad() PASSED
+
+FileInputMemoryJUnitTest > testUnicodeContent() STARTED
+
+FileInputMemoryJUnitTest > testUnicodeContent() PASSED
+
+FileInputMemoryJUnitTest > testStreamingLoadMemoryBound() STARTED
+
+FileInputMemoryJUnitTest > testStreamingLoadMemoryBound() PASSED
+
+FileInputMemoryJUnitTest > testStreamingLoadCorrectness() STARTED
+
+FileInputMemoryJUnitTest > testStreamingLoadCorrectness() PASSED
+
+FileInputMemoryJUnitTest > testReaderCleanupAfterLoad() STARTED
+
+FileInputMemoryJUnitTest > testReaderCleanupAfterLoad() PASSED
+
+FileInputMemoryJUnitTest > testSequentialLargeLoads() STARTED
+
+FileInputMemoryJUnitTest > testSequentialLargeLoads() PASSED
+
+FileInputMemoryJUnitTest > testBenchmarkLargeFilePeakMemory() STARTED
+
+FileInputMemoryJUnitTest > testBenchmarkLargeFilePeakMemory() PASSED
+
+FileInputMemoryJUnitTest > testSmallFileStreamingPath() STARTED
+
+FileInputMemoryJUnitTest > testSmallFileStreamingPath() PASSED
+
+FileInputMemoryJUnitTest > testCrLfLineEndings() STARTED
+
+FileInputMemoryJUnitTest > testCrLfLineEndings() PASSED
+
+FileListJUnitTest > makeCreatesFileList() STARTED
+
+FileListJUnitTest > makeCreatesFileList() PASSED
+
+FileListJUnitTest > containsNowReportsEntries() STARTED
+
+FileListJUnitTest > containsNowReportsEntries() PASSED
+
+FileListJUnitTest > fileEntriesHaveContent() STARTED
+
+FileListJUnitTest > fileEntriesHaveContent() PASSED
+
+FileListJUnitTest > removeAndCheckpoint() STARTED
+
+FileListJUnitTest > removeAndCheckpoint() PASSED
+
+FileListJUnitTest > undoRestoresRemoved() STARTED
+
+FileListJUnitTest > undoRestoresRemoved() PASSED
+
+FilePropertiesJUnitTest > ignoreExternalChangesDefaultFalse() STARTED
+
+FilePropertiesJUnitTest > ignoreExternalChangesDefaultFalse() PASSED
+
+FilePropertiesJUnitTest > newFilePropertiesIsWriteable() STARTED
+
+FilePropertiesJUnitTest > newFilePropertiesIsWriteable() PASSED
+
+FilePropertiesJUnitTest > initFileDetectsUnixLineEnding() STARTED
+
+FilePropertiesJUnitTest > initFileDetectsUnixLineEnding() PASSED
+
+FilePropertiesJUnitTest > setIgnoreExternalChangesToggle() STARTED
+
+FilePropertiesJUnitTest > setIgnoreExternalChangesToggle() PASSED
+
+FilePropertiesJUnitTest > copyConstructorPreservesFormat() STARTED
+
+FilePropertiesJUnitTest > copyConstructorPreservesFormat() PASSED
+
+FilePropertiesJUnitTest > readOnlyRoundTrip() STARTED
+
+FilePropertiesJUnitTest > readOnlyRoundTrip() PASSED
+
+FilePropertiesJUnitTest > updateModifiedTimeResetsCheck() STARTED
+
+FilePropertiesJUnitTest > updateModifiedTimeResetsCheck() PASSED
+
+FilePropertiesJUnitTest > safeWriteAtomicWrite() STARTED
+
+FilePropertiesJUnitTest > safeWriteAtomicWrite() PASSED
+
+FilePropertiesJUnitTest > checkModifiedFalseWhenIgnoring() STARTED
+
+FilePropertiesJUnitTest > checkModifiedFalseWhenIgnoring() PASSED
+
+FilePropertiesJUnitTest > writeAllPreservesLineEndings() STARTED
+
+FilePropertiesJUnitTest > writeAllPreservesLineEndings() PASSED
+
+FilePropertiesJUnitTest > writeAllWritesContentToFile() STARTED
+
+FilePropertiesJUnitTest > writeAllWritesContentToFile() PASSED
+
+FilePropertiesJUnitTest > setReadOnlyMakesUnwriteable() STARTED
+
+FilePropertiesJUnitTest > setReadOnlyMakesUnwriteable() PASSED
+
+FilePropertiesJUnitTest > initFileHandlesEmptyFile() STARTED
+
+FilePropertiesJUnitTest > initFileHandlesEmptyFile() PASSED
+
+FilePropertiesJUnitTest > initFileDetectsCrLfLineEnding() STARTED
+
+FilePropertiesJUnitTest > initFileDetectsCrLfLineEnding() PASSED
+
+FilePropertiesJUnitTest > checkModifiedFalseForNewFileProperties() STARTED
+
+FilePropertiesJUnitTest > checkModifiedFalseForNewFileProperties() PASSED
+
+FilePropertiesJUnitTest > checkModifiedDetectsExternalChange() STARTED
+
+FilePropertiesJUnitTest > checkModifiedDetectsExternalChange() PASSED
+
+FvContextJUnitTest > atReturnsCurrentLineContent() STARTED
+
+FvContextJUnitTest > atReturnsCurrentLineContent() PASSED
+
+FvContextJUnitTest > equivMatchesCurrentPosition() STARTED
+
+FvContextJUnitTest > equivMatchesCurrentPosition() PASSED
+
+FvContextJUnitTest > inserttextInsertsContent() STARTED
+
+FvContextJUnitTest > inserttextInsertsContent() PASSED
+
+FvContextJUnitTest > switchFileOnSameView() STARTED
+
+FvContextJUnitTest > switchFileOnSameView() PASSED
+
+FvContextJUnitTest > getCurrentIndexReturnsCursorLine() STARTED
+
+FvContextJUnitTest > getCurrentIndexReturnsCursorLine() PASSED
+
+FvContextJUnitTest > viewCountReflectsActiveViews() STARTED
+
+FvContextJUnitTest > viewCountReflectsActiveViews() PASSED
+
+FvContextJUnitTest > getPositionReturnsValidPosition() STARTED
+
+FvContextJUnitTest > getPositionReturnsValidPosition() PASSED
+
+FvContextJUnitTest > connectFvSetsCurrFvc() STARTED
+
+FvContextJUnitTest > connectFvSetsCurrFvc() PASSED
+
+FvContextJUnitTest > toStringContainsCursorInfo() STARTED
+
+FvContextJUnitTest > toStringContainsCursorInfo() PASSED
+
+FvContextJUnitTest > getCurrStateReturnsStatus() STARTED
+
+FvContextJUnitTest > getCurrStateReturnsStatus() PASSED
+
+FvContextJUnitTest > isGotoOkForNormalContext() STARTED
+
+FvContextJUnitTest > isGotoOkForNormalContext() PASSED
+
+FvContextJUnitTest > initialCursorAfterConnect() STARTED
+
+FvContextJUnitTest > initialCursorAfterConnect() PASSED
+
+FvContextJUnitTest > cursorabsPositionSetsXY() STARTED
+
+FvContextJUnitTest > cursorabsPositionSetsXY() PASSED
+
+FvContextJUnitTest > cursoryabsMovesLine() STARTED
+
+FvContextJUnitTest > cursoryabsMovesLine() PASSED
+
+FvContextJUnitTest > getcontextReturnsSameInstance() STARTED
+
+FvContextJUnitTest > getcontextReturnsSameInstance() PASSED
+
+FvContextJUnitTest > setCurrViewMakesCurrent() STARTED
+
+FvContextJUnitTest > setCurrViewMakesCurrent() PASSED
+
+FvContextJUnitTest > differentViewsSameFileDifferentContexts() STARTED
+
+FvContextJUnitTest > differentViewsSameFileDifferentContexts() PASSED
+
+GStateJUnitTest > setRegexWithDotAll() STARTED
+
+GStateJUnitTest > setRegexWithDotAll() PASSED
+
+GStateJUnitTest > setRegexCaseInsensitive() STARTED
+
+GStateJUnitTest > setRegexCaseInsensitive() PASSED
+
+GStateJUnitTest > setRegexChangesPattern() STARTED
+
+GStateJUnitTest > setRegexChangesPattern() PASSED
+
+GStateJUnitTest > emptyPatternMatchesAnything() STARTED
+
+GStateJUnitTest > emptyPatternMatchesAnything() PASSED
+
+GStateJUnitTest > getRegexReturnsNewMatcherEachTime() STARTED
+
+GStateJUnitTest > getRegexReturnsNewMatcherEachTime() PASSED
+
+GStateJUnitTest > setRegexNoMatchReturnsFalse() STARTED
+
+GStateJUnitTest > setRegexNoMatchReturnsFalse() PASSED
+
+GStateJUnitTest > setRegexOverwritesPrevious() STARTED
+
+GStateJUnitTest > setRegexOverwritesPrevious() PASSED
+
+GStateJUnitTest > initialRegexMatchesEmptyString() STARTED
+
+GStateJUnitTest > initialRegexMatchesEmptyString() PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses line with high line number STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses line with high line number PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > returns position for malformed line STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > returns position for malformed line PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses nested path correctly STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses nested path correctly PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses fallback colon-delimited format STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses fallback colon-delimited format PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > returns default position for empty line STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > returns default position for empty line PASSED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses standard grep-format line STARTED
+
+GlobalReaderJUnitTest > GlobalConv.fromString > parses standard grep-format line PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches tilde path STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches tilde path PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches Windows drive letter path STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches Windows drive letter path PASSED
+
+GlobalReaderJUnitTest > linepat pattern > does not match text without line number STARTED
+
+GlobalReaderJUnitTest > linepat pattern > does not match text without line number PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches standard file:line:comment format STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches standard file:line:comment format PASSED
+
+GlobalReaderJUnitTest > linepat pattern > does not match empty string STARTED
+
+GlobalReaderJUnitTest > linepat pattern > does not match empty string PASSED
+
+GlobalReaderJUnitTest > linepat pattern > does not match incomplete reference STARTED
+
+GlobalReaderJUnitTest > linepat pattern > does not match incomplete reference PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches path with nested directories STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches path with nested directories PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches file with dots in name STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches file with dots in name PASSED
+
+GlobalReaderJUnitTest > linepat pattern > leading spaces prevent match STARTED
+
+GlobalReaderJUnitTest > linepat pattern > leading spaces prevent match PASSED
+
+GlobalReaderJUnitTest > linepat pattern > captures comment field with leading spaces stripped STARTED
+
+GlobalReaderJUnitTest > linepat pattern > captures comment field with leading spaces stripped PASSED
+
+GlobalReaderJUnitTest > linepat pattern > matches single file name with line number STARTED
+
+GlobalReaderJUnitTest > linepat pattern > matches single file name with line number PASSED
+
+GrepFilterJUnitTest > noMatchReturnsFalse() STARTED
+
+GrepFilterJUnitTest > noMatchReturnsFalse() PASSED
+
+GrepFilterJUnitTest > complexRegexWorks() STARTED
+
+GrepFilterJUnitTest > complexRegexWorks() PASSED
+
+GrepFilterJUnitTest > matchesSimplePattern() STARTED
+
+GrepFilterJUnitTest > matchesSimplePattern() PASSED
+
+GrepFilterJUnitTest > invertedAllIncluded() STARTED
+
+GrepFilterJUnitTest > invertedAllIncluded() PASSED
+
+GrepFilterJUnitTest > invertedMatchExcludes() STARTED
+
+GrepFilterJUnitTest > invertedMatchExcludes() PASSED
+
+GrepFilterJUnitTest > emptyRegexMatchesEverything() STARTED
+
+GrepFilterJUnitTest > emptyRegexMatchesEverything() PASSED
+
+GrepFilterJUnitTest > matchesRegexDot() STARTED
+
+GrepFilterJUnitTest > matchesRegexDot() PASSED
+
+GrepFilterJUnitTest > invertedNonMatchIncludes() STARTED
+
+GrepFilterJUnitTest > invertedNonMatchIncludes() PASSED
+
+GrepFilterJUnitTest > matchesAnywhere() STARTED
+
+GrepFilterJUnitTest > matchesAnywhere() PASSED
+
+GrepFilterJUnitTest > caseMatters() STARTED
+
+GrepFilterJUnitTest > caseMatters() PASSED
+
+GrepFilterJUnitTest > specialCharsInFilename() STARTED
+
+GrepFilterJUnitTest > specialCharsInFilename() PASSED
+
+GrepFilterJUnitTest > dotStarMatchesAll() STARTED
+
+GrepFilterJUnitTest > dotStarMatchesAll() PASSED
+
+GuiProofOfConceptJUnitTest > canCreateRobotInstance() STARTED
+
+GuiProofOfConceptJUnitTest > canCreateRobotInstance() SKIPPED
+
+GuiProofOfConceptJUnitTest > assertJSwingDependencyAvailable() STARTED
+
+GuiProofOfConceptJUnitTest > assertJSwingDependencyAvailable() SKIPPED
+
+HelpSystemJUnitTest > getHelp(null) returns index STARTED
+
+HelpSystemJUnitTest > getHelp(null) returns index PASSED
+
+HelpSystemJUnitTest > getHelp is case-insensitive STARTED
+
+HelpSystemJUnitTest > getHelp is case-insensitive PASSED
+
+HelpSystemJUnitTest > getHelp('visual') returns visual mode help STARTED
+
+HelpSystemJUnitTest > getHelp('visual') returns visual mode help PASSED
+
+HelpSystemJUnitTest > getKeyBindings returns buffer STARTED
+
+HelpSystemJUnitTest > getKeyBindings returns buffer PASSED
+
+HelpSystemJUnitTest > getHelp('files') returns file help STARTED
+
+HelpSystemJUnitTest > getHelp('files') returns file help PASSED
+
+HelpSystemJUnitTest > getHelp('search') returns search help STARTED
+
+HelpSystemJUnitTest > getHelp('search') returns search help PASSED
+
+HelpSystemJUnitTest > getHelp('') returns index STARTED
+
+HelpSystemJUnitTest > getHelp('') returns index PASSED
+
+HelpSystemJUnitTest > getHelp('index') returns index STARTED
+
+HelpSystemJUnitTest > getHelp('index') returns index PASSED
+
+HelpSystemJUnitTest > getHelp('undo') returns undo help STARTED
+
+HelpSystemJUnitTest > getHelp('undo') returns undo help PASSED
+
+HelpSystemJUnitTest > getHelp('ex') returns ex command help STARTED
+
+HelpSystemJUnitTest > getHelp('ex') returns ex command help PASSED
+
+HelpSystemJUnitTest > calling getHelp twice returns fresh content STARTED
+
+HelpSystemJUnitTest > calling getHelp twice returns fresh content PASSED
+
+HelpSystemJUnitTest > getHelp('keybindings') contains keybinding architecture STARTED
+
+HelpSystemJUnitTest > getHelp('keybindings') contains keybinding architecture PASSED
+
+HelpSystemJUnitTest > getHelp('movement') returns movement help STARTED
+
+HelpSystemJUnitTest > getHelp('movement') returns movement help PASSED
+
+HelpSystemJUnitTest > getHelp('move') alias works STARTED
+
+HelpSystemJUnitTest > getHelp('move') alias works PASSED
+
+HelpSystemJUnitTest > help annotation does not corrupt header lines STARTED
+
+HelpSystemJUnitTest > help annotation does not corrupt header lines PASSED
+
+HelpSystemJUnitTest > getHelp('editing') returns editing help STARTED
+
+HelpSystemJUnitTest > getHelp('editing') returns editing help PASSED
+
+HelpSystemJUnitTest > getHelp('window') returns window help STARTED
+
+HelpSystemJUnitTest > getHelp('window') returns window help PASSED
+
+HelpSystemJUnitTest > help annotation does not add brackets to non-command text STARTED
+
+HelpSystemJUnitTest > help annotation does not add brackets to non-command text PASSED
+
+HelpSystemJUnitTest > getHelp with unknown topic shows error STARTED
+
+HelpSystemJUnitTest > getHelp with unknown topic shows error PASSED
+
+IconUtilJUnitTest > createJaviIcon(128) produces 128x128 image STARTED
+
+IconUtilJUnitTest > createJaviIcon(128) produces 128x128 image PASSED
+
+IconUtilJUnitTest > createJaviIcon(16) works at small size STARTED
+
+IconUtilJUnitTest > createJaviIcon(16) works at small size PASSED
+
+IconUtilJUnitTest > createJaviIcon(512) produces 512x512 image STARTED
+
+IconUtilJUnitTest > createJaviIcon(512) produces 512x512 image PASSED
+
+IconUtilJUnitTest > icon has reddish-orange background STARTED
+
+IconUtilJUnitTest > icon has reddish-orange background PASSED
+
+IconUtilJUnitTest > default icon is 128x128 STARTED
+
+IconUtilJUnitTest > default icon is 128x128 PASSED
+
+IconUtilJUnitTest > badge overlay area (top-right) retains icon content STARTED
+
+IconUtilJUnitTest > badge overlay area (top-right) retains icon content PASSED
+
+IconUtilJUnitTest > icon contains orange pixels for saucer/text STARTED
+
+IconUtilJUnitTest > icon contains orange pixels for saucer/text PASSED
+
+IconUtilJUnitTest > icon has non-trivial content (not all one color) STARTED
+
+IconUtilJUnitTest > icon has non-trivial content (not all one color) PASSED
+
+IconUtilJUnitTest > icon list contains 6 standard sizes STARTED
+
+IconUtilJUnitTest > icon list contains 6 standard sizes PASSED
+
+InputExceptionJUnitTest > inputExceptionWithCause() STARTED
+
+InputExceptionJUnitTest > inputExceptionWithCause() PASSED
+
+InputExceptionJUnitTest > inputExceptionIsCheckedException() STARTED
+
+InputExceptionJUnitTest > inputExceptionIsCheckedException() PASSED
+
+InputExceptionJUnitTest > inputExceptionMessageOnly() STARTED
+
+InputExceptionJUnitTest > inputExceptionMessageOnly() PASSED
+
+InputExceptionJUnitTest > exitExceptionWithCause() STARTED
+
+InputExceptionJUnitTest > exitExceptionWithCause() PASSED
+
+InputExceptionJUnitTest > exitExceptionCanBeCaughtAsInputException() STARTED
+
+InputExceptionJUnitTest > exitExceptionCanBeCaughtAsInputException() PASSED
+
+InputExceptionJUnitTest > inputExceptionNullCauseAllowed() STARTED
+
+InputExceptionJUnitTest > inputExceptionNullCauseAllowed() PASSED
+
+InputExceptionJUnitTest > exitExceptionDefaultMessage() STARTED
+
+InputExceptionJUnitTest > exitExceptionDefaultMessage() PASSED
+
+InputExceptionJUnitTest > inputExceptionCanBeCaughtAsException() STARTED
+
+InputExceptionJUnitTest > inputExceptionCanBeCaughtAsException() PASSED
+
+InputExceptionJUnitTest > exitExceptionExtendsInputException() STARTED
+
+InputExceptionJUnitTest > exitExceptionExtendsInputException() PASSED
+
+InsertBufferJUnitTest > findspaceboundReturnsZeroOnEmptyBuffer() STARTED
+
+InsertBufferJUnitTest > findspaceboundReturnsZeroOnEmptyBuffer() PASSED
+
+InsertBufferJUnitTest > insertCharsAppendsText() STARTED
+
+InsertBufferJUnitTest > insertCharsAppendsText() PASSED
+
+InsertBufferJUnitTest > isActiveInitiallyFalse() STARTED
+
+InsertBufferJUnitTest > isActiveInitiallyFalse() PASSED
+
+InsertBufferJUnitTest > insertCharsAppendsMultiple() STARTED
+
+InsertBufferJUnitTest > insertCharsAppendsMultiple() PASSED
+
+InsertBufferJUnitTest > findspaceboundSkipsBlankLines() STARTED
+
+InsertBufferJUnitTest > findspaceboundSkipsBlankLines() PASSED
+
+InsertBufferJUnitTest > findspaceboundFindsNextTabStop() STARTED
+
+InsertBufferJUnitTest > findspaceboundFindsNextTabStop() PASSED
+
+InsertBufferJUnitTest > insertCharsEmptyIterator() STARTED
+
+InsertBufferJUnitTest > insertCharsEmptyIterator() PASSED
+
+InsertBufferJUnitTest > findspaceboundAtCursorLine1ReturnsZero() STARTED
+
+InsertBufferJUnitTest > findspaceboundAtCursorLine1ReturnsZero() PASSED
+
+InsertBufferJUnitTest > insertCharsWithUnicode() STARTED
+
+InsertBufferJUnitTest > insertCharsWithUnicode() PASSED
+
+InsertBufferJUnitTest > isOverwriteInitiallyFalse() STARTED
+
+InsertBufferJUnitTest > isOverwriteInitiallyFalse() PASSED
+
+InsertBufferJUnitTest > insertCharsPreservesNewlines() STARTED
+
+InsertBufferJUnitTest > insertCharsPreservesNewlines() PASSED
+
+InsertBufferJUnitTest > insertCharsHandlesNull() STARTED
+
+InsertBufferJUnitTest > insertCharsHandlesNull() PASSED
+
+InsertBufferJUnitTest > insertCharsSingleChar() STARTED
+
+InsertBufferJUnitTest > insertCharsSingleChar() PASSED
+
+InsertBufferJUnitTest > insertCharsPreservesTabs() STARTED
+
+InsertBufferJUnitTest > insertCharsPreservesTabs() PASSED
+
+InsertBufferJUnitTest > getStringInitiallyEmpty() STARTED
+
+InsertBufferJUnitTest > getStringInitiallyEmpty() PASSED
+
+IoConverterJUnitTest > reload calls dorun pipeline STARTED
+
+IoConverterJUnitTest > reload calls dorun pipeline PASSED
+
+IoConverterJUnitTest > StringIoc convertStream produces correct cache STARTED
+
+IoConverterJUnitTest > StringIoc convertStream produces correct cache PASSED
+
+IoConverterJUnitTest > constructor with quickThread=false does not start thread STARTED
+
+IoConverterJUnitTest > constructor with quickThread=false does not start thread PASSED
+
+IoConverterJUnitTest > StringIoc convertStream with trailing newline STARTED
+
+IoConverterJUnitTest > StringIoc convertStream with trailing newline PASSED
+
+IoConverterJUnitTest > base getnext returns null STARTED
+
+IoConverterJUnitTest > base getnext returns null PASSED
+
+IoConverterJUnitTest > convertStream collects getnext into EditCache STARTED
+
+IoConverterJUnitTest > convertStream collects getnext into EditCache PASSED
+
+IoConverterJUnitTest > base getnext returns null repeatedly STARTED
+
+IoConverterJUnitTest > base getnext returns null repeatedly PASSED
+
+IoConverterJUnitTest > constructor with quickThread=true does not start thread until init1 STARTED
+
+IoConverterJUnitTest > constructor with quickThread=true does not start thread until init1 PASSED
+
+IoConverterJUnitTest > prop is the FileProperties passed at construction STARTED
+
+IoConverterJUnitTest > prop is the FileProperties passed at construction PASSED
+
+IoConverterJUnitTest > StringIoc convertStream single line STARTED
+
+IoConverterJUnitTest > StringIoc convertStream single line PASSED
+
+IoConverterJUnitTest > toString returns shortName from FileDescriptor STARTED
+
+IoConverterJUnitTest > toString returns shortName from FileDescriptor PASSED
+
+IoConverterJUnitTest > convertStream with single element STARTED
+
+IoConverterJUnitTest > convertStream with single element PASSED
+
+IoConverterJUnitTest > convertStream returns empty cache when getnext is null STARTED
+
+IoConverterJUnitTest > convertStream returns empty cache when getnext is null PASSED
+
+IoInfraJUnitTest > JaviFacade > createFileTE returns TextEdit instance STARTED
+
+IoInfraJUnitTest > JaviFacade > createFileTE returns TextEdit instance PASSED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > valueOf round-trips STARTED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > valueOf round-trips PASSED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > NOOP is first STARTED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > NOOP is first PASSED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > all opcodes exist STARTED
+
+IoInfraJUnitTest > ChangeOpt.Opcode > all opcodes exist PASSED
+
+IoInfraJUnitTest > IoConverter > prop is accessible STARTED
+
+IoInfraJUnitTest > IoConverter > prop is accessible PASSED
+
+IoInfraJUnitTest > IoConverter > getnext returns null by default STARTED
+
+IoInfraJUnitTest > IoConverter > getnext returns null by default PASSED
+
+IoInfraJUnitTest > IoConverter > toString returns string STARTED
+
+IoInfraJUnitTest > IoConverter > toString returns string PASSED
+
+IoInfraJUnitTest > ClassConverter > StringIoc uses converter for props STARTED
+
+IoInfraJUnitTest > ClassConverter > StringIoc uses converter for props PASSED
+
+IoInfraJUnitTest > ClassConverter > StringIoc.converter is not null STARTED
+
+IoInfraJUnitTest > ClassConverter > StringIoc.converter is not null PASSED
+
+IsContentUnchangedJUnitTest > differentSizeReturnsFalse() STARTED
+
+IsContentUnchangedJUnitTest > differentSizeReturnsFalse() PASSED
+
+IsContentUnchangedJUnitTest > sameSizeDifferentContentReturnsFalse() STARTED
+
+IsContentUnchangedJUnitTest > sameSizeDifferentContentReturnsFalse() PASSED
+
+IsContentUnchangedJUnitTest > newFileCreatedWithContentIsChanged() STARTED
+
+IsContentUnchangedJUnitTest > newFileCreatedWithContentIsChanged() PASSED
+
+IsContentUnchangedJUnitTest > fileDeletedReturnsFalse() STARTED
+
+IsContentUnchangedJUnitTest > fileDeletedReturnsFalse() PASSED
+
+IsContentUnchangedJUnitTest > multiLineFileUnchangedReturnsTrue() STARTED
+
+IsContentUnchangedJUnitTest > multiLineFileUnchangedReturnsTrue() PASSED
+
+IsContentUnchangedJUnitTest > newFileCreatedExternallyDetected() STARTED
+
+IsContentUnchangedJUnitTest > newFileCreatedExternallyDetected() PASSED
+
+IsContentUnchangedJUnitTest > unchangedFileReturnsTrue() STARTED
+
+IsContentUnchangedJUnitTest > unchangedFileReturnsTrue() PASSED
+
+IsContentUnchangedJUnitTest > emptyFileUnchangedReturnsTrue() STARTED
+
+IsContentUnchangedJUnitTest > emptyFileUnchangedReturnsTrue() PASSED
+
+JSJUnitTest > evalFunctionDefinitionAndCall() STARTED
+
+JSJUnitTest > evalFunctionDefinitionAndCall() PASSED
+
+JSJUnitTest > evalSimpleExpression() STARTED
+
+JSJUnitTest > evalSimpleExpression() PASSED
+
+JSJUnitTest > jsEvalIterMultiLineScript() STARTED
+
+JSJUnitTest > jsEvalIterMultiLineScript() PASSED
+
+JeyEventJUnitTest > getModifiers for plain character has no modifiers STARTED
+
+JeyEventJUnitTest > getModifiers for plain character has no modifiers PASSED
+
+JeyEventJUnitTest > shift modifier preserved for ctrl-Z (char 26) STARTED
+
+JeyEventJUnitTest > shift modifier preserved for ctrl-Z (char 26) PASSED
+
+JeyEventJUnitTest > shift modifier preserved for space STARTED
+
+JeyEventJUnitTest > shift modifier preserved for space PASSED
+
+JeyEventJUnitTest > toString includes modifier and code info STARTED
+
+JeyEventJUnitTest > toString includes modifier and code info PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers maps CTRL_DOWN_MASK STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers maps CTRL_DOWN_MASK PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers maps META_DOWN_MASK STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers maps META_DOWN_MASK PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers returns 0 for no modifiers STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers returns 0 for no modifiers PASSED
+
+JeyEventJUnitTest > shift modifier stripped for regular characters STARTED
+
+JeyEventJUnitTest > shift modifier stripped for regular characters PASSED
+
+JeyEventJUnitTest > character key stores char as code STARTED
+
+JeyEventJUnitTest > character key stores char as code PASSED
+
+JeyEventJUnitTest > JeyEvent not equal to non-JeyEvent STARTED
+
+JeyEventJUnitTest > JeyEvent not equal to non-JeyEvent PASSED
+
+JeyEventJUnitTest > shift modifier preserved for action keys STARTED
+
+JeyEventJUnitTest > shift modifier preserved for action keys PASSED
+
+JeyEventJUnitTest > equal events have same hashCode STARTED
+
+JeyEventJUnitTest > equal events have same hashCode PASSED
+
+JeyEventJUnitTest > different events likely have different hashCode STARTED
+
+JeyEventJUnitTest > different events likely have different hashCode PASSED
+
+JeyEventJUnitTest > getModifiers returns bitmask without ACT_MASK STARTED
+
+JeyEventJUnitTest > getModifiers returns bitmask without ACT_MASK PASSED
+
+JeyEventJUnitTest > null is not equal to JeyEvent STARTED
+
+JeyEventJUnitTest > null is not equal to JeyEvent PASSED
+
+JeyEventJUnitTest > different keys are not equal STARTED
+
+JeyEventJUnitTest > different keys are not equal PASSED
+
+JeyEventJUnitTest > VK constants have expected values STARTED
+
+JeyEventJUnitTest > VK constants have expected values PASSED
+
+JeyEventJUnitTest > identical events are equal STARTED
+
+JeyEventJUnitTest > identical events are equal PASSED
+
+JeyEventJUnitTest > ctrl modifier preserved for characters STARTED
+
+JeyEventJUnitTest > ctrl modifier preserved for characters PASSED
+
+JeyEventJUnitTest > action key (CHAR_UNDEFINED) uses keyCode STARTED
+
+JeyEventJUnitTest > action key (CHAR_UNDEFINED) uses keyCode PASSED
+
+JeyEventJUnitTest > shift modifier preserved for backspace (char 8) STARTED
+
+JeyEventJUnitTest > shift modifier preserved for backspace (char 8) PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers maps SHIFT_DOWN_MASK STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers maps SHIFT_DOWN_MASK PASSED
+
+JeyEventJUnitTest > same event equals itself STARTED
+
+JeyEventJUnitTest > same event equals itself PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers handles combined modifiers STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers handles combined modifiers PASSED
+
+JeyEventJUnitTest > convertExtendedModifiers maps ALT_DOWN_MASK STARTED
+
+JeyEventJUnitTest > convertExtendedModifiers maps ALT_DOWN_MASK PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecActionKey() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecActionKey() PASSED
+
+KeyBindingPersistenceJUnitTest > ctrlKeyRoundtripAllLetters() STARTED
+
+KeyBindingPersistenceJUnitTest > ctrlKeyRoundtripAllLetters() PASSED
+
+KeyBindingPersistenceJUnitTest > pageUpRoundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > pageUpRoundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecShiftChar() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecShiftChar() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecShiftLeft() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecShiftLeft() PASSED
+
+KeyBindingPersistenceJUnitTest > unbindRemovesFromUserBindings() STARTED
+
+KeyBindingPersistenceJUnitTest > unbindRemovesFromUserBindings() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlF1() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlF1() PASSED
+
+KeyBindingPersistenceJUnitTest > navKeyRoundtrips() STARTED
+
+KeyBindingPersistenceJUnitTest > navKeyRoundtrips() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecPlainChar() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecPlainChar() PASSED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsFormatIsKeyCommand() STARTED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsFormatIsKeyCommand() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlChar() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlChar() PASSED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecCtrlF1Roundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecCtrlF1Roundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsEmpty() STARTED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsEmpty() PASSED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecAltDeleteRoundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecAltDeleteRoundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > ctrlBRoundtripViaBind() STARTED
+
+KeyBindingPersistenceJUnitTest > ctrlBRoundtripViaBind() PASSED
+
+KeyBindingPersistenceJUnitTest > allFKeyRoundtrips() STARTED
+
+KeyBindingPersistenceJUnitTest > allFKeyRoundtrips() PASSED
+
+KeyBindingPersistenceJUnitTest > configPathIsUnderJaviDir() STARTED
+
+KeyBindingPersistenceJUnitTest > configPathIsUnderJaviDir() PASSED
+
+KeyBindingPersistenceJUnitTest > ctrlFRoundtripFormat() STARTED
+
+KeyBindingPersistenceJUnitTest > ctrlFRoundtripFormat() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecAltUp() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecAltUp() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlA() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlA() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlZ() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlZ() PASSED
+
+KeyBindingPersistenceJUnitTest > actionKeyRoundtripViaBind() STARTED
+
+KeyBindingPersistenceJUnitTest > actionKeyRoundtripViaBind() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlShiftF5() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecCtrlShiftF5() PASSED
+
+KeyBindingPersistenceJUnitTest > ctrlShiftF5FullRoundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > ctrlShiftF5FullRoundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > pageDownRoundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > pageDownRoundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > plainCharRoundtripViaBind() STARTED
+
+KeyBindingPersistenceJUnitTest > plainCharRoundtripViaBind() PASSED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsMultipleBindings() STARTED
+
+KeyBindingPersistenceJUnitTest > getUserBindingSpecsMultipleBindings() PASSED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecShiftLeftRoundtrip() STARTED
+
+KeyBindingPersistenceJUnitTest > parseKeySpecShiftLeftRoundtrip() PASSED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecAltChar() STARTED
+
+KeyBindingPersistenceJUnitTest > formatKeySpecAltChar() PASSED
+
+KeyGroupJUnitTest > different modifiers for same char are distinct STARTED
+
+KeyGroupJUnitTest > different modifiers for same char are distinct PASSED
+
+KeyGroupJUnitTest > get returns null for unbound key STARTED
+
+KeyGroupJUnitTest > get returns null for unbound key PASSED
+
+KeyGroupJUnitTest > getBindingList on empty KeyGroup returns empty list STARTED
+
+KeyGroupJUnitTest > getBindingList on empty KeyGroup returns empty list PASSED
+
+KeyGroupJUnitTest > duplicate keyactionbind throws RuntimeException STARTED
+
+KeyGroupJUnitTest > duplicate keyactionbind throws RuntimeException PASSED
+
+KeyGroupJUnitTest > action key and char key don't collide STARTED
+
+KeyGroupJUnitTest > action key and char key don't collide PASSED
+
+KeyGroupJUnitTest > getBindingList returns sorted list of bindings STARTED
+
+KeyGroupJUnitTest > getBindingList returns sorted list of bindings PASSED
+
+KeyGroupJUnitTest > duplicate keybind throws RuntimeException STARTED
+
+KeyGroupJUnitTest > duplicate keybind throws RuntimeException PASSED
+
+KeyGroupJUnitTest > keybind with modifiers stores and retrieves STARTED
+
+KeyGroupJUnitTest > keybind with modifiers stores and retrieves PASSED
+
+KeyGroupJUnitTest > getBindingList contains command names STARTED
+
+KeyGroupJUnitTest > getBindingList contains command names PASSED
+
+KeyGroupJUnitTest > keybind stores and get retrieves char binding STARTED
+
+KeyGroupJUnitTest > keybind stores and get retrieves char binding PASSED
+
+KeyGroupJUnitTest > keyactionbind stores action key binding STARTED
+
+KeyGroupJUnitTest > keyactionbind stores action key binding PASSED
+
+KeyMapJUnitTest > overlayWithShellNameCreated() STARTED
+
+KeyMapJUnitTest > overlayWithShellNameCreated() PASSED
+
+KeyMapJUnitTest > directoryOverlayCanBeCreatedAndResolved() STARTED
+
+KeyMapJUnitTest > directoryOverlayCanBeCreatedAndResolved() PASSED
+
+KeyMapJUnitTest > registeredNamesContainsRegistered() STARTED
+
+KeyMapJUnitTest > registeredNamesContainsRegistered() PASSED
+
+KeyMapJUnitTest > toStringShowsParentChain() STARTED
+
+KeyMapJUnitTest > toStringShowsParentChain() PASSED
+
+KeyMapJUnitTest > childOverridesParentBinding() STARTED
+
+KeyMapJUnitTest > childOverridesParentBinding() PASSED
+
+KeyMapJUnitTest > createOverlayHasParent() STARTED
+
+KeyMapJUnitTest > createOverlayHasParent() PASSED
+
+KeyMapJUnitTest > directoryOverlayHasEditBindingS() STARTED
+
+KeyMapJUnitTest > directoryOverlayHasEditBindingS() PASSED
+
+KeyMapJUnitTest > overlayOverridesEnterKeyInMoveGroup() STARTED
+
+KeyMapJUnitTest > overlayOverridesEnterKeyInMoveGroup() PASSED
+
+KeyMapJUnitTest > directoryOverlayEnterBoundAsMove() STARTED
+
+KeyMapJUnitTest > directoryOverlayEnterBoundAsMove() PASSED
+
+KeyMapJUnitTest > registerAndGet() STARTED
+
+KeyMapJUnitTest > registerAndGet() PASSED
+
+KeyMapJUnitTest > directoryOverlayCountOfEditBindings() STARTED
+
+KeyMapJUnitTest > directoryOverlayCountOfEditBindings() PASSED
+
+KeyMapJUnitTest > editLookupFallsThroughToParent() STARTED
+
+KeyMapJUnitTest > editLookupFallsThroughToParent() PASSED
+
+KeyMapJUnitTest > directoryOverlayFallsThroughForNavigation() STARTED
+
+KeyMapJUnitTest > directoryOverlayFallsThroughForNavigation() PASSED
+
+KeyMapJUnitTest > helpDirectoryTopicContainsContent() STARTED
+
+KeyMapJUnitTest > helpDirectoryTopicContainsContent() PASSED
+
+KeyMapJUnitTest > getReverseBindingMapContainsEntries() STARTED
+
+KeyMapJUnitTest > getReverseBindingMapContainsEntries() PASSED
+
+KeyMapJUnitTest > bindEditKeyCharAddsBinding() STARTED
+
+KeyMapJUnitTest > bindEditKeyCharAddsBinding() PASSED
+
+KeyMapJUnitTest > lookupFallsThroughToParent() STARTED
+
+KeyMapJUnitTest > lookupFallsThroughToParent() PASSED
+
+KeyMapJUnitTest > filteredBindingsDirectoryShowsOverrides() STARTED
+
+KeyMapJUnitTest > filteredBindingsDirectoryShowsOverrides() PASSED
+
+KeyMapJUnitTest > directoryOverlayAllEditBindingsPresent() STARTED
+
+KeyMapJUnitTest > directoryOverlayAllEditBindingsPresent() PASSED
+
+KeyMapJUnitTest > filteredBindingsUnknownKeymapShowsError() STARTED
+
+KeyMapJUnitTest > filteredBindingsUnknownKeymapShowsError() PASSED
+
+KeyMapJUnitTest > directoryOverlayParentIsNormal() STARTED
+
+KeyMapJUnitTest > directoryOverlayParentIsNormal() PASSED
+
+KeyMapJUnitTest > getOverlayKeymapsReturnsOnlyChildren() STARTED
+
+KeyMapJUnitTest > getOverlayKeymapsReturnsOnlyChildren() PASSED
+
+KeyMapJUnitTest > resolveForBufferReturnsNullForPlainTextEdit() STARTED
+
+KeyMapJUnitTest > resolveForBufferReturnsNullForPlainTextEdit() PASSED
+
+KeyMapJUnitTest > lookupMoveReturnsNullWhenNotBound() STARTED
+
+KeyMapJUnitTest > lookupMoveReturnsNullWhenNotBound() PASSED
+
+KeyMapJUnitTest > directoryOverlayCountOfMoveBindings() STARTED
+
+KeyMapJUnitTest > directoryOverlayCountOfMoveBindings() PASSED
+
+KeyMapJUnitTest > directoryOverlayRegisteredAfterInit() STARTED
+
+KeyMapJUnitTest > directoryOverlayRegisteredAfterInit() PASSED
+
+KeyMapJUnitTest > directoryOverlayJKFallThrough() STARTED
+
+KeyMapJUnitTest > directoryOverlayJKFallThrough() PASSED
+
+KeyMapJUnitTest > keybindingsHelpListsRegisteredKeymaps() STARTED
+
+KeyMapJUnitTest > keybindingsHelpListsRegisteredKeymaps() PASSED
+
+KeyMapJUnitTest > bindMoveKeyCharAddsBinding() STARTED
+
+KeyMapJUnitTest > bindMoveKeyCharAddsBinding() PASSED
+
+KeyMapJUnitTest > toStringRootHasNoArrow() STARTED
+
+KeyMapJUnitTest > toStringRootHasNoArrow() PASSED
+
+KeyMapJUnitTest > directoryEditOverrideHidesParent() STARTED
+
+KeyMapJUnitTest > directoryEditOverrideHidesParent() PASSED
+
+KeyMapJUnitTest > overlayChainThreeLevels() STARTED
+
+KeyMapJUnitTest > overlayChainThreeLevels() PASSED
+
+KeyMapJUnitTest > resolveForBufferReturnsDirectoryForDirEdit() STARTED
+
+KeyMapJUnitTest > resolveForBufferReturnsDirectoryForDirEdit() PASSED
+
+KeyMapJUnitTest > shellOverlayRegistered() STARTED
+
+KeyMapJUnitTest > shellOverlayRegistered() PASSED
+
+MapEventJUnitTest > formatKeySpecRoundtripsChar() STARTED
+
+MapEventJUnitTest > formatKeySpecRoundtripsChar() PASSED
+
+MapEventJUnitTest > jeyEventGetKeyCharForCharEvent() STARTED
+
+MapEventJUnitTest > jeyEventGetKeyCharForCharEvent() PASSED
+
+MapEventJUnitTest > persistenceConfigPathEndWithKeybindings() STARTED
+
+MapEventJUnitTest > persistenceConfigPathEndWithKeybindings() PASSED
+
+MapEventJUnitTest > getBindingListIsSorted() STARTED
+
+MapEventJUnitTest > getBindingListIsSorted() PASSED
+
+MapEventJUnitTest > helpSystemDirAliasNotNull() STARTED
+
+MapEventJUnitTest > helpSystemDirAliasNotNull() PASSED
+
+MapEventJUnitTest > keyBindingProtoChangesArg() STARTED
+
+MapEventJUnitTest > keyBindingProtoChangesArg() PASSED
+
+MapEventJUnitTest > jeyEventNotEqualsDifferentChar() STARTED
+
+MapEventJUnitTest > jeyEventNotEqualsDifferentChar() PASSED
+
+MapEventJUnitTest > bindTracksUserBinding() STARTED
+
+MapEventJUnitTest > bindTracksUserBinding() PASSED
+
+MapEventJUnitTest > overlayKeymapsListExcludesRootMaps() STARTED
+
+MapEventJUnitTest > overlayKeymapsListExcludesRootMaps() PASSED
+
+MapEventJUnitTest > jeyEventEqualsSameParams() STARTED
+
+MapEventJUnitTest > jeyEventEqualsSameParams() PASSED
+
+MapEventJUnitTest > keyMapReverseBindingMapCombinesMoveAndEdit() STARTED
+
+MapEventJUnitTest > keyMapReverseBindingMapCombinesMoveAndEdit() PASSED
+
+MapEventJUnitTest > registeredNamesReturnsImmutableSet() STARTED
+
+MapEventJUnitTest > registeredNamesReturnsImmutableSet() PASSED
+
+MapEventJUnitTest > formatKeySpecRoundtripsActionKey() STARTED
+
+MapEventJUnitTest > formatKeySpecRoundtripsActionKey() PASSED
+
+MapEventJUnitTest > jeyEventActionKeyVsCharKey() STARTED
+
+MapEventJUnitTest > jeyEventActionKeyVsCharKey() PASSED
+
+MapEventJUnitTest > keyMapOverlayWithConvenienceMethods() STARTED
+
+MapEventJUnitTest > keyMapOverlayWithConvenienceMethods() PASSED
+
+MapEventJUnitTest > helpSystemKeymapAliasNotNull() STARTED
+
+MapEventJUnitTest > helpSystemKeymapAliasNotNull() PASSED
+
+MapEventJUnitTest > keyMapBindMoveKeyAndLookup() STARTED
+
+MapEventJUnitTest > keyMapBindMoveKeyAndLookup() PASSED
+
+MapEventJUnitTest > reverseBindingMapMultipleKeysPerCommand() STARTED
+
+MapEventJUnitTest > reverseBindingMapMultipleKeysPerCommand() PASSED
+
+MapEventJUnitTest > jeyEventGetKeyCharForActionEvent() STARTED
+
+MapEventJUnitTest > jeyEventGetKeyCharForActionEvent() PASSED
+
+MapEventJUnitTest > jeyEventNotEqualsDifferentModifiers() STARTED
+
+MapEventJUnitTest > jeyEventNotEqualsDifferentModifiers() PASSED
+
+MapEventJUnitTest > helpSystemIndexTopicNotNull() STARTED
+
+MapEventJUnitTest > helpSystemIndexTopicNotNull() PASSED
+
+MapEventJUnitTest > getKeyGroupOverlayBadNameReturnsNull() STARTED
+
+MapEventJUnitTest > getKeyGroupOverlayBadNameReturnsNull() PASSED
+
+MapEventJUnitTest > getBindingListContainsEntries() STARTED
+
+MapEventJUnitTest > getBindingListContainsEntries() PASSED
+
+MapEventJUnitTest > keyBindingToStringFormatHasTwoPipes() STARTED
+
+MapEventJUnitTest > keyBindingToStringFormatHasTwoPipes() PASSED
+
+MapEventJUnitTest > helpSystemKeybindingsTopicNotNull() STARTED
+
+MapEventJUnitTest > helpSystemKeybindingsTopicNotNull() PASSED
+
+MapEventJUnitTest > filteredBindingsUnknownKeymapShowsError() STARTED
+
+MapEventJUnitTest > filteredBindingsUnknownKeymapShowsError() PASSED
+
+MapEventJUnitTest > lookupMissingKeyReturnsNull() STARTED
+
+MapEventJUnitTest > lookupMissingKeyReturnsNull() PASSED
+
+MapEventJUnitTest > getKeyGroupBasicMoveAndEdit() STARTED
+
+MapEventJUnitTest > getKeyGroupBasicMoveAndEdit() PASSED
+
+MapEventJUnitTest > keyactionbindAndLookup() STARTED
+
+MapEventJUnitTest > keyactionbindAndLookup() PASSED
+
+MapEventJUnitTest > reverseBindingMapEmptyForEmptyGroup() STARTED
+
+MapEventJUnitTest > reverseBindingMapEmptyForEmptyGroup() PASSED
+
+MapEventJUnitTest > jeyEventToStringContainsInfo() STARTED
+
+MapEventJUnitTest > jeyEventToStringContainsInfo() PASSED
+
+MapEventJUnitTest > helpSystemShellTopicNotNull() STARTED
+
+MapEventJUnitTest > helpSystemShellTopicNotNull() PASSED
+
+MapEventJUnitTest > helpSystemDirectoryTopicNotNull() STARTED
+
+MapEventJUnitTest > helpSystemDirectoryTopicNotNull() PASSED
+
+MapEventJUnitTest > keyMapBindMoveActionAndLookup() STARTED
+
+MapEventJUnitTest > keyMapBindMoveActionAndLookup() PASSED
+
+MapEventJUnitTest > sameCharDifferentModifiersAreDistinct() STARTED
+
+MapEventJUnitTest > sameCharDifferentModifiersAreDistinct() PASSED
+
+MapEventJUnitTest > getKeyGroupUnknownReturnsNull() STARTED
+
+MapEventJUnitTest > getKeyGroupUnknownReturnsNull() PASSED
+
+MapEventJUnitTest > keybindAndLookupBasicChar() STARTED
+
+MapEventJUnitTest > keybindAndLookupBasicChar() PASSED
+
+MapEventJUnitTest > helpSystemFileListTopicNotNull() STARTED
+
+MapEventJUnitTest > helpSystemFileListTopicNotNull() PASSED
+
+MapEventJUnitTest > keyBindingProtoSameArgReturnsSelf() STARTED
+
+MapEventJUnitTest > keyBindingProtoSameArgReturnsSelf() PASSED
+
+MapEventJUnitTest > reverseBindingMapContainsEntries() STARTED
+
+MapEventJUnitTest > reverseBindingMapContainsEntries() PASSED
+
+MapEventJUnitTest > unbindRemovesUserBinding() STARTED
+
+MapEventJUnitTest > unbindRemovesUserBinding() PASSED
+
+MapEventJUnitTest > keybindAndLookupWithModifier() STARTED
+
+MapEventJUnitTest > keybindAndLookupWithModifier() PASSED
+
+MapEventJUnitTest > filteredBindingsKnownKeymapShowsBindings() STARTED
+
+MapEventJUnitTest > filteredBindingsKnownKeymapShowsBindings() PASSED
+
+MapEventJUnitTest > keyMapBindEditActionAndLookup() STARTED
+
+MapEventJUnitTest > keyMapBindEditActionAndLookup() PASSED
+
+MapEventJUnitTest > keyMapBindMoveKeyWithModifier() STARTED
+
+MapEventJUnitTest > keyMapBindMoveKeyWithModifier() PASSED
+
+MapEventJUnitTest > getBindingListEmptyForEmptyGroup() STARTED
+
+MapEventJUnitTest > getBindingListEmptyForEmptyGroup() PASSED
+
+MapEventJUnitTest > keyMapBindEditKeyAndLookup() STARTED
+
+MapEventJUnitTest > keyMapBindEditKeyAndLookup() PASSED
+
+MiscCommandsJUnitTest > getHeightReturnsPositive() STARTED
+
+MiscCommandsJUnitTest > getHeightReturnsPositive() PASSED
+
+MiscCommandsJUnitTest > zprocessCommandIsRegistered() STARTED
+
+MiscCommandsJUnitTest > zprocessCommandIsRegistered() PASSED
+
+MiscCommandsJUnitTest > getWidthDefault() STARTED
+
+MiscCommandsJUnitTest > getWidthDefault() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellClose() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellClose() PASSED
+
+MiscCommandsJUnitTest > cmdEnumInvalidThrows() STARTED
+
+MiscCommandsJUnitTest > cmdEnumInvalidThrows() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellHistory() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellHistory() PASSED
+
+MiscCommandsJUnitTest > unknownCommandThrows() STARTED
+
+MiscCommandsJUnitTest > unknownCommandThrows() PASSED
+
+MiscCommandsJUnitTest > getHeightDefault() STARTED
+
+MiscCommandsJUnitTest > getHeightDefault() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsVt() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsVt() PASSED
+
+MiscCommandsJUnitTest > cmdEnumValueOfRoundTrips() STARTED
+
+MiscCommandsJUnitTest > cmdEnumValueOfRoundTrips() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellName() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellName() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellNext() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellNext() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellPrev() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellPrev() PASSED
+
+MiscCommandsJUnitTest > undoCommandDispatches() STARTED
+
+MiscCommandsJUnitTest > undoCommandDispatches() PASSED
+
+MiscCommandsJUnitTest > getWidthReturnsPositive() STARTED
+
+MiscCommandsJUnitTest > getWidthReturnsPositive() PASSED
+
+MiscCommandsJUnitTest > cmdEnumCount() STARTED
+
+MiscCommandsJUnitTest > cmdEnumCount() PASSED
+
+MiscCommandsJUnitTest > miscCommandsExtendsRgroup() STARTED
+
+MiscCommandsJUnitTest > miscCommandsExtendsRgroup() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellEnv() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShellEnv() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsExec() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsExec() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsRedo() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsRedo() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsUndo() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsUndo() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsRedraw() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsRedraw() PASSED
+
+MiscCommandsJUnitTest > cmdEnumContainsShells() STARTED
+
+MiscCommandsJUnitTest > cmdEnumContainsShells() PASSED
+
+MoveGroupJUnitTest > movelineIsRegistered() STARTED
+
+MoveGroupJUnitTest > movelineIsRegistered() PASSED
+
+MoveGroupJUnitTest > searchBackwardFindsPattern() STARTED
+
+MoveGroupJUnitTest > searchBackwardFindsPattern() PASSED
+
+MoveGroupJUnitTest > moveCommandReordersLines() STARTED
+
+MoveGroupJUnitTest > moveCommandReordersLines() PASSED
+
+MoveGroupJUnitTest > gotoLineByNumber() STARTED
+
+MoveGroupJUnitTest > gotoLineByNumber() PASSED
+
+MoveGroupJUnitTest > fvcExRangeDelete() STARTED
+
+MoveGroupJUnitTest > fvcExRangeDelete() PASSED
+
+MoveGroupJUnitTest > gotolineIsRegistered() STARTED
+
+MoveGroupJUnitTest > gotolineIsRegistered() PASSED
+
+MoveGroupJUnitTest > fvcCursorGotoLineViaCommand() STARTED
+
+MoveGroupJUnitTest > fvcCursorGotoLineViaCommand() PASSED
+
+MoveGroupJUnitTest > regsearchIsRegistered() STARTED
+
+MoveGroupJUnitTest > regsearchIsRegistered() PASSED
+
+MoveGroupJUnitTest > searchForwardFindsPattern() STARTED
+
+MoveGroupJUnitTest > searchForwardFindsPattern() PASSED
+
+MoveGroupJUnitTest > fvcLineOffsetNavigation() STARTED
+
+MoveGroupJUnitTest > fvcLineOffsetNavigation() PASSED
+
+MoveGroupJUnitTest > forwardwordIsRegistered() STARTED
+
+MoveGroupJUnitTest > forwardwordIsRegistered() PASSED
+
+MoveGroupJUnitTest > regsearchWrapsAround() STARTED
+
+MoveGroupJUnitTest > regsearchWrapsAround() PASSED
+
+MoveGroupJUnitTest > movecharIsRegistered() STARTED
+
+MoveGroupJUnitTest > movecharIsRegistered() PASSED
+
+MoveGroupJUnitTest > gotoDollarReturnsLastLine() STARTED
+
+MoveGroupJUnitTest > gotoDollarReturnsLastLine() PASSED
+
+MoveGroupJUnitTest > fvcExCopyCommand() STARTED
+
+MoveGroupJUnitTest > fvcExCopyCommand() PASSED
+
+MoveGroupJUnitTest > fvcCursorAbsMovesToXY() STARTED
+
+MoveGroupJUnitTest > fvcCursorAbsMovesToXY() PASSED
+
+MoveGroupJUnitTest > copyCommandPreservesOriginal() STARTED
+
+MoveGroupJUnitTest > copyCommandPreservesOriginal() PASSED
+
+MoveGroupJUnitTest > inverseGlobalDeleteRemovesNonMatching() STARTED
+
+MoveGroupJUnitTest > inverseGlobalDeleteRemovesNonMatching() PASSED
+
+MoveGroupJUnitTest > findmarkIsRegistered() STARTED
+
+MoveGroupJUnitTest > findmarkIsRegistered() PASSED
+
+MoveGroupJUnitTest > fvcExMoveCommand() STARTED
+
+MoveGroupJUnitTest > fvcExMoveCommand() PASSED
+
+MoveGroupJUnitTest > globalSubstituteMatchesPattern() STARTED
+
+MoveGroupJUnitTest > globalSubstituteMatchesPattern() PASSED
+
+MoveGroupJUnitTest > backwardwordIsRegistered() STARTED
+
+MoveGroupJUnitTest > backwardwordIsRegistered() PASSED
+
+MoveGroupJUnitTest > regsearchReturnsNullOnNoMatch() STARTED
+
+MoveGroupJUnitTest > regsearchReturnsNullOnNoMatch() PASSED
+
+MoveGroupJUnitTest > regsearchFindsPositionForward() STARTED
+
+MoveGroupJUnitTest > regsearchFindsPositionForward() PASSED
+
+MoveGroupJUnitTest > balancecharIsRegistered() STARTED
+
+MoveGroupJUnitTest > balancecharIsRegistered() PASSED
+
+MoveGroupJUnitTest > searchcommandIsRegistered() STARTED
+
+MoveGroupJUnitTest > searchcommandIsRegistered() PASSED
+
+MoveGroupJUnitTest > lineOffsetWithMinus() STARTED
+
+MoveGroupJUnitTest > lineOffsetWithMinus() PASSED
+
+MoveGroupJUnitTest > fvcCursorYRelativeMove() STARTED
+
+MoveGroupJUnitTest > fvcCursorYRelativeMove() PASSED
+
+MoveGroupJUnitTest > searchSubstituteOnSpecificLine() STARTED
+
+MoveGroupJUnitTest > searchSubstituteOnSpecificLine() PASSED
+
+MoveGroupJUnitTest > lineOffsetWithPlus() STARTED
+
+MoveGroupJUnitTest > lineOffsetWithPlus() PASSED
+
+MoveGroupJUnitTest > fvcCursorXAbsMovesToColumn() STARTED
+
+MoveGroupJUnitTest > fvcCursorXAbsMovesToColumn() PASSED
+
+MoveGroupJUnitTest > markIsRegistered() STARTED
+
+MoveGroupJUnitTest > markIsRegistered() PASSED
+
+MovePosJUnitTest > zeroPosition() STARTED
+
+MovePosJUnitTest > zeroPosition() PASSED
+
+MovePosJUnitTest > copyConstructor() STARTED
+
+MovePosJUnitTest > copyConstructor() PASSED
+
+MovePosJUnitTest > toStringNegativeValues() STARTED
+
+MovePosJUnitTest > toStringNegativeValues() PASSED
+
+MovePosJUnitTest > copyConstructorIsIndependent() STARTED
+
+MovePosJUnitTest > copyConstructorIsIndependent() PASSED
+
+MovePosJUnitTest > setUpdatesFields() STARTED
+
+MovePosJUnitTest > setUpdatesFields() PASSED
+
+MovePosJUnitTest > toStringXNonZeroIncludesBoth() STARTED
+
+MovePosJUnitTest > toStringXNonZeroIncludesBoth() PASSED
+
+MovePosJUnitTest > fieldsAreMutable() STARTED
+
+MovePosJUnitTest > fieldsAreMutable() PASSED
+
+MovePosJUnitTest > constructorSetsFields() STARTED
+
+MovePosJUnitTest > constructorSetsFields() PASSED
+
+MovePosJUnitTest > setToZero() STARTED
+
+MovePosJUnitTest > setToZero() PASSED
+
+MovePosJUnitTest > toStringXZeroOmitsX() STARTED
+
+MovePosJUnitTest > toStringXZeroOmitsX() PASSED
+
+PosListListJUnitTest > main() runs without exception STARTED
+
+PosListListJUnitTest > main() runs without exception PASSED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for empty array STARTED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for empty array PASSED
+
+PosListListJUnitTest > mkid deduplication > non-duplicate mkid position is not in key set STARTED
+
+PosListListJUnitTest > mkid deduplication > non-duplicate mkid position is not in key set PASSED
+
+PosListListJUnitTest > mkid deduplication > duplicate ctag position is detected in key set STARTED
+
+PosListListJUnitTest > mkid deduplication > duplicate ctag position is detected in key set PASSED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys builds keys from positions STARTED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys builds keys from positions PASSED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey differs for different files STARTED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey differs for different files PASSED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey differs for different lines STARTED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey differs for different lines PASSED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for null input STARTED
+
+PosListListJUnitTest > mkid deduplication > buildCtagKeys returns null for null input PASSED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey uses file and line only STARTED
+
+PosListListJUnitTest > mkid deduplication > makeDedupKey uses file and line only PASSED
+
+PosListListJUnitTest > findDirectories > returns empty for non-existent directory name STARTED
+
+PosListListJUnitTest > findDirectories > returns empty for non-existent directory name PASSED
+
+PosListListJUnitTest > findDirectories > returns non-empty for existing directory STARTED
+
+PosListListJUnitTest > findDirectories > returns non-empty for existing directory PASSED
+
+PosListListJUnitTest > cn/cp commands > cn is a registered command STARTED
+
+PosListListJUnitTest > cn/cp commands > cn is a registered command PASSED
+
+PosListListJUnitTest > cn/cp commands > cp is a registered command STARTED
+
+PosListListJUnitTest > cn/cp commands > cp is a registered command PASSED
+
+PosListListJUnitTest > myassert > true does not throw STARTED
+
+PosListListJUnitTest > myassert > true does not throw PASSED
+
+PosListListJUnitTest > myassert > false throws RuntimeException STARTED
+
+PosListListJUnitTest > myassert > false throws RuntimeException PASSED
+
+PosListListJUnitTest > PCmd enum > NEXT_POS is at ordinal 9 STARTED
+
+PosListListJUnitTest > PCmd enum > NEXT_POS is at ordinal 9 PASSED
+
+PosListListJUnitTest > PCmd enum > TA is at ordinal 1 STARTED
+
+PosListListJUnitTest > PCmd enum > TA is at ordinal 1 PASSED
+
+PosListListJUnitTest > PCmd enum > GOTO_DIR_LIST_DEFAULT is at ordinal 15 STARTED
+
+PosListListJUnitTest > PCmd enum > GOTO_DIR_LIST_DEFAULT is at ordinal 15 PASSED
+
+PosListListJUnitTest > PCmd enum > CP is at ordinal 17 STARTED
+
+PosListListJUnitTest > PCmd enum > CP is at ordinal 17 PASSED
+
+PosListListJUnitTest > PCmd enum > valueOf round-trips STARTED
+
+PosListListJUnitTest > PCmd enum > valueOf round-trips PASSED
+
+PosListListJUnitTest > PCmd enum > enum has expected number of values STARTED
+
+PosListListJUnitTest > PCmd enum > enum has expected number of values PASSED
+
+PosListListJUnitTest > PCmd enum > CN is at ordinal 16 STARTED
+
+PosListListJUnitTest > PCmd enum > CN is at ordinal 16 PASSED
+
+PosListListJUnitTest > PCmd enum > invalid name throws STARTED
+
+PosListListJUnitTest > PCmd enum > invalid name throws PASSED
+
+PosListListJUnitTest > getLastSym > empty result from non-identifier start STARTED
+
+PosListListJUnitTest > getLastSym > empty result from non-identifier start PASSED
+
+PosListListJUnitTest > getLastSym > stops at paren STARTED
+
+PosListListJUnitTest > getLastSym > stops at paren PASSED
+
+PosListListJUnitTest > getLastSym > stops at space STARTED
+
+PosListListJUnitTest > getLastSym > stops at space PASSED
+
+PosListListJUnitTest > getLastSym > extracts symbol from mid-string offset STARTED
+
+PosListListJUnitTest > getLastSym > extracts symbol from mid-string offset PASSED
+
+PosListListJUnitTest > getLastSym > extracts symbol from start of string STARTED
+
+PosListListJUnitTest > getLastSym > extracts symbol from start of string PASSED
+
+PosListListJUnitTest > getLastSym > handles end of string STARTED
+
+PosListListJUnitTest > getLastSym > handles end of string PASSED
+
+PosListListJUnitTest > getLastSym > handles single character STARTED
+
+PosListListJUnitTest > getLastSym > handles single character PASSED
+
+PosListListJUnitTest > getLastSym > includes dots in qualified names STARTED
+
+PosListListJUnitTest > getLastSym > includes dots in qualified names PASSED
+
+PosListListJUnitTest > filereg pattern > matches tilde path STARTED
+
+PosListListJUnitTest > filereg pattern > matches tilde path PASSED
+
+PosListListJUnitTest > filereg pattern > rejects filename with spaces STARTED
+
+PosListListJUnitTest > filereg pattern > rejects filename with spaces PASSED
+
+PosListListJUnitTest > filereg pattern > matches path with backslashes STARTED
+
+PosListListJUnitTest > filereg pattern > matches path with backslashes PASSED
+
+PosListListJUnitTest > filereg pattern > no match on empty string STARTED
+
+PosListListJUnitTest > filereg pattern > no match on empty string PASSED
+
+PosListListJUnitTest > filereg pattern > rejects filename with parens STARTED
+
+PosListListJUnitTest > filereg pattern > rejects filename with parens PASSED
+
+PosListListJUnitTest > filereg pattern > matches Java file:line reference STARTED
+
+PosListListJUnitTest > filereg pattern > matches Java file:line reference PASSED
+
+PosListListJUnitTest > filereg pattern > matches C file:line reference STARTED
+
+PosListListJUnitTest > filereg pattern > matches C file:line reference PASSED
+
+PosListListJUnitTest > filereg pattern > no match on bare text without colon-number STARTED
+
+PosListListJUnitTest > filereg pattern > no match on bare text without colon-number PASSED
+
+PosListListJUnitTest > filereg pattern > first match in multi-match string STARTED
+
+PosListListJUnitTest > filereg pattern > first match in multi-match string PASSED
+
+PosListListJUnitTest > filereg pattern > matches file:line without trailing space STARTED
+
+PosListListJUnitTest > filereg pattern > matches file:line without trailing space PASSED
+
+PosListListJUnitTest > filereg pattern > matches path with directories STARTED
+
+PosListListJUnitTest > filereg pattern > matches path with directories PASSED
+
+PosListListJUnitTest > filereg pattern > matches Windows drive letter path STARTED
+
+PosListListJUnitTest > filereg pattern > matches Windows drive letter path PASSED
+
+PosListListRegexJUnitTest > matchesJavaFileWithLineNumber() STARTED
+
+PosListListRegexJUnitTest > matchesJavaFileWithLineNumber() PASSED
+
+PosListListRegexJUnitTest > extractsCorrectLineNumberFromMultiMatchString() STARTED
+
+PosListListRegexJUnitTest > extractsCorrectLineNumberFromMultiMatchString() PASSED
+
+PosListListRegexJUnitTest > matchesCFileWithoutTrailingSpace() STARTED
+
+PosListListRegexJUnitTest > matchesCFileWithoutTrailingSpace() PASSED
+
+PosListListRegexJUnitTest > matchesCFileWithTrailingSpace() STARTED
+
+PosListListRegexJUnitTest > matchesCFileWithTrailingSpace() PASSED
+
+PosListListRegexJUnitTest > extractsCorrectFilenameFromMultiMatchString() STARTED
+
+PosListListRegexJUnitTest > extractsCorrectFilenameFromMultiMatchString() PASSED
+
+PosListListRegexJUnitTest > matchesWindowsDrivePath() STARTED
+
+PosListListRegexJUnitTest > matchesWindowsDrivePath() PASSED
+
+PositionIocJUnitTest > formatCompletionMessageWithResults() STARTED
+
+PositionIocJUnitTest > formatCompletionMessageWithResults() PASSED
+
+PositionIocJUnitTest > emptyLinesSkipped() STARTED
+
+PositionIocJUnitTest > emptyLinesSkipped() PASSED
+
+PositionIocJUnitTest > getnextHandlesEmptyInput() STARTED
+
+PositionIocJUnitTest > getnextHandlesEmptyInput() PASSED
+
+PositionIocJUnitTest > converterParsesLargeLineNumbers() STARTED
+
+PositionIocJUnitTest > converterParsesLargeLineNumbers() PASSED
+
+PositionIocJUnitTest > defposHasZeroCoordinates() STARTED
+
+PositionIocJUnitTest > defposHasZeroCoordinates() PASSED
+
+PositionIocJUnitTest > formatCompletionMessageNoOutput() STARTED
+
+PositionIocJUnitTest > formatCompletionMessageNoOutput() PASSED
+
+PositionIocJUnitTest > multiplePositionsParsed() STARTED
+
+PositionIocJUnitTest > multiplePositionsParsed() PASSED
+
+PositionIocJUnitTest > converterParsesNoCommaFormat() STARTED
+
+PositionIocJUnitTest > converterParsesNoCommaFormat() PASSED
+
+PositionIocJUnitTest > converterParsesMinimalInput() STARTED
+
+PositionIocJUnitTest > converterParsesMinimalInput() PASSED
+
+PositionIocJUnitTest > getnextSkipsUnparseableLines() STARTED
+
+PositionIocJUnitTest > getnextSkipsUnparseableLines() PASSED
+
+PositionIocJUnitTest > formatCompletionMessageTruncatesLongLine() STARTED
+
+PositionIocJUnitTest > formatCompletionMessageTruncatesLongLine() PASSED
+
+PositionIocJUnitTest > converterParsesCommentWithSpecialChars() STARTED
+
+PositionIocJUnitTest > converterParsesCommentWithSpecialChars() PASSED
+
+PositionIocJUnitTest > converterParsesEmptyString() STARTED
+
+PositionIocJUnitTest > converterParsesEmptyString() PASSED
+
+PositionIocJUnitTest > converterParsesStandardFormat() STARTED
+
+PositionIocJUnitTest > converterParsesStandardFormat() PASSED
+
+PositionIocJUnitTest > getnextParsesPositionLines() STARTED
+
+PositionIocJUnitTest > getnextParsesPositionLines() PASSED
+
+PositionJUnitTest > StringIter > iterates over elements calling toString STARTED
+
+PositionJUnitTest > StringIter > iterates over elements calling toString PASSED
+
+PositionJUnitTest > StringIter > empty iterator has no elements STARTED
+
+PositionJUnitTest > StringIter > empty iterator has no elements PASSED
+
+PositionJUnitTest > StringIter > remove throws UnsupportedOperationException STARTED
+
+PositionJUnitTest > StringIter > remove throws UnsupportedOperationException PASSED
+
+PositionJUnitTest > GState > empty regex matches any string STARTED
+
+PositionJUnitTest > GState > empty regex matches any string PASSED
+
+PositionJUnitTest > GState > setRegex with CASE_INSENSITIVE flag STARTED
+
+PositionJUnitTest > GState > setRegex with CASE_INSENSITIVE flag PASSED
+
+PositionJUnitTest > GState > setRegex changes the search pattern STARTED
+
+PositionJUnitTest > GState > setRegex changes the search pattern PASSED
+
+PositionJUnitTest > GState > getRegex returns fresh Matcher each call STARTED
+
+PositionJUnitTest > GState > getRegex returns fresh Matcher each call PASSED
+
+PositionJUnitTest > GrepFilter > inverted filter rejects matches STARTED
+
+PositionJUnitTest > GrepFilter > inverted filter rejects matches PASSED
+
+PositionJUnitTest > GrepFilter > accept matches filename against regex STARTED
+
+PositionJUnitTest > GrepFilter > accept matches filename against regex PASSED
+
+PositionJUnitTest > GrepFilter > accept rejects non-matching filename STARTED
+
+PositionJUnitTest > GrepFilter > accept rejects non-matching filename PASSED
+
+PositionJUnitTest > GrepFilter > inverted filter accepts non-matches STARTED
+
+PositionJUnitTest > GrepFilter > inverted filter accepts non-matches PASSED
+
+PositionJUnitTest > GrepFilter > partial match accepted (find not matches) STARTED
+
+PositionJUnitTest > GrepFilter > partial match accepted (find not matches) PASSED
+
+PositionJUnitTest > BackupStatus > fields are accessible STARTED
+
+PositionJUnitTest > BackupStatus > fields are accessible PASSED
+
+PositionJUnitTest > BackupStatus > clean() false when error present STARTED
+
+PositionJUnitTest > BackupStatus > clean() false when error present PASSED
+
+PositionJUnitTest > BackupStatus > clean() false when not cleanQuit STARTED
+
+PositionJUnitTest > BackupStatus > clean() false when not cleanQuit PASSED
+
+PositionJUnitTest > BackupStatus > clean() true when all conditions met STARTED
+
+PositionJUnitTest > BackupStatus > clean() true when all conditions met PASSED
+
+PositionJUnitTest > BackupStatus > toString contains status fields STARTED
+
+PositionJUnitTest > BackupStatus > toString contains status fields PASSED
+
+PositionJUnitTest > BackupStatus > clean() false when not isQuitAtEnd STARTED
+
+PositionJUnitTest > BackupStatus > clean() false when not isQuitAtEnd PASSED
+
+PositionJUnitTest > MovePos > toString with x=0 omits column STARTED
+
+PositionJUnitTest > MovePos > toString with x=0 omits column PASSED
+
+PositionJUnitTest > MovePos > copy constructor copies values STARTED
+
+PositionJUnitTest > MovePos > copy constructor copies values PASSED
+
+PositionJUnitTest > MovePos > mutation does not affect original in copy STARTED
+
+PositionJUnitTest > MovePos > mutation does not affect original in copy PASSED
+
+PositionJUnitTest > MovePos > constructor sets x and y STARTED
+
+PositionJUnitTest > MovePos > constructor sets x and y PASSED
+
+PositionJUnitTest > MovePos > set updates x and y STARTED
+
+PositionJUnitTest > MovePos > set updates x and y PASSED
+
+PositionJUnitTest > MovePos > toString with x>0 includes column and line STARTED
+
+PositionJUnitTest > MovePos > toString with x>0 includes column and line PASSED
+
+PositionJUnitTest > Position > getMovable returns MovePos with same coords STARTED
+
+PositionJUnitTest > Position > getMovable returns MovePos with same coords PASSED
+
+PositionJUnitTest > Position > constructor with FileDescriptor STARTED
+
+PositionJUnitTest > Position > constructor with FileDescriptor PASSED
+
+PositionJUnitTest > Position > toString: x=0 omits column STARTED
+
+PositionJUnitTest > Position > toString: x=0 omits column PASSED
+
+PositionJUnitTest > Position > badpos is at origin with empty filename STARTED
+
+PositionJUnitTest > Position > badpos is at origin with empty filename PASSED
+
+PositionJUnitTest > Position > equals: different x not equal STARTED
+
+PositionJUnitTest > Position > equals: different x not equal PASSED
+
+PositionJUnitTest > Position > equals: different y not equal STARTED
+
+PositionJUnitTest > Position > equals: different y not equal PASSED
+
+PositionJUnitTest > Position > equiv returns false for non-matching MovePos STARTED
+
+PositionJUnitTest > Position > equiv returns false for non-matching MovePos PASSED
+
+PositionJUnitTest > Position > constructor with null FileDescriptor throws NPE STARTED
+
+PositionJUnitTest > Position > constructor with null FileDescriptor throws NPE PASSED
+
+PositionJUnitTest > Position > posMove sets MovePos to position coords STARTED
+
+PositionJUnitTest > Position > posMove sets MovePos to position coords PASSED
+
+PositionJUnitTest > Position > equals: null returns false STARTED
+
+PositionJUnitTest > Position > equals: null returns false PASSED
+
+PositionJUnitTest > Position > equals: same instance returns true STARTED
+
+PositionJUnitTest > Position > equals: same instance returns true PASSED
+
+PositionJUnitTest > Position > equals: same file, x, y are equal STARTED
+
+PositionJUnitTest > Position > equals: same file, x, y are equal PASSED
+
+PositionJUnitTest > Position > hashCode: equal positions have same hash STARTED
+
+PositionJUnitTest > Position > hashCode: equal positions have same hash PASSED
+
+PositionJUnitTest > Position > equiv returns false for null STARTED
+
+PositionJUnitTest > Position > equiv returns false for null PASSED
+
+PositionJUnitTest > Position > equiv returns true for matching MovePos STARTED
+
+PositionJUnitTest > Position > equiv returns true for matching MovePos PASSED
+
+PositionJUnitTest > Position > equals: non-Position returns false STARTED
+
+PositionJUnitTest > Position > equals: non-Position returns false PASSED
+
+PositionJUnitTest > Position > toString: x>0 includes column and line STARTED
+
+PositionJUnitTest > Position > toString: x>0 includes column and line PASSED
+
+PositionJUnitTest > Position > constructor with string filename STARTED
+
+PositionJUnitTest > Position > constructor with string filename PASSED
+
+ProcessCommandJUnitTest > percentDeleteRemovesAllLines() STARTED
+
+ProcessCommandJUnitTest > percentDeleteRemovesAllLines() PASSED
+
+ProcessCommandJUnitTest > unknownCommandReturnsMinusOne() STARTED
+
+ProcessCommandJUnitTest > unknownCommandReturnsMinusOne() PASSED
+
+ProcessCommandJUnitTest > dollarSignRefersToLastLine() STARTED
+
+ProcessCommandJUnitTest > dollarSignRefersToLastLine() PASSED
+
+ProcessCommandJUnitTest > substituteGlobalReplacesAllOccurrences() STARTED
+
+ProcessCommandJUnitTest > substituteGlobalReplacesAllOccurrences() PASSED
+
+ProcessCommandJUnitTest > copyCommandDuplicatesLine() STARTED
+
+ProcessCommandJUnitTest > copyCommandDuplicatesLine() PASSED
+
+ProcessCommandJUnitTest > deleteCommandRemovesSingleLine() STARTED
+
+ProcessCommandJUnitTest > deleteCommandRemovesSingleLine() PASSED
+
+ProcessCommandJUnitTest > globalDeleteRemovesMatchingLines() STARTED
+
+ProcessCommandJUnitTest > globalDeleteRemovesMatchingLines() PASSED
+
+ProcessCommandJUnitTest > substituteReplacesFirstOccurrence() STARTED
+
+ProcessCommandJUnitTest > substituteReplacesFirstOccurrence() PASSED
+
+ProcessCommandJUnitTest > lineNumberOnlyMovesToLine() STARTED
+
+ProcessCommandJUnitTest > lineNumberOnlyMovesToLine() PASSED
+
+ProcessCommandJUnitTest > deleteCommandRemovesLineRange() STARTED
+
+ProcessCommandJUnitTest > deleteCommandRemovesLineRange() PASSED
+
+RgroupJUnitTest > oBToIntThrowsOnNull() STARTED
+
+RgroupJUnitTest > oBToIntThrowsOnNull() PASSED
+
+RgroupJUnitTest > oBToIntParsesZero() STARTED
+
+RgroupJUnitTest > oBToIntParsesZero() PASSED
+
+RgroupJUnitTest > oBToIntParsesValidInteger() STARTED
+
+RgroupJUnitTest > oBToIntParsesValidInteger() PASSED
+
+RgroupJUnitTest > oBToFloatTrimsWhitespace() STARTED
+
+RgroupJUnitTest > oBToFloatTrimsWhitespace() PASSED
+
+RgroupJUnitTest > bindingLookupFindsYankMode() STARTED
+
+RgroupJUnitTest > bindingLookupFindsYankMode() PASSED
+
+RgroupJUnitTest > oBToIntThrowsOnNonNumeric() STARTED
+
+RgroupJUnitTest > oBToIntThrowsOnNonNumeric() PASSED
+
+RgroupJUnitTest > oBToIntParsesNegativeInteger() STARTED
+
+RgroupJUnitTest > oBToIntParsesNegativeInteger() PASSED
+
+RgroupJUnitTest > bindingLookupReturnsNullForUnknownCommand() STARTED
+
+RgroupJUnitTest > bindingLookupReturnsNullForUnknownCommand() PASSED
+
+RgroupJUnitTest > keyBindingToStringContainsPipe() STARTED
+
+RgroupJUnitTest > keyBindingToStringContainsPipe() PASSED
+
+RgroupJUnitTest > bindingLookupFindsRegisteredEditCommand() STARTED
+
+RgroupJUnitTest > bindingLookupFindsRegisteredEditCommand() PASSED
+
+RgroupJUnitTest > oBToFloatThrowsOnNonNumeric() STARTED
+
+RgroupJUnitTest > oBToFloatThrowsOnNonNumeric() PASSED
+
+RgroupJUnitTest > oBToFloatParsesValidFloat() STARTED
+
+RgroupJUnitTest > oBToFloatParsesValidFloat() PASSED
+
+RgroupJUnitTest > bindingLookupFindsDeleteMode() STARTED
+
+RgroupJUnitTest > bindingLookupFindsDeleteMode() PASSED
+
+RgroupJUnitTest > bindingLookupFindsBackwardWord() STARTED
+
+RgroupJUnitTest > bindingLookupFindsBackwardWord() PASSED
+
+RgroupJUnitTest > bindingLookupFindsForwardWord() STARTED
+
+RgroupJUnitTest > bindingLookupFindsForwardWord() PASSED
+
+RgroupJUnitTest > oBToFloatParsesInteger() STARTED
+
+RgroupJUnitTest > oBToFloatParsesInteger() PASSED
+
+RgroupJUnitTest > oBToIntTrimsWhitespace() STARTED
+
+RgroupJUnitTest > oBToIntTrimsWhitespace() PASSED
+
+RgroupJUnitTest > oBToFloatParsesNegativeFloat() STARTED
+
+RgroupJUnitTest > oBToFloatParsesNegativeFloat() PASSED
+
+RgroupJUnitTest > oBToFloatThrowsOnNull() STARTED
+
+RgroupJUnitTest > oBToFloatThrowsOnNull() PASSED
+
+RgroupJUnitTest > bindingLookupFindsRegisteredMoveCommand() STARTED
+
+RgroupJUnitTest > bindingLookupFindsRegisteredMoveCommand() PASSED
+
+RgroupJUnitTest > bindingLookupFindsCommandProc() STARTED
+
+RgroupJUnitTest > bindingLookupFindsCommandProc() PASSED
+
+RgroupJUnitTest > oBToIntThrowsOnEmpty() STARTED
+
+RgroupJUnitTest > oBToIntThrowsOnEmpty() PASSED
+
+RgroupJUnitTest > oBToIntThrowsOnFloat() STARTED
+
+RgroupJUnitTest > oBToIntThrowsOnFloat() PASSED
+
+ScreenAttributesJUnitTest > setAttr / getAttr round-trip STARTED
+
+ScreenAttributesJUnitTest > setAttr / getAttr round-trip PASSED
+
+ScreenAttributesJUnitTest > getAttr with negative column returns DEFAULT STARTED
+
+ScreenAttributesJUnitTest > getAttr with negative column returns DEFAULT PASSED
+
+ScreenAttributesJUnitTest > eraseLine removes attribute row STARTED
+
+ScreenAttributesJUnitTest > eraseLine removes attribute row PASSED
+
+ScreenAttributesJUnitTest > fillAttr sets a range of columns STARTED
+
+ScreenAttributesJUnitTest > fillAttr sets a range of columns PASSED
+
+ScreenAttributesJUnitTest > setAttr auto-grows row when column exceeds capacity STARTED
+
+ScreenAttributesJUnitTest > setAttr auto-grows row when column exceeds capacity PASSED
+
+ScreenAttributesJUnitTest > evictBefore discards old lines STARTED
+
+ScreenAttributesJUnitTest > evictBefore discards old lines PASSED
+
+ScreenAttributesJUnitTest > setColumns updates capacity for new rows STARTED
+
+ScreenAttributesJUnitTest > setColumns updates capacity for new rows PASSED
+
+ScreenAttributesJUnitTest > fillAttr with empty range is a no-op STARTED
+
+ScreenAttributesJUnitTest > fillAttr with empty range is a no-op PASSED
+
+ScreenAttributesJUnitTest > eraseScreen removes range of rows STARTED
+
+ScreenAttributesJUnitTest > eraseScreen removes range of rows PASSED
+
+ScreenAttributesJUnitTest > getAttr returns DEFAULT for unset cell STARTED
+
+ScreenAttributesJUnitTest > getAttr returns DEFAULT for unset cell PASSED
+
+ScreenAttributesJUnitTest > clear removes all rows STARTED
+
+ScreenAttributesJUnitTest > clear removes all rows PASSED
+
+ScreenAttributesJUnitTest > eraseToEnd clears from column to end STARTED
+
+ScreenAttributesJUnitTest > eraseToEnd clears from column to end PASSED
+
+ShellManagerJUnitTest > getActiveBuffer returns null when empty STARTED
+
+ShellManagerJUnitTest > getActiveBuffer returns null when empty PASSED
+
+ShellManagerJUnitTest > extractBufferText: same position returns empty STARTED
+
+ShellManagerJUnitTest > extractBufferText: same position returns empty PASSED
+
+ShellManagerJUnitTest > getLeafProcessName returns name for current PID STARTED
+
+ShellManagerJUnitTest > getLeafProcessName returns name for current PID PASSED
+
+ShellManagerJUnitTest > nextShell with no sessions returns false STARTED
+
+ShellManagerJUnitTest > nextShell with no sessions returns false PASSED
+
+ShellManagerJUnitTest > switchToName with no sessions returns false STARTED
+
+ShellManagerJUnitTest > switchToName with no sessions returns false PASSED
+
+ShellManagerJUnitTest > LABEL_UPDATE_INTERVAL_MS is positive STARTED
+
+ShellManagerJUnitTest > LABEL_UPDATE_INTERVAL_MS is positive PASSED
+
+ShellManagerJUnitTest > closeShellAt with invalid index returns false STARTED
+
+ShellManagerJUnitTest > closeShellAt with invalid index returns false PASSED
+
+ShellManagerJUnitTest > closeAll on empty manager is no-op STARTED
+
+ShellManagerJUnitTest > closeAll on empty manager is no-op PASSED
+
+ShellManagerJUnitTest > extractBufferText: x beyond line length clamps STARTED
+
+ShellManagerJUnitTest > extractBufferText: x beyond line length clamps PASSED
+
+ShellManagerJUnitTest > closeActiveShell with no sessions returns false STARTED
+
+ShellManagerJUnitTest > closeActiveShell with no sessions returns false PASSED
+
+ShellManagerJUnitTest > clipboard copy/read round-trip STARTED
+
+ShellManagerJUnitTest > clipboard copy/read round-trip PASSED
+
+ShellManagerJUnitTest > extractBufferText: multi-line end beyond last line STARTED
+
+ShellManagerJUnitTest > extractBufferText: multi-line end beyond last line PASSED
+
+ShellManagerJUnitTest > isShellBuffer returns false for null buffer STARTED
+
+ShellManagerJUnitTest > isShellBuffer returns false for null buffer PASSED
+
+ShellManagerJUnitTest > getInstance returns same instance STARTED
+
+ShellManagerJUnitTest > getInstance returns same instance PASSED
+
+ShellManagerJUnitTest > closeShell with unknown ID returns false STARTED
+
+ShellManagerJUnitTest > closeShell with unknown ID returns false PASSED
+
+ShellManagerJUnitTest > extractBufferText: empty line returns empty STARTED
+
+ShellManagerJUnitTest > extractBufferText: empty line returns empty PASSED
+
+ShellManagerJUnitTest > extractBufferText: multi line STARTED
+
+ShellManagerJUnitTest > extractBufferText: multi line PASSED
+
+ShellManagerJUnitTest > getSessions returns empty list when empty STARTED
+
+ShellManagerJUnitTest > getSessions returns empty list when empty PASSED
+
+ShellManagerJUnitTest > notifyResize on empty manager is no-op STARTED
+
+ShellManagerJUnitTest > notifyResize on empty manager is no-op PASSED
+
+ShellManagerJUnitTest > getActive returns null when empty STARTED
+
+ShellManagerJUnitTest > getActive returns null when empty PASSED
+
+ShellManagerJUnitTest > activeIndex is -1 when empty STARTED
+
+ShellManagerJUnitTest > activeIndex is -1 when empty PASSED
+
+ShellManagerJUnitTest > forwardMouseEvent on empty manager is no-op STARTED
+
+ShellManagerJUnitTest > forwardMouseEvent on empty manager is no-op PASSED
+
+ShellManagerJUnitTest > extractBufferText: single line partial STARTED
+
+ShellManagerJUnitTest > extractBufferText: single line partial PASSED
+
+ShellManagerJUnitTest > findByName returns null when empty STARTED
+
+ShellManagerJUnitTest > findByName returns null when empty PASSED
+
+ShellManagerJUnitTest > switchTo with invalid index returns false STARTED
+
+ShellManagerJUnitTest > switchTo with invalid index returns false PASSED
+
+ShellManagerJUnitTest > no sessions initially after closeAll STARTED
+
+ShellManagerJUnitTest > no sessions initially after closeAll PASSED
+
+ShellManagerJUnitTest > previousShell with no sessions returns false STARTED
+
+ShellManagerJUnitTest > previousShell with no sessions returns false PASSED
+
+ShellManagerJUnitTest > extractBufferText: full single line STARTED
+
+ShellManagerJUnitTest > extractBufferText: full single line PASSED
+
+ShellManagerJUnitTest > switchToId with no sessions returns false STARTED
+
+ShellManagerJUnitTest > switchToId with no sessions returns false PASSED
+
+ShellManagerJUnitTest > isMouseTrackingActive returns false when empty STARTED
+
+ShellManagerJUnitTest > isMouseTrackingActive returns false when empty PASSED
+
+ShellManagerJUnitTest > findByBuffer returns null when empty STARTED
+
+ShellManagerJUnitTest > findByBuffer returns null when empty PASSED
+
+ShellManagerJUnitTest > getLeafProcessName returns null for invalid PID STARTED
+
+ShellManagerJUnitTest > getLeafProcessName returns null for invalid PID PASSED
+
+ShellManagerJUnitTest > extractBufferText: reversed selection STARTED
+
+ShellManagerJUnitTest > extractBufferText: reversed selection PASSED
+
+ShellManagerJUnitTest > getLeafProcessName returns full command with args STARTED
+
+ShellManagerJUnitTest > getLeafProcessName returns full command with args PASSED
+
+ShellManagerJUnitTest > getShellList reports no active shells STARTED
+
+ShellManagerJUnitTest > getShellList reports no active shells PASSED
+
+StreamInterfaceJUnitTest > percentGlobalSubstitute() STARTED
+
+StreamInterfaceJUnitTest > percentGlobalSubstitute() PASSED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsStopEditingOnC() STARTED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsStopEditingOnC() PASSED
+
+StreamInterfaceJUnitTest > exGlobalDeleteAndWriteRoundTrip() STARTED
+
+StreamInterfaceJUnitTest > exGlobalDeleteAndWriteRoundTrip() PASSED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsReloadOnR() STARTED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsReloadOnR() PASSED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsIgnoreOnI() STARTED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsIgnoreOnI() PASSED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsUseFileOnF() STARTED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsUseFileOnF() PASSED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsBackupOnB() STARTED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsBackupOnB() PASSED
+
+StreamInterfaceJUnitTest > fullLifecycleEditSaveUndoRedo() STARTED
+
+StreamInterfaceJUnitTest > fullLifecycleEditSaveUndoRedo() PASSED
+
+StreamInterfaceJUnitTest > searchAndEditWorkflow() STARTED
+
+StreamInterfaceJUnitTest > searchAndEditWorkflow() PASSED
+
+StreamInterfaceJUnitTest > globalDeleteWithRange() STARTED
+
+StreamInterfaceJUnitTest > globalDeleteWithRange() PASSED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsOkOnO() STARTED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsOkOnO() PASSED
+
+StreamInterfaceJUnitTest > writePartialToFile() STARTED
+
+StreamInterfaceJUnitTest > writePartialToFile() PASSED
+
+StreamInterfaceJUnitTest > regexSubstituteWithGroups() STARTED
+
+StreamInterfaceJUnitTest > regexSubstituteWithGroups() PASSED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsDiffOnD() STARTED
+
+StreamInterfaceJUnitTest > ireportDiffReturnsDiffOnD() PASSED
+
+StreamInterfaceJUnitTest > semicolonRangeDelete() STARTED
+
+StreamInterfaceJUnitTest > semicolonRangeDelete() PASSED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsShowDiffOnD() STARTED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsShowDiffOnD() PASSED
+
+StreamInterfaceJUnitTest > inverseGlobalFilterWorkflow() STARTED
+
+StreamInterfaceJUnitTest > inverseGlobalFilterWorkflow() PASSED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsIgnoreAlwaysOnA() STARTED
+
+StreamInterfaceJUnitTest > iconfirmReloadReturnsIgnoreAlwaysOnA() PASSED
+
+StreamInterfaceJUnitTest > moveLinesToNewPosition() STARTED
+
+StreamInterfaceJUnitTest > moveLinesToNewPosition() PASSED
+
+StreamInterfaceJUnitTest > multipleExCommandsSequence() STARTED
+
+StreamInterfaceJUnitTest > multipleExCommandsSequence() PASSED
+
+StreamInterfaceJUnitTest > exSubstituteAndWriteRoundTrip() STARTED
+
+StreamInterfaceJUnitTest > exSubstituteAndWriteRoundTrip() PASSED
+
+StringIocJUnitTest > getnext handles consecutive newlines STARTED
+
+StringIocJUnitTest > getnext handles consecutive newlines PASSED
+
+StringIocJUnitTest > getnext splits on newlines STARTED
+
+StringIocJUnitTest > getnext splits on newlines PASSED
+
+StringIocJUnitTest > getnext returns single line for input without newline STARTED
+
+StringIocJUnitTest > getnext returns single line for input without newline PASSED
+
+StringIocJUnitTest > prop is set from constructor STARTED
+
+StringIocJUnitTest > prop is set from constructor PASSED
+
+StringIocJUnitTest > getnext handles leading newline STARTED
+
+StringIocJUnitTest > getnext handles leading newline PASSED
+
+StringIocJUnitTest > converter field is accessible STARTED
+
+StringIocJUnitTest > converter field is accessible PASSED
+
+StringIocJUnitTest > getnext handles trailing newline STARTED
+
+StringIocJUnitTest > getnext handles trailing newline PASSED
+
+StringIocJUnitTest > getnext returns null after all lines consumed STARTED
+
+StringIocJUnitTest > getnext returns null after all lines consumed PASSED
+
+StringIocJUnitTest > getnext handles empty string STARTED
+
+StringIocJUnitTest > getnext handles empty string PASSED
+
+StringIterJUnitTest > emptyIterator() STARTED
+
+StringIterJUnitTest > emptyIterator() PASSED
+
+StringIterJUnitTest > hasNextDoesNotAdvance() STARTED
+
+StringIterJUnitTest > hasNextDoesNotAdvance() PASSED
+
+StringIterJUnitTest > iteratesOverStrings() STARTED
+
+StringIterJUnitTest > iteratesOverStrings() PASSED
+
+StringIterJUnitTest > convertsNonStringsViaToString() STARTED
+
+StringIterJUnitTest > convertsNonStringsViaToString() PASSED
+
+StringIterJUnitTest > removeThrowsUnsupported() STARTED
+
+StringIterJUnitTest > removeThrowsUnsupported() PASSED
+
+StringIterJUnitTest > singleElement() STARTED
+
+StringIterJUnitTest > singleElement() PASSED
+
+StringIterJUnitTest > nextOnExhaustedThrows() STARTED
+
+StringIterJUnitTest > nextOnExhaustedThrows() PASSED
+
+StringToArrayJUnitTest > leadingNewlineTwoLinesNoTrailing() STARTED
+
+StringToArrayJUnitTest > leadingNewlineTwoLinesNoTrailing() PASSED
+
+StringToArrayJUnitTest > singleLineTrailingNewline() STARTED
+
+StringToArrayJUnitTest > singleLineTrailingNewline() PASSED
+
+StringToArrayJUnitTest > twoLinesWithTrailingNewline() STARTED
+
+StringToArrayJUnitTest > twoLinesWithTrailingNewline() PASSED
+
+StringToArrayJUnitTest > leadingNewlineOneLine() STARTED
+
+StringToArrayJUnitTest > leadingNewlineOneLine() PASSED
+
+StringToArrayJUnitTest > twoLinesNoTrailing() STARTED
+
+StringToArrayJUnitTest > twoLinesNoTrailing() PASSED
+
+StringToArrayJUnitTest > leadingNewlineTwoLinesTrailingNewline() STARTED
+
+StringToArrayJUnitTest > leadingNewlineTwoLinesTrailingNewline() PASSED
+
+StringToArrayJUnitTest > singleCharNoNewline() STARTED
+
+StringToArrayJUnitTest > singleCharNoNewline() PASSED
+
+StringToArrayJUnitTest > trailingEmptyLineAfterText() STARTED
+
+StringToArrayJUnitTest > trailingEmptyLineAfterText() PASSED
+
+StringToArrayJUnitTest > bareNewline() STARTED
+
+StringToArrayJUnitTest > bareNewline() PASSED
+
+StringToArrayJUnitTest > leadingNewlineNoTrailing() STARTED
+
+StringToArrayJUnitTest > leadingNewlineNoTrailing() PASSED
+
+TextEditJUnitTest > tabfixCrLfFullRoundTrip() STARTED
+
+TextEditJUnitTest > tabfixCrLfFullRoundTrip() PASSED
+
+TextEditJUnitTest > processCommandSemicolonRange() STARTED
+
+TextEditJUnitTest > processCommandSemicolonRange() PASSED
+
+TextEditJUnitTest > insertOnePersistenceThreeReopens() STARTED
+
+TextEditJUnitTest > insertOnePersistenceThreeReopens() PASSED
+
+TextEditJUnitTest > insertTextWithNewlineSplitsLine() STARTED
+
+TextEditJUnitTest > insertTextWithNewlineSplitsLine() PASSED
+
+TextEditJUnitTest > mismatchedBackupFileThenBackupResponse() STARTED
+
+TextEditJUnitTest > mismatchedBackupFileThenBackupResponse() PASSED
+
+TextEditJUnitTest > stringToArraySingleNewline() STARTED
+
+TextEditJUnitTest > stringToArraySingleNewline() PASSED
+
+TextEditJUnitTest > insertUndoDisposeReopenRedoUndo() STARTED
+
+TextEditJUnitTest > insertUndoDisposeReopenRedoUndo() PASSED
+
+TextEditJUnitTest > stringToArrayNoTrailingNewline() STARTED
+
+TextEditJUnitTest > stringToArrayNoTrailingNewline() PASSED
+
+TextEditJUnitTest > processCommandDotReference() STARTED
+
+TextEditJUnitTest > processCommandDotReference() PASSED
+
+TextEditJUnitTest > basicInsertUndoRedo() STARTED
+
+TextEditJUnitTest > basicInsertUndoRedo() PASSED
+
+TextEditJUnitTest > joinLinesBasic() STARTED
+
+TextEditJUnitTest > joinLinesBasic() PASSED
+
+TextEditJUnitTest > deleteTextMultiLine() STARTED
+
+TextEditJUnitTest > deleteTextMultiLine() PASSED
+
+TextEditJUnitTest > stringToArrayLeadingNewline() STARTED
+
+TextEditJUnitTest > stringToArrayLeadingNewline() PASSED
+
+TextEditJUnitTest > terminateDiscardsBackupState() STARTED
+
+TextEditJUnitTest > terminateDiscardsBackupState() PASSED
+
+TextEditJUnitTest > stringToArrayLeadingNewlineNoTrailing() STARTED
+
+TextEditJUnitTest > stringToArrayLeadingNewlineNoTrailing() PASSED
+
+TextEditJUnitTest > insertCheckpointDisposeReopenUndo() STARTED
+
+TextEditJUnitTest > insertCheckpointDisposeReopenUndo() PASSED
+
+TextEditJUnitTest > corruptBackupRecovery() STARTED
+
+TextEditJUnitTest > corruptBackupRecovery() PASSED
+
+TextEditJUnitTest > insertOneAndUndo() STARTED
+
+TextEditJUnitTest > insertOneAndUndo() PASSED
+
+TextEditJUnitTest > insertOneUndoDisposeReopenRedo() STARTED
+
+TextEditJUnitTest > insertOneUndoDisposeReopenRedo() PASSED
+
+TextEditJUnitTest > processCommandCopyAlias() STARTED
+
+TextEditJUnitTest > processCommandCopyAlias() PASSED
+
+TextEditJUnitTest > getTextPreservesContent() STARTED
+
+TextEditJUnitTest > getTextPreservesContent() PASSED
+
+TextEditJUnitTest > persistenceChainUndoRedo() STARTED
+
+TextEditJUnitTest > persistenceChainUndoRedo() PASSED
+
+TextEditJUnitTest > processCommandGlobalSubstitute() STARTED
+
+TextEditJUnitTest > processCommandGlobalSubstitute() PASSED
+
+TextEditJUnitTest > stringToArrayTrailingNewline() STARTED
+
+TextEditJUnitTest > stringToArrayTrailingNewline() PASSED
+
+TextEditJUnitTest > stringToArrayTwoLines() STARTED
+
+TextEditJUnitTest > stringToArrayTwoLines() PASSED
+
+TextEditJUnitTest > multilineInsertUndoRedo() STARTED
+
+TextEditJUnitTest > multilineInsertUndoRedo() PASSED
+
+TextEditJUnitTest > deleteTextSameLine() STARTED
+
+TextEditJUnitTest > deleteTextSameLine() PASSED
+
+TextEditJUnitTest > processCommandRelativePlus() STARTED
+
+TextEditJUnitTest > processCommandRelativePlus() PASSED
+
+TextEditJUnitTest > changeCaseToggles() STARTED
+
+TextEditJUnitTest > changeCaseToggles() PASSED
+
+TextEditJUnitTest > processCommandWriteToFile() STARTED
+
+TextEditJUnitTest > processCommandWriteToFile() PASSED
+
+TextEditJUnitTest > joinLinesMultiple() STARTED
+
+TextEditJUnitTest > joinLinesMultiple() PASSED
+
+TextEditJUnitTest > stringToArraySingleLine() STARTED
+
+TextEditJUnitTest > stringToArraySingleLine() PASSED
+
+TextEditJUnitTest > insertOnExistingFileUndoRedoPersist() STARTED
+
+TextEditJUnitTest > insertOnExistingFileUndoRedoPersist() PASSED
+
+TextEditJUnitTest > processCommandMove() STARTED
+
+TextEditJUnitTest > processCommandMove() PASSED
+
+TextEditJUnitTest > reloadReflectsFileChanges() STARTED
+
+TextEditJUnitTest > reloadReflectsFileChanges() PASSED
+
+TextEditJUnitTest > multipleUndoRedo() STARTED
+
+TextEditJUnitTest > multipleUndoRedo() PASSED
+
+TextEditJUnitTest > insertTextMiddleOfLine() STARTED
+
+TextEditJUnitTest > insertTextMiddleOfLine() PASSED
+
+TextEditJUnitTest > stringToArrayNewlineThenOne() STARTED
+
+TextEditJUnitTest > stringToArrayNewlineThenOne() PASSED
+
+TextEditJUnitTest > deletedDmp2CausesBadBackup() STARTED
+
+TextEditJUnitTest > deletedDmp2CausesBadBackup() PASSED
+
+TextEditJUnitTest > perftestGlobalDeleteAndReopen() STARTED
+
+TextEditJUnitTest > perftestGlobalDeleteAndReopen() PASSED
+
+TextEditJUnitTest > insertWithoutSaveNotPersisted() STARTED
+
+TextEditJUnitTest > insertWithoutSaveNotPersisted() PASSED
+
+TextEditJUnitTest > mismatchedBackupFileResponse() STARTED
+
+TextEditJUnitTest > mismatchedBackupFileResponse() PASSED
+
+TextEditJUnitTest > processCommandRangeCopy() STARTED
+
+TextEditJUnitTest > processCommandRangeCopy() PASSED
+
+TextEditJUnitTest > processCommandRangeMove() STARTED
+
+TextEditJUnitTest > processCommandRangeMove() PASSED
+
+TextEditJUnitTest > insertStreamSplice() STARTED
+
+TextEditJUnitTest > insertStreamSplice() PASSED
+
+TextEditJUnitTest > processCommandRangeGlobalSub() STARTED
+
+TextEditJUnitTest > processCommandRangeGlobalSub() PASSED
+
+TextEditJUnitTest > tabfixConvertsTabs() STARTED
+
+TextEditJUnitTest > tabfixConvertsTabs() PASSED
+
+TextEditJUnitTest > processCommandInverseGlobalDelete() STARTED
+
+TextEditJUnitTest > processCommandInverseGlobalDelete() PASSED
+
+UndoHistoryJUnitTest > undoAtEmptyStackIsNoOp() STARTED
+
+UndoHistoryJUnitTest > undoAtEmptyStackIsNoOp() PASSED
+
+UndoHistoryJUnitTest > multipleCheckpointsAllPersist() STARTED
+
+UndoHistoryJUnitTest > multipleCheckpointsAllPersist() PASSED
+
+UndoHistoryJUnitTest > undoRedoAfterRemove() STARTED
+
+UndoHistoryJUnitTest > undoRedoAfterRemove() PASSED
+
+UndoHistoryJUnitTest > undoRevertsLastInsert() STARTED
+
+UndoHistoryJUnitTest > undoRevertsLastInsert() PASSED
+
+UndoHistoryJUnitTest > redoAtHeadIsNoOp() STARTED
+
+UndoHistoryJUnitTest > redoAtHeadIsNoOp() PASSED
+
+UndoHistoryJUnitTest > undoRedoAfterChangeElement() STARTED
+
+UndoHistoryJUnitTest > undoRedoAfterChangeElement() PASSED
+
+UndoHistoryJUnitTest > undoThenInsertDiscardsRedoHistory() STARTED
+
+UndoHistoryJUnitTest > undoThenInsertDiscardsRedoHistory() PASSED
+
+UndoHistoryJUnitTest > redoRestoresUndoneInsert() STARTED
+
+UndoHistoryJUnitTest > redoRestoresUndoneInsert() PASSED
+
+UndoHistoryJUnitTest > undoHistorySurvivesDisposeReopen() STARTED
+
+UndoHistoryJUnitTest > undoHistorySurvivesDisposeReopen() PASSED
+
+UndoHistoryJUnitTest > insertMakesFileModified() STARTED
+
+UndoHistoryJUnitTest > insertMakesFileModified() PASSED
+
+UndoHistoryJUnitTest > undoRedoMultilineInsert() STARTED
+
+UndoHistoryJUnitTest > undoRedoMultilineInsert() PASSED
+
+UndoHistoryJUnitTest > multipleRedosWalkForwardThroughHistory() STARTED
+
+UndoHistoryJUnitTest > multipleRedosWalkForwardThroughHistory() PASSED
+
+UndoHistoryJUnitTest > multipleUndosWalkBackThroughHistory() STARTED
+
+UndoHistoryJUnitTest > multipleUndosWalkBackThroughHistory() PASSED
+
+UndoHistoryJUnitTest > undoAllRestoresUnmodified() STARTED
+
+UndoHistoryJUnitTest > undoAllRestoresUnmodified() PASSED
+
+UndoHistoryJUnitTest > newFileIsNotModified() STARTED
+
+UndoHistoryJUnitTest > newFileIsNotModified() PASSED
+
+ViewCOptJUnitTest > lineChangedMergesRange() STARTED
+
+ViewCOptJUnitTest > lineChangedMergesRange() PASSED
+
+ViewCOptJUnitTest > lineChangedAfterInsertEscalates() STARTED
+
+ViewCOptJUnitTest > lineChangedAfterInsertEscalates() PASSED
+
+ViewCOptJUnitTest > blinkFromNoopSetsBlinkcursor() STARTED
+
+ViewCOptJUnitTest > blinkFromNoopSetsBlinkcursor() PASSED
+
+ViewCOptJUnitTest > blinkSuppressedWhenNotNoop() STARTED
+
+ViewCOptJUnitTest > blinkSuppressedWhenNotNoop() PASSED
+
+ViewCOptJUnitTest > lineChangedFromNoopSetsChange() STARTED
+
+ViewCOptJUnitTest > lineChangedFromNoopSetsChange() PASSED
+
+ViewCOptJUnitTest > resetOpReturnsToNoop() STARTED
+
+ViewCOptJUnitTest > resetOpReturnsToNoop() PASSED
+
+ViewCOptJUnitTest > mscreenAccumulatesAmount() STARTED
+
+ViewCOptJUnitTest > mscreenAccumulatesAmount() PASSED
+
+ViewCOptJUnitTest > insertSavesStartAndAmount() STARTED
+
+ViewCOptJUnitTest > insertSavesStartAndAmount() PASSED
+
+ViewCOptJUnitTest > insertEscalatesToRedraw() STARTED
+
+ViewCOptJUnitTest > insertEscalatesToRedraw() PASSED
+
+ViewCOptJUnitTest > deleteFromNoopSetsDelete() STARTED
+
+ViewCOptJUnitTest > deleteFromNoopSetsDelete() PASSED
+
+ViewCOptJUnitTest > multipleRedrawsStillRedraw() STARTED
+
+ViewCOptJUnitTest > multipleRedrawsStillRedraw() PASSED
+
+ViewCOptJUnitTest > mscreenEscalatesWhenExceedsLimit() STARTED
+
+ViewCOptJUnitTest > mscreenEscalatesWhenExceedsLimit() PASSED
+
+ViewCOptJUnitTest > insertFromBlinkSetsInsert() STARTED
+
+ViewCOptJUnitTest > insertFromBlinkSetsInsert() PASSED
+
+ViewCOptJUnitTest > redrawSetsRedrawOp() STARTED
+
+ViewCOptJUnitTest > redrawSetsRedrawOp() PASSED
+
+ViewCOptJUnitTest > mscreenFromNoopSets() STARTED
+
+ViewCOptJUnitTest > mscreenFromNoopSets() PASSED
+
+ViewCOptJUnitTest > initialStateIsNoop() STARTED
+
+ViewCOptJUnitTest > initialStateIsNoop() PASSED
+
+ViewCOptJUnitTest > insertFromNoopSetsInsert() STARTED
+
+ViewCOptJUnitTest > insertFromNoopSetsInsert() PASSED
+
+ViewCOptJUnitTest > deleteEscalatesToRedraw() STARTED
+
+ViewCOptJUnitTest > deleteEscalatesToRedraw() PASSED
+
+ViewJUnitTest > mscreenDoesNotThrow() STARTED
+
+ViewJUnitTest > mscreenDoesNotThrow() PASSED
+
+ViewJUnitTest > markInfoClearMarkResetsRange() STARTED
+
+ViewJUnitTest > markInfoClearMarkResetsRange() PASSED
+
+ViewJUnitTest > setMarkAndGetMark() STARTED
+
+ViewJUnitTest > setMarkAndGetMark() PASSED
+
+ViewJUnitTest > getCurrFileReturnsBoundTextEdit() STARTED
+
+ViewJUnitTest > getCurrFileReturnsBoundTextEdit() PASSED
+
+ViewJUnitTest > needBlinkTogglesCursorOnOff() STARTED
+
+ViewJUnitTest > needBlinkTogglesCursorOnOff() PASSED
+
+ViewJUnitTest > nonTraverseableView() STARTED
+
+ViewJUnitTest > nonTraverseableView() PASSED
+
+ViewJUnitTest > setFilePosUpdatesAccessors() STARTED
+
+ViewJUnitTest > setFilePosUpdatesAccessors() PASSED
+
+ViewJUnitTest > lineChangedDoesNotThrow() STARTED
+
+ViewJUnitTest > lineChangedDoesNotThrow() PASSED
+
+ViewJUnitTest > redrawDoesNotThrow() STARTED
+
+ViewJUnitTest > redrawDoesNotThrow() PASSED
+
+ViewJUnitTest > traverseableReflectsConstructorArg() STARTED
+
+ViewJUnitTest > traverseableReflectsConstructorArg() PASSED
+
+ViewJUnitTest > updateTempMarkPosSamePosClearsMark() STARTED
+
+ViewJUnitTest > updateTempMarkPosSamePosClearsMark() PASSED
+
+ViewJUnitTest > markInfoGetMarkReturnsCopy() STARTED
+
+ViewJUnitTest > markInfoGetMarkReturnsCopy() PASSED
+
+ViewJUnitTest > markInfoStarthEndhNoMark() STARTED
+
+ViewJUnitTest > markInfoStarthEndhNoMark() PASSED
+
+ViewJUnitTest > placelineReturnsScrollAmount() STARTED
+
+ViewJUnitTest > placelineReturnsScrollAmount() PASSED
+
+ViewJUnitTest > initialFilePosIsZeroOne() STARTED
+
+ViewJUnitTest > initialFilePosIsZeroOne() PASSED
+
+ViewJUnitTest > markInfoSetMarkSetsRange() STARTED
+
+ViewJUnitTest > markInfoSetMarkSetsRange() PASSED
+
+ViewJUnitTest > setMarkWithSamePositionIsIdempotent() STARTED
+
+ViewJUnitTest > setMarkWithSamePositionIsIdempotent() PASSED
+
+ViewJUnitTest > markInfoMarkChangeReversedOrder() STARTED
+
+ViewJUnitTest > markInfoMarkChangeReversedOrder() PASSED
+
+ViewJUnitTest > clearMarkResetsToNull() STARTED
+
+ViewJUnitTest > clearMarkResetsToNull() PASSED
+
+ViewJUnitTest > setCursorOffStopsBlink() STARTED
+
+ViewJUnitTest > setCursorOffStopsBlink() PASSED
+
+ViewJUnitTest > cursorChangeDoesNotThrow() STARTED
+
+ViewJUnitTest > cursorChangeDoesNotThrow() PASSED
+
+ViewJUnitTest > markInfoToStringFormat() STARTED
+
+ViewJUnitTest > markInfoToStringFormat() PASSED
+
+ViewJUnitTest > setMarkDifferentPositionUpdates() STARTED
+
+ViewJUnitTest > setMarkDifferentPositionUpdates() PASSED
+
+ViewJUnitTest > updateTempMarkPosSetsMark() STARTED
+
+ViewJUnitTest > updateTempMarkPosSetsMark() PASSED
+
+ViewJUnitTest > needBlinkReturnsZeroWhenCursorInactive() STARTED
+
+ViewJUnitTest > needBlinkReturnsZeroWhenCursorInactive() PASSED
+
+ViewJUnitTest > initialMarkIsNull() STARTED
+
+ViewJUnitTest > initialMarkIsNull() PASSED
+
+ViewJUnitTest > setCursorOnEnablesBlink() STARTED
+
+ViewJUnitTest > setCursorOnEnablesBlink() PASSED
+
+Vt100ParserJUnitTest > normalCharAppendedToBuffer() STARTED
+
+Vt100ParserJUnitTest > normalCharAppendedToBuffer() PASSED
+
+Vt100ParserJUnitTest > csiScrollDownDefault() STARTED
+
+Vt100ParserJUnitTest > csiScrollDownDefault() PASSED
+
+Vt100ParserJUnitTest > csiCursorLeftDefault() STARTED
+
+Vt100ParserJUnitTest > csiCursorLeftDefault() PASSED
+
+Vt100ParserJUnitTest > csiRowAbsolute() STARTED
+
+Vt100ParserJUnitTest > csiRowAbsolute() PASSED
+
+Vt100ParserJUnitTest > csiDeleteLinesDefault() STARTED
+
+Vt100ParserJUnitTest > csiDeleteLinesDefault() PASSED
+
+Vt100ParserJUnitTest > csiCursorRightWithCount() STARTED
+
+Vt100ParserJUnitTest > csiCursorRightWithCount() PASSED
+
+Vt100ParserJUnitTest > csiEraseCharsWithCount() STARTED
+
+Vt100ParserJUnitTest > csiEraseCharsWithCount() PASSED
+
+Vt100ParserJUnitTest > csiEraseEntireScreen() STARTED
+
+Vt100ParserJUnitTest > csiEraseEntireScreen() PASSED
+
+Vt100ParserJUnitTest > csiInsertLinesDefault() STARTED
+
+Vt100ParserJUnitTest > csiInsertLinesDefault() PASSED
+
+Vt100ParserJUnitTest > csiCursorLeftWithCount() STARTED
+
+Vt100ParserJUnitTest > csiCursorLeftWithCount() PASSED
+
+Vt100ParserJUnitTest > textThenEscapeSequence() STARTED
+
+Vt100ParserJUnitTest > textThenEscapeSequence() PASSED
+
+Vt100ParserJUnitTest > csiCursorDownWithCount() STARTED
+
+Vt100ParserJUnitTest > csiCursorDownWithCount() PASSED
+
+Vt100ParserJUnitTest > csiEraseLineToEnd() STARTED
+
+Vt100ParserJUnitTest > csiEraseLineToEnd() PASSED
+
+Vt100ParserJUnitTest > oscSetWindowTitle() STARTED
+
+Vt100ParserJUnitTest > oscSetWindowTitle() PASSED
+
+Vt100ParserJUnitTest > bellCharacterCallsBell() STARTED
+
+Vt100ParserJUnitTest > bellCharacterCallsBell() PASSED
+
+Vt100ParserJUnitTest > escEightRestoresCursor() STARTED
+
+Vt100ParserJUnitTest > escEightRestoresCursor() PASSED
+
+Vt100ParserJUnitTest > csiDeleteLinesWithCount() STARTED
+
+Vt100ParserJUnitTest > csiDeleteLinesWithCount() PASSED
+
+Vt100ParserJUnitTest > hvpHomeDefault() STARTED
+
+Vt100ParserJUnitTest > hvpHomeDefault() PASSED
+
+Vt100ParserJUnitTest > escMMovesUp() STARTED
+
+Vt100ParserJUnitTest > escMMovesUp() PASSED
+
+Vt100ParserJUnitTest > csiSetInsertMode() STARTED
+
+Vt100ParserJUnitTest > csiSetInsertMode() PASSED
+
+Vt100ParserJUnitTest > escEqualsReturnsToNorm() STARTED
+
+Vt100ParserJUnitTest > escEqualsReturnsToNorm() PASSED
+
+Vt100ParserJUnitTest > csiScrollUpWithCount() STARTED
+
+Vt100ParserJUnitTest > csiScrollUpWithCount() PASSED
+
+Vt100ParserJUnitTest > csiPrevLine() STARTED
+
+Vt100ParserJUnitTest > csiPrevLine() PASSED
+
+Vt100ParserJUnitTest > csiScrollDownWithCount() STARTED
+
+Vt100ParserJUnitTest > csiScrollDownWithCount() PASSED
+
+Vt100ParserJUnitTest > csiEraseLineToBeginning() STARTED
+
+Vt100ParserJUnitTest > csiEraseLineToBeginning() PASSED
+
+Vt100ParserJUnitTest > csiEraseScreenToEnd() STARTED
+
+Vt100ParserJUnitTest > csiEraseScreenToEnd() PASSED
+
+Vt100ParserJUnitTest > csiCursorDownDefault() STARTED
+
+Vt100ParserJUnitTest > csiCursorDownDefault() PASSED
+
+Vt100ParserJUnitTest > csiEraseCharsDefault() STARTED
+
+Vt100ParserJUnitTest > csiEraseCharsDefault() PASSED
+
+Vt100ParserJUnitTest > csiCursorUpDefault() STARTED
+
+Vt100ParserJUnitTest > csiCursorUpDefault() PASSED
+
+Vt100ParserJUnitTest > csiHomeWithRowAndCol() STARTED
+
+Vt100ParserJUnitTest > csiHomeWithRowAndCol() PASSED
+
+Vt100ParserJUnitTest > oscSetTitle() STARTED
+
+Vt100ParserJUnitTest > oscSetTitle() PASSED
+
+Vt100ParserJUnitTest > newlineAppendsToBuffer() STARTED
+
+Vt100ParserJUnitTest > newlineAppendsToBuffer() PASSED
+
+Vt100ParserJUnitTest > csiResetInsertMode() STARTED
+
+Vt100ParserJUnitTest > csiResetInsertMode() PASSED
+
+Vt100ParserJUnitTest > backspaceMovesLeft() STARTED
+
+Vt100ParserJUnitTest > backspaceMovesLeft() PASSED
+
+Vt100ParserJUnitTest > delCharIgnored() STARTED
+
+Vt100ParserJUnitTest > delCharIgnored() PASSED
+
+Vt100ParserJUnitTest > crFollowedByNewlineReturnsToNorm() STARTED
+
+Vt100ParserJUnitTest > crFollowedByNewlineReturnsToNorm() PASSED
+
+Vt100ParserJUnitTest > escSwitchesToEscState() STARTED
+
+Vt100ParserJUnitTest > escSwitchesToEscState() PASSED
+
+Vt100ParserJUnitTest > csiScrollUpDefault() STARTED
+
+Vt100ParserJUnitTest > csiScrollUpDefault() PASSED
+
+Vt100ParserJUnitTest > csiCursorUpWithCount() STARTED
+
+Vt100ParserJUnitTest > csiCursorUpWithCount() PASSED
+
+Vt100ParserJUnitTest > crFollowedByCharSetsXAndProcesses() STARTED
+
+Vt100ParserJUnitTest > crFollowedByCharSetsXAndProcesses() PASSED
+
+Vt100ParserJUnitTest > escSevenSavesCursor() STARTED
+
+Vt100ParserJUnitTest > escSevenSavesCursor() PASSED
+
+Vt100ParserJUnitTest > csiRestoreCursor() STARTED
+
+Vt100ParserJUnitTest > csiRestoreCursor() PASSED
+
+Vt100ParserJUnitTest > nullCharIgnored() STARTED
+
+Vt100ParserJUnitTest > nullCharIgnored() PASSED
+
+Vt100ParserJUnitTest > multipleSequencesInRow() STARTED
+
+Vt100ParserJUnitTest > multipleSequencesInRow() PASSED
+
+Vt100ParserJUnitTest > escBracketEntersGetnum() STARTED
+
+Vt100ParserJUnitTest > escBracketEntersGetnum() PASSED
+
+Vt100ParserJUnitTest > multipleNormalCharsAccumulate() STARTED
+
+Vt100ParserJUnitTest > multipleNormalCharsAccumulate() PASSED
+
+Vt100ParserJUnitTest > csiEraseScreenToBeginning() STARTED
+
+Vt100ParserJUnitTest > csiEraseScreenToBeginning() PASSED
+
+Vt100ParserJUnitTest > csiEraseEntireLine() STARTED
+
+Vt100ParserJUnitTest > csiEraseEntireLine() PASSED
+
+Vt100ParserJUnitTest > csiHomeWithRow() STARTED
+
+Vt100ParserJUnitTest > csiHomeWithRow() PASSED
+
+Vt100ParserJUnitTest > escBracketRightEntersOSC() STARTED
+
+Vt100ParserJUnitTest > escBracketRightEntersOSC() PASSED
+
+Vt100ParserJUnitTest > csiPrivateMode47On() STARTED
+
+Vt100ParserJUnitTest > csiPrivateMode47On() PASSED
+
+Vt100ParserJUnitTest > csiHomeDefault() STARTED
+
+Vt100ParserJUnitTest > csiHomeDefault() PASSED
+
+Vt100ParserJUnitTest > escGreaterReturnsToNorm() STARTED
+
+Vt100ParserJUnitTest > escGreaterReturnsToNorm() PASSED
+
+Vt100ParserJUnitTest > csiColumnAbsolute() STARTED
+
+Vt100ParserJUnitTest > csiColumnAbsolute() PASSED
+
+Vt100ParserJUnitTest > csiInsertLinesWithCount() STARTED
+
+Vt100ParserJUnitTest > csiInsertLinesWithCount() PASSED
+
+Vt100ParserJUnitTest > csiSGRCalled() STARTED
+
+Vt100ParserJUnitTest > csiSGRCalled() PASSED
+
+Vt100ParserJUnitTest > csiPrivateMode1047On() STARTED
+
+Vt100ParserJUnitTest > csiPrivateMode1047On() PASSED
+
+Vt100ParserJUnitTest > csiPrivateModeAltScreenOn() STARTED
+
+Vt100ParserJUnitTest > csiPrivateModeAltScreenOn() PASSED
+
+Vt100ParserJUnitTest > csiSaveCursor() STARTED
+
+Vt100ParserJUnitTest > csiSaveCursor() PASSED
+
+Vt100ParserJUnitTest > hvpWithRowAndCol() STARTED
+
+Vt100ParserJUnitTest > hvpWithRowAndCol() PASSED
+
+Vt100ParserJUnitTest > csiPrivateModeAltScreenOff() STARTED
+
+Vt100ParserJUnitTest > csiPrivateModeAltScreenOff() PASSED
+
+Vt100ParserJUnitTest > csiCursorRightDefault() STARTED
+
+Vt100ParserJUnitTest > csiCursorRightDefault() PASSED
+
+Vt100ParserJUnitTest > csiEraseCharX() STARTED
+
+Vt100ParserJUnitTest > csiEraseCharX() PASSED
+
+Vt100ParserJUnitTest > csiNextLine() STARTED
+
+Vt100ParserJUnitTest > csiNextLine() PASSED
+
+Vt100ParserJUnitTest > carriageReturnEntersCRState() STARTED
+
+Vt100ParserJUnitTest > carriageReturnEntersCRState() PASSED
+
+Vt100ParserJUnitTest > tabAppendsToBuffer() STARTED
+
+Vt100ParserJUnitTest > tabAppendsToBuffer() PASSED
+
+XrefReaderJUnitTest > linpatMatchesTildeInPath() STARTED
+
+XrefReaderJUnitTest > linpatMatchesTildeInPath() PASSED
+
+XrefReaderJUnitTest > parsesDeepPath() STARTED
+
+XrefReaderJUnitTest > parsesDeepPath() PASSED
+
+XrefReaderJUnitTest > linpatRejectsNoLineNumber() STARTED
+
+XrefReaderJUnitTest > linpatRejectsNoLineNumber() PASSED
+
+XrefReaderJUnitTest > converterHandlesMinimalLine() STARTED
+
+XrefReaderJUnitTest > converterHandlesMinimalLine() PASSED
+
+XrefReaderJUnitTest > parsesLargeLineNumber() STARTED
+
+XrefReaderJUnitTest > parsesLargeLineNumber() PASSED
+
+XrefReaderJUnitTest > parsesLineWithSpacesInComment() STARTED
+
+XrefReaderJUnitTest > parsesLineWithSpacesInComment() PASSED
+
+XrefReaderJUnitTest > parsesStandardGrepLine() STARTED
+
+XrefReaderJUnitTest > parsesStandardGrepLine() PASSED
+
+XrefReaderJUnitTest > emptyLineReturnsDefaultPosition() STARTED
+
+XrefReaderJUnitTest > emptyLineReturnsDefaultPosition() PASSED
+
+XrefReaderJUnitTest > linpatMatchesBackslashPath() STARTED
+
+XrefReaderJUnitTest > linpatMatchesBackslashPath() PASSED
+
+XrefReaderJUnitTest > converterHandlesMalformedLine() STARTED
+
+XrefReaderJUnitTest > converterHandlesMalformedLine() PASSED
+
+XrefReaderJUnitTest > parsesLineWithColonInPath() STARTED
+
+XrefReaderJUnitTest > parsesLineWithColonInPath() PASSED
+
+XrefReaderJUnitTest > parsesSimpleFileLine() STARTED
+
+XrefReaderJUnitTest > parsesSimpleFileLine() PASSED
+
+XrefReaderJUnitTest > linpatMatchesDriveLetter() STARTED
+
+XrefReaderJUnitTest > linpatMatchesDriveLetter() PASSED
+
+XrefReaderJUnitTest > linpatMatchesStandardGrepFormat() STARTED
+
+XrefReaderJUnitTest > linpatMatchesStandardGrepFormat() PASSED
+
+[Incubating] Problems report is available at: file:///Users/jjensen/gtools/myai/ai/javi-wt-F29/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 8s
+3 actionable tasks: 1 executed, 2 up-to-date
+exit: 0
