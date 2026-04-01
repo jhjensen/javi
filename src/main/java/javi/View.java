@@ -485,7 +485,7 @@ public abstract class View  extends
          op.changedpro(pos.y, fileY);
    }
 
-   final MovePos getMark() {
+   public final MovePos getMark() {
       return pmark.getMark();
    }
 

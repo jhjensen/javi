@@ -8,6 +8,7 @@ import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
 import javi.InsertBuffer;
+import javi.MovePos;
 import javi.Plugin;
 import javi.Rgroup;
 import javi.StringIoc;
@@ -88,6 +89,8 @@ public final class AICommands extends Rgroup implements Plugin {
    private static EditContainer lastSourceBuffer;
    /** Name of the last source buffer. */
    private static String lastSourceName;
+   /** Whether the last context capture used a visual selection. */
+   private static boolean lastSelectionActive;
 
    /** Request tracking for premium awareness. */
    private static int totalRequests;
@@ -1025,9 +1028,17 @@ public final class AICommands extends Rgroup implements Plugin {
       if (!"*ai-chat*".equals(name)) {
          lastSourceBuffer = fvc.edvec;
          lastSourceName = name;
+         // Prefer visual selection if active
+         String selected = getSelectedText(fvc);
+         if (null != selected) {
+            lastSelectionActive = true;
+            return selected;
+         }
+         lastSelectionActive = false;
          return getContextCode(fvc);
       }
       if (null != lastSourceBuffer) {
+         lastSelectionActive = false;
          return getBufferContent(lastSourceBuffer);
       }
       return null;
@@ -1035,7 +1046,8 @@ public final class AICommands extends Rgroup implements Plugin {
 
    /**
     * Get the source buffer name, preferring the real source over
-    * the chat buffer.
+    * the chat buffer. Appends " (selection)" when a visual
+    * selection was used for context.
     *
     * @param fvc the current file-view context
     * @return the source buffer name
@@ -1045,10 +1057,66 @@ public final class AICommands extends Rgroup implements Plugin {
       if (!"*ai-chat*".equals(name)) {
          lastSourceBuffer = fvc.edvec;
          lastSourceName = name;
-         return name;
+         return lastSelectionActive
+            ? name + " (selection)" : name;
       }
-      return null != lastSourceName
+      String base = null != lastSourceName
          ? lastSourceName : "*ai-chat*";
+      return lastSelectionActive
+         ? base + " (selection)" : base;
+   }
+
+   /**
+    * Extract visually selected text from the current buffer.
+    *
+    * <p>If a mark is active (visual selection), extracts the text
+    * between the mark position and cursor position. Returns null
+    * if no mark is set.</p>
+    *
+    * @param fvc the current file-view context
+    * @return the selected text, or null if no selection
+    */
+   @SuppressWarnings("unchecked")
+   private String getSelectedText(FvContext fvc) {
+      MovePos mark = fvc.vi.getMark();
+      if (null == mark)
+         return null;
+
+      int curY = fvc.inserty();
+      int curX = fvc.insertx();
+      int sy = mark.y;
+      int sx = mark.x;
+      int ey = curY;
+      int ex = curX;
+
+      // Normalize so start <= end
+      if (sy > ey || (sy == ey && sx > ex)) {
+         int tmp = sy; sy = ey; ey = tmp;
+         tmp = sx; sx = ex; ex = tmp;
+      }
+
+      EditContainer ec = fvc.edvec;
+      int lastLine = ec.readIn() - 1;
+      if (sy < 1) sy = 1;
+      if (ey > lastLine) ey = lastLine;
+
+      StringBuilder sb = new StringBuilder();
+      for (int y = sy; y <= ey; y++) {
+         Object lineObj = ec.at(y);
+         if (null == lineObj) break;
+         String line = lineObj.toString();
+         int from = (y == sy)
+            ? Math.min(sx, line.length()) : 0;
+         int to = (y == ey)
+            ? Math.min(ex, line.length())
+            : line.length();
+         if (from > to) from = to;
+         sb.append(line, from, to);
+         if (y < ey) sb.append('\n');
+      }
+
+      String result = sb.toString();
+      return result.isEmpty() ? null : result;
    }
 
    /**
