@@ -85,8 +85,8 @@ Git-Describe: v1.0-3-gabcdef
 6. [x] Add `make plugins` target to makefile
 7. [x] Plugin.bindKey() API for keybinding registration
 8. [x] Plugin.Loader classloader delegation — MultiClassLoader now delegates to app classloader
-9. [ ] Test `:loadplugin hello` end-to-end in running javi instance
-10. [ ] Verify `.javini` `loadplugin` works at startup (NPE fixed, needs manual test)
+9. [x] Test `:loadplugin hello` end-to-end in running javi instance
+10. [x] Verify `.javini` `loadplugin` works at startup (NPE fixed, needs manual test)
 11. [ ] Move existing plugin sources (F4/F7/F8/F9) to plugins/ directories (future — per-branch)
 
 ## Risks
@@ -98,3 +98,4 @@ Git-Describe: v1.0-3-gabcdef
 
 - 2026-03-28: Initial plan created. Investigation complete.
 - 2026-03-29: Fixed two bugs. (1) NPE: guarded statusBar access in AwtInterface.istatusaddline/iclearStatus/istatusSetline against null during early init — statusBar is created in Initer.doAwt() but .javini commands execute from AwtFontList.init() in the constructor, before Initer runs. (2) ClassCastException: MultiClassLoader.loadClass() was using findSystemClass() which only checks the boot classpath; changed to delegate to the app classloader (MultiClassLoader.class.getClassLoader()) so plugin JAR classes can see javi classes like Plugin, Rgroup, etc. Commit a78452b.
+- 2026-04-01: Added PluginJUnitTest.java with 12 tests covering: command registration, error cases (null/empty/missing), end-to-end hello plugin loading, .javini dispatch path, Plugin.Loader direct, Plugin.bindKey validation, classloader delegation verification. All tests pass. Classloader delegation confirmed working — parent-first via getParent().loadClass() in MultiClassLoader. Commit 9a75aad.
