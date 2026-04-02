@@ -82,6 +82,7 @@ final class TestInit {
          new Javi.Jcmds();
          new MiscCommands();
          new EditGroup();
+         new FormatDispatch();
          Command.init();
          MoveGroup.init();
       } finally {

@@ -407,7 +407,8 @@ final class EditGroup extends Rgroup {
                      JS.JSR.eval(line);
                      break out;
                   case 'C':
-                     ClangFormat.format(starty, doney, fvc.edvec);
+                  case 'F':
+                     FormatDispatch.formatRange(starty, doney, fvc.edvec);
                      break out;
                   case 12:
                      MiscCommands.redraw(true);

@@ -102,6 +102,7 @@ public final class Javi {
       //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
+      new FormatDispatch();
       //trace("unexpectedly slow");
 
       //new vcs.cmvc();
