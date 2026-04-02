@@ -49,9 +49,10 @@ class PosListListJUnitTest {
       }
    }
 
-   // Access private static filereg Matcher via reflection
-   private static Matcher getFileReg() throws Exception {
-      Field f = PosListList.Cmd.class.getDeclaredField("filereg");
+   // Access private static filePositionPattern Matcher via reflection
+   private static Matcher getFilePositionPattern() throws Exception {
+      Field f = PosListList.Cmd.class.getDeclaredField(
+         "filePositionPattern");
       f.setAccessible(true);
       return (Matcher) f.get(null);
    }
@@ -65,17 +66,17 @@ class PosListListJUnitTest {
    }
 
    // ================================================================
-   // filereg pattern matching (from PosListList.Cmd.main())
+   // filePositionPattern matching (from PosListList.Cmd.main())
    // ================================================================
 
    @Nested
-   @DisplayName("filereg pattern")
-   class FileRegTests {
+   @DisplayName("filePositionPattern")
+   class FilePositionPatternTests {
 
       @Test
       @DisplayName("matches Java file:line reference")
       void matchesJavaFileLine() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("UI.java:1118 java.xxx.event.");
          assertTrue(m.find());
          assertEquals("UI.java", m.group(1));
@@ -85,7 +86,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches C file:line reference")
       void matchesCFileLine() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254 ");
          assertTrue(m.find());
          assertEquals("smtp_hfilter.c", m.group(1));
@@ -95,7 +96,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches file:line without trailing space")
       void matchesCFileLineNoTrailingSpace() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254");
          assertTrue(m.find());
          assertEquals("smtp_hfilter.c", m.group(1));
@@ -105,7 +106,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("first match in multi-match string")
       void firstMatchInMulti() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
             + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
             + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
@@ -117,7 +118,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches path with directories")
       void matchesPathWithDirs() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("src/main/java/Foo.java:42");
          assertTrue(m.find());
          assertEquals("src/main/java/Foo.java", m.group(1));
@@ -127,7 +128,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches path with backslashes")
       void matchesBackslashPath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("src\\main\\Foo.java:99");
          assertTrue(m.find());
          assertEquals("src\\main\\Foo.java", m.group(1));
@@ -137,7 +138,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches Windows drive letter path")
       void matchesWindowsDrivePath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("C:\\src\\File.cpp:100");
          assertTrue(m.find());
          // group(2) captures optional drive letter
@@ -148,7 +149,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches tilde path")
       void matchesTildePath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("~/projects/test.py:7");
          assertTrue(m.find());
          assertEquals("~/projects/test.py", m.group(1));
@@ -158,7 +159,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("no match on bare text without colon-number")
       void noMatchBareText() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("just some text without file reference");
          assertFalse(m.find());
       }
@@ -166,7 +167,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("no match on empty string")
       void noMatchEmpty() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("");
          assertFalse(m.find());
       }
@@ -174,7 +175,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("rejects filename with spaces")
       void rejectsSpacesInName() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("my file.java:10");
          // The pattern excludes spaces, so "my" won't match "my file.java"
          assertTrue(m.find()); // matches "file.java:10"
@@ -184,7 +185,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("rejects filename with parens")
       void rejectsParensInName() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("(File).java:10");
          assertTrue(m.find());
          // Should match only the non-paren portion

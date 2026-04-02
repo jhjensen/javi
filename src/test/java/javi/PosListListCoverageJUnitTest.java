@@ -1022,15 +1022,15 @@ class PosListListCoverageJUnitTest {
    }
 
    // ================================================================
-   // filereg additional edge cases
+   // filePositionPattern additional edge cases
    // ================================================================
 
    @Nested
-   @DisplayName("filereg extra patterns")
-   class FileRegExtraTests {
+   @DisplayName("filePositionPattern extra patterns")
+   class FilePositionPatternExtraTests {
 
-      private static Matcher getFileReg() throws Exception {
-         Field f = PosListList.Cmd.class.getDeclaredField("filereg");
+      private static Matcher getFilePositionPattern() throws Exception {
+         Field f = PosListList.Cmd.class.getDeclaredField("filePositionPattern");
          f.setAccessible(true);
          return (Matcher) f.get(null);
       }
@@ -1038,7 +1038,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches gradle output format")
       void gradleOutput() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset(
             "/path/to/src/main/java/Foo.java:42: error: ...");
          assertTrue(m.find());
@@ -1050,7 +1050,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches gcc output format")
       void gccOutput() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("main.c:100: warning: implicit declaration");
          assertTrue(m.find());
          assertEquals("main.c", m.group(1));
@@ -1060,7 +1060,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches grep -n output format")
       void grepOutput() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("config.h:55:   #define MAX_BUF 1024");
          assertTrue(m.find());
          assertEquals("config.h", m.group(1));
@@ -1070,7 +1070,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches line 1 (minimum line number)")
       void lineOne() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("test.java:1");
          assertTrue(m.find());
          assertEquals("1", m.group(4));
@@ -1079,7 +1079,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches large line numbers")
       void largeLineNumber() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("big.log:999999");
          assertTrue(m.find());
          assertEquals("999999", m.group(4));
@@ -1088,7 +1088,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("no match when colon has no digits after")
       void noDigitsAfterColon() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("File.java: error text");
          assertFalse(m.find());
       }
@@ -1096,7 +1096,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("matches dotfiles")
       void dotfiles() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset(".bashrc:42 alias ls");
          assertTrue(m.find());
          assertEquals(".bashrc", m.group(1));
@@ -1106,7 +1106,7 @@ class PosListListCoverageJUnitTest {
       @Test
       @DisplayName("multiple matches iterates correctly")
       void multipleMatches() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("A.java:10 B.java:20 C.java:30");
          assertTrue(m.find());
          assertEquals("A.java", m.group(1));

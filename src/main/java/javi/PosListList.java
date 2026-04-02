@@ -141,23 +141,24 @@ public final class PosListList extends TextList<Position> {
          if ((wait && !lastlist.contains(1)) || (!lastlist.containsNow(1)))
             return;
 
-         FvContext listfvc = fvc.switchContext(lastlist, reverse[0] ? -1 : 1);
-         Object obj = listfvc.at();
-         //trace("obj class = " + obj.getClass());
-         if (obj instanceof Position) {
-            Position pos = (Position) obj;
+         FvContext listContext = fvc.switchContext(
+            lastlist, reverse[0] ? -1 : 1);
+         Object item = listContext.at();
+         if (item instanceof Position) {
+            Position pos = (Position) item;
             FileList.gotoposition(pos, true, fvc.vi);
-         } else if (obj instanceof TextEdit) {
-            TextEdit ex = (TextEdit) obj;
+         } else if (item instanceof TextEdit) {
+            TextEdit ex = (TextEdit) item;
             if (ex.at(0) instanceof Position)
                gotoList(fvc, ex);
             else
                FvContext.connectFv(ex, fvc.vi);
-         } else if (obj instanceof FvExecute) {
-            FvExecute fe = (FvExecute) obj;
+         } else if (item instanceof FvExecute) {
+            FvExecute fe = (FvExecute) item;
             fe.execute(fvc);
          } else
-            throw new RuntimeException("vic.gotonextpos unexpected object");
+            throw new RuntimeException(
+               "gotoNextPos unexpected object");
       }
    }
 
@@ -178,7 +179,7 @@ public final class PosListList extends TextList<Position> {
          instance = createInstance();
       }
 
-      private static final Matcher filereg = Pattern.compile(
+      private static final Matcher filePositionPattern = Pattern.compile(
             "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
       private static Ctag ctagFinder;
       private static HashMap<String, TextEdit> tagCache =
@@ -281,36 +282,7 @@ public final class PosListList extends TextList<Position> {
                throw new InputException("bad command");
 
             case GOTO_DIR_LIST:
-               // F3: Open directory editor for current file's directory
-               // with cursor positioned on the current file.
-               String dirPath = ".";
-               String targetFile = null;
-               if (fvc.edvec instanceof FileList) {
-                  // In FileList: use the file under cursor
-                  Object item = fvc.at();
-                  if (item instanceof EditContainer) {
-                     FileDescriptor ifd = ((EditContainer) item).fdes();
-                     if (ifd instanceof FileDescriptor.LocalFile) {
-                        File f = ((FileDescriptor.LocalFile) ifd).fh;
-                        File p = f.getParentFile();
-                        if (null != p && p.isDirectory()) {
-                           dirPath = p.getPath();
-                        }
-                        targetFile = f.getName();
-                     }
-                  }
-               } else {
-                  FileDescriptor fd = fvc.edvec.fdes();
-                  if (fd instanceof FileDescriptor.LocalFile) {
-                     File f = ((FileDescriptor.LocalFile) fd).fh;
-                     File parentDir = f.getParentFile();
-                     if (null != parentDir && parentDir.isDirectory()) {
-                        dirPath = parentDir.getPath();
-                     }
-                     targetFile = f.getName();
-                  }
-               }
-               return DirEdit.openDirectory(dirPath, fvc.vi, targetFile);
+               return openDirectoryForCurrentFile(fvc);
             case GOTO_ROOT:
                FvContext.connectFv(TextEdit.getRoot(), fvc.vi);
                return null;
@@ -390,13 +362,46 @@ public final class PosListList extends TextList<Position> {
       }
 
       private static void poptag(View vi) throws InputException {
-         //trace("entered popstack size = " +tagstack.size() );
          int size = tagstack.size();
          if (0 != size) {
-            //trace("pop to " + tagstack.get(size-1));
             FileList.gotoposition(tagstack.get(size - 1), false, vi);
             tagstack.remove(size - 1);
          }
+      }
+
+      private static Object openDirectoryForCurrentFile(
+            FvContext fvc) throws InputException, IOException {
+         String dirPath = ".";
+         String targetFile = null;
+         if (fvc.edvec instanceof FileList) {
+            Object item = fvc.at();
+            if (item instanceof EditContainer) {
+               FileDescriptor ifd =
+                  ((EditContainer) item).fdes();
+               if (ifd instanceof FileDescriptor.LocalFile) {
+                  File f =
+                     ((FileDescriptor.LocalFile) ifd).fh;
+                  File p = f.getParentFile();
+                  if (null != p && p.isDirectory()) {
+                     dirPath = p.getPath();
+                  }
+                  targetFile = f.getName();
+               }
+            }
+         } else {
+            FileDescriptor fd = fvc.edvec.fdes();
+            if (fd instanceof FileDescriptor.LocalFile) {
+               File f = ((FileDescriptor.LocalFile) fd).fh;
+               File parentDir = f.getParentFile();
+               if (null != parentDir
+                     && parentDir.isDirectory()) {
+                  dirPath = parentDir.getPath();
+               }
+               targetFile = f.getName();
+            }
+         }
+         return DirEdit.openDirectory(
+            dirPath, fvc.vi, targetFile);
       }
 
       private static ArrayList<Position> findDirectories(String name) {
@@ -435,68 +440,71 @@ public final class PosListList extends TextList<Position> {
          return str.substring(startid, endid);
       }
 
-      private void gototag(String str, FvContext fvc) throws
+      private void gototag(String tagName, FvContext fvc) throws
             InputException, IOException {
          Position originalPosition = fvc.getPosition(null);
 
-         String searchText = null == str
+         String searchText = null == tagName
                        ? fvc.at().toString()
-                       : str;
+                       : tagName;
 
-         trace("gototag entry str="
-            + (str == null ? "null" : "'" + str + "'")
+         trace("gototag entry tagName="
+            + (tagName == null ? "null" : "'" + tagName + "'")
             + " searchText='" + searchText + "'");
 
-         if (filereg.reset(searchText).find()) {
-            trace("gototag filereg matched file="
-               + filereg.group(1) + " line=" + filereg.group(4));
+         if (filePositionPattern.reset(searchText).find()) {
+            trace("gototag filePositionPattern matched file="
+               + filePositionPattern.group(1) + " line="
+               + filePositionPattern.group(4));
             FvContext fileContext = FileList.openFileName(
-               filereg.group(1), fvc.vi);
+               filePositionPattern.group(1), fvc.vi);
             if (null != fileContext) {
-               int ypos = Integer.parseInt(filereg.group(4));
+               int ypos = Integer.parseInt(
+                  filePositionPattern.group(4));
                fileContext.edvec.contains(ypos);
                fileContext.cursoryabs(ypos);
                tagstack.add(originalPosition);
-               trace("gototag filereg navigated, return");
+               trace("gototag filePosition navigated, return");
                return;
             }
-            trace("gototag filereg openFileName returned null");
+            trace("gototag filePosition openFileName returned null");
          }
 
-         if (null == str) {
-            str = fvc.at().toString();
-            str = getLastSym(str, fvc.insertx());
-            trace("gototag extracted sym='" + str + "'");
+         if (null == tagName) {
+            tagName = fvc.at().toString();
+            tagName = getLastSym(tagName, fvc.insertx());
+            trace("gototag extracted sym='" + tagName + "'");
          }
 
-         if (str.isEmpty()) {
-            trace("gototag empty str, return");
+         if (tagName.isEmpty()) {
+            trace("gototag empty tagName, return");
             return;
          }
 
          // Ctags + mkid combined lookup
-         TextEdit templist = taglookup(str, fvc.vi);
-         if (null == templist) {
+         TextEdit tagResults = taglookup(tagName, fvc.vi);
+         if (null == tagResults) {
             trace("gototag taglookup returned null");
-            throw new InputException("tag not found: " + str);
+            throw new InputException("tag not found: " + tagName);
          }
-         trace("gototag taglookup done templist="
-            + templist.toString() + " finish=" + templist.finish());
+         trace("gototag taglookup done tagResults="
+            + tagResults.toString() + " finish="
+            + tagResults.finish());
 
          // Check for any non-defpos entries in the result
          boolean hasResults = false;
-         for (int i = 1; i < templist.readIn(); i++) {
-            if (templist.at(i) != PositionIoc.defpos) {
+         for (int i = 1; i < tagResults.readIn(); i++) {
+            if (tagResults.at(i) != PositionIoc.defpos) {
                hasResults = true;
                break;
             }
          }
          trace("gototag hasResults=" + hasResults);
-         if (templist.finish() <= 1 || !hasResults)
-            throw new InputException("tag not found: " + str);
+         if (tagResults.finish() <= 1 || !hasResults)
+            throw new InputException("tag not found: " + tagName);
 
          tagstack.add(originalPosition);
-         instance.setLastList(templist);
+         instance.setLastList(tagResults);
          trace("gototag done, pushed tagstack size="
             + tagstack.size());
       }
@@ -521,34 +529,29 @@ public final class PosListList extends TextList<Position> {
             throws IOException {
          Position[] tagPositions = null;
 
-         PositionIoc reader;
-         if (true) {
-            trace("create tags ctagFinder" + ctagFinder);
-            if (null != ctagFinder) {
-               tagPositions = ctagFinder.taglookup(sym);
-               if ((tagPositions != null))
-                  if (tagPositions.length == 0)
-                     tagPositions = null;
-            }
-            reader = new XrefReader(sym, tagPositions);
-         } else {
-            reader = new GlobalReader(sym);
+         trace("createtags ctagFinder=" + ctagFinder);
+         if (null != ctagFinder) {
+            tagPositions = ctagFinder.taglookup(sym);
+            if ((tagPositions != null))
+               if (tagPositions.length == 0)
+                  tagPositions = null;
          }
+         PositionIoc reader = new XrefReader(sym, tagPositions);
 
-         TextEdit<Position> taglist = new TextEdit<Position>(
+         TextEdit<Position> tagResults = new TextEdit<Position>(
             reader, tagPositions, instance, reader.prop);
-         taglist.contains(2);
-         tagCache.put(sym, taglist);
-         if (taglist.at(1) != PositionIoc.defpos)
-            instance.insertOne(taglist, instance.finish());
-         return taglist;
+         tagResults.contains(2);
+         tagCache.put(sym, tagResults);
+         if (tagResults.at(1) != PositionIoc.defpos)
+            instance.insertOne(tagResults, instance.finish());
+         return tagResults;
       }
 
       private static final Pattern DOT_PATTERN =
          Pattern.compile("\\.");
-      private static final Matcher classmatcher = Pattern.compile(
+      private static final Matcher classTagMatcher = Pattern.compile(
          "\\bclass:(\\S*)\\b").matcher("");
-      private static final Matcher filematcher = Pattern.compile(
+      private static final Matcher fileTagMatcher = Pattern.compile(
          "\\bfile:(\\S*)\\b").matcher("");
 
       private static final class TagCacheDisposer
@@ -561,107 +564,116 @@ public final class PosListList extends TextList<Position> {
       private TagCacheDisposer disposeListener =
          new TagCacheDisposer();
 
-      private TextEdit taglookup(String str, View vi)
+      private TextEdit taglookup(String qualifiedName, View vi)
             throws InputException {
-         trace("taglookup str='" + str + "'");
-         String[]symlist = DOT_PATTERN.split(str);
+         trace("taglookup qualifiedName='" + qualifiedName + "'");
+         String[] nameSegments = DOT_PATTERN.split(qualifiedName);
 
-         if (0 == symlist.length) {
-            throw new InputException("invalid tag target" + str);
+         if (0 == nameSegments.length) {
+            throw new InputException(
+               "invalid tag target" + qualifiedName);
          }
 
-         String sym = symlist[symlist.length - 1];
+         String simpleName = nameSegments[nameSegments.length - 1];
          @SuppressWarnings("unchecked") // raw TextEdit from HashMap
-         TextEdit<Position> taglist = tagCache.get(sym);
-         trace("taglookup sym='" + sym
-            + "' cached=" + (taglist != null));
+         TextEdit<Position> tagResults = tagCache.get(simpleName);
+         trace("taglookup simpleName='" + simpleName
+            + "' cached=" + (tagResults != null));
          try {
-            if (null == taglist) {
-               taglist = createtags(sym);
-               taglist.addDisposeNotify(disposeListener);
+            if (null == tagResults) {
+               tagResults = createtags(simpleName);
+               tagResults.addDisposeNotify(disposeListener);
             }
 
-            int tagFinish = taglist.finish();
-            trace("taglookup taglist.finish()" + tagFinish
-               + " donereading=" + taglist.donereading());
+            int tagFinish = tagResults.finish();
+            trace("taglookup tagResults.finish()" + tagFinish
+               + " donereading=" + tagResults.donereading());
 
-            int tagcount = 1;
-            for (; tagcount < tagFinish; tagcount++) {
-               Position  ctagpos = taglist.at(tagcount);
-               if (!Ctag.getTagName(ctagpos).equals(sym))
+            int ctagCount = 1;
+            for (; ctagCount < tagFinish; ctagCount++) {
+               Position ctagpos = tagResults.at(ctagCount);
+               if (!Ctag.getTagName(ctagpos).equals(simpleName))
                   break;
             }
-            trace("taglookup tagcount=" + tagcount);
+            trace("taglookup ctagCount=" + ctagCount);
 
-            if (tagcount > 1) {
-               int[] scores = new int[tagcount];
-               for (int i = 1; i < tagcount; i++)
+            if (ctagCount > 1) {
+               int[] scores = new int[ctagCount];
+               for (int i = 1; i < ctagCount; i++)
                   scores[i] = 0;
-               int maxscore = 0;
+               int bestScore = 0;
 
-               for (int symIndex = symlist.length - 2;
+               for (int symIndex = nameSegments.length - 2;
                      symIndex >= 0;
                      symIndex--) {
-                  String currsym = symlist[symIndex];
+                  String segment = nameSegments[symIndex];
 
-                  for (int i = 1; i < tagcount; i++) {
-                     Position pos = taglist.at(i);
+                  for (int i = 1; i < ctagCount; i++) {
+                     Position pos = tagResults.at(i);
 
-                     if (classmatcher.reset(pos.comment).find()) {
-                        String clss =  classmatcher.group(1);
-                        //trace("classmatcher class = " + clss + " currsym = " + currsym);
-                        if (str.indexOf(clss) != -1) {
-                           scores[i] += clss.length();
+                     if (classTagMatcher.reset(
+                           pos.comment).find()) {
+                        String className =
+                           classTagMatcher.group(1);
+                        if (qualifiedName.indexOf(
+                              className) != -1) {
+                           scores[i] += className.length();
                         }
 
-                        if (clss.equals(currsym)) {
+                        if (className.equals(segment)) {
                            scores[i] += 2;
                         }
                      }
 
-                     if (filematcher.reset(pos.filename.shortName).find()
-                           && filematcher.group(1).equals(currsym)) {
+                     if (fileTagMatcher.reset(
+                              pos.filename.shortName).find()
+                           && fileTagMatcher.group(1).equals(
+                              segment)) {
                         scores[i] += 1;
                      }
-                     if (scores[i] > maxscore)
-                        maxscore = scores[i];
-                     else if (scores[i] < maxscore)
+                     if (scores[i] > bestScore)
+                        bestScore = scores[i];
+                     else if (scores[i] < bestScore)
                         scores[i] = Integer.MIN_VALUE;
                   }
                }
-               //for (int i=1;i<tagcount;i++)
-               //   trace("symlist[i] " + symlist[i] + " tagscore[" + i + "] = " + scores[i]);
-               for (int i = 1; i < tagcount; i++) {
+               for (int i = 1; i < ctagCount; i++) {
 
-                  if (scores[i] == maxscore) {
-                     if (FileList.gotoposition(taglist.at(i), false, vi)) {
-                        FvContext tagfvc =  FvContext.getcontext(vi, taglist);
+                  if (scores[i] == bestScore) {
+                     if (FileList.gotoposition(
+                           tagResults.at(i), false, vi)) {
+                        FvContext tagfvc = FvContext.getcontext(
+                           vi, tagResults);
                         if (tagfvc.edvec.contains(i))
                            tagfvc.cursoryabs(i);
                         break;
                      }
                   }
                }
-            } else if (taglist.readIn() > 1) {
+            } else if (tagResults.readIn() > 1) {
 
                // Merge any matching directories into the tag list
-               ArrayList<Position> dirMatches = findDirectories(str);
-               trace("taglookup dirMatches=" + dirMatches.size());
+               ArrayList<Position> dirMatches =
+                  findDirectories(qualifiedName);
+               trace("taglookup dirMatches="
+                  + dirMatches.size());
                @SuppressWarnings("unchecked")
-               TextEdit<Position> tlist = taglist;
+               TextEdit<Position> tlist = tagResults;
                for (Position dp : dirMatches) {
                   if (!containsPosition(tlist, dp))
                      tlist.insertOne(dp, tlist.readIn());
                }
 
                // Navigate to first non-defpos entry
-               for (int i = 1; i < taglist.readIn(); i++) {
-                  Position p = taglist.at(i);
-                  trace("taglookup trying entry " + i + " p=" + p);
+               for (int i = 1; i < tagResults.readIn(); i++) {
+                  Position p = tagResults.at(i);
+                  trace("taglookup trying entry "
+                     + i + " p=" + p);
                   if (p != PositionIoc.defpos
-                        && FileList.gotoposition(p, false, vi)) {
+                        && FileList.gotoposition(
+                           p, false, vi)) {
                      FvContext tagfvc =
-                        FvContext.getcontext(vi, taglist);
+                        FvContext.getcontext(vi, tagResults);
                      if (tagfvc.edvec.contains(i))
                         tagfvc.cursoryabs(i);
                      break;
@@ -672,7 +684,7 @@ public final class PosListList extends TextList<Position> {
             trace("PosListList taglookup caught " + e);
          }
 
-         return taglist;
+         return tagResults;
       }
 
       static void myassert(boolean flag, Object dump) {
@@ -683,22 +695,24 @@ public final class PosListList extends TextList<Position> {
       public static void main(String[] args) {
 
          try {
-            //final Matcher filereg = Pattern.compile(
-            //"(\b([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
-            // "(([a-zA-Z]:)?([^:\\s\\(\\)\"\']+)):([0-9]+)").matcher("");
-            filereg.reset("UI.java:1118 java.xxx.event.");
-            myassert(filereg.find(), "UI");
+            filePositionPattern.reset("UI.java:1118 java.xxx.event.");
+            myassert(filePositionPattern.find(), "UI");
 
-            myassert(filereg.reset("smtp_hfilter.c:254 ").find(), "");
-            myassert(filereg.reset("smtp_hfilter.c:254").find(), "");
+            myassert(filePositionPattern.reset(
+               "smtp_hfilter.c:254 ").find(), "");
+            myassert(filePositionPattern.reset(
+               "smtp_hfilter.c:254").find(), "");
 
-            filereg.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
+            filePositionPattern.reset(
+               "smtp_hfilter.c:254 hfilter_find SUBJECT"
                + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
                + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
-            myassert(filereg.find(), "");
-            myassert(filereg.group(4).equals("254"), filereg.group(4));
-            myassert(filereg.group(1).equals("smtp_hfilter.c"),
-               filereg.group(1));
+            myassert(filePositionPattern.find(), "");
+            myassert(filePositionPattern.group(4).equals("254"),
+               filePositionPattern.group(4));
+            myassert(filePositionPattern.group(1).equals(
+               "smtp_hfilter.c"),
+               filePositionPattern.group(1));
             trace("test executed successfully");
          } catch (Throwable e) {
             trace("main caught exception " + e);
