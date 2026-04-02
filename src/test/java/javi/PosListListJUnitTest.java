@@ -527,6 +527,9 @@ class PosListListJUnitTest {
       @Test
       @DisplayName(":ta nonexistent throws InputException")
       void taNotFoundThrowsInputException() throws Exception {
+         // Build tag name dynamically so lid won't find it
+         // in this source file's ID database index
+         String bogusTag = "zzz" + "notag" + "999";
          EventQueue.biglock2.lock();
          try {
             TestView view = new TestView(true);
@@ -543,7 +546,7 @@ class PosListListJUnitTest {
                assertThrows(
                   java.lang.reflect.InvocationTargetException.class,
                   () -> gototagMethod.invoke(
-                     pllCmd, "nonexistent_tag_xyz_99", fvc));
+                     pllCmd, bogusTag, fvc));
             assertTrue(
                ex.getCause() instanceof InputException,
                "cause must be InputException, got: "
