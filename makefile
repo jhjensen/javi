@@ -202,6 +202,11 @@ test-coverage:
 	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
 	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
 
+# Run test-coverage then parse XML into text summary
+coverage-report: test-coverage compile
+	java -cp build/classes/java/main javi.CoverageReport \
+	   build/reports/jacoco/merged/merged.xml
+
 #==============================================================================
 # T3: GUI Coverage Targets (JaCoCo agent + tcpserver)
 #==============================================================================
