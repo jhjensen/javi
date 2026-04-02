@@ -599,93 +599,106 @@ public final class PosListList extends TextList<Position> {
             trace("taglookup ctagCount=" + ctagCount);
 
             if (ctagCount > 1) {
-               int[] scores = new int[ctagCount];
-               for (int i = 1; i < ctagCount; i++)
-                  scores[i] = 0;
-               int bestScore = 0;
-
-               for (int symIndex = nameSegments.length - 2;
-                     symIndex >= 0;
-                     symIndex--) {
-                  String segment = nameSegments[symIndex];
-
-                  for (int i = 1; i < ctagCount; i++) {
-                     Position pos = tagResults.at(i);
-
-                     if (classTagMatcher.reset(
-                           pos.comment).find()) {
-                        String className =
-                           classTagMatcher.group(1);
-                        if (qualifiedName.indexOf(
-                              className) != -1) {
-                           scores[i] += className.length();
-                        }
-
-                        if (className.equals(segment)) {
-                           scores[i] += 2;
-                        }
-                     }
-
-                     if (fileTagMatcher.reset(
-                              pos.filename.shortName).find()
-                           && fileTagMatcher.group(1).equals(
-                              segment)) {
-                        scores[i] += 1;
-                     }
-                     if (scores[i] > bestScore)
-                        bestScore = scores[i];
-                     else if (scores[i] < bestScore)
-                        scores[i] = Integer.MIN_VALUE;
-                  }
-               }
-               for (int i = 1; i < ctagCount; i++) {
-
-                  if (scores[i] == bestScore) {
-                     if (FileList.gotoposition(
-                           tagResults.at(i), false, vi)) {
-                        FvContext tagfvc = FvContext.getcontext(
-                           vi, tagResults);
-                        if (tagfvc.edvec.contains(i))
-                           tagfvc.cursoryabs(i);
-                        break;
-                     }
-                  }
-               }
+               navigateToBestScoredTag(tagResults,
+                  ctagCount, nameSegments, qualifiedName, vi);
             } else if (tagResults.readIn() > 1) {
-
-               // Merge any matching directories into the tag list
-               ArrayList<Position> dirMatches =
-                  findDirectories(qualifiedName);
-               trace("taglookup dirMatches="
-                  + dirMatches.size());
-               @SuppressWarnings("unchecked")
-               TextEdit<Position> tlist = tagResults;
-               for (Position dp : dirMatches) {
-                  if (!containsPosition(tlist, dp))
-                     tlist.insertOne(dp, tlist.readIn());
-               }
-
-               // Navigate to first non-defpos entry
-               for (int i = 1; i < tagResults.readIn(); i++) {
-                  Position p = tagResults.at(i);
-                  trace("taglookup trying entry "
-                     + i + " p=" + p);
-                  if (p != PositionIoc.defpos
-                        && FileList.gotoposition(
-                           p, false, vi)) {
-                     FvContext tagfvc =
-                        FvContext.getcontext(vi, tagResults);
-                     if (tagfvc.edvec.contains(i))
-                        tagfvc.cursoryabs(i);
-                     break;
-                  }
-               }
+               navigateToFirstTag(tagResults,
+                  qualifiedName, vi);
             }
          } catch (IOException e) {
             trace("PosListList taglookup caught " + e);
          }
 
          return tagResults;
+      }
+
+      private static void navigateToBestScoredTag(
+            TextEdit<Position> tagResults, int ctagCount,
+            String[] nameSegments, String qualifiedName,
+            View vi) throws InputException {
+         int[] scores = new int[ctagCount];
+         for (int i = 1; i < ctagCount; i++)
+            scores[i] = 0;
+         int bestScore = 0;
+
+         for (int symIndex = nameSegments.length - 2;
+               symIndex >= 0;
+               symIndex--) {
+            String segment = nameSegments[symIndex];
+
+            for (int i = 1; i < ctagCount; i++) {
+               Position pos = tagResults.at(i);
+
+               if (classTagMatcher.reset(
+                     pos.comment).find()) {
+                  String className =
+                     classTagMatcher.group(1);
+                  if (qualifiedName.indexOf(
+                        className) != -1) {
+                     scores[i] += className.length();
+                  }
+                  if (className.equals(segment)) {
+                     scores[i] += 2;
+                  }
+               }
+
+               if (fileTagMatcher.reset(
+                        pos.filename.shortName).find()
+                     && fileTagMatcher.group(1).equals(
+                        segment)) {
+                  scores[i] += 1;
+               }
+               if (scores[i] > bestScore)
+                  bestScore = scores[i];
+               else if (scores[i] < bestScore)
+                  scores[i] = Integer.MIN_VALUE;
+            }
+         }
+         for (int i = 1; i < ctagCount; i++) {
+            if (scores[i] == bestScore) {
+               if (FileList.gotoposition(
+                     tagResults.at(i), false, vi)) {
+                  FvContext tagfvc = FvContext.getcontext(
+                     vi, tagResults);
+                  if (tagfvc.edvec.contains(i))
+                     tagfvc.cursoryabs(i);
+                  break;
+               }
+            }
+         }
+      }
+
+      @SuppressWarnings("unchecked")
+      private static void navigateToFirstTag(
+            TextEdit<Position> tagResults,
+            String qualifiedName, View vi)
+            throws InputException {
+         // Merge any matching directories into the tag list
+         ArrayList<Position> dirMatches =
+            findDirectories(qualifiedName);
+         trace("navigateToFirstTag dirMatches="
+            + dirMatches.size());
+         TextEdit<Position> tlist = tagResults;
+         for (Position dp : dirMatches) {
+            if (!containsPosition(tlist, dp))
+               tlist.insertOne(dp, tlist.readIn());
+         }
+
+         // Navigate to first non-defpos entry
+         for (int i = 1; i < tagResults.readIn(); i++) {
+            Position p = tagResults.at(i);
+            trace("navigateToFirstTag trying entry "
+               + i + " p=" + p);
+            if (p != PositionIoc.defpos
+                  && FileList.gotoposition(
+                     p, false, vi)) {
+               FvContext tagfvc =
+                  FvContext.getcontext(vi, tagResults);
+               if (tagfvc.edvec.contains(i))
+                  tagfvc.cursoryabs(i);
+               break;
+            }
+         }
       }
 
       static void myassert(boolean flag, Object dump) {
