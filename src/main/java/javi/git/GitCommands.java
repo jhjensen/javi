@@ -1,13 +1,18 @@
 package javi.git;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javi.Command;
 import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
 import javi.Plugin;
+import javi.PosListList;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -41,6 +46,9 @@ public final class GitCommands extends Rgroup implements Plugin {
    /** The git output buffer for diff/log/branch results. */
    private static TextEdit<String> outputBuffer;
 
+   /** The git log buffer, reused across invocations. */
+   private static TextEdit<String> logBuffer;
+
    /** Whether the file-write listener has been registered. */
    private static boolean listenerRegistered;
 
@@ -72,6 +80,8 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git_branch_delete",
          "git_rebase",
          "git",
+         "git_show",
+         "git_log_diff",
       };
       register(rnames);
    }
@@ -157,6 +167,12 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 25:
             gitDispatch(arg, fvc);
+            return null;
+         case 26:
+            gitShow(fvc);
+            return null;
+         case 27:
+            gitLogDiff(fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -264,18 +280,90 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Show git log.
+    * Show git log in a text buffer for in-editor navigation.
+    * Graph window is disabled; use :git_show / :git_log_diff
+    * to inspect individual commits.
     */
    private static void gitLog(FvContext fvc) throws
          IOException, InputException {
-      List<String> output = GitProcess.execute(
-         "log", "--oneline", "--graph", "-30");
-      if (output.isEmpty()) {
-         UI.reportMessage("No log entries");
-         return;
+      // Graph window disabled per user request.
+      // GitLogPanel.showLogWindow(100);
+      List<String> logLines = GitLogBuffer.getLogLines(100);
+      if (!logLines.isEmpty()) {
+         List<String> formatted = GitLogBuffer.formatLog(logLines);
+         logBuffer = createBuffer("*git-log*", formatted);
+         registerLogInPosListList(formatted);
+         FvContext.connectFv(logBuffer, fvc.vi);
       }
-      outputBuffer = createBuffer("*git-log*", output);
+   }
+
+   /**
+    * Registers the git log as a position list so it appears
+    * in F6 PosListList for easy navigation back to the log.
+    */
+   private static void registerLogInPosListList(
+         List<String> formatted) {
+      Pattern shaPat =
+         Pattern.compile("^\\s*([0-9a-f]{7,40})\\s+(.*)");
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < formatted.size(); i++) {
+         Matcher m = shaPat.matcher(formatted.get(i));
+         if (m.find()) {
+            sb.append("*git-log*:").append(i + 1).append(": ")
+               .append(m.group(1)).append(" ")
+               .append(m.group(2)).append("\n");
+         }
+      }
+      BufferedReader reader = new BufferedReader(
+         new StringReader(sb.toString()));
+      PosListList.Cmd.replaceFromReader("git-log", reader);
+   }
+
+   /**
+    * Show full commit details for the commit on the current line.
+    * Extracts the SHA from the cursor line in the log buffer and
+    * displays author, date, full message, and diff stat.
+    */
+   private static void gitShow(FvContext fvc) throws
+         IOException, InputException {
+      String sha = extractShaAtCursor(fvc);
+      if (null == sha) {
+         throw new InputException("No commit SHA on current line");
+      }
+      List<String> details = GitLogBuffer.getCommitDetails(sha);
+      outputBuffer = createBuffer("*git-show*", details);
       FvContext.connectFv(outputBuffer, fvc.vi);
+   }
+
+   /**
+    * Show the full diff for the commit on the current line.
+    * Extracts the SHA from the cursor line in the log buffer.
+    */
+   private static void gitLogDiff(FvContext fvc) throws
+         IOException, InputException {
+      String sha = extractShaAtCursor(fvc);
+      if (null == sha) {
+         throw new InputException("No commit SHA on current line");
+      }
+      List<String> diff = GitLogBuffer.getCommitDiff(sha);
+      outputBuffer = createBuffer("*git-diff*", diff);
+      FvContext.connectFv(outputBuffer, fvc.vi);
+   }
+
+   /**
+    * Extract a commit SHA from the line at the cursor position.
+    *
+    * @return the SHA string, or null if none found
+    */
+   @SuppressWarnings("unchecked")
+   private static String extractShaAtCursor(FvContext fvc) {
+      TextEdit<String> buf = fvc.edvec;
+      int curLine = fvc.inserty();
+      if (curLine < 1 || curLine > buf.readIn()) {
+         return null;
+      }
+      String line = buf.at(curLine).toString();
+      return GitLogBuffer.extractSha(line);
    }
 
    /**

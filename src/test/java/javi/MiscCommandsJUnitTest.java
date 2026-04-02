@@ -92,7 +92,7 @@ class MiscCommandsJUnitTest {
 
    @Test
    void cmdEnumCount() {
-      assertEquals(30, MiscCommands.Cmd.values().length,
+      assertEquals(31, MiscCommands.Cmd.values().length,
          "Update this count when adding new MiscCommands.Cmd values");
    }
 

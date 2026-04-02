@@ -8,11 +8,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javi.git.GitCommands;
+import javi.git.GitLogBuffer;
+import javi.git.GitLogEntry;
+import javi.git.GitLogGraph;
 import javi.git.GitStatusBuffer;
 
 /**
@@ -406,6 +411,293 @@ class GitJUnitTest {
       void loadclassCommandRegistered() {
          assertNotNull(Rgroup.bindingLookup("loadclass"),
             "loadclass command should be registered");
+      }
+   }
+
+   @Nested
+   class LogBufferShaExtractionTests {
+
+      @Test
+      void extractShaFromSimpleLine() {
+         assertEquals("abc1234",
+            GitLogBuffer.extractSha("* abc1234 Fix the bug"));
+      }
+
+      @Test
+      void extractShaFromBranchLine() {
+         assertEquals("def5678",
+            GitLogBuffer.extractSha(
+               "| * def5678 (HEAD -> main) Add feature"));
+      }
+
+      @Test
+      void extractShaFromMergeLine() {
+         assertEquals("9876543",
+            GitLogBuffer.extractSha("|/  9876543 Merge branch"));
+      }
+
+      @Test
+      void extractShaFromIndentedLine() {
+         assertEquals("aaa1111",
+            GitLogBuffer.extractSha(
+               "|  * aaa1111 Some commit message"));
+      }
+
+      @Test
+      void extractShaFullLength() {
+         String fullSha = "abc1234def5678901234567890abcdef12345678";
+         assertEquals(fullSha,
+            GitLogBuffer.extractSha("* " + fullSha + " msg"));
+      }
+
+      @Test
+      void extractShaReturnsNullForNoSha() {
+         assertNull(GitLogBuffer.extractSha(
+            "Git Log (all branches)"));
+      }
+
+      @Test
+      void extractShaReturnsNullForBlankLine() {
+         assertNull(GitLogBuffer.extractSha(""));
+      }
+
+      @Test
+      void extractShaReturnsNullForNull() {
+         assertNull(GitLogBuffer.extractSha(null));
+      }
+
+      @Test
+      void extractShaFromGraphOnlyLine() {
+         assertNull(GitLogBuffer.extractSha("| |"));
+      }
+
+      @Test
+      void extractShaWithBackslashGraph() {
+         assertEquals("bbb2222",
+            GitLogBuffer.extractSha(
+               "|\\ * bbb2222 Branch point"));
+      }
+   }
+
+   @Nested
+   class LogBufferDecorationTests {
+
+      @Test
+      void extractDecorationHeadAndBranch() {
+         assertEquals("HEAD -> main",
+            GitLogBuffer.extractDecoration(
+               "* abc1234 (HEAD -> main) Latest commit"));
+      }
+
+      @Test
+      void extractDecorationMultipleRefs() {
+         assertEquals("HEAD -> main, origin/main, tag: v1.0",
+            GitLogBuffer.extractDecoration(
+               "* abc1234 (HEAD -> main, origin/main,"
+               + " tag: v1.0) Release"));
+      }
+
+      @Test
+      void extractDecorationNone() {
+         assertNull(GitLogBuffer.extractDecoration(
+            "* abc1234 Plain commit"));
+      }
+
+      @Test
+      void extractDecorationNull() {
+         assertNull(GitLogBuffer.extractDecoration(null));
+      }
+   }
+
+   @Nested
+   class LogBufferFormatTests {
+
+      @Test
+      void formatLogIncludesHeader() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit",
+            "* def5678 Second commit"
+         );
+         List<String> result = GitLogBuffer.formatLog(logLines);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains("Git Log (all branches)"),
+            "Should have log header");
+         assertTrue(joined.contains("abc1234"),
+            "Should contain first commit SHA");
+         assertTrue(joined.contains("def5678"),
+            "Should contain second commit SHA");
+      }
+
+      @Test
+      void formatLogIncludesHelpText() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         List<String> result = GitLogBuffer.formatLog(logLines);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains(":git_show"),
+            "Should include git_show in help text");
+         assertTrue(joined.contains(":git_log_diff"),
+            "Should include git_log_diff in help text");
+      }
+
+      @Test
+      void formatLogPreservesGraphStructure() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 Latest",
+            "| * def5678 Branch work",
+            "|/",
+            "* 1111111 Common ancestor"
+         );
+         List<String> result = GitLogBuffer.formatLog(logLines);
+         // The graph lines should be preserved in order
+         assertTrue(result.contains("* abc1234 Latest"));
+         assertTrue(result.contains("| * def5678 Branch work"));
+         assertTrue(result.contains("|/"));
+         assertTrue(result.contains("* 1111111 Common ancestor"));
+      }
+   }
+
+   @Nested
+   class LogCommandRegistrationTests {
+
+      @BeforeAll
+      static void setUp() throws Exception {
+         TestInit.init();
+         Class.forName("javi.git.GitCommands");
+      }
+
+      @Test
+      void gitShowRegistered() {
+         assertNotNull(Rgroup.bindingLookup("git_show"),
+            "git_show should be registered");
+      }
+
+      @Test
+      void gitLogDiffRegistered() {
+         assertNotNull(Rgroup.bindingLookup("git_log_diff"),
+            "git_log_diff should be registered");
+      }
+   }
+
+   @Nested
+   class LogEntryParseTests {
+
+      @Test
+      void parseSingleCommit() {
+         List<String> lines = Arrays.asList(
+            "abc1234def5678901234567890abcdef12345678|"
+            + "| (HEAD -> main)|Fix bug|Alice|2025-01-15"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertEquals(1, entries.size());
+         GitLogEntry e = entries.get(0);
+         assertEquals("abc1234def5678901234567890abcdef12345678",
+            e.sha);
+         assertEquals("Fix bug", e.subject);
+         assertEquals("Alice", e.author);
+         assertEquals("HEAD -> main", e.decoration);
+         assertTrue(e.parents.isEmpty());
+      }
+
+      @Test
+      void parseCommitWithParent() {
+         List<String> lines = Arrays.asList(
+            "aaaa|bbbb| |Add feature|Bob|2025-01-14"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertEquals(1, entries.size());
+         assertEquals(1, entries.get(0).parents.size());
+         assertEquals("bbbb", entries.get(0).parents.get(0));
+      }
+
+      @Test
+      void parseMergeCommit() {
+         List<String> lines = Arrays.asList(
+            "aaaa|bbbb cccc| |Merge|Charlie|2025-01-13"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertEquals(1, entries.size());
+         assertEquals(2, entries.get(0).parents.size());
+         assertEquals("bbbb", entries.get(0).parents.get(0));
+         assertEquals("cccc", entries.get(0).parents.get(1));
+      }
+
+      @Test
+      void parseSkipsEmptyLines() {
+         List<String> lines = Arrays.asList("",
+            "aaaa|| |Msg|A|2025-01-12", "");
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertEquals(1, entries.size());
+      }
+
+      @Test
+      void parseNoDecoration() {
+         List<String> lines = Arrays.asList(
+            "aaaa|bbbb| |Msg|A|2025-01-12"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertNull(entries.get(0).decoration);
+      }
+
+      @Test
+      void shortShaReturnsSevenChars() {
+         List<String> lines = Arrays.asList(
+            "abcdef1234567890|| |Msg|A|2025-01-12"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         assertEquals("abcdef1", entries.get(0).shortSha());
+      }
+   }
+
+   @Nested
+   class LogGraphLaneTests {
+
+      @Test
+      void singleCommitGetsLaneZero() {
+         List<String> lines = Arrays.asList(
+            "aaaa|| |Root|A|2025-01-12"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         List<GitLogGraph.Row> rows =
+            GitLogGraph.assignLanes(entries);
+         assertEquals(1, rows.size());
+         assertEquals(0, rows.get(0).lane);
+      }
+
+      @Test
+      void linearHistoryStaysInLaneZero() {
+         List<String> lines = Arrays.asList(
+            "aaaa|bbbb| |Second|A|2025-01-12",
+            "bbbb|| |First|A|2025-01-11"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         List<GitLogGraph.Row> rows =
+            GitLogGraph.assignLanes(entries);
+         assertEquals(2, rows.size());
+         assertEquals(0, rows.get(0).lane);
+         assertEquals(0, rows.get(1).lane);
+      }
+
+      @Test
+      void mergeCommitHasTwoParentLanes() {
+         List<String> lines = Arrays.asList(
+            "aaaa|bbbb cccc| |Merge|A|2025-01-12",
+            "bbbb|dddd| |Main work|A|2025-01-11",
+            "cccc|dddd| |Branch work|A|2025-01-10",
+            "dddd|| |Common ancestor|A|2025-01-09"
+         );
+         List<GitLogEntry> entries = GitLogEntry.parse(lines);
+         List<GitLogGraph.Row> rows =
+            GitLogGraph.assignLanes(entries);
+         assertEquals(4, rows.size());
+         // Merge commit at lane 0
+         assertEquals(0, rows.get(0).lane);
+         // Should have 2 parent lanes
+         assertEquals(2, rows.get(0).parentLanes.length);
+         // First parent inherits lane, second gets new lane
+         assertEquals(0, rows.get(0).parentLanes[0]);
+         assertTrue(rows.get(0).parentLanes[1] > 0,
+            "Second parent should be in a different lane");
       }
    }
 }

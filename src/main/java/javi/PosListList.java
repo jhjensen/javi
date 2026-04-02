@@ -370,6 +370,22 @@ public final class PosListList extends TextList<Position> {
          }
       }
 
+      /**
+       * Creates and registers a position list from formatted lines.
+       * Each line should be in the format "file:line: comment".
+       * Replaces any existing list with the same name.
+       *
+       * @param name the position list name
+       * @param reader BufferedReader with position-formatted lines
+       * @return the new TextEdit for the list
+       */
+      public static TextEdit<Position> replaceFromReader(
+            String name, java.io.BufferedReader reader) {
+         PositionIoc ioc = new PositionIoc(
+            name, reader, PositionIoc.pconverter);
+         return replacePositionIoc(name, ioc);
+      }
+
       static void flush() throws IOException {
          tagstack.clear();
          tagCache.clear();
