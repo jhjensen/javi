@@ -112,8 +112,8 @@ public final class PosListList extends TextList<Position> {
       base.reload();
       //trace("finish = " + plist.finish());
       try {
-         for (int ii = 1; ii < finish(); ii++)
-            FvContext.dispose(at(ii), this);
+         for (int i = 1; i < finish(); i++)
+            FvContext.dispose(at(i), this);
       } catch (Exception e) {
          UI.popError("attempting to dispose of list", e);
       }
@@ -551,14 +551,15 @@ public final class PosListList extends TextList<Position> {
       private static final Matcher filematcher = Pattern.compile(
          "\\bfile:(\\S*)\\b").matcher("");
 
-      private static final class FDL
+      private static final class TagCacheDisposer
             implements EditContainer.FileDisposeListener {
          public void fileDisposed(EditContainer ev) {
             trace("file disposed " + ev);
             tagCache.remove(ev.getName());
          }
       }
-      private FDL disposeListener = new FDL();
+      private TagCacheDisposer disposeListener =
+         new TagCacheDisposer();
 
       private TextEdit taglookup(String str, View vi)
             throws InputException {
