@@ -428,16 +428,16 @@ public final class PosListList extends TextList<Position> {
          return results;
       }
 
-      private static String getLastSym(String str, int startid) {
-         //trace(":" + str + " startid = " + startid);
-         int endid = startid;
-         for (; endid < str.length(); endid++) {
-            char ch =  str.charAt(endid);
-            if (!Character.isJavaIdentifierPart(ch) && '.' != ch)
+      private static String extractIdentifier(
+            String text, int startIndex) {
+         int endIndex = startIndex;
+         for (; endIndex < text.length(); endIndex++) {
+            char ch = text.charAt(endIndex);
+            if (!Character.isJavaIdentifierPart(ch)
+                  && '.' != ch)
                break;
          }
-         //trace("endid" + endid + " startid = " + startid);
-         return str.substring(startid, endid);
+         return text.substring(startIndex, endIndex);
       }
 
       private void gototag(String tagName, FvContext fvc) throws
@@ -472,7 +472,8 @@ public final class PosListList extends TextList<Position> {
 
          if (null == tagName) {
             tagName = fvc.at().toString();
-            tagName = getLastSym(tagName, fvc.insertx());
+            tagName = extractIdentifier(
+               tagName, fvc.insertx());
             trace("gototag extracted sym='" + tagName + "'");
          }
 
@@ -525,11 +526,11 @@ public final class PosListList extends TextList<Position> {
          return false;
       }
 
-      private TextEdit<Position> createtags(String sym)
+      private TextEdit<Position> createTagList(String sym)
             throws IOException {
          Position[] tagPositions = null;
 
-         trace("createtags ctagFinder=" + ctagFinder);
+         trace("createTagList ctagFinder=" + ctagFinder);
          if (null != ctagFinder) {
             tagPositions = ctagFinder.taglookup(sym);
             if ((tagPositions != null))
@@ -581,7 +582,7 @@ public final class PosListList extends TextList<Position> {
             + "' cached=" + (tagResults != null));
          try {
             if (null == tagResults) {
-               tagResults = createtags(simpleName);
+               tagResults = createTagList(simpleName);
                tagResults.addDisposeNotify(disposeListener);
             }
 

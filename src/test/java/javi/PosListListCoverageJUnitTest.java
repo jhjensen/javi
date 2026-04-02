@@ -956,68 +956,68 @@ class PosListListCoverageJUnitTest {
    }
 
    // ================================================================
-   // getLastSym edge cases
+   // extractIdentifier edge cases
    // ================================================================
 
    @Nested
-   @DisplayName("getLastSym additional cases")
-   class GetLastSymExtraTests {
+   @DisplayName("extractIdentifier additional cases")
+   class ExtractIdentifierExtraTests {
 
-      private static Method getLastSymMethod;
+      private static Method extractIdentifierMethod;
 
       @BeforeAll
       static void setup() throws Exception {
-         getLastSymMethod = PosListList.Cmd.class.getDeclaredMethod(
-            "getLastSym", String.class, int.class);
-         getLastSymMethod.setAccessible(true);
+         extractIdentifierMethod = PosListList.Cmd.class.getDeclaredMethod(
+            "extractIdentifier", String.class, int.class);
+         extractIdentifierMethod.setAccessible(true);
       }
 
-      private String callGetLastSym(String str, int start)
+      private String callExtractIdentifier(String str, int start)
             throws Exception {
-         return (String) getLastSymMethod.invoke(null, str, start);
+         return (String) extractIdentifierMethod.invoke(null, str, start);
       }
 
       @Test
       @DisplayName("handles underscore characters")
       void underscores() throws Exception {
          assertEquals("my_var_name",
-            callGetLastSym("my_var_name = 5", 0));
+            callExtractIdentifier("my_var_name = 5", 0));
       }
 
       @Test
       @DisplayName("handles dollar sign")
       void dollarSign() throws Exception {
-         // getLastSym allows dots, so $field.get is one symbol
+         // extractIdentifier allows dots, so $field.get is one symbol
          assertEquals("$field.get",
-            callGetLastSym("$field.get()", 0));
+            callExtractIdentifier("$field.get()", 0));
       }
 
       @Test
       @DisplayName("handles digits in middle")
       void digitsInMiddle() throws Exception {
          assertEquals("var123abc",
-            callGetLastSym("var123abc end", 0));
+            callExtractIdentifier("var123abc end", 0));
       }
 
       @Test
       @DisplayName("stops at colon")
       void stopsAtColon() throws Exception {
          assertEquals("File",
-            callGetLastSym("File:42", 0));
+            callExtractIdentifier("File:42", 0));
       }
 
       @Test
       @DisplayName("start at end of string returns empty")
       void startAtEnd() throws Exception {
          assertEquals("",
-            callGetLastSym("abc", 3));
+            callExtractIdentifier("abc", 3));
       }
 
       @Test
       @DisplayName("fully qualified Java name")
       void qualifiedName() throws Exception {
          assertEquals("java.lang.String",
-            callGetLastSym("java.lang.String value", 0));
+            callExtractIdentifier("java.lang.String value", 0));
       }
    }
 

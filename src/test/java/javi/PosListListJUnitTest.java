@@ -57,10 +57,10 @@ class PosListListJUnitTest {
       return (Matcher) f.get(null);
    }
 
-   // Access private static getLastSym via reflection
-   private static String getLastSym(String str, int startid) throws Exception {
+   // Access private static extractIdentifier via reflection
+   private static String extractIdentifier(String str, int startid) throws Exception {
       Method m = PosListList.Cmd.class.getDeclaredMethod(
-         "getLastSym", String.class, int.class);
+         "extractIdentifier", String.class, int.class);
       m.setAccessible(true);
       return (String) m.invoke(null, str, startid);
    }
@@ -194,59 +194,59 @@ class PosListListJUnitTest {
    }
 
    // ================================================================
-   // getLastSym helper
+   // extractIdentifier helper
    // ================================================================
 
    @Nested
-   @DisplayName("getLastSym")
-   class GetLastSymTests {
+   @DisplayName("extractIdentifier")
+   class ExtractIdentifierTests {
 
       @Test
       @DisplayName("extracts symbol from start of string")
       void extractsFromStart() throws Exception {
-         assertEquals("myMethod", getLastSym("myMethod(args)", 0));
+         assertEquals("myMethod", extractIdentifier("myMethod(args)", 0));
       }
 
       @Test
       @DisplayName("extracts symbol from mid-string offset")
       void extractsFromOffset() throws Exception {
-         assertEquals("method", getLastSym("  method()", 2));
+         assertEquals("method", extractIdentifier("  method()", 2));
       }
 
       @Test
       @DisplayName("includes dots in qualified names")
       void includesDotsInQualifiedNames() throws Exception {
-         assertEquals("com.example.Class", getLastSym("com.example.Class:42", 0));
+         assertEquals("com.example.Class", extractIdentifier("com.example.Class:42", 0));
       }
 
       @Test
       @DisplayName("stops at space")
       void stopsAtSpace() throws Exception {
-         assertEquals("word", getLastSym("word rest", 0));
+         assertEquals("word", extractIdentifier("word rest", 0));
       }
 
       @Test
       @DisplayName("stops at paren")
       void stopsAtParen() throws Exception {
-         assertEquals("func", getLastSym("func(arg)", 0));
+         assertEquals("func", extractIdentifier("func(arg)", 0));
       }
 
       @Test
       @DisplayName("empty result from non-identifier start")
       void emptyFromNonIdentifier() throws Exception {
-         assertEquals("", getLastSym("(rest)", 0));
+         assertEquals("", extractIdentifier("(rest)", 0));
       }
 
       @Test
       @DisplayName("handles end of string")
       void handlesEndOfString() throws Exception {
-         assertEquals("abc", getLastSym("abc", 0));
+         assertEquals("abc", extractIdentifier("abc", 0));
       }
 
       @Test
       @DisplayName("handles single character")
       void handlesSingleChar() throws Exception {
-         assertEquals("x", getLastSym("x", 0));
+         assertEquals("x", extractIdentifier("x", 0));
       }
    }
 
