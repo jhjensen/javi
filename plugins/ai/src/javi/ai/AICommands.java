@@ -4,6 +4,9 @@ import java.io.IOException;
 
 import static history.Tools.trace;
 
+import javi.ai.tools.AIToolRegistry;
+import javi.ai.tools.BufferInfoTool;
+
 import javi.EditContainer;
 import javi.FvContext;
 import javi.InputException;
@@ -74,6 +77,7 @@ public final class AICommands extends Rgroup implements Plugin {
    private static final int CMD_AUTH     = 14;
    private static final int CMD_MODELS   = 15;
    private static final int CMD_STATUS   = 16;
+   private static final int CMD_TOOLS    = 17;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -123,8 +127,10 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.auth",       // 14 - device flow auth
          "ai.models",     // 15 - list available models
          "ai.status",     // 16 - request history/tracking
+         "ai.tools",      // 17 - list registered tools
       };
       register(rnames);
+      AIToolRegistry.registerBuiltins();
    }
 
    @Override
@@ -164,6 +170,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doModels(fvc);
          case CMD_STATUS:
             return doStatus(fvc);
+         case CMD_TOOLS:
+            return doTools(fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -229,6 +237,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doModels(fvc);
          case "status":
             return doStatus(fvc);
+         case "tools":
+            return doTools(fvc);
          case "help":
             showAiHelp(fvc);
             return null;
@@ -270,6 +280,7 @@ public final class AICommands extends Rgroup implements Plugin {
          ctxCode = getContextCode(fvc);
          lastSourceBuffer = fvc.edvec;
          lastSourceName = ctxName;
+         updateBufferInfoContext(fvc);
       } else if (null != lastSourceBuffer) {
          ctxCode = getBufferContent(lastSourceBuffer);
          ctxName = lastSourceName;
@@ -915,6 +926,7 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  :ai auth            Copilot device flow auth");
       appendToChatBuffer("  :ai models          List Copilot models");
       appendToChatBuffer("  :ai status          Show request tracking");
+      appendToChatBuffer("  :ai tools           List registered AI tools");
       appendToChatBuffer("  :ai help            Show this help");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
@@ -1028,6 +1040,7 @@ public final class AICommands extends Rgroup implements Plugin {
       if (!"*ai-chat*".equals(name)) {
          lastSourceBuffer = fvc.edvec;
          lastSourceName = name;
+         updateBufferInfoContext(fvc);
          // Prefer visual selection if active
          String selected = getSelectedText(fvc);
          if (null != selected) {
@@ -1042,6 +1055,27 @@ public final class AICommands extends Rgroup implements Plugin {
          return getBufferContent(lastSourceBuffer);
       }
       return null;
+   }
+
+   /**
+    * Update the BufferInfoTool cached context from the
+    * current file-view context. Called before AI requests
+    * so the tool has access to editor state.
+    *
+    * @param fvc the current file-view context
+    */
+   @SuppressWarnings("unchecked")
+   private static void updateBufferInfoContext(
+         FvContext fvc) {
+      String bufName = fvc.edvec.getName();
+      int lineCount = fvc.edvec.readIn() - 1;
+      int cursorLine = fvc.inserty();
+      int cursorCol = fvc.insertx();
+      MovePos mark = fvc.vi.getMark();
+      boolean hasSel = null != mark;
+      BufferInfoTool.setContext(
+         bufName, lineCount, cursorLine,
+         cursorCol, hasSel);
    }
 
    /**
@@ -1261,6 +1295,25 @@ public final class AICommands extends Rgroup implements Plugin {
             "Input Error: " + e.getMessage());
       }
       vi.repaint();
+   }
+
+   /**
+    * List registered AI tools.
+    *
+    * @param fvc the current file-view context
+    * @return null
+    */
+   private Object doTools(FvContext fvc) {
+      ensureChatBuffer();
+      String summary = AIToolRegistry.getSummary();
+      appendToChatBuffer(summary);
+      appendToChatBuffer("");
+      try {
+         FvContext.connectFv(chatBuffer, fvc.vi);
+      } catch (InputException e) {
+         UI.reportMessage("Error: " + e.getMessage());
+      }
+      return null;
    }
 
    /**

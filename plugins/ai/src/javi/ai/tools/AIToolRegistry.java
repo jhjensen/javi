@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javi.ai.AIException;
+import javi.ai.OpenAIProvider;
 
 import static history.Tools.trace;
 
@@ -202,6 +203,43 @@ public final class AIToolRegistry {
             .append("] — ").append(tool.description())
             .append('\n');
       }
+      return sb.toString();
+   }
+
+   /**
+    * Build the tools JSON array for inclusion in API requests.
+    *
+    * <p>Returns a JSON array string following the OpenAI
+    * function-calling format. Returns null if no tools are
+    * registered.</p>
+    *
+    * @return JSON tools array string, or null if empty
+    */
+   public static String getToolsJson() {
+      if (tools.isEmpty()) {
+         return null;
+      }
+      StringBuilder sb = new StringBuilder(512);
+      sb.append('[');
+      boolean first = true;
+      for (AITool tool : tools.values()) {
+         if (!first) {
+            sb.append(',');
+         }
+         first = false;
+         sb.append("{\"type\":\"function\",\"function\":{");
+         sb.append("\"name\":\"")
+            .append(OpenAIProvider.escapeJson(tool.name()))
+            .append("\",");
+         sb.append("\"description\":\"")
+            .append(OpenAIProvider.escapeJson(
+               tool.description()))
+            .append("\",");
+         sb.append("\"parameters\":")
+            .append(tool.inputSchema());
+         sb.append("}}");
+      }
+      sb.append(']');
       return sb.toString();
    }
 

@@ -1,8 +1,12 @@
 package javi.ai;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+
+import javi.ai.tools.AIToolRegistry;
 
 import static history.Tools.trace;
 
@@ -78,16 +82,64 @@ public final class CopilotProvider implements AIProvider {
    public String chatCompletion(
          List<Message> messages, int maxTokens)
          throws IOException, AIException {
+      String toolsJson = AIToolRegistry.hasTools()
+         ? AIToolRegistry.getToolsJson() : null;
+      if (null != toolsJson) {
+         trace("Copilot: sending " + AIToolRegistry
+            .getTools().size() + " tool definitions");
+      }
+
       String responseJson = client.chatCompletion(
-         messages, model, maxTokens);
+         messages, model, maxTokens, toolsJson);
+
+      // Tool execution loop
+      List<Message> conversationMsgs =
+         new ArrayList<>(messages);
+      int rounds = 0;
+      while (CopilotRestClient.hasToolCalls(responseJson)
+            && rounds < CopilotRestClient
+               .MAX_TOOL_ROUNDS) {
+         rounds++;
+         List<CopilotRestClient.ToolCall> toolCalls =
+            CopilotRestClient.extractToolCalls(
+               responseJson);
+         if (toolCalls.isEmpty()) {
+            break;
+         }
+         trace("Copilot: tool round " + rounds + ", "
+            + toolCalls.size() + " tool call(s)");
+
+         List<String> results = executeToolCalls(
+            toolCalls);
+
+         String body =
+            CopilotRestClient.buildToolFollowupJson(
+               conversationMsgs, toolCalls, results,
+               model, maxTokens, toolsJson, false);
+         responseJson = client.chatCompletionRaw(body);
+
+         int status = checkResponseStatus(responseJson);
+         if (status > 0) {
+            throw new AIException(
+               "Copilot tool followup error (HTTP "
+               + status + ")", status);
+         }
+      }
+      if (rounds > 0) {
+         trace("Copilot: tool loop completed after "
+            + rounds + " round(s)");
+      }
+
       return OpenAIProvider.extractContent(responseJson);
    }
 
    /**
-    * Send a streaming chat completion request.
+    * Send a streaming chat completion request with tool support.
     *
-    * <p>Tokens are passed to the callback as they arrive.
-    * Returns the full concatenated response.</p>
+    * <p>If the model requests tool calls, they are executed
+    * silently and a follow-up streaming request is made with
+    * the tool results. Only the final content response is
+    * streamed to the user.</p>
     *
     * @param messages the conversation messages
     * @param maxTokens max response tokens
@@ -100,8 +152,107 @@ public final class CopilotProvider implements AIProvider {
          List<Message> messages, int maxTokens,
          Consumer<String> onToken)
          throws IOException, AIException {
-      return client.chatCompletionStreaming(
-         messages, model, maxTokens, onToken);
+      String toolsJson = AIToolRegistry.hasTools()
+         ? AIToolRegistry.getToolsJson() : null;
+
+      // First, try a non-streaming request to check for
+      // tool calls. If no tools, go straight to streaming.
+      if (null == toolsJson) {
+         return client.chatCompletionStreaming(
+            messages, model, maxTokens, onToken);
+      }
+
+      // With tools enabled, do non-streaming first to
+      // handle potential tool call rounds
+      String responseJson = client.chatCompletion(
+         messages, model, maxTokens, toolsJson);
+
+      List<Message> conversationMsgs =
+         new ArrayList<>(messages);
+      int rounds = 0;
+      while (CopilotRestClient.hasToolCalls(responseJson)
+            && rounds < CopilotRestClient
+               .MAX_TOOL_ROUNDS) {
+         rounds++;
+         List<CopilotRestClient.ToolCall> toolCalls =
+            CopilotRestClient.extractToolCalls(
+               responseJson);
+         if (toolCalls.isEmpty()) {
+            break;
+         }
+         trace("Copilot streaming: tool round "
+            + rounds + ", " + toolCalls.size()
+            + " call(s)");
+
+         List<String> results = executeToolCalls(
+            toolCalls);
+
+         String body =
+            CopilotRestClient.buildToolFollowupJson(
+               conversationMsgs, toolCalls, results,
+               model, maxTokens, toolsJson, false);
+         responseJson = client.chatCompletionRaw(body);
+      }
+
+      if (0 == rounds) {
+         // No tool calls — the response already has
+         // content, deliver it as a single chunk
+         String content =
+            OpenAIProvider.extractContent(responseJson);
+         onToken.accept(content);
+         return content;
+      }
+
+      // After tool rounds, extract and deliver content
+      trace("Copilot streaming: tool loop done after "
+         + rounds + " round(s)");
+      String content =
+         OpenAIProvider.extractContent(responseJson);
+      onToken.accept(content);
+      return content;
+   }
+
+   /**
+    * Execute a list of tool calls and return results.
+    *
+    * @param toolCalls the tool calls to execute
+    * @return list of result strings in call order
+    */
+   private List<String> executeToolCalls(
+         List<CopilotRestClient.ToolCall> toolCalls) {
+      List<String> results = new ArrayList<>();
+      for (CopilotRestClient.ToolCall tc : toolCalls) {
+         String result;
+         try {
+            Map<String, String> params =
+               CopilotRestClient.parseToolArgs(
+                  tc.arguments());
+            trace("Copilot: executing tool '"
+               + tc.name() + "' with " + params);
+            result = AIToolRegistry.executeTool(
+               tc.name(), params);
+         } catch (AIException e) {
+            result = "Error: " + e.getMessage();
+            trace("Copilot: tool '" + tc.name()
+               + "' failed: " + e.getMessage());
+         }
+         results.add(result);
+      }
+      return results;
+   }
+
+   /**
+    * Check if a raw response JSON indicates an HTTP error.
+    *
+    * @param json the response body
+    * @return the HTTP status if error, 0 if OK
+    */
+   private static int checkResponseStatus(String json) {
+      // If the response contains an error object at root
+      if (json.startsWith("{\"error\"")) {
+         return 500;
+      }
+      return 0;
    }
 
    @Override

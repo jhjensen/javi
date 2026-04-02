@@ -85,6 +85,19 @@ public final class CopilotRestClient {
    /** Device flow maximum wait time (seconds). */
    static final int DEVICE_TIMEOUT_SECS = 600;
 
+   /** Maximum number of tool call round-trips per request. */
+   static final int MAX_TOOL_ROUNDS = 10;
+
+   /**
+    * Represents a tool call requested by the model.
+    *
+    * @param id the unique call ID (echoed back in tool result)
+    * @param name the tool function name
+    * @param arguments the JSON arguments string
+    */
+   public record ToolCall(String id, String name,
+         String arguments) { }
+
    private final HttpClient httpClient;
 
    /** Cached GitHub OAuth token (from apps.json). */
@@ -187,6 +200,93 @@ public final class CopilotRestClient {
          throw new AIException(
             "Copilot API error (HTTP " + status + "): "
             + OpenAIProvider.extractError(response.body()),
+            status);
+      }
+      return response.body();
+   }
+
+   /**
+    * Send a chat completion request with tool definitions.
+    *
+    * @param messages the conversation messages
+    * @param model the model identifier
+    * @param maxTokens max response tokens (0 for default)
+    * @param toolsJson JSON tools array, or null
+    * @return the response body JSON
+    * @throws IOException if a network error occurs
+    * @throws AIException if auth or API call fails
+    */
+   public String chatCompletion(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens,
+         String toolsJson)
+         throws IOException, AIException {
+      ensureSessionToken();
+
+      String body = buildChatJson(
+         messages, model, maxTokens, toolsJson);
+      trace("Copilot REST request to model: " + model
+         + (null != toolsJson ? " (with tools)" : ""));
+
+      HttpResponse<String> response =
+         sendApiPost("/chat/completions", body);
+
+      int status = response.statusCode();
+      if (401 == status) {
+         trace("Copilot: 401 — refreshing token");
+         invalidateSession();
+         ensureSessionToken();
+         response =
+            sendApiPost("/chat/completions", body);
+         status = response.statusCode();
+      }
+
+      if (status < 200 || status >= 300) {
+         throw new AIException(
+            "Copilot API error (HTTP " + status + "): "
+            + OpenAIProvider.extractError(
+               response.body()),
+            status);
+      }
+      return response.body();
+   }
+
+   /**
+    * Send a raw JSON body as a chat completion request.
+    *
+    * <p>Used for tool follow-up requests where the JSON is
+    * pre-built with special message types (assistant with
+    * tool_calls, tool results).</p>
+    *
+    * @param body the pre-built request JSON
+    * @return the response body JSON
+    * @throws IOException if a network error occurs
+    * @throws AIException if auth or API call fails
+    */
+   public String chatCompletionRaw(String body)
+         throws IOException, AIException {
+      ensureSessionToken();
+      trace("Copilot raw request (tool followup)");
+
+      HttpResponse<String> response =
+         sendApiPost("/chat/completions", body);
+
+      int status = response.statusCode();
+      if (401 == status) {
+         trace("Copilot: 401 raw — refreshing token");
+         invalidateSession();
+         ensureSessionToken();
+         response =
+            sendApiPost("/chat/completions", body);
+         status = response.statusCode();
+      }
+
+      if (status < 200 || status >= 300) {
+         throw new AIException(
+            "Copilot tool followup error (HTTP "
+            + status + "): "
+            + OpenAIProvider.extractError(
+               response.body()),
             status);
       }
       return response.body();
@@ -352,34 +452,448 @@ public final class CopilotRestClient {
    }
 
    /**
-    * Build streaming chat completion request JSON.
+    * Check if a response JSON contains tool calls.
+    *
+    * @param json the response JSON
+    * @return true if tool_calls are present
     */
-   public static String buildStreamingChatJson(
-         List<AIProvider.Message> messages,
-         String model, int maxTokens) {
-      StringBuilder sb = new StringBuilder(512);
+   static boolean hasToolCalls(String json) {
+      return json.contains("\"tool_calls\"");
+   }
+
+   /**
+    * Extract tool calls from a chat completion response.
+    *
+    * <p>Parses the {@code tool_calls} array from the first
+    * choice's message. Each tool call has an id, function
+    * name, and arguments string.</p>
+    *
+    * @param json the response JSON
+    * @return list of tool calls, empty if none found
+    */
+   static List<ToolCall> extractToolCalls(String json) {
+      List<ToolCall> calls = new ArrayList<>();
+      String marker = "\"tool_calls\":[";
+      int idx = json.indexOf(marker);
+      if (idx < 0) {
+         marker = "\"tool_calls\": [";
+         idx = json.indexOf(marker);
+      }
+      if (idx < 0) {
+         return calls;
+      }
+
+      // Parse each tool_call object in the array
+      int pos = idx + marker.length();
+      while (pos < json.length()) {
+         // Find next tool call object
+         int objStart = json.indexOf('{', pos);
+         if (objStart < 0) {
+            break;
+         }
+         // Check if we've passed the closing ]
+         int arrEnd = json.indexOf(']', pos);
+         if (arrEnd >= 0 && arrEnd < objStart) {
+            break;
+         }
+
+         String callId = extractJsonField(json,
+            "\"id\"", objStart);
+         String funcName = extractToolFuncName(json,
+            objStart);
+         String funcArgs = extractToolFuncArgs(json,
+            objStart);
+
+         if (null != callId && null != funcName) {
+            calls.add(new ToolCall(
+               callId, funcName, funcArgs));
+            trace("Tool call parsed: " + funcName
+               + " id=" + callId);
+         }
+
+         // Move past this tool call object
+         pos = skipJsonObject(json, objStart);
+      }
+      return calls;
+   }
+
+   /**
+    * Extract the function name from a tool_call object.
+    */
+   private static String extractToolFuncName(
+         String json, int from) {
+      // Look for "function":{"name":"xxx"
+      int funcIdx = json.indexOf("\"function\"", from);
+      if (funcIdx < 0) {
+         return null;
+      }
+      return extractJsonField(json,
+         "\"name\"", funcIdx);
+   }
+
+   /**
+    * Extract the function arguments from a tool_call object.
+    */
+   private static String extractToolFuncArgs(
+         String json, int from) {
+      int funcIdx = json.indexOf("\"function\"", from);
+      if (funcIdx < 0) {
+         return null;
+      }
+      // Look for "arguments": which may be a string value
+      String marker1 = "\"arguments\":\"";
+      int argIdx = json.indexOf(marker1, funcIdx);
+      if (argIdx < 0) {
+         marker1 = "\"arguments\": \"";
+         argIdx = json.indexOf(marker1, funcIdx);
+      }
+      if (argIdx < 0) {
+         return "{}";
+      }
+      argIdx += marker1.length();
+      try {
+         return OpenAIProvider.unescapeJsonString(
+            json, argIdx);
+      } catch (AIException e) {
+         return "{}";
+      }
+   }
+
+   /**
+    * Extract a JSON string field value starting search at
+    * the given position.
+    */
+   private static String extractJsonField(String json,
+         String fieldName, int from) {
+      String marker1 = fieldName + ":\"";
+      int idx = json.indexOf(marker1, from);
+      if (idx < 0) {
+         marker1 = fieldName + ": \"";
+         idx = json.indexOf(marker1, from);
+      }
+      if (idx < 0) {
+         return null;
+      }
+      idx += marker1.length();
+      try {
+         return OpenAIProvider.unescapeJsonString(
+            json, idx);
+      } catch (AIException e) {
+         return null;
+      }
+   }
+
+   /**
+    * Skip past a JSON object starting at the given position.
+    * Returns the position after the closing brace.
+    */
+   private static int skipJsonObject(String json,
+         int from) {
+      int depth = 0;
+      boolean inString = false;
+      for (int i = from; i < json.length(); i++) {
+         char c = json.charAt(i);
+         if (inString) {
+            if ('\\' == c) {
+               i++; // skip escaped char
+            } else if ('"' == c) {
+               inString = false;
+            }
+         } else {
+            if ('"' == c) {
+               inString = true;
+            } else if ('{' == c) {
+               depth++;
+            } else if ('}' == c) {
+               depth--;
+               if (0 == depth) {
+                  return i + 1;
+               }
+            }
+         }
+      }
+      return json.length();
+   }
+
+   /**
+    * Build a JSON message object for an assistant response
+    * with tool calls (for multi-turn tool protocol).
+    *
+    * <p>The assistant message echoes back the tool_calls
+    * array so the API knows which calls are being responded
+    * to in the subsequent tool result messages.</p>
+    *
+    * @param toolCalls the tool calls from the response
+    * @return JSON string for the assistant message
+    */
+   public static String buildAssistantToolCallJson(
+         List<ToolCall> toolCalls) {
+      StringBuilder sb = new StringBuilder(256);
+      sb.append("{\"role\":\"assistant\",\"content\":null,")
+         .append("\"tool_calls\":[");
+      for (int i = 0; i < toolCalls.size(); i++) {
+         if (i > 0) {
+            sb.append(',');
+         }
+         ToolCall tc = toolCalls.get(i);
+         sb.append("{\"id\":\"")
+            .append(OpenAIProvider.escapeJson(tc.id()))
+            .append("\",\"type\":\"function\",")
+            .append("\"function\":{\"name\":\"")
+            .append(OpenAIProvider.escapeJson(tc.name()))
+            .append("\",\"arguments\":\"")
+            .append(OpenAIProvider.escapeJson(
+               tc.arguments()))
+            .append("\"}}");
+      }
+      sb.append("]}");
+      return sb.toString();
+   }
+
+   /**
+    * Build a JSON message object for a tool result.
+    *
+    * @param toolCallId the call ID to respond to
+    * @param result the tool execution result text
+    * @return JSON string for the tool result message
+    */
+   public static String buildToolResultJson(
+         String toolCallId, String result) {
+      return "{\"role\":\"tool\",\"tool_call_id\":\""
+         + OpenAIProvider.escapeJson(toolCallId)
+         + "\",\"content\":\""
+         + OpenAIProvider.escapeJson(result) + "\"}";
+   }
+
+   /**
+    * Build a follow-up request JSON including tool results.
+    *
+    * <p>Constructs a full chat completion request with the
+    * original messages, the assistant's tool_calls message,
+    * and the tool result messages appended.</p>
+    *
+    * @param origMessages the original conversation messages
+    * @param toolCalls the tool calls from the assistant
+    * @param toolResults tool results in call order
+    * @param model the model identifier
+    * @param maxTokens max response tokens
+    * @param toolsJson tools array JSON, or null
+    * @param streaming whether to enable streaming
+    * @return the request body JSON
+    */
+   public static String buildToolFollowupJson(
+         List<AIProvider.Message> origMessages,
+         List<ToolCall> toolCalls,
+         List<String> toolResults,
+         String model, int maxTokens,
+         String toolsJson, boolean streaming) {
+      StringBuilder sb = new StringBuilder(1024);
       sb.append("{\"model\":\"")
          .append(OpenAIProvider.escapeJson(model))
-         .append("\",\"stream\":true,\"messages\":[");
-      for (int i = 0; i < messages.size(); i++) {
-         if (i > 0)
-            sb.append(',');
-         AIProvider.Message msg = messages.get(i);
-         sb.append("{\"role\":\"")
-            .append(OpenAIProvider.escapeJson(
-               msg.role()))
-            .append("\",\"content\":\"")
-            .append(OpenAIProvider.escapeJson(
-               msg.content()))
-            .append("\"}");
+         .append("\"");
+      if (streaming) {
+         sb.append(",\"stream\":true");
       }
+      sb.append(",\"messages\":[");
+
+      // Original messages
+      appendMessagesJson(sb, origMessages);
+
+      // Assistant message with tool_calls
+      sb.append(',')
+         .append(buildAssistantToolCallJson(toolCalls));
+
+      // Tool result messages
+      for (int i = 0; i < toolCalls.size(); i++) {
+         sb.append(',');
+         String result = i < toolResults.size()
+            ? toolResults.get(i) : "";
+         sb.append(buildToolResultJson(
+            toolCalls.get(i).id(), result));
+      }
+
       sb.append(']');
+      if (null != toolsJson) {
+         sb.append(",\"tools\":").append(toolsJson);
+      }
       if (maxTokens > 0) {
          sb.append(",\"max_tokens\":")
             .append(maxTokens);
       }
       sb.append('}');
       return sb.toString();
+   }
+
+   /**
+    * Parse tool arguments JSON into a simple key-value map.
+    *
+    * <p>Handles flat JSON objects with string values.
+    * Numeric and boolean values are converted to strings.</p>
+    *
+    * @param argsJson the JSON arguments string
+    * @return map of parameter names to string values
+    */
+   public static java.util.Map<String, String> parseToolArgs(
+         String argsJson) {
+      java.util.Map<String, String> params =
+         new java.util.LinkedHashMap<>();
+      if (null == argsJson || argsJson.isEmpty()
+            || "{}".equals(argsJson.trim())) {
+         return params;
+      }
+      // Parse key-value pairs from flat JSON object
+      int pos = argsJson.indexOf('{');
+      if (pos < 0) {
+         return params;
+      }
+      pos++;
+      while (pos < argsJson.length()) {
+         // Find next key
+         int keyStart = argsJson.indexOf('"', pos);
+         if (keyStart < 0) {
+            break;
+         }
+         keyStart++;
+         int keyEnd = argsJson.indexOf('"', keyStart);
+         if (keyEnd < 0) {
+            break;
+         }
+         String key = argsJson.substring(
+            keyStart, keyEnd);
+         pos = keyEnd + 1;
+         // Skip colon and whitespace
+         int colonIdx = argsJson.indexOf(':', pos);
+         if (colonIdx < 0) {
+            break;
+         }
+         pos = colonIdx + 1;
+         while (pos < argsJson.length()
+               && ' ' == argsJson.charAt(pos)) {
+            pos++;
+         }
+         // Read value (string, number, or boolean)
+         if (pos < argsJson.length()
+               && '"' == argsJson.charAt(pos)) {
+            pos++;
+            try {
+               String val =
+                  OpenAIProvider.unescapeJsonString(
+                     argsJson, pos);
+               params.put(key, val);
+               // Skip past the string value
+               pos = skipJsonString(argsJson, pos);
+            } catch (AIException e) {
+               break;
+            }
+         } else {
+            // Number or boolean — read to next delimiter
+            int end = pos;
+            while (end < argsJson.length()) {
+               char ch = argsJson.charAt(end);
+               if (',' == ch || '}' == ch
+                     || ']' == ch) {
+                  break;
+               }
+               end++;
+            }
+            params.put(key,
+               argsJson.substring(pos, end).trim());
+            pos = end;
+         }
+         // Skip comma
+         int comma = argsJson.indexOf(',', pos);
+         if (comma < 0) {
+            break;
+         }
+         pos = comma + 1;
+      }
+      return params;
+   }
+
+   /**
+    * Skip past a JSON string value (past closing quote).
+    */
+   private static int skipJsonString(String json,
+         int from) {
+      for (int i = from; i < json.length(); i++) {
+         char c = json.charAt(i);
+         if ('\\' == c) {
+            i++;
+         } else if ('"' == c) {
+            return i + 1;
+         }
+      }
+      return json.length();
+   }
+
+   /**
+    * Build streaming chat completion request JSON.
+    */
+   public static String buildStreamingChatJson(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens) {
+      return buildStreamingChatJson(messages, model,
+         maxTokens, null);
+   }
+
+   /**
+    * Build streaming chat completion request JSON with tools.
+    *
+    * @param messages the conversation messages
+    * @param model the model identifier
+    * @param maxTokens max response tokens (0 for default)
+    * @param toolsJson JSON tools array, or null to omit
+    * @return the request body JSON
+    */
+   public static String buildStreamingChatJson(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens,
+         String toolsJson) {
+      StringBuilder sb = new StringBuilder(512);
+      sb.append("{\"model\":\"")
+         .append(OpenAIProvider.escapeJson(model))
+         .append("\",\"stream\":true,\"messages\":[");
+      appendMessagesJson(sb, messages);
+      sb.append(']');
+      if (null != toolsJson) {
+         sb.append(",\"tools\":").append(toolsJson);
+      }
+      if (maxTokens > 0) {
+         sb.append(",\"max_tokens\":")
+            .append(maxTokens);
+      }
+      sb.append('}');
+      return sb.toString();
+   }
+
+   /**
+    * Append messages JSON array content to a StringBuilder.
+    *
+    * <p>Handles both regular messages (role + content) and
+    * tool result messages (role "tool" with tool_call_id).</p>
+    */
+   private static void appendMessagesJson(
+         StringBuilder sb,
+         List<AIProvider.Message> messages) {
+      for (int i = 0; i < messages.size(); i++) {
+         if (i > 0) {
+            sb.append(',');
+         }
+         AIProvider.Message msg = messages.get(i);
+         sb.append("{\"role\":\"")
+            .append(OpenAIProvider.escapeJson(
+               msg.role()))
+            .append("\"");
+         if (null != msg.content()) {
+            sb.append(",\"content\":\"")
+               .append(OpenAIProvider.escapeJson(
+                  msg.content()))
+               .append("\"");
+         } else {
+            sb.append(",\"content\":null");
+         }
+         sb.append('}');
+      }
    }
 
    /**
@@ -752,22 +1266,32 @@ public final class CopilotRestClient {
    public static String buildChatJson(
          List<AIProvider.Message> messages,
          String model, int maxTokens) {
+      return buildChatJson(messages, model, maxTokens,
+         null);
+   }
+
+   /**
+    * Build chat completion request JSON with optional tools.
+    *
+    * @param messages the conversation messages
+    * @param model the model identifier
+    * @param maxTokens max response tokens (0 for default)
+    * @param toolsJson JSON tools array, or null to omit
+    * @return the request body JSON
+    */
+   public static String buildChatJson(
+         List<AIProvider.Message> messages,
+         String model, int maxTokens,
+         String toolsJson) {
       StringBuilder sb = new StringBuilder(512);
       sb.append("{\"model\":\"")
          .append(OpenAIProvider.escapeJson(model))
          .append("\",\"messages\":[");
-      for (int i = 0; i < messages.size(); i++) {
-         if (i > 0)
-            sb.append(',');
-         AIProvider.Message msg = messages.get(i);
-         sb.append("{\"role\":\"")
-            .append(OpenAIProvider.escapeJson(msg.role()))
-            .append("\",\"content\":\"")
-            .append(OpenAIProvider.escapeJson(
-               msg.content()))
-            .append("\"}");
-      }
+      appendMessagesJson(sb, messages);
       sb.append(']');
+      if (null != toolsJson) {
+         sb.append(",\"tools\":").append(toolsJson);
+      }
       if (maxTokens > 0) {
          sb.append(",\"max_tokens\":")
             .append(maxTokens);

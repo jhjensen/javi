@@ -264,7 +264,7 @@ public final class OpenAIProvider implements AIProvider {
     * @param s the raw string
     * @return the JSON-escaped string (without surrounding quotes)
     */
-   static String escapeJson(String s) {
+   public static String escapeJson(String s) {
       if (null == s) {
          return "";
       }
