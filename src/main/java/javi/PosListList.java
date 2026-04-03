@@ -124,41 +124,61 @@ public final class PosListList extends TextList<Position> {
       finish();
    }
 
+   /**
+    * Recovers lastlist from lastlist2 if lastlist is null.
+    *
+    * @return true if lastlist is non-null after recovery
+    */
+   private boolean recoverLastList() {
+      if (null == lastlist) {
+         lastlist = lastlist2;
+         lastlist2 = null;
+      }
+      return null != lastlist;
+   }
+
+   /**
+    * Dispatches a position list item to the appropriate handler.
+    *
+    * @param item the item from the position list
+    * @param fvc the current FvContext
+    * @throws InputException if navigation fails
+    */
+   @SuppressWarnings("unchecked")
+   private void dispatchNextItem(Object item, FvContext<?> fvc)
+         throws InputException {
+      if (item instanceof Position) {
+         Position pos = (Position) item;
+         FileList.gotoposition(pos, true, fvc.vi);
+      } else if (item instanceof TextEdit) {
+         TextEdit ex = (TextEdit) item;
+         if (ex.at(0) instanceof Position)
+            gotoList(fvc, ex);
+         else
+            FvContext.connectFv(ex, fvc.vi);
+      } else if (item instanceof FvExecute) {
+         FvExecute fe = (FvExecute) item;
+         fe.execute(fvc);
+      } else
+         throw new RuntimeException(
+            "gotoNextPos unexpected object");
+   }
+
    private void gotoNextPos(FvContext<?> fvc, boolean[] reverse,
          boolean wait) throws InputException {
-      //trace(" goto nextpos lastlist = " + lastlist);
       if (fvc.edvec instanceof FileList)
          FvContext.connectFv((TextEdit) fvc.at(), fvc.vi);
       else  {
-         if ((null == lastlist)) {
-            lastlist = lastlist2;
-            lastlist2 = null;
-            //trace("lastlist " + lastlist + " lastlist2 " + lastlist2);
-         }
-         if (null == lastlist)
+         if (!recoverLastList())
             return;
 
-         if ((wait && !lastlist.contains(1)) || (!lastlist.containsNow(1)))
+         if ((wait && !lastlist.contains(1))
+               || (!lastlist.containsNow(1)))
             return;
 
          FvContext listContext = fvc.switchContext(
             lastlist, reverse[0] ? -1 : 1);
-         Object item = listContext.at();
-         if (item instanceof Position) {
-            Position pos = (Position) item;
-            FileList.gotoposition(pos, true, fvc.vi);
-         } else if (item instanceof TextEdit) {
-            TextEdit ex = (TextEdit) item;
-            if (ex.at(0) instanceof Position)
-               gotoList(fvc, ex);
-            else
-               FvContext.connectFv(ex, fvc.vi);
-         } else if (item instanceof FvExecute) {
-            FvExecute fe = (FvExecute) item;
-            fe.execute(fvc);
-         } else
-            throw new RuntimeException(
-               "gotoNextPos unexpected object");
+         dispatchNextItem(listContext.at(), fvc);
       }
    }
 
@@ -616,9 +636,8 @@ public final class PosListList extends TextList<Position> {
             TextEdit<Position> tagResults, int ctagCount,
             String[] nameSegments, String qualifiedName,
             View vi) throws InputException {
+         // index 0 unused; aligns with 1-based tagResults indices
          int[] scores = new int[ctagCount];
-         for (int i = 1; i < ctagCount; i++)
-            scores[i] = 0;
          int bestScore = 0;
 
          for (int symIndex = nameSegments.length - 2;
