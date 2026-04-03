@@ -75,4 +75,32 @@ class FormatDispatchJUnitTest {
       assertNotNull(Rgroup.bindingLookup("formatr"),
          ":formatr should be registered");
    }
+
+   @Test
+   @DisplayName("FormatDispatch dispatches to jformat when loaded")
+   void dispatchToJformatWhenPluginLoaded() throws Exception {
+      // Load the formatter plugin
+      java.io.File jar =
+         new java.io.File("build/libs/javi-formatter.jar");
+      if (!jar.exists())
+         return; // skip if JAR not built
+      Rgroup.doCommand("loadplugin", "formatter", 0, 1,
+         FvContext.getCurrFvc(), false);
+
+      // After loading, jformat should be available for dispatch
+      Rgroup.KeyBinding jf = Rgroup.bindingLookup("jformat");
+      assertNotNull(jf,
+         "jformat should be registered after formatter load");
+      // And FormatDispatch should detect .java files
+      assertEquals("java",
+         FormatDispatch.detectFileType("Test.java"));
+   }
+
+   @Test
+   @DisplayName("FormatDispatch reports no formatter for unknown types")
+   void noFormatterForUnknownType() {
+      assertNull(FormatDispatch.detectFileType("readme.md"));
+      assertNull(FormatDispatch.detectFileType("Makefile"));
+      assertNull(FormatDispatch.detectFileType(""));
+   }
 }

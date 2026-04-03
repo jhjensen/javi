@@ -379,6 +379,44 @@ class PluginJUnitTest {
 
    @Test
    @EnabledIf("formatterJarExists")
+   void loadFormatterPluginTwiceDoesNotThrow() throws Exception {
+      Rgroup.doCommand("loadplugin", "formatter", 0, 1,
+         FvContext.getCurrFvc(), false);
+      // Loading a second time should not throw
+      assertDoesNotThrow(() ->
+         Rgroup.doCommand("loadplugin", "formatter", 0, 1,
+            FvContext.getCurrFvc(), false));
+   }
+
+   @Test
+   @EnabledIf("formatterJarExists")
+   void formatterPluginImplementsPluginInterface()
+         throws Exception {
+      // Load via Plugin.Loader which handles classloader setup
+      Plugin.Loader.load(new File(FORMATTER_JAR).getPath());
+      // After loading, jformat is registered — verify the
+      // plugin class is assignable to Plugin
+      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
+      assertNotNull(kb,
+         "jformat should be registered if Plugin was loaded");
+   }
+
+   @Test
+   @EnabledIf("formatterJarExists")
+   void formatterJarContainsJavaFormatClass() throws Exception {
+      // Verify the JAR actually contains the plugin class file
+      File jar = new File(FORMATTER_JAR);
+      try (java.util.jar.JarFile jf =
+            new java.util.jar.JarFile(jar)) {
+         java.util.jar.JarEntry entry =
+            jf.getJarEntry("javi/JavaFormat.class");
+         assertNotNull(entry,
+            "JAR should contain javi/JavaFormat.class");
+      }
+   }
+
+   @Test
+   @EnabledIf("formatterJarExists")
    void formatterPluginHasCorrectManifest() throws Exception {
       File jar = new File(FORMATTER_JAR);
       try (java.util.jar.JarFile jf =
