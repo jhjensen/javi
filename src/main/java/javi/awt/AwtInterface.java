@@ -1116,8 +1116,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       public void setVisible(boolean vis) {
          //trace("setVisible " + vis);
-         if (vis)
+         if (vis) {
             resb = null;
+            setLocationRelativeTo(getParent());
+         }
          super.setVisible(vis);
       }
    }
@@ -1733,6 +1735,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          if (null == fdialog)
             fdialog = new FileDialog(frm, "open new vifile",
                FileDialog.LOAD);
+         fdialog.setLocationRelativeTo(frm);
          fdialog.setVisible(true);
          return   fdialog.getFile();
       }
