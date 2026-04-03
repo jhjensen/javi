@@ -119,6 +119,11 @@ public final class HelpSystem {
          case "keys":
             appendKeybindingsHelp();
             break;
+         case "folding":
+         case "fold":
+         case "folds":
+            appendFoldingHelp();
+            break;
          default:
             appendUnknownTopic(normalizedTopic);
             break;
@@ -132,7 +137,7 @@ public final class HelpSystem {
    private static final String[] TOPICS = {
       "index", "movement", "editing", "search", "files", "ex",
       "visual", "undo", "window", "shell", "diredit", "filelist",
-      "directory", "keybindings"
+      "directory", "keybindings", "folding"
    };
 
    /**
@@ -424,6 +429,7 @@ public final class HelpSystem {
       append("  :help filelist   - File list buffer");
       append("  :help directory  - Directory list buffer");
       append("  :help keybindings - Key binding architecture");
+      append("  :help folding    - Code folding commands");
       append("");
       append("QUICK REFERENCE");
       append("---------------");
@@ -1089,6 +1095,61 @@ public final class HelpSystem {
       append("  filelist   - File list buffer");
       append("  directory  - Directory list buffer");
       append("  keybindings - Key binding architecture");
+      append("  folding    - Code folding");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
+    * Append folding command help.
+    */
+   private static void appendFoldingHelp() {
+      append("FOLDING COMMANDS");
+      append("================");
+      append("");
+      append("Javi supports code folding to collapse sections of text.");
+      append("Folds can be created from brace matching, indentation,");
+      append("or {{{ / }}} markers.");
+      append("");
+      append("CREATING FOLDS");
+      append("--------------");
+      append("  :fold            Detect folds by brace matching");
+      append("  :foldindent      Detect folds by indentation level");
+      append("  :foldmarker      Detect folds by {{{ / }}} markers");
+      append("");
+      append("OPENING AND CLOSING");
+      append("-------------------");
+      append("  zo               Open fold at cursor");
+      append("  zc               Close fold at cursor");
+      append("  za               Toggle fold at cursor");
+      append("  zR               Open all folds (repeat to clear folds)");
+      append("  zM               Close all folds");
+      append("");
+      append("MOUSE");
+      append("-----");
+      append("  Click fold gutter (+/- column)   Toggle fold");
+      append("  Click collapsed fold summary     Expand fold");
+      append("");
+      append("FOLD DISPLAY");
+      append("------------");
+      append("  The left gutter shows fold indicators:");
+      append("    -              Line inside an open fold");
+      append("    +              Collapsed fold (click to expand)");
+      append("    |              Continuation of a fold");
+      append("");
+      append("  Collapsed folds display as a single summary line");
+      append("  showing the first line and the number of hidden lines.");
+      append("");
+      append("PERSISTENCE");
+      append("-----------");
+      append("  Fold state is saved alongside the buffer in .dmp2 files.");
+      append("  Folds are restored when the file is reopened.");
+      append("");
+      append("NOTES");
+      append("-----");
+      append("  - Cursor movement (j/k) skips over closed folds.");
+      append("  - Search (/) opens folds containing matches.");
+      append("  - zR with all folds already open clears all folds.");
       append("");
       append("Type :help for index.");
    }
