@@ -145,6 +145,48 @@ compile-test:
 guitest:
 	./gradlew guiTest
 
+#==============================================================================
+# Remote GUI testing (rdesk + Docker)
+#==============================================================================
+
+RDESK_GUITEST_DIR = /tmp/javi-guitest
+GUITEST_IMAGE = javi-guitest
+
+GUITEST_EXCLUDE = --exclude=build --exclude=.gradle --exclude=.git \
+   --exclude='*.dmp2' --exclude=ai.output --exclude=ai/*.out \
+   --exclude=bin --exclude=oldstuff --exclude=tmp
+
+# Full pipeline: sync, build Docker image, run GUI tests, fetch results
+rdesk-guitest: rdesk-guitest-sync rdesk-guitest-build rdesk-guitest-run rdesk-guitest-fetch
+
+# Sync javi source to rdesk
+rdesk-guitest-sync:
+	rsync -az $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_GUITEST_DIR)/
+
+# Build Docker image on rdesk
+rdesk-guitest-build: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker build -f Dockerfile.guitest -t $(GUITEST_IMAGE) .'
+
+# Run GUI tests on rdesk via Docker
+rdesk-guitest-run: rdesk-guitest-build
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker run --rm \
+	      -v $$(pwd)/build:/app/build \
+	      $(GUITEST_IMAGE)'
+
+# Fetch test results from rdesk
+rdesk-guitest-fetch:
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/reports/ \
+	   build/reports-rdesk/ 2>/dev/null || true
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/test-results/ \
+	   build/test-results-rdesk/ 2>/dev/null || true
+
+# Clean remote Docker image and files
+rdesk-guitest-clean:
+	ssh -n -T rdesk 'docker rmi $(GUITEST_IMAGE) 2>/dev/null; \
+	   rm -rf $(RDESK_GUITEST_DIR)'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage
@@ -157,8 +199,45 @@ pstest-coverage:
 
 # Run all tests with coverage and generate merged report
 test-coverage:
-	./gradlew jacocoTestReport
-	@echo "Coverage report: build/reports/jacoco/test/html/index.html"
+	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+# Run test-coverage then parse XML into text summary
+coverage-report: test-coverage compile
+	java -cp build/classes/java/main javi.CoverageReport \
+	   build/reports/jacoco/merged/merged.xml
+
+#==============================================================================
+# T3: GUI Coverage Targets (JaCoCo agent + tcpserver)
+#==============================================================================
+
+# Resolve JaCoCo agent JAR path from Gradle
+JACOCO_AGENT = $(shell ./gradlew -q jacocoAgentPath 2>/dev/null)
+
+# Launch javi with JaCoCo agent (coverage via tcpserver on port 6300)
+# Usage: make run-coverage [FILE=myfile.txt]
+# After exercising the GUI, run: make coverage-dump
+run-coverage: compile
+	@echo "Starting javi with JaCoCo coverage agent (port 6300)..."
+	@echo "Use the editor, then run 'make coverage-dump' before quitting."
+	java -javaagent:$(JACOCO_AGENT)=output=tcpserver,port=6300,address=127.0.0.1 \
+	   -cp $(CLASSPATH) javi.Javi $(FILE)
+
+# Dump coverage from running javi (must be started with run-coverage)
+coverage-dump:
+	./gradlew jacocoDump
+	@echo "Coverage dumped to build/jacoco/gui.exec"
+
+# Merge all .exec files (JUnit + legacy + GUI) and generate report
+coverage-merge:
+	./gradlew mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+# Full coverage workflow: JUnit + legacy tests + merge report
+# If gui.exec exists (from prior run-coverage + coverage-dump), it's included
+full-coverage: compile
+	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
+	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
 
 #==============================================================================
 # Run targets

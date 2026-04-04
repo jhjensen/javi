@@ -73,12 +73,18 @@ ai/validate.out: FORCE
 	echo "junit: $$junit_rc  cstyle: $$cstyle_rc  overall: $$rc" >> $@; \
 	exit $$rc
 
-# Convenience aliases (short names)
-compile.out: ai/compile.out
-junit.out:   ai/junit.out
-test-coverage.out: ai/test-coverage.out
-test.out:    ai/test.out
-cstyle.out:  ai/cstyle.out
-javadoc.out: ai/javadoc.out
-coverage.out: ai/coverage.out
-validate.out: ai/validate.out
+# Remote GUI tests (rdesk + Docker + Xvfb)
+ai/rdesk-guitest.out: FORCE
+	$(MAKE) rdesk-guitest > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T3: Full coverage (JUnit + legacy + merge report)
+ai/full-coverage.out: FORCE
+	$(MAKE) full-coverage > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T3: Coverage dump from running javi
+ai/coverage-dump.out: FORCE
+	$(MAKE) coverage-dump > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T3: Merge all .exec files and generate report
+ai/coverage-merge.out: FORCE
+	$(MAKE) coverage-merge > $@ 2>&1; echo "exit: $$?" >> $@
