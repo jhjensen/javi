@@ -759,6 +759,8 @@ final class OldView extends AwtView {
       private int mousePressed = 0;
       /** True when mouse-down occurred in the fold gutter column. */
       private boolean foldGutterPressed;
+      /** True when a fold was toggled by clicking a collapsed summary. */
+      private boolean foldClickToggled;
       /** Start position of a shell-mode mouse selection, or null. */
       private Position shellDragStart;
       private transient Graphics oldgr;
@@ -879,6 +881,7 @@ final class OldView extends AwtView {
                      } finally {
                         EventQueue.biglock2.unlock();
                      }
+                     foldClickToggled = true;
                      return;
                   }
                }
@@ -942,6 +945,7 @@ final class OldView extends AwtView {
                if (forwardVt100Mouse((MouseEvent) ev, true))
                   return;
                foldGutterPressed = false;
+               foldClickToggled = false;
                if (((MouseEvent) ev).getButton() == MouseEvent.BUTTON1
                      && isShellBufferNoTracking()) {
                   EventQueue.biglock2.lock();
@@ -960,7 +964,9 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_RELEASED:
                if (forwardVt100Mouse((MouseEvent) ev, false))
                   return;
-               if (foldGutterPressed
+               if (foldClickToggled) {
+                  foldClickToggled = false;
+               } else if (foldGutterPressed
                      && ((MouseEvent) ev).getButton()
                         == MouseEvent.BUTTON1) {
                   foldGutterPressed = false;

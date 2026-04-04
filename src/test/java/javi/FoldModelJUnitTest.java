@@ -384,6 +384,64 @@ class FoldModelJUnitTest {
       assertTrue(fm.isEmpty());
    }
 
+   @Test
+   void detectJsonBracesInStringIgnored() {
+      String[] lines = {
+         "",
+         "public class Foo {",
+         "   String s = \"}\";",
+         "   void bar() {",
+         "      println(\"{\");",
+         "   }",
+         "}",
+      };
+      FoldDetector.LineFetcher fetcher = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectJsonFolds(fetcher, lines.length);
+      assertEquals(2, fm.size());
+      FoldModel.FoldRange outer = fm.getFolds().get(0);
+      assertEquals(1, outer.startLine);
+      assertEquals(6, outer.endLine);
+      FoldModel.FoldRange inner = fm.getFolds().get(1);
+      assertEquals(3, inner.startLine);
+      assertEquals(5, inner.endLine);
+   }
+
+   @Test
+   void detectJsonBracesInLineCommentIgnored() {
+      String[] lines = {
+         "",
+         "void foo() {",
+         "   // } this brace should be ignored",
+         "   doSomething();",
+         "}",
+      };
+      FoldDetector.LineFetcher fetcher = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectJsonFolds(fetcher, lines.length);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange f = fm.getFolds().get(0);
+      assertEquals(1, f.startLine);
+      assertEquals(4, f.endLine);
+   }
+
+   @Test
+   void detectJsonEscapedQuoteInString() {
+      String[] lines = {
+         "",
+         "void foo() {",
+         "   String s = \"\\\"}\\\"\";",
+         "}",
+      };
+      FoldDetector.LineFetcher fetcher = i -> lines[i];
+      FoldModel fm =
+         FoldDetector.detectJsonFolds(fetcher, lines.length);
+      assertEquals(1, fm.size());
+      FoldModel.FoldRange f = fm.getFolds().get(0);
+      assertEquals(1, f.startLine);
+      assertEquals(3, f.endLine);
+   }
+
    // --- nextVisible / prevVisible ---
 
    @Test

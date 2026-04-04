@@ -29,8 +29,32 @@ public final class FoldDetector {
          String text = buffer.getLine(line);
          if (text == null)
             continue;
+         boolean inString = false;
+         boolean inChar = false;
+         boolean escaped = false;
          for (int i = 0; i < text.length(); i++) {
             char ch = text.charAt(i);
+            if (escaped) {
+               escaped = false;
+               continue;
+            }
+            if (ch == '\\' && (inString || inChar)) {
+               escaped = true;
+               continue;
+            }
+            if (ch == '"' && !inChar) {
+               inString = !inString;
+               continue;
+            }
+            if (ch == '\'' && !inString) {
+               inChar = !inChar;
+               continue;
+            }
+            if (inString || inChar)
+               continue;
+            if (ch == '/' && i + 1 < text.length()
+                  && text.charAt(i + 1) == '/')
+               break;
             if (ch == '{' || ch == '[') {
                stack.push(line);
             } else if (ch == '}' || ch == ']') {
