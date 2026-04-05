@@ -279,6 +279,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private TestFrame fullFrame;
    private final TestFrame normalFrame;
    private int viewCount = 0;
+   private boolean programmaticResize;
    private transient GraphicsDevice currdev;
    private transient FileDialog fdialog;
    private transient PopupMenu popmenu; // the menubar
@@ -778,6 +779,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       frm.add(cmdComp, -1);
       //frm.setComponentZOrder(ta,1);
       //trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! about to set visible");
+      programmaticResize = true;
       frm.validate();
       cmdComp.setVisible(true);
       return ta;
@@ -795,6 +797,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          FvContext newfvc = FvContext.dispose(fvc.vi);
          if (null != newfvc)
             isetTitle(newfvc.edvec.toString());
+         programmaticResize = true;
          frm.validate();
       }
    }
@@ -880,6 +883,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       }
 
       public void run() {
+         programmaticResize = true;
          frm.validate();
       }
    }
@@ -971,6 +975,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                == Frame.MAXIMIZED_BOTH))
             frm.setSize(frm.getPreferredSize());
 
+         programmaticResize = true;
          frm.validate();
       }
    }
@@ -1678,7 +1683,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          frm.setCompSize(startSize.width, startSize.height);
 
-         if (normalFrame == frm
+         if (programmaticResize && normalFrame == frm
                && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                == Frame.MAXIMIZED_BOTH)) {
             Dimension pref = frm.getPreferredSize();
@@ -1688,6 +1693,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                startSize = pref;
             }
          }
+         programmaticResize = false;
 
          int ccount = frm.getComponentCount();
          //trace("frame size at start of layout " + startSize + " insets " + inset);
