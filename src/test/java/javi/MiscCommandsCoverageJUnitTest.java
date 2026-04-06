@@ -179,10 +179,12 @@ class MiscCommandsCoverageJUnitTest {
 
    @Test
    void mapkeyUnknownGroupThrows() {
-      // normalKeyMap is null (bindCommands not called),
-      // so getKeyGroup("move") returns null → InputException
+      // When normalKeyMap is null (bindCommands not called),
+      // getKeyGroup("move") returns null → InputException.
+      // When bindCommands has been called, "move" is valid
+      // so use a truly unknown group name instead.
       assertThrows(InputException.class,
-         () -> Rgroup.doCommand("mapkey", "move h movechar",
+         () -> Rgroup.doCommand("mapkey", "bogusgroup h movechar",
             0, 1, FvContext.getCurrFvc(), false));
    }
 
