@@ -618,6 +618,17 @@ public final class PosListList extends TextList<Position> {
             }
             trace("taglookup ctagCount=" + ctagCount);
 
+            // Always merge matching directories into the tag list
+            @SuppressWarnings("unchecked")
+            TextEdit<Position> tlist = tagResults;
+            ArrayList<Position> dirMatches =
+               findDirectories(qualifiedName);
+            trace("taglookup dirMatches=" + dirMatches.size());
+            for (Position dp : dirMatches) {
+               if (!containsPosition(tlist, dp))
+                  tlist.insertOne(dp, tlist.readIn());
+            }
+
             if (ctagCount > 1) {
                navigateToBestScoredTag(tagResults,
                   ctagCount, nameSegments, qualifiedName, vi);
@@ -687,22 +698,10 @@ public final class PosListList extends TextList<Position> {
          }
       }
 
-      @SuppressWarnings("unchecked")
       private static void navigateToFirstTag(
             TextEdit<Position> tagResults,
             String qualifiedName, View vi)
             throws InputException {
-         // Merge any matching directories into the tag list
-         ArrayList<Position> dirMatches =
-            findDirectories(qualifiedName);
-         trace("navigateToFirstTag dirMatches="
-            + dirMatches.size());
-         TextEdit<Position> tlist = tagResults;
-         for (Position dp : dirMatches) {
-            if (!containsPosition(tlist, dp))
-               tlist.insertOne(dp, tlist.readIn());
-         }
-
          // Navigate to first non-defpos entry
          for (int i = 1; i < tagResults.readIn(); i++) {
             Position p = tagResults.at(i);
