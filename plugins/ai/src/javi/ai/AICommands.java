@@ -8,9 +8,11 @@ import javi.ai.tools.AIToolRegistry;
 import javi.ai.tools.BufferInfoTool;
 
 import javi.EditContainer;
+import javi.EventQueue;
 import javi.FvContext;
 import javi.InputException;
 import javi.InsertBuffer;
+import javi.JeyEvent;
 import javi.MovePos;
 import javi.Plugin;
 import javi.Rgroup;
@@ -78,6 +80,7 @@ public final class AICommands extends Rgroup implements Plugin {
    private static final int CMD_MODELS   = 15;
    private static final int CMD_STATUS   = 16;
    private static final int CMD_TOOLS    = 17;
+   private static final int CMD_GPROCESS = 18;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -128,6 +131,7 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.models",     // 15 - list available models
          "ai.status",     // 16 - request history/tracking
          "ai.tools",      // 17 - list registered tools
+         "ai.gprocess",   // 18 - g prefix key handler
       };
       register(rnames);
       AIToolRegistry.registerBuiltins();
@@ -172,6 +176,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doStatus(fvc);
          case CMD_TOOLS:
             return doTools(fvc);
+         case CMD_GPROCESS:
+            return doGProcess(count, rcount, fvc);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
@@ -904,6 +910,89 @@ public final class AICommands extends Rgroup implements Plugin {
    }
 
    /**
+    * Handle the 'g' prefix key in normal mode.
+    *
+    * <p>Reads the next key after 'g'. If 'a', enters AI subcommand
+    * mode (ga prefix). If 'g', goes to line 1 (standard vi gg).
+    * Other keys are ignored.</p>
+    *
+    * @param count the numeric count prefix
+    * @param rcount the raw count (0 when no digits typed)
+    * @param fvc the current file-view context
+    * @return null
+    * @throws IOException if an I/O error occurs
+    * @throws InputException if input fails
+    */
+   private Object doGProcess(int count, int rcount,
+         FvContext fvc)
+         throws IOException, InputException {
+      JeyEvent next = EventQueue.nextKeye(fvc.vi);
+      char ch = next.getKeyChar();
+      switch (ch) {
+         case 'a':
+            return doGaPrefix(fvc);
+         case 'g':
+            fvc.cursoryabs(rcount > 0 ? rcount : 1);
+            return null;
+         default:
+            return null;
+      }
+   }
+
+   /**
+    * Handle the 'ga' AI prefix in normal mode.
+    *
+    * <p>Reads the third key to dispatch the AI subcommand:
+    * <ul>
+    *   <li>{@code r} — review current code</li>
+    *   <li>{@code e} — explain current code</li>
+    *   <li>{@code d} — generate documentation</li>
+    *   <li>{@code f} — refactor current code</li>
+    *   <li>{@code c} — open AI chat</li>
+    *   <li>{@code s} — show AI status</li>
+    *   <li>{@code t} — test AI connection</li>
+    *   <li>{@code x} — cancel AI request</li>
+    *   <li>{@code ?} — show AI help</li>
+    * </ul></p>
+    *
+    * @param fvc the current file-view context
+    * @return null
+    * @throws IOException if an I/O error occurs
+    * @throws InputException if input fails
+    */
+   private Object doGaPrefix(FvContext fvc)
+         throws IOException, InputException {
+      JeyEvent next = EventQueue.nextKeye(fvc.vi);
+      char ch = next.getKeyChar();
+      switch (ch) {
+         case 'r':
+            return doReview(fvc);
+         case 'e':
+            return doExplain(fvc);
+         case 'd':
+            return doDoc(fvc);
+         case 'f':
+            return doRefactor(null, fvc);
+         case 'c':
+            return doChat(null, fvc);
+         case 's':
+            return doStatus(fvc);
+         case 't':
+            return doTest();
+         case 'x':
+            return doCancel();
+         case '?':
+            showAiHelp(fvc);
+            return null;
+         default:
+            UI.reportMessage(
+               "ga: unknown key '" + ch
+               + "' — use gar/gae/gad/gaf/gac");
+            return null;
+      }
+   }
+
+   /**
     * Show AI help in the status area.
     *
     * @param fvc the current file-view context
@@ -928,6 +1017,18 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  :ai status          Show request tracking");
       appendToChatBuffer("  :ai tools           List registered AI tools");
       appendToChatBuffer("  :ai help            Show this help");
+      appendToChatBuffer("");
+      appendToChatBuffer("NORMAL MODE (ga prefix)");
+      appendToChatBuffer("  gar                 Review current code");
+      appendToChatBuffer("  gae                 Explain current code");
+      appendToChatBuffer("  gad                 Generate documentation");
+      appendToChatBuffer("  gaf                 Refactor (prompts for instruction)");
+      appendToChatBuffer("  gac                 Open AI chat");
+      appendToChatBuffer("  gas                 Show AI status");
+      appendToChatBuffer("  gat                 Test AI connection");
+      appendToChatBuffer("  gax                 Cancel AI request");
+      appendToChatBuffer("  ga?                 Show this help");
+      appendToChatBuffer("  gg                  Go to first line");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
       appendToChatBuffer("  :set ai.provider=openai|anthropic|copilot");

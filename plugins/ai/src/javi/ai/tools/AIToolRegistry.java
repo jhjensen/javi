@@ -253,5 +253,7 @@ public final class AIToolRegistry {
       register(new FileReadTool());
       register(new FileListTool());
       register(new BufferInfoTool());
+      register(new BufferReadTool());
+      register(new BufferWriteTool());
    }
 }

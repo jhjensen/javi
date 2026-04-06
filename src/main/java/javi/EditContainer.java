@@ -422,7 +422,7 @@ public class EditContainer<OType> implements
 //static Matcher normalize1 =  Pattern.compile("(\\\\|/)").matcher("");
 //static Matcher normalize2 =  Pattern.compile("\\.").matcher("");
 
-   static final EditContainer grepfile(String spec) {
+   public static final EditContainer grepfile(String spec) {
       // jdk1.5 change to LITERAL
 //   normalize1.reset(spec);
 //   spec = normalize1.replaceAll("(\\\\\\\\|/)");

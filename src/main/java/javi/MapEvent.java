@@ -174,6 +174,9 @@ public final class MapEvent {
       normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
          null, CTRL_MASK);
 
+      // g prefix key for AI commands (ga*) and vi g-commands (gg)
+      normalKeyMap.bindEditKey('g', "ai.gprocess", null);
+
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
    }

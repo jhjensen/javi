@@ -51,7 +51,7 @@ public final class JeyEvent {
       return "JeyEvent mod " + modifiers + " code " + code;
    }
 
-   char getKeyChar() {
+   public char getKeyChar() {
       return (modifiers & ACT_MASK) == 0
          ? (char) code
          : CHAR_UNDEFINED;
