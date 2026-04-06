@@ -799,6 +799,8 @@ public final class MiscCommands extends Rgroup {
          FoldDetector.detectJsonFolds(fetcher, lineCount);
       fvc.setFoldModel(fm);
       saveFoldState(fvc);
+      fvc.vi.recalcScreenRow();
+      fvc.vi.redraw();
       UI.reportMessage(fm.statusSummary());
    }
 
@@ -821,6 +823,8 @@ public final class MiscCommands extends Rgroup {
          fetcher, lineCount, tabSize);
       fvc.setFoldModel(fm);
       saveFoldState(fvc);
+      fvc.vi.recalcScreenRow();
+      fvc.vi.redraw();
       UI.reportMessage(fm.statusSummary());
    }
 
