@@ -32,41 +32,51 @@ class PosListListJUnitTest {
       // Force PosListList.Cmd class loading and construction under
       // biglock2, since its static initializer and constructor
       // create TextEdit instances and register commands.
+      // Guard against double-registration when other PLL test
+      // classes run first in the same JVM.
       EventQueue.biglock2.lock();
       try {
-         pllCmd = new PosListList.Cmd();
+         try {
+            pllCmd = new PosListList.Cmd();
+            PosListListCoverageJUnitTest.sharedCmd = pllCmd;
+         } catch (RuntimeException e) {
+            // Commands already registered by another test class.
+            // Static inst is already initialized.
+            pllCmd = PosListListCoverageJUnitTest.sharedCmd;
+         }
       } finally {
          EventQueue.biglock2.unlock();
       }
    }
 
-   // Access private static filereg Matcher via reflection
-   private static Matcher getFileReg() throws Exception {
-      Field f = PosListList.Cmd.class.getDeclaredField("filereg");
+   // Access private static filePositionPattern Matcher via reflection
+   private static Matcher getFilePositionPattern() throws Exception {
+      Field f = PosListList.Cmd.class.getDeclaredField(
+         "filePositionPattern");
       f.setAccessible(true);
       return (Matcher) f.get(null);
    }
 
-   // Access private static getLastSym via reflection
-   private static String getLastSym(String str, int startid) throws Exception {
+   // Access private static extractIdentifier via reflection
+   private static String extractIdentifier(String str, int startid) throws Exception {
       Method m = PosListList.Cmd.class.getDeclaredMethod(
-         "getLastSym", String.class, int.class);
+         "extractIdentifier", String.class, int.class);
       m.setAccessible(true);
       return (String) m.invoke(null, str, startid);
    }
 
    // ================================================================
-   // filereg pattern matching (from PosListList.Cmd.main())
+   // filePositionPattern matching (from PosListList.Cmd.main())
    // ================================================================
 
    @Nested
-   @DisplayName("filereg pattern")
-   class FileRegTests {
+   @DisplayName("filePositionPattern")
+   class FilePositionPatternTests {
 
       @Test
       @DisplayName("matches Java file:line reference")
       void matchesJavaFileLine() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("UI.java:1118 java.xxx.event.");
          assertTrue(m.find());
          assertEquals("UI.java", m.group(1));
@@ -76,7 +86,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches C file:line reference")
       void matchesCFileLine() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254 ");
          assertTrue(m.find());
          assertEquals("smtp_hfilter.c", m.group(1));
@@ -86,7 +96,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches file:line without trailing space")
       void matchesCFileLineNoTrailingSpace() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254");
          assertTrue(m.find());
          assertEquals("smtp_hfilter.c", m.group(1));
@@ -96,7 +106,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("first match in multi-match string")
       void firstMatchInMulti() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("smtp_hfilter.c:254 hfilter_find SUBJECT"
             + "smtp_hfilter.c:266 hfilter_find SUBJECTsmtp_hfilter.c:"
             + "131 normalize_name_stbuf_ind 0 ,buffer[buf_ind]13");
@@ -108,7 +118,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches path with directories")
       void matchesPathWithDirs() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("src/main/java/Foo.java:42");
          assertTrue(m.find());
          assertEquals("src/main/java/Foo.java", m.group(1));
@@ -118,7 +128,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches path with backslashes")
       void matchesBackslashPath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("src\\main\\Foo.java:99");
          assertTrue(m.find());
          assertEquals("src\\main\\Foo.java", m.group(1));
@@ -128,7 +138,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches Windows drive letter path")
       void matchesWindowsDrivePath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("C:\\src\\File.cpp:100");
          assertTrue(m.find());
          // group(2) captures optional drive letter
@@ -139,7 +149,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("matches tilde path")
       void matchesTildePath() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("~/projects/test.py:7");
          assertTrue(m.find());
          assertEquals("~/projects/test.py", m.group(1));
@@ -149,7 +159,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("no match on bare text without colon-number")
       void noMatchBareText() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("just some text without file reference");
          assertFalse(m.find());
       }
@@ -157,7 +167,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("no match on empty string")
       void noMatchEmpty() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("");
          assertFalse(m.find());
       }
@@ -165,7 +175,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("rejects filename with spaces")
       void rejectsSpacesInName() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("my file.java:10");
          // The pattern excludes spaces, so "my" won't match "my file.java"
          assertTrue(m.find()); // matches "file.java:10"
@@ -175,7 +185,7 @@ class PosListListJUnitTest {
       @Test
       @DisplayName("rejects filename with parens")
       void rejectsParensInName() throws Exception {
-         Matcher m = getFileReg();
+         Matcher m = getFilePositionPattern();
          m.reset("(File).java:10");
          assertTrue(m.find());
          // Should match only the non-paren portion
@@ -184,59 +194,59 @@ class PosListListJUnitTest {
    }
 
    // ================================================================
-   // getLastSym helper
+   // extractIdentifier helper
    // ================================================================
 
    @Nested
-   @DisplayName("getLastSym")
-   class GetLastSymTests {
+   @DisplayName("extractIdentifier")
+   class ExtractIdentifierTests {
 
       @Test
       @DisplayName("extracts symbol from start of string")
       void extractsFromStart() throws Exception {
-         assertEquals("myMethod", getLastSym("myMethod(args)", 0));
+         assertEquals("myMethod", extractIdentifier("myMethod(args)", 0));
       }
 
       @Test
       @DisplayName("extracts symbol from mid-string offset")
       void extractsFromOffset() throws Exception {
-         assertEquals("method", getLastSym("  method()", 2));
+         assertEquals("method", extractIdentifier("  method()", 2));
       }
 
       @Test
       @DisplayName("includes dots in qualified names")
       void includesDotsInQualifiedNames() throws Exception {
-         assertEquals("com.example.Class", getLastSym("com.example.Class:42", 0));
+         assertEquals("com.example.Class", extractIdentifier("com.example.Class:42", 0));
       }
 
       @Test
       @DisplayName("stops at space")
       void stopsAtSpace() throws Exception {
-         assertEquals("word", getLastSym("word rest", 0));
+         assertEquals("word", extractIdentifier("word rest", 0));
       }
 
       @Test
       @DisplayName("stops at paren")
       void stopsAtParen() throws Exception {
-         assertEquals("func", getLastSym("func(arg)", 0));
+         assertEquals("func", extractIdentifier("func(arg)", 0));
       }
 
       @Test
       @DisplayName("empty result from non-identifier start")
       void emptyFromNonIdentifier() throws Exception {
-         assertEquals("", getLastSym("(rest)", 0));
+         assertEquals("", extractIdentifier("(rest)", 0));
       }
 
       @Test
       @DisplayName("handles end of string")
       void handlesEndOfString() throws Exception {
-         assertEquals("abc", getLastSym("abc", 0));
+         assertEquals("abc", extractIdentifier("abc", 0));
       }
 
       @Test
       @DisplayName("handles single character")
       void handlesSingleChar() throws Exception {
-         assertEquals("x", getLastSym("x", 0));
+         assertEquals("x", extractIdentifier("x", 0));
       }
    }
 
