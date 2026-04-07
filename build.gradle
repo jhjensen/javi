@@ -407,6 +407,26 @@ def buildPluginJar(String pName, File srcDir) {
         '' // trailing newline
     ].join('\n')
 
+    // Bundle dependency JARs if plugin has a deps file
+    def depsFile = new File(srcDir.parentFile, "deps.txt")
+    if (depsFile.exists()) {
+        depsFile.eachLine { dep ->
+            dep = dep.trim()
+            if (dep && !dep.startsWith('#')) {
+                configurations.runtimeClasspath.files.each { f ->
+                    if (f.name.contains(dep)) {
+                        ant.unzip(src: f.path, dest: classesDir) {
+                            patternset {
+                                include(name: '**/*.class')
+                                exclude(name: 'META-INF/**')
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Build the JAR
     def jarPath = new File(bdir, "libs/javi-${pName}.jar")
     ant.jar(destfile: jarPath.path, basedir: classesDir,
