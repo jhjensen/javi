@@ -22,7 +22,8 @@
 #else
    jroot=/Users/jjensen/javi
    myprog=$jroot/lib
-   commoncp=$myprog:$myprog/juniversalchardet-1.0.3.jar:$myprog/rhino-1.7.14.jar:$myprog/junit3.8.2/junit.jar:$JAVA_HOME/lib/tools.jar:$myprog/RXTXcomm.jar
+   commoncp=$myprog:$myprog/juniversalchardet-1.0.3.jar:$myprog/rhino-1.7.14.jar:$myprog/junit3.8.2/junit.jar:$JAVA_HOME/lib/tools.jar:$myprog/RXTXcomm.jar:$myprog/org.eclipse.jdt.core-3.45.0.jar
+
    exportcp="$jroot/build:$commoncp"
    BTCLASS="-Xbootclasspath/a:$JAVA_HOME/lib/tools.jar;$exportcp"
 
