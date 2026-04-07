@@ -1432,7 +1432,8 @@ public final class DirEdit extends TextEdit<String> {
     */
    static void notifySearchPathChanged() {
       for (DirEdit de : openInstances) {
-         de.populateDirectory();
+         if (de.isValid())
+            de.populateDirectory();
       }
    }
 
