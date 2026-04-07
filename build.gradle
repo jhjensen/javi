@@ -447,4 +447,6 @@ tasks.register('distAll', Copy) {
         exclude jar.archiveFileName.get()
     }
     into "$projectDir/dist"
+    // Rename main JAR to javi.jar (consistent with dist task)
+    rename(jar.archiveFileName.get(), projectVersion == 'dev' ? 'javi.jar' : "javi-${projectVersion}.jar")
 }
