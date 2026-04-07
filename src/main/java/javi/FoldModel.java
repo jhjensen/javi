@@ -314,9 +314,14 @@ public final class FoldModel {
     * </ul>
     */
    public char getFoldIndicator(int bufLine) {
+      // Check startLine matches first (fold headers) —
+      // an inner fold start takes priority over being
+      // inside an outer fold.
       for (FoldRange f : folds) {
          if (bufLine == f.startLine)
             return f.collapsed ? '+' : '-';
+      }
+      for (FoldRange f : folds) {
          if (!f.collapsed
                && bufLine > f.startLine
                && bufLine <= f.endLine)

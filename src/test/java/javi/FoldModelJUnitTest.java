@@ -1470,4 +1470,63 @@ class FoldModelJUnitTest {
       assertEquals(8, f.startLine);
       assertEquals(12, f.endLine);
    }
+
+   @Test
+   void nestedFoldIndicatorsShowDashAtAllBraceLines() {
+      // Simulates user's test case:
+      // line 1: {  1
+      // line 2: {  2
+      // line 3: {  3
+      // line 4: }
+      // line 5: }
+      // line 6: }
+      model.addFold(3, 4);  // inner
+      model.addFold(2, 5);  // middle
+      model.addFold(1, 6);  // outer
+      // All fold start lines should show '-' (open fold)
+      assertEquals('-', model.getFoldIndicator(1));
+      assertEquals('-', model.getFoldIndicator(2));
+      assertEquals('-', model.getFoldIndicator(3));
+      // Closing brace lines should show '|' (inside fold)
+      assertEquals('|', model.getFoldIndicator(4));
+      assertEquals('|', model.getFoldIndicator(5));
+      assertEquals('|', model.getFoldIndicator(6));
+   }
+
+   @Test
+   void nestedFoldIndicatorsCollapsedInner() {
+      model.addFold(3, 4);
+      model.addFold(2, 5);
+      model.addFold(1, 6);
+      model.closeFold(3);  // collapse innermost
+      assertEquals('-', model.getFoldIndicator(1));
+      assertEquals('-', model.getFoldIndicator(2));
+      assertEquals('+', model.getFoldIndicator(3));
+   }
+
+   @Test
+   void foldDetectorNestedBraces() {
+      // Verify FoldDetector creates correct folds for
+      // nested braces.
+      String[] lines = {
+         null,        // index 0 unused (1-based)
+         "{  1",      // line 1
+         "{  2",      // line 2
+         "{  3",      // line 3
+         "}",         // line 4
+         "}",         // line 5
+         "}",         // line 6
+      };
+      FoldDetector.LineFetcher fetcher =
+         lineNum -> lines[lineNum];
+      FoldModel fm =
+         FoldDetector.detectJsonFolds(fetcher, 7);
+      assertEquals(3, fm.size());
+      assertEquals('-', fm.getFoldIndicator(1));
+      assertEquals('-', fm.getFoldIndicator(2));
+      assertEquals('-', fm.getFoldIndicator(3));
+      assertEquals('|', fm.getFoldIndicator(4));
+      assertEquals('|', fm.getFoldIndicator(5));
+      assertEquals('|', fm.getFoldIndicator(6));
+   }
 }
