@@ -78,6 +78,10 @@ public abstract class Rgroup {
          return rg == Rgroup.this;
       }
 
+      Object getArg() {
+         return arg;
+      }
+
       KeyBinding proto(Object arg2) {
          return (arg != arg2) // use default bind if arguments the same
             ? new KeyBinding(arg2, index)

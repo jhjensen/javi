@@ -83,6 +83,11 @@ final class KeyGroup {
     */
    void bind(JeyEvent key, String commandName, Object arg) {
       Rgroup.KeyBinding kb = Rgroup.bindingLookup(commandName);
+      if (arg == null) {
+         Rgroup.KeyBinding existing = bindingMap.get(key);
+         if (existing != null)
+            arg = existing.getArg();
+      }
       bindingMap.put(key, kb.proto(arg));
       commandNames.put(key, commandName);
       userBindings.put(key, commandName);
