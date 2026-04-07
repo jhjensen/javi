@@ -757,6 +757,10 @@ final class OldView extends AwtView {
    final class MyCanvas extends Canvas {
 
       private int mousePressed = 0;
+      /** True when mouse-down occurred in the fold gutter column. */
+      private boolean foldGutterPressed;
+      /** True when a fold was toggled by clicking a collapsed summary. */
+      private boolean foldClickToggled;
       /** Start position of a shell-mode mouse selection, or null. */
       private Position shellDragStart;
       private transient Graphics oldgr;
@@ -839,8 +843,11 @@ final class OldView extends AwtView {
 
          if (event.getButton() == MouseEvent.BUTTON1
                && event.getX() < xoffset + charwidth) {
-            if (handleFoldGutterClick(event))
+            FoldModel fm = getActiveFoldModel();
+            if (fm != null && !fm.isEmpty()) {
+               foldGutterPressed = true;
                return;
+            }
          }
 
          EventQueue.biglock2.lock();
@@ -874,6 +881,7 @@ final class OldView extends AwtView {
                      } finally {
                         EventQueue.biglock2.unlock();
                      }
+                     foldClickToggled = true;
                      return;
                   }
                }
@@ -936,6 +944,8 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_PRESSED:
                if (forwardVt100Mouse((MouseEvent) ev, true))
                   return;
+               foldGutterPressed = false;
+               foldClickToggled = false;
                if (((MouseEvent) ev).getButton() == MouseEvent.BUTTON1
                      && isShellBufferNoTracking()) {
                   EventQueue.biglock2.lock();
@@ -954,7 +964,17 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_RELEASED:
                if (forwardVt100Mouse((MouseEvent) ev, false))
                   return;
-               if (null != shellDragStart
+               if (foldClickToggled) {
+                  foldClickToggled = false;
+               } else if (foldGutterPressed
+                     && ((MouseEvent) ev).getButton()
+                        == MouseEvent.BUTTON1) {
+                  foldGutterPressed = false;
+                  if (((MouseEvent) ev).getX()
+                        < xoffset + charwidth) {
+                     handleFoldGutterClick((MouseEvent) ev);
+                  }
+               } else if (null != shellDragStart
                      && ((MouseEvent) ev).getButton()
                         == MouseEvent.BUTTON1) {
                   copyShellSelection((MouseEvent) ev);
@@ -980,6 +1000,14 @@ final class OldView extends AwtView {
             case MouseEvent.MOUSE_DRAGGED:
                if (forwardVt100MouseDrag((MouseEvent) ev))
                   return;
+               if (foldGutterPressed) {
+                  // Mouse moved off fold column — cancel fold
+                  if (((MouseEvent) ev).getX()
+                        >= xoffset + charwidth) {
+                     foldGutterPressed = false;
+                  }
+                  break;
+               }
                if (1 == mousePressed) {
                   EventQueue.biglock2.lock();
                   try {
