@@ -310,6 +310,67 @@ public final class FoldDetector {
    }
 
    /**
+    * Detect foldable regions in Markdown files based on
+    * header levels ({@code #}, {@code ##}, {@code ###}, etc.).
+    * Each header starts a fold that extends to the next header
+    * of the same or higher level, or to end of file.
+    *
+    * @param buffer text buffer to scan (1-based lines)
+    * @param lineCount total lines in file (readIn())
+    * @return FoldModel with detected folds
+    */
+   public static FoldModel detectMarkdownFolds(
+         LineFetcher buffer, int lineCount) {
+      FoldModel model = new FoldModel();
+      if (lineCount <= 2)
+         return model;
+
+      int lastLine = lineCount - 1;
+      // Stack of [headerLevel, startLine]
+      Deque<int[]> stack = new ArrayDeque<>();
+
+      for (int line = 1; line < lineCount; line++) {
+         String text = buffer.getLine(line);
+         if (text == null)
+            continue;
+         int level = markdownHeaderLevel(text);
+         if (level > 0) {
+            // Close folds at same or deeper level
+            while (!stack.isEmpty()
+                  && stack.peek()[0] >= level) {
+               int[] top = stack.pop();
+               if (line - 1 > top[1])
+                  model.addFold(top[1], line - 1);
+            }
+            stack.push(new int[]{level, line});
+         }
+      }
+      // Close remaining folds at EOF
+      while (!stack.isEmpty()) {
+         int[] top = stack.pop();
+         if (lastLine > top[1])
+            model.addFold(top[1], lastLine);
+      }
+      return model;
+   }
+
+   /**
+    * Return the Markdown header level (1-6) for a line
+    * starting with one or more '#' followed by a space.
+    * Returns 0 if the line is not a header.
+    */
+   static int markdownHeaderLevel(String text) {
+      int len = text.length();
+      int i = 0;
+      while (i < len && text.charAt(i) == '#')
+         i++;
+      if (i > 0 && i <= 6 && i < len
+            && text.charAt(i) == ' ')
+         return i;
+      return 0;
+   }
+
+   /**
     * Abstraction so we can test without depending on TextEdit.
     */
    public interface LineFetcher {

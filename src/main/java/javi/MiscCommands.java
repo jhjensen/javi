@@ -795,8 +795,15 @@ public final class MiscCommands extends Rgroup {
       FoldDetector.LineFetcher fetcher = lineNum ->
          fvc.edvec.at(lineNum).toString();
       int lineCount = fvc.edvec.readIn();
-      FoldModel fm =
-         FoldDetector.detectJsonFolds(fetcher, lineCount);
+      String name = fvc.edvec.getName();
+      FoldModel fm;
+      if (name != null && name.endsWith(".md")) {
+         fm = FoldDetector.detectMarkdownFolds(
+            fetcher, lineCount);
+      } else {
+         fm = FoldDetector.detectJsonFolds(
+            fetcher, lineCount);
+      }
       fvc.setFoldModel(fm);
       saveFoldState(fvc);
       fvc.vi.recalcScreenRow();

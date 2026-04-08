@@ -217,4 +217,69 @@ class FoldDetectorJUnitTest {
       assertEquals(-1,
          FoldDetector.parseMarkerLevel("{{{", 3));
    }
+
+   // --- Markdown fold detection ---
+
+   @Test void markdownFoldsHeaders() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Top",         // 1
+         "intro text",    // 2
+         "## Section A",  // 3
+         "some content",  // 4
+         "## Section B",  // 5
+         "more content"   // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      // Should have 3 folds: # top (1-6), ## A (3-4), ## B (5-6)
+      assertEquals(3, folds.size());
+   }
+
+   @Test void markdownFoldsNestedHeaders() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# H1",       // 1
+         "## H2",      // 2
+         "### H3",     // 3
+         "text",       // 4
+         "## H2b",     // 5
+         "text"        // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      // H1 (1-6), H2 (2-4), H3 (3-4), H2b (5-6)
+      assertEquals(4, folds.size());
+   }
+
+   @Test void markdownFoldsEmpty() {
+      FoldDetector.LineFetcher buf = arrayFetcher("just text");
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 2);
+      assertTrue(m.getFolds().isEmpty());
+   }
+
+   @Test void markdownFoldsSingleHeader() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",
+         "body"
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 3);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      assertEquals(1, folds.size());
+      assertEquals(1, folds.get(0).startLine); // start
+      assertEquals(2, folds.get(0).endLine); // end
+   }
+
+   @Test void markdownHeaderLevelParsing() {
+      assertEquals(1, FoldDetector.markdownHeaderLevel("# H1"));
+      assertEquals(2, FoldDetector.markdownHeaderLevel("## H2"));
+      assertEquals(3,
+         FoldDetector.markdownHeaderLevel("### H3"));
+      assertEquals(6,
+         FoldDetector.markdownHeaderLevel("###### H6"));
+      assertEquals(0,
+         FoldDetector.markdownHeaderLevel("####### seven"));
+      assertEquals(0,
+         FoldDetector.markdownHeaderLevel("#nospace"));
+      assertEquals(0,
+         FoldDetector.markdownHeaderLevel("not a header"));
+   }
 }
