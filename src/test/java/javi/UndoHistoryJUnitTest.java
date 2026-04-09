@@ -463,4 +463,28 @@ class UndoHistoryJUnitTest {
       ex.disposeFvc();
       deleteTestFiles(fname);
    }
+
+   @Test
+   void addStateReportsModifiedStatus() throws IOException {
+      String fname = "ju_uh_state";
+      UI.setStream(new StringReader(""));
+      deleteTestFiles(fname);
+
+      TextEdit<String> ex = openTestFile(fname);
+      StringBuilder sb = new StringBuilder();
+      ex.addState(sb);
+      String initial = sb.toString();
+
+      // Insert and checkpoint — should show modified
+      ex.inserttext("hello\n", 0, 1);
+      ex.checkpoint();
+      sb = new StringBuilder();
+      ex.addState(sb);
+      String modified = sb.toString();
+      assertFalse(modified.isEmpty(),
+         "addState should produce non-empty output");
+
+      ex.disposeFvc();
+      deleteTestFiles(fname);
+   }
 }
