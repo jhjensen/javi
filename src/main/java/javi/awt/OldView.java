@@ -558,6 +558,8 @@ final class OldView extends AwtView {
 
    Shape updateCursorShape(Shape sh) {
       int cx = screenposx;
+      if (getActiveFoldModel() != null)
+         cx += charwidth;
       String iString = getInsertString();
       if (null != iString) {
          int tabOffset = iString.indexOf('\t');
@@ -659,6 +661,8 @@ final class OldView extends AwtView {
       String line = gettext().at(ypos).toString();
       // trace("xoffset " + xoffset + " getX " + event.getX());
       int xpos = event.getX() - xoffset;
+      if (fm != null)
+         xpos -= charwidth;
       if (xpos <= 0)
          xpos = 0;
       return new Position(tcharOffset(line, xpos), ypos,
