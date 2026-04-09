@@ -4,6 +4,7 @@ findbugs-1.3.9
 *.o
 *.dmp2
 *.class
+*.foldstate
 tags
 ID
 dist
