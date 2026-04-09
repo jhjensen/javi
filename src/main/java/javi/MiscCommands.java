@@ -774,9 +774,11 @@ public final class MiscCommands extends Rgroup {
          case 'M':
             fm.closeAll();
             int curLine = line;
-            if (fm.isFolded(curLine)) {
-               FoldModel.FoldRange cf = fm.findFold(curLine);
-               if (cf != null && cf.collapsed)
+            // Snap cursor to outermost visible fold start
+            // (inner fold starts are hidden by outer folds)
+            for (FoldModel.FoldRange cf : fm.getFolds()) {
+               if (cf.collapsed && curLine > cf.startLine
+                     && curLine <= cf.endLine)
                   curLine = cf.startLine;
             }
             fvc.cursoryabs(curLine);

@@ -205,23 +205,36 @@ public final class FoldModel {
     * Return the next visible buffer line after bufLine.
     * If bufLine is the start of a collapsed fold, skips to
     * endLine + 1. If the next line is inside a collapsed
-    * fold, skips past it.
+    * fold, skips past it. Handles nested collapsed folds
+    * by looping until the result is truly visible.
     */
    public int nextVisible(int bufLine) {
-      FoldRange f = findFoldAtStart(bufLine);
+      int result = bufLine;
+      FoldRange f = findFoldAtStart(result);
       if (f != null && f.collapsed)
-         return f.endLine + 1;
-      int next = bufLine + 1;
-      FoldRange enc = findFold(next);
-      if (enc != null && enc.collapsed && next > enc.startLine)
-         return enc.endLine + 1;
-      return next;
+         result = f.endLine + 1;
+      else
+         result = result + 1;
+      // Skip past any enclosing collapsed folds
+      boolean changed = true;
+      while (changed) {
+         changed = false;
+         for (FoldRange fr : folds) {
+            if (fr.collapsed && result > fr.startLine
+                  && result <= fr.endLine) {
+               result = fr.endLine + 1;
+               changed = true;
+            }
+         }
+      }
+      return result;
    }
 
    /**
     * Return the previous visible buffer line before bufLine.
     * If the previous line is inside a collapsed fold, jumps
-    * to the fold's start line.
+    * to the fold's start line. Handles nested collapsed
+    * folds by looping until the result is truly visible.
     *
     * @return previous visible line, or 0 if before start
     */
@@ -229,9 +242,18 @@ public final class FoldModel {
       int prev = bufLine - 1;
       if (prev < 1)
          return 0;
-      FoldRange f = findFold(prev);
-      if (f != null && f.collapsed && prev > f.startLine)
-         return f.startLine;
+      // Skip past all enclosing collapsed folds
+      boolean changed = true;
+      while (changed) {
+         changed = false;
+         for (FoldRange f : folds) {
+            if (f.collapsed && prev > f.startLine
+                  && prev <= f.endLine) {
+               prev = f.startLine;
+               changed = true;
+            }
+         }
+      }
       return prev;
    }
 
