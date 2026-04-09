@@ -282,4 +282,80 @@ class FoldDetectorJUnitTest {
       assertEquals(0,
          FoldDetector.markdownHeaderLevel("not a header"));
    }
+
+   // --- Markdown list fold detection ---
+
+   @Test void markdownFoldsListBlock() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "the following list:",  // 1
+         "- 1",                  // 2
+         "- 2"                   // 3
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 4);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      // fold from intro line (1) through last list item (3)
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 3),
+         "expected fold 1-3, got: " + folds);
+   }
+
+   @Test void markdownFoldsListWithNumbered() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "steps:",     // 1
+         "1. first",   // 2
+         "2. second",  // 3
+         "3. third"    // 4
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 5);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 4),
+         "expected fold 1-4, got: " + folds);
+   }
+
+   @Test void markdownFoldsListNoFoldForSingleItem() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "intro",     // 1
+         "- only"     // 2
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 3);
+      // still a fold 1-2 (intro + single list item)
+      assertTrue(folds(m).stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 2),
+         "expected fold 1-2, got: " + folds(m));
+   }
+
+   @Test void markdownFoldsHeaderAndList() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",              // 1
+         "some intro:",          // 2
+         "- item a",             // 3
+         "- item b",             // 4
+         "## Section",           // 5
+         "text"                  // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      // header folds: #Title (1-6), ##Section (5-6)
+      // list fold: intro 2-4
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 4),
+         "expected list fold 2-4, got: " + folds);
+   }
+
+   @Test void markdownIsListItem() {
+      assertTrue(FoldDetector.isListItem("- item"));
+      assertTrue(FoldDetector.isListItem("* item"));
+      assertTrue(FoldDetector.isListItem("+ item"));
+      assertTrue(FoldDetector.isListItem("1. item"));
+      assertTrue(FoldDetector.isListItem("10) item"));
+      assertTrue(FoldDetector.isListItem("   - indented"));
+      assertFalse(FoldDetector.isListItem("not a list"));
+      assertFalse(FoldDetector.isListItem(""));
+      assertFalse(FoldDetector.isListItem("-nospace"));
+   }
+
+   private List<FoldModel.FoldRange> folds(FoldModel m) {
+      return m.getFolds();
+   }
 }

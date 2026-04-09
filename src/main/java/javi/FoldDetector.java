@@ -311,9 +311,12 @@ public final class FoldDetector {
 
    /**
     * Detect foldable regions in Markdown files based on
-    * header levels ({@code #}, {@code ##}, {@code ###}, etc.).
-    * Each header starts a fold that extends to the next header
-    * of the same or higher level, or to end of file.
+    * header levels ({@code #}, {@code ##}, {@code ###}, etc.)
+    * and list blocks. Each header starts a fold that extends
+    * to the next header of the same or higher level, or to
+    * end of file. A non-list line followed by list items
+    * creates a fold from the introducing line through the
+    * last consecutive list item.
     *
     * @param buffer text buffer to scan (1-based lines)
     * @param lineCount total lines in file (readIn())
@@ -351,7 +354,90 @@ public final class FoldDetector {
          if (lastLine > top[1])
             model.addFold(top[1], lastLine);
       }
+
+      // Second pass: detect list blocks
+      detectMarkdownLists(buffer, lineCount, model);
+
       return model;
+   }
+
+   /**
+    * Detect list blocks in Markdown. A non-blank, non-list
+    * line followed by one or more list items creates a fold
+    * from the introducing line through the last consecutive
+    * list item.
+    */
+   private static void detectMarkdownLists(
+         LineFetcher buffer, int lineCount,
+         FoldModel model) {
+      int lastLine = lineCount - 1;
+      int line = 1;
+      while (line <= lastLine) {
+         String text = buffer.getLine(line);
+         if (text == null || text.isBlank()
+               || isListItem(text)
+               || markdownHeaderLevel(text) > 0) {
+            line++;
+            continue;
+         }
+         // Non-list, non-blank, non-header line — check
+         // if next line starts a list
+         int nextLine = line + 1;
+         if (nextLine > lastLine) {
+            line++;
+            continue;
+         }
+         String nextText = buffer.getLine(nextLine);
+         if (nextText == null || !isListItem(nextText)) {
+            line++;
+            continue;
+         }
+         // Found a list block — scan to end of list
+         int listEnd = nextLine;
+         for (int k = nextLine + 1; k <= lastLine; k++) {
+            String lt = buffer.getLine(k);
+            if (lt == null || (!isListItem(lt)
+                  && !lt.isBlank()))
+               break;
+            if (isListItem(lt))
+               listEnd = k;
+         }
+         if (listEnd > line)
+            model.addFold(line, listEnd);
+         line = listEnd + 1;
+      }
+   }
+
+   /**
+    * Return true if the line is a Markdown list item.
+    * Matches lines starting with optional whitespace then
+    * {@code - }, {@code * }, {@code + }, or a number
+    * followed by {@code . } or {@code ) }.
+    */
+   static boolean isListItem(String text) {
+      int len = text.length();
+      int i = 0;
+      while (i < len && (text.charAt(i) == ' '
+            || text.charAt(i) == '\t'))
+         i++;
+      if (i >= len)
+         return false;
+      char ch = text.charAt(i);
+      if ((ch == '-' || ch == '*' || ch == '+')
+            && i + 1 < len && text.charAt(i + 1) == ' ')
+         return true;
+      if (ch >= '0' && ch <= '9') {
+         int j = i + 1;
+         while (j < len && text.charAt(j) >= '0'
+               && text.charAt(j) <= '9')
+            j++;
+         if (j < len && (text.charAt(j) == '.'
+               || text.charAt(j) == ')')
+               && j + 1 < len
+               && text.charAt(j + 1) == ' ')
+            return true;
+      }
+      return false;
    }
 
    /**
