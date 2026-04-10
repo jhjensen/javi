@@ -177,6 +177,11 @@ public abstract class InsertBuffer extends View.Inserter {
                if (singleline && tryHelpCompletion(fvc)) {
                   break;
                }
+               if (GhostTextState.isVisible()) {
+                  itext(count, fvc);
+                  GhostTextState.accept(fvc);
+                  break;
+               }
                if (singleline) {
                   String comp = TabComplete.complete(
                      fvc.at().toString(), fvc.insertx(),
@@ -186,6 +191,13 @@ public abstract class InsertBuffer extends View.Inserter {
                      fvc.vi.lineChanged(fvc.inserty());
                      break;
                   }
+               }
+               if (!singleline
+                     && hasTextBeforeCursor(fvc)
+                     && isAiAvailable()) {
+                  itext(count, fvc);
+                  triggerAiCompletion(fvc);
+                  break;
                }
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
@@ -217,6 +229,7 @@ public abstract class InsertBuffer extends View.Inserter {
                fvc.deleteChars('0', false, true, 1);
                break;
             case COMPLETE:
+               GhostTextState.dismiss();
                itext(count, fvc);
                if (count > 1) {
                   if (overwrite)
@@ -227,10 +240,12 @@ public abstract class InsertBuffer extends View.Inserter {
                }
                return this;
             case INSERT_NEWLINE:
+               GhostTextState.dismiss();
                buffer.append('\n');
                itext(count, fvc);
                break;
             case CANCEL:
+               GhostTextState.dismiss();
                buffer.setLength(0);
                fvc.changeElement(original);
                return this;
@@ -359,6 +374,7 @@ public abstract class InsertBuffer extends View.Inserter {
                      notifyCommandLineHelp(fvc);
                } else {
                   char key = ke.getKeyChar();
+                  GhostTextState.dismiss();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
                      if (!singleline)
@@ -478,9 +494,47 @@ public abstract class InsertBuffer extends View.Inserter {
 
    final void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
+      GhostTextState.dismiss();
       fvc.vi.clearInsert();
       myfvc  = null;
       insertReset();
+   }
+
+   /**
+    * Check if there is non-whitespace text before the cursor
+    * on the current line.
+    */
+   private boolean hasTextBeforeCursor(FvContext fvc) {
+      String line = fvc.at().toString();
+      int pos = fvc.insertx() + buffer.length();
+      for (int i = 0; i < pos && i < line.length(); i++) {
+         if (line.charAt(i) != ' '
+               && line.charAt(i) != '\t') {
+            return true;
+         }
+      }
+      return buffer.toString().trim().length() > 0;
+   }
+
+   /**
+    * Check if the AI completion command is registered.
+    */
+   private static boolean isAiAvailable() {
+      return Rgroup.bindingLookup("ai.complete") != null;
+   }
+
+   /**
+    * Trigger AI inline completion via command dispatch.
+    */
+   private void triggerAiCompletion(FvContext fvc) {
+      GhostTextState.requestStarted();
+      try {
+         Rgroup.doCommand("ai.complete", null, 1, 0,
+            fvc, false);
+      } catch (Exception e) {
+         GhostTextState.reset();
+         UI.reportMessage("AI: " + e.getMessage());
+      }
    }
 
    public final void insertChars(CharacterIterator charit, int trunc) {

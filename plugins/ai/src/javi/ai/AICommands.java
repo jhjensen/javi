@@ -10,6 +10,7 @@ import javi.ai.tools.BufferInfoTool;
 import javi.EditContainer;
 import javi.EventQueue;
 import javi.FvContext;
+import javi.GhostTextState;
 import javi.InputException;
 import javi.InsertBuffer;
 import javi.JeyEvent;
@@ -84,13 +85,6 @@ public final class AICommands extends Rgroup implements Plugin {
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
-
-   /** Pending ghost text lines for accept/dismiss. */
-   private static String[] pendingGhostLines;
-   /** Line number where ghost text was placed. */
-   private static int pendingGhostLine;
-   /** Column offset where ghost text starts. */
-   private static int pendingGhostCol;
 
    /** Last non-chat source buffer for context capture. */
    private static EditContainer lastSourceBuffer;
@@ -649,69 +643,53 @@ public final class AICommands extends Rgroup implements Plugin {
       AIAsyncExecutor.submit(
          () -> {
             try {
-               return AIClient.getInstance().complete(code, fileName);
+               return AIClient.getInstance()
+                  .complete(code, fileName);
             } catch (IOException | AIException e) {
                throw new RuntimeException(e);
             }
          },
          completion -> {
-            if (null == completion || completion.isEmpty()) {
-               UI.reportMessage("AI: no completion available");
+            if (null == completion
+                  || completion.isEmpty()) {
+               GhostTextState.reset();
+               UI.reportMessage(
+                  "AI: no completion available");
                return;
             }
             completion = completion.strip();
-            String[] lines = completion.split("\n", -1);
-
-            pendingGhostLines = lines;
-            pendingGhostLine = cursorLine;
-            pendingGhostCol = cursorCol;
-
-            View.setGhostText(lines[0], cursorLine, cursorCol);
+            String[] lines =
+               completion.split("\n", -1);
+            GhostTextState.completionArrived(
+               lines, cursorLine, cursorCol);
             vi.repaint();
 
             String hint = lines.length > 1
                ? "AI: " + lines.length
-                  + " lines — Tab to accept, Esc to dismiss"
-               : "AI: Tab to accept, Esc to dismiss";
+                  + " lines — Tab to accept,"
+                  + " Esc to dismiss"
+               : "AI: Tab to accept,"
+                  + " Esc to dismiss";
             UI.reportMessage(hint);
          },
          error -> {
-            Throwable cause = error.getCause() != null
-               ? error.getCause() : error;
-            UI.reportMessage("AI Error: " + cause.getMessage());
+            GhostTextState.reset();
+            Throwable cause =
+               error.getCause() != null
+                  ? error.getCause() : error;
+            UI.reportMessage(
+               "AI Error: " + cause.getMessage());
          }
       );
       return null;
    }
 
    /**
-    * Accept the ghost text completion and insert it into the buffer.
+    * Accept the ghost text completion and insert it into
+    * the buffer. Delegates to {@link GhostTextState}.
     */
-   @SuppressWarnings("unchecked")
-   private Object doAcceptGhost(FvContext fvc) throws IOException {
-      if (null == pendingGhostLines) {
-         return null; // no-op when no ghost text pending
-      }
-      EditContainer ec = fvc.edvec;
-      int cursorLine = pendingGhostLine;
-      String[] lines = pendingGhostLines;
-
-      // Insert the first line at cursor column into current line
-      String currentLine = ec.at(cursorLine).toString();
-      String merged = currentLine.substring(0, pendingGhostCol)
-         + lines[0] + currentLine.substring(pendingGhostCol);
-      ec.changeElementAtStr(merged, cursorLine);
-
-      // Insert remaining lines
-      for (int i = 1; i < lines.length; i++) {
-         ec.insertOne(lines[i], cursorLine + i);
-      }
-
-      View.clearGhostText();
-      pendingGhostLines = null;
-      fvc.vi.repaint();
-      UI.reportMessage("AI: inserted " + lines.length + " line"
-         + (lines.length > 1 ? "s" : ""));
+   private Object doAcceptGhost(FvContext fvc) {
+      GhostTextState.accept(fvc);
       return null;
    }
 
@@ -733,8 +711,7 @@ public final class AICommands extends Rgroup implements Plugin {
     * Dismiss the ghost text completion without inserting.
     */
    private Object doDismissGhost() {
-      View.clearGhostText();
-      pendingGhostLines = null;
+      GhostTextState.dismiss();
       UI.reportMessage("AI: completion dismissed");
       return null;
    }
