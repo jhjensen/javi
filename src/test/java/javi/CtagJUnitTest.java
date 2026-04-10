@@ -103,4 +103,179 @@ class CtagJUnitTest {
       String name = Ctag.getTagName(p);
       assertEquals("", name);
    }
+
+   @Test
+   void lookupLastEntry(@TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("zeta");
+
+      assertNotNull(results);
+      assertEquals(1, results.length);
+      assertEquals(99, results[0].y);
+   }
+
+   @Test
+   void lookupBetaReturnsTwoEntries(
+         @TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("beta");
+
+      assertNotNull(results);
+      assertEquals(2, results.length);
+      assertEquals(20, results[0].y);
+      assertEquals(30, results[1].y);
+   }
+
+   @Test
+   void lookupBeforeAllEntries(
+         @TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("aaa");
+
+      assertNull(results);
+   }
+
+   @Test
+   void lookupAfterAllEntries(
+         @TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("zzzzz");
+
+      assertNull(results);
+   }
+
+   @Test
+   void getTagNameWithNullPosition() {
+      String name = Ctag.getTagName(null);
+      assertEquals("", name);
+   }
+
+   @Test
+   void getTagNameWithNullComment() {
+      Position p = new Position(0, 10, "file.c", null);
+      String name = Ctag.getTagName(p);
+      assertEquals("", name);
+   }
+
+   @Test
+   void lookupSingleEntryTagsFile(
+         @TempDir Path tmpDir) throws IOException {
+      String content =
+         "!_TAG_FILE_FORMAT\t2\n"
+         + "!_TAG_FILE_SORTED\t1\n"
+         + "only\tsrc/only.c\t42;\"\tf\n";
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, content,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("only");
+
+      assertNotNull(results);
+      assertEquals(1, results.length);
+      assertEquals(42, results[0].y);
+   }
+
+   @Test
+   void lookupMissInSingleEntryFile(
+         @TempDir Path tmpDir) throws IOException {
+      String content =
+         "!_TAG_FILE_FORMAT\t2\n"
+         + "!_TAG_FILE_SORTED\t1\n"
+         + "only\tsrc/only.c\t42;\"\tf\n";
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, content,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      assertNull(ct.taglookup("other"));
+   }
+
+   @Test
+   void lookupLargeFile(@TempDir Path tmpDir)
+         throws IOException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("!_TAG_FILE_FORMAT\t2\n");
+      sb.append("!_TAG_FILE_SORTED\t1\n");
+      for (int i = 0; i < 200; i++) {
+         String name = String.format("func_%03d", i);
+         sb.append(name).append("\tsrc/big.c\t")
+            .append(i + 1).append(";\"\tf\n");
+      }
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, sb.toString(),
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+
+      Position[] first = ct.taglookup("func_000");
+      assertNotNull(first);
+      assertEquals(1, first[0].y);
+
+      Position[] mid = ct.taglookup("func_100");
+      assertNotNull(mid);
+      assertEquals(101, mid[0].y);
+
+      Position[] last = ct.taglookup("func_199");
+      assertNotNull(last);
+      assertEquals(200, last[0].y);
+
+      assertNull(ct.taglookup("func_200"));
+   }
+
+   @Test
+   void repeatedLookupReturnsCachedResult(
+         @TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] r1 = ct.taglookup("alpha");
+      Position[] r2 = ct.taglookup("alpha");
+
+      assertNotNull(r1);
+      assertNotNull(r2);
+      assertTrue(r1 == r2,
+         "cached positions should be same array");
+   }
+
+   @Test
+   void getTagNameWithTabInExtras() {
+      Position p = new Position(
+         0, 10, "file.c", "tag:myFunc\tf\tclass:Foo");
+      String name = Ctag.getTagName(p);
+      assertEquals("myFunc", name);
+   }
+
+   @Test
+   void positionFileNameIsPreserved(
+         @TempDir Path tmpDir) throws IOException {
+      Path tagsFile = tmpDir.resolve("tags");
+      Files.writeString(tagsFile, TAGS_CONTENT,
+         StandardCharsets.UTF_8);
+
+      Ctag ct = new Ctag(tagsFile.toString());
+      Position[] results = ct.taglookup("zeta");
+
+      assertNotNull(results);
+      assertTrue(
+         results[0].filename.shortName.contains("zeta.c"));
+   }
 }
