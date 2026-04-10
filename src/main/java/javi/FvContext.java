@@ -623,8 +623,13 @@ public final class FvContext<OType> implements Serializable {
                   ((FileDescriptor.LocalFile) fd).canonName;
                FoldModel fm =
                   FoldModel.loadFolds(canonPath);
-               if (fm != null)
-                  context.foldModel = fm;
+               if (fm != null) {
+                  int maxLine = te.readIn() - 1;
+                  if (maxLine > 1 && fm.isValid(maxLine))
+                     context.foldModel = fm;
+                  else
+                     FoldModel.deleteFoldState(canonPath);
+               }
             }
          }
          fvmap.put(context);

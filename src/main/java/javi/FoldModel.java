@@ -99,6 +99,16 @@ public final class FoldModel {
    }
 
    /**
+    * Remove all folds whose range is within [start, end].
+    * Used when deleting a collapsed fold to also remove
+    * nested inner folds.
+    */
+   public void removeFoldsInRange(int start, int end) {
+      folds.removeIf(
+         f -> f.startLine >= start && f.endLine <= end);
+   }
+
+   /**
     * Toggle the fold containing the given line.
     * Returns the affected fold, or null if none found.
     */
@@ -184,8 +194,15 @@ public final class FoldModel {
    /** Number of visible lines given the current fold state. */
    public int getVisibleLineCount(int totalLines) {
       int hidden = 0;
-      for (FoldRange f : folds)
+      int skipUntil = 0;
+      for (FoldRange f : folds) {
+         if (!f.collapsed)
+            continue;
+         if (f.startLine <= skipUntil)
+            continue; // nested inside already-counted fold
          hidden += f.hiddenLines();
+         skipUntil = f.endLine;
+      }
       return totalLines - hidden;
    }
 
@@ -212,53 +229,53 @@ public final class FoldModel {
    /**
     * Map a buffer line to the visible screen line.
     * Returns -1 if the line is hidden inside a collapsed fold.
+    * Runs in O(foldCount) by summing hidden lines from
+    * non-nested collapsed folds before the target.
     */
    public int mapBufferToScreen(int bufferLine) {
       if (isFolded(bufferLine))
          return -1;
-      int visible = 0;
-      for (int bl = 1; bl <= bufferLine; bl++) {
-         if (isFolded(bl))
+      int hidden = 0;
+      int skipUntil = 0;
+      for (FoldRange f : folds) {
+         if (f.startLine >= bufferLine)
+            break;
+         if (f.startLine <= skipUntil)
             continue;
-         visible++;
+         if (!f.collapsed)
+            continue;
+         if (f.endLine < bufferLine) {
+            hidden += f.hiddenLines();
+            skipUntil = f.endLine;
+         }
       }
-      return visible;
+      return bufferLine - hidden;
    }
 
    /**
     * Return the next visible buffer line after bufLine.
     * If bufLine is the start of a collapsed fold, skips to
     * endLine + 1. If the next line is inside a collapsed
-    * fold, skips past it. Handles nested collapsed folds
-    * by looping until the result is truly visible.
+    * fold, skips past it.
     */
    public int nextVisible(int bufLine) {
-      int result = bufLine;
-      FoldRange f = findFoldAtStart(result);
+      FoldRange f = findFoldAtStart(bufLine);
+      int result;
       if (f != null && f.collapsed)
          result = f.endLine + 1;
       else
-         result = result + 1;
-      // Skip past any enclosing collapsed folds
-      boolean changed = true;
-      while (changed) {
-         changed = false;
-         for (FoldRange fr : folds) {
-            if (fr.collapsed && result > fr.startLine
-                  && result <= fr.endLine) {
-               result = fr.endLine + 1;
-               changed = true;
-            }
-         }
-      }
+         result = bufLine + 1;
+      FoldRange enc = findFold(result);
+      if (enc != null && enc.collapsed
+            && result > enc.startLine)
+         result = enc.endLine + 1;
       return result;
    }
 
    /**
     * Return the previous visible buffer line before bufLine.
     * If the previous line is inside a collapsed fold, jumps
-    * to the fold's start line. Handles nested collapsed
-    * folds by looping until the result is truly visible.
+    * to the fold's start line.
     *
     * @return previous visible line, or 0 if before start
     */
@@ -266,17 +283,13 @@ public final class FoldModel {
       int prev = bufLine - 1;
       if (prev < 1)
          return 0;
-      // Skip past all enclosing collapsed folds
-      boolean changed = true;
-      while (changed) {
-         changed = false;
-         for (FoldRange f : folds) {
-            if (f.collapsed && prev > f.startLine
-                  && prev <= f.endLine) {
-               prev = f.startLine;
-               changed = true;
-            }
-         }
+      // Snap to outermost collapsed fold start enclosing prev.
+      // Folds are sorted by startLine, so the first match
+      // is the outermost containing fold.
+      for (FoldRange f : folds) {
+         if (f.collapsed && prev > f.startLine
+               && prev <= f.endLine)
+            return f.startLine;
       }
       return prev;
    }
@@ -305,6 +318,24 @@ public final class FoldModel {
    /** True if no folds are defined. */
    public boolean isEmpty() {
       return folds.isEmpty();
+   }
+
+   /**
+    * Check whether all fold ranges fall within [1, maxLine].
+    * Used to validate loaded fold state against actual file
+    * content — stale .foldstate files may reference lines
+    * that no longer exist.
+    *
+    * @param maxLine maximum valid line number (readIn() - 1)
+    * @return true if all folds are valid
+    */
+   public boolean isValid(int maxLine) {
+      for (FoldRange f : folds) {
+         if (f.startLine < 1 || f.endLine > maxLine
+               || f.endLine <= f.startLine)
+            return false;
+      }
+      return true;
    }
 
    /** Clear all folds. */
@@ -339,9 +370,9 @@ public final class FoldModel {
    private static int adjustLine(
          int line, int index, int count) {
       if (count > 0)
-         return line > index ? line + count : line;
-      int delStart = index + 1;
-      int delEnd = index - count;
+         return line >= index ? line + count : line;
+      int delStart = index;
+      int delEnd = index - count - 1;
       if (line < delStart)
          return line;
       if (line > delEnd)

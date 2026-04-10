@@ -1529,4 +1529,392 @@ class FoldModelJUnitTest {
       assertEquals('|', fm.getFoldIndicator(5));
       assertEquals('|', fm.getFoldIndicator(6));
    }
+
+   // --- Performance: nextVisible/prevVisible O(n) per call ---
+
+   @Test
+   void nextVisibleLargeFoldCountIsEfficient() {
+      // Build 500 adjacent collapsed folds (2 lines each)
+      for (int i = 0; i < 500; i++) {
+         int s = 2 + i * 3;
+         model.addFold(s, s + 1);
+      }
+      model.closeAll();
+      // Walk the entire file; should complete quickly
+      int line = 1;
+      int steps = 0;
+      while (line < 1600 && steps < 2000) {
+         line = model.nextVisible(line);
+         steps++;
+      }
+      assertTrue(steps < 1100,
+         "expected under 1100 steps, got " + steps);
+   }
+
+   @Test
+   void prevVisibleLargeFoldCountIsEfficient() {
+      for (int i = 0; i < 500; i++) {
+         int s = 2 + i * 3;
+         model.addFold(s, s + 1);
+      }
+      model.closeAll();
+      int line = 1502;
+      int steps = 0;
+      while (line > 1 && steps < 2000) {
+         line = model.prevVisible(line);
+         if (line < 1)
+            break;
+         steps++;
+      }
+      assertTrue(steps < 1100,
+         "expected under 1100 steps, got " + steps);
+   }
+
+   @Test
+   void mapBufferToScreenLargeFoldCount() {
+      for (int i = 0; i < 200; i++) {
+         int s = 2 + i * 5;
+         model.addFold(s, s + 2);
+      }
+      model.closeAll();
+      // Line 1001 is past all folds
+      int vis = model.mapBufferToScreen(1001);
+      // 200 folds × 2 hidden lines each = 400 hidden
+      assertEquals(601, vis);
+   }
+
+   @Test
+   void mapBufferToScreenNestedFoldsAvoidDoubleCount() {
+      // Outer 1-100 collapsed, inner 10-20 collapsed
+      model.addFold(1, 100);
+      model.addFold(10, 20);
+      model.closeAll();
+      // Line 110: outer hides 99 lines (2-100)
+      // Inner is nested inside outer, should not double count
+      int vis = model.mapBufferToScreen(110);
+      assertEquals(110 - 99, vis);
+   }
+
+   @Test
+   void nextVisibleNestedCollapsedAdjacentFolds() {
+      // Outer open fold containing two collapsed inner folds
+      model.addFold(1, 30);  // open
+      model.addFold(5, 10);  // collapsed
+      model.addFold(11, 20); // collapsed
+      model.closeFold(5);
+      model.closeFold(11);
+      // From 4 → 5 (fold start)
+      assertEquals(5, model.nextVisible(4));
+      // From 5 (fold start) → 11 (next fold start)
+      assertEquals(11, model.nextVisible(5));
+      // From 11 (fold start) → 21
+      assertEquals(21, model.nextVisible(11));
+   }
+
+   // --- Bug fix: off-by-one in adjustForEdit for adjacent deletions ---
+
+   @Test
+   void adjustForEditDeleteLine1ShiftsFoldDown() {
+      // Bug: deleting line 1 before a fold at line 2 didn't
+      // move the fold mark up — fold stayed at 2 instead of 1
+      model.addFold(2, 10);
+      model.closeFold(2);
+      // Delete 1 line at position 1 (line 1)
+      model.adjustForEdit(1, -1);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(1, f.startLine,
+         "fold should shift from line 2 to line 1");
+      assertEquals(9, f.endLine,
+         "fold end should shift from line 10 to line 9");
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditDeleteAdjacentLineAboveFold() {
+      // Delete the line immediately before a fold
+      model.addFold(5, 15);
+      model.closeFold(5);
+      // Delete 1 line at position 4 (the line just above the fold)
+      model.adjustForEdit(4, -1);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(4, f.startLine,
+         "fold should shift from line 5 to line 4");
+      assertEquals(14, f.endLine,
+         "fold end should shift from line 15 to line 14");
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void adjustForEditDeleteMultipleLinesBeforeAdjacentFold() {
+      // Delete 3 lines (1-3) before a fold starting at line 4
+      model.addFold(4, 12);
+      model.adjustForEdit(1, -3);
+      FoldModel.FoldRange f = model.getFolds().get(0);
+      assertEquals(1, f.startLine,
+         "fold should shift from line 4 to line 1");
+      assertEquals(9, f.endLine,
+         "fold end should shift from line 12 to line 9");
+   }
+
+   // --- Tests from user fold bug description (todo.md) ---
+   // File content:
+   //   # 1    (line 1)
+   //   ## a   (line 2)
+   //   x      (line 3)
+   //   # 2    (line 4)
+   //   ## b   (line 5)
+   //   y      (line 6)
+   //   # 3    (line 7)
+   //   ## c   (line 8)
+   //   z      (line 9)
+
+   /**
+    * Verify markdown fold detection produces correctly-sized
+    * top-level folds for a file with three H1 sections each
+    * containing an H2 and body line. Each H1 fold should span
+    * only its section (3 lines), not the entire file.
+    * Bug: zM showed first fold as 8 lines instead of 2.
+    */
+   @Test
+   void markdownThreeH1SectionsFoldSizes() {
+      FoldDetector.LineFetcher buf = lineNum -> {
+         switch (lineNum) {
+            case 1: return "# 1";
+            case 2: return "## a";
+            case 3: return "x";
+            case 4: return "# 2";
+            case 5: return "## b";
+            case 6: return "y";
+            case 7: return "# 3";
+            case 8: return "## c";
+            case 9: return "z";
+            default: return null;
+         }
+      };
+      FoldModel fm =
+         FoldDetector.detectMarkdownFolds(buf, 10);
+      // 6 folds: #1(1-3), ##a(2-3), #2(4-6), ##b(5-6),
+      //          #3(7-9), ##c(8-9)
+      assertEquals(6, fm.size(),
+         "expected 6 folds (3 H1 + 3 H2), got: "
+         + fm.getFolds());
+      // Verify top-level H1 folds span exactly 3 lines each
+      FoldModel.FoldRange h1first = fm.findFoldAtStart(1);
+      assertNotNull(h1first, "H1 fold at line 1");
+      assertEquals(3, h1first.endLine,
+         "first H1 fold should end at line 3, not "
+         + h1first.endLine);
+      // Close fold to verify hiddenLines count
+      h1first.collapsed = true;
+      assertEquals(2, h1first.hiddenLines(),
+         "first H1 fold should hide 2 lines when collapsed");
+
+      FoldModel.FoldRange h1second = fm.findFoldAtStart(4);
+      assertNotNull(h1second, "H1 fold at line 4");
+      assertEquals(6, h1second.endLine,
+         "second H1 fold should end at line 6");
+
+      FoldModel.FoldRange h1third = fm.findFoldAtStart(7);
+      assertNotNull(h1third, "H1 fold at line 7");
+      assertEquals(9, h1third.endLine,
+         "third H1 fold should end at line 9");
+   }
+
+   /**
+    * After closeAll on the markdown test file, only the three
+    * H1 start lines should be visible. Verify foldSummaryText
+    * reports correct line count for each fold.
+    */
+   @Test
+   void markdownCloseAllVisibleLinesAndSummary() {
+      FoldDetector.LineFetcher buf = lineNum -> {
+         switch (lineNum) {
+            case 1: return "# 1";
+            case 2: return "## a";
+            case 3: return "x";
+            case 4: return "# 2";
+            case 5: return "## b";
+            case 6: return "y";
+            case 7: return "# 3";
+            case 8: return "## c";
+            case 9: return "z";
+            default: return null;
+         }
+      };
+      FoldModel fm =
+         FoldDetector.detectMarkdownFolds(buf, 10);
+      fm.closeAll();
+
+      // Only 3 visible lines: fold starts at 1, 4, 7
+      assertEquals(3, fm.getVisibleLineCount(9),
+         "only H1 start lines should be visible");
+
+      // Summary text for first fold: 2 hidden lines, not 8
+      FoldModel.FoldRange h1 = fm.findFoldAtStart(1);
+      String summary = FoldModel.foldSummaryText(
+         h1.startLine, h1.endLine, "# 1");
+      assertEquals("+--  2 lines: # 1", summary,
+         "first fold summary should show 2 lines");
+   }
+
+   /**
+    * After closeAll, mapScreenToBuffer should map screen
+    * line 1 to buffer line 1 ("# 1"), screen 2 to buffer
+    * line 4 ("# 2"), screen 3 to buffer line 7 ("# 3").
+    * Bug: cursor on first line showed "# a" instead of "# 1"
+    * (suggesting screen-to-buffer mapping returned line 2).
+    */
+   @Test
+   void markdownCloseAllScreenToBufferMapping() {
+      FoldDetector.LineFetcher buf = lineNum -> {
+         switch (lineNum) {
+            case 1: return "# 1";
+            case 2: return "## a";
+            case 3: return "x";
+            case 4: return "# 2";
+            case 5: return "## b";
+            case 6: return "y";
+            case 7: return "# 3";
+            case 8: return "## c";
+            case 9: return "z";
+            default: return null;
+         }
+      };
+      FoldModel fm =
+         FoldDetector.detectMarkdownFolds(buf, 10);
+      fm.closeAll();
+
+      // Screen line 1 → buffer line 1 (# 1)
+      assertEquals(1, fm.mapScreenToBuffer(1),
+         "screen 1 should map to buffer line 1 (# 1)");
+      // Screen line 2 → buffer line 4 (# 2)
+      assertEquals(4, fm.mapScreenToBuffer(2),
+         "screen 2 should map to buffer line 4 (# 2)");
+      // Screen line 3 → buffer line 7 (# 3)
+      assertEquals(7, fm.mapScreenToBuffer(3),
+         "screen 3 should map to buffer line 7 (# 3)");
+   }
+
+   /**
+    * After closeAll, buffer-to-screen mapping should return
+    * correct screen positions for visible lines and -1 for
+    * hidden lines.
+    */
+   @Test
+   void markdownCloseAllBufferToScreenMapping() {
+      FoldDetector.LineFetcher buf = lineNum -> {
+         switch (lineNum) {
+            case 1: return "# 1";
+            case 2: return "## a";
+            case 3: return "x";
+            case 4: return "# 2";
+            case 5: return "## b";
+            case 6: return "y";
+            case 7: return "# 3";
+            case 8: return "## c";
+            case 9: return "z";
+            default: return null;
+         }
+      };
+      FoldModel fm =
+         FoldDetector.detectMarkdownFolds(buf, 10);
+      fm.closeAll();
+
+      // Visible lines: 1, 4, 7
+      assertEquals(1, fm.mapBufferToScreen(1));
+      assertEquals(-1, fm.mapBufferToScreen(2),
+         "line 2 (## a) should be hidden");
+      assertEquals(-1, fm.mapBufferToScreen(3),
+         "line 3 (x) should be hidden");
+      assertEquals(2, fm.mapBufferToScreen(4),
+         "line 4 (# 2) should be screen line 2");
+      assertEquals(-1, fm.mapBufferToScreen(5));
+      assertEquals(-1, fm.mapBufferToScreen(6));
+      assertEquals(3, fm.mapBufferToScreen(7),
+         "line 7 (# 3) should be screen line 3");
+      assertEquals(-1, fm.mapBufferToScreen(8));
+      assertEquals(-1, fm.mapBufferToScreen(9));
+   }
+
+   /**
+    * Verify nextVisible correctly walks through three
+    * collapsed H1 folds — each jump from a fold start
+    * should land on the next fold start, not one past it.
+    */
+   @Test
+   void nextVisibleThreeCollapsedMarkdownFolds() {
+      // Replicate the exact fold structure from markdown
+      // detection on the test file
+      model.addFold(1, 3);
+      model.addFold(2, 3);
+      model.addFold(4, 6);
+      model.addFold(5, 6);
+      model.addFold(7, 9);
+      model.addFold(8, 9);
+      model.closeAll();
+
+      // Walking forward: 1 → 4 → 7 → 10
+      assertEquals(4, model.nextVisible(1),
+         "from fold start 1, next visible should be 4");
+      assertEquals(7, model.nextVisible(4),
+         "from fold start 4, next visible should be 7");
+      assertEquals(10, model.nextVisible(7),
+         "from fold start 7, next visible should be 10");
+   }
+
+   /**
+    * Verify prevVisible correctly walks backward through
+    * three collapsed H1 folds.
+    */
+   @Test
+   void prevVisibleThreeCollapsedMarkdownFolds() {
+      model.addFold(1, 3);
+      model.addFold(2, 3);
+      model.addFold(4, 6);
+      model.addFold(5, 6);
+      model.addFold(7, 9);
+      model.addFold(8, 9);
+      model.closeAll();
+
+      // Walking backward: 10 → 7 → 4 → 1
+      assertEquals(7, model.prevVisible(10),
+         "from line 10, prev visible should be fold 7");
+      assertEquals(4, model.prevVisible(7),
+         "from fold start 7, prev visible should be 4");
+      assertEquals(1, model.prevVisible(4),
+         "from fold start 4, prev visible should be 1");
+   }
+
+   // --- isValid validation tests ---
+
+   @Test
+   void isValidAcceptsCorrectFolds() {
+      model.addFold(1, 3);
+      model.addFold(4, 6);
+      assertTrue(model.isValid(6),
+         "folds within range should be valid");
+      assertTrue(model.isValid(10),
+         "folds within larger range should be valid");
+   }
+
+   @Test
+   void isValidRejectsOutOfRange() {
+      model.addFold(1, 3);
+      model.addFold(4, 9);
+      assertFalse(model.isValid(8),
+         "fold end 9 exceeds maxLine 8");
+   }
+
+   @Test
+   void isValidRejectsZeroStart() {
+      model.addFold(0, 5);
+      assertFalse(model.isValid(10),
+         "fold start 0 is invalid (1-based lines)");
+   }
+
+   @Test
+   void isValidEmptyModel() {
+      assertTrue(model.isValid(0),
+         "empty model is always valid");
+   }
 }

@@ -718,7 +718,7 @@ public final class MiscCommands extends Rgroup {
    private static void handleFoldCommand(
          int key, FvContext fvc) {
       FoldModel fm = fvc.getFoldModel();
-      if (fm == null || fm.isEmpty()) {
+      if (key != 'M' && (fm == null || fm.isEmpty())) {
          UI.reportMessage("no folds defined");
          return;
       }
@@ -799,18 +799,30 @@ public final class MiscCommands extends Rgroup {
             }
             break;
          case 'M':
-            fm.closeAll();
+            // Re-detect folds from scratch then close all
+            FoldDetector.LineFetcher mFetcher = lineNum ->
+               fvc.edvec.at(lineNum).toString();
+            int mLineCount = fvc.edvec.readIn();
+            String mName = fvc.edvec.getName();
+            FoldModel mFm;
+            if (mName != null && mName.endsWith(".md")) {
+               mFm = FoldDetector.detectMarkdownFolds(
+                  mFetcher, mLineCount);
+            } else {
+               mFm = FoldDetector.detectJsonFolds(
+                  mFetcher, mLineCount);
+            }
+            mFm.closeAll();
+            fvc.setFoldModel(mFm);
             int curLine = line;
-            // Snap cursor to outermost visible fold start
-            // (inner fold starts are hidden by outer folds)
-            for (FoldModel.FoldRange cf : fm.getFolds()) {
+            for (FoldModel.FoldRange cf : mFm.getFolds()) {
                if (cf.collapsed && curLine > cf.startLine
                      && curLine <= cf.endLine)
                   curLine = cf.startLine;
             }
             fvc.cursoryabs(curLine);
             fvc.vi.recalcScreenRow();
-            UI.reportMessage("closed all folds");
+            UI.reportMessage("recalculated and closed all folds");
             break;
          default:
             break;
