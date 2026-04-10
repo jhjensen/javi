@@ -36,9 +36,6 @@ RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 # Copy source and test files
 COPY src/ src/
 
-# Copy lib directory for runtime dependencies
-COPY lib/ lib/
-
 # Start Xvfb, run ALL tests, stop Xvfb, exit with test status
 ENTRYPOINT ["sh", "-c", \
     "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
