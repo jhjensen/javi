@@ -161,21 +161,21 @@ public final class MapEvent {
     * Extracted from bindCommands to stay within method-length limit.
     */
    private static void bindAiAndBufferKeys() {
-      // AI commands (F9 family = interactive, F12 family = inline)
-      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
-         null, SHIFT_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
-         null, CTRL_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
-         null, 0);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
-         null, SHIFT_MASK);
-      normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
-         null, CTRL_MASK);
-
-      // g prefix key for AI commands (ga*) and vi g-commands (gg)
-      normalKeyMap.bindEditKey('g', "ai.gprocess", null);
+      // AI commands — only bind if the AI plugin loaded successfully
+      if (Rgroup.bindingLookup("ai") != null) {
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
+            null, SHIFT_MASK);
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
+            null, CTRL_MASK);
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
+            null, 0);
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
+            null, SHIFT_MASK);
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
+            null, CTRL_MASK);
+         normalKeyMap.bindEditKey('g', "ai.gprocess", null);
+      }
 
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
