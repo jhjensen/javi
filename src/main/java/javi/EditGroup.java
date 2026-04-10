@@ -345,6 +345,8 @@ final class EditGroup extends Rgroup {
                switch (key) {
                   case 'o':
                      MovePos markpos = fvc.vi.getMark();
+                     if (markpos == null)
+                        continue;
                      xold = fvc.insertx();
                      yold = fvc.inserty();
                      fvc.setMark();

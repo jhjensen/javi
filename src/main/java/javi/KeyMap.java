@@ -272,6 +272,29 @@ final class KeyMap {
       shellMap.bindEditAction(JeyEvent.VK_INSERT,
          "vt", null, 0);                               // Insert key
       register(shellMap);
+
+      // Git log overlay: vim-style expand/navigate
+      KeyMap gitlogMap = createOverlay("gitlog", normalMap);
+      gitlogMap.bindEditKey((char) 13, "git_expand", null);
+      gitlogMap.bindEditKey((char) 10, "git_expand", null);
+      gitlogMap.bindEditKey('o', "git_expand", null);
+      gitlogMap.bindEditKey('O', "git_log_diff", null);
+      gitlogMap.bindEditKey('R', "git_expand_all", null);
+      gitlogMap.bindEditKey('q', "nextfile", null);
+      register(gitlogMap);
+
+      // Git status overlay: vim-style stage/unstage/discard
+      KeyMap gitstatusMap = createOverlay("gitstatus", normalMap);
+      gitstatusMap.bindEditKey('s', "git_stage_line", null);
+      gitstatusMap.bindEditKey('u', "git_unstage_line", null);
+      gitstatusMap.bindEditKey('X', "git_discard", null);
+      gitstatusMap.bindEditKey('c', "git_commit", null);
+      gitstatusMap.bindEditKey('R', "git_refresh", null);
+      gitstatusMap.bindEditKey('d', "git_diff", null);
+      gitstatusMap.bindEditKey('q', "nextfile", null);
+      gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
+      gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
+      register(gitstatusMap);
    }
 
    /**
@@ -280,12 +303,20 @@ final class KeyMap {
     */
    @SuppressWarnings("rawtypes")
    static KeyMap resolveForBuffer(TextEdit buffer) {
+      if (null == buffer)
+         return null;
       if (buffer instanceof FileList)
          return get("filelist");
       if (buffer instanceof DirEdit)
          return get("directory");
       if (buffer instanceof Vt100)
          return get("shell");
+      // Git buffers identified by name
+      String name = buffer.toString();
+      if ("*git-log*".equals(name))
+         return get("gitlog");
+      if ("*git-status*".equals(name))
+         return get("gitstatus");
       return null;
    }
 

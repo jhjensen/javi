@@ -3,12 +3,15 @@ package javi.git;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javi.Command;
 import javi.EditContainer;
+import javi.FoldModel;
 import javi.FvContext;
 import javi.InputException;
 import javi.Plugin;
@@ -52,6 +55,26 @@ public final class GitCommands extends Rgroup implements Plugin {
    /** Whether the file-write listener has been registered. */
    private static boolean listenerRegistered;
 
+   /** Working directory for git log commands. */
+   private static java.io.File logDir;
+
+   /** Number of log entries to fetch per page. */
+   private static int logPageSize = 100;
+
+   /** Raw graph lines from most recent git log. */
+   private static List<String> logLogLines;
+
+   /** SHA-to-message map from most recent git log. */
+   private static Map<String, List<String>> logMessages;
+
+   /** SHAs whose diffs are currently expanded. */
+   private static final java.util.Set<String> logDiffExpanded =
+      new java.util.HashSet<>();
+
+   /** Cached diff content keyed by SHA. */
+   private static final Map<String, List<String>> logDiffCache =
+      new java.util.HashMap<>();
+
    public GitCommands() {
       final String[] rnames = {
          "",
@@ -82,6 +105,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git",
          "git_show",
          "git_log_diff",
+         "git_expand",
+         "git_expand_all",
+         "git_collapse_all",
       };
       register(rnames);
    }
@@ -173,6 +199,15 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 27:
             gitLogDiff(fvc);
+            return null;
+         case 28:
+            gitExpand(fvc);
+            return null;
+         case 29:
+            gitExpandAll(fvc);
+            return null;
+         case 30:
+            gitCollapseAll(fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -286,15 +321,47 @@ public final class GitCommands extends Rgroup implements Plugin {
     */
    private static void gitLog(FvContext fvc) throws
          IOException, InputException {
-      // Graph window disabled per user request.
-      // GitLogPanel.showLogWindow(100);
-      List<String> logLines = GitLogBuffer.getLogLines(100);
-      if (!logLines.isEmpty()) {
-         List<String> formatted = GitLogBuffer.formatLog(logLines);
+      java.io.File dir = getFileDir(fvc);
+      logDir = dir;
+      logPageSize = 100;
+      logDiffExpanded.clear();
+      logDiffCache.clear();
+      logLogLines = GitLogBuffer.getLogLines(logPageSize, dir);
+      if (!logLogLines.isEmpty()) {
+         logMessages =
+            GitLogBuffer.getCommitMessages(logPageSize, dir);
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> formatted =
+            GitLogBuffer.buildFoldedLog(
+               logLogLines, logMessages, foldRanges,
+               logDiffExpanded, logDiffCache);
          logBuffer = createBuffer("*git-log*", formatted);
          registerLogInPosListList(formatted);
-         FvContext.connectFv(logBuffer, fvc.vi);
+         FvContext<?> logFvc =
+            FvContext.connectFv(logBuffer, fvc.vi);
+         FoldModel fm = new FoldModel();
+         for (int[] range : foldRanges) {
+            fm.addFold(range[0], range[1]);
+         }
+         fm.closeAll();
+         logFvc.setFoldModel(fm);
       }
+   }
+
+   /**
+    * Get the parent directory of the current file for git commands.
+    *
+    * @return the directory, or null if not a local file
+    */
+   private static java.io.File getFileDir(FvContext fvc) {
+      String path = fvc.edvec.fdes().getCanonName();
+      if (path == null || path.startsWith("*"))
+         return null;
+      java.io.File f = new java.io.File(path);
+      java.io.File parent = f.getParentFile();
+      if (parent != null && parent.isDirectory())
+         return parent;
+      return null;
    }
 
    /**
@@ -348,6 +415,224 @@ public final class GitCommands extends Rgroup implements Plugin {
       List<String> diff = GitLogBuffer.getCommitDiff(sha);
       outputBuffer = createBuffer("*git-diff*", diff);
       FvContext.connectFv(outputBuffer, fvc.vi);
+   }
+
+   /**
+    * Toggle fold at cursor line. Detects diff markers and
+    * pagination sentinels for special handling: fetches diffs
+    * or loads more log entries and rebuilds the buffer.
+    */
+   @SuppressWarnings("unchecked")
+   private static void gitExpand(FvContext fvc) throws
+         IOException, InputException {
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null || fm.isEmpty()) {
+         UI.reportMessage("No folds in git log");
+         return;
+      }
+      int line = fvc.inserty();
+      // Read line text for marker detection
+      TextEdit<String> buf = fvc.edvec;
+      String lineText = "";
+      if (line >= 1 && line <= buf.readIn()) {
+         lineText = buf.at(line).toString();
+      }
+      // Diff show marker: first-time diff expansion
+      if (lineText.startsWith(
+            GitLogBuffer.DIFF_SHOW_PREFIX)) {
+         String sha =
+            GitLogBuffer.extractShaFromMarker(lineText);
+         if (sha != null) {
+            fetchAndCacheDiff(sha);
+            logDiffExpanded.add(sha);
+            rebuildLogBuffer(fvc, sha);
+            return;
+         }
+      }
+      // Pagination sentinel: load more entries
+      if (lineText.startsWith(
+            GitLogBuffer.PAGINATION_MARKER)) {
+         loadMoreLogEntries();
+         rebuildLogBuffer(fvc, null);
+         return;
+      }
+      // Default: regular fold toggle
+      FoldModel.FoldRange fold = fm.toggleFold(line);
+      if (fold != null) {
+         fvc.vi.recalcScreenRow();
+         fvc.vi.redraw();
+         UI.reportMessage(fold.collapsed
+            ? "Folded" : "Unfolded");
+      } else {
+         UI.reportMessage("No fold at current line");
+      }
+   }
+
+   /**
+    * Open all folds and expand all diffs in the git log.
+    * Fetches diffs for every commit and rebuilds the buffer.
+    */
+   private static void gitExpandAll(FvContext fvc) throws
+         IOException, InputException {
+      if (logLogLines == null || logLogLines.isEmpty()) {
+         // Fallback: no log state, just open folds
+         FoldModel fm = fvc.getFoldModel();
+         if (fm == null || fm.isEmpty()) {
+            UI.reportMessage("No folds in git log");
+            return;
+         }
+         fm.openAll();
+         fvc.vi.recalcScreenRow();
+         fvc.vi.redraw();
+         UI.reportMessage("Expanded all commits");
+         return;
+      }
+      // Expand all diffs
+      UI.reportMessage("Loading all diffs...");
+      for (String line : logLogLines) {
+         String sha = GitLogBuffer.extractSha(line);
+         if (sha != null && !logDiffExpanded.contains(sha)) {
+            fetchAndCacheDiff(sha);
+            logDiffExpanded.add(sha);
+         }
+      }
+      // Rebuild with everything open
+      List<int[]> foldRanges = new ArrayList<>();
+      List<String> formatted =
+         GitLogBuffer.buildFoldedLog(
+            logLogLines, logMessages, foldRanges,
+            logDiffExpanded, logDiffCache);
+      logBuffer = createBuffer("*git-log*", formatted);
+      registerLogInPosListList(formatted);
+      FvContext<?> logFvc =
+         FvContext.connectFv(logBuffer, fvc.vi);
+      FoldModel fm = new FoldModel();
+      for (int[] range : foldRanges) {
+         fm.addFold(range[0], range[1]);
+      }
+      fm.openAll();
+      logFvc.setFoldModel(fm);
+      UI.reportMessage("Expanded all commits with diffs");
+   }
+
+   /**
+    * Close all folds in the git log.
+    */
+   private static void gitCollapseAll(FvContext fvc) throws
+         IOException, InputException {
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null || fm.isEmpty()) {
+         return;
+      }
+      fm.closeAll();
+      fvc.vi.recalcScreenRow();
+      fvc.vi.redraw();
+      UI.reportMessage("Collapsed all");
+   }
+
+   /**
+    * Rebuild the git log buffer from stored state.
+    * Preserves open fold state for commits that were open
+    * before the rebuild, and opens the trigger SHA's folds.
+    *
+    * @param fvc current view context
+    * @param triggerSha SHA that triggered the rebuild, or null
+    */
+   @SuppressWarnings("unchecked")
+   private static void rebuildLogBuffer(
+         FvContext fvc, String triggerSha)
+         throws IOException, InputException {
+      java.util.Set<String> openShas =
+         getOpenCommitShas(fvc);
+      if (triggerSha != null) {
+         openShas.add(triggerSha);
+      }
+      List<int[]> foldRanges = new ArrayList<>();
+      List<String> formatted =
+         GitLogBuffer.buildFoldedLog(
+            logLogLines, logMessages, foldRanges,
+            logDiffExpanded, logDiffCache);
+      logBuffer = createBuffer("*git-log*", formatted);
+      registerLogInPosListList(formatted);
+      FvContext<?> logFvc =
+         FvContext.connectFv(logBuffer, fvc.vi);
+      FoldModel fm = new FoldModel();
+      for (int[] range : foldRanges) {
+         fm.addFold(range[0], range[1]);
+      }
+      fm.closeAll();
+      // Restore open state
+      for (FoldModel.FoldRange f : fm.getFolds()) {
+         String lt =
+            formatted.get(f.startLine - 1);
+         String sha = GitLogBuffer.extractSha(lt);
+         if (sha != null && openShas.contains(sha)) {
+            f.collapsed = false;
+         }
+         if (lt.startsWith(
+               GitLogBuffer.DIFF_HIDE_PREFIX)) {
+            String dfSha =
+               GitLogBuffer.extractShaFromMarker(lt);
+            if (dfSha != null
+                  && openShas.contains(dfSha)) {
+               f.collapsed = false;
+            }
+         }
+      }
+      logFvc.setFoldModel(fm);
+   }
+
+   /**
+    * Scan the current fold model for open commit folds
+    * and return the set of their SHAs.
+    */
+   @SuppressWarnings("unchecked")
+   private static java.util.Set<String> getOpenCommitShas(
+         FvContext fvc) {
+      java.util.Set<String> result =
+         new java.util.HashSet<>();
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null || logBuffer == null) {
+         return result;
+      }
+      for (FoldModel.FoldRange f : fm.getFolds()) {
+         if (!f.collapsed
+               && f.startLine >= 1
+               && f.startLine <= logBuffer.readIn()) {
+            String lt =
+               logBuffer.at(f.startLine).toString();
+            String sha = GitLogBuffer.extractSha(lt);
+            if (sha != null) {
+               result.add(sha);
+            }
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Fetch diff lines for a SHA and store in the cache.
+    */
+   private static void fetchAndCacheDiff(String sha)
+         throws IOException {
+      if (!logDiffCache.containsKey(sha)) {
+         List<String> diff =
+            GitLogBuffer.getDiffLines(sha, logDir);
+         logDiffCache.put(sha, diff);
+      }
+   }
+
+   /**
+    * Load more log entries by increasing the page size
+    * and re-fetching from git.
+    */
+   private static void loadMoreLogEntries()
+         throws IOException {
+      logPageSize += 100;
+      logLogLines =
+         GitLogBuffer.getLogLines(logPageSize, logDir);
+      logMessages =
+         GitLogBuffer.getCommitMessages(logPageSize, logDir);
    }
 
    /**

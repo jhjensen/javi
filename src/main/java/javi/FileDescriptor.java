@@ -78,6 +78,15 @@ public class FileDescriptor implements Serializable {
       return shortName;
    }
 
+   /**
+    * Return the canonical name of this file descriptor.
+    *
+    * @return the canonical name
+    */
+   public String getCanonName() {
+      return canonName;
+   }
+
    private static final String separator = File.separator;
    private static String separator2 = "." + File.separator;
 

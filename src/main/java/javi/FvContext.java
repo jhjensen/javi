@@ -272,7 +272,7 @@ public final class FvContext<OType> implements Serializable {
    }
 
    /** Set the fold model for this context. */
-   void setFoldModel(FoldModel fm) {
+   public void setFoldModel(FoldModel fm) {
       this.foldModel = fm;
    }
 

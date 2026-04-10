@@ -149,10 +149,12 @@ public final class GitStatusBuffer {
       result.add("");
 
       // Key bindings help
-      result.add("Commands: :git_toggle (stage/unstage at cursor)"
-         + "  :git_stage_line  :git_unstage_line  :git_discard");
+      result.add("Keys: s=stage  u=unstage  X=discard  "
+         + "c=commit  R=refresh  d=diff  q=quit");
+      result.add("Commands: :git_toggle  :git_stage_line  "
+         + ":git_unstage_line  :git_discard");
       result.add("          :git_commit  :git_diff  :git_log"
-         + "  :git_refresh  :git_stash  :git_stash_pop");
+         + "  :git_stash  :git_stash_pop");
       result.add("          :git_merge <branch>  :git_fetch"
          + "  :git_pull  :git_push");
 

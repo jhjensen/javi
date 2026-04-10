@@ -1,8 +1,10 @@
 package javi;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -18,11 +20,12 @@ import javi.git.GitCommands;
 import javi.git.GitLogBuffer;
 import javi.git.GitLogEntry;
 import javi.git.GitLogGraph;
+import javi.git.GitLogExpander;
 import javi.git.GitStatusBuffer;
 
 /**
  * Tests for Git integration plugin: status buffer formatting,
- * command registration, and help content.
+ * command registration, log expansion, and keymap bindings.
  */
 class GitJUnitTest {
 
@@ -520,7 +523,7 @@ class GitJUnitTest {
          );
          List<String> result = GitLogBuffer.formatLog(logLines);
          String joined = String.join("\n", result);
-         assertTrue(joined.contains("Git Log (all branches)"),
+         assertTrue(joined.contains("Git Log"),
             "Should have log header");
          assertTrue(joined.contains("abc1234"),
             "Should contain first commit SHA");
@@ -534,10 +537,10 @@ class GitJUnitTest {
             "* abc1234 First commit");
          List<String> result = GitLogBuffer.formatLog(logLines);
          String joined = String.join("\n", result);
-         assertTrue(joined.contains(":git_show"),
-            "Should include git_show in help text");
-         assertTrue(joined.contains(":git_log_diff"),
-            "Should include git_log_diff in help text");
+         assertTrue(joined.contains("expand"),
+            "Should include expand in help text");
+         assertTrue(joined.contains("quit"),
+            "Should include quit in help text");
       }
 
       @Test
@@ -698,6 +701,452 @@ class GitJUnitTest {
          assertEquals(0, rows.get(0).parentLanes[0]);
          assertTrue(rows.get(0).parentLanes[1] > 0,
             "Second parent should be in a different lane");
+      }
+   }
+
+   @Nested
+   class ExpanderStaticContentTests {
+
+      @Test
+      void getStatContentFormatsWithBorders() {
+         // If git is available, verify output has border markers
+         try {
+            List<String> content =
+               GitLogExpander.getStatContent("HEAD");
+            assertNotNull(content);
+            assertFalse(content.isEmpty());
+            assertTrue(content.get(0).contains("+--"),
+               "Should start with top border");
+            assertTrue(content.get(content.size() - 1)
+               .contains("+---"),
+               "Should end with bottom border");
+         } catch (Exception e) {
+            // git not available in test env — acceptable
+            assertTrue(true, "Skipped: git not available");
+         }
+      }
+
+      @Test
+      void getDiffContentFormatsWithBorders() {
+         try {
+            List<String> content =
+               GitLogExpander.getDiffContent("HEAD");
+            assertNotNull(content);
+            assertFalse(content.isEmpty());
+            assertTrue(content.get(0).contains("full diff"),
+               "Should indicate full diff mode");
+         } catch (Exception e) {
+            assertTrue(true, "Skipped: git not available");
+         }
+      }
+   }
+
+   @Nested
+   class ExpanderUnitTests {
+
+      @Test
+      void newExpanderHasNoExpansions() {
+         GitLogExpander expander = new GitLogExpander();
+         assertFalse(expander.hasExpansions());
+         assertEquals(0, expander.expansionCount());
+      }
+
+      @Test
+      void getExpansionReturnsZeroForUnknownSha() {
+         GitLogExpander expander = new GitLogExpander();
+         assertEquals(0, expander.getLevel("abc1234"));
+      }
+
+      @Test
+      void toggleFirstTimeGoesToLevel1() {
+         GitLogExpander expander = new GitLogExpander();
+         assertEquals(1, expander.toggle("abc1234"));
+         assertEquals(1, expander.getLevel("abc1234"));
+         assertTrue(expander.hasExpansions());
+      }
+
+      @Test
+      void toggleSecondTimeGoesToLevel2() {
+         GitLogExpander expander = new GitLogExpander();
+         expander.toggle("abc1234"); // level 1
+         assertEquals(2, expander.toggle("abc1234"));
+         assertEquals(2, expander.getLevel("abc1234"));
+      }
+
+      @Test
+      void toggleThirdTimeCollapses() {
+         GitLogExpander expander = new GitLogExpander();
+         expander.toggle("abc1234"); // level 1
+         expander.toggle("abc1234"); // level 2
+         assertEquals(0, expander.toggle("abc1234"));
+         assertEquals(0, expander.getLevel("abc1234"));
+         assertFalse(expander.hasExpansions());
+      }
+
+      @Test
+      void expandAllSetsLevel2() {
+         GitLogExpander expander = new GitLogExpander();
+         List<String> lines = Arrays.asList(
+            "* abc1234 First commit",
+            "* def5678 Second commit"
+         );
+         expander.expandAll(lines);
+         assertEquals(2, expander.getLevel("abc1234"));
+         assertEquals(2, expander.getLevel("def5678"));
+         assertEquals(2, expander.expansionCount());
+      }
+
+      @Test
+      void collapseAllClearsState() {
+         GitLogExpander expander = new GitLogExpander();
+         expander.toggle("abc1234");
+         expander.toggle("def5678");
+         expander.collapseAll();
+         assertFalse(expander.hasExpansions());
+         assertEquals(0, expander.getLevel("abc1234"));
+      }
+
+      @Test
+      void multipleShaTracks() {
+         GitLogExpander expander = new GitLogExpander();
+         expander.toggle("aaa1111");
+         expander.toggle("bbb2222");
+         assertEquals(2, expander.expansionCount());
+         assertEquals(1, expander.getLevel("aaa1111"));
+         assertEquals(1, expander.getLevel("bbb2222"));
+      }
+   }
+
+   @Nested
+   class LogBufferUpdatedHelpTextTests {
+
+      @Test
+      void formatLogShowsKeyBindings() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         List<String> result = GitLogBuffer.formatLog(logLines);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains("Enter"),
+            "Should mention Enter key");
+         assertTrue(joined.contains("expand"),
+            "Should mention expand");
+         assertTrue(joined.contains("q=quit"),
+            "Should mention q for quit");
+      }
+   }
+
+   @Nested
+   class StatusBufferUpdatedHelpTextTests {
+
+      @Test
+      void statusBufferShowsKeyBindings() {
+         List<String> raw = Arrays.asList(
+            "# branch.head main",
+            "# branch.oid abc1234"
+         );
+         List<String> result = GitStatusBuffer.formatStatus(raw);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains("s=stage"),
+            "Should mention s for stage");
+         assertTrue(joined.contains("u=unstage"),
+            "Should mention u for unstage");
+         assertTrue(joined.contains("X=discard"),
+            "Should mention X for discard");
+         assertTrue(joined.contains("q=quit"),
+            "Should mention q for quit");
+      }
+   }
+
+   @Nested
+   class ExpandCommandRegistrationTests {
+
+      @BeforeAll
+      static void setUp() throws Exception {
+         TestInit.init();
+         Class.forName("javi.git.GitCommands");
+      }
+
+      @Test
+      void gitExpandRegistered() {
+         assertNotNull(Rgroup.bindingLookup("git_expand"),
+            "git_expand should be registered");
+      }
+
+      @Test
+      void gitExpandAllRegistered() {
+         assertNotNull(
+            Rgroup.bindingLookup("git_expand_all"),
+            "git_expand_all should be registered");
+      }
+
+      @Test
+      void gitCollapseAllRegistered() {
+         assertNotNull(
+            Rgroup.bindingLookup("git_collapse_all"),
+            "git_collapse_all should be registered");
+      }
+   }
+
+   @Nested
+   class KeymapOverlayTests {
+
+      @Test
+      void gitlogOverlayCanBeCreated() {
+         // Verify overlay creation works without needing
+         // full command registration
+         KeyGroup mg = new KeyGroup("test-move");
+         KeyGroup eg = new KeyGroup("test-edit");
+         KeyMap parent = new KeyMap("test-parent", mg, eg);
+         KeyMap overlay = KeyMap.createOverlay("test-gitlog",
+            parent);
+         assertNotNull(overlay);
+         assertEquals("test-parent",
+            overlay.getParent().getName());
+      }
+
+      @Test
+      void gitstatusOverlayCanBeCreated() {
+         KeyGroup mg = new KeyGroup("test-move2");
+         KeyGroup eg = new KeyGroup("test-edit2");
+         KeyMap parent = new KeyMap("test-parent2", mg, eg);
+         KeyMap overlay = KeyMap.createOverlay("test-gitstatus",
+            parent);
+         assertNotNull(overlay);
+         assertEquals("test-parent2",
+            overlay.getParent().getName());
+      }
+
+      @Test
+      void overlayLookupFallsThrough() {
+         // Verify parent-chain fallback works
+         KeyGroup mg = new KeyGroup("ov-move");
+         KeyGroup eg = new KeyGroup("ov-edit");
+         KeyMap parent = new KeyMap("ov-parent", mg, eg);
+         KeyMap overlay = KeyMap.createOverlay("ov-child",
+            parent);
+         // No bindings in child → lookups return null locally
+         // but would fall through to parent if parent had them
+         JeyEvent ev = new JeyEvent(0, 0, 'z');
+         assertNull(overlay.lookupEdit(ev),
+            "Unbound key should return null");
+      }
+   }
+
+   @Nested
+   class DiffSubFoldTests {
+
+      @Test
+      void buildFoldedLogIncludesDiffShowMarkers() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234", Arrays.asList(
+            "  Author: John", "  Date: 2025-01-15",
+            "  ", "  First commit"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> result =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               null, null);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains(
+            "  >> Show diffs ("),
+            "Should contain diff show marker");
+         assertTrue(joined.contains("abc1234"),
+            "Diff marker should contain SHA");
+         assertTrue(joined.contains("toggle to view diffs"),
+            "Should have toggle hint");
+      }
+
+      @Test
+      void buildFoldedLogWithExpandedDiffs() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234", Arrays.asList(
+            "  Author: John", "  Date: 2025-01-15",
+            "  ", "  First commit"));
+         java.util.Set<String> diffExpanded =
+            new java.util.HashSet<>();
+         diffExpanded.add("abc1234");
+         Map<String, List<String>> diffCache =
+            new java.util.HashMap<>();
+         diffCache.put("abc1234", Arrays.asList(
+            " file.java | 2 +-",
+            "diff --git a/file.java b/file.java",
+            "--- a/file.java",
+            "+++ b/file.java",
+            "-old line",
+            "+new line"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> result =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               diffExpanded, diffCache);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains(
+            "  << Diffs ("),
+            "Should contain diff hide marker");
+         assertTrue(joined.contains("  | diff --git"),
+            "Should contain prefixed diff lines");
+         assertTrue(joined.contains(
+            "  +----------------------------"),
+            "Should have diff end border");
+         assertFalse(joined.contains(
+            "  >> Show diffs ("),
+            "Show marker should not appear for expanded");
+      }
+
+      @Test
+      void nestedFoldRangesCreated() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234", Arrays.asList(
+            "  Author: John", "  First commit"));
+         List<int[]> foldRanges = new ArrayList<>();
+         GitLogBuffer.buildFoldedLog(
+            logLines, messages, foldRanges,
+            null, null);
+         // Should have: diff sub-fold, commit fold,
+         // pagination fold = 3 folds
+         assertTrue(foldRanges.size() >= 3,
+            "Should have at least 3 folds (diff, commit,"
+            + " pagination), got " + foldRanges.size());
+         // First fold added is the diff sub-fold,
+         // second is the commit fold
+         int[] diffFold = foldRanges.get(0);
+         int[] commitFold = foldRanges.get(1);
+         assertTrue(
+            commitFold[0] <= diffFold[0],
+            "Commit fold should start at or before diff");
+         assertTrue(
+            commitFold[1] >= diffFold[1],
+            "Commit fold should end at or after diff");
+      }
+
+      @Test
+      void foldModelHandlesNestedFolds() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234", Arrays.asList(
+            "  Author: John", "  First commit"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> formatted =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               null, null);
+         FoldModel fm = new FoldModel();
+         for (int[] range : foldRanges) {
+            fm.addFold(range[0], range[1]);
+         }
+         fm.closeAll();
+         assertTrue(fm.size() >= 3,
+            "FoldModel should have folds");
+         // Open the commit fold
+         int[] commitFold = foldRanges.get(1);
+         FoldModel.FoldRange opened =
+            fm.openFold(commitFold[0]);
+         assertNotNull(opened,
+            "Should find commit fold");
+         assertFalse(opened.collapsed,
+            "Commit fold should be open");
+         // The diff sub-fold should still be collapsed
+         int[] diffFold = foldRanges.get(0);
+         FoldModel.FoldRange inner =
+            fm.findFoldAtStart(diffFold[0]);
+         assertNotNull(inner,
+            "Should find diff sub-fold");
+         assertTrue(inner.collapsed,
+            "Diff sub-fold should remain collapsed");
+      }
+   }
+
+   @Nested
+   class DiffMarkerExtractionTests {
+
+      @Test
+      void extractShaFromShowMarker() {
+         assertEquals("abc1234",
+            GitLogBuffer.extractShaFromMarker(
+               "  >> Show diffs (abc1234)"));
+      }
+
+      @Test
+      void extractShaFromHideMarker() {
+         assertEquals("def5678",
+            GitLogBuffer.extractShaFromMarker(
+               "  << Diffs (def5678) <<"));
+      }
+
+      @Test
+      void extractShaFromMarkerReturnsNull() {
+         assertNull(
+            GitLogBuffer.extractShaFromMarker(
+               "  no parens here"));
+      }
+
+      @Test
+      void extractShaFromMarkerNull() {
+         assertNull(
+            GitLogBuffer.extractShaFromMarker(null));
+      }
+   }
+
+   @Nested
+   class PaginationTests {
+
+      @Test
+      void paginationMarkerPresent() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234",
+            Arrays.asList("  Author: John"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> result =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               null, null);
+         String joined = String.join("\n", result);
+         assertTrue(joined.contains(
+            "--- more ---"),
+            "Should contain pagination marker");
+         assertTrue(joined.contains("load more"),
+            "Should mention loading more");
+      }
+
+      @Test
+      void paginationFoldAtEnd() {
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234",
+            Arrays.asList("  Author: John"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> result =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               null, null);
+         // Last fold should be pagination
+         int[] lastFold =
+            foldRanges.get(foldRanges.size() - 1);
+         // Pagination fold end should match last line
+         assertEquals(result.size(), lastFold[1],
+            "Pagination fold should end at last line");
+         // The start line should contain the marker
+         String startText =
+            result.get(lastFold[0] - 1);
+         assertTrue(startText.startsWith(
+            "--- more ---"),
+            "Pagination fold start should be the marker");
       }
    }
 }

@@ -29,12 +29,27 @@ public final class GitProcess {
     * @throws IOException if the process cannot be started or read
     */
    public static List<String> execute(String... args) throws IOException {
+      return execute((java.io.File) null, args);
+   }
+
+   /**
+    * Execute a git command in the given directory.
+    *
+    * @param dir working directory for the git command, or null for default
+    * @param args git subcommand and arguments
+    * @return list of output lines from the command
+    * @throws IOException if the process cannot be started or read
+    */
+   public static List<String> execute(java.io.File dir, String... args)
+         throws IOException {
       String[] cmd = new String[args.length + 1];
       cmd[0] = "git";
       System.arraycopy(args, 0, cmd, 1, args.length);
 
       ProcessBuilder pb = new ProcessBuilder(cmd);
       pb.redirectErrorStream(true);
+      if (dir != null)
+         pb.directory(dir);
       Process proc = pb.start();
 
       ArrayList<String> output = new ArrayList<>();
