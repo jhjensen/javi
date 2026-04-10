@@ -1,0 +1,47 @@
+# Dockerfile.alltest — Run ALL tests (headless + GUI) in Docker with Xvfb
+#
+# Runs both standard JUnit tests and AssertJ Swing GUI tests inside
+# Xvfb. This covers the javi.awt package tests that need AWT classes
+# initialized with a real display.
+#
+# Build:  docker build -f Dockerfile.alltest -t javi-alltest .
+# Run:    docker run --rm -v $(pwd)/build:/app/build javi-alltest
+#
+# The entrypoint starts Xvfb, runs `./gradlew test guiTest`, and
+# exits with the Gradle exit code.
+
+FROM eclipse-temurin:24-jdk-noble
+
+# Xvfb + X11 libraries for headless AWT rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libfreetype6 \
+    fontconfig \
+    fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Gradle wrapper first for layer caching
+COPY gradlew build.gradle ./
+COPY gradle/ gradle/
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
+
+# Copy source and test files
+COPY src/ src/
+
+# Copy lib directory for runtime dependencies
+COPY lib/ lib/
+
+# Start Xvfb, run ALL tests, stop Xvfb, exit with test status
+ENTRYPOINT ["sh", "-c", \
+    "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
+     sleep 1 && \
+     DISPLAY=:99 ./gradlew --no-daemon test guiTest; \
+     status=$?; kill %1 2>/dev/null; exit $status"]

@@ -77,6 +77,10 @@ ai/validate.out: FORCE
 ai/rdesk-guitest.out: FORCE
 	$(MAKE) rdesk-guitest > $@ 2>&1; echo "exit: $$?" >> $@
 
+# Remote ALL tests (headless JUnit + GUI via Docker + Xvfb)
+ai/rdesk-alltest.out: FORCE
+	$(MAKE) rdesk-alltest > $@ 2>&1; echo "exit: $$?" >> $@
+
 # T3: Full coverage (JUnit + legacy + merge report)
 ai/full-coverage.out: FORCE
 	$(MAKE) full-coverage > $@ 2>&1; echo "exit: $$?" >> $@

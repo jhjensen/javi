@@ -191,6 +191,31 @@ rdesk-guitest-clean:
 	ssh -n -T rdesk 'docker rmi $(GUITEST_IMAGE) 2>/dev/null; \
 	   rm -rf $(RDESK_GUITEST_DIR)'
 
+#==============================================================================
+# T1: Remote Docker all-tests (headless JUnit + GUI tests via Xvfb)
+#==============================================================================
+
+ALLTEST_IMAGE = javi-alltest
+
+# Full pipeline: sync, build Docker image, run ALL tests, fetch results
+rdesk-alltest: rdesk-guitest-sync rdesk-alltest-build rdesk-alltest-run rdesk-guitest-fetch
+
+# Build all-test Docker image on rdesk
+rdesk-alltest-build: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker build -f Dockerfile.alltest -t $(ALLTEST_IMAGE) .'
+
+# Run ALL tests on rdesk via Docker
+rdesk-alltest-run: rdesk-alltest-build
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker run --rm \
+	      -v $$(pwd)/build:/app/build \
+	      $(ALLTEST_IMAGE)'
+
+# Clean all-test Docker image
+rdesk-alltest-clean:
+	ssh -n -T rdesk 'docker rmi $(ALLTEST_IMAGE) 2>/dev/null'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage
