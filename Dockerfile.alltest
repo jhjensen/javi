@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreetype6 \
     fontconfig \
     fonts-dejavu-core \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -35,6 +36,11 @@ RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 
 # Copy source and test files
 COPY src/ src/
+
+# build.gradle calls `git describe --always --dirty` during evaluation;
+# .git is excluded from rsync, so create a minimal repo
+RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
+    git add -A && git commit -q -m "docker build"
 
 # Start Xvfb, run ALL tests, stop Xvfb, exit with test status
 ENTRYPOINT ["sh", "-c", \

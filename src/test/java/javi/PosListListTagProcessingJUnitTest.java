@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tag processing tests for {@link PosListList}.
@@ -642,8 +643,18 @@ class PosListListTagProcessingJUnitTest {
                      String.class);
                m.setAccessible(true);
                // Should handle null ctagFinder gracefully
-               TextEdit result = (TextEdit) m.invoke(
-                  pllCmd, "nonexistentSymbol99");
+               TextEdit result;
+               try {
+                  result = (TextEdit) m.invoke(
+                     pllCmd, "nonexistentSymbol99");
+               } catch (java.lang.reflect.InvocationTargetException e) {
+                  if (e.getCause() instanceof java.io.IOException) {
+                     assumeTrue(false,
+                        "lid not on PATH: " + e.getCause().getMessage());
+                     return;
+                  }
+                  throw e;
+               }
                assertNotNull(result,
                   "should return TextEdit even with "
                      + "null ctagFinder");
