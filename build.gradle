@@ -152,6 +152,7 @@ tasks.register('guiTest', Test) {
     useJUnitPlatform {
         includeTags 'gui'
     }
+    jacoco.enabled = true
     group = 'verification'
     description = 'Run AssertJ Swing GUI tests (requires graphical display)'
     systemProperty 'junit.jupiter.execution.timeout.default', '60s'
@@ -334,6 +335,7 @@ tasks.register('jacocoMerge', JavaExec) {
 // Produces: build/reports/jacoco/merged/html/index.html
 tasks.register('mergedCoverageReport', JacocoReport) {
     dependsOn compileJava, test
+    mustRunAfter 'guiTest', 'pstestCoverage', 'intArrayTestCoverage'
     group = 'verification'
     description = 'Generate merged coverage report from all .exec files'
     executionData.from(

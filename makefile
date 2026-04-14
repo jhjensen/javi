@@ -185,6 +185,9 @@ rdesk-guitest-fetch:
 	   build/reports-rdesk/ 2>/dev/null || true
 	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/test-results/ \
 	   build/test-results-rdesk/ 2>/dev/null || true
+	@mkdir -p build/jacoco
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/jacoco/ \
+	   build/jacoco/ 2>/dev/null || true
 
 # Clean remote Docker image and files
 rdesk-guitest-clean:
@@ -258,6 +261,8 @@ coverage-dump:
 	@echo "Coverage dumped to build/jacoco/gui.exec"
 
 # Merge all .exec files (JUnit + legacy + GUI) and generate report
+# Note: Local-only — excludes GUI tests (need display). For full coverage
+# including GUI tests, use: make rdesk-alltest  (generates Docker report)
 coverage-merge:
 	./gradlew mergedCoverageReport
 	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
@@ -267,6 +272,12 @@ coverage-merge:
 full-coverage: compile
 	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
 	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+# Full coverage including GUI tests via rdesk Docker
+# Docker generates the merged report with consistent class files.
+# Report fetched to build/reports-rdesk/jacoco/merged/html/index.html
+rdesk-coverage: rdesk-alltest
+	@echo "Full coverage report (including GUI): build/reports-rdesk/jacoco/merged/html/index.html"
 
 #==============================================================================
 # Run targets

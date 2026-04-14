@@ -92,3 +92,7 @@ ai/coverage-dump.out: FORCE
 # T3: Merge all .exec files and generate report
 ai/coverage-merge.out: FORCE
 	$(MAKE) coverage-merge > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T1: Full coverage including GUI tests via rdesk Docker
+ai/rdesk-coverage.out: FORCE
+	$(MAKE) rdesk-coverage > $@ 2>&1; echo "exit: $$?" >> $@

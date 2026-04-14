@@ -42,9 +42,9 @@ COPY src/ src/
 RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
     git add -A && git commit -q -m "docker build"
 
-# Start Xvfb, run ALL tests, stop Xvfb, exit with test status
+# Start Xvfb, run ALL tests + legacy coverage + merged report, stop Xvfb
 ENTRYPOINT ["sh", "-c", \
     "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
      sleep 1 && \
-     DISPLAY=:99 ./gradlew --no-daemon test guiTest; \
+     DISPLAY=:99 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport; \
      status=$?; kill %1 2>/dev/null; exit $status"]
