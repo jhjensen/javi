@@ -22,12 +22,12 @@ public final class GitLogGraph {
       public final int[] parentLanes;
       public final int activeLaneCount;
 
-      Row(GitLogEntry entry, int lane, int[] parentLanes,
-            int activeLaneCount) {
-         this.entry = entry;
-         this.lane = lane;
-         this.parentLanes = parentLanes;
-         this.activeLaneCount = activeLaneCount;
+      Row(GitLogEntry rowEntry, int rowLane, int[] rowParentLanes,
+            int rowActiveLaneCount) {
+         this.entry = rowEntry;
+         this.lane = rowLane;
+         this.parentLanes = rowParentLanes;
+         this.activeLaneCount = rowActiveLaneCount;
       }
    }
 

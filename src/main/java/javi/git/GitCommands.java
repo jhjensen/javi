@@ -344,6 +344,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             fm.addFold(range[0], range[1]);
          }
          fm.closeAll();
+         fm.setToggleHandler(GitCommands::handleLogFoldToggle);
          logFvc.setFoldModel(fm);
       }
    }
@@ -371,14 +372,18 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static void registerLogInPosListList(
          List<String> formatted) {
       Pattern shaPat =
-         Pattern.compile("^\\s*([0-9a-f]{7,40})\\s+(.*)");
+         Pattern.compile("^[*|/\\\\ ]+\\s*([0-9a-f]{7,40})\\b");
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < formatted.size(); i++) {
          Matcher m = shaPat.matcher(formatted.get(i));
          if (m.find()) {
-            sb.append("*git-log*:").append(i + 1).append(": ")
-               .append(m.group(1)).append(" ")
-               .append(m.group(2)).append("\n");
+            String sha = m.group(1);
+            String rest = formatted.get(i)
+               .substring(m.end()).trim();
+            // Format: filename(line -comment) for PositionConverter
+            sb.append("*git-log*(").append(i + 1)
+               .append(" -").append(sha)
+               .append(" ").append(rest).append(")\n");
          }
       }
       BufferedReader reader = new BufferedReader(
@@ -511,6 +516,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          fm.addFold(range[0], range[1]);
       }
       fm.openAll();
+      fm.setToggleHandler(GitCommands::handleLogFoldToggle);
       logFvc.setFoldModel(fm);
       UI.reportMessage("Expanded all commits with diffs");
    }
@@ -579,6 +585,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             }
          }
       }
+      fm.setToggleHandler(GitCommands::handleLogFoldToggle);
       logFvc.setFoldModel(fm);
    }
 
@@ -620,6 +627,55 @@ public final class GitCommands extends Rgroup implements Plugin {
             GitLogBuffer.getDiffLines(sha, logDir);
          logDiffCache.put(sha, diff);
       }
+   }
+
+   /**
+    * FoldToggleHandler for the git log buffer. Intercepts
+    * fold toggle/open on diff markers and pagination sentinels
+    * to fetch content and rebuild the buffer. Returns false
+    * for regular folds so the default toggle proceeds.
+    *
+    * @param line the buffer line being toggled
+    * @param fvc the current view context
+    * @return true if handled, false for default behavior
+    */
+   @SuppressWarnings("unchecked")
+   private static boolean handleLogFoldToggle(
+         int line, FvContext<?> fvc)
+         throws IOException, InputException {
+      TextEdit<?> buf = fvc.edvec;
+      if (line < 1 || line > buf.readIn()) {
+         return false;
+      }
+      String lineText = buf.at(line).toString();
+      if (lineText.startsWith(
+            GitLogBuffer.DIFF_SHOW_PREFIX)) {
+         String sha =
+            GitLogBuffer.extractShaFromMarker(lineText);
+         if (sha != null) {
+            fetchAndCacheDiff(sha);
+            logDiffExpanded.add(sha);
+            rebuildLogBuffer(fvc, sha);
+            return true;
+         }
+      }
+      if (lineText.startsWith(
+            GitLogBuffer.DIFF_HIDE_PREFIX)) {
+         String sha =
+            GitLogBuffer.extractShaFromMarker(lineText);
+         if (sha != null) {
+            logDiffExpanded.remove(sha);
+            rebuildLogBuffer(fvc, null);
+            return true;
+         }
+      }
+      if (lineText.startsWith(
+            GitLogBuffer.PAGINATION_MARKER)) {
+         loadMoreLogEntries();
+         rebuildLogBuffer(fvc, null);
+         return true;
+      }
+      return false;
    }
 
    /**

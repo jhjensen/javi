@@ -344,6 +344,15 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             ec = text;
          }
       }
+      // Fallback: internal buffers (names like *git-log*)
+      // may use InternalFd; try name-based lookup
+      if (null == ec) {
+         String shortName = fh.shortName;
+         if (shortName.startsWith("*")
+               && shortName.endsWith("*")) {
+            ec = (TextEdit) EditContainer.grepfile(shortName);
+         }
+      }
       //trace("openFile ec " + ec);
       if (null != ec) {
          int index = indexOf(ec);

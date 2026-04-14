@@ -879,6 +879,19 @@ final class OldView extends AwtView {
                         && clickFold.collapsed) {
                      EventQueue.biglock2.lock();
                      try {
+                        FoldModel.FoldToggleHandler cth =
+                           clickFm.getToggleHandler();
+                        if (cth != null) {
+                           try {
+                              if (cth.onToggle(
+                                    pos.y, newfvc)) {
+                                 foldClickToggled = true;
+                                 return;
+                              }
+                           } catch (Exception e) {
+                              // fall through
+                           }
+                        }
                         clickFm.toggleFold(pos.y);
                         recalcScreenRow();
                         MiscCommands.saveFoldState(newfvc);
@@ -1132,9 +1145,19 @@ final class OldView extends AwtView {
                return false;
             char ind = fm.getFoldIndicator(tindex);
             if (ind == '+' || ind == '-') {
-               fm.toggleFold(tindex);
+               FoldModel.FoldToggleHandler fgh =
+                  fm.getToggleHandler();
                FvContext fvc = FvContext.getcontext(
                   OldView.this, getCurrFile());
+               if (fgh != null && fvc != null) {
+                  try {
+                     if (fgh.onToggle(tindex, fvc))
+                        return true;
+                  } catch (Exception e) {
+                     // fall through to default toggle
+                  }
+               }
+               fm.toggleFold(tindex);
                if (fvc != null) {
                   recalcScreenRow();
                   MiscCommands.saveFoldState(fvc);
@@ -1327,6 +1350,8 @@ final class OldView extends AwtView {
                char c0 = lt.charAt(0);
                if (c0 == '-' && !lt.startsWith("---"))
                   atIt.setLineForeground(Color.red);
+               else if (c0 == '+' && !lt.startsWith("+++"))
+                  atIt.setLineForeground(Color.green);
                else if (c0 == '@')
                   atIt.setLineForeground(Color.cyan);
             }

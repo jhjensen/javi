@@ -56,8 +56,8 @@ public final class GitLogPanel extends Canvas {
    /** Maximum lane count across all rows. */
    private final int maxLanes;
 
-   private GitLogPanel(List<GitLogGraph.Row> rows) {
-      this.rows = rows;
+   private GitLogPanel(List<GitLogGraph.Row> graphRows) {
+      this.rows = graphRows;
       int max = 0;
       for (GitLogGraph.Row r : rows) {
          if (r.lane >= max) {

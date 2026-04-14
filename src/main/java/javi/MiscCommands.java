@@ -725,6 +725,17 @@ public final class MiscCommands extends Rgroup {
       int line = fvc.inserty();
       switch (key) {
          case 'o':
+            FoldModel.FoldToggleHandler oh =
+               fm.getToggleHandler();
+            if (oh != null) {
+               try {
+                  if (oh.onToggle(line, fvc))
+                     break;
+               } catch (IOException | InputException e) {
+                  UI.reportMessage(e.getMessage());
+                  break;
+               }
+            }
             FoldModel.FoldRange fo = fm.openFold(line);
             if (fo != null) {
                fvc.vi.recalcScreenRow();
@@ -747,6 +758,17 @@ public final class MiscCommands extends Rgroup {
             }
             break;
          case 'a':
+            FoldModel.FoldToggleHandler th =
+               fm.getToggleHandler();
+            if (th != null) {
+               try {
+                  if (th.onToggle(line, fvc))
+                     break;
+               } catch (IOException | InputException e) {
+                  UI.reportMessage(e.getMessage());
+                  break;
+               }
+            }
             FoldModel.FoldRange fa = fm.toggleFold(line);
             if (fa != null) {
                if (fa.collapsed && line > fa.startLine)

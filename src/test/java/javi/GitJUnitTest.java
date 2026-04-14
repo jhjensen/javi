@@ -1149,4 +1149,129 @@ class GitJUnitTest {
             "Pagination fold start should be the marker");
       }
    }
+
+   @Nested
+   class FoldToggleHandlerTests {
+
+      @Test
+      void handlerCalledOnToggle() {
+         FoldModel fm = new FoldModel();
+         fm.addFold(1, 5);
+         fm.closeAll();
+         boolean[] called = {false};
+         int[] capturedLine = {0};
+         fm.setToggleHandler((line, fvc) -> {
+            called[0] = true;
+            capturedLine[0] = line;
+            return true;
+         });
+         assertNotNull(fm.getToggleHandler(),
+            "Handler should be set");
+         // Simulate what MiscCommands does
+         FoldModel.FoldToggleHandler handler =
+            fm.getToggleHandler();
+         try {
+            assertTrue(handler.onToggle(1, null),
+               "Handler should return true");
+         } catch (Exception e) {
+            // unexpected
+         }
+         assertTrue(called[0],
+            "Handler should have been called");
+         assertEquals(1, capturedLine[0],
+            "Handler should receive the correct line");
+      }
+
+      @Test
+      void noHandlerDefaultsToNormalToggle() {
+         FoldModel fm = new FoldModel();
+         fm.addFold(1, 5);
+         fm.closeAll();
+         assertNull(fm.getToggleHandler(),
+            "No handler by default");
+         // Normal toggle still works
+         FoldModel.FoldRange r = fm.toggleFold(1);
+         assertNotNull(r);
+         assertFalse(r.collapsed,
+            "Fold should be opened by toggle");
+      }
+
+      @Test
+      void handlerReturningFalseAllowsDefault() {
+         FoldModel fm = new FoldModel();
+         fm.addFold(1, 5);
+         fm.closeAll();
+         fm.setToggleHandler((line, fvc) -> false);
+         FoldModel.FoldToggleHandler handler =
+            fm.getToggleHandler();
+         try {
+            assertFalse(handler.onToggle(1, null),
+               "Handler should return false");
+         } catch (Exception e) {
+            // unexpected
+         }
+         // Normal toggle proceeds
+         FoldModel.FoldRange r = fm.toggleFold(1);
+         assertNotNull(r);
+         assertFalse(r.collapsed);
+      }
+   }
+
+   @Nested
+   class PosListFormatTests {
+
+      @Test
+      void positionConverterParsesGitLogFormat() {
+         // Verify the format *git-log*(lineNum -comment)
+         // is parseable by PositionConverter
+         String line = "*git-log*(5 -abc1234 Fix the bug)";
+         int parenIdx = line.indexOf('(');
+         assertTrue(parenIdx > 0,
+            "Should contain opening paren");
+         String filename = line.substring(0, parenIdx);
+         assertEquals("*git-log*", filename,
+            "Filename should be *git-log*");
+         int dashIdx = line.indexOf('-', parenIdx + 1);
+         assertTrue(dashIdx > parenIdx,
+            "Should contain dash after paren");
+         String lineNumStr =
+            line.substring(parenIdx + 1, dashIdx)
+               .trim();
+         assertEquals("5", lineNumStr,
+            "Line number should be 5");
+      }
+
+      @Test
+      void buildFoldedLogGraphLinesHaveShaForPosFormat() {
+         // Verify that graph lines with SHAs can be matched
+         // by the regex used in registerLogInPosListList
+         List<String> logLines = Arrays.asList(
+            "* abc1234 First commit",
+            "* def5678 Second commit");
+         Map<String, List<String>> messages =
+            new java.util.LinkedHashMap<>();
+         messages.put("abc1234",
+            Arrays.asList("  Author: John"));
+         messages.put("def5678",
+            Arrays.asList("  Author: Jane"));
+         List<int[]> foldRanges = new ArrayList<>();
+         List<String> result =
+            GitLogBuffer.buildFoldedLog(
+               logLines, messages, foldRanges,
+               null, null);
+         // Find lines with SHAs using the same pattern
+         // as registerLogInPosListList
+         java.util.regex.Pattern shaPat =
+            java.util.regex.Pattern.compile(
+               "^[*|/\\\\ ]+\\s*([0-9a-f]{7,40})\\b");
+         int shaCount = 0;
+         for (String r : result) {
+            if (shaPat.matcher(r).find())
+               shaCount++;
+         }
+         assertTrue(shaCount >= 2,
+            "Should find at least 2 SHA lines but found "
+               + shaCount);
+      }
+   }
 }

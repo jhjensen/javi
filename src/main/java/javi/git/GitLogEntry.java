@@ -20,14 +20,15 @@ public final class GitLogEntry {
    public final String date;
    public final String decoration;
 
-   public GitLogEntry(String sha, List<String> parents, String subject,
-         String author, String date, String decoration) {
-      this.sha = sha;
-      this.parents = Collections.unmodifiableList(parents);
-      this.subject = subject;
-      this.author = author;
-      this.date = date;
-      this.decoration = decoration;
+   public GitLogEntry(String commitSha, List<String> commitParents,
+         String commitSubject, String commitAuthor,
+         String commitDate, String commitDecoration) {
+      this.sha = commitSha;
+      this.parents = Collections.unmodifiableList(commitParents);
+      this.subject = commitSubject;
+      this.author = commitAuthor;
+      this.date = commitDate;
+      this.decoration = commitDecoration;
    }
 
    /**

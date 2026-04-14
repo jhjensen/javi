@@ -24,6 +24,30 @@ public final class FoldModel {
    private final List<FoldRange> folds = new ArrayList<>();
 
    /**
+    * Callback invoked before a fold toggle or open operation.
+    * Returns true if the handler consumed the action (caller
+    * should skip the default toggle). The handler receives the
+    * buffer line number and the current FvContext.
+    */
+   @FunctionalInterface
+   public interface FoldToggleHandler {
+      boolean onToggle(int line, FvContext<?> fvc)
+         throws IOException, InputException;
+   }
+
+   private FoldToggleHandler toggleHandler;
+
+   /** Set a handler to intercept fold toggle/open actions. */
+   public void setToggleHandler(FoldToggleHandler h) {
+      this.toggleHandler = h;
+   }
+
+   /** Get the current fold toggle handler, or null. */
+   public FoldToggleHandler getToggleHandler() {
+      return toggleHandler;
+   }
+
+   /**
     * A single fold range. Start and end are inclusive, 1-based.
     */
    public static final class FoldRange
