@@ -164,6 +164,25 @@ public final class FoldModel {
    }
 
    /**
+    * Open all collapsed folds that contain the given line.
+    * Unlike {@link #openFold} which opens only the innermost,
+    * this opens every enclosing fold so the line becomes visible.
+    *
+    * @return true if any fold was opened
+    */
+   public boolean openAllEnclosing(int line) {
+      boolean opened = false;
+      for (FoldRange f : folds) {
+         if (f.collapsed && line >= f.startLine
+               && line <= f.endLine) {
+            f.collapsed = false;
+            opened = true;
+         }
+      }
+      return opened;
+   }
+
+   /**
     * Find the innermost fold containing the given line
     * (either at the start line or inside the range).
     * Returns null if none.

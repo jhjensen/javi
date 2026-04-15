@@ -1917,4 +1917,32 @@ class FoldModelJUnitTest {
       assertTrue(model.isValid(0),
          "empty model is always valid");
    }
+
+   // --- openAllEnclosing ---
+
+   @Test
+   void openAllEnclosingOpensOuterAndInner() {
+      model.addFold(1, 100);
+      model.addFold(10, 20);
+      model.closeAll();
+      assertTrue(model.isFolded(15));
+      boolean opened = model.openAllEnclosing(15);
+      assertTrue(opened);
+      assertFalse(model.isFolded(15));
+      // both folds should now be open
+      assertFalse(model.findFold(15).collapsed);
+      assertFalse(model.findFold(50).collapsed);
+   }
+
+   @Test
+   void openAllEnclosingReturnsFalseWhenNoFolds() {
+      assertFalse(model.openAllEnclosing(5));
+   }
+
+   @Test
+   void openAllEnclosingIgnoresAlreadyOpen() {
+      model.addFold(1, 10);
+      // fold is open by default
+      assertFalse(model.openAllEnclosing(5));
+   }
 }
