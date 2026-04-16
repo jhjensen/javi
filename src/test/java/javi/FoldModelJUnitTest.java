@@ -1945,4 +1945,85 @@ class FoldModelJUnitTest {
       // fold is open by default
       assertFalse(model.openAllEnclosing(5));
    }
+
+   // --- Fold-aware insert/paste boundary tests ---
+
+   @Test
+   void insertAfterCollapsedFoldDoesNotExtendFold() {
+      // Fold 5-15 collapsed. Insert 1 line at endLine+1 (16).
+      model.addFold(5, 15);
+      model.closeAll();
+      // Simulate insertStrings at endLine+1: adjustForEdit(16, 1)
+      model.adjustForEdit(16, 1);
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertEquals(5, f.startLine);
+      assertEquals(15, f.endLine); // unchanged
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void insertInsideCollapsedFoldExtendsFold() {
+      // Fold 5-15 collapsed. Insert at startLine+1 (6) pushes end.
+      model.addFold(5, 15);
+      model.closeAll();
+      model.adjustForEdit(6, 1);
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertEquals(5, f.startLine);
+      assertEquals(16, f.endLine); // extended
+   }
+
+   @Test
+   void insertBeforeCollapsedFoldShiftsFold() {
+      // Fold 5-15 collapsed. Insert at line 3 shifts fold.
+      model.addFold(5, 15);
+      model.closeAll();
+      model.adjustForEdit(3, 2); // insert 2 lines at pos 3
+      FoldModel.FoldRange f = model.findFoldAtStart(7);
+      assertNotNull(f);
+      assertEquals(7, f.startLine);
+      assertEquals(17, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void pasteMultipleLinesAfterCollapsedFold() {
+      // Fold 5-15 collapsed, paste 3 lines after fold.
+      // Insert at endLine+1 = 16, count = 3
+      model.addFold(5, 15);
+      model.closeAll();
+      model.adjustForEdit(16, 3);
+      FoldModel.FoldRange f = model.findFoldAtStart(5);
+      assertNotNull(f);
+      assertEquals(5, f.startLine);
+      assertEquals(15, f.endLine); // unchanged
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void pasteBeforeCollapsedFoldShiftsFold() {
+      // Fold 5-15 collapsed, paste 3 lines before fold (at 5).
+      model.addFold(5, 15);
+      model.closeAll();
+      model.adjustForEdit(5, 3);
+      FoldModel.FoldRange f = model.findFoldAtStart(8);
+      assertNotNull(f);
+      assertEquals(8, f.startLine);
+      assertEquals(18, f.endLine);
+      assertTrue(f.collapsed);
+   }
+
+   @Test
+   void nextVisibleAfterInsertPastFold() {
+      // After inserting lines after a collapsed fold,
+      // nextVisible from fold start should land on first
+      // inserted line (endLine + 1).
+      model.addFold(5, 15);
+      model.closeAll();
+      // Simulate insert of 3 lines after fold
+      model.adjustForEdit(16, 3);
+      // nextVisible(5) should skip fold to 16
+      assertEquals(16, model.nextVisible(5));
+   }
 }

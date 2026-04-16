@@ -90,21 +90,8 @@ final class EditGroup extends Rgroup {
       //trace("rnum = " + rnum + " count = " + count + " rcount = " + rcount);
       Cmd cmd = CMDS[rnum];
 
-      // Block editing on collapsed fold lines
-      if (cmd != Cmd.MARK_MODE
-            && cmd != Cmd.Q_MODE
-            && cmd != Cmd.DO_OVER) {
-         FoldModel fm = fvc.getFoldModel();
-         if (fm != null) {
-            FoldModel.FoldRange fr =
-               fm.findFoldAtStart(fvc.inserty());
-            if (fr != null && fr.collapsed) {
-               UI.reportMessage(
-                  "cannot edit collapsed fold");
-               return null;
-            }
-         }
-      }
+      if (blockedByCollapsedFold(cmd, fvc))
+         return null;
 
       try {
          if (!dotmode && !(cmd == Cmd.YANK_MODE || cmd == Cmd.YANK
@@ -134,9 +121,11 @@ final class EditGroup extends Rgroup {
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
             case OPENLINE:
-               fvc.cursorxabs(Integer.MAX_VALUE);
-               fvc.inserttext("\n");
-               fvc.cursory(1);
+               if (!fvc.openLineBelowFold()) {
+                  fvc.cursorxabs(Integer.MAX_VALUE);
+                  fvc.inserttext("\n");
+                  fvc.cursory(1);
+               }
                InsertBuffer.insertMode(dotmode, count, fvc, false, false);
                break;
             case OPENLINE_ABOVE:
@@ -718,5 +707,36 @@ final class EditGroup extends Rgroup {
       fvc.changeElementStr(istring.toString());
    }
 
+   /**
+    * Return true if the given command should be blocked
+    * because the cursor is on a collapsed fold line.
+    * Commands that handle fold boundaries (O/o/p/P) are
+    * exempt.
+    */
+   private static boolean blockedByCollapsedFold(
+         Cmd cmd, FvContext fvc) {
+      switch (cmd) {
+         case MARK_MODE:
+         case Q_MODE:
+         case DO_OVER:
+         case OPENLINE:
+         case OPENLINE_ABOVE:
+         case PUT_BEFORE:
+         case PUT_AFTER:
+            return false;
+         default:
+            break;
+      }
+      FoldModel fm = fvc.getFoldModel();
+      if (fm == null)
+         return false;
+      FoldModel.FoldRange fr =
+         fm.findFoldAtStart(fvc.inserty());
+      if (fr != null && fr.collapsed) {
+         UI.reportMessage("cannot edit collapsed fold");
+         return true;
+      }
+      return false;
+   }
 
 }
