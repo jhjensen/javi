@@ -40,6 +40,8 @@ final class KeyGroup {
    private static Rgroup.KeyBinding getkb(String name, Object arg) {
       //trace("looking up " + name);
       Rgroup.KeyBinding kb = Rgroup.bindingLookup(name);
+      if (kb == null)
+         throw new RuntimeException("unregistered command: " + name);
       return kb.proto(arg); // use default bind if arguments the same
    }
 
