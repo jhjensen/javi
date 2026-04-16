@@ -736,15 +736,85 @@ public final class FvContext<OType> implements Serializable {
    }
 
    void cursorx(int x) {
-      // trace("cursorx " + x);
-      // cursor(x,0);
-      cursor2abs(fileposx + x, fileposy);
+      // Grapheme-cluster-aware cursor movement: BreakIterator
+      // ensures the cursor steps over combined emoji (ZWJ
+      // sequences, flags, skin-tone modifiers) as a single unit.
+      String line = edvec.at(fileposy).toString();
+      int pos = fileposx;
+      java.text.BreakIterator bi =
+         java.text.BreakIterator.getCharacterInstance();
+      bi.setText(line);
+      if (x > 0) {
+         for (int i = 0; i < x && pos < line.length(); i++) {
+            int next = bi.following(pos);
+            if (next == java.text.BreakIterator.DONE)
+               break;
+            pos = next;
+         }
+      } else {
+         for (int i = 0; i < -x && pos > 0; i++) {
+            int prev = bi.preceding(pos);
+            if (prev == java.text.BreakIterator.DONE)
+               break;
+            pos = prev;
+         }
+      }
+      cursor2abs(pos, fileposy);
    }
 
    void cursorxabs(int x) {
-      // trace("cursorxabs " + x);
-      // cursor(x-fileposx,0);
+      // Snap to grapheme cluster boundary
+      String line = edvec.at(fileposy).toString();
+      if (x > 0 && x < line.length()) {
+         java.text.BreakIterator bi =
+            java.text.BreakIterator.getCharacterInstance();
+         bi.setText(line);
+         if (!bi.isBoundary(x))
+            x = bi.preceding(x);
+      }
       cursor2abs(x, fileposy);
+   }
+
+   /**
+    * Calculate display width of a string region in columns.
+    * Uses BreakIterator for grapheme cluster boundaries.
+    * Each grapheme cluster occupies 1 or 2 columns based on
+    * its first code point (wide for CJK, emoji, supplementary).
+    */
+   static int displayWidth(String text, int start, int end) {
+      int width = 0;
+      java.text.BreakIterator bi =
+         java.text.BreakIterator.getCharacterInstance();
+      bi.setText(text);
+      int pos = start;
+      while (pos < end) {
+         int cp = Character.codePointAt(text, pos);
+         width += isWideCodePoint(cp) ? 2 : 1;
+         int next = bi.following(pos);
+         if (next == java.text.BreakIterator.DONE
+               || next > end)
+            break;
+         pos = next;
+      }
+      return width;
+   }
+
+   static boolean isWideCodePoint(int cp) {
+      if (Character.isSupplementaryCodePoint(cp))
+         return true;
+      // CJK Unified Ideographs
+      if (cp >= 0x4E00 && cp <= 0x9FFF)
+         return true;
+      // CJK Unified Ideographs Extension A
+      if (cp >= 0x3400 && cp <= 0x4DBF)
+         return true;
+      // CJK Compatibility Ideographs
+      if (cp >= 0xF900 && cp <= 0xFAFF)
+         return true;
+      // Fullwidth forms
+      if (cp >= 0xFF01 && cp <= 0xFF60)
+         return true;
+      return false;
    }
 
    void cursoryabs(int y) {
@@ -805,7 +875,17 @@ public final class FvContext<OType> implements Serializable {
       if (newy < 1)
          return;
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
-      fileposx = inrange(newx, 0, edvec.at(fileposy).toString().length());
+      String line = edvec.at(fileposy).toString();
+      fileposx = inrange(newx, 0, line.length());
+      // Snap to grapheme cluster boundary so cursor never lands
+      // in the middle of a surrogate pair or combining sequence.
+      if (fileposx > 0 && fileposx < line.length()) {
+         java.text.BreakIterator bi =
+            java.text.BreakIterator.getCharacterInstance();
+         bi.setText(line);
+         if (!bi.isBoundary(fileposx))
+            fileposx = bi.preceding(fileposx);
+      }
       if (vis)
          vi.cursorChanged(fileposx, fileposy);
    }
@@ -877,27 +957,42 @@ public final class FvContext<OType> implements Serializable {
       String line = at().toString();
       String deleted = null;
 
-      // Thread.dumpStack();
-
       // trace("count = " + count + " llen = " + line.length());
 
       if (line.length() == insertx() && reversable)
          forward = false;
+
+      java.text.BreakIterator bi =
+         java.text.BreakIterator.getCharacterInstance();
+      bi.setText(line);
+
       if (forward) {
-         if (insertx() + count > line.length())
-            count = line.length() - insertx();
-         deleted = line.substring(insertx(), insertx() + count);
+         // Expand count to cover full grapheme clusters
+         int end = insertx();
+         for (int i = 0; i < count && end < line.length(); i++) {
+            int next = bi.following(end);
+            if (next == java.text.BreakIterator.DONE)
+               break;
+            end = next;
+         }
+         deleted = line.substring(insertx(), end);
          line = line.substring(0, insertx())
-               + line.substring(insertx() + count, line.length());
+               + line.substring(end, line.length());
       } else {
-         if (insertx() < count)
-            count = insertx();
-         if (0 == count)
+         // Expand count backward to cover full grapheme clusters
+         int start = insertx();
+         for (int i = 0; i < count && start > 0; i++) {
+            int prev = bi.preceding(start);
+            if (prev == java.text.BreakIterator.DONE)
+               break;
+            start = prev;
+         }
+         if (start == insertx())
             return;
-         deleted = line.substring(insertx() - count, insertx());
-         line = line.substring(0, insertx() - count)
+         deleted = line.substring(start, insertx());
+         line = line.substring(0, start)
                + line.substring(insertx(), line.length());
-         cursorx(-count);
+         cursor2abs(start, fileposy);
       }
       Buffers.deleted(bufid, deleted);
       changeElementStr(line);

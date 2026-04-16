@@ -18,6 +18,8 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
 
 import java.util.concurrent.TimeUnit;
 
@@ -342,7 +344,7 @@ final class OldView extends AwtView {
       }
       int newx = 0 == charoff
             ? 0
-            : fontm.stringWidth(nline.substring(0, charoff));
+            : measureWidth(nline.substring(0, charoff));
 
       // trace("nXchange = " + nXchange + " charoff " + charoff + " newx " + newx);
       setFilePos(nXchange + getfileX(), newY);
@@ -382,7 +384,7 @@ final class OldView extends AwtView {
             }
          }
          if (0 != charoff)
-            newx = fontm.stringWidth(nline.substring(0, charoff));
+            newx = measureWidth(nline.substring(0, charoff));
       }
 
       saveScreenX = newx;
@@ -567,7 +569,7 @@ final class OldView extends AwtView {
          if (-1 != tabOffset)
             iString = DeTabber.deTab(iString, tabOffset, tabStop, new int[1]);
          // trace("stringWidth " + fontm.stringWidth(iString) + " iString:" + iString);
-         cx += fontm.stringWidth(iString);
+         cx += measureWidth(iString);
       }
       int rx = cx - 1;
       int ry = (screenposy) * (charheight) - 1;
@@ -586,42 +588,92 @@ final class OldView extends AwtView {
       return new Rectangle(rx, ry, rwidth, rheight);
    }
 
+   /**
+    * Convert a pixel x-position to a character offset in the
+    * line. Uses BreakIterator to iterate by grapheme clusters
+    * so the result always lands on a cluster boundary (never
+    * in the middle of a surrogate pair or ZWJ sequence).
+    */
    int charOffset(String line, int xpos) {
+      java.text.BreakIterator bi =
+         java.text.BreakIterator.getCharacterInstance();
+      bi.setText(line);
       int charguess = xpos / charwidth;
-      // trace("charOffset xpos " + xpos + " line:" + line + " chargues = " +
-      // charguess);
       if (charguess > line.length())
          charguess = line.length();
-      int xguess = fontm.stringWidth(line.substring(0, charguess));
+      // Snap initial guess to grapheme cluster boundary
+      if (charguess > 0 && charguess < line.length()
+            && !bi.isBoundary(charguess)) {
+         int snap = bi.preceding(charguess);
+         if (snap != java.text.BreakIterator.DONE)
+            charguess = snap;
+      }
+      int xguess = measureWidth(
+         line.substring(0, charguess));
       int lastxguess = xguess;
-      // trace("guess1 = " + charguess);
       if (xpos < xguess) {
+         int rightPos = charguess;
          while (xpos < xguess) {
             if (charguess <= 0)
                break;
-            charguess--;
+            rightPos = charguess;
             lastxguess = xguess;
-            xguess = fontm.stringWidth(line.substring(0, charguess));
-            // trace("guess2 = " + charguess + " xguess " + xguess + " lastxguess " +
-            // lastxguess);
+            int prev = bi.preceding(charguess);
+            if (prev == java.text.BreakIterator.DONE)
+               break;
+            charguess = prev;
+            xguess = measureWidth(
+               line.substring(0, charguess));
          }
          return (xpos - xguess) <= (lastxguess - xpos)
                ? charguess
-               : charguess + 1;
+               : rightPos;
       } else {
+         int leftPos = charguess;
          while (xpos > xguess) {
             if (charguess >= line.length())
                break;
-            charguess++;
+            leftPos = charguess;
             lastxguess = xguess;
-            xguess = fontm.stringWidth(line.substring(0, charguess));
-            // trace("guess3 = " + charguess + " xguess " + xguess + " lastxguess " +
-            // lastxguess);
+            int next = bi.following(charguess);
+            if (next == java.text.BreakIterator.DONE)
+               break;
+            charguess = next;
+            xguess = measureWidth(
+               line.substring(0, charguess));
          }
          return (xguess - xpos) <= (xpos - lastxguess)
                ? charguess
-               : charguess - 1;
+               : leftPos;
       }
+   }
+
+   /**
+    * Check if a string contains any surrogate pairs (emoji, supplementary).
+    */
+   private static boolean hasSurrogates(String s) {
+      for (int i = 0; i < s.length(); i++) {
+         if (Character.isHighSurrogate(s.charAt(i)))
+            return true;
+      }
+      return false;
+   }
+
+   /**
+    * Measure the advance width of a string. Uses TextLayout when
+    * surrogate pairs are present so that font substitution (emoji
+    * fallback fonts) is accounted for. Falls back to the faster
+    * FontMetrics.stringWidth() for plain ASCII/BMP-only text.
+    */
+   private int measureWidth(String s) {
+      if (s.isEmpty())
+         return 0;
+      if (!hasSurrogates(s))
+         return fontm.stringWidth(s);
+      FontRenderContext frc =
+         new FontRenderContext(null, true, true);
+      TextLayout tl = new TextLayout(s, activeFont, frc);
+      return Math.round(tl.getAdvance());
    }
 
    private int tcharOffset(String line, int xpos) {

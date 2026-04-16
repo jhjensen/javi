@@ -463,7 +463,7 @@ final class MoveGroup extends Rgroup {
       String line = fvc.at().toString();
       for (int xindex = fvc.insertx() + 1; xindex < line.length(); xindex++)
          if (line.charAt(xindex) == findchar) {
-            fvc.cursorx(xindex - fvc.insertx());
+            fvc.cursorxabs(xindex);
             return;
          }
    }
@@ -472,7 +472,7 @@ final class MoveGroup extends Rgroup {
       String line = fvc.at().toString();
       for (int xindex = fvc.insertx() - 1; xindex >= 0; xindex--)
          if (line.charAt(xindex) == findchar) {
-            fvc.cursorx(xindex - fvc.insertx());
+            fvc.cursorxabs(xindex);
             return;
          }
    }
@@ -481,7 +481,7 @@ final class MoveGroup extends Rgroup {
       String line = fvc.at().toString();
       for (int xindex = fvc.insertx() + 2; xindex < line.length(); xindex++)
          if (line.charAt(xindex) == findchar) {
-            fvc.cursorx(xindex - fvc.insertx() - 1);
+            fvc.cursorxabs(xindex - 1);
             return;
          }
    }
@@ -490,7 +490,7 @@ final class MoveGroup extends Rgroup {
       String line = fvc.at().toString();
       for (int xindex = fvc.insertx() - 2; xindex >= 0; xindex--)
          if (line.charAt(xindex) == findchar) {
-            fvc.cursorx(xindex - fvc.insertx() + 1);
+            fvc.cursorxabs(xindex + 1);
             return;
          }
    }
