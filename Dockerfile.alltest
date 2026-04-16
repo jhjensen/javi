@@ -34,6 +34,9 @@ COPY gradlew build.gradle ./
 COPY gradle/ gradle/
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 
+# Cache-bust: ARG changes when source files are newer than Dockerfile
+ARG SRC_HASH=0
+
 # Copy source and test files
 COPY src/ src/
 

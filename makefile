@@ -204,9 +204,11 @@ ALLTEST_IMAGE = javi-alltest
 rdesk-alltest: rdesk-guitest-sync rdesk-alltest-build rdesk-alltest-run rdesk-guitest-fetch
 
 # Build all-test Docker image on rdesk
+# Use --build-arg to bust Docker layer cache when source changes
 rdesk-alltest-build: rdesk-guitest-sync
 	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
-	   docker build -f Dockerfile.alltest -t $(ALLTEST_IMAGE) .'
+	   docker build --build-arg SRC_HASH=$$(find src -type f -newer Dockerfile.alltest -print | wc -l) \
+	      -f Dockerfile.alltest -t $(ALLTEST_IMAGE) .'
 
 # Run ALL tests on rdesk via Docker
 rdesk-alltest-run: rdesk-alltest-build
