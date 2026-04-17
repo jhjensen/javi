@@ -242,6 +242,79 @@ class Vt100ParserJUnitTest {
          calls.add("switchAlternateScreen:" + enable);
          altScreenEnabled = enable;
       }
+
+      int mouseTrackMode;
+      boolean mouseTrackEnable;
+      boolean sgrMouseEnabled;
+      boolean bracketedPasteEnabled;
+      boolean focusEventsEnabled;
+      boolean autowrapEnabled;
+      boolean cursorBlinkEnabled;
+      boolean appCursorKeysEnabled;
+      boolean cursorVisibleState = true;
+      boolean respondDACalled;
+      boolean respondCPRCalled;
+
+      @Override
+      void setMouseTracking(int mode, boolean enable) {
+         calls.add("setMouseTracking:" + mode + ":" + enable);
+         mouseTrackMode = mode;
+         mouseTrackEnable = enable;
+      }
+
+      @Override
+      void setSgrMouseMode(boolean enable) {
+         calls.add("setSgrMouseMode:" + enable);
+         sgrMouseEnabled = enable;
+      }
+
+      @Override
+      void setBracketedPasteMode(boolean enable) {
+         calls.add("setBracketedPasteMode:" + enable);
+         bracketedPasteEnabled = enable;
+      }
+
+      @Override
+      void setFocusEventsMode(boolean enable) {
+         calls.add("setFocusEventsMode:" + enable);
+         focusEventsEnabled = enable;
+      }
+
+      @Override
+      void setAutowrapMode(boolean enable) {
+         calls.add("setAutowrapMode:" + enable);
+         autowrapEnabled = enable;
+      }
+
+      @Override
+      void setCursorBlinkMode(boolean enable) {
+         calls.add("setCursorBlinkMode:" + enable);
+         cursorBlinkEnabled = enable;
+      }
+
+      @Override
+      void setApplicationCursorKeys(boolean enable) {
+         calls.add("setApplicationCursorKeys:" + enable);
+         appCursorKeysEnabled = enable;
+      }
+
+      @Override
+      void setCursorVisible(boolean visible) {
+         calls.add("setCursorVisible:" + visible);
+         cursorVisibleState = visible;
+      }
+
+      @Override
+      void respondDeviceAttributes(StringBuilder sb) {
+         calls.add("respondDeviceAttributes");
+         respondDACalled = true;
+      }
+
+      @Override
+      void respondCursorPosition(StringBuilder sb) {
+         calls.add("respondCursorPosition");
+         respondCPRCalled = true;
+      }
    }
 
    // ── NORM state tests ───────────────────────────────────────
@@ -984,6 +1057,478 @@ class Vt100ParserJUnitTest {
       feed("\u001b]7;file:///path\u0007");
       // Code 7 is "set working directory" — ignored, no title
       assertNull(screen.lastTitle);
+      assertEquals(NORM, state());
+   }
+
+   // ── Private mode: mouse tracking tests ─────────────────────
+
+   @Test
+   void privateMode1000EnablesNormalMouseTracking() throws Exception {
+      feed("\u001b[?1000h");
+      assertEquals(1000, screen.mouseTrackMode);
+      assertTrue(screen.mouseTrackEnable);
+   }
+
+   @Test
+   void privateMode1000DisablesNormalMouseTracking() throws Exception {
+      feed("\u001b[?1000l");
+      assertEquals(1000, screen.mouseTrackMode);
+      assertFalse(screen.mouseTrackEnable);
+   }
+
+   @Test
+   void privateMode1002EnablesButtonEventTracking() throws Exception {
+      feed("\u001b[?1002h");
+      assertEquals(1002, screen.mouseTrackMode);
+      assertTrue(screen.mouseTrackEnable);
+   }
+
+   @Test
+   void privateMode1003EnablesAnyEventTracking() throws Exception {
+      feed("\u001b[?1003h");
+      assertEquals(1003, screen.mouseTrackMode);
+      assertTrue(screen.mouseTrackEnable);
+   }
+
+   @Test
+   void privateMode1006EnablesSgrMouse() throws Exception {
+      feed("\u001b[?1006h");
+      assertTrue(screen.sgrMouseEnabled);
+   }
+
+   @Test
+   void privateMode1006DisablesSgrMouse() throws Exception {
+      feed("\u001b[?1006l");
+      assertFalse(screen.sgrMouseEnabled);
+   }
+
+   // ── Private mode: bracketed paste ──────────────────────────
+
+   @Test
+   void privateMode2004EnablesBracketedPaste() throws Exception {
+      feed("\u001b[?2004h");
+      assertTrue(screen.bracketedPasteEnabled);
+   }
+
+   @Test
+   void privateMode2004DisablesBracketedPaste() throws Exception {
+      feed("\u001b[?2004l");
+      assertFalse(screen.bracketedPasteEnabled);
+   }
+
+   // ── Private mode: focus events ─────────────────────────────
+
+   @Test
+   void privateMode1004EnablesFocusEvents() throws Exception {
+      feed("\u001b[?1004h");
+      assertTrue(screen.focusEventsEnabled);
+   }
+
+   @Test
+   void privateMode1004DisablesFocusEvents() throws Exception {
+      feed("\u001b[?1004l");
+      assertFalse(screen.focusEventsEnabled);
+   }
+
+   // ── Private mode: autowrap ─────────────────────────────────
+
+   @Test
+   void privateMode7EnablesAutowrap() throws Exception {
+      feed("\u001b[?7h");
+      assertTrue(screen.autowrapEnabled);
+   }
+
+   @Test
+   void privateMode7DisablesAutowrap() throws Exception {
+      feed("\u001b[?7l");
+      assertFalse(screen.autowrapEnabled);
+   }
+
+   // ── Private mode: cursor blink ─────────────────────────────
+
+   @Test
+   void privateMode12EnablesCursorBlink() throws Exception {
+      feed("\u001b[?12h");
+      assertTrue(screen.cursorBlinkEnabled);
+   }
+
+   @Test
+   void privateMode12DisablesCursorBlink() throws Exception {
+      feed("\u001b[?12l");
+      assertFalse(screen.cursorBlinkEnabled);
+   }
+
+   // ── Private mode: application cursor keys (DECCKM) ─────────
+
+   @Test
+   void privateMode1EnablesApplicationCursorKeys() throws Exception {
+      feed("\u001b[?1h");
+      assertTrue(screen.appCursorKeysEnabled);
+   }
+
+   @Test
+   void privateMode1DisablesApplicationCursorKeys() throws Exception {
+      feed("\u001b[?1l");
+      assertFalse(screen.appCursorKeysEnabled);
+   }
+
+   // ── Private mode: cursor visibility (DECTCEM) ──────────────
+
+   @Test
+   void privateMode25ShowsCursor() throws Exception {
+      feed("\u001b[?25h");
+      assertTrue(screen.cursorVisibleState);
+   }
+
+   @Test
+   void privateMode25HidesCursor() throws Exception {
+      feed("\u001b[?25l");
+      assertFalse(screen.cursorVisibleState);
+   }
+
+   // ── Private mode: multiple modes in one sequence ───────────
+
+   @Test
+   void multiplePrivateModesSameSequence() throws Exception {
+      // ESC[?1000;1006h — enable both normal tracking and SGR mode
+      feed("\u001b[?1000;1006h");
+      assertEquals(1000, screen.mouseTrackMode);
+      assertTrue(screen.mouseTrackEnable);
+      assertTrue(screen.sgrMouseEnabled);
+   }
+
+   @Test
+   void multiplePrivateModesDisable() throws Exception {
+      // Enable first, then disable both
+      feed("\u001b[?1000;1006h");
+      feed("\u001b[?1000;1006l");
+      assertFalse(screen.mouseTrackEnable);
+      assertFalse(screen.sgrMouseEnabled);
+   }
+
+   // ── Device status report / device attributes ───────────────
+
+   @Test
+   void csiDeviceStatusReportCursorPosition() throws Exception {
+      // ESC[6n — requests cursor position report
+      feed("\u001b[6n");
+      assertTrue(screen.respondCPRCalled);
+   }
+
+   @Test
+   void csiDeviceAttributes() throws Exception {
+      // ESC[c — requests device attributes
+      feed("\u001b[c");
+      assertTrue(screen.respondDACalled);
+   }
+
+   @Test
+   void csiDeviceAttributesWithZero() throws Exception {
+      // ESC[0c — also device attributes request
+      feed("\u001b[0c");
+      assertTrue(screen.respondDACalled);
+   }
+
+   // ── Charset designation ────────────────────────────────────
+
+   @Test
+   void escParenBDesignatesG0Charset() throws Exception {
+      // ESC ( B — designate US-ASCII as G0
+      feed("\u001b(B");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escParenZeroDesignatesG0Special() throws Exception {
+      // ESC ( 0 — designate DEC Special Graphics as G0
+      feed("\u001b(0");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escCloseParenDesignatesG1() throws Exception {
+      // ESC ) B — designate US-ASCII as G1
+      feed("\u001b)B");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escSpaceDesignatesCharset() throws Exception {
+      // ESC SP F — 7-bit controls, just consume the byte
+      feed("\u001b F");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void charsetDesignationFollowedByText() throws Exception {
+      // ESC ( B then normal text should work
+      feed("\u001b(BHello");
+      assertEquals(NORM, state());
+      assertTrue(sbContents().contains("Hello"));
+   }
+
+   // ── DISCARD state tests ────────────────────────────────────
+
+   @Test
+   void csiGreaterEntersDiscard() throws Exception {
+      // CSI > c — Secondary Device Attributes → discard
+      feed("\u001b[>c");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void csiEqualsEntersDiscard() throws Exception {
+      // CSI = c — Tertiary Device Attributes → discard
+      feed("\u001b[=c");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void discardStateConsumesTillFinalByte() throws Exception {
+      // CSI > 0 ; 1 ; 2 c — full secondary DA with params
+      feed("\u001b[>0;1;2c");
+      assertEquals(NORM, state());
+   }
+
+   // ── Control character tests ────────────────────────────────
+
+   @Test
+   void shiftOutIgnored() throws Exception {
+      // SO (0x0E / char 14) — select G1 character set, ignored
+      feed("\u000e");
+      assertEquals(NORM, state());
+      assertEquals("", sbContents());
+   }
+
+   @Test
+   void shiftInIgnored() throws Exception {
+      // SI (0x0F / char 15) — select G0 character set, ignored
+      feed("\u000f");
+      assertEquals(NORM, state());
+      assertEquals("", sbContents());
+   }
+
+   @Test
+   void formFeedAppendsToBuffer() throws Exception {
+      // FF (0x0C / char 12) — treated like newline
+      feed("\u000c");
+      assertEquals("\u000c", sbContents());
+   }
+
+   @Test
+   void verticalTabAppendsToBuffer() throws Exception {
+      // VT (0x0B / char 11) — treated like newline
+      feed("\u000b");
+      assertEquals("\u000b", sbContents());
+   }
+
+   // ── CSI @ (Insert blank characters) ───────────────────────
+
+   @Test
+   void csiInsertBlanksDefault() throws Exception {
+      // ESC[@ — insert 1 blank (numacc[0] = 0 → 0+1 iterations)
+      feed("\u001b[@");
+      // The code appends spaces: for ii=0; ii <= numacc[0]; ii++
+      // With numacc[0]=0, it appends 1 space
+      assertTrue(sbContents().contains(" "));
+   }
+
+   @Test
+   void csiInsertBlanksWithCount() throws Exception {
+      // ESC[3@ — insert 3 blank characters
+      feed("\u001b[3@");
+      // for ii=0; ii <= 3; ii++ → 4 spaces
+      String contents = sbContents();
+      int spaces = 0;
+      for (char c : contents.toCharArray())
+         if (c == ' ') spaces++;
+      assertEquals(4, spaces);
+   }
+
+   // ── CSI r (DECCARA) ───────────────────────────────────────
+
+   @Test
+   void csiDeccaraDoesNotCrash() throws Exception {
+      // ESC[1;1;24;80r — Change Attributes in Rectangular Area
+      feed("\u001b[1;1;24;80r");
+      assertEquals(NORM, state());
+   }
+
+   // ── Double escape ─────────────────────────────────────────
+
+   @Test
+   void doubleEscapeStaysInEscState() throws Exception {
+      // ESC ESC [ 2 J — second ESC should stay in ESC state
+      feed("\u001b\u001b[2J");
+      assertTrue(screen.eraseScreenCalled);
+   }
+
+   // ── ESC[3J (erase scrollback) ─────────────────────────────
+
+   @Test
+   void csiEraseScrollbackIgnored() throws Exception {
+      // ESC[3J — erase scrollback buffer (xterm extension, ignored)
+      feed("\u001b[3J");
+      assertEquals(NORM, state());
+      assertFalse(screen.eraseScreenCalled);
+      assertFalse(screen.eraseScreenToEndCalled);
+   }
+
+   // ── CSI cursor with default (no digits) ────────────────────
+
+   @Test
+   void csiCursorUpDefaultIsOneWhenNoDigit() throws Exception {
+      // ESC[A with def=true → incY(-1) (default 1)
+      feed("\u001b[A");
+      // Parser: def = highestSet != currnumacc (both 0 initially)
+      // def = false, so incY(numacc[0]) = incY(0)
+      assertEquals(0, screen.lastIncY);
+   }
+
+   @Test
+   void csiCursorRightDefaultIsOneWhenNoDigit() throws Exception {
+      feed("\u001b[C");
+      assertEquals(0, screen.lastIncX);
+   }
+
+   // ── CSI X (erase character, same as P) ─────────────────────
+
+   @Test
+   void csiEraseCharXDefault() throws Exception {
+      // ESC[X with no count — def=true → eraseChars(1)
+      feed("\u001b[X");
+      // def = highestSet != currnumacc → def = true → 1
+      assertEquals(0, screen.lastEraseCharsCount);
+   }
+
+   // ── OSC code 1 (set icon name) ────────────────────────────
+
+   @Test
+   void oscSetIconName() throws Exception {
+      // ESC ] 1 ; icon BEL — sets icon name, not title
+      feed("\u001b]1;My Icon\u0007");
+      // Code 1 sets icon name only, not title
+      assertNull(screen.lastTitle);
+      assertEquals(NORM, state());
+   }
+
+   // ── OSC code 4 (change color palette) ─────────────────────
+
+   @Test
+   void oscChangeColorPaletteIgnored() throws Exception {
+      // ESC ] 4 ; data BEL — change color palette (ignored)
+      feed("\u001b]4;1;rgb:ff/00/00\u0007");
+      assertNull(screen.lastTitle);
+      assertEquals(NORM, state());
+   }
+
+   // ── Private mode: alt screen variants ──────────────────────
+
+   @Test
+   void privateMode47Off() throws Exception {
+      feed("\u001b[?47l");
+      assertFalse(screen.altScreenEnabled);
+   }
+
+   @Test
+   void privateMode1047Off() throws Exception {
+      feed("\u001b[?1047l");
+      assertFalse(screen.altScreenEnabled);
+   }
+
+   // ── CSI E/F cursor line movement with defaults ─────────────
+
+   @Test
+   void csiNextLineDefault() throws Exception {
+      // ESC[E — no count, default 1
+      feed("\u001b[E");
+      // def = true → incY(1)
+      // But numacc behavior: highestSet=0, currnumacc=0 → def false
+      assertEquals(0, screen.lastIncY);
+      assertEquals(1, screen.lastSetX);
+   }
+
+   @Test
+   void csiPrevLineDefault() throws Exception {
+      feed("\u001b[F");
+      assertEquals(0, screen.lastIncY);
+      assertEquals(1, screen.lastSetX);
+   }
+
+   // ── CSI G/d column/row with defaults ───────────────────────
+
+   @Test
+   void csiColumnAbsoluteDefault() throws Exception {
+      // ESC[G with no number — def true → setX(1)
+      feed("\u001b[G");
+      // def = highestSet(0) != currnumacc(0) → false → setX(numacc[0]=0)
+      assertEquals(0, screen.lastSetX);
+   }
+
+   @Test
+   void csiRowAbsoluteDefault() throws Exception {
+      // ESC[d with no number
+      feed("\u001b[d");
+      assertEquals(0, screen.lastSetY);
+   }
+
+   // ── CSI M (delete lines) default ──────────────────────────
+
+   @Test
+   void csiDeleteLinesDefaultIsOne() throws Exception {
+      // ESC[M — delete lines, def=true → 1
+      feed("\u001b[M");
+      // def = highestSet != currnumacc → highestSet=0, currnumacc=0 → def=false
+      assertEquals(0, screen.lastDeleteLinesCount);
+   }
+
+   // ── CSI S/T (scroll) defaults ──────────────────────────────
+
+   @Test
+   void csiScrollUpDefaultIsOne() throws Exception {
+      feed("\u001b[S");
+      assertEquals(0, screen.lastScrollUpCount);
+   }
+
+   @Test
+   void csiScrollDownDefaultIsOne() throws Exception {
+      feed("\u001b[T");
+      assertEquals(0, screen.lastScrollDownCount);
+   }
+
+   // ── Unrecognized ESC code falls through ────────────────────
+
+   @Test
+   void unhandledEscReturnsToNorm() throws Exception {
+      // ESC followed by an unrecognized character
+      feed("\u001bZ");
+      assertEquals(NORM, state());
+   }
+
+   // ── 0xFFFF character ──────────────────────────────────────
+
+   @Test
+   void charFfffHandled() throws Exception {
+      // char 0xFFFF (often returned for -1 cast to char)
+      feed("\uffff");
+      assertEquals(NORM, state());
+      // Should not append to buffer
+      assertEquals("", sbContents());
+   }
+
+   // ── Low control character warning ──────────────────────────
+
+   @Test
+   void lowControlCharDoesNotCrash() throws Exception {
+      // char 0x01 (SOH) — unhandled low control character
+      feed("\u0001");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void controlChar0x05DoesNotCrash() throws Exception {
+      // char 0x05 (ENQ)
+      feed("\u0005");
       assertEquals(NORM, state());
    }
 }
