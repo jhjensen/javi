@@ -10,7 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javi.Command;
+import javi.DirEdit;
 import javi.EditContainer;
+import javi.FileList;
 import javi.FoldModel;
 import javi.FvContext;
 import javi.InputException;
@@ -75,6 +77,9 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static final Map<String, List<String>> logDiffCache =
       new java.util.HashMap<>();
 
+   /** Extra arguments for the current git log session (e.g. path filter). */
+   private static String[] logExtraArgs;
+
    public GitCommands() {
       final String[] rnames = {
          "",
@@ -135,7 +140,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             gitDiff(arg, fvc);
             return null;
          case 6:
-            gitLog(fvc);
+            gitLog(arg, fvc);
             return null;
          case 7:
             gitBranch(fvc);
@@ -318,18 +323,28 @@ public final class GitCommands extends Rgroup implements Plugin {
     * Show git log in a text buffer for in-editor navigation.
     * Graph window is disabled; use :git_show / :git_log_diff
     * to inspect individual commits.
+    *
+    * <p>Optional argument is appended to the git log command.
+    * For example, {@code :git_log -- path/to/file} restricts
+    * the log to a single file.  If no argument is given, the
+    * log runs in the directory of the current file (or, when
+    * the current buffer is a file-list or directory browser,
+    * in the directory of the entry at the cursor).</p>
     */
-   private static void gitLog(FvContext fvc) throws
+   private static void gitLog(Object arg, FvContext fvc) throws
          IOException, InputException {
       java.io.File dir = getFileDir(fvc);
       logDir = dir;
       logPageSize = 100;
       logDiffExpanded.clear();
       logDiffCache.clear();
-      logLogLines = GitLogBuffer.getLogLines(logPageSize, dir);
+      logExtraArgs = parseLogArgs(arg);
+      logLogLines = GitLogBuffer.getLogLines(
+         logPageSize, dir, logExtraArgs);
       if (!logLogLines.isEmpty()) {
          logMessages =
-            GitLogBuffer.getCommitMessages(logPageSize, dir);
+            GitLogBuffer.getCommitMessages(
+               logPageSize, dir, logExtraArgs);
          List<int[]> foldRanges = new ArrayList<>();
          List<String> formatted =
             GitLogBuffer.buildFoldedLog(
@@ -350,11 +365,51 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Get the parent directory of the current file for git commands.
+    * Get the directory context for git commands.
     *
-    * @return the directory, or null if not a local file
+    * <p>When the current buffer is a DirEdit (directory browser),
+    * returns the directory of the entry at the cursor.  When the
+    * current buffer is the FileList, returns the directory of the
+    * file at the cursor.  Otherwise returns the parent directory
+    * of the current file.</p>
+    *
+    * @return the directory, or null if not determinable
     */
+   @SuppressWarnings("unchecked")
    private static java.io.File getFileDir(FvContext fvc) {
+      // DirEdit: use path of cursor entry
+      if (fvc.edvec instanceof DirEdit) {
+         DirEdit de = (DirEdit) fvc.edvec;
+         String fullPath = de.getFullPath(fvc.inserty());
+         if (fullPath != null) {
+            java.io.File f = new java.io.File(fullPath);
+            return f.isDirectory() ? f : f.getParentFile();
+         }
+         // Fall back to the directory being browsed
+         String dirName = de.fdes().getCanonName();
+         if (dirName != null)
+            return new java.io.File(dirName);
+         return null;
+      }
+      // FileList: use path of file at cursor
+      if (fvc.edvec instanceof FileList) {
+         FileList fl = (FileList) fvc.edvec;
+         int line = fvc.inserty();
+         if (line >= 1 && line < fl.finish()) {
+            EditContainer entry = fl.at(line);
+            if (entry != null) {
+               String entryPath = entry.fdes().getCanonName();
+               if (entryPath != null && !entryPath.startsWith("*")) {
+                  java.io.File ef = new java.io.File(entryPath);
+                  java.io.File ep = ef.getParentFile();
+                  if (ep != null && ep.isDirectory())
+                     return ep;
+               }
+            }
+         }
+         return null;
+      }
+      // Regular file: use its parent directory
       String path = fvc.edvec.fdes().getCanonName();
       if (path == null || path.startsWith("*"))
          return null;
@@ -363,6 +418,22 @@ public final class GitCommands extends Rgroup implements Plugin {
       if (parent != null && parent.isDirectory())
          return parent;
       return null;
+   }
+
+   /**
+    * Parse the optional argument to {@code :git_log} into an
+    * array of extra git arguments.  Splits on whitespace.
+    *
+    * @param arg the raw command argument, or null
+    * @return array of extra args, or null if none
+    */
+   private static String[] parseLogArgs(Object arg) {
+      if (null == arg)
+         return null;
+      String s = arg.toString().trim();
+      if (s.isEmpty())
+         return null;
+      return s.split("\\s+");
    }
 
    /**
@@ -686,9 +757,11 @@ public final class GitCommands extends Rgroup implements Plugin {
          throws IOException {
       logPageSize += 100;
       logLogLines =
-         GitLogBuffer.getLogLines(logPageSize, logDir);
+         GitLogBuffer.getLogLines(
+            logPageSize, logDir, logExtraArgs);
       logMessages =
-         GitLogBuffer.getCommitMessages(logPageSize, logDir);
+         GitLogBuffer.getCommitMessages(
+            logPageSize, logDir, logExtraArgs);
    }
 
    /**

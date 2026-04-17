@@ -653,7 +653,7 @@ public final class DirEdit extends TextEdit<String> {
     * @param lineNum the line number
     * @return the full path, or null if not a file entry line
     */
-   String getFullPath(int lineNum) {
+   public String getFullPath(int lineNum) {
       String filename = getFilename(lineNum);
       if (null == filename) {
          return null;
