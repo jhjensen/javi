@@ -138,13 +138,16 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git_stage_hunk",
          "git_unstage_hunk",
          "git_patch",
+         "git_goto_file",
+         "git_amend",
       };
       register(rnames);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
-      if (!GitProcess.isGitRepo()) {
+      java.io.File dir = getFileDir(fvc);
+      if (!GitProcess.isGitRepo(dir)) {
          UI.reportMessage("Not a git repository");
          return null;
       }
@@ -250,6 +253,12 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 34:
             gitPatch(arg, fvc);
+            return null;
+         case 35:
+            gitGotoFile(fvc);
+            return null;
+         case 36:
+            gitAmend(fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -722,6 +731,7 @@ public final class GitCommands extends Rgroup implements Plugin {
    /**
     * Stage the diff hunk at the cursor position in the patch buffer.
     * The cursor must be within a hunk (on or below an {@code @@} line).
+    * After a successful stage, the cursor advances to the next hunk.
     */
    private static void gitStageHunk(FvContext fvc) throws
          IOException, InputException {
@@ -745,6 +755,8 @@ public final class GitCommands extends Rgroup implements Plugin {
             List<String> lines = GitStatusBuffer.getStatusLines();
             statusBuffer = createBuffer("*git-status*", lines);
          }
+         // Advance cursor to the next hunk
+         advanceToNextHunk(fvc, hunk);
       } else {
          UI.reportMessage("Stage failed: " + err);
       }
@@ -776,6 +788,26 @@ public final class GitCommands extends Rgroup implements Plugin {
          }
       } else {
          UI.reportMessage("Unstage failed: " + err);
+      }
+   }
+
+   /**
+    * Move the cursor to the start of the next hunk after the given one.
+    * If there is no next hunk, stay at the current position.
+    *
+    * @param fvc current view context
+    * @param current the hunk just processed
+    */
+   private static void advanceToNextHunk(FvContext fvc,
+         GitHunkStaging.Hunk current) {
+      if (patchHunks == null)
+         return;
+      for (GitHunkStaging.Hunk h : patchHunks) {
+         if (h.index == current.index + 1) {
+            // +2 accounts for the 2-line header in formatAnnotatedDiff
+            fvc.cursoryabs(h.bufferLine + 2);
+            return;
+         }
       }
    }
 
@@ -970,11 +1002,13 @@ public final class GitCommands extends Rgroup implements Plugin {
     * Finalize a commit using the message from the *git-commit* buffer.
     * Reads all non-comment, non-empty lines from the current buffer
     * as the commit message, then runs {@code git commit -m "message"}.
+    * Detects amend mode from the buffer name {@code *git-commit-amend*}.
     */
    @SuppressWarnings("unchecked") // FvContext raw type in Rgroup API
    private static void gitDoCommit(FvContext fvc) throws
          IOException, InputException {
       TextEdit<String> buf = fvc.edvec;
+      boolean amend = buf.toString().startsWith("*git-commit-amend*");
       StringBuilder msg = new StringBuilder();
       int size = buf.readIn();
       for (int i = 1; i < size; i++) {
@@ -990,9 +1024,16 @@ public final class GitCommands extends Rgroup implements Plugin {
          UI.reportMessage("Aborting: empty commit message");
          return;
       }
-      int rc = GitProcess.executeWithExitCode("commit", "-m", message);
+      int rc;
+      if (amend) {
+         rc = GitProcess.executeWithExitCode(
+            "commit", "--amend", "-m", message);
+      } else {
+         rc = GitProcess.executeWithExitCode("commit", "-m", message);
+      }
       if (0 == rc) {
-         UI.reportMessage("Committed: " + firstLine(message));
+         String verb = amend ? "Amended" : "Committed";
+         UI.reportMessage(verb + ": " + firstLine(message));
       } else {
          List<String> err = GitProcess.execute("commit", "-m", message);
          UI.reportMessage("Commit failed: " + String.join(" ", err));
@@ -1537,6 +1578,120 @@ public final class GitCommands extends Rgroup implements Plugin {
       public boolean fileDisposed(EditContainer ev) {
          return false;
       }
+   }
+
+   /**
+    * Navigate to the file and line referenced by the current cursor
+    * position in a diff/patch buffer.  Parses the {@code +++} header
+    * for the filename and the {@code @@} hunk header plus line offset
+    * for the target line number.
+    */
+   @SuppressWarnings("unchecked")
+   private static void gitGotoFile(FvContext fvc) throws
+         IOException, InputException {
+      TextEdit<String> buf = fvc.edvec;
+      int curLine = fvc.inserty();
+      // Walk backward to find +++ (filename) and @@ (hunk start)
+      String filepath = null;
+      int hunkNewStart = 0;
+      int hunkBodyStart = 0;
+      for (int i = curLine; i >= 1; i--) {
+         String line = buf.at(i).toString();
+         if (line.startsWith("@@ ") && hunkBodyStart == 0) {
+            hunkBodyStart = i + 1;
+            // Parse @@ -old,count +new,count @@
+            int plus = line.indexOf('+', 3);
+            if (plus >= 0) {
+               int comma = line.indexOf(',', plus);
+               int sp = line.indexOf(' ', plus);
+               int end = comma >= 0 && (sp < 0 || comma < sp)
+                  ? comma : sp;
+               if (end > plus)
+                  hunkNewStart = parseIntSafe(
+                     line.substring(plus + 1, end));
+            }
+         }
+         if (line.startsWith("+++ ") && filepath == null) {
+            // Strip b/ prefix from +++ b/path
+            filepath = line.substring(4).trim();
+            if (filepath.startsWith("b/"))
+               filepath = filepath.substring(2);
+            break;
+         }
+      }
+      if (filepath == null || filepath.equals("/dev/null")) {
+         throw new InputException("No file path found");
+      }
+      // Count new-file lines from hunk body start to cursor
+      int lineOffset = 0;
+      if (hunkBodyStart > 0) {
+         for (int i = hunkBodyStart; i <= curLine; i++) {
+            String line = buf.at(i).toString();
+            if (!line.startsWith("-"))
+               lineOffset++;
+         }
+      }
+      int targetLine = hunkNewStart + lineOffset;
+      if (targetLine < 1) targetLine = 1;
+
+      FvContext newFvc = FileList.openFileName(filepath, fvc.vi);
+      if (newFvc != null)
+         newFvc.cursoryabs(targetLine);
+   }
+
+   /**
+    * Parse an integer, returning 0 on failure.
+    */
+   private static int parseIntSafe(String s) {
+      try {
+         return Integer.parseInt(s.trim());
+      } catch (NumberFormatException e) {
+         return 0;
+      }
+   }
+
+   /**
+    * Switch the current commit buffer to amend mode.
+    * Prepopulates the commit message with the previous commit's
+    * message and marks the buffer for {@code git commit --amend}.
+    */
+   @SuppressWarnings("unchecked")
+   private static void gitAmend(FvContext fvc) throws
+         IOException, InputException {
+      // Get the last commit message
+      List<String> lastMsg = GitProcess.execute(
+         "log", "-1", "--pretty=%B");
+      // Get staged files for reference
+      List<String> staged = GitProcess.execute(
+         "diff", "--cached", "--stat");
+
+      java.util.ArrayList<String> lines = new java.util.ArrayList<>();
+      for (String m : lastMsg) {
+         lines.add(m);
+      }
+      lines.add("# Amend mode — :git_do_commit will amend the last commit");
+      lines.add("# Lines starting with '#' will be ignored.");
+      lines.add("#");
+      lines.add("# Changes to be committed:");
+      for (String s : staged) {
+         lines.add("#   " + s);
+      }
+      if (staged.isEmpty()) {
+         lines.add("#   (no new staged changes)");
+      }
+      // Show what the last commit already contained
+      List<String> prevStat = GitProcess.execute(
+         "diff", "--stat", "HEAD~1", "HEAD");
+      lines.add("#");
+      lines.add("# Previous commit:");
+      for (String s : prevStat) {
+         lines.add("#   " + s);
+      }
+
+      TextEdit<String> commitBuffer = createBuffer(
+         "*git-commit-amend*", lines);
+      FvContext.connectFv(commitBuffer, fvc.vi);
+      UI.reportMessage("Amend mode — edit message, then :git_do_commit");
    }
 
    /**

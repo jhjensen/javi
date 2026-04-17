@@ -294,7 +294,17 @@ final class KeyMap {
       gitstatusMap.bindEditKey('q', "nextfile", null);
       gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
       gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
+      gitstatusMap.bindEditKey('p', "git_patch", null);
+      gitstatusMap.bindEditKey('a', "git_amend", null);
       register(gitstatusMap);
+
+      // Git patch overlay: hunk staging with fugitive-style keys
+      KeyMap gitpatchMap = createOverlay("gitpatch", normalMap);
+      gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
+      gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitpatchMap.bindEditKey('q', "nextfile", null);
+      gitpatchMap.bindEditKey((char) 29, "git_goto_file", null); // ^]
+      register(gitpatchMap);
    }
 
    /**
@@ -313,10 +323,12 @@ final class KeyMap {
          return get("shell");
       // Git buffers identified by name
       String name = buffer.toString();
-      if ("*git-log*".equals(name))
+      if (name.startsWith("*git-log"))
          return get("gitlog");
       if ("*git-status*".equals(name))
          return get("gitstatus");
+      if ("*git-patch*".equals(name))
+         return get("gitpatch");
       return null;
    }
 

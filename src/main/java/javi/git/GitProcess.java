@@ -171,6 +171,34 @@ public final class GitProcess {
    }
 
    /**
+    * Check if the given directory is inside a git repository.
+    *
+    * @param dir directory to check, or null to use the JVM CWD
+    * @return true if inside a git repo
+    */
+   public static boolean isGitRepo(java.io.File dir) {
+      if (dir == null)
+         return isGitRepo();
+      try {
+         String[] cmd = {"git", "-C", dir.getAbsolutePath(),
+            "rev-parse", "--is-inside-work-tree"};
+         ProcessBuilder pb = new ProcessBuilder(cmd);
+         pb.redirectErrorStream(true);
+         Process proc = pb.start();
+         try (BufferedReader reader = new BufferedReader(
+               new InputStreamReader(proc.getInputStream(),
+                  StandardCharsets.UTF_8))) {
+            while (null != reader.readLine()) {
+               continue;
+            }
+            return 0 == proc.waitFor();
+         }
+      } catch (IOException | InterruptedException e) {
+         return false;
+      }
+   }
+
+   /**
     * Execute a git command, writing the given string to its stdin.
     *
     * @param stdinContent content to write to the process stdin

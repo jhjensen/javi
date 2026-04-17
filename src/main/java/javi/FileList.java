@@ -365,7 +365,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return null != ec;
    }
 
-   static FvContext openFileName(String fname, View vi) throws
+   public static FvContext openFileName(String fname, View vi) throws
          IOException, InputException  {
       return instance.open1File(fname, vi);
    }

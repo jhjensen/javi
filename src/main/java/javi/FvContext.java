@@ -847,7 +847,7 @@ public final class FvContext<OType> implements Serializable {
       return false;
    }
 
-   void cursoryabs(int y) {
+   public void cursoryabs(int y) {
       FoldModel fm = foldModel;
       if (fm != null && !fm.isEmpty() && fm.isFolded(y)) {
          FoldModel.FoldRange f = fm.findFold(y);
