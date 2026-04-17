@@ -8,7 +8,7 @@ import java.io.IOException;
  *
  * <p>Supports:</p>
  * <ul>
- *   <li>{@code .java} → jformat command (via plugin, e.g. JavaFormat)</li>
+ *   <li>{@code .java} → {@link ClangFormat} (clang-format with Java config)</li>
  *   <li>{@code .c .cc .cpp .cxx .h .hpp .hxx} → {@link ClangFormat}
  *       (clang-format)</li>
  * </ul>
@@ -86,20 +86,7 @@ public final class FormatDispatch extends Rgroup {
    static void formatRange(int startLine, int endLine, TextEdit ex) {
       String name = ex.getName();
       String type = detectFileType(name);
-      if ("java".equals(type)) {
-         Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformatr");
-         if (kb != null) {
-            try {
-               kb.dobind(startLine, endLine, FvContext.getCurrFvc(), false);
-            } catch (Exception e) {
-               UI.reportError("Java format: " + e.getMessage());
-            }
-         } else {
-            UI.reportMessage(
-               "Java formatter plugin not loaded"
-               + " (use :loadplugin JavaFormat)");
-         }
-      } else if ("cpp".equals(type)) {
+      if ("java".equals(type) || "cpp".equals(type)) {
          ClangFormat.format(startLine, endLine, ex);
       } else {
          UI.reportMessage("No formatter for: " + name);
@@ -115,20 +102,7 @@ public final class FormatDispatch extends Rgroup {
    static void formatAll(TextEdit ex) {
       String name = ex.getName();
       String type = detectFileType(name);
-      if ("java".equals(type)) {
-         Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
-         if (kb != null) {
-            try {
-               kb.dobind(0, 0, FvContext.getCurrFvc(), false);
-            } catch (Exception e) {
-               UI.reportError("Java format: " + e.getMessage());
-            }
-         } else {
-            UI.reportMessage(
-               "Java formatter plugin not loaded"
-               + " (use :loadplugin JavaFormat)");
-         }
-      } else if ("cpp".equals(type)) {
+      if ("java".equals(type) || "cpp".equals(type)) {
          ClangFormat.format(1, ex.readIn() - 1, ex);
       } else {
          UI.reportMessage("No formatter for: " + name);
