@@ -28,7 +28,8 @@ import java.util.regex.Pattern;
 public final class HelpSystem {
 
    /** The singleton help buffer. */
-   private static TextEdit<String> helpBuffer;
+   private static final HelpBuffer helpBuf =
+      new HelpBuffer("*help*");
 
    /** Private constructor to prevent instantiation. */
    private HelpSystem() {
@@ -41,12 +42,10 @@ public final class HelpSystem {
     * @return TextEdit buffer containing help content
     */
    public static TextEdit<String> getHelp(String topic) {
-      if (null == helpBuffer) {
-         createHelpBuffer();
-      }
+      helpBuf.ensure();
 
       // Clear and repopulate with requested topic
-      clearBuffer();
+      helpBuf.clear();
 
       String normalizedTopic = (null == topic || topic.isEmpty())
          ? "index"
@@ -134,7 +133,7 @@ public final class HelpSystem {
       }
 
       annotateBindingsInBuffer();
-      return helpBuffer;
+      return helpBuf.getBuffer();
    }
 
    /** Primary help topic names for tab completion. */
@@ -157,10 +156,8 @@ public final class HelpSystem {
     * @return TextEdit buffer containing formatted key bindings
     */
    public static TextEdit<String> getKeyBindings() {
-      if (null == helpBuffer) {
-         createHelpBuffer();
-      }
-      clearBuffer();
+      helpBuf.ensure();
+      helpBuf.clear();
       append("KEY BINDINGS");
       append("============");
       append("");
@@ -175,7 +172,7 @@ public final class HelpSystem {
          append("  (no bindings registered)");
       }
 
-      return helpBuffer;
+      return helpBuf.getBuffer();
    }
 
    /**
@@ -185,10 +182,8 @@ public final class HelpSystem {
     * @return TextEdit buffer containing bindings for the active keymap
     */
    public static TextEdit<String> getContextBindings(FvContext fvc) {
-      if (null == helpBuffer) {
-         createHelpBuffer();
-      }
-      clearBuffer();
+      helpBuf.ensure();
+      helpBuf.clear();
 
       KeyMap active = MapEvent.getActiveKeyMap(fvc);
       append("ACTIVE KEY BINDINGS");
@@ -237,7 +232,7 @@ public final class HelpSystem {
          append(line);
       }
 
-      return helpBuffer;
+      return helpBuf.getBuffer();
    }
 
    /**
@@ -251,10 +246,8 @@ public final class HelpSystem {
     * @return TextEdit buffer containing filtered bindings
     */
    public static TextEdit<String> getFilteredBindings(String keymapName) {
-      if (null == helpBuffer) {
-         createHelpBuffer();
-      }
-      clearBuffer();
+      helpBuf.ensure();
+      helpBuf.clear();
 
       KeyMap km = KeyMap.get(keymapName);
       if (km == null) {
@@ -262,7 +255,7 @@ public final class HelpSystem {
          append("");
          append("Registered keymaps: "
             + KeyMap.registeredNames());
-         return helpBuffer;
+         return helpBuf.getBuffer();
       }
 
       append("KEY BINDINGS: " + keymapName);
@@ -310,33 +303,22 @@ public final class HelpSystem {
             append("  (no bindings)");
       }
 
-      return helpBuffer;
+      return helpBuf.getBuffer();
    }
 
    /**
-    * Create the help buffer if it doesn't exist.
+    * Check if the given buffer is the static help buffer.
     */
-   private static void createHelpBuffer() {
-      StringIoc sio = new StringIoc("*help*", "");
-      helpBuffer = new TextEdit<>(sio, sio.prop);
-   }
-
-   /**
-    * Clear the help buffer content.
-    */
-   private static void clearBuffer() {
-      int finish = helpBuffer.finish();
-      if (finish > 2) {
-         // remove(startLine, numberOfLines) - keep the first empty line
-         helpBuffer.remove(1, finish - 2);
-      }
+   static boolean isHelpBuffer(EditContainer buf) {
+      return helpBuf.getBuffer() != null
+         && helpBuf.getBuffer() == buf;
    }
 
    /**
     * Append a line to the help buffer.
     */
    private static void append(String line) {
-      helpBuffer.insertOne(line, helpBuffer.finish());
+      helpBuf.append(line);
    }
 
    /** Pattern to match colon command references like :help, :shells, :mapkey */
@@ -362,15 +344,15 @@ public final class HelpSystem {
       if (reverseMap.isEmpty())
          return;
 
-      int end = helpBuffer.finish();
+      int end = helpBuf.getBuffer().finish();
       for (int i = 1; i < end; i++) {
-         String line = helpBuffer.at(i).toString();
+         String line = helpBuf.getBuffer().at(i).toString();
          String annotated = annotateLineBindings(line, reverseMap);
          if (annotated != null) {
-            helpBuffer.remove(i, 1);
-            helpBuffer.insertOne(annotated, i);
+            helpBuf.getBuffer().remove(i, 1);
+            helpBuf.getBuffer().insertOne(annotated, i);
             // re-fetch end since buffer was modified
-            end = helpBuffer.finish();
+            end = helpBuf.getBuffer().finish();
          }
       }
    }
@@ -442,7 +424,7 @@ public final class HelpSystem {
       append("  i a              Insert/Append text");
       append("  x dd             Delete char/line");
       append("  yy p             Yank (copy) and paste");
-      append("  u Ctrl-R         Undo/Redo");
+      append("  u ^R         Undo/Redo");
       append("  / ?              Search forward/backward");
       append("  :w :q            Save/Quit");
       append("  :e <file>        Edit file");
@@ -450,6 +432,7 @@ public final class HelpSystem {
       append("FUNCTION KEYS");
       append("-------------");
       append("  F1               Next position in position list");
+      append("  Shift-F1         Toggle context help panel");
       append("  F2               File list");
       append("  F3               Directory list");
       append("  F4               Font list");
@@ -458,7 +441,7 @@ public final class HelpSystem {
       append("  F7               Make (build)");
       append("  F8               Terminal (vt100)");
       append("  F11              Toggle fullscreen");
-      append("  Ctrl-L           Redraw screen");
+      append("  ^L           Redraw screen");
       append("");
       append("Type :help <topic> for more information on a topic.");
    }
@@ -499,10 +482,10 @@ public final class HelpSystem {
       append("  H                Top of screen");
       append("  M                Middle of screen");
       append("  L                Bottom of screen");
-      append("  Ctrl-F           Page forward");
-      append("  Ctrl-B           Page backward");
-      append("  Ctrl-D           Half page down");
-      append("  Ctrl-U           Half page up");
+      append("  ^F           Page forward");
+      append("  ^B           Page backward");
+      append("  ^D           Half page down");
+      append("  ^U           Half page up");
       append("");
       append("FILE MOVEMENT");
       append("-------------");
@@ -613,7 +596,7 @@ public final class HelpSystem {
       append("  ?<pattern>       Search backward for pattern");
       append("  n                Repeat search in same direction");
       append("  N                Repeat search in opposite direction");
-      append("  Ctrl-F3          Repeat search forward");
+      append("  ^F3          Repeat search forward");
       append("");
       append("PATTERNS");
       append("--------");
@@ -638,8 +621,8 @@ public final class HelpSystem {
       append("");
       append("TAGS");
       append("----");
-      append("  Ctrl-]           Jump to tag under cursor");
-      append("  Ctrl-T           Pop tag stack (return)");
+      append("  ^]           Jump to tag under cursor");
+      append("  ^T           Pop tag stack (return)");
       append("");
       append("Type :help for index.");
    }
@@ -665,13 +648,13 @@ public final class HelpSystem {
       append("BUFFER NAVIGATION");
       append("-----------------");
       append("  F2               Show file list");
-      append("  Ctrl-^           Switch to alternate file");
+      append("  ^^           Switch to alternate file");
       append("  :n               Next file in argument list");
       append("  :N               Previous file in argument list");
       append("");
       append("FILE INFO");
       append("---------");
-      append("  Ctrl-G           Show file status");
+      append("  ^G           Show file status");
       append("");
       append("DIRECTORY BROWSING");
       append("------------------");
@@ -777,9 +760,9 @@ public final class HelpSystem {
       append("COMMANDS");
       append("--------");
       append("  u                Undo last change");
-      append("  Ctrl-R           Redo last undone change");
-      append("  Ctrl-Z           Undo (alternate)");
-      append("  Ctrl-Y           Redo (alternate)");
+      append("  ^R           Redo last undone change");
+      append("  ^Z           Undo (alternate)");
+      append("  ^Y           Redo (alternate)");
       append("  U                Undo all changes on current line");
       append("");
       append("PERSISTENCE");
@@ -801,12 +784,12 @@ public final class HelpSystem {
       append("");
       append("SCROLLING");
       append("---------");
-      append("  Ctrl-F, Page Down   Scroll forward one page");
-      append("  Ctrl-B, Page Up     Scroll backward one page");
-      append("  Ctrl-D              Scroll down half page");
-      append("  Ctrl-U              Scroll up half page");
-      append("  Ctrl-E              Scroll down one line");
-      append("  Ctrl-Y              Scroll up one line");
+      append("  ^F, Page Down   Scroll forward one page");
+      append("  ^B, Page Up     Scroll backward one page");
+      append("  ^D              Scroll down half page");
+      append("  ^U              Scroll up half page");
+      append("  ^E              Scroll down one line");
+      append("  ^Y              Scroll up one line");
       append("");
       append("CURSOR POSITIONING");
       append("------------------");
@@ -822,7 +805,7 @@ public final class HelpSystem {
       append("");
       append("DISPLAY");
       append("-------");
-      append("  Ctrl-L           Redraw screen");
+      append("  ^L           Redraw screen");
       append("  F11              Toggle fullscreen");
       append("");
       append("RESIZING");
@@ -955,8 +938,8 @@ public final class HelpSystem {
       append("  j, Down          Move to next file");
       append("  k, Up            Move to previous file");
       append("  Enter, F1        Open file at cursor");
-      append("  Ctrl-F1          Open and wait for position list");
-      append("  Shift-F1         Open in split view");
+      append("  ^F1          Open and wait for position list");
+      append("  Shift-F1         Toggle context help panel");
       append("");
       append("FILE MANAGEMENT");
       append("---------------");

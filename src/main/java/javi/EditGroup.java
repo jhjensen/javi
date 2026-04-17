@@ -79,8 +79,37 @@ final class EditGroup extends Rgroup {
          "shiftmode",
          "tabfix"
       };
-
-      register(rnames);
+      final String[] descs = {
+         null,
+         "insert before cursor",
+         "insert at line start",
+         "append after cursor",
+         "append at line end",
+         "open line below",
+         "open line above",
+         "substitute character",
+         "substitute entire line",
+         "delete character(s)",
+         "delete to end of line",
+         "delete to end + insert",
+         "delete with motion",
+         "join lines",
+         "replace single character",
+         "toggle upper/lower case",
+         "change with motion",
+         "put (paste) before cursor",
+         "put (paste) after cursor",
+         "record/stop macro",
+         "yank with motion",
+         "yank (copy) line(s)",
+         "repeat last edit",
+         "visual selection mode",
+         null,
+         null,
+         "shift lines left/right",
+         "fix tabs in selection",
+      };
+      register(rnames, descs);
    }
 
    @SuppressWarnings("unchecked") // raw FvContext type
@@ -228,8 +257,10 @@ final class EditGroup extends Rgroup {
    private void shiftmode(int direction, int count, FvContext fvc,
          boolean dotmode, int rcount) throws
             InterruptedException, IOException, InputException {
-      if (!dotmode)
+      if (!dotmode) {
+         ContextHelp.onSubModeEntered("shiftmode");
          dotevent3 = EventQueue.nextKeye(fvc.vi);
+      }
       JeyEvent event = dotevent3;
 
       switch (event.getKeyChar()) {
@@ -263,24 +294,34 @@ final class EditGroup extends Rgroup {
 
    private int donex, markamount;
 
+   private int[] initMarkPos(FvContext fvc, boolean vMode) {
+      int xold = 0;
+      int yold = 0;
+      MovePos markpos = fvc.vi.getMark();
+      if (markpos == null) {
+         if (!vMode)
+            xold = fvc.insertx();
+         yold = fvc.inserty();
+         fvc.setMark();
+      } else {
+         xold = markpos.x;
+         yold = markpos.y;
+      }
+      return new int[]{xold, yold};
+   }
+
    @SuppressWarnings("unchecked") // raw FvContext type
    private void markmode(char bufid, boolean dotmode, int count,
          int rcount, FvContext fvc, boolean vMode) throws
          InputException, IOException, InterruptedException {
+      ContextHelp.onSubModeEntered("markmode");
       int starty, startx, doney;
       int xold = 0;
       int yold = 0;
       if (!dotmode) {
-         MovePos markpos = fvc.vi.getMark();
-         if (markpos == null) {
-            if (!vMode)
-               xold = fvc.insertx();
-            yold = fvc.inserty();
-            fvc.setMark();
-         } else {
-            xold = markpos.x;
-            yold = markpos.y;
-         }
+         int[] mp = initMarkPos(fvc, vMode);
+         xold = mp[0];
+         yold = mp[1];
       }
    out:
       try {
@@ -580,8 +621,10 @@ final class EditGroup extends Rgroup {
 
       // In DirEdit, 'dd' triggers file deletion instead of line deletion
       if (fvc.edvec instanceof DirEdit) {
-         if (!dotmode)
+         if (!dotmode) {
+            ContextHelp.onSubModeEntered("deletemode");
             dotevent3 = EventQueue.nextKeye(fvc.vi);
+         }
          if ('d' == dotevent3.getKeyChar()) {
             ((DirEdit) fvc.edvec).deleteSelected(fvc);
          }
@@ -591,8 +634,10 @@ final class EditGroup extends Rgroup {
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
-      if (!dotmode)
+      if (!dotmode) {
+         ContextHelp.onSubModeEntered("deletemode");
          dotevent3 = EventQueue.nextKeye(fvc.vi);
+      }
 
       JeyEvent event = dotevent3;
 
@@ -630,8 +675,10 @@ final class EditGroup extends Rgroup {
       int xold = fvc.insertx();
       int yold = fvc.inserty();
 
-      if (!dotmode)
+      if (!dotmode) {
+         ContextHelp.onSubModeEntered("yankmode");
          dotevent3 = EventQueue.nextKeye(fvc.vi);
+      }
 
       JeyEvent event =  dotevent3;
 
@@ -664,7 +711,7 @@ final class EditGroup extends Rgroup {
 
       JeyEvent event = dotmode
          ? dotevent3
-         : EventQueue.nextKeye(fvc.vi);
+         : changeNextKey(fvc);
 
       switch (event.getKeyChar())  {
          case 'c':
@@ -684,13 +731,21 @@ final class EditGroup extends Rgroup {
       }
    }
 
+   private JeyEvent changeNextKey(FvContext fvc) throws
+         InputException {
+      ContextHelp.onSubModeEntered("changemode");
+      return EventQueue.nextKeye(fvc.vi);
+   }
+
    private void subChar(boolean dotmode, int count, FvContext fvc) throws
       InputException {
 
-      if (!dotmode)
+      if (!dotmode) {
+         ContextHelp.onSubModeEntered("replacechar");
          do
             dotchar = EventQueue.nextKey(fvc.vi);
          while (dotchar  == JeyEvent.CHAR_UNDEFINED);
+      }
       if (27 == dotchar)
          return;
       String line = fvc.at().toString();

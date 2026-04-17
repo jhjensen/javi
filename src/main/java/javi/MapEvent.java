@@ -264,7 +264,8 @@ public final class MapEvent {
       km.bindEditAction(JeyEvent.VK_F1, "nextposwait",
          ff, CTRL_MASK);
       km.bindEditAction(JeyEvent.VK_F1, "nextpos", ff, 0);
-      km.bindEditAction(JeyEvent.VK_F1, "nextpos", tt, SHIFT_MASK);
+      km.bindEditAction(JeyEvent.VK_F1, "contexthelp",
+         null, SHIFT_MASK);
       km.bindEditAction(JeyEvent.VK_F2, "gotofilelist", null, 0);
       km.bindEditAction(JeyEvent.VK_F3, "gotodirlist", null, 0);
       km.bindEditAction(JeyEvent.VK_F4, "gotofontlist", null, 0);
@@ -530,6 +531,7 @@ public final class MapEvent {
             || domovement(jEv, fiterate, riterate, false, fvc)
             || screenmovement(jEv, fvc)) {
          aiterate = 0;
+         ContextHelp.onCommandCompleted(fvc);
          return;
       }
    }

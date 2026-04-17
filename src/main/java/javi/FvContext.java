@@ -411,6 +411,15 @@ public final class FvContext<OType> implements Serializable {
    public void setCurrView() {
       activate();
       currfvc = this;
+      ContextHelp.onContextChanged(this);
+   }
+
+   /**
+    * Activate a view for display without making it the current
+    * focus. Used for display-only panels like the help side panel.
+    */
+   void activateDisplay() {
+      activate();
    }
 
    private void activate() {

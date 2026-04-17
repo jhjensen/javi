@@ -43,6 +43,7 @@ public final class MiscCommands extends Rgroup {
       FOLD_MARKER,   // 28: :foldmarker - marker-based folds
       LOAD_PLUGIN,   // 29: :loadplugin - load a plugin JAR
       LOAD_CLASS,    // 30: :loadclass - load a class by name (plugin)
+      CONTEXT_HELP,  // 31: toggle context help panel
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -51,37 +52,263 @@ public final class MiscCommands extends Rgroup {
       final String[] rnames = {
          "",
          "xxxunused",
-         "zprocess",
-         "redraw",
-         "undo",
-         "redo",             // 5
-         "undoline",
-         "vt",
-         "loadgroup",
-         "comm",
-         "exec",            //10
-         "lines",
-         "setwidth",
-         "shells",           // 13
-         "shellclose",       // 14
-         "shellnext",        // 15
-         "shellprev",        // 16
-         "shellname",        // 17
-         "shellenv",         // 18
-         "shellhistory",     // 19
-         "shellnew",         // 20
-         "mapkey",           // 21
-         "unmapkey",         // 22
-         "keymap",           // 23
-         "savemapkeys",      // 24
-         "loadmapkeys",      // 25
-         "fold",             // 26
-         "foldindent",       // 27
-         "foldmarker",       // 28
-         "loadplugin",       // 29
+         null,               // 2: zprocess — via registerCommand
+         null,               // 3: redraw — via registerCommand
+         null,               // 4: undo — via registerCommand
+         null,               // 5: redo — via registerCommand
+         null,               // 6: undoline — via registerCommand
+         null,               // 7: vt — via registerArgCommand
+         null,               // 8: loadgroup — via registerArgCommand
+         null,               // 9: comm — via registerArgCommand
+         null,               // 10: exec — via registerArgCommand
+         null,               // 11: lines — via registerArgCommand
+         null,               // 12: setwidth — via registerArgCommand
+         null,               // 13: shells — via registerCommand
+         null,               // 14: shellclose — via registerArgCommand
+         null,               // 15: shellnext — via registerCommand
+         null,               // 16: shellprev — via registerCommand
+         null,               // 17: shellname — via registerArgCommand
+         null,               // 18: shellenv — via registerArgCommand
+         null,               // 19: shellhistory — via registerCommand
+         null,               // 20: shellnew — via registerArgCommand
+         null,               // 21: mapkey — via registerArgCommand
+         null,               // 22: unmapkey — via registerArgCommand
+         null,               // 23: keymap — via registerCommand
+         null,               // 24: savemapkeys — via registerCommand
+         null,               // 25: loadmapkeys — via registerCommand
+         null,               // 26: fold — via registerArgCommand
+         null,               // 27: foldindent — via registerArgCommand
+         null,               // 28: foldmarker — via registerCommand
+         null,               // 29: loadplugin — via registerArgCommand
          "loadclass",        // 30
+         null,               // 31: contexthelp — via registerCommand
       };
-      register(rnames);
+      final String[] descs = {
+         null,
+         null,
+         null,               // 2: migrated
+         null,               // 3: migrated
+         null,               // 4: migrated
+         null,               // 5: migrated
+         null,               // 6: migrated
+         null,               // 7: migrated
+         null,               // 8: migrated
+         null,               // 9: migrated
+         null,               // 10: migrated
+         null,               // 11: migrated
+         null,               // 12: migrated
+         null,               // 13: migrated
+         null,               // 14: migrated
+         null,               // 15: migrated
+         null,               // 16: migrated
+         null,               // 17: migrated
+         null,               // 18: migrated
+         null,               // 19: migrated
+         null,               // 20: migrated
+         null,               // 21: migrated
+         null,               // 22: migrated
+         null,               // 23: migrated
+         null,               // 24: migrated
+         null,               // 25: migrated
+         null,               // 26: migrated
+         null,               // 27: migrated
+         null,               // 28: migrated
+         null,               // 29: migrated
+         null,               // 30: migrated
+      };
+      register(rnames, descs);
+
+      registerNoArgCommands();
+      registerArgCommands();
+   }
+
+   /** Phase 2b-2: arg-free commands with closure handlers. */
+   private void registerNoArgCommands() {
+      registerCommand(new CommandEntry("zprocess",
+         "scroll screen to position", "screen",
+         (count, rcount, fvc, dot) -> {
+            zprocess(rcount, fvc); return null;
+         }));
+      registerCommand(new CommandEntry("redraw",
+         "redraw screen", "screen",
+         (count, rcount, fvc, dot) -> {
+            redraw(true); return null;
+         }));
+      registerCommand(new CommandEntry("undo",
+         "undo last change", "edit",
+         (count, rcount, fvc, dot) -> {
+            undo(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("redo",
+         "redo undone change", "edit",
+         (count, rcount, fvc, dot) -> {
+            redo(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("undoline",
+         "undo entire line", "edit",
+         (count, rcount, fvc, dot) -> null));
+      registerCommand(new CommandEntry("shells",
+         "list active shells", "shell",
+         (count, rcount, fvc, dot) -> {
+            listShells(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("shellnext",
+         "next shell", "shell",
+         (count, rcount, fvc, dot) -> {
+            nextShell(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("shellprev",
+         "previous shell", "shell",
+         (count, rcount, fvc, dot) -> {
+            prevShell(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("shellhistory",
+         "show shell scrollback", "shell",
+         (count, rcount, fvc, dot) -> {
+            showShellHistory(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("keymap",
+         "show current keymap", "keymap",
+         (count, rcount, fvc, dot) -> {
+            showKeyMap(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("savemapkeys",
+         "save user key bindings", "keymap",
+         (count, rcount, fvc, dot) -> {
+            saveMapKeys(); return null;
+         }));
+      registerCommand(new CommandEntry("loadmapkeys",
+         "load user key bindings", "keymap",
+         (count, rcount, fvc, dot) -> {
+            loadMapKeys(); return null;
+         }));
+      registerCommand(new CommandEntry("foldmarker",
+         "marker-based folds", "fold",
+         (count, rcount, fvc, dot) -> {
+            doFoldMarker(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("contexthelp",
+         "toggle help panel (Shift-F1)", "help",
+         (count, rcount, fvc, dot) -> {
+            ContextHelp.toggle(fvc); return null;
+         }));
+      registerCommand(new CommandEntry("helpscrolldown",
+         "scroll help panel down", "help",
+         (count, rcount, fvc, dot) -> {
+            ContextHelp.scrollHelpDown(); return null;
+         }));
+      registerCommand(new CommandEntry("helpscrollup",
+         "scroll help panel up", "help",
+         (count, rcount, fvc, dot) -> {
+            ContextHelp.scrollHelpUp(); return null;
+         }));
+   }
+
+   /** Phase 2b-3: arg-dependent commands with closure handlers. */
+   private void registerArgCommands() {
+      registerArgCommand("vt",
+         "open/toggle shell (F8)", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            startshell(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("loadgroup",
+         "load command group", "misc",
+         (arg, count, rcount, fvc, dot) -> {
+            loadgroup(fvc.edvec.getName(),
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("comm",
+         "communication (F10)", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            startcom(
+               arg instanceof String ? (String) arg : null,
+               fvc);
+            return null;
+         });
+      registerArgCommand("exec",
+         "execute external command", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            startcmd(
+               arg instanceof String ? (String) arg : null,
+               fvc);
+            return null;
+         });
+      registerArgCommand("lines",
+         "set window height", "display",
+         (arg, count, rcount, fvc, dot) -> {
+            defheight = oBToInt(arg); return null;
+         });
+      registerArgCommand("setwidth",
+         "set window width", "display",
+         (arg, count, rcount, fvc, dot) -> {
+            defwidth = oBToInt(arg); return null;
+         });
+      registerArgCommand("shellclose",
+         "close current shell", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            closeShell(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("shellname",
+         "rename shell", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            renameShell(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("shellenv",
+         "set shell env variable", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            setShellEnv(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("shellnew",
+         "create new shell", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            newShellCommand(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("mapkey",
+         "bind a key to command", "keymap",
+         (arg, count, rcount, fvc, dot) -> {
+            doMap(
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("unmapkey",
+         "unbind a key", "keymap",
+         (arg, count, rcount, fvc, dot) -> {
+            doUnmap(
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("fold",
+         "detect/manage folds", "fold",
+         (arg, count, rcount, fvc, dot) -> {
+            doFold(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("foldindent",
+         "indent-based folds", "fold",
+         (arg, count, rcount, fvc, dot) -> {
+            doFoldIndent(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
+      registerArgCommand("loadplugin",
+         "load a plugin JAR", "misc",
+         (arg, count, rcount, fvc, dot) -> {
+            loadPlugin(
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
    }
 
    private static TextEdit debugfile;
@@ -95,97 +322,6 @@ public final class MiscCommands extends Rgroup {
       switch (CMDS[rnum]) {
          case XXX_UNUSED:
             // free
-            return null;
-         case Z_PROCESS:
-            zprocess(rcount, fvc);
-            return null;
-         case REDRAW:
-            redraw(true);
-            return null;
-         case UNDO:
-            undo(fvc);
-            return null;
-         case REDO:
-            redo(fvc);
-            return null;
-         case UNDO_LINE:
-            return null; // fvc.edvec.undoElement(fvc.inserty()); return null;
-         case VT:
-            // Type safety: arg should be String from key mapping
-            startshell(fvc, arg instanceof String ? (String) arg : null);
-            return null;
-         case LOAD_GROUP:
-            // Type safety: arg should be String from key mapping
-            loadgroup(fvc.edvec.getName(), arg instanceof String ? (String) arg : null);
-            return null;
-         case COMM:
-            // Type safety: arg should be String from key mapping
-            startcom(arg instanceof String ? (String) arg : null, fvc);
-            return null;
-         case EXEC:
-            // Type safety: arg should be String from key mapping
-            startcmd(arg instanceof String ? (String) arg : null, fvc);
-            return null;
-         case LINES:
-            defheight = oBToInt(arg);
-            return null;
-         case SET_WIDTH:
-            defwidth = oBToInt(arg);
-            return null;
-         case SHELLS:
-            listShells(fvc);
-            return null;
-         case SHELL_CLOSE:
-            closeShell(fvc, (String) arg);
-            return null;
-         case SHELL_NEXT:
-            nextShell(fvc);
-            return null;
-         case SHELL_PREV:
-            prevShell(fvc);
-            return null;
-         case SHELL_NAME:
-            renameShell(fvc, arg instanceof String ? (String) arg : null);
-            return null;
-         case SHELL_ENV:
-            setShellEnv(fvc, arg instanceof String ? (String) arg : null);
-            return null;
-         case SHELL_HISTORY:
-            showShellHistory(fvc);
-            return null;
-         case SHELL_NEW:
-            newShellCommand(fvc,
-               arg instanceof String ? (String) arg : null);
-            return null;
-         case MAP_KEY:
-            doMap(arg instanceof String ? (String) arg : null);
-            return null;
-         case UNMAP_KEY:
-            doUnmap(arg instanceof String ? (String) arg : null);
-            return null;
-         case SHOW_KEYMAP:
-            showKeyMap(fvc);
-            return null;
-         case SAVE_MAP_KEYS:
-            saveMapKeys();
-            return null;
-         case LOAD_MAP_KEYS:
-            loadMapKeys();
-            return null;
-         case FOLD:
-            doFold(fvc,
-               arg instanceof String ? (String) arg : null);
-            return null;
-         case FOLD_INDENT:
-            doFoldIndent(fvc,
-               arg instanceof String ? (String) arg : null);
-            return null;
-         case FOLD_MARKER:
-            doFoldMarker(fvc);
-            return null;
-         case LOAD_PLUGIN:
-            loadPlugin(arg instanceof String
-               ? (String) arg : null);
             return null;
          case LOAD_CLASS:
             loadClass(arg instanceof String ? (String) arg : null);
@@ -675,6 +811,7 @@ public final class MiscCommands extends Rgroup {
 
    private void zprocess(int rcount, FvContext fvc)
          throws InputException {
+      ContextHelp.onSubModeEntered("zprocess");
       int scchange = 0;
       float scrpos = 0.f;
 

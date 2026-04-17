@@ -4,6 +4,7 @@ import history.Tools;
 
 import java.awt.AWTEvent;
 import java.awt.AWTKeyStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -26,6 +27,7 @@ import java.awt.MenuItem;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.PopupMenu;
+import java.awt.Scrollbar;
 import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.Toolkit;
@@ -280,6 +282,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private final TestFrame normalFrame;
    private int viewCount = 0;
    private boolean programmaticResize;
+   /** The help side-panel OldView, or null if hidden. */
+   private OldView helpPanel;
+   /** Wrapper panel holding help canvas + scrollbar. */
+   private Panel helpPanelWrapper;
+   /** Vertical scrollbar for the help panel. */
+   private Scrollbar helpScrollbar;
    private transient GraphicsDevice currdev;
    private transient FileDialog fdialog;
    private transient PopupMenu popmenu; // the menubar
@@ -351,7 +359,13 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          for (int ii = 0; ii < ccount; ii++) {
             Component cp = getComponent(ii);
             //trace("component " + cp);
-            if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
+            if (cp == helpPanelWrapper) {
+               Dimension cpsize = cp.getPreferredSize();
+               fsize.width += cpsize.width;
+               if (cpsize.height > viewheight)
+                  viewheight = cpsize.height;
+            } else if ((cp instanceof OldView.MyCanvas)
+                  && (cp != cmdComp)) {
                Dimension cpsize = cp.getPreferredSize();
                //trace("component prefsize " + cpsize);
                fsize.width += cpsize.width;
@@ -383,14 +397,35 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          if (statusBar.isVisible())
             viewHeight -=  statusBar.getPreferredSize().height;
 
+         int availableWidth = width - inset.left - inset.right;
+         if (helpPanelWrapper != null) {
+            int hw = helpPanelWrapper.getSize().width;
+            if (hw <= 0)
+               hw = helpPanelWrapper
+                  .getPreferredSize().width;
+            availableWidth -= hw;
+         }
+         if (availableWidth < 1)
+            availableWidth = 1;
+         if (viewHeight < 1)
+            viewHeight = 1;
          Dimension viewSize = new Dimension(
-            (width - inset.left - inset.right) / viewCount, viewHeight);
+            availableWidth / viewCount, viewHeight);
 
          int ccount = getComponentCount();
          for (int ii = 0; ii < ccount; ii++) {
             Component cp = getComponent(ii);
             //trace("component " + cp);
-            if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
+            if (cp == helpPanelWrapper) {
+               Dimension hSize = new Dimension(
+                  cp.getSize().width, viewHeight);
+               if (hSize.width <= 0)
+                  hSize.width =
+                     cp.getPreferredSize().width;
+               if (!cp.getSize().equals(hSize))
+                  cp.setSize(hSize);
+            } else if ((cp instanceof OldView.MyCanvas)
+                  && (cp != cmdComp)) {
                if (!cp.getSize().equals(viewSize)) {
                   //trace("setting view size " + viewSize);
                   cp.setSize(viewSize);
@@ -805,6 +840,66 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    void inextView(FvContext fvc) {
       FvContext newfvc = FvContext.nextView();
       isetTitle(newfvc.edvec.toString());
+   }
+
+   public View icreateHelpPanel(int widthChars) {
+      OldView ta = new OldView(false);
+      ta.setColors(Color.white, Color.black);
+      Component cmdComp = ta.getComponent();
+      cmdComp.setFont(AwtFontList.getMonoFont(null));
+      ta.setSizebyChar(widthChars, MiscCommands.getHeight());
+      helpPanel = ta;
+      cmdComp.addMouseWheelListener(e -> {
+         int lines = e.getScrollType()
+               == java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL
+            ? 20 : e.getScrollAmount();
+         javi.ContextHelp.scrollHelpLines(
+            lines * e.getWheelRotation());
+      });
+      helpScrollbar = new Scrollbar(Scrollbar.VERTICAL);
+      helpScrollbar.setFocusable(false);
+      helpScrollbar.addAdjustmentListener(e ->
+         javi.ContextHelp.scrollHelpToLine(e.getValue()));
+      helpPanelWrapper = new Panel(new BorderLayout());
+      helpPanelWrapper.add(cmdComp, BorderLayout.CENTER);
+      helpPanelWrapper.add(helpScrollbar, BorderLayout.EAST);
+      frm.add(helpPanelWrapper, -1);
+      helpPanelWrapper.setVisible(true);
+      if (normalFrame == frm
+            && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+            == Frame.MAXIMIZED_BOTH)) {
+         Dimension curSize = frm.getSize();
+         Dimension helpPref = helpPanelWrapper.getPreferredSize();
+         frm.setSize(curSize.width + helpPref.width,
+            curSize.height);
+      }
+      frm.validate();
+      return ta;
+   }
+
+   public void iremoveHelpPanel(View helpView) {
+      OldView ta = (OldView) helpView;
+      int helpWidth = helpPanelWrapper.getSize().width;
+      frm.remove(helpPanelWrapper);
+      helpPanel = null;
+      helpPanelWrapper = null;
+      helpScrollbar = null;
+      FvContext.dispose(helpView);
+      if (normalFrame == frm
+            && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
+            == Frame.MAXIMIZED_BOTH)) {
+         Dimension curSize = frm.getSize();
+         frm.setSize(curSize.width - helpWidth,
+            curSize.height);
+      }
+      frm.validate();
+   }
+
+   public void iupdateHelpScrollbar(
+         int current, int max, int visible) {
+      if (helpScrollbar != null)
+         helpScrollbar.setValues(
+            current, visible, 1, max);
    }
 
    public void isetStream(Reader inreader) { /* unimplemented */ }
@@ -1720,7 +1815,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             Component cp = frm.getComponent(ii);
             //trace("processing component " + cp);
             if (cp.isVisible()) {
-               if ((cp instanceof OldView.MyCanvas) && (cp != cmdComp)) {
+               if (cp == helpPanelWrapper
+                     || ((cp instanceof OldView.MyCanvas)
+                        && (cp != cmdComp))) {
                   Point oldloc = cp.getLocation();
                   Point newloc = new Point(left, inset.top);
                   if (!oldloc.equals(newloc)) {

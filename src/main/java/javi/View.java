@@ -113,14 +113,25 @@ public abstract class View  extends
    final void setInsert(Inserter ins)  {
       inserter = ins;
       startInsertion(ins);
+      ContextHelp.onInsertModeChanged();
    }
 
    final void clearInsert()  {
       endInsertion(inserter);
       inserter = null;
+      ContextHelp.onInsertModeChanged();
    }
 
-   final boolean isTraverseable() {
+   /**
+    * Check whether this view is currently in insert mode.
+    *
+    * @return true if an Inserter is active
+    */
+   final boolean isInInsertMode() {
+      return inserter != null;
+   }
+
+   public final boolean isTraverseable() {
       return traverse;
    }
 

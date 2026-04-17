@@ -129,6 +129,22 @@ final class KeyGroup {
    }
 
    /**
+    * Get all bindings as structured entries for custom formatting.
+    *
+    * @return list of {keyStr, commandName} pairs, sorted by key
+    */
+   List<String[]> getBindingEntries() {
+      List<String[]> result = new ArrayList<>();
+      for (Map.Entry<JeyEvent, String> entry
+            : commandNames.entrySet()) {
+         String keyStr = formatKey(entry.getKey());
+         result.add(new String[]{keyStr, entry.getValue()});
+      }
+      result.sort((a, b) -> a[0].compareTo(b[0]));
+      return result;
+   }
+
+   /**
     * Get user-modified bindings as serializable "key command" pairs.
     * Each entry is formatted as "keyspec command" suitable for
     * writing to a keybinding config file.
@@ -176,7 +192,7 @@ final class KeyGroup {
       int mods = ev.getModifiers();
 
       if ((mods & JeyEvent.CTRL_MASK) != 0) {
-         sb.append("Ctrl-");
+         sb.append("^");
       }
       if ((mods & JeyEvent.SHIFT_MASK) != 0) {
          sb.append("Shift-");
@@ -192,9 +208,9 @@ final class KeyGroup {
          if (keyChar >= 32) {
             sb.append(keyChar);
          } else {
-            // Control character - display as Ctrl-X
+            // Control character - display as ^X
             if (sb.length() == 0) {
-               sb.append("Ctrl-");
+               sb.append("^");
             }
             sb.append((char) (keyChar + 'A' - 1));
          }

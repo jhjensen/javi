@@ -237,4 +237,15 @@ public final class StreamInterface extends UI {
    public boolean imoveToTrash(File file) {
       return false;
    }
+
+   public View icreateHelpPanel(int widthChars) {
+      return null;
+   }
+
+   public void iremoveHelpPanel(View helpView) {
+   }
+
+   public void iupdateHelpScrollbar(
+         int current, int max, int visible) {
+   }
 }
