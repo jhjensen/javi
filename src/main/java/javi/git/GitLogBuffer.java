@@ -59,9 +59,32 @@ public final class GitLogBuffer {
     */
    public static List<String> getLogLines(int count, java.io.File dir)
          throws IOException {
-      return GitProcess.execute(dir,
-         "log", "--oneline", "--graph", "--decorate",
-         "-" + count, "HEAD");
+      return getLogLines(count, dir, null);
+   }
+
+   /**
+    * Run git log with graph and decorations, appending extra arguments.
+    *
+    * @param count number of log entries to show
+    * @param dir working directory for the git command, or null
+    * @param extraArgs additional arguments (e.g. "--" "path/file"), or null
+    * @return list of log output lines
+    * @throws IOException if git command fails
+    */
+   public static List<String> getLogLines(int count, java.io.File dir,
+         String[] extraArgs) throws IOException {
+      ArrayList<String> args = new ArrayList<>();
+      args.add("log");
+      args.add("--oneline");
+      args.add("--graph");
+      args.add("--decorate");
+      args.add("-" + count);
+      args.add("HEAD");
+      if (extraArgs != null) {
+         for (String ea : extraArgs)
+            args.add(ea);
+      }
+      return GitProcess.execute(dir, args.toArray(new String[0]));
    }
 
    /**
@@ -200,9 +223,32 @@ public final class GitLogBuffer {
     */
    public static Map<String, List<String>> getCommitMessages(
          int count, java.io.File dir) throws IOException {
+      return getCommitMessages(count, dir, null);
+   }
+
+   /**
+    * Fetch commit messages for the given count of recent commits,
+    * with optional extra arguments (e.g. path filter).
+    *
+    * @param count number of commits to fetch
+    * @param dir working directory for the git command, or null
+    * @param extraArgs additional arguments, or null
+    * @return ordered map of sha to message body lines
+    * @throws IOException if git command fails
+    */
+   public static Map<String, List<String>> getCommitMessages(
+         int count, java.io.File dir, String[] extraArgs)
+         throws IOException {
+      ArrayList<String> args = new ArrayList<>();
+      args.add("log");
+      args.add("--format=%h%x00%s%x00%an <%ae>%x00%ai%x00%b%x00%x01");
+      args.add("-" + count);
+      if (extraArgs != null) {
+         for (String ea : extraArgs)
+            args.add(ea);
+      }
       List<String> raw = GitProcess.execute(dir,
-         "log", "--format=%h%x00%s%x00%an <%ae>%x00%ai%x00%b%x00%x01",
-         "-" + count);
+         args.toArray(new String[0]));
       Map<String, List<String>> result = new LinkedHashMap<>();
       StringBuilder block = new StringBuilder();
       for (String line : raw) {

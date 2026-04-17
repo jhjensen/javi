@@ -1,5 +1,6 @@
 package javi;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1272,6 +1273,73 @@ class GitJUnitTest {
          assertTrue(shaCount >= 2,
             "Should find at least 2 SHA lines but found "
                + shaCount);
+      }
+   }
+
+   @Nested
+   class LogExtraArgsTests {
+
+      @Test
+      void getLogLinesWithNullExtraArgs() throws IOException {
+         // Should behave the same as no-arg overload
+         List<String> result =
+            GitLogBuffer.getLogLines(5, null, null);
+         assertNotNull(result,
+            "Should return non-null list with null extraArgs");
+      }
+
+      @Test
+      void getLogLinesWithPathFilter() throws IOException {
+         // Should not throw; result may be empty if path has no commits
+         List<String> result =
+            GitLogBuffer.getLogLines(5, null,
+               new String[]{"--", "nonexistent-file.txt"});
+         assertNotNull(result,
+            "Should return non-null list with path filter");
+      }
+
+      @Test
+      void getLogLinesWithEmptyExtraArgs() throws IOException {
+         List<String> result =
+            GitLogBuffer.getLogLines(5, null, new String[0]);
+         assertNotNull(result,
+            "Should return non-null list with empty extraArgs");
+      }
+
+      @Test
+      void getCommitMessagesWithNullExtraArgs() throws IOException {
+         Map<String, List<String>> result =
+            GitLogBuffer.getCommitMessages(5, null, null);
+         assertNotNull(result,
+            "Should return non-null map with null extraArgs");
+      }
+
+      @Test
+      void getCommitMessagesWithPathFilter() throws IOException {
+         Map<String, List<String>> result =
+            GitLogBuffer.getCommitMessages(5, null,
+               new String[]{"--", "nonexistent-file.txt"});
+         assertNotNull(result,
+            "Should return non-null map with path filter");
+      }
+   }
+
+   @Nested
+   class LogArgRegistrationTests {
+
+      @BeforeAll
+      static void setUp() throws Exception {
+         TestInit.init();
+         Class.forName("javi.git.GitCommands");
+      }
+
+      @Test
+      void gitLogAcceptsArgViaDispatcher() {
+         // The git dispatcher should be able to route "log -- file"
+         assertNotNull(Rgroup.bindingLookup("git"),
+            "git dispatcher must be registered");
+         assertNotNull(Rgroup.bindingLookup("git_log"),
+            "git_log must be registered");
       }
    }
 }

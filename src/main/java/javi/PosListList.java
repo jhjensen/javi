@@ -8,6 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
 
+import javi.git.GitCommands;
+
 public final class PosListList extends TextList<Position> {
 
    private static final long serialVersionUID = 1;
@@ -434,6 +436,14 @@ public final class PosListList extends TextList<Position> {
                   dirPath = parentDir.getPath();
                }
                targetFile = f.getName();
+            } else {
+               // Check for git log buffer directory
+               File gitDir =
+                  GitCommands.getBufferDir(
+                     fvc.edvec.getName());
+               if (null != gitDir && gitDir.isDirectory()) {
+                  dirPath = gitDir.getPath();
+               }
             }
          }
          return DirEdit.openDirectory(
