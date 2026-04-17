@@ -6,8 +6,6 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javi.Command;
 import javi.DirEdit;
@@ -79,6 +77,23 @@ public final class GitCommands extends Rgroup implements Plugin {
 
    /** Extra arguments for the current git log session (e.g. path filter). */
    private static String[] logExtraArgs;
+
+   /** Current git log buffer name (unique per directory). */
+   private static String logBufferName;
+
+   /** Map of git log buffer names to their associated directories. */
+   private static final Map<String, java.io.File> logBufferDirs =
+      new java.util.LinkedHashMap<>();
+
+   /**
+    * Returns the directory associated with a git log buffer, or null.
+    *
+    * @param bufferName the buffer's short name (e.g. "*git-log:javi*")
+    * @return the directory, or null if not a git log buffer
+    */
+   public static java.io.File getBufferDir(String bufferName) {
+      return logBufferDirs.get(bufferName);
+   }
 
    public GitCommands() {
       final String[] rnames = {
@@ -350,8 +365,11 @@ public final class GitCommands extends Rgroup implements Plugin {
             GitLogBuffer.buildFoldedLog(
                logLogLines, logMessages, foldRanges,
                logDiffExpanded, logDiffCache);
-         logBuffer = createBuffer("*git-log*", formatted);
-         registerLogInPosListList(formatted);
+         String dirLabel = dir != null ? dir.getName() : "repo";
+         logBufferName = "*git-log:" + dirLabel + "*";
+         logBuffer = createBuffer(logBufferName, formatted);
+         logBufferDirs.put(logBufferName, dir);
+         registerLogInPosListList();
          FvContext<?> logFvc =
             FvContext.connectFv(logBuffer, fvc.vi);
          FoldModel fm = new FoldModel();
@@ -437,25 +455,20 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Registers the git log as a position list so it appears
-    * in F6 PosListList for easy navigation back to the log.
+    * Registers git log buffers in PosListList so they appear
+    * in F6 for easy navigation.  Each open git log buffer
+    * gets a single entry pointing to line 1 of the buffer.
     */
-   private static void registerLogInPosListList(
-         List<String> formatted) {
-      Pattern shaPat =
-         Pattern.compile("^[*|/\\\\ ]+\\s*([0-9a-f]{7,40})\\b");
+   private static void registerLogInPosListList() {
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < formatted.size(); i++) {
-         Matcher m = shaPat.matcher(formatted.get(i));
-         if (m.find()) {
-            String sha = m.group(1);
-            String rest = formatted.get(i)
-               .substring(m.end()).trim();
-            // Format: filename(line -comment) for PositionConverter
-            sb.append("*git-log*(").append(i + 1)
-               .append(" -").append(sha)
-               .append(" ").append(rest).append(")\n");
-         }
+      for (Map.Entry<String, java.io.File> e
+            : logBufferDirs.entrySet()) {
+         String bName = e.getKey();
+         java.io.File bDir = e.getValue();
+         String label = bDir != null
+            ? bDir.getPath() : "repo";
+         sb.append(bName).append("(1 -git log ")
+            .append(label).append(")\n");
       }
       BufferedReader reader = new BufferedReader(
          new StringReader(sb.toString()));
@@ -578,8 +591,8 @@ public final class GitCommands extends Rgroup implements Plugin {
          GitLogBuffer.buildFoldedLog(
             logLogLines, logMessages, foldRanges,
             logDiffExpanded, logDiffCache);
-      logBuffer = createBuffer("*git-log*", formatted);
-      registerLogInPosListList(formatted);
+      logBuffer = createBuffer(logBufferName, formatted);
+      registerLogInPosListList();
       FvContext<?> logFvc =
          FvContext.connectFv(logBuffer, fvc.vi);
       FoldModel fm = new FoldModel();
@@ -629,8 +642,8 @@ public final class GitCommands extends Rgroup implements Plugin {
          GitLogBuffer.buildFoldedLog(
             logLogLines, logMessages, foldRanges,
             logDiffExpanded, logDiffCache);
-      logBuffer = createBuffer("*git-log*", formatted);
-      registerLogInPosListList(formatted);
+      logBuffer = createBuffer(logBufferName, formatted);
+      registerLogInPosListList();
       FvContext<?> logFvc =
          FvContext.connectFv(logBuffer, fvc.vi);
       FoldModel fm = new FoldModel();
