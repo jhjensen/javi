@@ -641,5 +641,308 @@ class AtViewJUnitTest {
          // overwrite should not increase length
          assertEquals(11, result.length());
       }
+
+      @Test
+      @DisplayName("addOlineText char appends to overlay region")
+      void addOlineTextCharAppends() {
+         atv.setText("hello world");
+         atv.addOlineText("X", 5, false);
+         atv.addOlineText('Y', false);
+         String result = atv.getText();
+         assertTrue(result.contains("XY"),
+            "char append should extend overlay: " + result);
+      }
+
+      @Test
+      @DisplayName("addOlineText char overwrite mode")
+      void addOlineTextCharOverwrite() {
+         atv.setText("hello world");
+         atv.addOlineText("X", 5, true);
+         atv.addOlineText('Z', true);
+         String result = atv.getText();
+         assertTrue(result.contains("XZ"),
+            "char overwrite should extend overlay: " + result);
+      }
+
+      @Test
+      @DisplayName("overlay region uses bpu/gpu attrs")
+      void overlayRegionUsesSpecialAttrs() {
+         atv.setText("hello world");
+         atv.addOlineText("XX", 5, false);
+         // position inside overlay (offset 5 or 6)
+         atv.setIndex(5);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         // overlay region uses bpu which has insertCursor fg
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(AtView.insertCursor, fg,
+            "overlay region should use insertCursor foreground");
+      }
+
+      @Test
+      @DisplayName("outside overlay with overlay set uses byu attrs")
+      void outsideOverlayUsesByu() {
+         atv.setText("hello world");
+         atv.addOlineText("XX", 5, false);
+         atv.setIndex(0);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         // Outside overlay: should have underline (byu)
+         assertNotNull(m.get(TextAttribute.UNDERLINE),
+            "outside overlay should use underlined attrs");
+      }
+   }
+
+   // ── setLineForeground ─────────────────────────────────────
+
+   @Nested
+   @DisplayName("setLineForeground")
+   class LineForegroundTests {
+
+      @Test
+      @DisplayName("red line foreground overrides green")
+      void redLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.red);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.red, fg);
+      }
+
+      @Test
+      @DisplayName("cyan line foreground overrides green")
+      void cyanLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.cyan);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.cyan, fg);
+      }
+
+      @Test
+      @DisplayName("line foreground does not affect highlighted region")
+      void lineFgDoesNotAffectHighlight() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.red);
+         atv.setHighlight(2, 4);
+         atv.setIndex(3); // inside highlight
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         // highlighted region uses ly map, not lineFg
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         assertEquals(new Color(0, 0, 128), bg);
+      }
+
+      @Test
+      @DisplayName("setText resets line foreground")
+      void setTextResetsLineFg() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.red);
+         atv.setText("world");
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(AtView.foreground, fg,
+            "after setText, line foreground should reset");
+      }
+   }
+
+   // ── getRunLimit(attribute) for FOREGROUND ─────────────────
+
+   @Nested
+   @DisplayName("getRunLimit(FOREGROUND)")
+   class RunLimitForegroundTests {
+
+      @Test
+      @DisplayName("no overlay — run limit is text end")
+      void noOverlayRunLimitIsEnd() {
+         atv.setText("hello");
+         assertEquals(5,
+            atv.getRunLimit(TextAttribute.FOREGROUND));
+      }
+
+      @Test
+      @DisplayName("overlay — run limit stops at overlay start")
+      void overlayRunLimitStopsAtStart() {
+         atv.setText("hello world");
+         atv.addOlineText("XX", 5, false);
+         atv.setIndex(0);
+         int limit = atv.getRunLimit(TextAttribute.FOREGROUND);
+         assertEquals(5, limit,
+            "foreground run should stop at overlay start");
+      }
+
+      @Test
+      @DisplayName("inside overlay — run limit at overlay end")
+      void insideOverlayRunLimit() {
+         atv.setText("hello world");
+         atv.addOlineText("XX", 5, false);
+         atv.setIndex(5);
+         int limit = atv.getRunLimit(TextAttribute.FOREGROUND);
+         assertEquals(7, limit,
+            "foreground run inside overlay stops at overlay end");
+      }
+   }
+
+   // ── Terminal attribute edge cases ─────────────────────────
+
+   @Nested
+   @DisplayName("Terminal attribute edge cases")
+   class TermAttrEdgeCases {
+
+      @Test
+      @DisplayName("256-color cube mid-range (index 100)")
+      void colorCubeMidRange() {
+         // 100 = 16 + 84 → r=84/36=2, g=(84%36)/6=2, b=84%6=0
+         int attr = CellAttr.pack(
+            false, false, false, 100, -1);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(new Color(135, 135, 0), fg);
+      }
+
+      @Test
+      @DisplayName("ANSI bright magenta (color 13)")
+      void ansiBrightMagenta() {
+         // 13 = 8 + 5 → ANSI_BRIGHT[5] = magenta
+         int attr = CellAttr.pack(
+            false, false, false, 13, -1);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(new Color(255, 0, 255), fg);
+      }
+
+      @Test
+      @DisplayName("reverse + bold swaps bright foreground to bg")
+      void reverseBoldSwapsBrightToBg() {
+         int attr = CellAttr.pack(
+            true, false, true, 2, -1);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         // bold+green→bright green, reversed to bg
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         assertEquals(new Color(0, 255, 0), bg);
+         // bg was default black, reversed to fg
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(AtView.background, fg);
+      }
+
+      @Test
+      @DisplayName("emphasis + terminal attr adds underline")
+      void emphasisPlusTermAttr() {
+         int attr = CellAttr.pack(
+            false, false, false, 1, -1);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         atv.emphasize(true);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         assertNotNull(m.get(TextAttribute.UNDERLINE),
+            "emphasis should add underline to term attrs");
+      }
+
+      @Test
+      @DisplayName("pos beyond termAttrs length uses DEFAULT")
+      void posBeyondTermAttrsUsesDefault() {
+         int red = CellAttr.pack(
+            false, false, false, 1, -1);
+         atv.setText("abc");
+         atv.setTerminalAttrs(new int[]{red}); // only 1 element
+         atv.setIndex(2); // beyond array
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(AtView.foreground, fg,
+            "beyond termAttrs should use default green");
+      }
+
+      @Test
+      @DisplayName("background 256-color cube")
+      void background256Cube() {
+         // bg color 21 = 16+5 → r=0, g=0, b=5 → (0,0,255)
+         int attr = CellAttr.pack(
+            false, false, false, -1, 21);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         assertEquals(new Color(0, 0, 255), bg);
+      }
+
+      @Test
+      @DisplayName("background greyscale")
+      void backgroundGreyscale() {
+         int attr = CellAttr.pack(
+            false, false, false, -1, 240);
+         atv.setText("x");
+         atv.setTerminalAttrs(new int[]{attr});
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         // 240 - 232 = 8 → 8 + 8*10 = 88
+         assertEquals(new Color(88, 88, 88), bg);
+      }
+   }
+
+   // ── line2 with line2start in toString ─────────────────────
+
+   @Nested
+   @DisplayName("line2 and wrapped-line attrs")
+   class Line2Tests {
+
+      @Test
+      @DisplayName("line2start appears in toString")
+      void line2StartInToString() {
+         atv.setText("hello world");
+         atv.line2(5);
+         String s = atv.toString();
+         assertTrue(s.contains("5"), s);
+      }
+
+      @Test
+      @DisplayName("past line2start uses para background")
+      void pastLine2UsesParaBg() {
+         atv.setText("hello world");
+         atv.line2(5);
+         atv.setIndex(6); // past line2start
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         assertEquals(AtView.paraBackground, bg);
+      }
+
+      @Test
+      @DisplayName("before line2start uses normal background")
+      void beforeLine2UsesNormalBg() {
+         atv.setText("hello world");
+         atv.line2(5);
+         atv.setIndex(2);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color bg = (Color) m.get(TextAttribute.BACKGROUND);
+         assertEquals(AtView.background, bg);
+      }
+
+      @Test
+      @DisplayName("getRunLimit respects line2start boundary")
+      void runLimitRespectsLine2() {
+         atv.setText("hello world");
+         atv.line2(5);
+         atv.setIndex(0);
+         int limit = atv.getRunLimit();
+         assertEquals(5, limit,
+            "run should stop at line2start");
+      }
    }
 }
