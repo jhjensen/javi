@@ -19,3 +19,5 @@ src/main/java/javi/JS.java,1
 src/main/java/javi/BackupStatus.java,1
 src/main/java/javi/XrefReader.java,1
 src/main/java/javi/plugin/FindBugs.java,1
+src/main/java/javi/EditGroup.java,1
+src/test/java/javi/FoldModelJUnitTest.java,1

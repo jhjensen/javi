@@ -314,6 +314,21 @@ final class OldView extends AwtView {
       }
 
       // trace("cursorchanged " + yChange + " screenSaveX " + saveScreenX);
+
+      // Force cursor to column 0 on collapsed fold summary lines.
+      // The displayed text is the fold summary, not the real line,
+      // so any nonzero column would place the cursor at a position
+      // that doesn't correspond to displayed characters.
+      if (fm != null) {
+         FoldModel.FoldRange foldAtY =
+            fm.findFoldAtStart(newY);
+         if (foldAtY != null && foldAtY.collapsed) {
+            setFilePos(0, newY);
+            fixcursor(-getfileX(), visYChange, 0);
+            return 0;
+         }
+      }
+
       String oline = gettext().at(newY).toString();
       String nline = oline;
 
@@ -368,6 +383,15 @@ final class OldView extends AwtView {
       }
 
       int newx = 0;
+
+      // Force cursor to column 0 on collapsed fold lines
+      if (fm != null) {
+         FoldModel.FoldRange foldAtY =
+            fm.findFoldAtStart(newY);
+         if (foldAtY != null && foldAtY.collapsed) {
+            newX = 0;
+         }
+      }
 
       if (0 != newX) {
          int charoff = newX;
@@ -507,21 +531,17 @@ final class OldView extends AwtView {
 
    /**
     * Recompute screenposy based on current fold state.
-    * Counts visible lines from line 1 to current fileY.
+    * Uses mapBufferToScreen for O(foldCount) performance.
     */
    public void recalcScreenRow() {
       FoldModel fm = getActiveFoldModel();
       if (fm == null)
          return;
-      int target = getfileY();
-      int visLine = 0;
-      int line = 1;
-      while (line < target) {
-         line = fm.nextVisible(line);
-         visLine++;
-         if (line >= target)
-            break;
-      }
+      int visLine = fm.mapBufferToScreen(getfileY());
+      if (visLine <= 0)
+         visLine = 0;
+      else
+         visLine--;
       screenposy = Math.min(visLine, screenSize / 2);
    }
 
@@ -1475,9 +1495,9 @@ final class OldView extends AwtView {
             } else {
                paintOneLine(gr, index, tindex);
                tindex++;
+               paintFoldIndicator(
+                  gr, index, displayedBufLine, fm);
             }
-            paintFoldIndicator(
-               gr, index, displayedBufLine, fm);
          }
          xoffset = savedXoffset;
       }

@@ -276,6 +276,31 @@ public final class FvContext<OType> implements Serializable {
       this.foldModel = fm;
    }
 
+   /**
+    * If the cursor is on the start line of a collapsed fold,
+    * insert an empty line after the fold and move the cursor
+    * there. Used by the 'o' command to open a line below a fold.
+    *
+    * @return true if the cursor was on a collapsed fold and
+    *         the line was inserted; false otherwise
+    */
+   boolean openLineBelowFold() {
+      if (foldModel == null)
+         return false;
+      FoldModel.FoldRange cf =
+         foldModel.findFoldAtStart(fileposy);
+      if (cf == null || !cf.collapsed)
+         return false;
+      int target = cf.endLine + 1;
+      java.util.ArrayList<String> empty =
+         new java.util.ArrayList<>(1);
+      empty.add("");
+      edvec.insertStrings(empty, target);
+      cursoryabs(target);
+      cursorxabs(0);
+      return true;
+   }
+
    static int viewCount() {
       return fvmap.viewCount();
    }
@@ -623,8 +648,13 @@ public final class FvContext<OType> implements Serializable {
                   ((FileDescriptor.LocalFile) fd).canonName;
                FoldModel fm =
                   FoldModel.loadFolds(canonPath);
-               if (fm != null)
-                  context.foldModel = fm;
+               if (fm != null) {
+                  int maxLine = te.readIn() - 1;
+                  if (maxLine > 1 && fm.isValid(maxLine))
+                     context.foldModel = fm;
+                  else
+                     FoldModel.deleteFoldState(canonPath);
+               }
             }
          }
          fvmap.put(context);
@@ -900,7 +930,14 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public void insertStrings(ArrayList<String> obarray, boolean after) {
-      edvec.insertStrings(obarray, fileposy + (after ? 1 : 0));
+      int insertAt = fileposy + (after ? 1 : 0);
+      if (after && foldModel != null) {
+         FoldModel.FoldRange cf =
+            foldModel.findFoldAtStart(fileposy);
+         if (cf != null && cf.collapsed)
+            insertAt = cf.endLine + 1;
+      }
+      edvec.insertStrings(obarray, insertAt);
    }
 
    public void changeElement(OType obj) {

@@ -358,4 +358,83 @@ class FoldDetectorJUnitTest {
    private List<FoldModel.FoldRange> folds(FoldModel m) {
       return m.getFolds();
    }
+
+   // --- User's exact markdown scenario (bug F25) ---
+
+   /**
+    * Verify fold detection for user's exact test markdown:
+    * three H1 sections with one H2 subsection each.
+    * Should produce 6 folds: 3 H1 (outer) + 3 H2 (inner).
+    */
+   @Test void markdownThreeH1Sections() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# 1",    // 1
+         "## a",   // 2
+         "x",      // 3
+         "# 2",    // 4
+         "## b",   // 5
+         "y",      // 6
+         "# 3",    // 7
+         "## c",   // 8
+         "z"       // 9
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 10);
+      List<FoldModel.FoldRange> folds = m.getFolds();
+      assertEquals(6, folds.size(),
+         "expected 6 folds, got: " + folds);
+      // Top-level H1 folds
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 3),
+         "expected H1 fold 1-3, got: " + folds);
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 4 && f.endLine == 6),
+         "expected H1 fold 4-6, got: " + folds);
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 7 && f.endLine == 9),
+         "expected H1 fold 7-9, got: " + folds);
+      // Nested H2 folds
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 3),
+         "expected H2 fold 2-3, got: " + folds);
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 5 && f.endLine == 6),
+         "expected H2 fold 5-6, got: " + folds);
+      assertTrue(folds.stream().anyMatch(
+         f -> f.startLine == 8 && f.endLine == 9),
+         "expected H2 fold 8-9, got: " + folds);
+   }
+
+   /**
+    * When all folds are closed, the summary text for the
+    * first top-level fold should reference the fold's own
+    * start line, not child content.
+    */
+   @Test void markdownThreeH1SummaryText() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# 1",    // 1
+         "## a",   // 2
+         "x",      // 3
+         "# 2",    // 4
+         "## b",   // 5
+         "y",      // 6
+         "# 3",    // 7
+         "## c",   // 8
+         "z"       // 9
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 10);
+      m.closeAll();
+
+      // Top-level fold at line 1 should show "# 1"
+      FoldModel.FoldRange f1 = m.findFoldAtStart(1);
+      assertNotNull(f1, "fold starting at line 1");
+      assertEquals(3, f1.endLine,
+         "fold at line 1 should end at line 3");
+      String summary1 = FoldModel.foldSummaryText(
+         f1.startLine, f1.endLine, "# 1");
+      assertEquals("+--  2 lines: # 1", summary1);
+
+      // Visible lines after closeAll: 1, 4, 7
+      assertEquals(4, m.nextVisible(1));
+      assertEquals(7, m.nextVisible(4));
+   }
 }
