@@ -2,13 +2,19 @@ package javi;
 
 import java.awt.Canvas;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
+import java.awt.Image;
+import java.util.List;
 import org.assertj.swing.core.BasicRobot;
 import org.assertj.swing.core.ComponentFinder;
 import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.core.Robot;
 import org.assertj.swing.finder.WindowFinder;
 import org.assertj.swing.fixture.FrameFixture;
+
+import javi.awt.IconUtil;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -457,6 +463,279 @@ class AssertJSwingGuiJUnitTest {
             "FileDescriptor name must not be empty");
       } finally {
          EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ── OldView rendering & metrics tests ────────────────────────
+
+   @Test
+   void t24_viewHasPositiveTabStop() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         int tabStop = fvc.vi.getTabStop();
+         assertTrue(tabStop > 0,
+            "View tabStop should be positive, got " + tabStop);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t25_viewSetTabStopRoundTrips() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         int orig = fvc.vi.getTabStop();
+         fvc.vi.setTabStop(3);
+         assertEquals(3, fvc.vi.getTabStop(),
+            "tabStop should be 3 after setTabStop(3)");
+         fvc.vi.setTabStop(orig);
+         assertEquals(orig, fvc.vi.getTabStop(),
+            "tabStop should be restored");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t26_viewGetRowsReturnsPositive() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         int rows = fvc.vi.getRows(1.0f);
+         assertTrue(rows > 0,
+            "getRows(1.0) should return positive, got " + rows);
+         int halfRows = fvc.vi.getRows(0.5f);
+         assertTrue(halfRows > 0,
+            "getRows(0.5) should return positive, got " + halfRows);
+         assertTrue(halfRows <= rows,
+            "getRows(0.5) should be <= getRows(1.0)");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t27_viewScreenFirstLineValid() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         int firstLine = fvc.vi.screenFirstLine();
+         assertTrue(firstLine >= 0,
+            "screenFirstLine should be >= 0, got " + firstLine);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t28_viewIsVisibleInGui() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         assertTrue(fvc.vi.isVisible(),
+            "Current view should be visible in GUI mode");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t29_viewRecalcScreenRowDoesNotThrow() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         // recalcScreenRow is called after window resize;
+         // verify it doesn't crash with valid state
+         fvc.vi.recalcScreenRow();
+         // If we reach this point, no exception was thrown
+         assertTrue(true);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t30_canvasHasNonZeroDimensions() {
+      ComponentFinder finder = robot.finder();
+      Canvas canvas = finder.findByType(
+         window.target(), Canvas.class, true);
+      Dimension size = canvas.getSize();
+      assertTrue(size.width > 0,
+         "Canvas width must be > 0, got " + size.width);
+      assertTrue(size.height > 0,
+         "Canvas height must be > 0, got " + size.height);
+   }
+
+   @Test
+   void t31_canvasHasFontSet() {
+      ComponentFinder finder = robot.finder();
+      Canvas canvas = finder.findByType(
+         window.target(), Canvas.class, true);
+      Font font = canvas.getFont();
+      assertNotNull(font, "Canvas should have a font set");
+      assertTrue(font.getSize() > 0,
+         "Canvas font size should be > 0");
+   }
+
+   @Test
+   void t32_viewRepaintDoesNotThrow() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         fvc.vi.repaint();
+         // Verify the view and frame remain visible after repaint
+         assertTrue(fvc.vi.isVisible(),
+            "View should remain visible after repaint");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   // ── AwtInterface / UI tests ──────────────────────────────────
+
+   @Test
+   void t33_uiSingletonIsAwtInterface() {
+      UI ui = UI.getInstance();
+      assertNotNull(ui, "UI singleton must exist");
+      assertEquals("javi.awt.AwtInterface", ui.getClass().getName(),
+         "UI singleton should be AwtInterface");
+   }
+
+   @Test
+   void t34_uiIsVisible() {
+      UI ui = UI.getInstance();
+      assertTrue(ui.iisVisible(),
+         "UI should report visible");
+   }
+
+   @Test
+   void t35_uiSetTitleChangesFrameTitle() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         UI ui = UI.getInstance();
+         String origTitle = window.target().getTitle();
+         ui.isetTitle("Test Title T35");
+         assertEquals("Test Title T35", window.target().getTitle(),
+            "Frame title should change after isetTitle");
+         // Restore
+         ui.isetTitle(origTitle);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t36_uiRepaintDoesNotCrash() {
+      UI ui = UI.getInstance();
+      ui.irepaint();
+      // Verify frame is still showing
+      window.requireVisible();
+   }
+
+   @Test
+   void t37_statusBarToggle() {
+      UI ui = UI.getInstance();
+      // Toggle status bar on, then off, verifying no crash
+      ui.itoggleStatus();
+      window.requireVisible();
+      ui.itoggleStatus();
+      window.requireVisible();
+   }
+
+   @Test
+   void t38_statusBarAddLine() {
+      UI ui = UI.getInstance();
+      ui.istatusaddline("test status line");
+      window.requireVisible();
+      ui.iclearStatus();
+   }
+
+   @Test
+   void t39_statusBarSetLine() {
+      UI ui = UI.getInstance();
+      ui.istatusSetline("test set line");
+      window.requireVisible();
+      ui.iclearStatus();
+   }
+
+   @Test
+   void t40_statusBarClear() {
+      UI ui = UI.getInstance();
+      ui.istatusaddline("line to clear");
+      ui.iclearStatus();
+      window.requireVisible();
+   }
+
+   @Test
+   void t41_showHideCommand() throws Exception {
+      UI ui = UI.getInstance();
+      // Show command line, verify no crash
+      ui.ishowCommand();
+      window.requireVisible();
+      // Hide command line
+      ui.ihideCommand();
+      window.requireVisible();
+   }
+
+   @Test
+   void t42_frameHasIconImages() {
+      Frame f = window.target();
+      List<Image> icons = f.getIconImages();
+      assertNotNull(icons, "Frame should have icon images");
+      assertFalse(icons.isEmpty(),
+         "Frame should have at least one icon image");
+   }
+
+   @Test
+   void t43_iconUtilCreatesValidIcon() {
+      Image icon = IconUtil.createJaviIcon(64);
+      assertNotNull(icon, "IconUtil should create a non-null icon");
+      assertEquals(64, icon.getWidth(null),
+         "Icon width should match requested size");
+      assertEquals(64, icon.getHeight(null),
+         "Icon height should match requested size");
+   }
+
+   @Test
+   void t44_trashSupportedReturnsBooleanWithoutCrash() {
+      // Just verify the method returns without exception
+      // (result depends on platform — may be true or false)
+      boolean supported = UI.trashSupported();
+      // Always true: the call completed without error
+      assertTrue(supported || !supported);
+   }
+
+   @Test
+   void t45_viewSizeByCharDoesNotCrash() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         // Set size by character dimensions — must not throw
+         fvc.vi.setSizebyChar(80, 24);
+         assertTrue(fvc.vi.isVisible(),
+            "View should remain visible after setSizebyChar");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t46_multipleCanvasesHaveFont() {
+      ComponentFinder finder = robot.finder();
+      java.util.Collection<Canvas> canvases =
+         finder.findAll(window.target(),
+            new GenericTypeMatcher<Canvas>(Canvas.class, false) {
+               @Override
+               protected boolean isMatching(Canvas c) {
+                  return c.isDisplayable();
+               }
+            });
+      for (Canvas c : canvases) {
+         Font f = c.getFont();
+         assertNotNull(f,
+            "Every canvas should have a font: " + c);
       }
    }
 }

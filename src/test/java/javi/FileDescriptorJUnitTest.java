@@ -3,6 +3,7 @@ package javi;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * JUnit 5 port of the inline path-normalization tests from
@@ -44,6 +45,11 @@ class FileDescriptorJUnitTest {
 
    @Test
    void canonicalizeDotDotSegments() {
+      // Requires cwd deep enough for ../../ to resolve meaningfully;
+      // in Docker (/app) the path can't be canonicalized.
+      assumeTrue(System.getProperty("user.dir").chars()
+         .filter(c -> c == '/').count() >= 3,
+         "cwd too shallow for dot-dot resolution");
       assertShortName("../../xxx/../yy/../yy", "../../yy");
    }
 

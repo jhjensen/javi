@@ -1,13 +1,14 @@
-# Dockerfile.guitest — Headless GUI testing for Javi editor
+# Dockerfile.alltest — Run ALL tests (headless + GUI) in Docker with Xvfb
 #
-# Runs AssertJ Swing GUI tests inside Xvfb (virtual framebuffer).
-# Requires no display on the host — fully self-contained.
+# Runs both standard JUnit tests and AssertJ Swing GUI tests inside
+# Xvfb. This covers the javi.awt package tests that need AWT classes
+# initialized with a real display.
 #
-# Build:  docker build -f Dockerfile.guitest -t javi-guitest .
-# Run:    docker run --rm -v $(pwd)/build:/app/build javi-guitest
+# Build:  docker build -f Dockerfile.alltest -t javi-alltest .
+# Run:    docker run --rm -v $(pwd)/build:/app/build javi-alltest
 #
-# The entrypoint starts Xvfb, runs `./gradlew guiTest`, and exits
-# with the Gradle exit code.
+# The entrypoint starts Xvfb, runs `./gradlew test guiTest`, and
+# exits with the Gradle exit code.
 
 FROM eclipse-temurin:24-jdk-noble
 
@@ -33,6 +34,9 @@ COPY gradlew build.gradle ./
 COPY gradle/ gradle/
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 
+# Cache-bust: ARG changes when source files are newer than Dockerfile
+ARG SRC_HASH=0
+
 # Copy source and test files
 COPY src/ src/
 
@@ -41,9 +45,9 @@ COPY src/ src/
 RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
     git add -A && git commit -q -m "docker build"
 
-# Start Xvfb, run GUI tests, stop Xvfb, exit with test status
+# Start Xvfb, run ALL tests + legacy coverage + merged report, stop Xvfb
 ENTRYPOINT ["sh", "-c", \
     "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
      sleep 1 && \
-     DISPLAY=:99 ./gradlew --no-daemon guiTest; \
+     DISPLAY=:99 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport; \
      status=$?; kill %1 2>/dev/null; exit $status"]

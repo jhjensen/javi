@@ -185,11 +185,41 @@ rdesk-guitest-fetch:
 	   build/reports-rdesk/ 2>/dev/null || true
 	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/test-results/ \
 	   build/test-results-rdesk/ 2>/dev/null || true
+	@mkdir -p build/jacoco
+	rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/jacoco/ \
+	   build/jacoco/ 2>/dev/null || true
 
 # Clean remote Docker image and files
 rdesk-guitest-clean:
 	ssh -n -T rdesk 'docker rmi $(GUITEST_IMAGE) 2>/dev/null; \
 	   rm -rf $(RDESK_GUITEST_DIR)'
+
+#==============================================================================
+# T1: Remote Docker all-tests (headless JUnit + GUI tests via Xvfb)
+#==============================================================================
+
+ALLTEST_IMAGE = javi-alltest
+
+# Full pipeline: sync, build Docker image, run ALL tests, fetch results
+rdesk-alltest: rdesk-guitest-sync rdesk-alltest-build rdesk-alltest-run rdesk-guitest-fetch
+
+# Build all-test Docker image on rdesk
+# Use --build-arg to bust Docker layer cache when source changes
+rdesk-alltest-build: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker build --build-arg SRC_HASH=$$(find src -type f -newer Dockerfile.alltest -print | wc -l) \
+	      -f Dockerfile.alltest -t $(ALLTEST_IMAGE) .'
+
+# Run ALL tests on rdesk via Docker
+rdesk-alltest-run: rdesk-alltest-build
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker run --rm \
+	      -v $$(pwd)/build:/app/build \
+	      $(ALLTEST_IMAGE)'
+
+# Clean all-test Docker image
+rdesk-alltest-clean:
+	ssh -n -T rdesk 'docker rmi $(ALLTEST_IMAGE) 2>/dev/null'
 
 # Run PSTest with coverage and generate report
 pstest-coverage:
@@ -233,6 +263,8 @@ coverage-dump:
 	@echo "Coverage dumped to build/jacoco/gui.exec"
 
 # Merge all .exec files (JUnit + legacy + GUI) and generate report
+# Note: Local-only — excludes GUI tests (need display). For full coverage
+# including GUI tests, use: make rdesk-alltest  (generates Docker report)
 coverage-merge:
 	./gradlew mergedCoverageReport
 	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
@@ -242,6 +274,12 @@ coverage-merge:
 full-coverage: compile
 	./gradlew test pstestCoverage intArrayTestCoverage mergedCoverageReport
 	@echo "Merged coverage report: build/reports/jacoco/merged/html/index.html"
+
+# Full coverage including GUI tests via rdesk Docker
+# Docker generates the merged report with consistent class files.
+# Report fetched to build/reports-rdesk/jacoco/merged/html/index.html
+rdesk-coverage: rdesk-alltest
+	@echo "Full coverage report (including GUI): build/reports-rdesk/jacoco/merged/html/index.html"
 
 #==============================================================================
 # Run targets

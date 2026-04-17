@@ -152,6 +152,7 @@ tasks.register('guiTest', Test) {
     useJUnitPlatform {
         includeTags 'gui'
     }
+    jacoco.enabled = true
     group = 'verification'
     description = 'Run AssertJ Swing GUI tests (requires graphical display)'
     systemProperty 'junit.jupiter.execution.timeout.default', '60s'
@@ -185,25 +186,33 @@ tasks.named('jacocoTestCoverageVerification') {
     )
     violationRules {
         rule {
-            // Overall project minimum (includes javi.awt at 0%)
+            // Overall project minimum
             limit {
-                minimum = 0.22
+                minimum = 0.50
             }
         }
         rule {
-            // Testable packages must meet a higher bar
+            // javi package — core editor logic
             element = 'PACKAGE'
             includes = ['javi']
             limit {
-                minimum = 0.23
+                minimum = 0.50
             }
         }
         rule {
-            // history package has strong coverage — hold higher bar
+            // javi.awt package — AWT UI layer
+            element = 'PACKAGE'
+            includes = ['javi.awt']
+            limit {
+                minimum = 0.30
+            }
+        }
+        rule {
+            // history package — strong coverage, hold the line
             element = 'PACKAGE'
             includes = ['history']
             limit {
-                minimum = 0.70
+                minimum = 0.78
             }
         }
     }
@@ -334,6 +343,7 @@ tasks.register('jacocoMerge', JavaExec) {
 // Produces: build/reports/jacoco/merged/html/index.html
 tasks.register('mergedCoverageReport', JacocoReport) {
     dependsOn compileJava, test
+    mustRunAfter 'guiTest', 'pstestCoverage', 'intArrayTestCoverage'
     group = 'verification'
     description = 'Generate merged coverage report from all .exec files'
     executionData.from(

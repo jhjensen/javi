@@ -1,7 +1,5 @@
 package javi;
 
-import java.io.IOException;
-
 /**
  * Shared test initialization utility.
  *
@@ -15,7 +13,7 @@ import java.io.IOException;
  * happens before any other {@code InternalFd} instances are created,
  * avoiding counter-dependent canonName mismatches.
  */
-final class TestInit {
+public final class TestInit {
 
    private static volatile boolean initialized;
    private static volatile boolean commandsInitialized;
@@ -28,7 +26,7 @@ final class TestInit {
     * StreamInterface singleton, and Buffers (delete buffer).
     * Safe to call from multiple test classes' {@code @BeforeAll}.
     */
-   static synchronized void init() throws Exception {
+   public static synchronized void init() throws Exception {
       if (initialized)
          return;
       // TextEdit root creation requires biglock2 to be held
@@ -73,7 +71,7 @@ final class TestInit {
     * {@code FvContext} or external tool setup.
     * </p>
     */
-   static synchronized void initCommands() throws Exception {
+   public static synchronized void initCommands() throws Exception {
       init(); // ensure base init first
       if (commandsInitialized)
          return;
