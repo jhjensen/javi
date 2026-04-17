@@ -85,6 +85,12 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static final Map<String, java.io.File> logBufferDirs =
       new java.util.LinkedHashMap<>();
 
+   /** Parsed hunks for the current patch buffer. */
+   private static List<GitHunkStaging.Hunk> patchHunks;
+
+   /** Raw diff lines for the current patch buffer. */
+   private static List<String> patchDiffLines;
+
    /**
     * Returns the directory associated with a git log buffer, or null.
     *
@@ -128,6 +134,10 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git_expand",
          "git_expand_all",
          "git_collapse_all",
+         "git_blame",
+         "git_stage_hunk",
+         "git_unstage_hunk",
+         "git_patch",
       };
       register(rnames);
    }
@@ -228,6 +238,18 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 30:
             gitCollapseAll(fvc);
+            return null;
+         case 31:
+            gitBlame(arg, fvc);
+            return null;
+         case 32:
+            gitStageHunk(fvc);
+            return null;
+         case 33:
+            gitUnstageHunk(fvc);
+            return null;
+         case 34:
+            gitPatch(arg, fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -618,6 +640,143 @@ public final class GitCommands extends Rgroup implements Plugin {
       fvc.vi.recalcScreenRow();
       fvc.vi.redraw();
       UI.reportMessage("Collapsed all");
+   }
+
+   /**
+    * Show per-line blame annotations for a file.
+    * With no argument, blames the current file.
+    * Usage: {@code :git_blame} or {@code :git_blame path/to/file}
+    */
+   private static void gitBlame(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      String filepath;
+      java.io.File dir = null;
+      if (null != arg) {
+         filepath = arg.toString().trim();
+      } else {
+         String path = fvc.edvec.fdes().getCanonName();
+         if (path == null || path.startsWith("*")) {
+            throw new InputException(
+               "No file to blame — use :git_blame <file>");
+         }
+         java.io.File f = new java.io.File(path);
+         dir = f.getParentFile();
+         filepath = f.getName();
+      }
+      List<GitBlameBuffer.BlameEntry> entries =
+         GitBlameBuffer.getBlameEntries(filepath, dir);
+      if (entries.isEmpty()) {
+         UI.reportMessage("No blame data for " + filepath);
+         return;
+      }
+      List<String> formatted = GitBlameBuffer.formatBlame(entries);
+      String shortName = filepath;
+      int slash = shortName.lastIndexOf('/');
+      if (slash >= 0)
+         shortName = shortName.substring(slash + 1);
+      outputBuffer = createBuffer(
+         "*git-blame:" + shortName + "*", formatted);
+      FvContext.connectFv(outputBuffer, fvc.vi);
+   }
+
+   /**
+    * Show an annotated diff for a file, enabling hunk-level staging.
+    * With no argument, uses the file on the cursor line in the
+    * status buffer.  Usage: {@code :git_patch} or
+    * {@code :git_patch path/to/file}
+    */
+   private static void gitPatch(Object arg, FvContext fvc) throws
+         IOException, InputException {
+      String filepath;
+      if (null != arg) {
+         filepath = arg.toString().trim();
+      } else {
+         filepath = extractFilenameAtCursor(fvc);
+         if (null == filepath) {
+            throw new InputException(
+               "No file — use :git_patch <file>");
+         }
+      }
+      String section = findSection(fvc);
+      List<String> diffLines;
+      if ("Staged".equals(section)) {
+         diffLines = GitHunkStaging.getStagedFileDiff(filepath);
+      } else {
+         diffLines = GitHunkStaging.getFileDiff(filepath);
+      }
+      if (diffLines.isEmpty()) {
+         UI.reportMessage("No diff for " + filepath);
+         return;
+      }
+      patchDiffLines = diffLines;
+      patchHunks = GitHunkStaging.parseHunks(diffLines);
+      List<String> formatted = GitHunkStaging.formatAnnotatedDiff(
+         diffLines, patchHunks);
+      outputBuffer = createBuffer("*git-patch*", formatted);
+      FvContext.connectFv(outputBuffer, fvc.vi);
+      UI.reportMessage(patchHunks.size() + " hunk"
+         + (patchHunks.size() == 1 ? "" : "s")
+         + " — s=stage  u=unstage");
+   }
+
+   /**
+    * Stage the diff hunk at the cursor position in the patch buffer.
+    * The cursor must be within a hunk (on or below an {@code @@} line).
+    */
+   private static void gitStageHunk(FvContext fvc) throws
+         IOException, InputException {
+      if (patchHunks == null || patchHunks.isEmpty()) {
+         throw new InputException(
+            "No hunks — open a patch with :git_patch first");
+      }
+      // Account for the 2-line header in formatAnnotatedDiff
+      int bufferLine = fvc.inserty() - 2;
+      GitHunkStaging.Hunk hunk =
+         GitHunkStaging.findHunkAtLine(patchHunks, bufferLine);
+      if (null == hunk) {
+         throw new InputException(
+            "Cursor is not within a diff hunk");
+      }
+      String err = GitHunkStaging.stageHunk(hunk);
+      if (null == err) {
+         UI.reportMessage("Staged hunk " + (hunk.index + 1));
+         // Refresh status if visible
+         if (null != statusBuffer) {
+            List<String> lines = GitStatusBuffer.getStatusLines();
+            statusBuffer = createBuffer("*git-status*", lines);
+         }
+      } else {
+         UI.reportMessage("Stage failed: " + err);
+      }
+   }
+
+   /**
+    * Unstage the diff hunk at the cursor position.
+    * Applies the hunk in reverse to remove it from the index.
+    */
+   private static void gitUnstageHunk(FvContext fvc) throws
+         IOException, InputException {
+      if (patchHunks == null || patchHunks.isEmpty()) {
+         throw new InputException(
+            "No hunks — open a patch with :git_patch first");
+      }
+      int bufferLine = fvc.inserty() - 2;
+      GitHunkStaging.Hunk hunk =
+         GitHunkStaging.findHunkAtLine(patchHunks, bufferLine);
+      if (null == hunk) {
+         throw new InputException(
+            "Cursor is not within a diff hunk");
+      }
+      String err = GitHunkStaging.unstageHunk(hunk);
+      if (null == err) {
+         UI.reportMessage("Unstaged hunk " + (hunk.index + 1));
+         if (null != statusBuffer) {
+            List<String> lines = GitStatusBuffer.getStatusLines();
+            statusBuffer = createBuffer("*git-status*", lines);
+         }
+      } else {
+         UI.reportMessage("Unstage failed: " + err);
+      }
    }
 
    /**
