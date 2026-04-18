@@ -203,7 +203,7 @@
     fill: gray.lighten(93%),
     inset: theme-spacing.medium,
     radius: 4pt,
-    stroke: (dash: "dashed") + gray.lighten(60%) + theme-strokes.thin,
+    stroke: (dash: "dashed", paint: gray.lighten(60%), thickness: theme-strokes.thin),
     width: 100%,
     align(center)[
       #text(size: theme-font-sizes.small, fill: gray.darken(30%), style: "italic")[

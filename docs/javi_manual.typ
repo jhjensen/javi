@@ -13,7 +13,7 @@
 #title-page(
   title: "Javi User Manual",
   subtitle: "A Vi-Like Editor Written in Java",
-  date: "March 2026",
+  date: "April 2026",
 )
 
 #outline(indent: auto, depth: 3)
@@ -77,6 +77,7 @@ Javi has a built-in help system accessible from command mode:
   ([#cmd("help filelist")], [File list buffer]),
   ([#cmd("help directory")], [Directory list buffer]),
   ([#cmd("help keybindings")], [Key binding architecture]),
+  ([#cmd("help git")], [Git integration commands]),
 )
 
 Help content is displayed in a read-only buffer navigable with normal vi
@@ -392,13 +393,6 @@ to traditional ex/vi commands, see the
 = Folding
 <sec-folding>
 
-#warning-box[
-  *Branch availability:* Folding is implemented on the
-  `feature/F25-vim-folding` branch and is not yet available on master.
-  The commands and key bindings described below will work once that
-  branch is merged.
-]
-
 Folding lets you collapse regions of text into a single summary line,
 reducing visual clutter when working with large files. Collapsed regions
 hide their contents from view but remain in the buffer --- unfolding
@@ -682,33 +676,80 @@ Javi provides Magit-inspired Git integration through colon commands.
 All commands require Git to be installed and the editor to be running
 inside a Git repository.
 
-== Commands
+A convenient shorthand is available: #cmd("git _subcmd_") expands to
+#cmd("git\__subcmd_"). For example, #cmd("git status") is equivalent to
+#cmd("git_status"), and #cmd("git log") to #cmd("git_log").
+
+== Status and Staging
 
 #cmd-table(
   ([#cmd("git_status")], [Show staged, unstaged, and untracked files]),
   ([#cmd("git_stage _file_")], [Stage a file (`git add`)]),
   ([#cmd("git_unstage _file_")], [Unstage a file (`git restore --staged`)]),
+  ([#cmd("git_stage_line")], [Stage the file on the cursor line (in status buffer)]),
+  ([#cmd("git_unstage_line")], [Unstage the file on the cursor line]),
+  ([#cmd("git_toggle")], [Toggle staged/unstaged for cursor line]),
+  ([#cmd("git_discard")], [Discard unstaged changes for cursor line]),
+  ([#cmd("git_refresh")], [Refresh the status buffer]),
+)
+
+== Committing
+
+#cmd-table(
   ([#cmd("git_commit")], [Open commit message editor showing staged changes]),
+  ([#cmd("git_do_commit")], [Finalize commit with message from the commit buffer]),
+  ([#cmd("git_amend")], [Amend the most recent commit]),
+)
+
+== Viewing
+
+#cmd-table(
   ([#cmd("git_diff")], [Show `git diff` output in a buffer]),
   ([#cmd("git_diff _file_")], [Show diff for a specific file]),
   ([#cmd("git_log")], [Show last 30 log entries (oneline, graph)]),
   ([#cmd("git_branch")], [Show all branches with latest commit]),
+  ([#cmd("git_show")], [Show commit details]),
+  ([#cmd("git_blame")], [Show `git blame` for the current file]),
 )
 
-=== Additional Commands
+== Branch Operations
 
 #cmd-table(
-  ([#cmd("git_stash")], [Stash current changes]),
-  ([#cmd("git_stash_pop")], [Pop the most recent stash]),
-  ([#cmd("git_stash_list")], [List all stashes]),
+  ([#cmd("git_branch_create _name_")], [Create a new branch]),
+  ([#cmd("git_branch_switch _name_")], [Switch to another branch]),
+  ([#cmd("git_branch_delete _name_")], [Delete a merged branch]),
+  ([#cmd("git_merge _branch_")], [Merge a branch into current]),
+  ([#cmd("git_rebase _branch_")], [Rebase current branch onto branch]),
+  ([#cmd("git_rebase --continue")], [Continue rebase after resolving conflicts]),
+  ([#cmd("git_rebase --abort")], [Abort an in-progress rebase]),
+)
+
+== Remote Operations
+
+#cmd-table(
   ([#cmd("git_fetch")], [Fetch from remote]),
-  ([#cmd("git_pull")], [Pull from remote]),
+  ([#cmd("git_pull")], [Pull from remote (fetch + merge)]),
   ([#cmd("git_push")], [Push to remote]),
-  ([#cmd("git_branch_create")], [Create a new branch]),
-  ([#cmd("git_branch_switch")], [Switch to another branch]),
-  ([#cmd("git_branch_delete")], [Delete a branch]),
-  ([#cmd("git_merge")], [Merge a branch]),
-  ([#cmd("git_rebase")], [Rebase current branch]),
+)
+
+== Stash
+
+#cmd-table(
+  ([#cmd("git_stash")], [Stash working directory changes]),
+  ([#cmd("git_stash_pop")], [Pop the top stash entry]),
+  ([#cmd("git_stash_list")], [Show stash list in a buffer]),
+)
+
+== Hunk-Level Operations
+
+For fine-grained staging, the following commands work in diff and patch
+buffers:
+
+#cmd-table(
+  ([#cmd("git_stage_hunk")], [Stage the hunk at the cursor]),
+  ([#cmd("git_unstage_hunk")], [Unstage the hunk at the cursor]),
+  ([#cmd("git_patch")], [Open patch view for the file at cursor]),
+  ([#cmd("git_goto_file")], [Jump to the source file from a diff or status line]),
 )
 
 == Status Buffer
@@ -738,13 +779,29 @@ normal vi keys.
 
 #screenshot-placeholder[Git status buffer showing staged, unstaged, and untracked files]
 
+The status buffer auto-refreshes when files are saved in the editor.
+
+== Log Buffer
+
+The #cmd("git_log") buffer displays commit history with a graph.
+Within the log buffer, these commands provide interactive navigation:
+
+#cmd-table(
+  ([#cmd("git_log_diff")], [Toggle inline diff for commit at cursor]),
+  ([#cmd("git_expand")], [Expand the commit at cursor (show diff)]),
+  ([#cmd("git_expand_all")], [Expand all commits]),
+  ([#cmd("git_collapse_all")], [Collapse all expanded commits]),
+)
+
 == Workflow Example
 
 + Run #cmd("git_status") to see the current repository state.
 + Stage files with #cmd("git_stage src/main/java/javi/Example.java").
++ Or use #cmd("git_stage_line") on a file in the status buffer.
 + Run #cmd("git_commit") to open the commit message editor.
++ Edit the commit message, then run #cmd("git_do_commit") to finalize.
 + View the log with #cmd("git_log") to verify your commit.
-+ Check diffs with #cmd("git_diff") to review changes.
++ Push with #cmd("git_push") when ready.
 
 #note-box[
   *Note:* If the current directory is not inside a Git repository, all
@@ -1469,7 +1526,44 @@ fold commands.
 
 Available topics: `index`, `movement`, `editing`, `search`, `files`,
 `ex`, `visual`, `undo`, `window`, `shell`, `diredit`, `filelist`,
-`directory`, `keybindings`.
+`directory`, `keybindings`, `git`.
+
+=== Git Integration Commands
+
+#cmd-table(
+  ([#cmd("git _subcmd_")], [Shorthand: expands to #cmd("git\__subcmd_")]),
+  ([#cmd("git_status")], [Show staged, unstaged, and untracked files]),
+  ([#cmd("git_stage _file_")], [Stage a file]),
+  ([#cmd("git_unstage _file_")], [Unstage a file]),
+  ([#cmd("git_stage_line")], [Stage file on cursor line]),
+  ([#cmd("git_unstage_line")], [Unstage file on cursor line]),
+  ([#cmd("git_toggle")], [Toggle staged/unstaged for cursor line]),
+  ([#cmd("git_discard")], [Discard unstaged changes for cursor line]),
+  ([#cmd("git_refresh")], [Refresh status buffer]),
+  ([#cmd("git_commit")], [Open commit message editor]),
+  ([#cmd("git_do_commit")], [Finalize commit]),
+  ([#cmd("git_amend")], [Amend most recent commit]),
+  ([#cmd("git_diff")], [Show diff]),
+  ([#cmd("git_log")], [Show log entries]),
+  ([#cmd("git_branch")], [Show branches]),
+  ([#cmd("git_show")], [Show commit details]),
+  ([#cmd("git_blame")], [Show blame for current file]),
+  ([#cmd("git_branch_create")], [Create branch]),
+  ([#cmd("git_branch_switch")], [Switch branch]),
+  ([#cmd("git_branch_delete")], [Delete branch]),
+  ([#cmd("git_merge")], [Merge branch]),
+  ([#cmd("git_rebase")], [Rebase current branch]),
+  ([#cmd("git_fetch")], [Fetch from remote]),
+  ([#cmd("git_pull")], [Pull from remote]),
+  ([#cmd("git_push")], [Push to remote]),
+  ([#cmd("git_stash")], [Stash changes]),
+  ([#cmd("git_stash_pop")], [Pop stash]),
+  ([#cmd("git_stash_list")], [List stashes]),
+  ([#cmd("git_stage_hunk")], [Stage hunk at cursor]),
+  ([#cmd("git_unstage_hunk")], [Unstage hunk at cursor]),
+  ([#cmd("git_patch")], [Open patch view]),
+  ([#cmd("git_goto_file")], [Jump to file from diff/status]),
+)
 
 === JavaScript Integration
 
@@ -1499,7 +1593,7 @@ Available topics: `index`, `movement`, `editing`, `search`, `files`,
 = Appendix B: Accuracy Notes
 
 The following features described in this manual are planned but *not yet
-implemented* in the codebase as of March 2026. The corresponding
+implemented* in the codebase as of April 2026. The corresponding
 sections describe the intended design:
 
 - *AI Integration* (Section 6) --- The `:ai` commands, Copilot
@@ -1507,19 +1601,10 @@ sections describe the intended design:
   `AiCommands` class or related command registrations exist in the
   source code.
 
-- *Git Integration* (Section 7) --- The `:git_status`, `:git_stage`,
-  `:git_commit`, and related commands are not yet implemented. No
-  `GitCommands` class or related command registrations exist.
-
 - *LSP Integration* (Section 8) --- The `:lspdef`, `:lspref`,
   `:lsphover`, and related commands are not yet implemented. No LSP
   client, F12/Shift-F12/F9/Ctrl-K bindings for LSP, or language
   server configuration system exist in the source code.
-
-- *Folding* (Section 4) --- The folding feature (`:fold`, `:foldindent`,
-  `:foldmarker`, and `zo`/`zc`/`za`/`zR`/`zM` key bindings) is
-  implemented on the `feature/F25-vim-folding` branch and will be
-  available once merged to master.
 
 - *Tag management commands* --- The commands `:tagsauto` (auto-regenerate
   ctags), `:tagfiles` (list tag files), `:tagadd` (add tag file), and
@@ -1532,6 +1617,17 @@ sections describe the intended design:
   the terminal. All other shell management commands (`:shellnew`,
   `:shells`, `:shellnext`, etc.) work as documented.
 
-These sections document the planned feature design for future
-implementation. All other sections accurately reflect the current
-codebase.
+The following features are *fully implemented* and documented accurately:
+
+- *Folding* (Section 4) --- All fold detection methods (`:fold`,
+  `:foldindent`, `:foldmarker`) and fold manipulation keys
+  (`zo`/`zc`/`za`/`zR`/`zM`) are implemented on master.
+
+- *Git Integration* (Section 7) --- All core git commands are
+  implemented: status, staging, committing, diff, log, branch
+  operations, stash, remote operations, blame, and hunk-level
+  staging. The advanced commands (`git_stage_hunk`, `git_unstage_hunk`,
+  `git_patch`, `git_blame`, `git_goto_file`, `git_amend`) are
+  functional but not yet documented in the built-in help system.
+
+All other sections accurately reflect the current codebase.
