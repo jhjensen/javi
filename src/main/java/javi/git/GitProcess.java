@@ -199,6 +199,69 @@ public final class GitProcess {
    }
 
    /**
+    * Get the root directory of the git repository containing
+    * the given directory.
+    *
+    * @param dir directory within a git repo, or null for JVM CWD
+    * @return the repo root path, or null if not a git repo
+    */
+   public static String getRepoRoot(java.io.File dir) {
+      try {
+         List<String> output;
+         if (dir != null) {
+            output = execute(dir,
+               "rev-parse", "--show-toplevel");
+         } else {
+            output = execute("rev-parse", "--show-toplevel");
+         }
+         if (!output.isEmpty())
+            return output.get(0).trim();
+      } catch (IOException e) {
+         // not a repo
+      }
+      return null;
+   }
+
+   /**
+    * Get the path to the actual .git directory for the repo
+    * containing the given directory.  In a worktree this returns
+    * the worktree-specific git dir (e.g. {@code .git/worktrees/X}),
+    * not the shared toplevel.  Falls back to {@code <root>/.git}
+    * if the command fails.
+    *
+    * @param dir directory within a git repo, or null for JVM CWD
+    * @return the git directory path, or null if not a git repo
+    */
+   public static String getGitDir(java.io.File dir) {
+      try {
+         String[] cmd = {"git", "rev-parse", "--absolute-git-dir"};
+         ProcessBuilder pb = new ProcessBuilder(cmd);
+         pb.redirectErrorStream(true);
+         if (dir != null)
+            pb.directory(dir);
+         Process proc = pb.start();
+         java.util.ArrayList<String> output = new java.util.ArrayList<>();
+         try (java.io.BufferedReader reader =
+               new java.io.BufferedReader(
+                  new java.io.InputStreamReader(
+                     proc.getInputStream(),
+                     StandardCharsets.UTF_8))) {
+            for (String line; null != (line = reader.readLine());) {
+               output.add(line);
+            }
+            int rc = proc.waitFor();
+            if (rc == 0 && !output.isEmpty())
+               return output.get(0).trim();
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+      } catch (IOException e) {
+         // not a repo or old git
+      }
+      return null;
+   }
+
+   /**
     * Execute a git command, writing the given string to its stdin.
     *
     * @param stdinContent content to write to the process stdin

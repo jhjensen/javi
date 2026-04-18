@@ -279,14 +279,14 @@ class GitJUnitTest {
             String content = sb.toString();
             assertTrue(content.contains("GIT INTEGRATION"),
                "Should have git integration header");
-            assertTrue(content.contains(":git_status"),
-               "Should document git_status");
-            assertTrue(content.contains(":git_commit"),
-               "Should document git_commit");
-            assertTrue(content.contains(":git_push"),
-               "Should document git_push");
-            assertTrue(content.contains(":git_rebase"),
-               "Should document git_rebase");
+            assertTrue(content.contains(":git status"),
+               "Should document git status");
+            assertTrue(content.contains(":git commit"),
+               "Should document git commit");
+            assertTrue(content.contains(":git push"),
+               "Should document git push");
+            assertTrue(content.contains(":git rebase"),
+               "Should document git rebase");
          } finally {
             EventQueue.biglock2.unlock();
          }
@@ -349,11 +349,11 @@ class GitJUnitTest {
                sb.append(help.at(i).toString()).append('\n');
             }
             String content = sb.toString();
-            assertTrue(content.contains(":git_rebase <branch>"),
+            assertTrue(content.contains(":git rebase <branch>"),
                "Help should document rebase with branch arg");
-            assertTrue(content.contains(":git_rebase --continue"),
+            assertTrue(content.contains(":git rebase --continue"),
                "Help should document rebase --continue");
-            assertTrue(content.contains(":git_rebase --abort"),
+            assertTrue(content.contains(":git rebase --abort"),
                "Help should document rebase --abort");
          } finally {
             EventQueue.biglock2.unlock();
@@ -373,7 +373,7 @@ class GitJUnitTest {
             }
             String content = sb.toString();
             int branchIdx = content.indexOf("BRANCH OPERATIONS");
-            int rebaseIdx = content.indexOf(":git_rebase");
+            int rebaseIdx = content.indexOf(":git rebase");
             int remoteIdx = content.indexOf("REMOTE OPERATIONS");
             assertTrue(branchIdx >= 0,
                "Should have branch operations section");

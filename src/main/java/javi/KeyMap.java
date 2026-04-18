@@ -29,12 +29,27 @@ import java.util.Map;
  */
 final class KeyMap {
 
+   /**
+    * Callback for buffer-specific visual mode key handling.
+    * When set on a keymap, {@link EditGroup} invokes this before
+    * the default visual-mode switch.  Return {@code true} if the
+    * key was consumed (break out of mark mode), {@code false}
+    * to fall through to the default handling.
+    */
+   @FunctionalInterface
+   interface VisualHandler {
+      boolean handle(char key, int starty, int doney,
+         int startx, int donex, FvContext<?> fvc)
+         throws java.io.IOException, InputException;
+   }
+
    private static final Map<String, KeyMap> registry = new LinkedHashMap<>();
 
    private final String name;
    private final KeyGroup moveKeys;
    private final KeyGroup editKeys;
    private final KeyMap parent; // null for root keymaps
+   private VisualHandler visualHandler;
 
    KeyMap(String keyMapName, KeyGroup moveGroup, KeyGroup editGroup,
          KeyMap parentMap) {
@@ -54,6 +69,25 @@ final class KeyMap {
 
    KeyMap getParent() {
       return parent;
+   }
+
+   /**
+    * Set a visual-mode key handler for this keymap.
+    * Invoked by {@link EditGroup#markmode} before the default switch.
+    */
+   void setVisualHandler(VisualHandler handler) {
+      this.visualHandler = handler;
+   }
+
+   /**
+    * Get the visual-mode key handler, checking the parent chain.
+    *
+    * @return the handler, or null if none set
+    */
+   VisualHandler getVisualHandler() {
+      if (visualHandler != null)
+         return visualHandler;
+      return (parent != null) ? parent.getVisualHandler() : null;
    }
 
    // ---- Lookup with parent-chain fallback ----
@@ -288,14 +322,16 @@ final class KeyMap {
       gitstatusMap.bindEditKey('s', "git_stage_line", null);
       gitstatusMap.bindEditKey('u', "git_unstage_line", null);
       gitstatusMap.bindEditKey('X', "git_discard", null);
-      gitstatusMap.bindEditKey('c', "git_commit", null);
+      gitstatusMap.bindEditKey('c', "git_commit_menu", null);
       gitstatusMap.bindEditKey('R', "git_refresh", null);
+      gitstatusMap.bindEditKey((char) 12, "git_refresh", null); // ^L
       gitstatusMap.bindEditKey('d', "git_diff", null);
       gitstatusMap.bindEditKey('q', "nextfile", null);
       gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
       gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
       gitstatusMap.bindEditKey('p', "git_patch", null);
-      gitstatusMap.bindEditKey('a', "git_amend", null);
+      gitstatusMap.bindEditKey(
+         (char) 29, "git_goto_file", null); // ^]
       register(gitstatusMap);
 
       // Git patch overlay: hunk staging with fugitive-style keys
@@ -303,8 +339,29 @@ final class KeyMap {
       gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
       gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
       gitpatchMap.bindEditKey('q', "nextfile", null);
+      gitpatchMap.bindEditKey((char) 12, "git_refresh", null); // ^L
       gitpatchMap.bindEditKey((char) 29, "git_goto_file", null); // ^]
+      gitpatchMap.setVisualHandler(
+         javi.git.GitCommands::handleVisualKey);
       register(gitpatchMap);
+
+      // Git commit view overlay: message editing + hunk staging
+      KeyMap gitcommitMap = createOverlay("gitcommit", normalMap);
+      gitcommitMap.bindEditKey('s', "git_stage_hunk", null);
+      gitcommitMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitcommitMap.bindEditKey('q', "git_commit_quit", null);
+      gitcommitMap.bindEditKey((char) 12, "git_refresh", null); // ^L
+      gitcommitMap.bindEditKey(
+         (char) 29, "git_goto_file", null); // ^]
+      gitcommitMap.setVisualHandler(
+         javi.git.GitCommands::handleVisualKey);
+      register(gitcommitMap);
+
+      // Git commit message overlay: fully editable with ZZ to commit
+      KeyMap gitcommitmsgMap = createOverlay("gitcommitmsg", normalMap);
+      gitcommitmsgMap.bindEditKey('Z', "git_commit_finalize", null);
+      gitcommitmsgMap.bindEditKey('q', "git_commit_quit", null);
+      register(gitcommitmsgMap);
    }
 
    /**
@@ -329,6 +386,10 @@ final class KeyMap {
          return get("gitstatus");
       if ("*git-patch*".equals(name))
          return get("gitpatch");
+      if ("*git-commit-msg*".equals(name))
+         return get("gitcommitmsg");
+      if (name.startsWith("*git-commit"))
+         return get("gitcommit");
       return null;
    }
 

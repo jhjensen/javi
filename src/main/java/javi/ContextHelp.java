@@ -230,7 +230,7 @@ public final class ContextHelp {
     *
     * @param subMode short description of the sub-mode
     */
-   static void onSubModeEntered(String subMode) {
+   public static void onSubModeEntered(String subMode) {
       if (helpPanelView == null)
          return;
       inSubMode = true;
@@ -523,17 +523,38 @@ public final class ContextHelp {
    }
 
    private static void appendExCommandList() {
-      append("REGISTERED EX COMMANDS");
-      append("----------------------");
+      FvContext<?> fvc = FvContext.getCurrFvc();
+      String bufName = (fvc != null && fvc.edvec != null)
+         ? fvc.edvec.toString() : "";
+      boolean isGitContext = bufName.startsWith("*git-");
+
       Set<String> cmds = Rgroup.getRegisteredCommands();
       TreeSet<String> sorted = new TreeSet<>(cmds);
-      for (String cmd : sorted) {
-         if (!cmd.isEmpty() && !cmd.startsWith("xxx")) {
-            String desc = Rgroup.getDescription(cmd);
-            if (desc != null) {
-               append(String.format("  :%-18s %s", cmd, desc));
-            } else {
-               append("  :" + cmd);
+
+      // In git context, show git commands first
+      if (isGitContext) {
+         append("GIT COMMANDS");
+         append("------------");
+         for (String cmd : sorted) {
+            if (cmd.startsWith("git")) {
+               appendExCommandEntry(cmd);
+            }
+         }
+         append("");
+         append("OTHER EX COMMANDS");
+         append("-----------------");
+         for (String cmd : sorted) {
+            if (!cmd.isEmpty() && !cmd.startsWith("xxx")
+                  && !cmd.startsWith("git")) {
+               appendExCommandEntry(cmd);
+            }
+         }
+      } else {
+         append("REGISTERED EX COMMANDS");
+         append("----------------------");
+         for (String cmd : sorted) {
+            if (!cmd.isEmpty() && !cmd.startsWith("xxx")) {
+               appendExCommandEntry(cmd);
             }
          }
       }
@@ -541,6 +562,15 @@ public final class ContextHelp {
       append("Type :help <topic> for detailed topic help.");
       append("");
       appendSeeAlso("ex", "search");
+   }
+
+   private static void appendExCommandEntry(String cmd) {
+      String desc = Rgroup.getDescription(cmd);
+      if (desc != null) {
+         append(String.format("  :%-18s %s", cmd, desc));
+      } else {
+         append("  :" + cmd);
+      }
    }
 
    private static void appendShellModeHelp() {

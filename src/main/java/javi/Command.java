@@ -331,6 +331,16 @@ public final class Command extends Rgroup {
       }
    }
 
+   /**
+    * Check whether a named command exists in the binding table.
+    *
+    * @param name the command name to look up
+    * @return true if the command is registered
+    */
+   public static boolean hasCommand(String name) {
+      return bindingLookup(name) != null;
+   }
+
    public static void command(String line, FvContext fvc, Object args) {
       //trace("command " + line);
       String command;

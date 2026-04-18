@@ -1,25 +1,23 @@
 package javi.git;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javi.Command;
+import javi.ContextHelp;
 import javi.DirEdit;
 import javi.EditContainer;
+import javi.EventQueue;
 import javi.FileList;
-import javi.FoldModel;
 import javi.FvContext;
 import javi.InputException;
 import javi.Plugin;
-import javi.PosListList;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
 import javi.UI;
+import javi.View;
 
 /**
  * Rgroup subclass providing git commands for the editor.
@@ -47,49 +45,44 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static TextEdit<String> statusBuffer;
 
    /** The git output buffer for diff/log/branch results. */
-   private static TextEdit<String> outputBuffer;
+   static TextEdit<String> outputBuffer;
 
-   /** The git log buffer, reused across invocations. */
-   private static TextEdit<String> logBuffer;
 
    /** Whether the file-write listener has been registered. */
    private static boolean listenerRegistered;
 
-   /** Working directory for git log commands. */
-   private static java.io.File logDir;
 
-   /** Number of log entries to fetch per page. */
-   private static int logPageSize = 100;
 
-   /** Raw graph lines from most recent git log. */
-   private static List<String> logLogLines;
 
-   /** SHA-to-message map from most recent git log. */
-   private static Map<String, List<String>> logMessages;
 
-   /** SHAs whose diffs are currently expanded. */
-   private static final java.util.Set<String> logDiffExpanded =
-      new java.util.HashSet<>();
 
-   /** Cached diff content keyed by SHA. */
-   private static final Map<String, List<String>> logDiffCache =
-      new java.util.HashMap<>();
 
-   /** Extra arguments for the current git log session (e.g. path filter). */
-   private static String[] logExtraArgs;
 
-   /** Current git log buffer name (unique per directory). */
-   private static String logBufferName;
 
-   /** Map of git log buffer names to their associated directories. */
-   private static final Map<String, java.io.File> logBufferDirs =
-      new java.util.LinkedHashMap<>();
 
    /** Parsed hunks for the current patch buffer. */
    private static List<GitHunkStaging.Hunk> patchHunks;
 
    /** Raw diff lines for the current patch buffer. */
    private static List<String> patchDiffLines;
+
+   /** Parsed hunks for the commit view buffer. */
+   private static List<GitHunkStaging.Hunk> commitViewHunks;
+
+   /** Whether the current commit view is in amend mode. */
+   private static boolean commitAmendMode;
+
+   /** Root path of the repo for the current commit session. */
+   private static String commitRepoRoot;
+
+   /** The commit message buffer for split-view commit workflow. */
+   private static TextEdit<String> commitMsgBuffer;
+
+   /** The staging buffer for split-view commit workflow. */
+   private static TextEdit<String> commitStagingBuffer;
+
+   /** The view displaying the staging buffer (right pane). */
+   private static View commitStagingView;
 
    /**
     * Returns the directory associated with a git log buffer, or null.
@@ -98,7 +91,7 @@ public final class GitCommands extends Rgroup implements Plugin {
     * @return the directory, or null if not a git log buffer
     */
    public static java.io.File getBufferDir(String bufferName) {
-      return logBufferDirs.get(bufferName);
+      return GitLogHelper.logBufferDirs.get(bufferName);
    }
 
    public GitCommands() {
@@ -140,8 +133,53 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git_patch",
          "git_goto_file",
          "git_amend",
+         "git_commit_menu",
+         "git_commit_quit",
+         "git_commit_finalize",
       };
-      register(rnames);
+      final String[] descs = {
+         "",
+         "Show git status buffer",
+         "Stage a file (git add)",
+         "Unstage a file (git restore --staged)",
+         "Open split-view commit editor",
+         "Show diff output",
+         "Show git log with graph",
+         "Show branch list",
+         "Finalize commit from message buffer",
+         "Create a new branch",
+         "Switch to a branch",
+         "Stage file at cursor",
+         "Unstage file at cursor",
+         "Toggle stage/unstage at cursor",
+         "Discard unstaged changes at cursor",
+         "Refresh git status or staging view",
+         "Stash working directory changes",
+         "Pop top stash entry",
+         "Show stash list",
+         "Merge a branch",
+         "Fetch from remote",
+         "Pull from remote (fetch + merge)",
+         "Push to remote",
+         "Delete a branch",
+         "Rebase onto a branch",
+         "Git dispatcher (:git <subcmd>)",
+         "Show full commit details",
+         "Show diff for commit at cursor",
+         "Toggle fold / expand diff",
+         "Expand all folds and diffs",
+         "Collapse all folds",
+         "Show per-line blame annotations",
+         "Stage diff hunk at cursor",
+         "Unstage diff hunk at cursor",
+         "Show annotated patch for file at cursor",
+         "Open file from diff context (^])",
+         "Amend previous commit",
+         "Commit sub-menu (c=commit a=amend)",
+         "Quit commit view with save prompt",
+         "ZZ to finalize commit",
+      };
+      register(rnames, descs);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -168,7 +206,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             gitDiff(arg, fvc);
             return null;
          case 6:
-            gitLog(arg, fvc);
+            GitLogHelper.gitLog(arg, fvc);
             return null;
          case 7:
             gitBranch(fvc);
@@ -228,19 +266,19 @@ public final class GitCommands extends Rgroup implements Plugin {
             gitDispatch(arg, fvc);
             return null;
          case 26:
-            gitShow(fvc);
+            GitLogHelper.gitShow(fvc);
             return null;
          case 27:
-            gitLogDiff(fvc);
+            GitLogHelper.gitLogDiff(fvc);
             return null;
          case 28:
-            gitExpand(fvc);
+            GitLogHelper.gitExpand(fvc);
             return null;
          case 29:
-            gitExpandAll(fvc);
+            GitLogHelper.gitExpandAll(fvc);
             return null;
          case 30:
-            gitCollapseAll(fvc);
+            GitLogHelper.gitCollapseAll(fvc);
             return null;
          case 31:
             gitBlame(arg, fvc);
@@ -259,6 +297,15 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 36:
             gitAmend(fvc);
+            return null;
+         case 37:
+            gitCommitMenu(fvc);
+            return null;
+         case 38:
+            gitCommitQuit(fvc);
+            return null;
+         case 39:
+            gitCommitFinalize(fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -320,29 +367,77 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Open a commit message buffer showing staged changes.
+    * Open the split-view commit workflow: left pane shows the editable
+    * commit message, right pane shows staged files and unstaged diffs.
+    * Loads any previously saved commit message for this repo.
     */
    private static void gitCommit(FvContext fvc) throws
          IOException, InputException {
-      // Get staged files for reference
-      List<String> staged = GitProcess.execute(
-         "diff", "--cached", "--stat");
+      openSplitCommitView(fvc, false);
+   }
 
-      java.util.ArrayList<String> lines = new java.util.ArrayList<>();
-      lines.add("");
-      lines.add("# Enter commit message above, then run :git_do_commit");
-      lines.add("# Lines starting with '#' will be ignored.");
-      lines.add("#");
-      lines.add("# Changes to be committed:");
-      for (String s : staged) {
-         lines.add("#   " + s);
-      }
-      if (staged.isEmpty()) {
-         lines.add("#   (no staged changes)");
-      }
+   /** Open split-view commit: msg left, staging right. */
+   private static void openSplitCommitView(FvContext fvc,
+         boolean amend) throws IOException, InputException {
+      ensureListenerRegistered();
+      java.io.File dir = getFileDir(fvc);
+      commitRepoRoot = GitProcess.getRepoRoot(dir);
+      commitAmendMode = amend;
 
-      TextEdit<String> commitBuffer = createBuffer("*git-commit*", lines);
-      FvContext.connectFv(commitBuffer, fvc.vi);
+      // Build message buffer
+      List<String> msgLines = new ArrayList<>();
+      List<String> savedMsg =
+         GitCommitView.loadMessage(commitRepoRoot);
+      if (savedMsg != null && !savedMsg.isEmpty()) {
+         msgLines.addAll(savedMsg);
+      } else if (amend) {
+         List<String> lastMsg = GitProcess.execute(
+            "log", "-1", "--pretty=%B");
+         for (String m : lastMsg) {
+            if (!m.isEmpty() || !msgLines.isEmpty())
+               msgLines.add(m);
+         }
+         while (!msgLines.isEmpty()
+               && msgLines.get(msgLines.size() - 1).isEmpty())
+            msgLines.remove(msgLines.size() - 1);
+      }
+      if (msgLines.isEmpty())
+         msgLines.add("");
+      commitMsgBuffer = createBuffer(
+         "*git-commit-msg*", msgLines);
+
+      // Build staging buffer
+      List<String> stagingLines =
+         GitCommitView.buildStagingView();
+      commitViewHunks =
+         GitCommitView.parseStagingViewHunks(stagingLines);
+      commitStagingBuffer = createBuffer(
+         "*git-commit-staging*", stagingLines);
+
+      // Display message in current view (left pane)
+      FvContext.connectFv(commitMsgBuffer, fvc.vi);
+
+      // Create second view (right pane) for staging
+      if (commitStagingView == null) {
+         Command.command("va", fvc, null);
+      } else {
+         // Reuse existing staging view
+         Command.command("vn", null, null);
+      }
+      // Now the new/next view is current — show staging there
+      FvContext<?> stagingFvc = FvContext.getCurrFvc();
+      commitStagingView = stagingFvc.vi;
+      FvContext.connectFv(commitStagingBuffer, stagingFvc.vi);
+
+      // Switch focus back to message view (left pane)
+      Command.command("vn", null, null);
+      if (amend) {
+         UI.reportMessage(
+            "Amend — edit message, ZZ to commit, q to cancel");
+      } else {
+         UI.reportMessage(
+            "Edit message, ZZ to commit, q to cancel");
+      }
    }
 
    /**
@@ -365,53 +460,6 @@ public final class GitCommands extends Rgroup implements Plugin {
       FvContext.connectFv(outputBuffer, fvc.vi);
    }
 
-   /**
-    * Show git log in a text buffer for in-editor navigation.
-    * Graph window is disabled; use :git_show / :git_log_diff
-    * to inspect individual commits.
-    *
-    * <p>Optional argument is appended to the git log command.
-    * For example, {@code :git_log -- path/to/file} restricts
-    * the log to a single file.  If no argument is given, the
-    * log runs in the directory of the current file (or, when
-    * the current buffer is a file-list or directory browser,
-    * in the directory of the entry at the cursor).</p>
-    */
-   private static void gitLog(Object arg, FvContext fvc) throws
-         IOException, InputException {
-      java.io.File dir = getFileDir(fvc);
-      logDir = dir;
-      logPageSize = 100;
-      logDiffExpanded.clear();
-      logDiffCache.clear();
-      logExtraArgs = parseLogArgs(arg);
-      logLogLines = GitLogBuffer.getLogLines(
-         logPageSize, dir, logExtraArgs);
-      if (!logLogLines.isEmpty()) {
-         logMessages =
-            GitLogBuffer.getCommitMessages(
-               logPageSize, dir, logExtraArgs);
-         List<int[]> foldRanges = new ArrayList<>();
-         List<String> formatted =
-            GitLogBuffer.buildFoldedLog(
-               logLogLines, logMessages, foldRanges,
-               logDiffExpanded, logDiffCache);
-         String dirLabel = dir != null ? dir.getName() : "repo";
-         logBufferName = "*git-log:" + dirLabel + "*";
-         logBuffer = createBuffer(logBufferName, formatted);
-         logBufferDirs.put(logBufferName, dir);
-         registerLogInPosListList();
-         FvContext<?> logFvc =
-            FvContext.connectFv(logBuffer, fvc.vi);
-         FoldModel fm = new FoldModel();
-         for (int[] range : foldRanges) {
-            fm.addFold(range[0], range[1]);
-         }
-         fm.closeAll();
-         fm.setToggleHandler(GitCommands::handleLogFoldToggle);
-         logFvc.setFoldModel(fm);
-      }
-   }
 
    /**
     * Get the directory context for git commands.
@@ -425,7 +473,7 @@ public final class GitCommands extends Rgroup implements Plugin {
     * @return the directory, or null if not determinable
     */
    @SuppressWarnings("unchecked")
-   private static java.io.File getFileDir(FvContext fvc) {
+   static java.io.File getFileDir(FvContext fvc) {
       // DirEdit: use path of cursor entry
       if (fvc.edvec instanceof DirEdit) {
          DirEdit de = (DirEdit) fvc.edvec;
@@ -469,187 +517,12 @@ public final class GitCommands extends Rgroup implements Plugin {
       return null;
    }
 
-   /**
-    * Parse the optional argument to {@code :git_log} into an
-    * array of extra git arguments.  Splits on whitespace.
-    *
-    * @param arg the raw command argument, or null
-    * @return array of extra args, or null if none
-    */
-   private static String[] parseLogArgs(Object arg) {
-      if (null == arg)
-         return null;
-      String s = arg.toString().trim();
-      if (s.isEmpty())
-         return null;
-      return s.split("\\s+");
-   }
 
-   /**
-    * Registers git log buffers in PosListList so they appear
-    * in F6 for easy navigation.  Each open git log buffer
-    * gets a single entry pointing to line 1 of the buffer.
-    */
-   private static void registerLogInPosListList() {
-      StringBuilder sb = new StringBuilder();
-      for (Map.Entry<String, java.io.File> e
-            : logBufferDirs.entrySet()) {
-         String bName = e.getKey();
-         java.io.File bDir = e.getValue();
-         String label = bDir != null
-            ? bDir.getPath() : "repo";
-         sb.append(bName).append("(1 -git log ")
-            .append(label).append(")\n");
-      }
-      BufferedReader reader = new BufferedReader(
-         new StringReader(sb.toString()));
-      PosListList.Cmd.replaceFromReader("git-log", reader);
-   }
 
-   /**
-    * Show full commit details for the commit on the current line.
-    * Extracts the SHA from the cursor line in the log buffer and
-    * displays author, date, full message, and diff stat.
-    */
-   private static void gitShow(FvContext fvc) throws
-         IOException, InputException {
-      String sha = extractShaAtCursor(fvc);
-      if (null == sha) {
-         throw new InputException("No commit SHA on current line");
-      }
-      List<String> details = GitLogBuffer.getCommitDetails(sha);
-      outputBuffer = createBuffer("*git-show*", details);
-      FvContext.connectFv(outputBuffer, fvc.vi);
-   }
 
-   /**
-    * Show the full diff for the commit on the current line.
-    * Extracts the SHA from the cursor line in the log buffer.
-    */
-   private static void gitLogDiff(FvContext fvc) throws
-         IOException, InputException {
-      String sha = extractShaAtCursor(fvc);
-      if (null == sha) {
-         throw new InputException("No commit SHA on current line");
-      }
-      List<String> diff = GitLogBuffer.getCommitDiff(sha);
-      outputBuffer = createBuffer("*git-diff*", diff);
-      FvContext.connectFv(outputBuffer, fvc.vi);
-   }
 
-   /**
-    * Toggle fold at cursor line. Detects diff markers and
-    * pagination sentinels for special handling: fetches diffs
-    * or loads more log entries and rebuilds the buffer.
-    */
-   @SuppressWarnings("unchecked")
-   private static void gitExpand(FvContext fvc) throws
-         IOException, InputException {
-      FoldModel fm = fvc.getFoldModel();
-      if (fm == null || fm.isEmpty()) {
-         UI.reportMessage("No folds in git log");
-         return;
-      }
-      int line = fvc.inserty();
-      // Read line text for marker detection
-      TextEdit<String> buf = fvc.edvec;
-      String lineText = "";
-      if (line >= 1 && line <= buf.readIn()) {
-         lineText = buf.at(line).toString();
-      }
-      // Diff show marker: first-time diff expansion
-      if (lineText.startsWith(
-            GitLogBuffer.DIFF_SHOW_PREFIX)) {
-         String sha =
-            GitLogBuffer.extractShaFromMarker(lineText);
-         if (sha != null) {
-            fetchAndCacheDiff(sha);
-            logDiffExpanded.add(sha);
-            rebuildLogBuffer(fvc, sha);
-            return;
-         }
-      }
-      // Pagination sentinel: load more entries
-      if (lineText.startsWith(
-            GitLogBuffer.PAGINATION_MARKER)) {
-         loadMoreLogEntries();
-         rebuildLogBuffer(fvc, null);
-         return;
-      }
-      // Default: regular fold toggle
-      FoldModel.FoldRange fold = fm.toggleFold(line);
-      if (fold != null) {
-         fvc.vi.recalcScreenRow();
-         fvc.vi.redraw();
-         UI.reportMessage(fold.collapsed
-            ? "Folded" : "Unfolded");
-      } else {
-         UI.reportMessage("No fold at current line");
-      }
-   }
 
-   /**
-    * Open all folds and expand all diffs in the git log.
-    * Fetches diffs for every commit and rebuilds the buffer.
-    */
-   private static void gitExpandAll(FvContext fvc) throws
-         IOException, InputException {
-      if (logLogLines == null || logLogLines.isEmpty()) {
-         // Fallback: no log state, just open folds
-         FoldModel fm = fvc.getFoldModel();
-         if (fm == null || fm.isEmpty()) {
-            UI.reportMessage("No folds in git log");
-            return;
-         }
-         fm.openAll();
-         fvc.vi.recalcScreenRow();
-         fvc.vi.redraw();
-         UI.reportMessage("Expanded all commits");
-         return;
-      }
-      // Expand all diffs
-      UI.reportMessage("Loading all diffs...");
-      for (String line : logLogLines) {
-         String sha = GitLogBuffer.extractSha(line);
-         if (sha != null && !logDiffExpanded.contains(sha)) {
-            fetchAndCacheDiff(sha);
-            logDiffExpanded.add(sha);
-         }
-      }
-      // Rebuild with everything open
-      List<int[]> foldRanges = new ArrayList<>();
-      List<String> formatted =
-         GitLogBuffer.buildFoldedLog(
-            logLogLines, logMessages, foldRanges,
-            logDiffExpanded, logDiffCache);
-      logBuffer = createBuffer(logBufferName, formatted);
-      registerLogInPosListList();
-      FvContext<?> logFvc =
-         FvContext.connectFv(logBuffer, fvc.vi);
-      FoldModel fm = new FoldModel();
-      for (int[] range : foldRanges) {
-         fm.addFold(range[0], range[1]);
-      }
-      fm.openAll();
-      fm.setToggleHandler(GitCommands::handleLogFoldToggle);
-      logFvc.setFoldModel(fm);
-      UI.reportMessage("Expanded all commits with diffs");
-   }
 
-   /**
-    * Close all folds in the git log.
-    */
-   private static void gitCollapseAll(FvContext fvc) throws
-         IOException, InputException {
-      FoldModel fm = fvc.getFoldModel();
-      if (fm == null || fm.isEmpty()) {
-         return;
-      }
-      fm.closeAll();
-      fvc.vi.recalcScreenRow();
-      fvc.vi.redraw();
-      UI.reportMessage("Collapsed all");
-   }
 
    /**
     * Show per-line blame annotations for a file.
@@ -729,20 +602,35 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Stage the diff hunk at the cursor position in the patch buffer.
-    * The cursor must be within a hunk (on or below an {@code @@} line).
+    * Stage the diff hunk at the cursor position.
+    * Works in both the patch buffer ({@code *git-patch*}) and
+    * the combined commit view ({@code *git-commit*}).
     * After a successful stage, the cursor advances to the next hunk.
+    * In the commit view, the view is refreshed preserving the message.
     */
+   @SuppressWarnings("unchecked")
    private static void gitStageHunk(FvContext fvc) throws
          IOException, InputException {
-      if (patchHunks == null || patchHunks.isEmpty()) {
+      TextEdit<String> buf = fvc.edvec;
+      String bufName = buf.toString();
+      boolean isCommitView = bufName.startsWith("*git-commit");
+
+      List<GitHunkStaging.Hunk> hunks = isCommitView
+         ? commitViewHunks : patchHunks;
+      if (hunks == null || hunks.isEmpty()) {
          throw new InputException(
             "No hunks — open a patch with :git_patch first");
       }
-      // Account for the 2-line header in formatAnnotatedDiff
-      int bufferLine = fvc.inserty() - 2;
+
+      int bufferLine;
+      if (isCommitView) {
+         bufferLine = fvc.inserty();
+      } else {
+         // Account for the 2-line header in formatAnnotatedDiff
+         bufferLine = fvc.inserty() - 2;
+      }
       GitHunkStaging.Hunk hunk =
-         GitHunkStaging.findHunkAtLine(patchHunks, bufferLine);
+         GitHunkStaging.findHunkAtLine(hunks, bufferLine);
       if (null == hunk) {
          throw new InputException(
             "Cursor is not within a diff hunk");
@@ -750,13 +638,19 @@ public final class GitCommands extends Rgroup implements Plugin {
       String err = GitHunkStaging.stageHunk(hunk);
       if (null == err) {
          UI.reportMessage("Staged hunk " + (hunk.index + 1));
-         // Refresh status if visible
-         if (null != statusBuffer) {
-            List<String> lines = GitStatusBuffer.getStatusLines();
-            statusBuffer = createBuffer("*git-status*", lines);
+         if (isCommitView) {
+            refreshCommitView(fvc);
+         } else {
+            // Refresh status if visible
+            if (null != statusBuffer) {
+               List<String> lines =
+                  GitStatusBuffer.getStatusLines();
+               statusBuffer =
+                  createBuffer("*git-status*", lines);
+            }
+            // Advance cursor to the next hunk
+            advanceToNextHunk(fvc, hunk);
          }
-         // Advance cursor to the next hunk
-         advanceToNextHunk(fvc, hunk);
       } else {
          UI.reportMessage("Stage failed: " + err);
       }
@@ -764,17 +658,64 @@ public final class GitCommands extends Rgroup implements Plugin {
 
    /**
     * Unstage the diff hunk at the cursor position.
-    * Applies the hunk in reverse to remove it from the index.
+    * Works in both the patch buffer and the commit view.
     */
+   @SuppressWarnings("unchecked")
    private static void gitUnstageHunk(FvContext fvc) throws
          IOException, InputException {
-      if (patchHunks == null || patchHunks.isEmpty()) {
+      TextEdit<String> buf = fvc.edvec;
+      String bufName = buf.toString();
+      boolean isCommitView = bufName.startsWith("*git-commit");
+
+      List<GitHunkStaging.Hunk> hunks = isCommitView
+         ? commitViewHunks : patchHunks;
+
+      // In the commit view, check if cursor is in the staged section
+      if (isCommitView) {
+         int curLine = fvc.inserty();
+         String curText = (curLine >= 1 && curLine <= buf.readIn())
+            ? buf.at(curLine).toString() : "";
+         // If in the staged section (comment lines between separators)
+         if (curText.startsWith("#   ")
+               && !curText.startsWith("#   (")) {
+            // Check we're between staged and unstaged separators
+            boolean inStaged = false;
+            for (int i = curLine; i >= 1; i--) {
+               String lt = buf.at(i).toString();
+               if (lt.equals(GitCommitView.UNSTAGED_SEPARATOR))
+                  break;
+               if (lt.equals(GitCommitView.STAGED_SEPARATOR)) {
+                  inStaged = true;
+                  break;
+               }
+            }
+            if (inStaged) {
+               // Extract filename from "# file | N ++-" stat line
+               String stat = curText.substring(4).trim();
+               int pipe = stat.indexOf('|');
+               if (pipe > 0)
+                  stat = stat.substring(0, pipe).trim();
+               GitProcess.execute("restore", "--staged", stat);
+               UI.reportMessage("Unstaged: " + stat);
+               refreshCommitView(fvc);
+               return;
+            }
+         }
+      }
+
+      if (hunks == null || hunks.isEmpty()) {
          throw new InputException(
             "No hunks — open a patch with :git_patch first");
       }
-      int bufferLine = fvc.inserty() - 2;
+
+      int bufferLine;
+      if (isCommitView) {
+         bufferLine = fvc.inserty();
+      } else {
+         bufferLine = fvc.inserty() - 2;
+      }
       GitHunkStaging.Hunk hunk =
-         GitHunkStaging.findHunkAtLine(patchHunks, bufferLine);
+         GitHunkStaging.findHunkAtLine(hunks, bufferLine);
       if (null == hunk) {
          throw new InputException(
             "Cursor is not within a diff hunk");
@@ -782,9 +723,15 @@ public final class GitCommands extends Rgroup implements Plugin {
       String err = GitHunkStaging.unstageHunk(hunk);
       if (null == err) {
          UI.reportMessage("Unstaged hunk " + (hunk.index + 1));
-         if (null != statusBuffer) {
-            List<String> lines = GitStatusBuffer.getStatusLines();
-            statusBuffer = createBuffer("*git-status*", lines);
+         if (isCommitView) {
+            refreshCommitView(fvc);
+         } else {
+            if (null != statusBuffer) {
+               List<String> lines =
+                  GitStatusBuffer.getStatusLines();
+               statusBuffer =
+                  createBuffer("*git-status*", lines);
+            }
          }
       } else {
          UI.reportMessage("Unstage failed: " + err);
@@ -800,189 +747,76 @@ public final class GitCommands extends Rgroup implements Plugin {
     */
    private static void advanceToNextHunk(FvContext fvc,
          GitHunkStaging.Hunk current) {
-      if (patchHunks == null)
+      List<GitHunkStaging.Hunk> hunks = patchHunks;
+      // Check if we're in the commit view
+      String bufName = fvc.edvec.toString();
+      if (bufName.startsWith("*git-commit"))
+         hunks = commitViewHunks;
+      if (hunks == null)
          return;
-      for (GitHunkStaging.Hunk h : patchHunks) {
+      for (GitHunkStaging.Hunk h : hunks) {
          if (h.index == current.index + 1) {
-            // +2 accounts for the 2-line header in formatAnnotatedDiff
-            fvc.cursoryabs(h.bufferLine + 2);
+            if (bufName.startsWith("*git-commit")) {
+               fvc.cursoryabs(h.bufferLine);
+            } else {
+               // +2 accounts for the 2-line header
+               fvc.cursoryabs(h.bufferLine + 2);
+            }
             return;
          }
       }
    }
 
-   /**
-    * Rebuild the git log buffer from stored state.
-    * Preserves open fold state for commits that were open
-    * before the rebuild, and opens the trigger SHA's folds.
-    *
-    * @param fvc current view context
-    * @param triggerSha SHA that triggered the rebuild, or null
-    */
+   /** Refresh staging buffer after stage/unstage. */
    @SuppressWarnings("unchecked")
-   private static void rebuildLogBuffer(
-         FvContext fvc, String triggerSha)
-         throws IOException, InputException {
-      java.util.Set<String> openShas =
-         getOpenCommitShas(fvc);
-      if (triggerSha != null) {
-         openShas.add(triggerSha);
+   private static void refreshCommitView(FvContext fvc) throws
+         IOException, InputException {
+      // Save message to disk from the message buffer
+      if (commitMsgBuffer != null) {
+         List<String> msgLines = new ArrayList<>();
+         int size = commitMsgBuffer.readIn();
+         for (int i = 1; i < size; i++)
+            msgLines.add(commitMsgBuffer.at(i).toString());
+         // Trim trailing blanks
+         while (!msgLines.isEmpty()
+               && msgLines.get(msgLines.size() - 1).isEmpty())
+            msgLines.remove(msgLines.size() - 1);
+         GitCommitView.saveMessage(commitRepoRoot, msgLines);
       }
-      List<int[]> foldRanges = new ArrayList<>();
-      List<String> formatted =
-         GitLogBuffer.buildFoldedLog(
-            logLogLines, logMessages, foldRanges,
-            logDiffExpanded, logDiffCache);
-      logBuffer = createBuffer(logBufferName, formatted);
-      registerLogInPosListList();
-      FvContext<?> logFvc =
-         FvContext.connectFv(logBuffer, fvc.vi);
-      FoldModel fm = new FoldModel();
-      for (int[] range : foldRanges) {
-         fm.addFold(range[0], range[1]);
-      }
-      fm.closeAll();
-      // Restore open state
-      for (FoldModel.FoldRange f : fm.getFolds()) {
-         String lt =
-            formatted.get(f.startLine - 1);
-         String sha = GitLogBuffer.extractSha(lt);
-         if (sha != null && openShas.contains(sha)) {
-            f.collapsed = false;
-         }
-         if (lt.startsWith(
-               GitLogBuffer.DIFF_HIDE_PREFIX)) {
-            String dfSha =
-               GitLogBuffer.extractShaFromMarker(lt);
-            if (dfSha != null
-                  && openShas.contains(dfSha)) {
-               f.collapsed = false;
-            }
-         }
-      }
-      fm.setToggleHandler(GitCommands::handleLogFoldToggle);
-      logFvc.setFoldModel(fm);
-   }
 
-   /**
-    * Scan the current fold model for open commit folds
-    * and return the set of their SHAs.
-    */
-   @SuppressWarnings("unchecked")
-   private static java.util.Set<String> getOpenCommitShas(
-         FvContext fvc) {
-      java.util.Set<String> result =
-         new java.util.HashSet<>();
-      FoldModel fm = fvc.getFoldModel();
-      if (fm == null || logBuffer == null) {
-         return result;
-      }
-      for (FoldModel.FoldRange f : fm.getFolds()) {
-         if (!f.collapsed
-               && f.startLine >= 1
-               && f.startLine <= logBuffer.readIn()) {
-            String lt =
-               logBuffer.at(f.startLine).toString();
-            String sha = GitLogBuffer.extractSha(lt);
-            if (sha != null) {
-               result.add(sha);
-            }
-         }
-      }
-      return result;
-   }
+      // Rebuild the staging buffer
+      List<String> stagingLines =
+         GitCommitView.buildStagingView();
+      commitViewHunks =
+         GitCommitView.parseStagingViewHunks(stagingLines);
+      commitStagingBuffer = createBuffer(
+         "*git-commit-staging*", stagingLines);
 
-   /**
-    * Fetch diff lines for a SHA and store in the cache.
-    */
-   private static void fetchAndCacheDiff(String sha)
-         throws IOException {
-      if (!logDiffCache.containsKey(sha)) {
-         List<String> diff =
-            GitLogBuffer.getDiffLines(sha, logDir);
-         logDiffCache.put(sha, diff);
+      // Update the staging view if it exists
+      if (commitStagingView != null) {
+         try {
+            FvContext.connectFv(
+               commitStagingBuffer, commitStagingView);
+         } catch (InputException e) {
+            // View may have been closed; fall back to current
+            FvContext.connectFv(commitStagingBuffer, fvc.vi);
+         }
+      } else {
+         FvContext.connectFv(commitStagingBuffer, fvc.vi);
+      }
+
+      // Also refresh status buffer if visible
+      if (null != statusBuffer) {
+         List<String> lines = GitStatusBuffer.getStatusLines();
+         statusBuffer = createBuffer("*git-status*", lines);
       }
    }
 
-   /**
-    * FoldToggleHandler for the git log buffer. Intercepts
-    * fold toggle/open on diff markers and pagination sentinels
-    * to fetch content and rebuild the buffer. Returns false
-    * for regular folds so the default toggle proceeds.
-    *
-    * @param line the buffer line being toggled
-    * @param fvc the current view context
-    * @return true if handled, false for default behavior
-    */
-   @SuppressWarnings("unchecked")
-   private static boolean handleLogFoldToggle(
-         int line, FvContext<?> fvc)
-         throws IOException, InputException {
-      TextEdit<?> buf = fvc.edvec;
-      if (line < 1 || line > buf.readIn()) {
-         return false;
-      }
-      String lineText = buf.at(line).toString();
-      if (lineText.startsWith(
-            GitLogBuffer.DIFF_SHOW_PREFIX)) {
-         String sha =
-            GitLogBuffer.extractShaFromMarker(lineText);
-         if (sha != null) {
-            fetchAndCacheDiff(sha);
-            logDiffExpanded.add(sha);
-            rebuildLogBuffer(fvc, sha);
-            return true;
-         }
-      }
-      if (lineText.startsWith(
-            GitLogBuffer.DIFF_HIDE_PREFIX)) {
-         String sha =
-            GitLogBuffer.extractShaFromMarker(lineText);
-         if (sha != null) {
-            logDiffExpanded.remove(sha);
-            rebuildLogBuffer(fvc, null);
-            return true;
-         }
-      }
-      if (lineText.startsWith(
-            GitLogBuffer.PAGINATION_MARKER)) {
-         loadMoreLogEntries();
-         rebuildLogBuffer(fvc, null);
-         return true;
-      }
-      return false;
-   }
 
-   /**
-    * Load more log entries by increasing the page size
-    * and re-fetching from git.
-    */
-   private static void loadMoreLogEntries()
-         throws IOException {
-      logPageSize += 100;
-      logLogLines =
-         GitLogBuffer.getLogLines(
-            logPageSize, logDir, logExtraArgs);
-      logMessages =
-         GitLogBuffer.getCommitMessages(
-            logPageSize, logDir, logExtraArgs);
-   }
 
-   /**
-    * Extract a commit SHA from the line at the cursor position.
-    *
-    * @return the SHA string, or null if none found
-    */
-   @SuppressWarnings("unchecked")
-   private static String extractShaAtCursor(FvContext fvc) {
-      TextEdit<String> buf = fvc.edvec;
-      int curLine = fvc.inserty();
-      if (curLine < 1 || curLine > buf.readIn()) {
-         return null;
-      }
-      String line = buf.at(curLine).toString();
-      return GitLogBuffer.extractSha(line);
-   }
+
+
+
 
    /**
     * Show git branch list.
@@ -998,45 +832,72 @@ public final class GitCommands extends Rgroup implements Plugin {
       FvContext.connectFv(outputBuffer, fvc.vi);
    }
 
-   /**
-    * Finalize a commit using the message from the *git-commit* buffer.
-    * Reads all non-comment, non-empty lines from the current buffer
-    * as the commit message, then runs {@code git commit -m "message"}.
-    * Detects amend mode from the buffer name {@code *git-commit-amend*}.
-    */
-   @SuppressWarnings("unchecked") // FvContext raw type in Rgroup API
+   /** Finalize commit from message buffer, close staging view. */
+   @SuppressWarnings("unchecked")
    private static void gitDoCommit(FvContext fvc) throws
          IOException, InputException {
-      TextEdit<String> buf = fvc.edvec;
-      boolean amend = buf.toString().startsWith("*git-commit-amend*");
-      StringBuilder msg = new StringBuilder();
-      int size = buf.readIn();
-      for (int i = 1; i < size; i++) {
-         String line = buf.at(i).toString();
-         if (!line.startsWith("#")) {
+      boolean amend = commitAmendMode;
+
+      // Read message from the dedicated message buffer if available
+      String message;
+      if (commitMsgBuffer != null) {
+         StringBuilder msg = new StringBuilder();
+         int size = commitMsgBuffer.readIn();
+         for (int i = 1; i < size; i++) {
+            String line = commitMsgBuffer.at(i).toString();
             if (msg.length() > 0)
                msg.append('\n');
             msg.append(line);
          }
+         message = msg.toString().trim();
+      } else {
+         // Legacy: extract from combined view buffer
+         TextEdit<String> buf = fvc.edvec;
+         String bufName = buf.toString();
+         if (bufName.startsWith("*git-commit")) {
+            message = GitCommitView.extractMessage(buf);
+         } else {
+            StringBuilder msg = new StringBuilder();
+            int size = buf.readIn();
+            for (int i = 1; i < size; i++) {
+               String line = buf.at(i).toString();
+               if (!line.startsWith("#")) {
+                  if (msg.length() > 0)
+                     msg.append('\n');
+                  msg.append(line);
+               }
+            }
+            message = msg.toString().trim();
+         }
       }
-      String message = msg.toString().trim();
+
       if (message.isEmpty()) {
          UI.reportMessage("Aborting: empty commit message");
          return;
       }
-      int rc;
+      GitProcess.Result result;
       if (amend) {
-         rc = GitProcess.executeWithExitCode(
+         result = GitProcess.executeWithResult(
             "commit", "--amend", "-m", message);
       } else {
-         rc = GitProcess.executeWithExitCode("commit", "-m", message);
+         result = GitProcess.executeWithResult(
+            "commit", "-m", message);
       }
-      if (0 == rc) {
+      if (0 == result.exitCode) {
          String verb = amend ? "Amended" : "Committed";
          UI.reportMessage(verb + ": " + firstLine(message));
+         commitAmendMode = false;
+         GitCommitView.clearSavedMessage(commitRepoRoot);
+         closeSplitCommitView(fvc);
+         // Return to status view
+         if (null != statusBuffer) {
+            gitStatus(fvc);
+         }
       } else {
-         List<String> err = GitProcess.execute("commit", "-m", message);
-         UI.reportMessage("Commit failed: " + String.join(" ", err));
+         String errMsg = result.output.isEmpty()
+            ? "unknown error"
+            : String.join(" ", result.output);
+         UI.reportMessage("Commit failed: " + errMsg);
       }
    }
 
@@ -1086,6 +947,8 @@ public final class GitCommands extends Rgroup implements Plugin {
 
    /**
     * Stage the file on the current cursor line in the status buffer.
+    * Uses {@code git add} for modified/new files and {@code git rm}
+    * for deleted files.
     */
    private static void gitStageLine(FvContext fvc) throws
          IOException, InputException {
@@ -1093,7 +956,11 @@ public final class GitCommands extends Rgroup implements Plugin {
       if (null == filename) {
          throw new InputException("No file on current line");
       }
-      GitProcess.execute("add", filename);
+      if (isDeletedAtCursor(fvc)) {
+         GitProcess.execute("rm", "--", filename);
+      } else {
+         GitProcess.execute("add", "--", filename);
+      }
       UI.reportMessage("Staged: " + filename);
       gitStatus(fvc);
    }
@@ -1126,8 +993,11 @@ public final class GitCommands extends Rgroup implements Plugin {
       if ("Staged".equals(section)) {
          GitProcess.execute("restore", "--staged", filename);
          UI.reportMessage("Unstaged: " + filename);
+      } else if (isDeletedAtCursor(fvc)) {
+         GitProcess.execute("rm", "--", filename);
+         UI.reportMessage("Staged: " + filename);
       } else {
-         GitProcess.execute("add", filename);
+         GitProcess.execute("add", "--", filename);
          UI.reportMessage("Staged: " + filename);
       }
       gitStatus(fvc);
@@ -1157,9 +1027,19 @@ public final class GitCommands extends Rgroup implements Plugin {
    /**
     * Refresh the git status buffer.
     */
+   /** Refresh current git buffer (status, commit, or patch view). */
    private static void gitRefresh(FvContext fvc) throws
          IOException, InputException {
-      gitStatus(fvc);
+      String bufName = fvc.edvec.toString();
+      if (bufName.startsWith("*git-commit")) {
+         refreshCommitView(fvc);
+      } else if ("*git-patch*".equals(bufName)) {
+         // Re-run the patch for the same file
+         gitPatch(null, fvc);
+      } else {
+         gitStatus(fvc);
+      }
+      UI.reportMessage("Refreshed");
    }
 
    /**
@@ -1225,6 +1105,21 @@ public final class GitCommands extends Rgroup implements Plugin {
       }
       // Untracked files are just the bare filename
       return trimmed;
+   }
+
+   /**
+    * Check whether the current cursor line describes a deleted file.
+    *
+    * @return true if the line starts with the "deleted" descriptor
+    */
+   @SuppressWarnings("unchecked")
+   static boolean isDeletedAtCursor(FvContext fvc) {
+      TextEdit<String> buf = fvc.edvec;
+      int curLine = fvc.inserty();
+      if (curLine < 1 || curLine > buf.readIn())
+         return false;
+      String line = buf.at(curLine).toString();
+      return line.trim().startsWith("deleted");
    }
 
    /**
@@ -1529,8 +1424,14 @@ public final class GitCommands extends Rgroup implements Plugin {
          return;
       }
       String full = arg.toString().trim();
+      // Try full underscore-joined form (":git do commit" -> git_do_commit)
       String sub;
       String rest;
+      String joined = "git_" + full.replace(' ', '_');
+      if (Command.hasCommand(joined)) {
+         Command.command(joined, fvc, null);
+         return;
+      }
       int sp = full.indexOf(' ');
       if (sp >= 0) {
          sub = full.substring(0, sp);
@@ -1590,7 +1491,63 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static void gitGotoFile(FvContext fvc) throws
          IOException, InputException {
       TextEdit<String> buf = fvc.edvec;
-      int curLine = fvc.inserty();
+      String bufName = buf.toString();
+
+      // Status buffer: extract filename and open it
+      if ("*git-status*".equals(bufName)) {
+         // First check if cursor is on a diff line (+++ or @@)
+         int curLine = fvc.inserty();
+         String curText = (curLine >= 1 && curLine <= buf.readIn())
+            ? buf.at(curLine).toString() : "";
+         if (curText.startsWith("+++ ")
+               || curText.startsWith("@@ ")
+               || curText.startsWith("diff --git ")) {
+            // Delegate to diff navigation logic below
+            navigateDiffLine(fvc, buf, curLine);
+            return;
+         }
+         String filename = extractFilenameAtCursor(fvc);
+         if (filename == null)
+            throw new InputException("No file on current line");
+         FvContext newFvc = FileList.openFileName(filename, fvc.vi);
+         if (newFvc != null)
+            newFvc.cursoryabs(1);
+         return;
+      }
+
+      // Commit staging view: handle stat lines in staged section
+      if (bufName.startsWith("*git-commit")) {
+         int curLine = fvc.inserty();
+         String curText = (curLine >= 1 && curLine <= buf.readIn())
+            ? buf.at(curLine).toString() : "";
+         // Staged stat lines: "#   file.java | 3 +-"
+         if (curText.startsWith("#   ")
+               && !curText.startsWith("#   (")) {
+            String stat = curText.substring(4).trim();
+            int pipe = stat.indexOf('|');
+            if (pipe > 0)
+               stat = stat.substring(0, pipe).trim();
+            if (!stat.isEmpty()) {
+               FvContext newFvc =
+                  FileList.openFileName(stat, fvc.vi);
+               if (newFvc != null)
+                  newFvc.cursoryabs(1);
+               return;
+            }
+         }
+      }
+
+      navigateDiffLine(fvc, buf, fvc.inserty());
+   }
+
+   /**
+    * Navigate from a diff context to the corresponding source file.
+    * Walks backward from the given line to find {@code +++} (filename)
+    * and {@code @@} (hunk start), then computes the target line.
+    */
+   private static void navigateDiffLine(FvContext fvc,
+         TextEdit<String> buf, int curLine) throws
+         IOException, InputException {
       // Walk backward to find +++ (filename) and @@ (hunk start)
       String filepath = null;
       int hunkNewStart = 0;
@@ -1612,12 +1569,14 @@ public final class GitCommands extends Rgroup implements Plugin {
             }
          }
          if (line.startsWith("+++ ") && filepath == null) {
-            // Strip b/ prefix from +++ b/path
-            filepath = line.substring(4).trim();
-            if (filepath.startsWith("b/"))
-               filepath = filepath.substring(2);
+            filepath = stripDiffPrefix(line.substring(4).trim());
             break;
          }
+      }
+      // If backward scan failed, scan forward for +++ or
+      // extract from diff --git header
+      if (filepath == null) {
+         filepath = forwardScanForFilepath(buf, curLine);
       }
       if (filepath == null || filepath.equals("/dev/null")) {
          throw new InputException("No file path found");
@@ -1640,6 +1599,91 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
+    * Strip a single-character prefix (b/, w/, i/, etc.) from a
+    * diff file path.  Returns the original path if no prefix.
+    */
+   static String stripDiffPrefix(String path) {
+      if (path.length() > 2 && path.charAt(1) == '/')
+         return path.substring(2);
+      return path;
+   }
+
+   /**
+    * Scan forward from curLine to find a {@code +++} line for the
+    * filename.  Also handles {@code diff --git} lines by extracting
+    * the second (destination) path.
+    *
+    * @return the file path, or null if not found
+    */
+   @SuppressWarnings("unchecked")
+   static String forwardScanForFilepath(
+         TextEdit<String> buf, int curLine) {
+      // Delegate to List-based overload for testability
+      List<String> lines = new ArrayList<>();
+      for (int i = 1; i <= buf.readIn(); i++)
+         lines.add(buf.at(i).toString());
+      return forwardScanForFilepath(lines, curLine);
+   }
+
+   /**
+    * List-based overload for unit testing.  Line numbers are
+    * 1-based (matching TextEdit convention).
+    */
+   static String forwardScanForFilepath(
+         List<String> lines, int curLine) {
+      String curText = (curLine >= 1 && curLine <= lines.size())
+         ? lines.get(curLine - 1) : "";
+
+      // diff --git a/path b/path  OR  diff --git i/path w/path
+      if (curText.startsWith("diff --git ")) {
+         return extractPathFromDiffGit(curText);
+      }
+
+      // Scan forward (limited to 5 lines) for +++ header
+      int limit = Math.min(curLine + 5, lines.size());
+      for (int i = curLine + 1; i <= limit; i++) {
+         String line = lines.get(i - 1);
+         if (line.startsWith("+++ ")) {
+            return stripDiffPrefix(line.substring(4).trim());
+         }
+         // Stop at next diff header or hunk start
+         if (line.startsWith("diff --git ")
+               || line.startsWith("@@ "))
+            break;
+      }
+      return null;
+   }
+
+   /**
+    * Extract the destination file path from a {@code diff --git}
+    * header line.  Handles both standard ({@code a/...  b/...})
+    * and custom ({@code i/...  w/...}) prefixes.
+    *
+    * @param line the full diff --git header
+    * @return extracted path, or null if unparseable
+    */
+   static String extractPathFromDiffGit(String line) {
+      // Format: "diff --git <prefix>/<path> <prefix>/<path>"
+      // The second path is the destination.
+      String rest = line.substring("diff --git ".length());
+      // Find the second path: split on space, but paths can
+      // contain spaces.  The reliable marker is the prefix
+      // char + '/' appearing twice.
+      // Try: find " b/" or " w/" as separator
+      int sep = rest.lastIndexOf(" b/");
+      if (sep < 0) sep = rest.lastIndexOf(" w/");
+      if (sep < 0) {
+         // Fallback: split on first space, take second half
+         int sp = rest.indexOf(' ');
+         if (sp > 0) {
+            return stripDiffPrefix(rest.substring(sp + 1).trim());
+         }
+         return null;
+      }
+      return rest.substring(sep + 3).trim();
+   }
+
+   /**
     * Parse an integer, returning 0 on failure.
     */
    private static int parseIntSafe(String s) {
@@ -1651,47 +1695,139 @@ public final class GitCommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Switch the current commit buffer to amend mode.
-    * Prepopulates the commit message with the previous commit's
-    * message and marks the buffer for {@code git commit --amend}.
+    * Switch to amend mode. Opens the combined commit view
+    * pre-populated with the previous commit's message.
     */
    @SuppressWarnings("unchecked")
+   /**
+    * Open the split-view commit workflow in amend mode.
+    * Pre-fills the message buffer with the previous commit message.
+    */
    private static void gitAmend(FvContext fvc) throws
          IOException, InputException {
-      // Get the last commit message
-      List<String> lastMsg = GitProcess.execute(
-         "log", "-1", "--pretty=%B");
-      // Get staged files for reference
-      List<String> staged = GitProcess.execute(
-         "diff", "--cached", "--stat");
+      openSplitCommitView(fvc, true);
+   }
 
-      java.util.ArrayList<String> lines = new java.util.ArrayList<>();
-      for (String m : lastMsg) {
-         lines.add(m);
+   /**
+    * Commit sub-menu triggered by 'c' in git status/commit buffers.
+    * Reads the next key to decide the action:
+    * <ul>
+    *   <li>{@code c} — open fresh commit view</li>
+    *   <li>{@code a} — open amend commit view</li>
+    *   <li>{@code A} — amend without editing (reuse message)</li>
+    * </ul>
+    * Any other key cancels the sub-menu.
+    */
+   private static void gitCommitMenu(FvContext fvc) throws
+         IOException, InputException {
+      ContextHelp.onSubModeEntered("gitcommitmenu");
+      UI.reportMessage("c=commit  a=amend  A=amend-no-edit");
+      char next = EventQueue.nextKey(fvc.vi);
+      switch (next) {
+         case 'c':
+            gitCommit(fvc);
+            break;
+         case 'a':
+            gitAmend(fvc);
+            break;
+         case 'A':
+            gitAmendNoEdit(fvc);
+            break;
+         case 27: // ESC
+            UI.reportMessage("");
+            break;
+         default:
+            UI.reportMessage("Cancelled");
+            break;
       }
-      lines.add("# Amend mode — :git_do_commit will amend the last commit");
-      lines.add("# Lines starting with '#' will be ignored.");
-      lines.add("#");
-      lines.add("# Changes to be committed:");
-      for (String s : staged) {
-         lines.add("#   " + s);
-      }
-      if (staged.isEmpty()) {
-         lines.add("#   (no new staged changes)");
-      }
-      // Show what the last commit already contained
-      List<String> prevStat = GitProcess.execute(
-         "diff", "--stat", "HEAD~1", "HEAD");
-      lines.add("#");
-      lines.add("# Previous commit:");
-      for (String s : prevStat) {
-         lines.add("#   " + s);
-      }
+   }
 
-      TextEdit<String> commitBuffer = createBuffer(
-         "*git-commit-amend*", lines);
-      FvContext.connectFv(commitBuffer, fvc.vi);
-      UI.reportMessage("Amend mode — edit message, then :git_do_commit");
+   /**
+    * Amend the last commit without editing the message.
+    * Equivalent to {@code git commit --amend --no-edit}.
+    */
+   private static void gitAmendNoEdit(FvContext fvc) throws
+         IOException, InputException {
+      int rc = GitProcess.executeWithExitCode(
+         "commit", "--amend", "--no-edit");
+      if (0 == rc) {
+         UI.reportMessage("Amended (no edit)");
+         if (null != statusBuffer)
+            gitStatus(fvc);
+      } else {
+         List<String> err = GitProcess.execute(
+            "commit", "--amend", "--no-edit");
+         UI.reportMessage("Amend failed: "
+            + String.join(" ", err));
+      }
+   }
+
+
+   /** Close split-view: remove staging pane, clear state. */
+   private static void closeSplitCommitView(FvContext fvc)
+         throws IOException, InputException {
+      if (commitStagingView != null) {
+         // Ensure the staging view is current before closing it
+         FvContext<?> curr = FvContext.getCurrFvc();
+         if (curr.vi != commitStagingView) {
+            FvContext.connectFv(
+               commitStagingBuffer, commitStagingView);
+            // Navigate to staging view
+            while (FvContext.getCurrFvc().vi != commitStagingView) {
+               Command.command("vn", null, null);
+               if (FvContext.getCurrFvc().vi == curr.vi)
+                  break; // Prevent infinite loop
+            }
+         }
+         // Close the current (staging) view
+         Command.command("vd", null, null);
+         commitStagingView = null;
+      }
+      commitMsgBuffer = null;
+      commitStagingBuffer = null;
+      commitViewHunks = null;
+   }
+
+   /** Quit commit with confirmation, saving message. */
+   private static void gitCommitQuit(FvContext fvc) throws
+         IOException, InputException {
+      UI.reportMessage("Discard commit? (y/n)");
+      char confirm = EventQueue.nextKey(fvc.vi);
+      if (confirm != 'y' && confirm != 'Y') {
+         UI.reportMessage("");
+         return;
+      }
+      // Save the in-progress message before closing
+      if (commitMsgBuffer != null && commitRepoRoot != null) {
+         List<String> msgLines = new ArrayList<>();
+         int size = commitMsgBuffer.readIn();
+         for (int i = 1; i < size; i++)
+            msgLines.add(commitMsgBuffer.at(i).toString());
+         while (!msgLines.isEmpty()
+               && msgLines.get(msgLines.size() - 1).isEmpty())
+            msgLines.remove(msgLines.size() - 1);
+         GitCommitView.saveMessage(commitRepoRoot, msgLines);
+      }
+      closeSplitCommitView(fvc);
+      // Return to status view
+      if (null != statusBuffer) {
+         gitStatus(fvc);
+      } else {
+         UI.reportMessage("Commit cancelled");
+      }
+   }
+
+   /** ZZ handler: read next key, commit if Z. */
+   private static void gitCommitFinalize(FvContext fvc) throws
+         IOException, InputException {
+      ContextHelp.onSubModeEntered("gitcommitfinalize");
+      UI.reportMessage("Z to commit, any other key cancels");
+      char next = EventQueue.nextKey(fvc.vi);
+      if (next == 'Z') {
+         gitDoCommit(fvc);
+      } else {
+         UI.reportMessage("");
+      }
    }
 
    /**
@@ -1706,5 +1842,72 @@ public final class GitCommands extends Rgroup implements Plugin {
       String content = String.join("\n", lines);
       StringIoc sio = new StringIoc(name, content);
       return new TextEdit<>(sio, sio.prop);
+   }
+
+   /**
+    * Visual-mode handler for git commit/patch buffers.
+    * Handles 's' (stage selected lines) and 'u' (unstage).
+    *
+    * @return true if the key was consumed, false for default
+    */
+   @SuppressWarnings("unchecked")
+   public static boolean handleVisualKey(char key, int starty,
+         int doney, int startx, int donex, FvContext<?> fvc)
+         throws IOException, InputException {
+      if (key != 's' && key != 'u')
+         return false;
+
+      TextEdit<?> buf = fvc.edvec;
+      String bufName = buf.toString();
+      boolean isCommitView = bufName.startsWith("*git-commit");
+
+      List<GitHunkStaging.Hunk> hunks = isCommitView
+         ? commitViewHunks : patchHunks;
+      if (hunks == null || hunks.isEmpty()) {
+         UI.reportMessage("No hunks available");
+         return true;
+      }
+
+      // Find the hunk containing the selection start
+      int adjustedStart = starty;
+      int adjustedEnd = doney;
+      if (!isCommitView) {
+         // Account for the 2-line header in formatAnnotatedDiff
+         adjustedStart -= 2;
+         adjustedEnd -= 2;
+      }
+      GitHunkStaging.Hunk hunk =
+         GitHunkStaging.findHunkAtLine(hunks, adjustedStart);
+      if (hunk == null) {
+         UI.reportMessage(
+            "Selection is not within a diff hunk");
+         return true;
+      }
+
+      String err;
+      if (key == 's') {
+         err = GitHunkStaging.stagePartialHunk(
+            hunk, starty, doney);
+      } else {
+         err = GitHunkStaging.unstagePartialHunk(
+            hunk, starty, doney);
+      }
+      if (err == null) {
+         String verb = (key == 's') ? "Staged" : "Unstaged";
+         UI.reportMessage(verb + " selected lines");
+         if (isCommitView) {
+            refreshCommitView(fvc);
+         } else if (statusBuffer != null) {
+            List<String> lines =
+               GitStatusBuffer.getStatusLines();
+            statusBuffer =
+               createBuffer("*git-status*", lines);
+         }
+      } else {
+         UI.reportMessage(
+            (key == 's' ? "Stage" : "Unstage")
+            + " failed: " + err);
+      }
+      return true;
    }
 }

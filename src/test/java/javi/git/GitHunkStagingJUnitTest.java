@@ -256,4 +256,149 @@ class GitHunkStagingJUnitTest {
          assertEquals(1, found.index);
       }
    }
+
+   // ── Partial hunk patch building ──────────────────────────
+
+   @Nested
+   @DisplayName("partial hunk staging")
+   class PartialHunkStaging {
+
+      private GitHunkStaging.Hunk makeHunk(
+            String... bodyLines) {
+         List<String> header = lines(
+            "diff --git a/F.java b/F.java",
+            "index abc..def 100644",
+            "--- a/F.java",
+            "+++ b/F.java");
+         // bufferLine = 1 (1-based, @@ line is at buffer line 1)
+         return new GitHunkStaging.Hunk(
+            header, Arrays.asList(bodyLines), 0, 1);
+      }
+
+      @Test
+      @DisplayName("stages only selected added lines")
+      void stageSelectedAdditions() {
+         // body[0] = @@ line, body[1..] = content
+         // bufferLine=1, so body[1] is at buffer line 2, etc.
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -1,3 +1,5 @@",
+            " context1",     // buf line 2
+            "+add1",         // buf line 3  <-- selected
+            "+add2",         // buf line 4  <-- selected
+            " context2",     // buf line 5
+            "+add3");        // buf line 6  <-- NOT selected
+
+         // Select lines 3-4 only (add1, add2)
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 3, 4);
+         assertNotNull(patch);
+         // add3 should not appear as a '+' line
+         assertTrue(!patch.contains("+add3"),
+            "unselected add line should be omitted");
+         assertTrue(patch.contains("+add1"));
+         assertTrue(patch.contains("+add2"));
+         assertTrue(patch.contains(" context1"));
+         assertTrue(patch.contains(" context2"));
+      }
+
+      @Test
+      @DisplayName("converts unselected removes to context")
+      void unselectedRemoveBecomesContext() {
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -1,4 +1,3 @@",
+            " ctx",          // buf line 2
+            "-del1",         // buf line 3  <-- selected
+            "-del2",         // buf line 4  <-- NOT selected
+            " end");         // buf line 5
+
+         // Select only del1 (line 3)
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 3, 3);
+         assertNotNull(patch);
+         // del1 should still be '-del1'
+         assertTrue(patch.contains("-del1"));
+         // del2 should become context: ' del2' instead of '-del2'
+         assertTrue(patch.contains(" del2"),
+            "unselected '-' should become context");
+         assertTrue(!patch.contains("-del2"),
+            "unselected '-' should not remain as delete");
+      }
+
+      @Test
+      @DisplayName("returns null when no changes in selection")
+      void noChangesInSelection() {
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -1,3 +1,4 @@",
+            " ctx1",         // buf line 2  <-- selected
+            "+add1",         // buf line 3
+            " ctx2");        // buf line 4
+
+         // Select only context line 2
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 2, 2);
+         assertNull(patch, "context-only selection has no changes");
+      }
+
+      @Test
+      @DisplayName("adjusts @@ header counts for partial patch")
+      void adjustedHeaderCounts() {
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -10,4 +10,6 @@",
+            " ctx",          // buf 2
+            "+a",            // buf 3  <-- selected
+            "+b",            // buf 4
+            "-c",            // buf 5
+            " end");         // buf 6
+
+         // Select only '+a' (line 3)
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 3, 3);
+         assertNotNull(patch);
+         // Expected: ctx, +a, end, and -c converted to ' c'
+         // old: ctx, c, end = 3 lines, new: ctx, a, c, end = 4 lines
+         assertTrue(patch.contains("@@ -10,3 +10,4 @@"),
+            "header should reflect adjusted counts, got: " + patch);
+      }
+
+      @Test
+      @DisplayName("mixed adds and removes, partial selection")
+      void mixedPartialSelection() {
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -5,5 +5,6 @@",
+            " a",            // buf 2
+            "-old1",         // buf 3  <-- selected
+            "+new1",         // buf 4  <-- selected
+            "-old2",         // buf 5  <-- NOT selected
+            "+new2",         // buf 6  <-- NOT selected
+            " b");           // buf 7
+
+         // Select lines 3-4 (old1, new1)
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 3, 4);
+         assertNotNull(patch);
+         assertTrue(patch.contains("-old1"));
+         assertTrue(patch.contains("+new1"));
+         // old2 becomes context, new2 is omitted
+         assertTrue(patch.contains(" old2"));
+         assertTrue(!patch.contains("-old2"));
+         assertTrue(!patch.contains("+new2"));
+      }
+
+      @Test
+      @DisplayName("toPatch includes file headers")
+      void includesFileHeaders() {
+         GitHunkStaging.Hunk hunk = makeHunk(
+            "@@ -1,2 +1,3 @@",
+            " x",
+            "+y");
+         // Select line 3 (the +y line)
+         String patch = GitHunkStaging.buildPartialPatch(
+            hunk, 3, 3);
+         assertNotNull(patch);
+         assertTrue(patch.startsWith(
+            "diff --git a/F.java b/F.java"));
+         assertTrue(patch.contains("--- a/F.java"));
+         assertTrue(patch.contains("+++ b/F.java"));
+      }
+   }
 }

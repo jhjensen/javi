@@ -238,7 +238,7 @@ public final class EventQueue {
       }
    }
 
-   static char nextKey(CursorControl vi) throws InputException {
+   public static char nextKey(CursorControl vi) throws InputException {
       return nextEvent(vi).getKeyChar();
    }
 

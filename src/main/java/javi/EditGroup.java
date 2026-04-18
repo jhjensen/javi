@@ -380,6 +380,15 @@ final class EditGroup extends Rgroup {
             }
             char key = event.getKeyChar();
             try {
+               // Check for buffer-specific visual handler
+               KeyMap km = fvc.getKeyMap();
+               if (km != null) {
+                  KeyMap.VisualHandler vh = km.getVisualHandler();
+                  if (vh != null && vh.handle(key, starty, doney,
+                        startx, donex, fvc)) {
+                     break out;
+                  }
+               }
                switch (key) {
                   case 'o':
                      MovePos markpos = fvc.vi.getMark();
@@ -809,6 +818,8 @@ final class EditGroup extends Rgroup {
       istring.append(line.substring(fvc.insertx() + icount, line.length()));
       fvc.changeElementStr(istring.toString());
    }
+
+
 
    /**
     * Return true if the given command should be blocked

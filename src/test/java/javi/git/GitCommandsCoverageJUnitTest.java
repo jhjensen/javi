@@ -42,7 +42,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsNullReturnsNull() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       assertNull(m.invoke(null, (Object) null));
@@ -50,7 +50,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsEmptyStringReturnsNull() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       assertNull(m.invoke(null, ""));
@@ -58,7 +58,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsWhitespaceOnlyReturnsNull() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       assertNull(m.invoke(null, "   "));
@@ -66,7 +66,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsSingleArgReturnsSingleElement() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       String[] result = (String[]) m.invoke(null, "--all");
@@ -77,7 +77,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsMultipleArgsSplitsOnWhitespace() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       String[] result = (String[]) m.invoke(null,
@@ -91,7 +91,7 @@ class GitCommandsCoverageJUnitTest {
 
    @Test
    void parseLogArgsExtraWhitespaceIgnored() throws Exception {
-      Method m = GitCommands.class.getDeclaredMethod(
+      Method m = GitLogHelper.class.getDeclaredMethod(
          "parseLogArgs", Object.class);
       m.setAccessible(true);
       String[] result = (String[]) m.invoke(null, "  -n  10  ");

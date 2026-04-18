@@ -235,4 +235,187 @@ public final class GitHunkStaging {
       result.addAll(diffLines);
       return result;
    }
+
+   /**
+    * Build a partial patch from a hunk, including only the lines
+    * whose buffer positions fall within [{@code selStart},
+    * {@code selEnd}] (1-based, inclusive).
+    *
+    * <p>Lines within the selection are kept as-is.
+    * Unselected {@code +} lines are removed (they don't exist in
+    * the original file).
+    * Unselected {@code -} lines are converted to context lines
+    * (the original file has them, so they must appear).
+    * Context lines ({@code ' '} prefix) are always kept.</p>
+    *
+    * <p>The {@code @@} header counts are recomputed to match
+    * the filtered body.</p>
+    *
+    * @param hunk the full hunk
+    * @param selStart first selected buffer line (1-based)
+    * @param selEnd last selected buffer line (1-based)
+    * @return the partial patch string, or null if the selection
+    *         contains no changes
+    */
+   static String buildPartialPatch(Hunk hunk, int selStart,
+         int selEnd) {
+      if (hunk.body.isEmpty())
+         return null;
+
+      // Parse the @@ header to get the original line numbers
+      String aaLine = hunk.body.get(0);
+      int[] oldStart = {1};
+      int[] newStart = {1};
+      parseAtAt(aaLine, oldStart, newStart);
+
+      // Build filtered body — skip the @@ line itself (index 0),
+      // process each body line.
+      List<String> filtered = new ArrayList<>();
+      boolean hasChanges = false;
+      for (int i = 1; i < hunk.body.size(); i++) {
+         String line = hunk.body.get(i);
+         int bufLine = hunk.bufferLine + i; // 1-based
+         boolean selected = bufLine >= selStart
+            && bufLine <= selEnd;
+         char prefix = line.isEmpty() ? ' ' : line.charAt(0);
+
+         if (prefix == '+') {
+            if (selected) {
+               filtered.add(line);
+               hasChanges = true;
+            }
+            // Unselected '+' lines: omit entirely
+         } else if (prefix == '-') {
+            if (selected) {
+               filtered.add(line);
+               hasChanges = true;
+            } else {
+               // Convert to context: '-foo' -> ' foo'
+               filtered.add(" " + line.substring(1));
+            }
+         } else {
+            // Context line — always keep
+            filtered.add(line);
+         }
+      }
+      if (!hasChanges)
+         return null;
+
+      // Recount old/new line counts
+      int oldCount = 0;
+      int newCount = 0;
+      for (String fl : filtered) {
+         char p = fl.isEmpty() ? ' ' : fl.charAt(0);
+         if (p == '-') {
+            oldCount++;
+         } else if (p == '+') {
+            newCount++;
+         } else {
+            oldCount++;
+            newCount++;
+         }
+      }
+
+      // Build the patch
+      StringBuilder sb = new StringBuilder();
+      for (String h : hunk.header) {
+         sb.append(h).append('\n');
+      }
+      sb.append("@@ -").append(oldStart[0]).append(',')
+         .append(oldCount).append(" +").append(newStart[0])
+         .append(',').append(newCount).append(" @@\n");
+      for (String fl : filtered) {
+         sb.append(fl).append('\n');
+      }
+      return sb.toString();
+   }
+
+   /**
+    * Stage only the selected lines from a hunk.
+    *
+    * @param hunk the hunk containing the selection
+    * @param selStart first selected buffer line (1-based)
+    * @param selEnd last selected buffer line (1-based)
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String stagePartialHunk(Hunk hunk, int selStart,
+         int selEnd) throws IOException {
+      String patch = buildPartialPatch(hunk, selStart, selEnd);
+      if (patch == null)
+         return "No changes in selection";
+      GitProcess.Result res = GitProcess.executeWithStdin(
+         patch, "apply", "--cached");
+      if (0 == res.exitCode)
+         return null;
+      return res.output.isEmpty()
+         ? "Failed to stage partial hunk"
+         : String.join(" ", res.output);
+   }
+
+   /**
+    * Unstage only the selected lines from a hunk.
+    *
+    * @param hunk the hunk containing the selection
+    * @param selStart first selected buffer line (1-based)
+    * @param selEnd last selected buffer line (1-based)
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String unstagePartialHunk(Hunk hunk, int selStart,
+         int selEnd) throws IOException {
+      String patch = buildPartialPatch(hunk, selStart, selEnd);
+      if (patch == null)
+         return "No changes in selection";
+      GitProcess.Result res = GitProcess.executeWithStdin(
+         patch, "apply", "--cached", "--reverse");
+      if (0 == res.exitCode)
+         return null;
+      return res.output.isEmpty()
+         ? "Failed to unstage partial hunk"
+         : String.join(" ", res.output);
+   }
+
+   /**
+    * Parse the old-start and new-start line numbers from an
+    * {@code @@} header line.
+    *
+    * @param aaLine the @@ line (e.g. "@@ -10,5 +12,7 @@")
+    * @param oldStart output: old file start line
+    * @param newStart output: new file start line
+    */
+   private static void parseAtAt(String aaLine,
+         int[] oldStart, int[] newStart) {
+      // @@ -OLD,COUNT +NEW,COUNT @@
+      int minus = aaLine.indexOf('-', 2);
+      if (minus >= 0) {
+         int comma = aaLine.indexOf(',', minus);
+         int sp = aaLine.indexOf(' ', minus);
+         int end = comma >= 0 && (sp < 0 || comma < sp)
+            ? comma : sp;
+         if (end > minus) {
+            try {
+               oldStart[0] = Integer.parseInt(
+                  aaLine.substring(minus + 1, end).trim());
+            } catch (NumberFormatException e) {
+               // keep default
+            }
+         }
+      }
+      int plus = aaLine.indexOf('+', 2);
+      if (plus >= 0) {
+         int comma = aaLine.indexOf(',', plus);
+         int sp = aaLine.indexOf(' ', plus);
+         int end = comma >= 0 && (sp < 0 || comma < sp)
+            ? comma : sp;
+         if (end > plus) {
+            try {
+               newStart[0] = Integer.parseInt(
+                  aaLine.substring(plus + 1, end).trim());
+            } catch (NumberFormatException e) {
+               // keep default
+            }
+         }
+      }
+   }
 }
