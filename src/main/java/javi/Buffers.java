@@ -17,6 +17,29 @@ public final class Buffers {
    private static final int circSize = 10; // addressable by single digit int.
    private static CircBuffer delbuffer;
 
+   /**
+    * Fold span of the most recently deleted/yanked content.
+    * When dd or yy is used on a collapsed fold, this records
+    * the fold span so that p can recreate the fold mark.
+    * Zero means no fold metadata.
+    */
+   private static int lastFoldSpan;
+
+   /** Record fold span for the most recent yank/delete. */
+   static void setLastFoldSpan(int span) {
+      lastFoldSpan = span;
+   }
+
+   /** Get the fold span from the most recent yank/delete. */
+   static int getLastFoldSpan() {
+      return lastFoldSpan;
+   }
+
+   /** Clear fold metadata (for non-fold yank/delete). */
+   static void clearFoldSpan() {
+      lastFoldSpan = 0;
+   }
+
    public static void init(CircBuffer cbuf) {
       buflist.clear();
       delbuffer = cbuf;

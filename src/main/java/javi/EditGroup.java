@@ -210,6 +210,15 @@ final class EditGroup extends Rgroup {
                yankmode('0', false, count, rcount, fvc);
                break;
             case YANK:
+               FoldModel yfm = fvc.getFoldModel();
+               FoldModel.FoldRange yfr = yfm != null
+                  ? yfm.findFoldAtStart(fvc.inserty()) : null;
+               if (yfr != null && yfr.collapsed) {
+                  count = yfr.span();
+                  Buffers.setLastFoldSpan(count);
+               } else {
+                  Buffers.clearFoldSpan();
+               }
                ArrayList<String> bufs = fvc.getElementsAt(count);
                //trace("yank " + count + " lines ");
                Buffers.deleted('0', bufs);
@@ -572,12 +581,31 @@ final class EditGroup extends Rgroup {
          return;
 
       if (buf instanceof String) {
+         Buffers.clearFoldSpan();
          if (after)
             fvc.cursorx(1);
          fvc.cursorabs(fvc.inserttext((String) buf));
       } else {
          ArrayList<String> buf2 = (ArrayList<String>) buf;
+         int foldSpan = Buffers.getLastFoldSpan();
+         int insertAt = fvc.inserty() + (after ? 1 : 0);
+         FoldModel fm = fvc.getFoldModel();
+         if (after && fm != null) {
+            FoldModel.FoldRange cf =
+               fm.findFoldAtStart(fvc.inserty());
+            if (cf != null && cf.collapsed)
+               insertAt = cf.endLine + 1;
+         }
          fvc.insertStrings(buf2, after);
+         if (foldSpan > 0 && buf2.size() == foldSpan
+               && fm != null) {
+            int foldEnd = insertAt + foldSpan - 1;
+            fm.addFold(insertAt, foldEnd);
+            FoldModel.FoldRange nf =
+               fm.findFoldAtStart(insertAt);
+            if (nf != null)
+               nf.collapsed = true;
+         }
          fvc.cursory(buf2.size());
       }
    }
@@ -645,6 +673,17 @@ final class EditGroup extends Rgroup {
 
          case 'd':
             fvc.edvec.finish();
+            FoldModel ddfm = fvc.getFoldModel();
+            FoldModel.FoldRange ddfr = ddfm != null
+               ? ddfm.findFoldAtStart(fvc.inserty()) : null;
+            if (ddfr != null && ddfr.collapsed) {
+               count = ddfr.span();
+               ddfm.removeFoldsInRange(
+                  ddfr.startLine, ddfr.endLine);
+               Buffers.setLastFoldSpan(count);
+            } else {
+               Buffers.clearFoldSpan();
+            }
             if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
                count = fvc.edvec.finish() - 1;
             Buffers.deleted(bufid, fvc.edvec.remove(fvc.inserty(), count));
@@ -683,6 +722,15 @@ final class EditGroup extends Rgroup {
       JeyEvent event =  dotevent3;
 
       if ('y' == event.getKeyChar()) {
+         FoldModel yyfm = fvc.getFoldModel();
+         FoldModel.FoldRange yyfr = yyfm != null
+            ? yyfm.findFoldAtStart(fvc.inserty()) : null;
+         if (yyfr != null && yyfr.collapsed) {
+            count = yyfr.span();
+            Buffers.setLastFoldSpan(count);
+         } else {
+            Buffers.clearFoldSpan();
+         }
          if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
             count = fvc.edvec.finish() - 1;
          Buffers.deleted(bufid, fvc.getElementsAt(count));
@@ -778,6 +826,9 @@ final class EditGroup extends Rgroup {
          case OPENLINE_ABOVE:
          case PUT_BEFORE:
          case PUT_AFTER:
+         case DELETE_MODE:
+         case YANK_MODE:
+         case YANK:
             return false;
          default:
             break;
