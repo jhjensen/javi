@@ -71,21 +71,44 @@ public final class FileList extends TextEdit<TextEdit<String>> {
 
    }
 
+   private static final String[] CMD_NAMES = {
+      "",
+      "vi",
+      "e",
+      "Zprocess",
+      "nextfile",
+      "gotofilelist", //5
+      "q",
+      "x",
+      "wq",
+      "q!",
+   };
+
+   private static final String[] CMD_DESCS = {
+      null,
+      "open file",
+      "edit file",
+      "ZZ: save and exit file",
+      "switch to next file",
+      "file list (F2)",
+      "quit",
+      "save and quit",
+      "write and quit",
+      "force quit (no save)",
+   };
+
+   /**
+    * Pre-register FileList command descriptions so they are
+    * available to the help system before FileList is fully
+    * initialized.
+    */
+   static void initDescriptions() {
+      Rgroup.registerDescriptions(CMD_NAMES, CMD_DESCS);
+   }
+
    private final class Commands extends Rgroup {
       Commands() {
-         final String[] rnames = {
-            "",
-            "vi",
-            "e",
-            "Zprocess",
-            "nextfile",
-            "gotofilelist", //5
-            "q",
-            "x",
-            "wq",
-            "q!",
-         };
-         register(rnames);
+         register(CMD_NAMES, CMD_DESCS);
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -668,6 +691,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
    private static void processZ(FvContext fvc) throws
          InputException {
       View currview = fvc.vi;
+      ContextHelp.onSubModeEntered("Zprocess");
       if ('Z' == EventQueue.nextKey(currview)) {
          try {
             TextEdit ev =  fvc.edvec;

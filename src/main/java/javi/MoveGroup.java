@@ -97,7 +97,37 @@ final class MoveGroup extends Rgroup {
          "unusedm1",
          "movescreenline",
       };
-      register(rnames);
+      final String[] descs = {
+         null,
+         "move cursor left/right",
+         "move cursor up/down",
+         "forward word",
+         "forward WORD",
+         "backward word",
+         "backward WORD",
+         "end of word",
+         "end of WORD",
+         "first non-blank on line",
+         "matching bracket",
+         "shift+move line",
+         "move to line start +/-",
+         "cursor to screen position",
+         "find char on line",
+         "repeat find char",
+         "repeat last search",
+         "search forward/backward",
+         "go to column",
+         "go to line number",
+         "go to mark",
+         "set mark",
+         "forward to regex match",
+         "backward to regex match",
+         "repeat last motion",
+         "scroll screen",
+         null,
+         "scroll by line",
+      };
+      register(rnames, descs);
       EditContainer.registerChangeListen(new FCH());
    }
 
@@ -200,9 +230,11 @@ final class MoveGroup extends Rgroup {
             gotoline(count, rcount, fvc, arg);
             return null;
          case FIND_MARK:
+            ContextHelp.onSubModeEntered("markjump");
             findmark(fvc, EventQueue.nextKey(fvc.vi));
             return null;
          case MARK:
+            ContextHelp.onSubModeEntered("markset");
             mark(fvc, EventQueue.nextKey(fvc.vi));
             return null;
          case FORWARD_REGEX:
@@ -361,6 +393,7 @@ final class MoveGroup extends Rgroup {
          regsearch(false, count, fvc);
 
       else {
+         ContextHelp.onSubModeEntered("searchcommand");
          String line  = InsertBuffer.getcomline(!direction ? "/" : "?");
          line = line.substring(1, line.length());
          if (0 == line.length())
@@ -426,6 +459,7 @@ final class MoveGroup extends Rgroup {
    private void findchar(boolean[] arg, FvContext fvc, boolean dotmode) throws
          InputException {
       if (!dotmode) {
+         ContextHelp.onSubModeEntered("findchar");
          char tmp = EventQueue.nextKey(fvc.vi);
          if (27 == tmp) // esc
             return;

@@ -115,6 +115,8 @@ final class OldView extends AwtView {
    private int charwidth; // not an acurate number
    private boolean boldflag;
    private AtView atIt;
+   private Color overrideFg;
+   private Color overrideBg;
    private int tabStop;
    private Font activeFont;
    private final MyCanvas canvas = new MyCanvas();
@@ -163,8 +165,19 @@ final class OldView extends AwtView {
       charheight = fontm.getHeight();
       // trace("charheight = " + charheight);
       boldflag = font.isBold();
-      atIt = new AtView(font);
+      if (overrideFg != null)
+         atIt = new AtView(font, overrideFg, overrideBg);
+      else
+         atIt = new AtView(font);
       charascent = fontm.getMaxAscent();
+   }
+
+   void setColors(Color fg, Color bg) {
+      overrideFg = fg;
+      overrideBg = bg;
+      canvas.setBackground(bg);
+      if (activeFont != null)
+         atIt = new AtView(activeFont, fg, bg);
    }
 
    /**
@@ -1030,6 +1043,11 @@ final class OldView extends AwtView {
 
       public void processEvent(AWTEvent ev) {
          // trace("ev " + ev.getID() + " has focus " + hasFocus());
+         if (!OldView.this.isTraverseable()) {
+            // Non-traverseable views (e.g. help panel) ignore
+            // all mouse and keyboard input
+            return;
+         }
          switch (ev.getID()) {
             case MouseEvent.MOUSE_PRESSED:
                if (forwardVt100Mouse((MouseEvent) ev, true))
@@ -1403,7 +1421,9 @@ final class OldView extends AwtView {
        */
       private void paintOneLine(
             Graphics gr, int index, int tindex) {
-         imageg.setColor(AtView.background);
+         imageg.setColor(
+            overrideBg != null ? overrideBg
+               : AtView.background);
          imageg.fillRect(0, 0, pixelWidth, charheight);
          atIt.setText(gettext().at(tindex).toString());
 

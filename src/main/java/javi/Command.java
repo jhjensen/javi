@@ -40,9 +40,22 @@ public final class Command extends Rgroup {
       "map",        //9
    };
 
+   private static final String[] descs = {
+      null,
+      "read file into buffer",
+      "set tab stop width",
+      "terminate editor",
+      "enter ex command mode",
+      "open/checkout file",
+      "set editor option",
+      "reload current file",
+      "show help",
+      "show key bindings",
+   };
+
    static void init()  {
       instance = new Command();
-      instance.register(rnames);
+      instance.register(rnames, descs);
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -134,21 +147,28 @@ public final class Command extends Rgroup {
    /**
     * Display help for the given topic.
     *
-    * @param topic the help topic (null for index)
+    * <p>When no topic is specified, shows context-sensitive help
+    * that dynamically lists keybindings for the active keymap.
+    * If the help buffer is already showing, toggles it off.</p>
+    *
+    * @param topic the help topic (null for context help)
     * @param fvc the current file-view context
     * @throws InputException if help cannot be displayed
     */
    private static void showHelp(String topic, FvContext fvc)
          throws InputException {
-      // Auto-redirect to context-sensitive help when no topic specified
-      if (null == topic || topic.isEmpty()) {
-         if (fvc.edvec instanceof Vt100)
-            topic = "shell";
-         else if (fvc.edvec instanceof DirEdit)
-            topic = "diredit";
-         else if (fvc.edvec instanceof FileList)
-            topic = "filelist";
+      // Toggle: if no topic and already showing help, dismiss
+      if ((null == topic || topic.isEmpty())
+            && ContextHelp.isShowingHelp(fvc)) {
+         ContextHelp.toggle(fvc);
+         return;
       }
+      // No topic: show context-sensitive help
+      if (null == topic || topic.isEmpty()) {
+         ContextHelp.toggle(fvc);
+         return;
+      }
+      // Specific topic: delegate to static HelpSystem
       TextEdit<String> helpBuffer = HelpSystem.getHelp(topic);
       FvContext.connectFv(helpBuffer, fvc.vi);
    }
@@ -194,6 +214,7 @@ public final class Command extends Rgroup {
 
    private static void commandproc(FvContext fvc) {
 
+      ContextHelp.onSubModeEntered("commandproc");
       String line = InsertBuffer.getcomline(":");
       line = line.substring(1, line.length());
       command(line, fvc, null);

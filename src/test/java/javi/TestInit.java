@@ -83,6 +83,7 @@ public final class TestInit {
          new FormatDispatch();
          Command.init();
          MoveGroup.init();
+         FileList.initDescriptions();
       } finally {
          EventQueue.biglock2.unlock();
       }

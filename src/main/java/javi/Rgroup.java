@@ -45,13 +45,73 @@ import static history.Tools.trace;
  */
 public abstract class Rgroup {
 
+   /**
+    * Functional interface for command execution.
+    * Commands receive count, repeat-count, view context,
+    * and whether this is a dot-repeat invocation.
+    */
+   @FunctionalInterface
+   interface CommandHandler {
+      Object execute(int count, int rcount, FvContext fvc,
+         boolean dotMode)
+         throws IOException, InterruptedException, InputException;
+   }
+
+   /**
+    * Functional interface for arg-dependent command execution.
+    * Like CommandHandler but also receives the command argument
+    * from the key mapping (e.g., ":vt hostname" passes "hostname").
+    */
+   @FunctionalInterface
+   interface ArgCommandHandler {
+      Object execute(Object arg, int count, int rcount, FvContext fvc,
+         boolean dotMode)
+         throws IOException, InterruptedException, InputException;
+   }
+
+   /**
+    * Self-describing command entry with metadata and handler.
+    * Used by Phase 2b keymap-to-help auto-extraction.
+    */
+   record CommandEntry(
+      String name,
+      String description,
+      String category,
+      CommandHandler handler
+   ) { }
+
    final class KeyBinding {
       private final Object arg;
       private final int index;
+      private final CommandHandler handler;
+      private final ArgCommandHandler argHandler;
 
       KeyBinding(Object argi, int indexi) {
          arg = argi;
          index = indexi;
+         handler = null;
+         argHandler = null;
+      }
+
+      KeyBinding(CommandHandler handleri) {
+         arg = null;
+         index = -1;
+         handler = handleri;
+         argHandler = null;
+      }
+
+      KeyBinding(ArgCommandHandler handleri) {
+         arg = null;
+         index = -1;
+         handler = null;
+         argHandler = handleri;
+      }
+
+      private KeyBinding(Object argi, ArgCommandHandler handleri) {
+         arg = argi;
+         index = -1;
+         handler = null;
+         argHandler = handleri;
       }
 
       public String toString() {
@@ -61,17 +121,25 @@ public abstract class Rgroup {
       Object dobind(int count,
          int rcount, FvContext fvc, boolean dotmode) throws
             IOException, InterruptedException, InputException {
+         if (handler != null)
+            return handler.execute(count, rcount, fvc, dotmode);
+         if (argHandler != null)
+            return argHandler.execute(arg, count, rcount, fvc,
+               dotmode);
          return doroutine(index, arg, count, rcount, fvc, dotmode);
       }
 
       Object dobind(Object arg2, int count,
          int rcount, FvContext fvc, boolean dotmode) throws
             IOException, InterruptedException, InputException {
-
-         return doroutine(index, null == arg2
-               ? arg
-               : arg2
-            , count, rcount, fvc, dotmode);
+         if (handler != null)
+            return handler.execute(count, rcount, fvc, dotmode);
+         Object resolved = null == arg2 ? arg : arg2;
+         if (argHandler != null)
+            return argHandler.execute(resolved, count, rcount, fvc,
+               dotmode);
+         return doroutine(index, resolved, count, rcount, fvc,
+            dotmode);
       }
 
       boolean matches(Rgroup rg) {
@@ -83,20 +151,32 @@ public abstract class Rgroup {
       }
 
       KeyBinding proto(Object arg2) {
-         return (arg != arg2) // use default bind if arguments the same
-            ? new KeyBinding(arg2, index)
-            : this;
-
+         if (arg == arg2)
+            return this;
+         if (argHandler != null)
+            return new KeyBinding(arg2, argHandler);
+         return new KeyBinding(arg2, index);
       }
    }
 
    private static HashMap<String, KeyBinding> cmhash =
+      new HashMap<>(200);
+   private static HashMap<String, String> descHash =
       new HashMap<>(200);
    private HashMap<String, Object> glist = new HashMap<>(100);
 
    static final KeyBinding bindingLookup(String name) {
       //trace("bindingLookup " + name + " ret " + cmhash.get(name));
       return cmhash.get(name);
+   }
+
+   /**
+    * Get all registered command names.
+    *
+    * @return unmodifiable set of command names
+    */
+   static java.util.Set<String> getRegisteredCommands() {
+      return java.util.Collections.unmodifiableSet(cmhash.keySet());
    }
 
    protected abstract Object doroutine(int rnum, Object arg, int count,
@@ -119,12 +199,90 @@ public abstract class Rgroup {
    public final void register(String[] commands) {
       for (int ii = 1; ii < commands.length; ii++) {
          //trace("registering " + commands[ii]);
+         if (commands[ii] == null)
+            continue;
          if (cmhash.containsKey(commands[ii]))
             throw new RuntimeException("duplicate command:" + commands[ii]);
          else
             cmhash.put(commands[ii], new KeyBinding(null, ii));
 
       }
+   }
+
+   /**
+    * Register commands with descriptions. Each command name at
+    * index i is paired with the description at index i.
+    * Descriptions make the command self-documenting — the help
+    * system extracts them automatically from the active keymap.
+    */
+   public final void register(String[] commands, String[] descs) {
+      register(commands);
+      for (int ii = 1; ii < commands.length && ii < descs.length; ii++)
+         if (commands[ii] != null && descs[ii] != null)
+            descHash.put(commands[ii], descs[ii]);
+   }
+
+   /**
+    * Get the registered description for a command name.
+    *
+    * @param commandName the internal command name
+    * @return human-readable description, or null if none
+    */
+   static String getDescription(String commandName) {
+      return descHash.get(commandName);
+   }
+
+   /**
+    * Pre-register descriptions for commands that will be
+    * registered later by a subsystem not yet initialized.
+    * Safe to call before or after command registration.
+    */
+   static void registerDescriptions(
+         String[] commands, String[] descs) {
+      for (int ii = 1; ii < commands.length
+            && ii < descs.length; ii++)
+         if (descs[ii] != null)
+            descHash.put(commands[ii], descs[ii]);
+   }
+
+   private static HashMap<String, CommandEntry> entryHash =
+      new HashMap<>(200);
+
+   /**
+    * Register a self-describing command with closure handler.
+    * Phase 2b: commands registered this way carry their own
+    * metadata for help auto-extraction. The handler replaces
+    * the doroutine dispatch for this command.
+    */
+   public final void registerCommand(CommandEntry entry) {
+      if (cmhash.containsKey(entry.name()))
+         throw new RuntimeException(
+            "duplicate command:" + entry.name());
+      cmhash.put(entry.name(), new KeyBinding(entry.handler()));
+      entryHash.put(entry.name(), entry);
+      descHash.put(entry.name(), entry.description());
+   }
+
+   /**
+    * Register an arg-dependent command with closure handler.
+    * The handler receives the resolved argument from the key
+    * mapping (e.g., ":vt hostname" passes "hostname" as arg).
+    */
+   public final void registerArgCommand(String name, String desc,
+         String category, ArgCommandHandler handler) {
+      if (cmhash.containsKey(name))
+         throw new RuntimeException("duplicate command:" + name);
+      cmhash.put(name, new KeyBinding(handler));
+      entryHash.put(name, new CommandEntry(name, desc, category,
+         null));
+      descHash.put(name, desc);
+   }
+
+   /**
+    * Get CommandEntry for a registered command, or null.
+    */
+   static CommandEntry getCommandEntry(String name) {
+      return entryHash.get(name);
    }
 
 /*

@@ -165,6 +165,31 @@ public abstract class UI {
     */
    public abstract boolean imoveToTrash(File file);
 
+   /**
+    * Create a non-traverseable side panel view for help display.
+    *
+    * @param widthChars width in characters
+    * @return the new View, or null if not supported
+    */
+   public abstract View icreateHelpPanel(int widthChars);
+
+   /**
+    * Remove a help panel view created by icreateHelpPanel.
+    *
+    * @param helpView the view to remove
+    */
+   public abstract void iremoveHelpPanel(View helpView);
+
+   /**
+    * Update the help panel scrollbar position and range.
+    *
+    * @param current current top line
+    * @param max total lines in help content
+    * @param visible number of visible rows
+    */
+   public abstract void iupdateHelpScrollbar(
+      int current, int max, int visible);
+
    static final void saveState(ObjectOutputStream os) throws IOException {
 //      os.writeObject (new Boolean(instance instanceof AwtInterface));
       instance.iflush(true);
@@ -433,5 +458,23 @@ public abstract class UI {
       if (null != instance)
          return instance.imoveToTrash(file);
       return false;
+   }
+
+   static View createHelpPanel(int widthChars) {
+      if (null != instance)
+         return instance.icreateHelpPanel(widthChars);
+      return null;
+   }
+
+   static void removeHelpPanel(View helpView) {
+      if (null != instance)
+         instance.iremoveHelpPanel(helpView);
+   }
+
+   static void updateHelpScrollbar(
+         int current, int max, int visible) {
+      if (null != instance)
+         instance.iupdateHelpScrollbar(
+            current, max, visible);
    }
 }
