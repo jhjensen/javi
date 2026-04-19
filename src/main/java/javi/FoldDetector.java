@@ -2,6 +2,7 @@ package javi;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Set;
 
 /**
  * Detects foldable regions in text buffers.
@@ -336,6 +337,7 @@ public final class FoldDetector {
       // Stack of [headerLevel, startLine]
       Deque<int[]> stack = new ArrayDeque<>();
       int codeBlockStart = 0; // 0 = not in code block
+      String codeBlockLang = null;
 
       for (int line = 1; line < lineCount; line++) {
          String text = buffer.getLine(line);
@@ -344,11 +346,18 @@ public final class FoldDetector {
          if (isFencedCodeBoundary(text)) {
             if (codeBlockStart == 0) {
                codeBlockStart = line;
+               codeBlockLang = extractFenceLanguage(text);
             } else {
                // End of code block — fold the whole block
-               if (line > codeBlockStart)
+               if (line > codeBlockStart) {
                   model.addFold(codeBlockStart, line);
+                  if (codeBlockLang != null)
+                     detectSubFolds(buffer,
+                        codeBlockStart, line,
+                        codeBlockLang, model);
+               }
                codeBlockStart = 0;
+               codeBlockLang = null;
             }
             continue;
          }
@@ -510,6 +519,103 @@ public final class FoldDetector {
          i++;
       }
       return count >= 3;
+   }
+
+   /** Languages that use brace-based fold detection. */
+   private static final Set<String> BRACE_LANGUAGES = Set.of(
+      "java", "javascript", "js", "typescript", "ts",
+      "c", "cpp", "c++", "csharp", "cs", "go", "rust",
+      "json", "jsonc", "css", "scss", "less",
+      "swift", "kotlin", "scala", "groovy", "dart",
+      "php", "perl", "ruby", "lua"
+   );
+
+   /** Languages that use indent-based fold detection. */
+   private static final Set<String> INDENT_LANGUAGES = Set.of(
+      "python", "py", "yaml", "yml", "coffeescript",
+      "nim", "haskell"
+   );
+
+   /**
+    * Extract the language identifier from a fenced code block
+    * opening line. Returns the lowercase language tag, or null
+    * if none is present.
+    *
+    * <p>Accepts lines like {@code ```java}, {@code ``` python},
+    * {@code ~~~typescript}. Skips leading whitespace and the
+    * fence characters, then returns the first word.</p>
+    */
+   static String extractFenceLanguage(String text) {
+      int len = text.length();
+      int i = 0;
+      while (i < len && i < 3 && text.charAt(i) == ' ')
+         i++;
+      if (i >= len)
+         return null;
+      char fence = text.charAt(i);
+      if (fence != '`' && fence != '~')
+         return null;
+      while (i < len && text.charAt(i) == fence)
+         i++;
+      // skip whitespace between fence and language tag
+      while (i < len && text.charAt(i) == ' ')
+         i++;
+      if (i >= len)
+         return null;
+      int start = i;
+      while (i < len && text.charAt(i) != ' '
+            && text.charAt(i) != '\t')
+         i++;
+      if (i == start)
+         return null;
+      return text.substring(start, i).toLowerCase();
+   }
+
+   /**
+    * Detect sub-folds inside a fenced code block range using
+    * the appropriate strategy for the given language. The
+    * sub-folds are added to the existing model. Only the
+    * content lines (excluding fence boundaries) are scanned.
+    *
+    * @param buffer text buffer
+    * @param blockStart first line of code block (fence line)
+    * @param blockEnd last line of code block (fence line)
+    * @param lang lowercase language identifier
+    * @param model fold model to add sub-folds to
+    */
+   private static void detectSubFolds(LineFetcher buffer,
+         int blockStart, int blockEnd, String lang,
+         FoldModel model) {
+      int contentStart = blockStart + 1;
+      int contentEnd = blockEnd - 1;
+      if (contentEnd < contentStart)
+         return;
+      // line count for sub-detector: 1-based content lines
+      int subLineCount = contentEnd - contentStart + 2;
+      LineFetcher subFetcher = lineNum -> {
+         int actual = contentStart + lineNum - 1;
+         if (actual > contentEnd)
+            return null;
+         return buffer.getLine(actual);
+      };
+
+      FoldModel subModel;
+      if (BRACE_LANGUAGES.contains(lang)) {
+         subModel = detectJsonFolds(subFetcher, subLineCount);
+      } else if (INDENT_LANGUAGES.contains(lang)) {
+         subModel = detectIndentFolds(
+            subFetcher, subLineCount, 3);
+      } else {
+         return;
+      }
+      // Translate sub-model line numbers back to buffer lines
+      for (FoldModel.FoldRange sf : subModel.getFolds()) {
+         int realStart = contentStart + sf.startLine - 1;
+         int realEnd = contentStart + sf.endLine - 1;
+         if (realEnd <= realStart)
+            continue;
+         model.addFold(realStart, realEnd);
+      }
    }
 
    /**

@@ -595,4 +595,179 @@ class FoldDetectorJUnitTest {
          "second code block fold 6-8, got: "
          + m.getFolds());
    }
+
+   // --- extractFenceLanguage ---
+
+   @Test void extractLanguageJava() {
+      assertEquals("java",
+         FoldDetector.extractFenceLanguage("```java"));
+   }
+
+   @Test void extractLanguagePython() {
+      assertEquals("python",
+         FoldDetector.extractFenceLanguage("```python"));
+   }
+
+   @Test void extractLanguageWithSpaces() {
+      assertEquals("typescript",
+         FoldDetector.extractFenceLanguage("``` typescript"));
+   }
+
+   @Test void extractLanguageTildeFence() {
+      assertEquals("json",
+         FoldDetector.extractFenceLanguage("~~~json"));
+   }
+
+   @Test void extractLanguageNone() {
+      assertNull(
+         FoldDetector.extractFenceLanguage("```"));
+   }
+
+   @Test void extractLanguageClosingFence() {
+      assertNull(
+         FoldDetector.extractFenceLanguage("```  "));
+   }
+
+   @Test void extractLanguageMixedCase() {
+      assertEquals("javascript",
+         FoldDetector.extractFenceLanguage("```JavaScript"));
+   }
+
+   // --- Sub-fold detection inside fenced code blocks ---
+
+   @Test void markdownJavaCodeBlockSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",           // 1
+         "```java",           // 2
+         "class Foo {",       // 3
+         "   void bar() {",   // 4
+         "      x();",        // 5
+         "   }",              // 6
+         "}",                 // 7
+         "```"                // 8
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 9);
+      // Whole code block fold 2-8
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 8),
+         "whole code block fold 2-8, got: " + m.getFolds());
+      // Sub-fold for outer brace: lines 3-7
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3 && f.endLine == 7),
+         "outer brace fold 3-7, got: " + m.getFolds());
+      // Sub-fold for inner method: lines 4-6
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 4 && f.endLine == 6),
+         "inner brace fold 4-6, got: " + m.getFolds());
+   }
+
+   @Test void markdownJsonCodeBlockSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Config",          // 1
+         "```json",           // 2
+         "{",                 // 3
+         "  \"key\": {",      // 4
+         "    \"v\": 1",      // 5
+         "  }",               // 6
+         "}",                 // 7
+         "```"                // 8
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 9);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 8),
+         "whole code block fold 2-8, got: " + m.getFolds());
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3 && f.endLine == 7),
+         "outer brace fold 3-7, got: " + m.getFolds());
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 4 && f.endLine == 6),
+         "inner brace fold 4-6, got: " + m.getFolds());
+   }
+
+   @Test void markdownPythonCodeBlockIndentSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Script",          // 1
+         "```python",         // 2
+         "def foo():",        // 3
+         "   x = 1",          // 4
+         "   y = 2",          // 5
+         "z = 3",             // 6
+         "```"                // 7
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 8);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 7),
+         "whole code block fold 2-7, got: " + m.getFolds());
+      // indent fold: lines 3-5 (def foo with indented body)
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3 && f.endLine == 5),
+         "indent fold 3-5, got: " + m.getFolds());
+   }
+
+   @Test void markdownNoLangNoSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",           // 1
+         "```",               // 2
+         "class Foo {",       // 3
+         "   bar();",         // 4
+         "}",                 // 5
+         "```"                // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      // Should only have the whole block fold, no sub-folds
+      long codeFolds = m.getFolds().stream()
+         .filter(f -> f.startLine >= 2 && f.endLine <= 6)
+         .count();
+      assertEquals(1, codeFolds,
+         "no-lang block should have 1 fold, got: "
+         + m.getFolds());
+   }
+
+   @Test void markdownUnknownLangNoSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",           // 1
+         "```brainfuck",      // 2
+         "+++[>++<-]",        // 3
+         "```"                // 4
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 5);
+      long codeFolds = m.getFolds().stream()
+         .filter(f -> f.startLine >= 2 && f.endLine <= 4)
+         .count();
+      assertEquals(1, codeFolds,
+         "unknown lang should have 1 fold, got: "
+         + m.getFolds());
+   }
+
+   @Test void markdownTsCodeBlockBraceFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "```ts",             // 1
+         "function f() {",    // 2
+         "   return 1;",      // 3
+         "}",                 // 4
+         "```"                // 5
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 6);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 5),
+         "whole block fold 1-5, got: " + m.getFolds());
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 4),
+         "brace sub-fold 2-4, got: " + m.getFolds());
+   }
+
+   @Test void markdownUnclosedCodeBlockNoSubFolds() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "```java",           // 1
+         "class Foo {",       // 2
+         "   x();",           // 3
+         "}"                  // 4
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 5);
+      // Unclosed block folds to EOF; no sub-folds because
+      // the block has no closing fence
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine == 4),
+         "unclosed block fold 1-4, got: " + m.getFolds());
+   }
 }
