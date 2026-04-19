@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests for {@link FormatDispatch} file type detection and
@@ -76,9 +77,24 @@ class FormatDispatchJUnitTest {
          ":formatr should be registered");
    }
 
+   /** Check whether clang-format-mp-20 (or symlink) is on PATH. */
+   private static boolean clangFormatAvailable() {
+      try {
+         Process p = new ProcessBuilder("clang-format-mp-20", "--version")
+            .redirectErrorStream(true).start();
+         p.getInputStream().readAllBytes();
+         return p.waitFor() == 0;
+      } catch (Exception e) {
+         return false;
+      }
+   }
+
    @Test
    @DisplayName("clang-format reformats Java code with 3-space indent")
    void clangFormatReformatsJava() throws Exception {
+      assumeTrue(clangFormatAvailable(),
+         "clang-format-mp-20 not available — skipping");
+
       // Create a buffer with zero-indent Java code
       String content = String.join("\n",
          "package test;",
@@ -97,15 +113,7 @@ class FormatDispatchJUnitTest {
          "precondition: method should have no indent");
 
       // Format the entire buffer via FormatDispatch
-      try {
-         FormatDispatch.formatAll(ex);
-      } catch (Exception e) {
-         // Skip if clang-format is not available
-         if (e.getMessage() != null
-               && e.getMessage().contains("reformat"))
-            return;
-         throw e;
-      }
+      FormatDispatch.formatAll(ex);
 
       // Verify clang-format applied 3-space indentation
       assertEquals("   public void bar() {",
