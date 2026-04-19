@@ -77,11 +77,45 @@ Javi has a built-in help system accessible from command mode:
   ([#cmd("help filelist")], [File list buffer]),
   ([#cmd("help directory")], [Directory list buffer]),
   ([#cmd("help keybindings")], [Key binding architecture]),
+  ([#cmd("help folding")], [Folding commands and detection]),
   ([#cmd("help git")], [Git integration commands]),
 )
 
 Help content is displayed in a read-only buffer navigable with normal vi
 movement keys.
+
+== Context-Sensitive Help Panel
+
+Javi includes a context-sensitive help side panel that dynamically shows
+the key bindings available in the current context. Unlike #cmd("help")
+topics which display static documentation, the context help panel
+queries the live keymap system and updates as you switch buffers or
+modes.
+
+#cmd-table(
+  ([#key("Shift-F1")], [Toggle context-sensitive help side panel]),
+  ([#cmd("contexthelp")], [Toggle context-sensitive help side panel]),
+  ([#cmd("helpscrolldown")], [Scroll help panel down]),
+  ([#cmd("helpscrollup")], [Scroll help panel up]),
+)
+
+The help panel appears as a fixed-width side panel on the right edge of
+the editor window. It does not take keyboard focus --- you can continue
+editing while the panel is visible.
+
+The panel content adapts to your current context:
+
+- *Normal mode* --- shows all bound keys from the active keymap chain,
+  including any overlay bindings (e.g., DirEdit or file list bindings).
+- *Insert mode* --- shows insert-mode key bindings.
+- *Sub-mode* (e.g., after pressing #key("d") or #key("z")) --- shows
+  the available completions for the pending operator.
+
+#note-box[
+  *Tip:* Leave the help panel open while learning Javi. It updates
+  automatically as you switch between buffers with different keymap
+  overlays (shell, directory editor, file list, etc.).
+]
 
 // ============================================================================
 // 2. DIFFERENCES FROM VI
@@ -1276,7 +1310,7 @@ modifier-key variants.
   fill: (_, row) => if row == 0 { gray.lighten(85%) } else { none },
   [*Key*], [*Modifier*], [*Action*],
   [#key("F1")], [---], [Next position in position list],
-  [#key("F1")], [Shift], [Previous position in position list],
+  [#key("F1")], [Shift], [Toggle context-sensitive help panel],
   [#key("F1")], [Ctrl], [Next position with wait],
   [#key("F2")], [---], [File list (open buffers)],
   [#key("F3")], [---], [Directory list],
@@ -1522,11 +1556,14 @@ fold commands.
 #cmd-table(
   ([#cmd("help")], [Show help index (context-sensitive)]),
   ([#cmd("help _topic_")], [Show help for specific topic]),
+  ([#cmd("contexthelp")], [Toggle context-sensitive help side panel]),
+  ([#cmd("helpscrolldown")], [Scroll help panel down]),
+  ([#cmd("helpscrollup")], [Scroll help panel up]),
 )
 
 Available topics: `index`, `movement`, `editing`, `search`, `files`,
 `ex`, `visual`, `undo`, `window`, `shell`, `diredit`, `filelist`,
-`directory`, `keybindings`, `git`.
+`directory`, `keybindings`, `folding`, `git`.
 
 === Git Integration Commands
 
@@ -1619,15 +1656,18 @@ sections describe the intended design:
 
 The following features are *fully implemented* and documented accurately:
 
+- *Context-Sensitive Help* (Section 1) --- The `Shift-F1` help side
+  panel, `:contexthelp`, and help panel scrolling commands are
+  implemented. The panel dynamically reflects the active keymap.
+
 - *Folding* (Section 4) --- All fold detection methods (`:fold`,
   `:foldindent`, `:foldmarker`) and fold manipulation keys
   (`zo`/`zc`/`za`/`zR`/`zM`) are implemented on master.
 
-- *Git Integration* (Section 7) --- All core git commands are
-  implemented: status, staging, committing, diff, log, branch
-  operations, stash, remote operations, blame, and hunk-level
-  staging. The advanced commands (`git_stage_hunk`, `git_unstage_hunk`,
-  `git_patch`, `git_blame`, `git_goto_file`, `git_amend`) are
-  functional but not yet documented in the built-in help system.
+- *Git Integration* (Section 7) --- All git commands documented in this
+  manual are implemented, including advanced commands:
+  `git_stage_hunk`, `git_unstage_hunk`, `git_patch`, `git_blame`,
+  `git_goto_file`, `git_amend`, `git_log_diff`, `git_expand`,
+  `git_expand_all`, and `git_collapse_all`.
 
 All other sections accurately reflect the current codebase.
