@@ -437,4 +437,162 @@ class FoldDetectorJUnitTest {
       assertEquals(4, m.nextVisible(1));
       assertEquals(7, m.nextVisible(4));
    }
+
+   // --- Fenced code block handling ---
+
+   @Test void isFencedCodeBoundary() {
+      assertTrue(FoldDetector.isFencedCodeBoundary("```"));
+      assertTrue(FoldDetector.isFencedCodeBoundary("```java"));
+      assertTrue(FoldDetector.isFencedCodeBoundary("````"));
+      assertTrue(FoldDetector.isFencedCodeBoundary("~~~"));
+      assertTrue(FoldDetector.isFencedCodeBoundary("~~~python"));
+      assertTrue(FoldDetector.isFencedCodeBoundary(" ```"));
+      assertTrue(FoldDetector.isFencedCodeBoundary("  ```"));
+      assertFalse(FoldDetector.isFencedCodeBoundary("``"));
+      assertFalse(FoldDetector.isFencedCodeBoundary("~~"));
+      assertFalse(FoldDetector.isFencedCodeBoundary("text"));
+      assertFalse(FoldDetector.isFencedCodeBoundary(""));
+      assertFalse(
+         FoldDetector.isFencedCodeBoundary("    ```"),
+         "4 spaces indent is not a valid fence");
+   }
+
+   @Test void markdownCodeBlockFoldsAsUnit() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",     // 1
+         "intro",       // 2
+         "```java",     // 3
+         "public {",    // 4
+         "  x();",      // 5
+         "}",           // 6
+         "```",         // 7
+         "after"        // 8
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 9);
+      // Should have a code block fold 3-7
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3 && f.endLine == 7),
+         "expected code block fold 3-7, got: "
+         + m.getFolds());
+   }
+
+   @Test void markdownCodeBlockBracesNotFolded() {
+      // Braces inside a code block should NOT create
+      // separate folds — the block folds as a whole.
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",     // 1
+         "```",         // 2
+         "{",           // 3
+         "  inner",     // 4
+         "}",           // 5
+         "```",         // 6
+         "after"        // 7
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 8);
+      // Code block fold 2-6; no separate brace fold 3-5
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 6),
+         "expected code block fold 2-6, got: "
+         + m.getFolds());
+      assertFalse(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3 && f.endLine == 5),
+         "brace fold inside code block should not exist");
+   }
+
+   @Test void markdownHeaderInsideCodeBlockIgnored() {
+      // A # line inside ``` should not create a header fold
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Real header",   // 1
+         "```",             // 2
+         "# Not a header",  // 3
+         "text",            // 4
+         "```",             // 5
+         "after"            // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      // Header fold at 1, code block fold at 2-5
+      // No fold starting at line 3
+      assertFalse(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 3),
+         "header inside code block should not create fold");
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 1),
+         "real header should create fold");
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 5),
+         "expected code block fold 2-5");
+   }
+
+   @Test void markdownListInsideCodeBlockIgnored() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "intro:",         // 1
+         "```",            // 2
+         "- not a list",   // 3
+         "- really not",   // 4
+         "```",            // 5
+         "real text"       // 6
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 7);
+      // Code block fold 2-5; no list fold inside code block
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 5),
+         "expected code block fold 2-5, got: "
+         + m.getFolds());
+      // The intro line should not fold with code block
+      // content as list items
+      assertFalse(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 1 && f.endLine >= 3
+            && f.endLine <= 4),
+         "list fold should not include code block content");
+   }
+
+   @Test void markdownUnclosedCodeBlockExtendsToEOF() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "text",       // 1
+         "```",        // 2
+         "code",       // 3
+         "more code"   // 4
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 5);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 4),
+         "unclosed code block should extend to EOF, got: "
+         + m.getFolds());
+   }
+
+   @Test void markdownTildeCodeBlock() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# H1",     // 1
+         "~~~",      // 2
+         "code",     // 3
+         "~~~",      // 4
+         "after"     // 5
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 6);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 4),
+         "tilde fence should create code block fold, got: "
+         + m.getFolds());
+   }
+
+   @Test void markdownMultipleCodeBlocks() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",   // 1
+         "```",       // 2
+         "block 1",   // 3
+         "```",       // 4
+         "between",   // 5
+         "```",       // 6
+         "block 2",   // 7
+         "```"        // 8
+      );
+      FoldModel m = FoldDetector.detectMarkdownFolds(buf, 9);
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 2 && f.endLine == 4),
+         "first code block fold 2-4, got: " + m.getFolds());
+      assertTrue(m.getFolds().stream().anyMatch(
+         f -> f.startLine == 6 && f.endLine == 8),
+         "second code block fold 6-8, got: "
+         + m.getFolds());
+   }
 }

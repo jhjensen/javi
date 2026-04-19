@@ -318,6 +318,10 @@ public final class FoldDetector {
     * creates a fold from the introducing line through the
     * last consecutive list item.
     *
+    * <p>Fenced code blocks ({@code ```}) are treated as a
+    * single foldable unit. Headers and other structure inside
+    * code blocks are ignored for fold detection.</p>
+    *
     * @param buffer text buffer to scan (1-based lines)
     * @param lineCount total lines in file (readIn())
     * @return FoldModel with detected folds
@@ -331,11 +335,25 @@ public final class FoldDetector {
       int lastLine = lineCount - 1;
       // Stack of [headerLevel, startLine]
       Deque<int[]> stack = new ArrayDeque<>();
+      int codeBlockStart = 0; // 0 = not in code block
 
       for (int line = 1; line < lineCount; line++) {
          String text = buffer.getLine(line);
          if (text == null)
             continue;
+         if (isFencedCodeBoundary(text)) {
+            if (codeBlockStart == 0) {
+               codeBlockStart = line;
+            } else {
+               // End of code block — fold the whole block
+               if (line > codeBlockStart)
+                  model.addFold(codeBlockStart, line);
+               codeBlockStart = 0;
+            }
+            continue;
+         }
+         if (codeBlockStart != 0)
+            continue; // skip content inside code blocks
          int level = markdownHeaderLevel(text);
          if (level > 0) {
             // Close folds at same or deeper level
@@ -354,6 +372,9 @@ public final class FoldDetector {
          if (lastLine > top[1])
             model.addFold(top[1], lastLine);
       }
+      // Unclosed code block extends to EOF
+      if (codeBlockStart != 0 && lastLine > codeBlockStart)
+         model.addFold(codeBlockStart, lastLine);
 
       // Second pass: detect list blocks
       detectMarkdownLists(buffer, lineCount, model);
@@ -365,15 +386,25 @@ public final class FoldDetector {
     * Detect list blocks in Markdown. A non-blank, non-list
     * line followed by one or more list items creates a fold
     * from the introducing line through the last consecutive
-    * list item.
+    * list item. Lines inside fenced code blocks are skipped.
     */
    private static void detectMarkdownLists(
          LineFetcher buffer, int lineCount,
          FoldModel model) {
       int lastLine = lineCount - 1;
       int line = 1;
+      boolean inCode = false;
       while (line <= lastLine) {
          String text = buffer.getLine(line);
+         if (text != null && isFencedCodeBoundary(text)) {
+            inCode = !inCode;
+            line++;
+            continue;
+         }
+         if (inCode) {
+            line++;
+            continue;
+         }
          if (text == null || text.isBlank()
                || isListItem(text)
                || markdownHeaderLevel(text) > 0) {
@@ -454,6 +485,31 @@ public final class FoldDetector {
             && text.charAt(i) == ' ')
          return i;
       return 0;
+   }
+
+   /**
+    * Return true if the line is a fenced code block boundary.
+    * Matches lines starting with optional whitespace then
+    * three or more backticks ({@code ```}) or tildes
+    * ({@code ~~~}), optionally followed by a language tag.
+    */
+   static boolean isFencedCodeBoundary(String text) {
+      int len = text.length();
+      int i = 0;
+      // skip up to 3 spaces of indentation
+      while (i < len && i < 3 && text.charAt(i) == ' ')
+         i++;
+      if (i >= len)
+         return false;
+      char fence = text.charAt(i);
+      if (fence != '`' && fence != '~')
+         return false;
+      int count = 0;
+      while (i < len && text.charAt(i) == fence) {
+         count++;
+         i++;
+      }
+      return count >= 3;
    }
 
    /**
