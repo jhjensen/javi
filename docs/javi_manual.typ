@@ -1624,10 +1624,113 @@ Available topics: `index`, `movement`, `editing`, `search`, `files`,
 )
 
 // ============================================================================
-// APPENDIX B: ACCURACY NOTES
+// APPENDIX B: .JAVINI CONFIGURATION REFERENCE
 // ============================================================================
 
-= Appendix B: Accuracy Notes
+= Appendix B: `.javini` Configuration Reference
+<sec-javini>
+
+The `.javini` file is Javi's startup configuration file. It is read from
+the current directory when Javi launches. Each line in the file is
+executed as if it were typed at the colon command prompt, so any valid
+colon command can appear in `.javini`.
+
+== File Location
+
+Javi looks for `.javini` in the working directory where it was launched.
+There is no global (home directory) configuration file --- each project
+can have its own `.javini` with project-specific settings.
+
+== Format
+
+One command per line. Blank lines and lines that cause errors are
+silently skipped. Comments are not supported --- every non-empty line
+is interpreted as a command.
+
+```
+fontname Verdana
+fontsize 15.5
+fontweight 1.0
+lines 70
+tabstop 3
+loadplugin javi-hello.jar
+loadclass javi.git.GitCommands
+loadmapkeys
+```
+
+== Common Settings
+
+#config-table(
+  ([#lit("fontname _name_")], [Set the editor font face (e.g., `Verdana`, `Courier New`, `JetBrains Mono`)]),
+  ([#lit("fontsize _n_")], [Set font size in points (float, e.g., `15.5`)]),
+  ([#lit("fontweight _n_")], [Set font weight (float: `1.0` = normal, `2.0` = bold)]),
+  ([#lit("monofontname _name_")], [Set the monospace font for terminals]),
+  ([#lit("lines _n_")], [Set default window height in lines]),
+  ([#lit("setwidth _n_")], [Set default window width in columns]),
+  ([#lit("tabstop _n_")], [Set tab display width (default: 8)]),
+)
+
+== Plugin Loading
+
+#config-table(
+  ([#lit("loadplugin _file.jar_")], [Load a plugin JAR file from the current directory or classpath]),
+  ([#lit("loadclass _classname_")], [Load a command class by fully qualified name (e.g., `javi.git.GitCommands`)]),
+  ([#lit("loadgroup _name_")], [Load a named command group]),
+)
+
+Plugins are loaded during startup after the main editor initializes.
+A plugin JAR must contain classes that register commands via the Javi
+command framework.
+
+== Key Binding Customization
+
+#config-table(
+  ([#lit("mapkey _group_ _key_ _command_")], [Bind a key in the named group]),
+  ([#lit("unmapkey _group_ _key_")], [Remove a key binding]),
+  ([#lit("loadmapkeys")], [Load saved key bindings from `~/.javi/keybindings`]),
+)
+
+Add `loadmapkeys` to your `.javini` to restore custom bindings
+automatically on startup.
+
+== Editor Options via `set`
+
+The `set` command can also appear in `.javini` for any registered
+option:
+
+```
+set ai.provider=copilot
+set ai.model=gpt-4
+```
+
+See the AI Integration section for available `ai.*` options.
+
+== Example `.javini`
+
+A typical development configuration:
+
+```
+fontname JetBrains Mono
+fontsize 14.0
+fontweight 1.0
+lines 60
+setwidth 120
+tabstop 4
+loadclass javi.git.GitCommands
+loadmapkeys
+```
+
+#note-box[
+  *Tip:* Keep your `.javini` minimal. Use it for font/size preferences
+  and essential plugin loading. Per-session settings are better managed
+  interactively with colon commands.
+]
+
+// ============================================================================
+// APPENDIX C: ACCURACY NOTES
+// ============================================================================
+
+= Appendix C: Accuracy Notes
 
 The following features described in this manual are planned but *not yet
 implemented* in the codebase as of April 2026. The corresponding
