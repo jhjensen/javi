@@ -12,7 +12,7 @@
 
 FROM eclipse-temurin:24-jdk-noble
 
-# Xvfb + X11 libraries for headless AWT rendering
+# Xvfb + X11 libraries for headless AWT rendering + clang-format for FormatDispatch tests
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
     libx11-6 \
@@ -25,7 +25,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fontconfig \
     fonts-dejavu-core \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    clang-format \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/clang-format /usr/local/bin/clang-format-mp-20
 
 WORKDIR /app
 
