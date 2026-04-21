@@ -619,6 +619,63 @@ public final class FoldDetector {
    }
 
    /**
+    * Return true if the given filename has a recognized
+    * extension for automatic fold detection. Used by zM to
+    * decide whether to auto-create folds.
+    */
+   public static boolean isFoldSupported(String filename) {
+      if (filename == null)
+         return false;
+      String ext = fileExtension(filename);
+      if (ext == null)
+         return false;
+      return ext.equals("md") || ext.equals("markdown")
+         || BRACE_LANGUAGES.contains(ext)
+         || INDENT_LANGUAGES.contains(ext);
+   }
+
+   /**
+    * Detect folds using the appropriate strategy for the
+    * given filename's extension. Returns null if the file
+    * type is not recognized.
+    *
+    * @param filename the buffer filename (for extension)
+    * @param buffer line fetcher for buffer content
+    * @param lineCount total lines in file
+    * @return detected FoldModel, or null if unsupported
+    */
+   public static FoldModel detectForFile(String filename,
+         LineFetcher buffer, int lineCount) {
+      if (filename == null)
+         return null;
+      String ext = fileExtension(filename);
+      if (ext == null)
+         return null;
+      if (ext.equals("md") || ext.equals("markdown"))
+         return detectMarkdownFolds(buffer, lineCount);
+      if (INDENT_LANGUAGES.contains(ext))
+         return detectIndentFolds(buffer, lineCount, 3);
+      if (BRACE_LANGUAGES.contains(ext))
+         return detectJsonFolds(buffer, lineCount);
+      return null;
+   }
+
+   /**
+    * Extract the lowercase file extension from a filename.
+    * Returns null if no extension is present.
+    */
+   private static String fileExtension(String filename) {
+      int dot = filename.lastIndexOf('.');
+      if (dot < 0 || dot == filename.length() - 1)
+         return null;
+      // Strip any path prefix to get just the extension
+      int slash = filename.lastIndexOf('/');
+      if (slash > dot)
+         return null;
+      return filename.substring(dot + 1).toLowerCase();
+   }
+
+   /**
     * Abstraction so we can test without depending on TextEdit.
     */
    public interface LineFetcher {

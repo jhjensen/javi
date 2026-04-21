@@ -1,7 +1,11 @@
 package javi;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 
 class FoldDetectorJUnitTest {
@@ -769,5 +773,91 @@ class FoldDetectorJUnitTest {
       assertTrue(m.getFolds().stream().anyMatch(
          f -> f.startLine == 1 && f.endLine == 4),
          "unclosed block fold 1-4, got: " + m.getFolds());
+   }
+
+   // --- detectForFile / isFoldSupported ---
+
+   @Test void isFoldSupportedJava() {
+      assertTrue(FoldDetector.isFoldSupported("Foo.java"));
+   }
+
+   @Test void isFoldSupportedPython() {
+      assertTrue(FoldDetector.isFoldSupported("script.py"));
+   }
+
+   @Test void isFoldSupportedMarkdown() {
+      assertTrue(FoldDetector.isFoldSupported("README.md"));
+   }
+
+   @Test void isFoldSupportedJson() {
+      assertTrue(FoldDetector.isFoldSupported("data.json"));
+   }
+
+   @Test void isFoldSupportedYaml() {
+      assertTrue(FoldDetector.isFoldSupported("conf.yml"));
+   }
+
+   @Test void isFoldSupportedUnknown() {
+      assertFalse(FoldDetector.isFoldSupported("file.txt"));
+   }
+
+   @Test void isFoldSupportedNull() {
+      assertFalse(FoldDetector.isFoldSupported(null));
+   }
+
+   @Test void isFoldSupportedNoExtension() {
+      assertFalse(FoldDetector.isFoldSupported("Makefile"));
+   }
+
+   @Test void detectForFileJavaUsesBraces() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "class Foo {",  // 1
+         "   int x;",    // 2
+         "}"             // 3
+      );
+      FoldModel m = FoldDetector.detectForFile(
+         "Foo.java", buf, 4);
+      assertNotNull(m);
+      assertEquals(1, m.getFolds().size());
+      assertEquals(1, m.getFolds().get(0).startLine);
+      assertEquals(3, m.getFolds().get(0).endLine);
+   }
+
+   @Test void detectForFilePythonUsesIndent() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "def foo():",      // 1
+         "   return 1",     // 2
+         "def bar():",      // 3
+         "   return 2"      // 4
+      );
+      FoldModel m = FoldDetector.detectForFile(
+         "main.py", buf, 5);
+      assertNotNull(m);
+      assertFalse(m.isEmpty());
+   }
+
+   @Test void detectForFileMarkdown() {
+      FoldDetector.LineFetcher buf = arrayFetcher(
+         "# Title",      // 1
+         "text",         // 2
+         "## Sub",       // 3
+         "more text"     // 4
+      );
+      FoldModel m = FoldDetector.detectForFile(
+         "README.md", buf, 5);
+      assertNotNull(m);
+      assertFalse(m.isEmpty());
+   }
+
+   @Test void detectForFileUnknownReturnsNull() {
+      FoldDetector.LineFetcher buf = arrayFetcher("hello");
+      FoldModel m = FoldDetector.detectForFile(
+         "notes.txt", buf, 2);
+      assertNull(m);
+   }
+
+   @Test void detectForFileNullReturnsNull() {
+      FoldDetector.LineFetcher buf = arrayFetcher("hello");
+      assertNull(FoldDetector.detectForFile(null, buf, 2));
    }
 }

@@ -936,21 +936,28 @@ public final class MiscCommands extends Rgroup {
             }
             break;
          case 'M':
-            // Re-detect folds from scratch then close all
+            // Auto-detect folds for supported file types,
+            // then close all. If file type not supported,
+            // just close existing folds.
+            FoldModel existingFm = fvc.getFoldModel();
             FoldDetector.LineFetcher mFetcher = lineNum ->
                fvc.edvec.at(lineNum).toString();
             int mLineCount = fvc.edvec.readIn();
             String mName = fvc.edvec.getName();
-            FoldModel mFm;
-            if (mName != null && mName.endsWith(".md")) {
-               mFm = FoldDetector.detectMarkdownFolds(
-                  mFetcher, mLineCount);
+            FoldModel mFm = FoldDetector.detectForFile(
+               mName, mFetcher, mLineCount);
+            if (mFm == null) {
+               if (existingFm == null
+                     || existingFm.isEmpty()) {
+                  UI.reportMessage("no folds defined");
+                  break;
+               }
+               existingFm.closeAll();
+               mFm = existingFm;
             } else {
-               mFm = FoldDetector.detectJsonFolds(
-                  mFetcher, mLineCount);
+               mFm.closeAll();
+               fvc.setFoldModel(mFm);
             }
-            mFm.closeAll();
-            fvc.setFoldModel(mFm);
             int curLine = line;
             for (FoldModel.FoldRange cf : mFm.getFolds()) {
                if (cf.collapsed && curLine > cf.startLine
@@ -974,11 +981,10 @@ public final class MiscCommands extends Rgroup {
          fvc.edvec.at(lineNum).toString();
       int lineCount = fvc.edvec.readIn();
       String name = fvc.edvec.getName();
-      FoldModel fm;
-      if (name != null && name.endsWith(".md")) {
-         fm = FoldDetector.detectMarkdownFolds(
-            fetcher, lineCount);
-      } else {
+      FoldModel fm = FoldDetector.detectForFile(
+         name, fetcher, lineCount);
+      if (fm == null) {
+         // Fallback: brace detection for unknown types
          fm = FoldDetector.detectJsonFolds(
             fetcher, lineCount);
       }
