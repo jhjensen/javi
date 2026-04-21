@@ -799,15 +799,14 @@ public final class DirEdit extends TextEdit<String> {
     */
    void goToParent(FvContext fvc) {
       try {
-         // Use getCanonicalFile() to resolve "." and ".." segments
-         // before getting parent. getAbsoluteFile() leaves "." in the
-         // path so parent of "/X/Y/." is "/X/Y" (same directory).
          File resolved = currentDir.fh.getCanonicalFile();
          File parent = resolved.getParentFile();
          if (null != parent) {
+            String childName = resolved.getName();
             currentDir = FileDescriptor.LocalDir.make(parent.getPath());
             populateDirectory();
-            fvc.cursoryabs(3); // Position on first entry
+            int line = findLineForFilename(childName);
+            fvc.cursoryabs(line > 0 ? line : 3);
          }
       } catch (IOException e) {
          trace("DirEdit: failed to resolve parent: " + e);

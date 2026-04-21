@@ -494,4 +494,60 @@ class DirEditCoverageJUnitTest {
 
       de.disposeFvc();
    }
+
+   // ── goToParent cursor positioning (F36) ────────────────────
+
+   @Test
+   void goToParentPositionsCursorOnChildDirectory() throws Exception {
+      // Create parent with multiple subdirectories
+      File parent = new File(tempDir, "parentnav");
+      parent.mkdir();
+      new File(parent, "aaa").mkdir();
+      new File(parent, "bbb").mkdir();
+      new File(parent, "ccc").mkdir();
+
+      // Start in child directory "bbb"
+      File child = new File(parent, "bbb");
+      DirEdit de = makeDirEdit(child);
+      TestView view = new TestView(true);
+      FvContext<?> fvc = FvContext.connectFv(de, view);
+
+      // Navigate up to parent
+      de.goToParent(fvc);
+
+      // Cursor should be on "bbb/" in the parent listing
+      String cursorFile = de.getFilename(fvc.inserty());
+      assertEquals("bbb/", cursorFile,
+         "After goToParent, cursor should be on the directory we came from");
+
+      de.disposeFvc();
+   }
+
+   @Test
+   void goToParentFallsBackToFirstEntryWhenChildMissing()
+         throws Exception {
+      // Create parent with a child, navigate into child, then
+      // delete the child and go up — cursor should fall back to
+      // first entry since the child no longer exists in the listing
+      File parent = new File(tempDir, "parentfb");
+      parent.mkdir();
+      File child = new File(parent, "ephemeral");
+      child.mkdir();
+
+      DirEdit de = makeDirEdit(child);
+      TestView view = new TestView(true);
+      FvContext<?> fvc = FvContext.connectFv(de, view);
+
+      // Remove the child directory before navigating up
+      child.delete();
+
+      de.goToParent(fvc);
+
+      // Cursor should be at line 3 (first entry fallback)
+      assertEquals(3, fvc.inserty(),
+         "When child directory is gone, cursor should fall back to "
+         + "first entry");
+
+      de.disposeFvc();
+   }
 }
