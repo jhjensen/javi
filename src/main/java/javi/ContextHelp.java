@@ -302,6 +302,11 @@ public final class ContextHelp {
          append("");
       } else {
          appendKeymapInfo(active);
+         // When an overlay is active, show overlay-specific bindings
+         // first (they're the most relevant context).
+         if (active.getParent() != null) {
+            appendOverrideBindings(active);
+         }
          appendMovementBindings(active);
          appendEditBindings(active);
       }
@@ -327,6 +332,28 @@ public final class ContextHelp {
          p = p.getParent();
       }
       append(chain.toString());
+      append("");
+   }
+
+   /**
+    * Emit combined overlay bindings (move + edit) as a single
+    * prominent section at the top of the help screen, before
+    * the inherited base bindings.
+    */
+   private static void appendOverrideBindings(KeyMap active) {
+      List<String[]> moveOverrides =
+         active.getMoveKeys().getBindingEntries();
+      List<String[]> editOverrides =
+         active.getEditKeys().getBindingEntries();
+      if (moveOverrides.isEmpty() && editOverrides.isEmpty())
+         return;
+      append(active.getName().toUpperCase()
+         + " KEYS (overrides)");
+      append("-".repeat(active.getName().length() + 17));
+      if (!moveOverrides.isEmpty())
+         appendDescribedEntries(moveOverrides);
+      if (!editOverrides.isEmpty())
+         appendDescribedEntries(editOverrides);
       append("");
    }
 
@@ -397,21 +424,47 @@ public final class ContextHelp {
    }
 
    private static void appendExCommandSummary() {
-      append("EX COMMANDS (type : to enter)");
-      append("----------------------------");
+      FvContext<?> fvc = FvContext.getCurrFvc();
+      String bufName = (fvc != null && fvc.edvec != null)
+         ? fvc.edvec.fdes().getShortName() : "";
+      boolean isGitContext = bufName.startsWith("*git-");
+
       Set<String> cmds = Rgroup.getRegisteredCommands();
       TreeSet<String> sorted = new TreeSet<>(cmds);
-      for (String cmd : sorted) {
-         if (!cmd.isEmpty() && !cmd.startsWith("xxx")) {
-            String desc = Rgroup.getDescription(cmd);
-            if (desc != null) {
-               append(String.format("  :%-18s %s", cmd, desc));
-            } else {
-               append("  :" + cmd);
-            }
+
+      if (isGitContext) {
+         append("GIT COMMANDS (type : to enter)");
+         append("-----------------------------");
+         for (String cmd : sorted) {
+            if (cmd.startsWith("git"))
+               appendExSummaryEntry(cmd);
+         }
+         append("");
+         append("OTHER EX COMMANDS");
+         append("-----------------");
+         for (String cmd : sorted) {
+            if (!cmd.isEmpty() && !cmd.startsWith("xxx")
+                  && !cmd.startsWith("git"))
+               appendExSummaryEntry(cmd);
+         }
+      } else {
+         append("EX COMMANDS (type : to enter)");
+         append("----------------------------");
+         for (String cmd : sorted) {
+            if (!cmd.isEmpty() && !cmd.startsWith("xxx"))
+               appendExSummaryEntry(cmd);
          }
       }
       append("");
+   }
+
+   private static void appendExSummaryEntry(String cmd) {
+      String desc = Rgroup.getDescription(cmd);
+      if (desc != null) {
+         append(String.format("  :%-18s %s", cmd, desc));
+      } else {
+         append("  :" + cmd);
+      }
    }
 
    private static void appendCommandprocHelp() {
@@ -525,7 +578,7 @@ public final class ContextHelp {
    private static void appendExCommandList() {
       FvContext<?> fvc = FvContext.getCurrFvc();
       String bufName = (fvc != null && fvc.edvec != null)
-         ? fvc.edvec.toString() : "";
+         ? fvc.edvec.fdes().getShortName() : "";
       boolean isGitContext = bufName.startsWith("*git-");
 
       Set<String> cmds = Rgroup.getRegisteredCommands();

@@ -79,7 +79,7 @@ class GitCommandsExtendedJUnitTest {
    class ParseIntSafe {
 
       private int invoke(String input) throws Exception {
-         Method m = GitCommands.class.getDeclaredMethod(
+         Method m = GitDiffNav.class.getDeclaredMethod(
             "parseIntSafe", String.class);
          m.setAccessible(true);
          return (int) m.invoke(null, input);

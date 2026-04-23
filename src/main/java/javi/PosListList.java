@@ -407,6 +407,17 @@ public final class PosListList extends TextList<Position> {
          }
       }
 
+      /**
+       * Push a position onto the tag stack so that ^T (poptag) can
+       * return to it.  Used by git_goto_file and similar navigation
+       * commands that jump to a file from a read-only buffer.
+       *
+       * @param pos the position to push
+       */
+      public static void pushTag(Position pos) {
+         tagstack.add(pos);
+      }
+
       private static Object openDirectoryForCurrentFile(
             FvContext fvc) throws InputException, IOException {
          String dirPath = ".";

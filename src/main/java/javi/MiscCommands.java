@@ -202,6 +202,11 @@ public final class MiscCommands extends Rgroup {
          (count, rcount, fvc, dot) -> {
             ContextHelp.scrollHelpUp(); return null;
          }));
+      registerCommand(new CommandEntry("check_external",
+         "check if file changed on disk", "file",
+         (count, rcount, fvc, dot) -> {
+            FileList.checkCurrentFileExternal(fvc); return null;
+         }));
    }
 
    /** Phase 2b-3: arg-dependent commands with closure handlers. */

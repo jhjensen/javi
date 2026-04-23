@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import static history.Tools.trace;
 
 /**
@@ -209,6 +210,7 @@ public final class FvContext<OType> implements Serializable {
    private static FvContext<?> defaultFvc;
    private static FvContext<?> currfvc; // the main text display area
    private static final TextEdit<String> defaultText;
+   private static Consumer<FvContext<?>> postContextHook;
 
    public final TextEdit<OType> edvec;
    public final View vi;
@@ -301,8 +303,16 @@ public final class FvContext<OType> implements Serializable {
       return true;
    }
 
-   static int viewCount() {
+   public static int viewCount() {
       return fvmap.viewCount();
+   }
+
+   /**
+    * Register a hook called after every context change in setCurrView.
+    * Used by GitCommands to restore split-view state on navigation.
+    */
+   public static void setPostContextHook(Consumer<FvContext<?>> hook) {
+      postContextHook = hook;
    }
 
    private void readObject(
@@ -412,6 +422,8 @@ public final class FvContext<OType> implements Serializable {
       activate();
       currfvc = this;
       ContextHelp.onContextChanged(this);
+      if (postContextHook != null)
+         postContextHook.accept(this);
    }
 
    /**
@@ -728,7 +740,7 @@ public final class FvContext<OType> implements Serializable {
       return edvec.at(index);
    }
 
-   Position getPosition(String description) {
+   public Position getPosition(String description) {
       return new Position(fileposx, fileposy, edvec.fdes(), description);
    }
 

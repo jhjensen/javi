@@ -403,9 +403,10 @@ class GitSplitViewJUnitTest {
       }
 
       @Test
-      @DisplayName("counts new-file lines excluding deletions")
+      @DisplayName("counts new-file lines to first changed line")
       void countNewFileLines() {
-         // Simulates the line-counting logic in navigateDiffLine
+         // Simulates the line-counting logic in navigateDiffLine:
+         // count non-deleted lines from body start, stop at first +
          List<String> hunkBody = lines(
             " context",
             "+added1",
@@ -416,9 +417,11 @@ class GitSplitViewJUnitTest {
          for (String line : hunkBody) {
             if (!line.startsWith("-"))
                offset++;
+            if (line.startsWith("+"))
+               break;
          }
-         assertEquals(4, offset);
-         // Target = hunkNewStart + offset
+         assertEquals(2, offset);
+         // Target = hunkNewStart + offset - 1
       }
    }
 }

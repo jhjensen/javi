@@ -1,5 +1,0 @@
-running java -jar /Users/jjensen/gtools/myai/ai/javi-wt-F25/lib/checkstyle-10.21.4-all.jar -c checkstyle.xml src/main/java/javi/FoldDetector.java 
-bad line !!!!:Error: Unable to access jarfile /Users/jjensen/gtools/myai/ai/javi-wt-F25/lib/checkstyle-10.21.4-all.jar
-
-found errors in 0 files
-exit: 0

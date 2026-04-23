@@ -1433,19 +1433,21 @@ final class OldView extends AwtView {
             atIt.setTerminalAttrs(
                scrAttrs.getRow(tindex));
 
-         boolean isDiffBuffer = null != gettext()
-            && "*git-diff*".equals(
-               gettext().fdes().getShortName());
-         if (isDiffBuffer) {
+         String bufShortName = null != gettext()
+            ? gettext().fdes().getShortName() : "";
+         if (bufShortName.startsWith("*git-")) {
             String lt = atIt.getText();
             if (!lt.isEmpty()) {
                char c0 = lt.charAt(0);
-               if (c0 == '-' && !lt.startsWith("---"))
+               if (lt.startsWith("---") || lt.startsWith("+++")
+                     || lt.startsWith("diff --git"))
+                  atIt.setLineForeground(AtView.foldSummaryColor);
+               else if (c0 == '-')
                   atIt.setLineForeground(Color.red);
-               else if (c0 == '+' && !lt.startsWith("+++"))
+               else if (c0 == '+')
                   atIt.setLineForeground(Color.green);
                else if (c0 == '@')
-                  atIt.setLineForeground(Color.cyan);
+                  atIt.setLineForeground(AtView.foldSummaryColor);
             }
          }
 
@@ -1556,9 +1558,7 @@ final class OldView extends AwtView {
             fold.startLine, fold.endLine, firstLine);
          summary = summary.replace('\t', ' ');
          imageg.setFont(activeFont);
-         imageg.setColor(index == screenposy
-            ? AtView.cursorColor
-            : AtView.foldSummaryColor);
+         imageg.setColor(AtView.foldSummaryColor);
          imageg.drawString(summary, xoffset, charascent);
          gr.drawImage(dbuf, 0, index * charheight, null);
       }

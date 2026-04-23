@@ -24,6 +24,10 @@ final class AtView implements
    private HashMap<Attribute, Object> gy;
    private HashMap<Attribute, Object> ry;
    private HashMap<Attribute, Object> cy;
+   private HashMap<Attribute, Object> yy;
+   private HashMap<Attribute, Object> ryu;
+   private HashMap<Attribute, Object> cyu;
+   private HashMap<Attribute, Object> yyu;
 
    private String text;
    private int pos;
@@ -243,6 +247,17 @@ final class AtView implements
       ry.put(TextAttribute.FOREGROUND, Color.red);
       cy = new HashMap<>(by);
       cy.put(TextAttribute.FOREGROUND, Color.cyan);
+      yy = new HashMap<>(by);
+      yy.put(TextAttribute.FOREGROUND, Color.YELLOW);
+      ryu = new HashMap<>(ry);
+      ryu.put(TextAttribute.UNDERLINE,
+         TextAttribute.UNDERLINE_LOW_DOTTED);
+      cyu = new HashMap<>(cy);
+      cyu.put(TextAttribute.UNDERLINE,
+         TextAttribute.UNDERLINE_LOW_DOTTED);
+      yyu = new HashMap<>(yy);
+      yyu.put(TextAttribute.UNDERLINE,
+         TextAttribute.UNDERLINE_LOW_DOTTED);
       text = "";
 
    }
@@ -334,9 +349,16 @@ final class AtView implements
          : pos < line2start
          ? bpu
          : gpu;
-      if (null != lineFg && base == by) {
+      if (null != lineFg && (base == by || base == byu)) {
+         if (base == byu) {
+            return lineFg == Color.red ? ryu
+               : lineFg == Color.cyan ? cyu
+               : lineFg == Color.YELLOW ? yyu
+               : byu;
+         }
          return lineFg == Color.red ? ry
             : lineFg == Color.cyan ? cy
+            : lineFg == Color.YELLOW ? yy
             : by;
       }
       return base;

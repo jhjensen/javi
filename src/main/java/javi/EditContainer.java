@@ -623,7 +623,7 @@ public class EditContainer<OType> implements
        in progress contains will wait until the element is read in.
    @param desired the desired element number
    */
-   final boolean contains(int desired) {
+   public final boolean contains(int desired) {
       //trace("requested = " + desired + " finishedread = " + finishedread + " editvec = " + this);
       if (!finishedread)
          myexpand(desired + 1);

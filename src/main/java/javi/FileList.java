@@ -926,4 +926,52 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          return false;
       }
    }
+
+   /**
+    * Check if the current file has been modified externally and
+    * prompt the user for action if so.  This is the explicit
+    * counterpart of the idle-based check, triggered by {@code ^l}.
+    *
+    * @param fvc the current view context
+    */
+   @SuppressWarnings("unchecked")
+   public static void checkCurrentFileExternal(FvContext fvc)
+         throws IOException, InputException {
+      TextEdit<String> ev = fvc.edvec;
+      FileProperties fp = ev.getFileProperties();
+      if (!fp.checkModified()) {
+         UI.reportMessage("File unchanged on disk");
+         return;
+      }
+      if (isContentUnchanged(ev, fp)) {
+         fp.updateModifiedTime();
+         UI.reportMessage("File unchanged on disk (same content)");
+         return;
+      }
+      UI.ReloadAction action;
+      do {
+         action = UI.confirmReload(ev.getName(), ev.isModified());
+         switch (action) {
+            case RELOAD:
+               ev.reload();
+               fvc.fixCursor();
+               break;
+            case IGNORE:
+               break;
+            case IGNORE_ALWAYS:
+               fp.setIgnoreExternalChanges(true);
+               break;
+            case SHOW_DIFF:
+               ev.showExternalDiff();
+               break;
+            case STOP_EDITING:
+               saveAndCloseFile(ev, true, fvc);
+               break;
+            default:
+               break;
+         }
+      } while (action == UI.ReloadAction.SHOW_DIFF);
+      if (action != UI.ReloadAction.STOP_EDITING)
+         fp.updateModifiedTime();
+   }
 }

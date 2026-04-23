@@ -49,6 +49,10 @@ public final class GitCommitView {
    static final String UNSTAGED_SEPARATOR =
       "# --- unstaged changes ---";
 
+   /** Separator marking the start of untracked files. */
+   static final String UNTRACKED_SEPARATOR =
+      "# --- untracked files ---";
+
    /** Private constructor to prevent instantiation. */
    private GitCommitView() {
    }
@@ -85,6 +89,19 @@ public final class GitCommitView {
       } else {
          lines.addAll(diff);
       }
+      lines.add("");
+
+      // Untracked files section
+      List<String> untracked = GitProcess.execute(
+         "ls-files", "--others", "--exclude-standard");
+      lines.add(UNTRACKED_SEPARATOR);
+      if (untracked.isEmpty()) {
+         lines.add("#   (no untracked files)");
+      } else {
+         for (String f : untracked) {
+            lines.add("  " + f);
+         }
+      }
 
       lines.add("");
       lines.add("# s=stage hunk  u=unstage  ^]=goto file"
@@ -114,15 +131,19 @@ public final class GitCommitView {
       if (diffStart < 0 || diffStart >= viewLines.size())
          return new ArrayList<>();
 
-      // Extract just the diff lines
+      // Extract just the diff lines (stop at untracked section)
       List<String> diffLines = new ArrayList<>();
       for (int i = diffStart; i < viewLines.size(); i++) {
          String line = viewLines.get(i);
+         if (line.equals(UNTRACKED_SEPARATOR))
+            break;
          if (line.startsWith("# ") && line.contains("stage"))
             break;
          if (line.isEmpty()
                && i + 1 < viewLines.size()
-               && viewLines.get(i + 1).startsWith("# "))
+               && (viewLines.get(i + 1).startsWith("# ")
+                  || viewLines.get(i + 1).equals(
+                     UNTRACKED_SEPARATOR)))
             break;
          diffLines.add(line);
       }
@@ -206,6 +227,20 @@ public final class GitCommitView {
          lines.add("#   (no unstaged changes)");
       } else {
          lines.addAll(diff);
+      }
+
+      lines.add("");
+
+      // Untracked files section
+      List<String> untracked = GitProcess.execute(
+         "ls-files", "--others", "--exclude-standard");
+      lines.add(UNTRACKED_SEPARATOR);
+      if (untracked.isEmpty()) {
+         lines.add("#   (no untracked files)");
+      } else {
+         for (String f : untracked) {
+            lines.add("  " + f);
+         }
       }
 
       lines.add("");
@@ -334,12 +369,16 @@ public final class GitCommitView {
       List<String> diffLines = new ArrayList<>();
       for (int i = diffStart; i < viewLines.size(); i++) {
          String line = viewLines.get(i);
-         // Stop at the trailing help line
+         // Stop at untracked section or trailing help line
+         if (line.equals(UNTRACKED_SEPARATOR))
+            break;
          if (line.startsWith("# ") && line.contains("stage"))
             break;
          if (line.isEmpty()
                && i + 1 < viewLines.size()
-               && viewLines.get(i + 1).startsWith("# "))
+               && (viewLines.get(i + 1).startsWith("# ")
+                  || viewLines.get(i + 1).equals(
+                     UNTRACKED_SEPARATOR)))
             break;
          diffLines.add(line);
       }

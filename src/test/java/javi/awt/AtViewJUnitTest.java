@@ -747,6 +747,69 @@ class AtViewJUnitTest {
          assertEquals(AtView.foreground, fg,
             "after setText, line foreground should reset");
       }
+
+      @Test
+      @DisplayName("yellow line foreground overrides green")
+      void yellowLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.YELLOW);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.YELLOW, fg);
+      }
+
+      @Test
+      @DisplayName("emphasized red line keeps red foreground")
+      void emphasizedRedLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.red);
+         atv.emphasize(true);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.red, fg,
+            "emphasis should preserve red lineFg");
+      }
+
+      @Test
+      @DisplayName("emphasized yellow line keeps yellow foreground")
+      void emphasizedYellowLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.YELLOW);
+         atv.emphasize(true);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.YELLOW, fg,
+            "emphasis should preserve yellow lineFg");
+      }
+
+      @Test
+      @DisplayName("emphasized cyan line keeps cyan foreground")
+      void emphasizedCyanLineForeground() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.cyan);
+         atv.emphasize(true);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         Color fg = (Color) m.get(TextAttribute.FOREGROUND);
+         assertEquals(Color.cyan, fg,
+            "emphasis should preserve cyan lineFg");
+      }
+
+      @Test
+      @DisplayName("emphasized line with lineFg has underline")
+      void emphasizedLineFgHasUnderline() {
+         atv.setText("hello");
+         atv.setLineForeground(Color.YELLOW);
+         atv.emphasize(true);
+         Map<AttributedCharacterIterator.Attribute, Object> m =
+            atv.getAttributes();
+         assertEquals(TextAttribute.UNDERLINE_LOW_DOTTED,
+            m.get(TextAttribute.UNDERLINE),
+            "emphasized lineFg should include underline");
+      }
    }
 
    // ── getRunLimit(attribute) for FOREGROUND ─────────────────

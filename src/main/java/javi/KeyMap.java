@@ -1,5 +1,7 @@
 package javi;
 
+import static javi.JeyEvent.CTRL_MASK;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -50,6 +52,7 @@ final class KeyMap {
    private final KeyGroup editKeys;
    private final KeyMap parent; // null for root keymaps
    private VisualHandler visualHandler;
+   private boolean suppressParentEdit;
 
    KeyMap(String keyMapName, KeyGroup moveGroup, KeyGroup editGroup,
          KeyMap parentMap) {
@@ -104,12 +107,26 @@ final class KeyMap {
 
    /**
     * Look up an edit/static binding, falling through to parent if not found.
+    * When {@code suppressParentEdit} is set, unbound edit keys are
+    * silently ignored instead of falling through to the parent keymap.
     */
    Rgroup.KeyBinding lookupEdit(JeyEvent key) {
       Rgroup.KeyBinding binding = editKeys.get(key);
       if (binding != null)
          return binding;
+      if (suppressParentEdit)
+         return null;
       return (parent != null) ? parent.lookupEdit(key) : null;
+   }
+
+   /**
+    * Suppress fallthrough to parent edit bindings.  When true,
+    * edit keys not explicitly bound in this overlay are ignored
+    * rather than dispatching through the parent keymap.
+    * Use for read-only overlay buffers (git status, patch, log).
+    */
+   void setSuppressParentEdit(boolean flag) {
+      suppressParentEdit = flag;
    }
 
    // ---- Runtime binding modification ----
@@ -315,6 +332,11 @@ final class KeyMap {
       gitlogMap.bindEditKey('O', "git_log_diff", null);
       gitlogMap.bindEditKey('R', "git_expand_all", null);
       gitlogMap.bindEditKey('q', "nextfile", null);
+      gitlogMap.bindEditKey(':', "commandproc", null);
+      gitlogMap.bindEditKey(
+         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
+      addNavigationKeys(gitlogMap);
+      gitlogMap.setSuppressParentEdit(true);
       register(gitlogMap);
 
       // Git status overlay: vim-style stage/unstage/discard
@@ -324,14 +346,18 @@ final class KeyMap {
       gitstatusMap.bindEditKey('X', "git_discard", null);
       gitstatusMap.bindEditKey('c', "git_commit_menu", null);
       gitstatusMap.bindEditKey('R', "git_refresh", null);
-      gitstatusMap.bindEditKey((char) 12, "git_refresh", null); // ^L
+      gitstatusMap.bindEditKey(
+         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
       gitstatusMap.bindEditKey('d', "git_diff", null);
       gitstatusMap.bindEditKey('q', "nextfile", null);
+      gitstatusMap.bindEditKey(':', "commandproc", null);
       gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
       gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
       gitstatusMap.bindEditKey('p', "git_patch", null);
       gitstatusMap.bindEditKey(
-         (char) 29, "git_goto_file", null); // ^]
+         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
+      addNavigationKeys(gitstatusMap);
+      gitstatusMap.setSuppressParentEdit(true);
       register(gitstatusMap);
 
       // Git patch overlay: hunk staging with fugitive-style keys
@@ -339,22 +365,32 @@ final class KeyMap {
       gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
       gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
       gitpatchMap.bindEditKey('q', "nextfile", null);
-      gitpatchMap.bindEditKey((char) 12, "git_refresh", null); // ^L
-      gitpatchMap.bindEditKey((char) 29, "git_goto_file", null); // ^]
+      gitpatchMap.bindEditKey(':', "commandproc", null);
+      gitpatchMap.bindEditKey(
+         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
+      gitpatchMap.bindEditKey(
+         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
       gitpatchMap.setVisualHandler(
          javi.git.GitCommands::handleVisualKey);
+      addNavigationKeys(gitpatchMap);
+      gitpatchMap.setSuppressParentEdit(true);
       register(gitpatchMap);
 
-      // Git commit view overlay: message editing + hunk staging
+      // Git commit view overlay: staging buffer (read-only)
+      // suppressParentEdit blocks edit keys like 'o', 'i', etc.
       KeyMap gitcommitMap = createOverlay("gitcommit", normalMap);
       gitcommitMap.bindEditKey('s', "git_stage_hunk", null);
       gitcommitMap.bindEditKey('u', "git_unstage_hunk", null);
       gitcommitMap.bindEditKey('q', "git_commit_quit", null);
-      gitcommitMap.bindEditKey((char) 12, "git_refresh", null); // ^L
+      gitcommitMap.bindEditKey(':', "commandproc", null);
       gitcommitMap.bindEditKey(
-         (char) 29, "git_goto_file", null); // ^]
+         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
+      gitcommitMap.bindEditKey(
+         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
       gitcommitMap.setVisualHandler(
          javi.git.GitCommands::handleVisualKey);
+      addNavigationKeys(gitcommitMap);
+      gitcommitMap.setSuppressParentEdit(true);
       register(gitcommitMap);
 
       // Git commit message overlay: fully editable with ZZ to commit
@@ -365,8 +401,24 @@ final class KeyMap {
    }
 
    /**
+    * Add navigation keys that must be explicitly bound on overlays
+    * with suppressParentEdit, since they are edit-group bindings
+    * in the normal keymap and would otherwise be suppressed.
+    */
+   private static void addNavigationKeys(KeyMap overlay) {
+      overlay.bindEditAction(JeyEvent.VK_F5,
+         "gotopositionlist", null, 0);
+      overlay.bindEditAction(JeyEvent.VK_F6,
+         "gotopllist", null, 0);
+      overlay.bindEditKey(
+         (char) 20, "poptag", null, CTRL_MASK); // ^T
+   }
+
+   /**
     * Resolve the appropriate buffer-type keymap for a given buffer.
     * Returns null if the buffer uses the default normal keymap.
+    * Uses the file descriptor's short name (not toString(), which
+    * includes modification state and canonical name).
     */
    @SuppressWarnings("rawtypes")
    static KeyMap resolveForBuffer(TextEdit buffer) {
@@ -378,8 +430,8 @@ final class KeyMap {
          return get("directory");
       if (buffer instanceof Vt100)
          return get("shell");
-      // Git buffers identified by name
-      String name = buffer.toString();
+      // Git buffers identified by short name
+      String name = buffer.fdes().getShortName();
       if (name.startsWith("*git-log"))
          return get("gitlog");
       if ("*git-status*".equals(name))
