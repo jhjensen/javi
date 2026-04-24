@@ -14,7 +14,7 @@ LINK=ld
 all: ctag
 
 # Classpath for running Java
-R=/Users/jjensen/javi
+R := $(shell pwd)
 export CLASSPATH=$R/build/classes/java/main:$R/lib/juniversalchardet-1.0.3.jar:$R/lib/rhino-1.7.14.jar
 
 #==============================================================================

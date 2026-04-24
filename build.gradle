@@ -1,14 +1,19 @@
 
 plugins {
     id 'java'
+    id 'application'
     id 'jacoco'  // Code coverage
     id 'com.github.johnrengelman.shadow' version '8.1.1' // Add Shadow Plugin
     id 'com.github.spotbugs' version '6.0.7' // B9: Static analysis
 }
 
+application {
+    mainClass = 'javi.Javi'
+}
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_22
-    targetCompatibility = JavaVersion.VERSION_22
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 jacoco {
