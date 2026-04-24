@@ -39,8 +39,9 @@ RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 # Cache-bust: ARG changes when source files are newer than Dockerfile
 ARG SRC_HASH=0
 
-# Copy source and test files
+# Copy source, test files, and clang-format config
 COPY src/ src/
+COPY .clang-format ./
 
 # build.gradle calls `git describe --always --dirty` during evaluation;
 # .git is excluded from rsync, so create a minimal repo
