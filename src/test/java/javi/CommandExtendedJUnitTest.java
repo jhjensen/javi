@@ -2,6 +2,8 @@ package javi;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Extended coverage tests for {@link Command} — doneInit,
@@ -288,5 +289,92 @@ class CommandExtendedJUnitTest {
    @Test
    void readiniHandlesMissingFile() {
       assertDoesNotThrow(() -> Command.readini());
+   }
+
+   // ── preprocess: comments, blank lines, variable expansion ──
+
+   private static List<String> runPreprocess(String input) throws IOException {
+      List<String> out = new ArrayList<>();
+      Command.preprocess(new StringReader(input), out);
+      return out;
+   }
+
+   @Test
+   void preprocessSkipsCommentsAndBlankLines() throws IOException {
+      String input = String.join("\n",
+         "# leading comment",
+         "",
+         "   # indented comment",
+         "fontsize 12",
+         "",
+         "# trailing comment",
+         "lines 50",
+         "");
+      List<String> out = runPreprocess(input);
+      assertEquals(2, out.size());
+      assertEquals("fontsize 12", out.get(0));
+      assertEquals("lines 50", out.get(1));
+   }
+
+   @Test
+   void preprocessExpandsLetVariables() throws IOException {
+      String input = String.join("\n",
+         "let SIZE=14",
+         "let NAME=helvetica",
+         "fontsize $SIZE",
+         "fontname ${NAME}",
+         "");
+      List<String> out = runPreprocess(input);
+      assertEquals(2, out.size());
+      assertEquals("fontsize 14", out.get(0));
+      assertEquals("fontname helvetica", out.get(1));
+   }
+
+   @Test
+   void preprocessExpandsEnvironmentVariables() throws IOException {
+      // PATH is virtually always set; if not, the test is a no-op equivalence.
+      String envPath = System.getenv("PATH");
+      String input = "echo ${PATH}\n";
+      List<String> out = runPreprocess(input);
+      assertEquals(1, out.size());
+      assertEquals("echo " + (null == envPath ? "" : envPath), out.get(0));
+   }
+
+   @Test
+   void preprocessLetOverridesEnvironment() throws IOException {
+      String input = String.join("\n",
+         "let PATH=overridden",
+         "echo $PATH",
+         "");
+      List<String> out = runPreprocess(input);
+      assertEquals(1, out.size());
+      assertEquals("echo overridden", out.get(0));
+   }
+
+   @Test
+   void preprocessUnknownVariableExpandsToEmpty() throws IOException {
+      String input = "set tabstop=$NOPE_DOES_NOT_EXIST_XYZZY\n";
+      List<String> out = runPreprocess(input);
+      assertEquals(1, out.size());
+      assertEquals("set tabstop=", out.get(0));
+   }
+
+   @Test
+   void preprocessLetDoesNotEmitCommandLine() throws IOException {
+      String input = "let X=hello\n";
+      List<String> out = runPreprocess(input);
+      assertEquals(0, out.size());
+   }
+
+   @Test
+   void preprocessLetExpandsRhsUsingPriorVars() throws IOException {
+      String input = String.join("\n",
+         "let A=foo",
+         "let B=$A/bar",
+         "echo $B",
+         "");
+      List<String> out = runPreprocess(input);
+      assertEquals(1, out.size());
+      assertEquals("echo foo/bar", out.get(0));
    }
 }

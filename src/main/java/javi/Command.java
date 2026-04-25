@@ -2,8 +2,14 @@ package javi;
 
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -107,9 +113,30 @@ public final class Command extends Rgroup {
    }
 
    private static final ArrayList<String> cmdlist = new ArrayList<>();
+
+   // Matches ${NAME} or $NAME (NAME starts with letter/_, then letters/digits/_).
+   private static final Pattern VAR_REF = Pattern.compile(
+      "\\$\\{([A-Za-z_][A-Za-z0-9_]*)\\}|\\$([A-Za-z_][A-Za-z0-9_]*)");
+
+   // Matches: let NAME=value  (whitespace flexible; value may be empty).
+   private static final Pattern LET_DEF = Pattern.compile(
+      "^\\s*let\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(.*?)\\s*$");
+
    /**
     * Reads initialization commands from the .javini configuration file.
     * Each line in the file is added to the command list for later execution.
+    *
+    * <p>Preprocessing:
+    * <ul>
+    *   <li>Blank lines are skipped.</li>
+    *   <li>Lines whose first non-whitespace character is {@code #} are
+    *       treated as comments and skipped.</li>
+    *   <li>{@code let NAME=VALUE} lines define variables for subsequent
+    *       expansion and are not dispatched as commands.</li>
+    *   <li>{@code $NAME} and {@code ${NAME}} references are expanded from
+    *       in-file {@code let} definitions first, then from the process
+    *       environment. Unknown references expand to the empty string.</li>
+    * </ul>
     *
     * @throws IOException if an I/O error occurs reading the file
     */
@@ -118,9 +145,49 @@ public final class Command extends Rgroup {
       if (!ifile.isFile())
          return;
       try (BufferedReader ini = ifile.getBufferedReader()) {
-         for (String line; null != (line = ini.readLine());)
-            cmdlist.add(line);
+         preprocess(ini, cmdlist);
       }
+   }
+
+   /**
+    * Preprocesses .javini-style input, appending command lines to {@code out}.
+    * See {@link #readini()} for the supported syntax.
+    *
+    * @param in source of lines to preprocess
+    * @param out list to append non-comment, non-directive command lines to
+    * @throws IOException if reading from {@code in} fails
+    */
+   static void preprocess(Reader in, List<String> out) throws IOException {
+      BufferedReader br = (in instanceof BufferedReader)
+         ? (BufferedReader) in : new BufferedReader(in);
+      Map<String, String> vars = new HashMap<>();
+      for (String line; null != (line = br.readLine());) {
+         String trimmed = line.stripLeading();
+         if (trimmed.isEmpty() || trimmed.charAt(0) == '#')
+            continue;
+         Matcher lm = LET_DEF.matcher(line);
+         if (lm.matches()) {
+            vars.put(lm.group(1), expandVars(lm.group(2), vars));
+            continue;
+         }
+         out.add(expandVars(line, vars));
+      }
+   }
+
+   private static String expandVars(String s, Map<String, String> vars) {
+      Matcher m = VAR_REF.matcher(s);
+      StringBuilder sb = new StringBuilder();
+      while (m.find()) {
+         String name = (null != m.group(1)) ? m.group(1) : m.group(2);
+         String val = vars.get(name);
+         if (null == val)
+            val = System.getenv(name);
+         if (null == val)
+            val = "";
+         m.appendReplacement(sb, Matcher.quoteReplacement(val));
+      }
+      m.appendTail(sb);
+      return sb.toString();
    }
 
    public static void execCmdList() {

@@ -9,6 +9,7 @@ tags
 ID
 dist
 build
+build/install/
 lib
 instructions.md
 javitests/junit3.8.2
