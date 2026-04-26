@@ -1538,7 +1538,6 @@ final class OldView extends AwtView {
          if (null != ghost && tindex == getGhostLine()) {
             atIt.addGhostText(ghost, getGhostCol());
          }
-         }
 
          if (index == screenposy) {
             atIt.emphasize(true);
