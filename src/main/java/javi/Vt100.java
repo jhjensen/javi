@@ -6,11 +6,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import gnu.io.CommPortIdentifier;
-import gnu.io.NoSuchPortException;
-import gnu.io.PortInUseException;
-import gnu.io.SerialPort;
-import gnu.io.UnsupportedCommOperationException;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -42,14 +37,14 @@ import static history.Tools.trace;
  * <h2>Connection Types</h2>
  * <ul>
  *   <li>{@link Telnet} - Local shell or SSH connections</li>
- *   <li>{@link CommReader} - Serial port connections</li>
+ *   <li>Serial port connections (via RXTX plugin)</li>
  * </ul>
  *
  * @see Vt100Parser
  * @see VScreen
  * @see ShellSession
  */
-class Vt100 extends TextEdit<String> {
+public class Vt100 extends TextEdit<String> {
 
 
    private static final long serialVersionUID = 1;
@@ -122,7 +117,7 @@ class Vt100 extends TextEdit<String> {
     *    BufferedInputStream, IoConverter, Charset)}
     */
    @Deprecated
-   Vt100(OutputStream ostri, BufferedInputStream istr,
+   protected Vt100(OutputStream ostri, BufferedInputStream istr,
          IoConverter<String> ioc)
          throws java.io.UnsupportedEncodingException {
       this(ostri, istr, ioc, CharsetDetector.detectTerminalCharset());
@@ -136,7 +131,7 @@ class Vt100 extends TextEdit<String> {
     * @param ioc I/O converter for the terminal buffer
     * @param charsetToUse the charset for encoding I/O
     */
-   Vt100(OutputStream ostri, BufferedInputStream istr,
+   protected Vt100(OutputStream ostri, BufferedInputStream istr,
          IoConverter<String> ioc, Charset charsetToUse) {
       super(ioc, ioc.prop);
       this.charset = charsetToUse;
@@ -176,7 +171,7 @@ class Vt100 extends TextEdit<String> {
    }
 
    @Override
-   public ScreenAttributes getTerminalAttributes() {
+   public final ScreenAttributes getTerminalAttributes() {
       return ecscreen.screenAttrs;
    }
 
@@ -1056,6 +1051,10 @@ class Vt100 extends TextEdit<String> {
       return null;
    }
 
+   /** {@inheritDoc}
+    * Subclasses should call {@code super.disposeFvc()} to stop the
+    * parser, then release their own resources (e.g. close a serial port).
+    */
    public void disposeFvc() throws IOException {
       parser.stop();
       super.disposeFvc();
@@ -1114,54 +1113,4 @@ class Vt100 extends TextEdit<String> {
       }
    }
 
-   static final class CommReader extends Vt100 {
-
-      private static final long serialVersionUID = 1;
-      private transient SerialPort port;
-
-      static Vt100 make(String comport, int baud) throws
-            InputException, IOException {
-         try {
-            //trace("comport " + comport);
-            CommPortIdentifier portid =
-               CommPortIdentifier.getPortIdentifier(comport);
-            SerialPort ports = (SerialPort) portid.open("CommReader", 100);
-            try {
-               ports.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
-               ports.setSerialPortParams(baud, SerialPort.DATABITS_8,
-                  SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-               return new Vt100.CommReader(baud, comport, ports);
-            }  catch (IOException e) {
-               ports.close();
-               throw e; // new IOException("serial port: " + e.getMessage());
-            }  catch (UnsupportedCommOperationException e) {
-               ports.close();
-               throw new IOException("serial port: " + e.getMessage(), e);
-            }
-         } catch (NoSuchPortException e) {
-            throw new InputException("invalid serial port name", e);
-         } catch (PortInUseException e) {
-            throw new InputException("serial port in use", e);
-         }
-      }
-
-      CommReader(int baud, String comport, SerialPort porti) throws
-            IOException {
-         super(
-            porti.getOutputStream(),
-            new BufferedInputStream(porti.getInputStream()),
-            new StringIoc("vt100 start", null)
-         );
-         port = porti;
-      }
-
-      public void disposeFvc() throws IOException {
-         super.disposeFvc();
-         if (null != port) {
-            port.close();
-            port = null;
-         }
-      }
-
-   }
 }

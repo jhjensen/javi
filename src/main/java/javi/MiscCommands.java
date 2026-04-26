@@ -59,7 +59,7 @@ public final class MiscCommands extends Rgroup {
          null,               // 6: undoline — via registerCommand
          null,               // 7: vt — via registerArgCommand
          null,               // 8: loadgroup — via registerArgCommand
-         null,               // 9: comm — via registerArgCommand
+         null,               // 9: comm — moved to RXTX plugin
          null,               // 10: exec — via registerArgCommand
          null,               // 11: lines — via registerArgCommand
          null,               // 12: setwidth — via registerArgCommand
@@ -220,14 +220,6 @@ public final class MiscCommands extends Rgroup {
                arg instanceof String ? (String) arg : null);
             return null;
          });
-      registerArgCommand("comm",
-         "communication (F10)", "shell",
-         (arg, count, rcount, fvc, dot) -> {
-            startcom(
-               arg instanceof String ? (String) arg : null,
-               fvc);
-            return null;
-         });
       registerArgCommand("exec",
          "execute external command", "shell",
          (arg, count, rcount, fvc, dot) -> {
@@ -359,8 +351,6 @@ public final class MiscCommands extends Rgroup {
          ShellManager mgr = ShellManager.getInstance();
          if (mgr.closeByBuffer(ev))
             refreshShellPositionList(mgr);
-         if (ev == commCon)
-            commCon = null;
          return false;
       }
    }
@@ -723,33 +713,6 @@ public final class MiscCommands extends Rgroup {
          content);
       TextEdit<String> histBuf = new TextEdit<>(ioc, ioc.prop);
       FvContext.connectFv(histBuf, fvc.vi);
-   }
-
-   private static TextEdit commCon;
-   private static String portname = "COM1";
-   private static int baudrate = 38400;
-
-   private static void startcom(String arg,
-      FvContext fvc)
-      throws IOException, InputException {
-      // trace("reached startcommCon");
-      if (null == commCon) {
-         if (null != arg)
-            try {
-               String[] args = arg.split(" +");
-               if (2 != args.length)
-                  throw new InputException("invalid arguments to comm command:"
-                        + arg);
-               baudrate = Integer.parseInt(args[1]);
-               portname = args[0];
-            } catch (NumberFormatException e) {
-               throw new InputException("invalid number in arguments", e);
-            }
-         EditContainer.registerListener(fli);
-         commCon = Vt100.CommReader.make(portname, baudrate);
-         FvContext.connectFv(commCon, fvc.vi);
-      } else
-         FvContext.connectFv(commCon, fvc.vi);
    }
 
    static final class ProcIo extends BufInIoc<String> {

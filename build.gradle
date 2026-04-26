@@ -40,19 +40,13 @@ spotbugsMain {
 
 repositories {
     mavenCentral()
-    // RXTX serial library may need additional repositories
-    maven {
-        url 'https://repo.spring.io/plugins-release/'
-        content {
-            includeGroup 'org.rxtx'
-        }
-    }
 }
 
 // Configuration for standalone JaCoCo agent (PSTest, IntArrayTest)
 configurations {
     jacocoManualAgent
     jacocoCli
+    rxtxLib   // RXTX dependency for plugin JAR only
 }
 
 dependencies {
@@ -65,10 +59,6 @@ dependencies {
     
     // Character encoding detection
     implementation 'com.github.albfernandez:juniversalchardet:2.4.0'
-    
-    // Serial port communication (for VT100 terminal emulation)
-    // Note: RXTX may require native libraries for your platform
-    implementation 'org.rxtx:rxtx:2.1.7'
 
     // Test dependencies
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
@@ -79,6 +69,44 @@ dependencies {
     jacocoManualAgent 'org.jacoco:org.jacoco.agent:0.8.13:runtime'
     // JaCoCo CLI for dump/merge operations
     jacocoCli 'org.jacoco:org.jacoco.cli:0.8.13'
+
+    // F36: RXTX serial library — plugin only, not on main classpath
+    rxtxLib 'org.rxtx:rxtx:2.1.7'
+}
+
+// F36: RXTX plugin source set — compiled separately, not part of main build
+sourceSets {
+    rxtxPlugin {
+        java {
+            srcDirs = ['src/plugin/java']
+        }
+        compileClasspath = sourceSets.main.output + configurations.rxtxLib
+        runtimeClasspath = output + sourceSets.main.output + configurations.rxtxLib
+    }
+}
+
+// F36: Resolve rxtx dependency via Maven Central with Spring repo fallback
+repositories {
+    maven {
+        url 'https://repo.spring.io/plugins-release/'
+        content {
+            includeGroup 'org.rxtx'
+        }
+    }
+}
+
+// F36: Plugin JAR — fat JAR bundling plugin code + RXTX classes
+tasks.register('rxtxJar', Jar) {
+    archiveBaseName = 'javi-rxtx'
+    from sourceSets.rxtxPlugin.output
+    from {
+        configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    manifest {
+        attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/libs")
+    dependsOn 'compileRxtxPluginJava'
 }
 
 sourceSets {
