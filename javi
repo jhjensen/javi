@@ -1,0 +1,13 @@
+#!/bin/bash
+# javi — launcher script
+# Builds if needed, then runs the editor.
+
+jroot="$(cd "$(dirname "$0")" && pwd)"
+
+# Build install tree if it doesn't exist
+if [ ! -x "$jroot/build/install/javi/bin/javi" ]; then
+    echo "Building javi..."
+    "$jroot/gradlew" -p "$jroot" installDist || exit 1
+fi
+
+exec "$jroot/build/install/javi/bin/javi" "$@"

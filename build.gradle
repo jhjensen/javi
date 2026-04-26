@@ -16,6 +16,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
+// Strict cross-compilation: prevent accidental use of JDK 22+ APIs
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+}
+
 jacoco {
     // Use Gradle's default JaCoCo version for compatibility
 }
