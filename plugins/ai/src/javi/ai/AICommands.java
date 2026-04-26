@@ -956,6 +956,8 @@ public final class AICommands extends Rgroup implements Plugin {
             return doStatus(fvc);
          case 't':
             return doTest();
+         case 'm':
+            return doModels(fvc);
          case 'x':
             return doCancel();
          case '?':
@@ -1003,9 +1005,17 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  gac                 Open AI chat");
       appendToChatBuffer("  gas                 Show AI status");
       appendToChatBuffer("  gat                 Test AI connection");
+      appendToChatBuffer("  gam                 List available models");
       appendToChatBuffer("  gax                 Cancel AI request");
       appendToChatBuffer("  ga?                 Show this help");
       appendToChatBuffer("  gg                  Go to first line");
+      appendToChatBuffer("");
+      appendToChatBuffer("INSERT MODE");
+      appendToChatBuffer("  Tab                 Trigger AI completion "
+         + "(if text before cursor)");
+      appendToChatBuffer("  Tab (ghost visible) Accept ghost text");
+      appendToChatBuffer("  Esc                 Dismiss ghost text "
+         + "/ exit insert mode");
       appendToChatBuffer("");
       appendToChatBuffer("CONFIGURATION");
       appendToChatBuffer("  :set ai.provider=openai|anthropic|copilot");
