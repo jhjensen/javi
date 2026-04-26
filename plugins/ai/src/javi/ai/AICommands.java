@@ -1043,6 +1043,9 @@ public final class AICommands extends Rgroup implements Plugin {
       totalRequests++;
       totalInputChars += ctxChars;
 
+      RequestLog.logRequest(command, model, prov, premium,
+         source, ctxChars, ctxLines);
+
       String info = "[" + prov + "/" + model
          + (premium ? " PREMIUM" : "") + "] :"
          + command + " — source: " + source
@@ -1424,6 +1427,14 @@ public final class AICommands extends Rgroup implements Plugin {
          + estInputTokens);
       appendToChatBuffer("Est. output tokens: ~"
          + estOutputTokens);
+      if (RequestLog.getToolCallCount() > 0) {
+         appendToChatBuffer("Tool calls: "
+            + RequestLog.getToolCallCount());
+      }
+      if (RequestLog.getTotalDurationMs() > 0) {
+         appendToChatBuffer("Total API time: "
+            + RequestLog.getTotalDurationMs() + "ms");
+      }
       appendToChatBuffer("");
       appendToChatBuffer("PREMIUM REQUESTS");
       appendToChatBuffer("Copilot premium models: "
@@ -1433,9 +1444,25 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("Current model ("
          + currentModel + "): "
          + (isPremium ? "PREMIUM" : "standard"));
+      appendToChatBuffer("Premium request count: "
+         + RequestLog.getPremiumCount());
       appendToChatBuffer("History size: "
          + AIClient.getInstance().getHistorySize()
          + " messages");
+      appendToChatBuffer("");
+      int logSize = RequestLog.size();
+      if (logSize > 0) {
+         int showCount = Math.min(logSize, 10);
+         appendToChatBuffer("RECENT REQUESTS (last "
+            + showCount + " of " + logSize + ")");
+         appendToChatBuffer(
+            RequestLog.formatRecent(showCount));
+      }
+      appendToChatBuffer("TOOLS (" + AIToolRegistry.getTools().size() + ")");
+      for (var entry : AIToolRegistry.getTools().entrySet()) {
+         appendToChatBuffer("  " + entry.getKey()
+            + " [" + entry.getValue().permissionLevel() + "]");
+      }
       appendToChatBuffer("");
       try {
          FvContext.connectFv(chatBuffer, fvc.vi);

@@ -252,6 +252,7 @@ public final class AIToolRegistry {
    public static void registerBuiltins() {
       register(new FileReadTool());
       register(new FileListTool());
+      register(new GrepTool());
       register(new BufferInfoTool());
       register(new BufferReadTool());
       register(new BufferWriteTool());
