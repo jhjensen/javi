@@ -116,6 +116,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          IOException {
 
          //trace("rnum = " + rnum);
+         if (rnum != 0 && fvc == null)
+            throw new InputException(
+               "file command unavailable during startup");
          switch (rnum) {
             case 0:
                return null; // noop
