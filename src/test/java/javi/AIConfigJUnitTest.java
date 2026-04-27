@@ -44,6 +44,7 @@ class AIConfigJUnitTest {
    private String origModel;
    private int origMaxTokens;
    private int origTimeout;
+   private int origDelay;
    private String origApiKey;
 
    @BeforeEach
@@ -52,6 +53,7 @@ class AIConfigJUnitTest {
       origProvider = c.getProvider();
       origMaxTokens = c.getMaxTokens();
       origTimeout = c.getTimeoutSeconds();
+      origDelay = c.getCompletionDelayMs();
       // Read raw fields via reflection so null is preserved
       java.lang.reflect.Field mf =
          AIConfig.class.getDeclaredField("model");
@@ -69,6 +71,7 @@ class AIConfigJUnitTest {
       c.setProvider(origProvider.getId());
       c.setMaxTokens(origMaxTokens);
       c.setTimeoutSeconds(origTimeout);
+      c.setCompletionDelayMs(origDelay);
       // Restore raw fields via reflection
       java.lang.reflect.Field mf =
          AIConfig.class.getDeclaredField("model");
@@ -179,6 +182,22 @@ class AIConfigJUnitTest {
       }
 
       @Test
+      @DisplayName("delay key changes completion delay")
+      void setDelay() {
+         AIConfig c = AIConfig.getInstance();
+         assertTrue(c.setSetting("delay", "1200"));
+         assertEquals(1200, c.getCompletionDelayMs());
+      }
+
+      @Test
+      @DisplayName("delay zero disables auto-completion")
+      void setDelayZero() {
+         AIConfig c = AIConfig.getInstance();
+         assertTrue(c.setSetting("delay", "0"));
+         assertEquals(0, c.getCompletionDelayMs());
+      }
+
+      @Test
       @DisplayName("unknown key returns false")
       void unknownKey() {
          AIConfig c = AIConfig.getInstance();
@@ -238,6 +257,14 @@ class AIConfigJUnitTest {
          assertThrows(IllegalArgumentException.class,
             () -> c.setProvider("llama"));
       }
+
+      @Test
+      @DisplayName("completionDelay rejects negative")
+      void completionDelayRejectsNegative() {
+         AIConfig c = AIConfig.getInstance();
+         assertThrows(IllegalArgumentException.class,
+            () -> c.setCompletionDelayMs(-1));
+      }
    }
 
    // ── getSummary ───────────────────────────────────────────
@@ -283,6 +310,16 @@ class AIConfigJUnitTest {
          String summary = c.getSummary();
          assertTrue(summary.contains("30"),
             "summary should mention timeout");
+      }
+
+      @Test
+      @DisplayName("includes delay")
+      void includesDelay() {
+         AIConfig c = AIConfig.getInstance();
+         c.setCompletionDelayMs(500);
+         String summary = c.getSummary();
+         assertTrue(summary.contains("500"),
+            "summary should mention delay");
       }
 
       @Test
@@ -345,6 +382,23 @@ class AIConfigJUnitTest {
    }
 
    // ── Default system prompt ────────────────────────────────
+
+   // ── Completion delay defaults ─────────────────────────
+
+   @Test
+   @DisplayName("default completion delay is 800ms")
+   void defaultCompletionDelay() {
+      AIConfig c = AIConfig.getInstance();
+      assertEquals(800, c.getCompletionDelayMs());
+   }
+
+   @Test
+   @DisplayName("setCompletionDelayMs(0) disables")
+   void completionDelayDisable() {
+      AIConfig c = AIConfig.getInstance();
+      c.setCompletionDelayMs(0);
+      assertEquals(0, c.getCompletionDelayMs());
+   }
 
    @Test
    @DisplayName("default system prompt mentions Javi")

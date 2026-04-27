@@ -2,6 +2,10 @@ package javi;
 
 import java.io.IOException;
 import java.text.CharacterIterator;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static history.Tools.trace;
 import static javi.JeyEvent.CTRL_MASK;
@@ -25,6 +29,15 @@ public abstract class InsertBuffer extends View.Inserter {
    private boolean singleline;
    private int promptBoundary;
    private FvContext myfvc;
+
+   /** Timer for auto-triggering AI completion after typing pause. */
+   private static final ScheduledExecutorService completionTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> {
+         Thread t = new Thread(r, "ai-completion-timer");
+         t.setDaemon(true);
+         return t;
+      });
+   private volatile ScheduledFuture<?> pendingCompletion;
 
    static final boolean[] ff = {false, false};
 
@@ -160,6 +173,7 @@ public abstract class InsertBuffer extends View.Inserter {
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws InputException {
          //trace("rnum = " + rnum);
+         cancelCompletionTimer();
 
          switch (ICMDS[rnum]) {
             case TOGGLE_INSERT:
@@ -374,6 +388,7 @@ public abstract class InsertBuffer extends View.Inserter {
                      notifyCommandLineHelp(fvc);
                } else {
                   char key = ke.getKeyChar();
+                  cancelCompletionTimer();
                   GhostTextState.dismiss();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
@@ -403,6 +418,7 @@ public abstract class InsertBuffer extends View.Inserter {
                      viewer.lineChanged(fvc.inserty());
                      if (singleline)
                         notifyCommandLineHelp(fvc);
+                     scheduleAutoCompletion(fvc);
                   }
                }
             }
@@ -494,6 +510,7 @@ public abstract class InsertBuffer extends View.Inserter {
 
    final void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
+      cancelCompletionTimer();
       GhostTextState.dismiss();
       fvc.vi.clearInsert();
       myfvc  = null;
@@ -534,6 +551,72 @@ public abstract class InsertBuffer extends View.Inserter {
       } catch (Exception e) {
          GhostTextState.reset();
          UI.reportMessage("AI: " + e.getMessage());
+      }
+   }
+
+   /**
+    * Cancel any pending auto-completion timer.
+    */
+   private void cancelCompletionTimer() {
+      ScheduledFuture<?> f = pendingCompletion;
+      if (null != f) {
+         f.cancel(false);
+         pendingCompletion = null;
+      }
+   }
+
+   /**
+    * Schedule an auto-completion trigger after the configured delay.
+    *
+    * <p>Posts an {@link EventQueue.IEvent} when the timer fires,
+    * which executes on the editor thread with {@code biglock2} held.
+    * The timer is cancelled by any subsequent keypress.</p>
+    *
+    * @param fvc the current file-view context
+    */
+   private void scheduleAutoCompletion(FvContext fvc) {
+      cancelCompletionTimer();
+      if (!isAiAvailable() || singleline) {
+         return;
+      }
+      int delayMs = getCompletionDelay();
+      if (delayMs <= 0) {
+         return;
+      }
+      pendingCompletion = completionTimer.schedule(() -> {
+         EventQueue.insert(new EventQueue.IEvent() {
+            @Override
+            public void execute() {
+               if (null == myfvc
+                     || GhostTextState.isPending()
+                     || GhostTextState.isVisible()) {
+                  return;
+               }
+               if (hasTextBeforeCursor(fvc)) {
+                  itext(1, fvc);
+                  triggerAiCompletion(fvc);
+               }
+            }
+         });
+      }, delayMs, TimeUnit.MILLISECONDS);
+   }
+
+   /**
+    * Get the completion delay from AIConfig via reflection to avoid
+    * compile-time dependency on the plugin JAR.
+    *
+    * @return delay in milliseconds, or 0 if config unavailable
+    */
+   private static int getCompletionDelay() {
+      try {
+         Class<?> configClass = Class.forName(
+            "javi.ai.AIConfig");
+         Object config = configClass.getMethod("getInstance")
+            .invoke(null);
+         return (Integer) configClass.getMethod(
+            "getCompletionDelayMs").invoke(config);
+      } catch (Exception e) {
+         return 0;
       }
    }
 

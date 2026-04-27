@@ -86,6 +86,7 @@ public final class AIConfig {
    private volatile String apiKey = null;
    private volatile int timeoutSeconds = 30;
    private volatile String systemPrompt = DEFAULT_SYSTEM_PROMPT;
+   private volatile int completionDelayMs = 800;
 
    /** Default system prompt for code assistance. */
    static final String DEFAULT_SYSTEM_PROMPT =
@@ -235,6 +236,34 @@ public final class AIConfig {
    }
 
    /**
+    * Get the auto-completion delay in milliseconds.
+    *
+    * <p>When positive, AI completion triggers automatically after
+    * the user pauses typing for this many milliseconds in insert
+    * mode. Set to 0 to disable auto-trigger (require explicit
+    * Tab).</p>
+    *
+    * @return delay in milliseconds (0 = disabled)
+    */
+   public int getCompletionDelayMs() {
+      return completionDelayMs;
+   }
+
+   /**
+    * Set the auto-completion delay.
+    *
+    * @param ms delay in milliseconds (0 to disable, must be non-negative)
+    * @throws IllegalArgumentException if ms is negative
+    */
+   public void setCompletionDelayMs(int ms) {
+      if (ms < 0) {
+         throw new IllegalArgumentException(
+            "completion delay must be non-negative");
+      }
+      this.completionDelayMs = ms;
+   }
+
+   /**
     * Get the system prompt for AI conversations.
     *
     * @return the system prompt string
@@ -297,6 +326,9 @@ public final class AIConfig {
          case "timeout":
             setTimeoutSeconds(Integer.parseInt(value));
             return true;
+         case "delay":
+            setCompletionDelayMs(Integer.parseInt(value));
+            return true;
          default:
             return false;
       }
@@ -315,6 +347,7 @@ public final class AIConfig {
          + " model=" + getModel()
          + " maxTokens=" + maxTokens
          + " timeout=" + timeoutSeconds + "s"
+         + " delay=" + completionDelayMs + "ms"
          + " apiKey=" + keyStatus;
    }
 }
