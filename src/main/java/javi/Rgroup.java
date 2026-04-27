@@ -63,7 +63,7 @@ public abstract class Rgroup {
     * from the key mapping (e.g., ":vt hostname" passes "hostname").
     */
    @FunctionalInterface
-   interface ArgCommandHandler {
+   public interface ArgCommandHandler {
       Object execute(Object arg, int count, int rcount, FvContext fvc,
          boolean dotMode)
          throws IOException, InterruptedException, InputException;

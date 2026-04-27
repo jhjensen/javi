@@ -275,7 +275,7 @@ public final class MapEvent {
       km.bindEditAction(JeyEvent.VK_F7, "mk", null, 0);
       km.bindEditAction(JeyEvent.VK_F8, "vt", null, 0);
       //km.bindEditAction(JeyEvent.VK_F9, "startcon", null, 0);
-      km.bindEditAction(JeyEvent.VK_F10, "comm", null, 0);
+      //km.bindEditAction(JeyEvent.VK_F10, "comm", null, 0); // moved to rxtx plugin
       //km.bindEditAction(JeyEvent.VK_F11, "exec", null, 0);
       km.bindEditAction(JeyEvent.VK_F11, "fullscreen", null, 0);
 

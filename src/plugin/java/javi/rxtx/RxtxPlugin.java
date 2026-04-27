@@ -57,6 +57,11 @@ public final class RxtxPlugin extends Rgroup implements Plugin {
       EditContainer.registerListener(commListener);
    }
 
+   protected Object doroutine(int rnum, Object arg, int count,
+         int rcount, FvContext fvc, boolean dotmode) {
+      throw new RuntimeException("RxtxPlugin: unexpected doroutine");
+   }
+
    private static void startcom(String arg, FvContext fvc)
          throws IOException, InputException {
       if (null == commCon) {
