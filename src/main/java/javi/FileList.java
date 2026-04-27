@@ -116,6 +116,21 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          IOException {
 
          //trace("rnum = " + rnum);
+
+         // Handle directory arguments for e/vi before requiring fvc.
+         // This allows "e src" in .javini to add directories to the
+         // search path during startup when fvc is not yet available.
+         if ((rnum == 1 || rnum == 2) && arg != null) {
+            String fname = arg instanceof String
+               ? (String) arg : arg.toString();
+            FileDescriptor fd = FileDescriptor.make(fname);
+            if (fd instanceof FileDescriptor.LocalDir) {
+               DirManager.getInstance().addSearchDir(
+                  (FileDescriptor.LocalDir) fd);
+               return null;
+            }
+         }
+
          if (rnum != 0 && fvc == null)
             throw new InputException(
                "file command unavailable during startup");
