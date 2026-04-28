@@ -132,8 +132,8 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          }
 
          if (rnum != 0 && fvc == null)
-            throw new InputException(
-               "file command unavailable during startup");
+            throw new DeferCommandException(
+               "file command deferred until startup completes");
          switch (rnum) {
             case 0:
                return null; // noop

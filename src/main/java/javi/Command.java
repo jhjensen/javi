@@ -193,12 +193,17 @@ public final class Command extends Rgroup {
    public static void execCmdList() {
       Iterator<String> cit = cmdlist.iterator();
       while (cit.hasNext()) {
-         command(cit.next(), null, null);
-         cit.remove();
+         try {
+            command(cit.next(), null, null);
+            cit.remove();
+         } catch (DeferCommandException e) {
+            // leave in list for later execution
+         }
       }
    }
 
    static void doneInit() {
+      execCmdList(); // retry commands deferred during early init
       if (cmdlist.size() != 0) {
          StringBuilder bf = new StringBuilder(
             "command list has unexecuted commands:\n");
@@ -211,8 +216,17 @@ public final class Command extends Rgroup {
       }
    }
 
+   /** Package-private access to cmdlist size for testing. */
+   static int cmdListSize() {
+      return cmdlist.size();
+   }
+
+   /** Package-private: add a command to the pending list for testing. */
+   static void addToCmdList(String cmd) {
+      cmdlist.add(cmd);
+   }
+
    /**
-    * Display help for the given topic.
     *
     * <p>When no topic is specified, shows context-sensitive help
     * that dynamically lists keybindings for the active keymap.
