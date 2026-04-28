@@ -38,7 +38,7 @@ import static history.Tools.trace;
 public final class CopilotProvider implements AIProvider {
 
    /** Default model when none is explicitly configured. */
-   static final String DEFAULT_MODEL = "gpt-4.1";
+   public static final String DEFAULT_MODEL = "gpt-4.1";
 
    private final CopilotRestClient client;
    private final String model;
