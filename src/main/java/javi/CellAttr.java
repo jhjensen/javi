@@ -113,6 +113,19 @@ public final class CellAttr {
       return decodeColor((attr >> BG_SHIFT) & COLOR_MASK);
    }
 
+   /**
+    * Returns an attribute with only the background colour from the
+    * given attribute. Used for BCE (background colour erase) — erase
+    * operations fill with the current background colour.
+    *
+    * @param attr packed attribute
+    * @return bg-only attribute, or {@link #DEFAULT} if no bg is set
+    */
+   public static int bgOnly(int attr) {
+      int bg = bgColor(attr);
+      return bg < 0 ? DEFAULT : pack(false, false, false, -1, bg);
+   }
+
    // ----- colour encoding helpers -----
 
    /**

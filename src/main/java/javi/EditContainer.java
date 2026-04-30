@@ -129,6 +129,9 @@ public class EditContainer<OType> implements
    private final EditContainer parent;
 
    private transient UndoHistory<OType> backup;
+
+   /** When true, undo records are not accumulated (terminal buffers). */
+   boolean undoDisabled;
    private transient boolean finishedread = false;
    private transient boolean ioError = false;
    private transient boolean backupMade;
@@ -1131,15 +1134,21 @@ public class EditContainer<OType> implements
    }
 
    private void insertRecord(OType[] obarray, int indexi) {
-      backup.push(new InsertRecord(obarray, indexi));
+      InsertRecord rec = new InsertRecord(obarray, indexi);
+      if (!undoDisabled)
+         backup.push(rec);
    }
 
    private void insertRecord(String[] obarray, int indexi) {
-      backup.push(new InsertStringRecord(obarray, indexi));
+      InsertStringRecord rec = new InsertStringRecord(obarray, indexi);
+      if (!undoDisabled)
+         backup.push(rec);
    }
 
    private void insertRecord(Iterator<OType> it, int indexi, int count) {
-      backup.push(new InsertRecord(it, indexi, count, true));
+      InsertRecord rec = new InsertRecord(it, indexi, count, true);
+      if (!undoDisabled)
+         backup.push(rec);
    }
 
    private void insertRecordDone(Iterator<OType> it, int indexi, int count) {
@@ -1148,12 +1157,16 @@ public class EditContainer<OType> implements
 
    private void modRecord(OType ob, int index) {
       //trace("ModRecord ob " + ob);
-      backup.push(new ModRecord(ob, index));
+      ModRecord rec = new ModRecord(ob, index);
+      if (!undoDisabled)
+         backup.push(rec);
    }
 
    private void deleteRecord(int start, int number) {
       //trace("DeleteRecord");
-      backup.push(new DeleteRecord(start, number));
+      DeleteRecord rec = new DeleteRecord(start, number);
+      if (!undoDisabled)
+         backup.push(rec);
    }
 
    final boolean isParent(EditContainer ev) {

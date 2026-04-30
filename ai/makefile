@@ -96,3 +96,7 @@ ai/coverage-merge.out: FORCE
 # T1: Full coverage including GUI tests via rdesk Docker
 ai/rdesk-coverage.out: FORCE
 	$(MAKE) rdesk-coverage > $@ 2>&1; echo "exit: $$?" >> $@
+
+# F22: Remote esctest2 VT100 compliance tests
+ai/rdesk-esctest2.out: FORCE
+	$(MAKE) rdesk-esctest2 > $@ 2>&1; echo "exit: $$?" >> $@

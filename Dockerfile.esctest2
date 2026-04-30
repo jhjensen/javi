@@ -1,0 +1,60 @@
+# Dockerfile.esctest2 — Run esctest2 VT100 compliance tests against javi in Docker
+#
+# Builds javi fat jar, starts Xvfb, launches javi with :shellnew,
+# runs esctest2 test suite through javi's terminal emulator.
+#
+# Build:  docker build -f Dockerfile.esctest2 -t javi-esctest2 .
+# Run:    docker run --rm -v $(pwd)/results:/results javi-esctest2
+#
+# Results are written to /results/ volume mount.
+
+FROM eclipse-temurin:24-jdk-noble
+
+# Xvfb + X11 + Python3 for esctest2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libfreetype6 \
+    fontconfig \
+    fonts-dejavu-core \
+    git \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone esctest2
+RUN git clone --depth=1 https://github.com/ThomasDickey/esctest2.git /esctest2
+
+WORKDIR /app
+
+# Copy Gradle wrapper first for layer caching
+COPY gradlew build.gradle ./
+COPY gradle/ gradle/
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
+
+# Cache-bust: ARG changes when source files are newer than Dockerfile
+ARG SRC_HASH=0
+
+# Copy source files
+COPY src/ src/
+
+# Create minimal git repo for build.gradle version detection
+RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
+    git add -A && git commit -q -m "docker build"
+
+# Build fat jar
+RUN ./gradlew shadowJar 2>&1 | tail -5
+
+# Copy entrypoint script
+COPY ai/docker-esctest2.sh /docker-esctest2.sh
+RUN chmod +x /docker-esctest2.sh
+
+# Pre-create results directory
+RUN mkdir -p /results
+
+ENTRYPOINT ["/docker-esctest2.sh"]

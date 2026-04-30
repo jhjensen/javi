@@ -99,12 +99,40 @@ abstract class VScreen {
    /**
     * Erases the specified number of characters at cursor.
     *
-    * <p>Implements ESC[nP (delete n characters).</p>
+    * <p>Implements ESC[nX (erase n characters). Replaces characters
+    * at the cursor position with spaces.</p>
     *
     * @param count number of characters to erase
     * @param sb pending output buffer to flush
     */
    abstract void eraseChars(int count, StringBuilder sb);
+
+   /**
+    * Deletes the specified number of characters at cursor.
+    *
+    * <p>Implements ESC[nP (delete n characters). Removes characters
+    * at the cursor position and shifts remaining characters left.</p>
+    *
+    * @param count number of characters to delete
+    * @param sb pending output buffer to flush
+    */
+   void deleteChars(int count, StringBuilder sb) {
+      // Default: fall back to eraseChars
+      eraseChars(count, sb);
+   }
+
+   /**
+    * Inserts blank characters at cursor, shifting text right.
+    *
+    * <p>Implements CSI n {@code @} (ICH). Characters shifted
+    * past the right margin are lost.</p>
+    *
+    * @param count number of blank characters to insert
+    * @param sb pending output buffer to flush
+    */
+   void insertChars(int count, StringBuilder sb) {
+      // Default no-op; overridden in ECScreen
+   }
 
    /**
     * Inserts blank lines at the cursor position.
@@ -224,6 +252,18 @@ abstract class VScreen {
    }
 
    /**
+    * Erases the scrollback buffer above the visible screen.
+    *
+    * <p>Implements ESC[3J (xterm extension). Removes all lines
+    * above the visible terminal area.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void eraseScrollback(StringBuilder sb) {
+      // Default no-op implementation
+   }
+
+   /**
     * Sets text attributes (bold, underline, color, etc.).
     *
     * <p>Implements ESC[nm where n is an SGR parameter.</p>
@@ -253,6 +293,53 @@ abstract class VScreen {
     */
    void setTitle(String title) {
       // Default no-op
+   }
+
+   /**
+    * Sets the icon (tab) title.
+    *
+    * <p>Implements OSC 1;title BEL.</p>
+    *
+    * @param title the new icon title
+    */
+   void setIconTitle(String title) {
+      // Default no-op
+   }
+
+   /**
+    * Saves the current state of a DEC private mode (XTERM_SAVE).
+    *
+    * <p>Implements CSI ? Ps s.</p>
+    *
+    * @param modeNum the DEC private mode number
+    */
+   void saveMode(int modeNum) {
+      // Default no-op
+   }
+
+   /**
+    * Restores a previously saved DEC private mode (XTERM_RESTORE).
+    *
+    * <p>Implements CSI ? Ps r.</p>
+    *
+    * @param modeNum the DEC private mode number
+    * @param sb pending output buffer to flush
+    */
+   void restoreMode(int modeNum, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to DECRQM (DEC Private Mode Report request).
+    *
+    * <p>Implements CSI ? Ps $ p. Responds with DECRPM:
+    * CSI ? Ps; Pm $ y where Pm indicates mode state.</p>
+    *
+    * @param modeNum the DEC private mode number to report
+    * @param sb pending output buffer to flush
+    */
+   void respondDecrqm(int modeNum, StringBuilder sb) {
+      // Default: report mode not recognized (Pm=0)
    }
 
    /**
@@ -316,6 +403,25 @@ abstract class VScreen {
    }
 
    /**
+    * Sets reverse-wraparound mode (mode 45).
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setReverseWrapMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets reverse-wraparound extend mode (mode 1045).
+    * Wraps around top/bottom of scroll region unconditionally.
+    *
+    * @param enable true to enable, false to disable
+    */
+   void setReverseWrapExtendMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
     * Sets cursor blink mode (mode 12).
     *
     * @param enable true to enable, false to disable
@@ -330,6 +436,18 @@ abstract class VScreen {
     * @param enable true to enable, false to disable
     */
    void setApplicationCursorKeys(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Sets Line Feed/New Line mode (ANSI mode 20).
+    *
+    * <p>When enabled, LF acts as CR+LF (moves to column 1 and down).
+    * When disabled (default), LF only moves down.</p>
+    *
+    * @param enable true to enable LNM, false to disable
+    */
+   void setLnmMode(boolean enable) {
       // Default no-op
    }
 
@@ -355,11 +473,272 @@ abstract class VScreen {
    }
 
    /**
+    * Responds to a Secondary Device Attributes request (CSI &gt; c).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondSecondaryDA(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
     * Responds to a Cursor Position Report request (CSI 6 n).
     *
     * @param sb pending output buffer to flush
     */
    void respondCursorPosition(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a Device Status Report (DSR 5) with "OK".
+    *
+    * @param sb pending output buffer to flush
+    */
+   void respondStatusOk(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to DECRQCRA (Request Checksum of Rectangular Area).
+    *
+    * <p>Implements CSI Pid ; Pp ; Pt ; Pl ; Pb ; Pr * y.
+    * Response is DCS Pid ! ~ D..D ST where D..D is a hex-encoded
+    * 16-bit checksum of character values in the rectangle.</p>
+    *
+    * @param params the CSI numeric parameters
+    * @param highParam index of the highest parameter set
+    * @param sb pending output buffer to flush
+    */
+   void respondRectChecksum(int[] params, int highParam,
+         StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Handles window operations (CSI Ps t — XTWINOPS).
+    * Ps=18: report terminal size in characters.
+    *
+    * @param ps the operation code
+    * @param p1 first parameter
+    * @param p2 second parameter
+    * @param sb pending output buffer to flush
+    */
+   void handleWindowOp(int ps, int p1, int p2, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Sets the scrolling region (top and bottom margins).
+    *
+    * <p>Implements DECSTBM (CSI Pt;Pb r). Lines outside the
+    * scrolling region are unaffected by scroll operations.</p>
+    *
+    * @param top 1-based top margin row (0 means reset to default)
+    * @param bottom 1-based bottom margin row (0 means reset to default)
+    * @param sb pending output buffer to flush
+    */
+   void setScrollRegion(int top, int bottom, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Index — move cursor down one line, scrolling if at bottom margin.
+    *
+    * <p>Implements IND (ESC D). If the cursor is at the bottom
+    * margin of the scrolling region, the region scrolls up.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void index(StringBuilder sb) {
+      // Default: just move down
+      incY(1, sb);
+   }
+
+   /**
+    * Reverse Index — move cursor up one line, scrolling if at top margin.
+    *
+    * <p>Implements RI (ESC M). If the cursor is at the top margin
+    * of the scrolling region, the region scrolls down.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void reverseIndex(StringBuilder sb) {
+      // Default: just move up
+      incY(-1, sb);
+   }
+
+   /**
+    * Next Line — move cursor to beginning of next line, scrolling
+    * if at bottom margin.
+    *
+    * <p>Implements NEL (ESC E). Equivalent to CR + IND.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void nextLine(StringBuilder sb) {
+      // Default: CR + move down
+      setX(1, sb);
+      incY(1, sb);
+   }
+
+   /**
+    * Screen Alignment Display — fills the screen with 'E' characters.
+    *
+    * <p>Implements DECALN (ESC # 8). Used for screen alignment testing.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void screenAlignmentDisplay(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Sets origin mode (DECOM).
+    *
+    * <p>When enabled, cursor addressing is relative to the scroll
+    * region. When disabled, cursor addressing is absolute.</p>
+    *
+    * @param enable true for relative addressing, false for absolute
+    */
+   void setOriginMode(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Handles a horizontal tab character (HT, 0x09).
+    *
+    * <p>Advances the cursor to the next tab stop (every 8 columns).
+    * The default implementation appends a literal tab character.</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void handleTab(StringBuilder sb) {
+      sb.append('\t');
+   }
+
+   /**
+    * Sets a tab stop at the current cursor column (HTS, ESC H).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void setTabStop(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Clears tab stops per mode (TBC, CSI g).
+    *
+    * <p>mode 0 = clear at cursor column; mode 3 = clear all.</p>
+    *
+    * @param mode the TBC mode parameter
+    * @param sb pending output buffer to flush
+    */
+   void clearTabStop(int mode, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Sets the column mode (DECCOLM, CSI ?3h / ?3l).
+    *
+    * <p>Per VT100 spec, toggling DECCOLM clears the screen,
+    * resets scroll margins, and homes the cursor. Mode 80
+    * sets 80-column mode; mode 132 sets 132-column mode.</p>
+    *
+    * @param columns the column count (80 or 132)
+    * @param sb pending output buffer to flush
+    */
+   void setColumnMode(int columns, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Sets whether 80/132 column switching (DECCOLM, mode 3) is allowed.
+    *
+    * <p>Mode 40 (xterm): when disabled, DECCOLM changes are ignored.</p>
+    *
+    * @param enable true to allow 80/132 switching
+    */
+   void setAllow80To132(boolean enable) {
+      // Default no-op
+   }
+
+   /**
+    * Moves the cursor backward by the specified number of tab
+    * stops (CBT, CSI Z).
+    *
+    * @param count number of tab stops to move backward
+    * @param sb pending output buffer to flush
+    */
+   void backwardTab(int count, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Performs a soft terminal reset (DECSTR, CSI !p).
+    *
+    * @param sb pending output buffer to flush
+    */
+   void softReset(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Performs a hard terminal reset (RIS, ESC c).
+    *
+    * <p>Resets all terminal state and homes the cursor.
+    * More thorough than softReset: also clears the screen,
+    * resets character sets, and moves cursor to (1,1).</p>
+    *
+    * @param sb pending output buffer to flush
+    */
+   void hardReset(StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to DEC-private Device Status Reports (CSI ? Ps n).
+    *
+    * <p>Handles keyboard language (26), printer port (15),
+    * and UDK lock (25) queries.</p>
+    *
+    * @param ps the DEC-private DSR parameter
+    * @param sb pending output buffer to flush
+    */
+   void respondDecdsr(int ps, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Repeats a graphic character (REP, CSI b).
+    *
+    * @param ch the character to repeat
+    * @param count number of times to repeat
+    * @param sb pending output buffer to flush
+    */
+   void repeatChar(char ch, int count, StringBuilder sb) {
+      // Default no-op
+   }
+
+   /**
+    * Handles an OSC color sequence (set, query, or reset).
+    *
+    * <p>Covers OSC 4 (palette), OSC 10/11/12 (dynamic colors),
+    * OSC 17/19 (special colors), and OSC 104/110-119 (resets).</p>
+    *
+    * @param oscNum the OSC number
+    * @param payload the content after the first semicolon
+    */
+   void handleOscColor(int oscNum, String payload) {
+      // Default no-op
+   }
+
+   /**
+    * Responds to a DCS +q terminfo capability query.
+    *
+    * @param hexName hex-encoded capability name (e.g. "436F" for "Co")
+    */
+   void respondTerminfoQuery(String hexName) {
       // Default no-op
    }
 }

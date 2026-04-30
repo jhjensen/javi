@@ -1,5 +1,6 @@
 src/main/java/javi/awt/OldView.java,2
 src/main/java/javi/Command.java,1
+src/test/java/javi/Vt100ComplianceJUnitTest.java,1
 src/main/java/javi/MovePos.java,2
 src/main/java/javi/MapEvent.java,1
 src/main/java/javi/FileDescriptor.java,3
@@ -23,3 +24,4 @@ src/main/java/javi/EditGroup.java,1
 src/test/java/javi/FoldModelJUnitTest.java,1
 src/test/java/javi/AssertJSwingGuiJUnitTest.java,48
 src/main/java/javi/git/GitCommands.java,1
+src/main/java/javi/Vt100Parser.java,61

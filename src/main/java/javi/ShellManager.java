@@ -272,6 +272,25 @@ public final class ShellManager {
    }
 
    /**
+    * Returns the ScreenAttributes for a shell buffer, or null
+    * if the buffer is not a terminal session.
+    *
+    * @param buffer the TextEdit buffer to check
+    * @return ScreenAttributes or null
+    */
+   public synchronized ScreenAttributes getScreenAttrsForBuffer(
+         TextEdit<?> buffer) {
+      for (ShellSession session : sessions) {
+         if (session.getBuffer() == buffer) {
+            Vt100 vt = session.getVt100();
+            if (null != vt)
+               return vt.getScreenAttributes();
+         }
+      }
+      return null;
+   }
+
+   /**
     * Forwards a focus event to the active shell if focus reporting is enabled.
     *
     * @param focusIn true for focus gained, false for focus lost

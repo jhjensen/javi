@@ -43,6 +43,7 @@ import javi.ShellManager;
 import javi.ScreenAttributes;
 import javi.UI;
 import javi.View;
+import javi.Wcwidth;
 import javi.ChangeOpt;
 import javi.ScrollEvent;
 
@@ -470,17 +471,27 @@ final class OldView extends AwtView {
          String oline = gettext().at(newY).toString();
          String nline = oline;
 
-         if (0 != tabStop) {
-            int tabOffset = oline.indexOf('\t');
-            if (tabOffset != -1) {
-               int[] tvals = new int[1];
-               tvals[0] = charoff;
-               nline = DeTabber.deTab(nline, tabOffset, tabStop, tvals);
-               charoff = tvals[0];
+         // Terminal mode: use grid-based positioning where each
+         // column is exactly charwidth pixels. This prevents emoji
+         // and other wide chars from causing cursor drift.
+         if (gettext().getTerminalAttributes() != null) {
+            int end = Math.min(charoff, oline.length());
+            newx = Wcwidth.stringWidth(oline.substring(0, end))
+               * charwidth;
+         } else {
+            if (0 != tabStop) {
+               int tabOffset = oline.indexOf('\t');
+               if (tabOffset != -1) {
+                  int[] tvals = new int[1];
+                  tvals[0] = charoff;
+                  nline = DeTabber.deTab(nline, tabOffset,
+                     tabStop, tvals);
+                  charoff = tvals[0];
+               }
             }
+            if (0 != charoff)
+               newx = measureWidth(nline.substring(0, charoff));
          }
-         if (0 != charoff)
-            newx = measureWidth(nline.substring(0, charoff));
       }
 
       saveScreenX = newx;
@@ -886,7 +897,7 @@ final class OldView extends AwtView {
          xchar = minColumns;
       if (ychar < 0)
          ychar = screenSize;
-      canvas.setSize(xchar * charwidth, ychar * charheight);
+      canvas.setSize(xchar * charwidth + 2 * inset, ychar * charheight);
       // UI.resize();
       // invalidate();//???
       // trace("pixelwidth = " + pixelWidth + " charwidth = " + charwidth + "
@@ -978,7 +989,12 @@ final class OldView extends AwtView {
          if (screenposy >= screenSize)
             moveScreen(screenposy - screenSize + 1);
          super.setSize(pixelWidth, newy);
-         ShellManager.getInstance().notifyResize(screenSize, minColumns);
+         // Only update default dimensions from main editing views,
+         // not the 1-line command buffer at the bottom of the frame.
+         if (screenSize > 1) {
+            MiscCommands.updateScreenDimensions(screenSize, minColumns);
+            ShellManager.getInstance().notifyResize(screenSize, minColumns);
+         }
          // imageg = null;
          // trace("oldview = " + this + " cliprect = " + cliprect);
          // trace("pixelwidth = " + pixelWidth + " charwidth = " + charwidth + "
@@ -1113,18 +1129,24 @@ final class OldView extends AwtView {
                   return;
                foldGutterPressed = false;
                foldClickToggled = false;
-               if (((MouseEvent) ev).getButton() == MouseEvent.BUTTON1
-                     && isShellBufferNoTracking()) {
-                  EventQueue.biglock2.lock();
-                  try {
-                     shellDragStart = mousepos((MouseEvent) ev);
-                  } finally {
-                     EventQueue.biglock2.unlock();
+               if (isShellBufferNoTracking()) {
+                  // Shell buffer without mouse tracking — only allow
+                  // text selection via drag, never move the cursor.
+                  if (((MouseEvent) ev).getButton()
+                        == MouseEvent.BUTTON1) {
+                     EventQueue.biglock2.lock();
+                     try {
+                        shellDragStart = mousepos((MouseEvent) ev);
+                     } finally {
+                        EventQueue.biglock2.unlock();
+                     }
+                  } else {
+                     shellDragStart = null;
                   }
                } else {
                   shellDragStart = null;
+                  mousepress((MouseEvent) ev);
                }
-               mousepress((MouseEvent) ev);
                mousePressed = ((MouseEvent) ev).getButton();
                break;
 
@@ -1466,13 +1488,23 @@ final class OldView extends AwtView {
             overrideBg != null ? overrideBg
                : AtView.background);
          imageg.fillRect(0, 0, pixelWidth, charheight);
-         atIt.setText(gettext().at(tindex).toString());
+         String lineText = gettext().at(tindex).toString();
 
          ScreenAttributes scrAttrs =
             gettext().getTerminalAttributes();
-         if (scrAttrs != null)
-            atIt.setTerminalAttrs(
-               scrAttrs.getRow(tindex));
+         int[] rowAttrs = scrAttrs != null
+            ? scrAttrs.getRow(tindex) : null;
+
+         // Strip wide-char padding before rendering so AWT
+         // draws wide characters at their natural double width.
+         if (scrAttrs != null) {
+            rowAttrs = Wcwidth.compressAttrs(lineText, rowAttrs);
+            lineText = Wcwidth.stripPadding(lineText);
+         }
+
+         atIt.setText(lineText);
+         if (rowAttrs != null)
+            atIt.setTerminalAttrs(rowAttrs);
 
          String bufShortName = null != gettext()
             ? gettext().fdes().getShortName() : "";

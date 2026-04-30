@@ -285,6 +285,49 @@ rdesk-alltest-run: rdesk-alltest-build
 rdesk-alltest-clean:
 	ssh -n -T rdesk 'docker rmi $(ALLTEST_IMAGE) 2>/dev/null'
 
+#==============================================================================
+# F22: Remote Docker esctest2 (VT100 compliance tests via Xvfb)
+#==============================================================================
+
+ESCTEST_IMAGE = javi-esctest2
+RDESK_ESCTEST_DIR = /tmp/javi-esctest2
+
+# Full pipeline: sync, build Docker image, run esctest2, fetch results
+rdesk-esctest2: rdesk-esctest2-sync rdesk-esctest2-build rdesk-esctest2-run rdesk-esctest2-fetch
+
+# Sync javi source to rdesk
+rdesk-esctest2-sync:
+	rsync -az $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_ESCTEST_DIR)/
+
+# Build esctest2 Docker image on rdesk
+rdesk-esctest2-build: rdesk-esctest2-sync
+	ssh -n -T rdesk 'cd $(RDESK_ESCTEST_DIR) && \
+	   docker build --build-arg SRC_HASH=$$(find src -type f -newer Dockerfile.esctest2 -print | wc -l) \
+	      -f Dockerfile.esctest2 -t $(ESCTEST_IMAGE) .'
+
+# Run esctest2 on rdesk via Docker
+rdesk-esctest2-run: rdesk-esctest2-build
+	ssh -n -T rdesk 'cd $(RDESK_ESCTEST_DIR) && \
+	   rm -rf results && mkdir -p results && \
+	   docker run --rm \
+	      -v $$(pwd)/results:/results \
+	      $(ESCTEST_IMAGE)'
+
+# Fetch esctest2 results from rdesk
+rdesk-esctest2-fetch:
+	@mkdir -p ai/esctest2-results
+	rsync -az rdesk:$(RDESK_ESCTEST_DIR)/results/ \
+	   ai/esctest2-results/ 2>/dev/null || true
+	@echo "=== Results fetched to ai/esctest2-results/ ==="
+	@if [ -f ai/esctest2-results/esctest2.log ]; then \
+	   tail -30 ai/esctest2-results/esctest2.log; \
+	fi
+
+# Clean remote esctest2 Docker image and files
+rdesk-esctest2-clean:
+	ssh -n -T rdesk 'docker rmi $(ESCTEST_IMAGE) 2>/dev/null; \
+	   rm -rf $(RDESK_ESCTEST_DIR)'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage

@@ -2,6 +2,7 @@ package javi;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -99,6 +100,7 @@ class Vt100ParserJUnitTest {
       int lastIncX, lastIncY, lastSetX, lastSetY;
       int lastSetXYx, lastSetXYy;
       int lastEraseCharsCount, lastInsertLinesCount;
+      int lastInsertCharsCount;
       int lastDeleteLinesCount;
       int lastScrollUpCount, lastScrollDownCount;
       boolean insertMode;
@@ -162,6 +164,12 @@ class Vt100ParserJUnitTest {
       void insertLines(int count, StringBuilder sb) {
          calls.add("insertLines:" + count);
          lastInsertLinesCount = count;
+      }
+
+      @Override
+      void insertChars(int count, StringBuilder sb) {
+         calls.add("insertChars:" + count);
+         lastInsertCharsCount = count;
       }
 
       void setInsertMode(boolean val, StringBuilder sb) {
@@ -254,6 +262,11 @@ class Vt100ParserJUnitTest {
       boolean cursorVisibleState = true;
       boolean respondDACalled;
       boolean respondCPRCalled;
+      boolean handleTabCalled;
+      boolean indexCalled, reverseIndexCalled, nextLineCalled;
+      boolean screenAlignmentCalled;
+      int scrollRegionTop, scrollRegionBottom;
+      boolean originModeEnabled;
 
       @Override
       void setMouseTracking(int mode, boolean enable) {
@@ -315,6 +328,62 @@ class Vt100ParserJUnitTest {
          calls.add("respondCursorPosition");
          respondCPRCalled = true;
       }
+
+      @Override
+      void handleTab(StringBuilder sb) {
+         calls.add("handleTab");
+         handleTabCalled = true;
+      }
+
+      @Override
+      void setScrollRegion(int top, int bottom, StringBuilder sb) {
+         calls.add("setScrollRegion:" + top + "," + bottom);
+         scrollRegionTop = top;
+         scrollRegionBottom = bottom;
+      }
+
+      @Override
+      void index(StringBuilder sb) {
+         calls.add("index");
+         indexCalled = true;
+      }
+
+      @Override
+      void reverseIndex(StringBuilder sb) {
+         calls.add("reverseIndex");
+         reverseIndexCalled = true;
+      }
+
+      @Override
+      void nextLine(StringBuilder sb) {
+         calls.add("nextLine");
+         nextLineCalled = true;
+      }
+
+      @Override
+      void screenAlignmentDisplay(StringBuilder sb) {
+         calls.add("screenAlignmentDisplay");
+         screenAlignmentCalled = true;
+      }
+
+      @Override
+      void setOriginMode(boolean enable) {
+         calls.add("setOriginMode:" + enable);
+         originModeEnabled = enable;
+      }
+
+      boolean respondRectChecksumCalled;
+      int[] rectChecksumParams;
+      int rectChecksumHighParam;
+
+      @Override
+      void respondRectChecksum(int[] params, int highParam,
+            StringBuilder sb) {
+         calls.add("respondRectChecksum");
+         respondRectChecksumCalled = true;
+         rectChecksumParams = params.clone();
+         rectChecksumHighParam = highParam;
+      }
    }
 
    // ── NORM state tests ───────────────────────────────────────
@@ -365,7 +434,8 @@ class Vt100ParserJUnitTest {
    @Test
    void tabAppendsToBuffer() throws Exception {
       feed("\t");
-      assertEquals("\t", sbContents());
+      assertTrue(screen.handleTabCalled,
+         "HT should be dispatched to handleTab");
    }
 
    @Test
@@ -416,9 +486,10 @@ class Vt100ParserJUnitTest {
    }
 
    @Test
-   void escMMovesUp() throws Exception {
+   void escMCallsReverseIndexOld() throws Exception {
       feed("\u001bM");
-      assertEquals(-1, screen.lastIncY);
+      assertTrue(screen.reverseIndexCalled,
+         "ESC M should call reverseIndex");
    }
 
    @Test
@@ -444,8 +515,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiCursorUpDefault() throws Exception {
       feed("\u001b[A");
-      // No digit entered: numacc[0]=0, def=false → incY(0)
-      assertEquals(0, screen.lastIncY);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(-1, screen.lastIncY);
    }
 
    @Test
@@ -457,7 +528,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiCursorDownDefault() throws Exception {
       feed("\u001b[B");
-      assertEquals(0, screen.lastIncY);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastIncY);
    }
 
    @Test
@@ -469,7 +541,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiCursorRightDefault() throws Exception {
       feed("\u001b[C");
-      assertEquals(0, screen.lastIncX);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastIncX);
    }
 
    @Test
@@ -481,7 +554,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiCursorLeftDefault() throws Exception {
       feed("\u001b[D");
-      assertEquals(0, screen.lastIncX);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(-1, screen.lastIncX);
    }
 
    @Test
@@ -495,9 +569,9 @@ class Vt100ParserJUnitTest {
    @Test
    void csiHomeDefault() throws Exception {
       feed("\u001b[H");
-      // No digits: currnumacc=0, def=false → case 1: setXY(1, numacc[0], sb)
+      // No digits: def=true → case 0: setXY(1, 1) (home)
       assertEquals(1, screen.lastSetXYx);
-      assertEquals(0, screen.lastSetXYy);
+      assertEquals(1, screen.lastSetXYy);
    }
 
    @Test
@@ -581,8 +655,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiEraseCharsDefault() throws Exception {
       feed("\u001b[P");
-      // def=false → eraseChars(numacc[0]) = eraseChars(0)
-      assertEquals(0, screen.lastEraseCharsCount);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastEraseCharsCount);
    }
 
    @Test
@@ -614,9 +688,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiDeleteLinesDefault() throws Exception {
       feed("\u001b[M");
-      // def=false → deleteLines(numacc[0]) = deleteLines(0)
-      // But code has: deleteLines(def ? 1 : numacc[currnumacc])
-      assertEquals(0, screen.lastDeleteLinesCount);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastDeleteLinesCount);
    }
 
    @Test
@@ -628,7 +701,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiScrollUpDefault() throws Exception {
       feed("\u001b[S");
-      assertEquals(0, screen.lastScrollUpCount);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastScrollUpCount);
    }
 
    @Test
@@ -640,7 +714,8 @@ class Vt100ParserJUnitTest {
    @Test
    void csiScrollDownDefault() throws Exception {
       feed("\u001b[T");
-      assertEquals(0, screen.lastScrollDownCount);
+      // No digit: default parameter = 1 per VT100 spec
+      assertEquals(1, screen.lastScrollDownCount);
    }
 
    @Test
@@ -730,9 +805,9 @@ class Vt100ParserJUnitTest {
    @Test
    void hvpHomeDefault() throws Exception {
       feed("\u001b[f");
-      // Same as H default: case 1 → setXY(1, numacc[0], sb)
+      // No digit: def=true → case 0: setXY(1, 1) (home)
       assertEquals(1, screen.lastSetXYx);
-      assertEquals(0, screen.lastSetXYy);
+      assertEquals(1, screen.lastSetXYy);
    }
 
    @Test
@@ -1310,39 +1385,62 @@ class Vt100ParserJUnitTest {
 
    @Test
    void formFeedAppendsToBuffer() throws Exception {
-      // FF (0x0C / char 12) — treated like newline
+      // FF (0x0C / char 12) — normalized to LF per VT100 spec
       feed("\u000c");
-      assertEquals("\u000c", sbContents());
+      assertEquals("\n", sbContents());
    }
 
    @Test
    void verticalTabAppendsToBuffer() throws Exception {
-      // VT (0x0B / char 11) — treated like newline
+      // VT (0x0B / char 11) — normalized to LF per VT100 spec
       feed("\u000b");
-      assertEquals("\u000b", sbContents());
+      assertEquals("\n", sbContents());
+   }
+
+   // ── CSI intermediate byte handling ─────────────────────────
+
+   @Test
+   void csiSpaceQIsConsumed() throws Exception {
+      // ESC[0 q — DECSCUSR (cursor style), space is intermediate
+      feed("\u001b[0 q");
+      assertEquals(NORM, state());
+      // Should not append 'q' to the output buffer
+      assertFalse(sbContents().contains("q"));
+   }
+
+   @Test
+   void csiGreaterParamsConsumedBeforeFinal() throws Exception {
+      // ESC[>4;2m — modifyOtherKeys (xterm).  CSI_GT must consume
+      // all parameter bytes (4, ;, 2) before the final byte (m).
+      feed("\u001b[>4;2m");
+      assertEquals(NORM, state());
+      assertFalse(sbContents().contains(";"));
+      assertFalse(sbContents().contains("m"));
+   }
+
+   @Test
+   void colonSubparameterConsumed() throws Exception {
+      // ESC[4:3m — curly underline via colon subparameter
+      feed("\u001b[4:3m");
+      assertEquals(NORM, state());
+      assertFalse(sbContents().contains(":"));
    }
 
    // ── CSI @ (Insert blank characters) ───────────────────────
 
    @Test
    void csiInsertBlanksDefault() throws Exception {
-      // ESC[@ — insert 1 blank (numacc[0] = 0 → 0+1 iterations)
+      // ESC[@ — insert 1 blank character at cursor
       feed("\u001b[@");
-      // The code appends spaces: for ii=0; ii <= numacc[0]; ii++
-      // With numacc[0]=0, it appends 1 space
-      assertTrue(sbContents().contains(" "));
+      // def=true (highestSet=-1), so insertChars(1)
+      assertEquals(1, screen.lastInsertCharsCount);
    }
 
    @Test
    void csiInsertBlanksWithCount() throws Exception {
       // ESC[3@ — insert 3 blank characters
       feed("\u001b[3@");
-      // for ii=0; ii <= 3; ii++ → 4 spaces
-      String contents = sbContents();
-      int spaces = 0;
-      for (char c : contents.toCharArray())
-         if (c == ' ') spaces++;
-      assertEquals(4, spaces);
+      assertEquals(3, screen.lastInsertCharsCount);
    }
 
    // ── CSI r (DECCARA) ───────────────────────────────────────
@@ -1380,15 +1478,15 @@ class Vt100ParserJUnitTest {
    void csiCursorUpDefaultIsOneWhenNoDigit() throws Exception {
       // ESC[A with def=true → incY(-1) (default 1)
       feed("\u001b[A");
-      // Parser: def = highestSet != currnumacc (both 0 initially)
-      // def = false, so incY(numacc[0]) = incY(0)
-      assertEquals(0, screen.lastIncY);
+      // highestSet=-1, currnumacc=0 → def=true → incY(-1)
+      assertEquals(-1, screen.lastIncY);
    }
 
    @Test
    void csiCursorRightDefaultIsOneWhenNoDigit() throws Exception {
       feed("\u001b[C");
-      assertEquals(0, screen.lastIncX);
+      // def=true → incX(1)
+      assertEquals(1, screen.lastIncX);
    }
 
    // ── CSI X (erase character, same as P) ─────────────────────
@@ -1397,8 +1495,8 @@ class Vt100ParserJUnitTest {
    void csiEraseCharXDefault() throws Exception {
       // ESC[X with no count — def=true → eraseChars(1)
       feed("\u001b[X");
-      // def = highestSet != currnumacc → def = true → 1
-      assertEquals(0, screen.lastEraseCharsCount);
+      // highestSet=-1 → def=true → eraseChars(1)
+      assertEquals(1, screen.lastEraseCharsCount);
    }
 
    // ── OSC code 1 (set icon name) ────────────────────────────
@@ -1440,18 +1538,17 @@ class Vt100ParserJUnitTest {
 
    @Test
    void csiNextLineDefault() throws Exception {
-      // ESC[E — no count, default 1
+      // ESC[E — no count, def=true → incY(1), setX(1)
       feed("\u001b[E");
-      // def = true → incY(1)
-      // But numacc behavior: highestSet=0, currnumacc=0 → def false
-      assertEquals(0, screen.lastIncY);
+      assertEquals(1, screen.lastIncY);
       assertEquals(1, screen.lastSetX);
    }
 
    @Test
    void csiPrevLineDefault() throws Exception {
       feed("\u001b[F");
-      assertEquals(0, screen.lastIncY);
+      // def=true → incY(-1), setX(1)
+      assertEquals(-1, screen.lastIncY);
       assertEquals(1, screen.lastSetX);
    }
 
@@ -1459,27 +1556,25 @@ class Vt100ParserJUnitTest {
 
    @Test
    void csiColumnAbsoluteDefault() throws Exception {
-      // ESC[G with no number — def true → setX(1)
+      // ESC[G with no number — def=true → setX(1)
       feed("\u001b[G");
-      // def = highestSet(0) != currnumacc(0) → false → setX(numacc[0]=0)
-      assertEquals(0, screen.lastSetX);
+      assertEquals(1, screen.lastSetX);
    }
 
    @Test
    void csiRowAbsoluteDefault() throws Exception {
-      // ESC[d with no number
+      // ESC[d with no number — def=true → setY(1)
       feed("\u001b[d");
-      assertEquals(0, screen.lastSetY);
+      assertEquals(1, screen.lastSetY);
    }
 
    // ── CSI M (delete lines) default ──────────────────────────
 
    @Test
    void csiDeleteLinesDefaultIsOne() throws Exception {
-      // ESC[M — delete lines, def=true → 1
+      // ESC[M — delete lines, def=true → deleteLines(1)
       feed("\u001b[M");
-      // def = highestSet != currnumacc → highestSet=0, currnumacc=0 → def=false
-      assertEquals(0, screen.lastDeleteLinesCount);
+      assertEquals(1, screen.lastDeleteLinesCount);
    }
 
    // ── CSI S/T (scroll) defaults ──────────────────────────────
@@ -1487,13 +1582,15 @@ class Vt100ParserJUnitTest {
    @Test
    void csiScrollUpDefaultIsOne() throws Exception {
       feed("\u001b[S");
-      assertEquals(0, screen.lastScrollUpCount);
+      // def=true → scrollUp(1)
+      assertEquals(1, screen.lastScrollUpCount);
    }
 
    @Test
    void csiScrollDownDefaultIsOne() throws Exception {
       feed("\u001b[T");
-      assertEquals(0, screen.lastScrollDownCount);
+      // def=true → scrollDown(1)
+      assertEquals(1, screen.lastScrollDownCount);
    }
 
    // ── Unrecognized ESC code falls through ────────────────────
@@ -1530,5 +1627,352 @@ class Vt100ParserJUnitTest {
       // char 0x05 (ENQ)
       feed("\u0005");
       assertEquals(NORM, state());
+   }
+
+   @Test
+   void tabCallsHandleTab() throws Exception {
+      feed("\t");
+      assertTrue(screen.handleTabCalled,
+         "HT (0x09) should call handleTab");
+      assertTrue(screen.calls.contains("handleTab"));
+      assertEquals(NORM, state());
+   }
+
+   // ── IND / RI / NEL tests ──────────────────────────────────
+
+   @Test
+   void escDCallsIndex() throws Exception {
+      feed("\u001bD");
+      assertTrue(screen.indexCalled, "ESC D should call index");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escECallsNextLine() throws Exception {
+      feed("\u001bE");
+      assertTrue(screen.nextLineCalled,
+         "ESC E should call nextLine");
+      assertEquals(NORM, state());
+   }
+
+   // ── DECSTBM (CSI r) tests ─────────────────────────────────
+
+   @Test
+   void csiSetsScrollRegion() throws Exception {
+      feed("\u001b[5;15r");
+      assertEquals(5, screen.scrollRegionTop);
+      assertEquals(15, screen.scrollRegionBottom);
+   }
+
+   @Test
+   void csiResetScrollRegion() throws Exception {
+      feed("\u001b[5;15r"); // set first
+      feed("\u001b[r");     // reset
+      assertEquals(0, screen.scrollRegionTop);
+      assertEquals(0, screen.scrollRegionBottom);
+   }
+
+   // ── DECALN (ESC # 8) test ─────────────────────────────────
+
+   @Test
+   void escHash8CallsDecaln() throws Exception {
+      feed("\u001b#8");
+      assertTrue(screen.screenAlignmentCalled,
+         "ESC # 8 should call screenAlignmentDisplay");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escHashOtherIgnored() throws Exception {
+      feed("\u001b#3");
+      assertFalse(screen.screenAlignmentCalled,
+         "ESC # 3 should not call screenAlignmentDisplay");
+      assertEquals(NORM, state());
+   }
+
+   // ── DECOM (ESC[?6h/l) tests ───────────────────────────────
+
+   @Test
+   void originModeOn() throws Exception {
+      feed("\u001b[?6h");
+      assertTrue(screen.originModeEnabled);
+   }
+
+   @Test
+   void originModeOff() throws Exception {
+      feed("\u001b[?6h"); // enable
+      feed("\u001b[?6l"); // disable
+      assertFalse(screen.originModeEnabled);
+   }
+
+   // ── DEC Special Graphics charset tests ────────────────────
+
+   @Test
+   void escParen0ActivatesDecGraphicsOnG0() throws Exception {
+      // ESC ( 0 → G0 = DEC Special Graphics
+      // 'q' (0x71) should map to horizontal line U+2500
+      feed("\u001b(0q");
+      assertEquals("\u2500", sbContents(),
+         "G0 DEC graphics: 'q' should map to horiz line");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   void escParenBResetsG0ToAscii() throws Exception {
+      feed("\u001b(0");  // G0 = DEC graphics
+      feed("\u001b(B");  // G0 = ASCII
+      feed("q");
+      assertEquals("q", sbContents(),
+         "G0 ASCII: 'q' should remain 'q'");
+   }
+
+   @Test
+   void decGraphicsMapsBorderChars() throws Exception {
+      // ESC ( 0, then send box drawing mnemonics: l q k x x m q j
+      // l=top-left, q=horiz, k=top-right, x=vert, m=bot-left, j=bot-right
+      feed("\u001b(0lqkxxmqj");
+      String expected = "\u250C\u2500\u2510\u2502\u2502\u2514\u2500\u2518";
+      assertEquals(expected, sbContents());
+   }
+
+   @Test
+   void decGraphicsOnlyAffectsRange60To7E() throws Exception {
+      // Characters below 0x60 should pass through unchanged
+      feed("\u001b(0ABC 123");
+      assertEquals("ABC 123", sbContents());
+   }
+
+   @Test
+   void soSelectsG1() throws Exception {
+      // Set G1 to DEC graphics, then SO to activate G1
+      feed("\u001b)0");   // G1 = DEC graphics
+      feed("\u000E");     // SO = select G1
+      feed("q");
+      assertEquals("\u2500", sbContents(),
+         "SO should activate G1 (DEC graphics)");
+   }
+
+   @Test
+   void siSelectsG0() throws Exception {
+      // Set G1 to DEC graphics, SO to select G1, then SI to select G0
+      feed("\u001b)0");   // G1 = DEC graphics
+      feed("\u000E");     // SO = select G1
+      feed("\u000F");     // SI = select G0 (ASCII by default)
+      feed("q");
+      assertEquals("q", sbContents(),
+         "SI should revert to G0 (ASCII)");
+   }
+
+   @Test
+   void g1DecGraphicsViaParenRight() throws Exception {
+      // ESC ) 0 = set G1 to DEC graphics
+      feed("\u001b)0");
+      // G0 is still ASCII, so normal chars unchanged
+      feed("q");
+      assertEquals("q", sbContents(),
+         "G1 designation should not affect G0 output");
+   }
+
+   @Test
+   void decGraphicsAllMappedChars() throws Exception {
+      // Verify the full map: 0x60 through 0x7E
+      char[] expected = Vt100Parser.DEC_GRAPHICS_MAP;
+      feed("\u001b(0"); // G0 = DEC graphics
+      StringBuilder input = new StringBuilder();
+      for (char c = 0x60; c <= 0x7E; c++)
+         input.append(c);
+      feed(input.toString());
+      String result = sbContents();
+      assertEquals(expected.length, result.length());
+      for (int i = 0; i < expected.length; i++)
+         assertEquals(expected[i], result.charAt(i),
+            "char 0x" + Integer.toHexString(0x60 + i));
+   }
+
+   @Test
+   void escSpaceConsumedWithoutAffectingCharsets()
+         throws Exception {
+      // ESC SP F — should consume 'F' without changing charsets
+      feed("\u001b F");
+      assertEquals(NORM, state());
+      // G0 should still be ASCII
+      feed("q");
+      assertEquals("q", sbContents());
+   }
+
+   // ── DCS / APC / PM / SOS string sequences ────────────────
+
+   @Test
+   @DisplayName("DCS sequence consumed until ST (ESC backslash)")
+   void dcsConsumedUntilSt() throws Exception {
+      // ESC P ... ESC \  (DCS with ESC \ terminator)
+      feed("\u001bPsome DCS data\u001b\\");
+      assertEquals(NORM, state());
+      // Nothing should leak into the output
+      assertEquals("", sbContents());
+   }
+
+   @Test
+   @DisplayName("APC sequence consumed until ST")
+   void apcConsumedUntilSt() throws Exception {
+      feed("\u001b_APC content\u001b\\");
+      assertEquals(NORM, state());
+      assertEquals("", sbContents());
+   }
+
+   @Test
+   @DisplayName("DCS followed by normal text")
+   void dcsFollowedByText() throws Exception {
+      feed("\u001bPdcs stuff\u001b\\hello");
+      assertEquals(NORM, state());
+      assertEquals("hello", sbContents());
+   }
+
+   @Test
+   @DisplayName("DCS with 8-bit ST (0x9C) terminator")
+   void dcsTerminatedBy8bitSt() throws Exception {
+      feed("\u001bPdcs data\u009C");
+      assertEquals(NORM, state());
+      assertEquals("", sbContents());
+   }
+
+   @Test
+   @DisplayName("PM sequence consumed without output")
+   void pmConsumedWithoutOutput() throws Exception {
+      feed("\u001b^privacy message\u001b\\");
+      assertEquals(NORM, state());
+      assertEquals("", sbContents());
+   }
+
+   // ── handleModeSet bug fix tests ────────────────────────────
+
+   @Test
+   @DisplayName("CSI 4h sets insert mode (single param)")
+   void modeSetSingleParam() throws Exception {
+      feed("\u001b[4h");
+      long setCount = screen.calls.stream()
+         .filter(c -> c.equals("setInsertMode:true"))
+         .count();
+      assertEquals(1, setCount,
+         "single param should call setInsertMode once");
+   }
+
+   @Test
+   @DisplayName("CSI 20;4h — unknown mode 20, then insert mode 4")
+   void modeSetMultiParamsProcessesEach() throws Exception {
+      // Old buggy code checked numacc[currnumacc] (=4) for both
+      // iterations, calling setInsertMode twice.
+      // Fixed code checks numacc[0]=20 (unknown) then numacc[1]=4.
+      feed("\u001b[20;4h");
+      long setCount = screen.calls.stream()
+         .filter(c -> c.equals("setInsertMode:true"))
+         .count();
+      assertEquals(1, setCount,
+         "mode 20 is unknown; only mode 4 should set insert mode");
+   }
+
+   @Test
+   @DisplayName("CSI 4;4h — duplicate mode 4 calls setInsertMode twice")
+   void modeSetDuplicateParamsBothProcessed() throws Exception {
+      feed("\u001b[4;4h");
+      long setCount = screen.calls.stream()
+         .filter(c -> c.equals("setInsertMode:true"))
+         .count();
+      assertEquals(2, setCount,
+         "both params are 4, so setInsertMode called twice");
+   }
+
+   @Test
+   @DisplayName("CSI 4l resets insert mode (single param)")
+   void modeResetSingleParam() throws Exception {
+      feed("\u001b[4h"); // enable first
+      feed("\u001b[4l"); // then disable
+      long resetCount = screen.calls.stream()
+         .filter(c -> c.equals("setInsertMode:false"))
+         .count();
+      assertEquals(1, resetCount);
+   }
+
+   // ── DEC private mode tests ─────────────────────────────────
+
+   @Test
+   @DisplayName("CSI ?1048h saves cursor via private mode")
+   void decMode1048hSavesCursor() throws Exception {
+      feed("\u001b[?1048h");
+      assertTrue(screen.saveCursorCalled,
+         "mode 1048h should save cursor");
+   }
+
+   @Test
+   @DisplayName("CSI ?1048l restores cursor via private mode")
+   void decMode1048lRestoresCursor() throws Exception {
+      feed("\u001b[?1048l");
+      assertTrue(screen.restoreCursorCalled,
+         "mode 1048l should restore cursor");
+   }
+
+   @Test
+   @DisplayName("CSI ?9h enables X10 mouse tracking as normal")
+   void decMode9EnablesMouse() throws Exception {
+      feed("\u001b[?9h");
+      assertEquals(1000, screen.mouseTrackMode);
+      assertTrue(screen.mouseTrackEnable);
+   }
+
+   @Test
+   @DisplayName("CSI ?5h reverse video accepted without error")
+   void decMode5AcceptedSilently() throws Exception {
+      feed("\u001b[?5h");
+      assertEquals(NORM, state());
+      // No error logged — just accepted
+   }
+
+   @Test
+   @DisplayName("CSI ?5l reverse video reset accepted")
+   void decMode5ResetAccepted() throws Exception {
+      feed("\u001b[?5l");
+      assertEquals(NORM, state());
+   }
+
+   // ── DECRQCRA (CSI * y) parser tests ───────────────────────
+
+   @Test
+   @DisplayName("CSI Pid;Pp;Pt;Pl;Pb;Pr * y dispatches DECRQCRA")
+   void decrqcraDispatched() throws Exception {
+      feed("\u001b[1;1;1;1;24;80*y");
+      assertTrue(screen.respondRectChecksumCalled,
+         "DECRQCRA should be dispatched");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   @DisplayName("DECRQCRA passes all 6 parameters")
+   void decrqcraPassesParams() throws Exception {
+      feed("\u001b[7;1;2;3;10;40*y");
+      assertTrue(screen.respondRectChecksumCalled);
+      assertEquals(7, screen.rectChecksumParams[0], "Pid");
+      assertEquals(1, screen.rectChecksumParams[1], "Pp");
+      assertEquals(2, screen.rectChecksumParams[2], "Pt");
+      assertEquals(3, screen.rectChecksumParams[3], "Pl");
+      assertEquals(10, screen.rectChecksumParams[4], "Pb");
+      assertEquals(40, screen.rectChecksumParams[5], "Pr");
+      assertEquals(5, screen.rectChecksumHighParam, "highParam");
+   }
+
+   @Test
+   @DisplayName("CSI * z (unknown final) discarded")
+   void csiStarUnknownDiscarded() throws Exception {
+      feed("\u001b[1;1*z");
+      assertFalse(screen.respondRectChecksumCalled,
+         "unknown CSI * final should not dispatch DECRQCRA");
+      assertEquals(NORM, state());
+   }
+
+   @Test
+   @DisplayName("CSI * y with no params dispatches with defaults")
+   void decrqcraNoParams() throws Exception {
+      feed("\u001b[*y");
+      assertTrue(screen.respondRectChecksumCalled,
+         "DECRQCRA with no params should still dispatch");
    }
 }

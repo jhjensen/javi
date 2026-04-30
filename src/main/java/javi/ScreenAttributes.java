@@ -181,6 +181,27 @@ public final class ScreenAttributes {
    }
 
    /**
+    * Shifts all attribute row keys by the given offset.
+    * Rows that would go below zero are discarded.
+    * Used when scrollback lines are trimmed from the buffer.
+    *
+    * @param offset amount to add to each line key (negative to shift down)
+    */
+   public void shiftAllLines(int offset) {
+      if (0 == offset)
+         return;
+      java.util.HashMap<Integer, int[]> shifted =
+         new java.util.HashMap<>();
+      for (java.util.Map.Entry<Integer, int[]> e : rows.entrySet()) {
+         int newKey = e.getKey() + offset;
+         if (newKey >= 0)
+            shifted.put(newKey, e.getValue());
+      }
+      rows.clear();
+      rows.putAll(shifted);
+   }
+
+   /**
     * Updates the column capacity (e.g. on terminal resize).
     *
     * @param newCols new column count
@@ -202,5 +223,151 @@ public final class ScreenAttributes {
     */
    public int getColumns() {
       return cols;
+   }
+
+   /**
+    * Creates a deep copy of this attribute grid.
+    *
+    * <p>Used by the alternate screen buffer to snapshot the main
+    * screen's attributes before switching, so that the alternate
+    * screen can write freely without polluting the saved state.</p>
+    *
+    * @return a new ScreenAttributes with cloned row data
+    */
+   public ScreenAttributes snapshot() {
+      ScreenAttributes copy = new ScreenAttributes(cols);
+      for (java.util.Map.Entry<Integer, int[]> entry
+            : rows.entrySet()) {
+         copy.rows.put(entry.getKey(),
+            entry.getValue().clone());
+      }
+      return copy;
+   }
+
+   /**
+    * Replaces all data in this grid with a deep copy of the
+    * given source. Used to restore the main screen's attributes
+    * after exiting the alternate screen buffer.
+    *
+    * @param source the attribute grid to restore from
+    */
+   public void restoreFrom(ScreenAttributes source) {
+      rows.clear();
+      for (java.util.Map.Entry<Integer, int[]> entry
+            : source.rows.entrySet()) {
+         rows.put(entry.getKey(),
+            entry.getValue().clone());
+      }
+      cols = source.cols;
+   }
+
+   /**
+    * Shifts attribute rows up within a region, discarding the top
+    * rows and clearing the bottom ones.  Used when lines are
+    * deleted or the screen scrolls up.
+    *
+    * @param startLine first line of the region (inclusive)
+    * @param endLine   last line of the region (exclusive)
+    * @param count     number of lines to shift up
+    */
+   public void shiftLinesUp(int startLine, int endLine, int count) {
+      if (count <= 0 || startLine >= endLine)
+         return;
+      for (int dst = startLine; dst < endLine; dst++) {
+         int src = dst + count;
+         if (src < endLine) {
+            int[] row = rows.get(src);
+            if (null != row)
+               rows.put(dst, row);
+            else
+               rows.remove(dst);
+         } else {
+            rows.remove(dst);
+         }
+      }
+   }
+
+   /**
+    * Shifts attribute rows down within a region, discarding the
+    * bottom rows and clearing the top ones.  Used when lines are
+    * inserted or the screen scrolls down.
+    *
+    * @param startLine first line of the region (inclusive)
+    * @param endLine   last line of the region (exclusive)
+    * @param count     number of lines to shift down
+    */
+   public void shiftLinesDown(int startLine, int endLine, int count) {
+      if (count <= 0 || startLine >= endLine)
+         return;
+      for (int dst = endLine - 1; dst >= startLine; dst--) {
+         int src = dst - count;
+         if (src >= startLine) {
+            int[] row = rows.get(src);
+            if (null != row)
+               rows.put(dst, row);
+            else
+               rows.remove(dst);
+         } else {
+            rows.remove(dst);
+         }
+      }
+   }
+
+   /**
+    * Shifts cell attributes left within a row, filling vacated
+    * cells on the right with the given attribute.  Used by DCH
+    * (Delete Character) to keep attributes aligned after text
+    * shifts left.
+    *
+    * @param line     1-based line number
+    * @param col      0-based column where the shift starts
+    * @param count    number of cells to remove/shift
+    * @param colLimit total column width (cells beyond this are lost)
+    * @param fill     attribute to fill vacated cells at the right
+    */
+   public void shiftCellsLeft(int line, int col, int count,
+         int colLimit, int fill) {
+      if (count <= 0 || col < 0)
+         return;
+      int[] row = rows.get(line);
+      if (null == row)
+         return;
+      int len = Math.min(row.length, colLimit);
+      for (int dst = col; dst < len; dst++) {
+         int src = dst + count;
+         row[dst] = (src < len) ? row[src] : fill;
+      }
+   }
+
+   /**
+    * Shifts cell attributes right within a row, filling vacated
+    * cells at the insertion point with the given attribute.  Used
+    * by ICH (Insert Character) to keep attributes aligned after
+    * text shifts right.
+    *
+    * @param line     1-based line number
+    * @param col      0-based column where the shift starts
+    * @param count    number of cells to insert
+    * @param colLimit total column width (cells shifted past this are lost)
+    * @param fill     attribute to fill inserted cells
+    */
+   public void shiftCellsRight(int line, int col, int count,
+         int colLimit, int fill) {
+      if (count <= 0 || col < 0)
+         return;
+      int[] row = rows.get(line);
+      if (null == row) {
+         row = new int[Math.max(this.cols, colLimit)];
+         rows.put(line, row);
+      } else if (row.length < colLimit) {
+         row = Arrays.copyOf(row, colLimit);
+         rows.put(line, row);
+      }
+      int len = Math.min(row.length, colLimit);
+      // Shift right from end
+      for (int dst = len - 1; dst >= col; dst--) {
+         int src = dst - count;
+         row[dst] = (src >= col) ? row[src] : fill;
+      }
    }
 }

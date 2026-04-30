@@ -44,6 +44,8 @@ public final class MiscCommands extends Rgroup {
       LOAD_PLUGIN,   // 29: :loadplugin - load a plugin JAR
       LOAD_CLASS,    // 30: :loadclass - load a class by name (plugin)
       CONTEXT_HELP,  // 31: toggle context help panel
+      HEAP_DUMP,     // 32: :heapdump - write HPROF heap dump
+      TERM_LOG,      // 33: :termlog - toggle terminal I/O logging
    }
 
    private static final Cmd[] CMDS = Cmd.values();
@@ -82,6 +84,7 @@ public final class MiscCommands extends Rgroup {
          null,               // 29: loadplugin — via registerArgCommand
          "loadclass",        // 30
          null,               // 31: contexthelp — via registerCommand
+         "heapdump",         // 32
       };
       final String[] descs = {
          null,
@@ -306,12 +309,19 @@ public final class MiscCommands extends Rgroup {
                arg instanceof String ? (String) arg : null);
             return null;
          });
+      registerArgCommand("termlog",
+         "toggle terminal I/O logging", "shell",
+         (arg, count, rcount, fvc, dot) -> {
+            doTermLog(fvc,
+               arg instanceof String ? (String) arg : null);
+            return null;
+         });
    }
 
    private static TextEdit debugfile;
    private static TextEdit cmdfile;
-   private static int defwidth = 80;
-   private static int defheight = 80;
+   private static volatile int defwidth = 80;
+   private static volatile int defheight = 80;
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
@@ -322,6 +332,9 @@ public final class MiscCommands extends Rgroup {
             return null;
          case LOAD_CLASS:
             loadClass(arg instanceof String ? (String) arg : null);
+            return null;
+         case HEAP_DUMP:
+            doHeapDump(fvc);
             return null;
 
          default:
@@ -337,6 +350,21 @@ public final class MiscCommands extends Rgroup {
 
    public static int getWidth() {
       return defwidth;
+   }
+
+   /**
+    * Updates the default screen dimensions from actual window metrics.
+    * Called by OldView when the canvas is resized so that new shells
+    * inherit the correct column/row counts.
+    *
+    * @param rows number of character rows
+    * @param cols number of character columns
+    */
+   public static void updateScreenDimensions(int rows, int cols) {
+      if (rows > 0)
+         defheight = rows;
+      if (cols > 0)
+         defwidth = cols;
    }
 
    private static final class MyFl implements EditContainer.FileStatusListener {
@@ -1136,6 +1164,55 @@ public final class MiscCommands extends Rgroup {
          return f;
       // Return build/libs path for the error message
       return new java.io.File("build/libs/" + jarName);
+   }
+
+   private static void doHeapDump(FvContext fvc) {
+      String path = "/tmp/javi-heap-"
+         + System.currentTimeMillis() + ".hprof";
+      try {
+         var server = java.lang.management.ManagementFactory
+            .getPlatformMBeanServer();
+         var mxBean = java.lang.management.ManagementFactory
+            .newPlatformMXBeanProxy(server,
+               "com.sun.management:type=HotSpotDiagnostic",
+               com.sun.management.HotSpotDiagnosticMXBean.class);
+         mxBean.dumpHeap(path, true);
+         UI.reportMessage("Heap dump written to " + path);
+      } catch (Exception e) {
+         UI.reportMessage("Heap dump failed: " + e.getMessage());
+         trace("doHeapDump: " + e);
+      }
+   }
+
+   /**
+    * Handles the :termlog command. Usage:
+    * :termlog on — enable logging to ~/javi-termlog.txt
+    * :termlog off — disable logging
+    * :termlog /path/to/file — enable logging to specified file
+    */
+   private static void doTermLog(FvContext fvc, String arg) {
+      ShellManager mgr = ShellManager.getInstance();
+      ShellSession session = mgr.getActive();
+      if (null == session) {
+         UI.reportMessage("No active shell session");
+         return;
+      }
+      Vt100 vt = session.getVt100();
+      if (null == vt) {
+         UI.reportMessage("No active terminal");
+         return;
+      }
+      if (null == arg || arg.isEmpty() || "on".equals(arg)) {
+         vt.termLog.enable();
+         UI.reportMessage("Terminal logging enabled: "
+            + "~/javi-termlog.txt");
+      } else if ("off".equals(arg)) {
+         vt.termLog.disable();
+         UI.reportMessage("Terminal logging disabled");
+      } else {
+         vt.termLog.enable(java.nio.file.Path.of(arg));
+         UI.reportMessage("Terminal logging enabled: " + arg);
+      }
    }
 
    // Parse a key specification string into a JeyEvent.

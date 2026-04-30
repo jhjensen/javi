@@ -1,0 +1,56 @@
+# javi terminal emulator terminfo entry
+#
+# This terminfo describes the capabilities of javi's built-in VT100
+# terminal emulator. It is derived from xterm-256color but omits
+# capabilities that javi does not implement:
+#
+#   - No italic (sitm/ritm) — SGR 3/23 silently ignored
+#   - No dim (dim) — SGR 2 silently ignored
+#   - No blink (blink) — SGR 5 silently ignored
+#   - No invisible (invis) — SGR 8 silently ignored
+#   - No color palette redefinition (initc, oc)
+#   - No printer support (mc0/mc4/mc5)
+#   - No margin bell, logging, or Tektronix mode
+#   - No DEC locator or highlight mouse tracking
+#   - No smglp/smglr/smgrp (horizontal margins)
+#
+# Install:  tic terminfo/javi.terminfo
+# Use:      export TERM=javi-256color
+#
+javi-256color|javi terminal emulator with 256 colors,
+	am, bce, km, mir, msgr, npc, xenl,
+	colors#0x100, cols#80, it#8, lines#24, pairs#0x10000,
+	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	bel=^G, bold=\E[1m, cbt=\E[Z, civis=\E[?25l,
+	clear=\E[H\E[2J, cnorm=\E[?12l\E[?25h, cr=\r,
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H,
+	cud=\E[%p1%dB, cud1=\n, cuf=\E[%p1%dC, cuf1=\E[C,
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A,
+	dch=\E[%p1%dP, dch1=\E[P,
+	dl=\E[%p1%dM, dl1=\E[M, ech=\E[%p1%dX, ed=\E[J, el=\E[K,
+	el1=\E[1K, home=\E[H,
+	hpa=\E[%i%p1%dG, ht=^I, hts=\EH, ich=\E[%p1%d@,
+	il=\E[%p1%dL, il1=\E[L, ind=\n, indn=\E[%p1%dS,
+	is2=\E[!p\E[?3;4l\E[4l\E>,
+	kDC=\E[3;2~, kEND=\E[1;2F, kHOM=\E[1;2H, kIC=\E[2;2~,
+	kLFT=\E[1;2D, kNXT=\E[6;2~, kPRV=\E[5;2~, kRIT=\E[1;2C,
+	kbs=^?, kcbt=\E[Z, kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC,
+	kcuu1=\EOA, kdch1=\E[3~, kend=\EOF, kent=\EOM,
+	kf1=\EOP, kf2=\EOQ, kf3=\EOR, kf4=\EOS,
+	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~,
+	kf9=\E[20~, kf10=\E[21~, kf11=\E[23~, kf12=\E[24~,
+	khome=\EOH, kich1=\E[2~, knp=\E[6~, kpp=\E[5~,
+	kmous=\E[<, nel=\EE,
+	op=\E[39;49m, rc=\E8, rep=%p1%c\E[%p2%{1}%-%db,
+	rev=\E[7m, ri=\EM, rin=\E[%p1%dT, rmacs=\E(B,
+	rmam=\E[?7l, rmcup=\E[?1049l, rmir=\E[4l,
+	rmkx=\E[?1l\E>, rmso=\E[27m, rmul=\E[24m,
+	rs2=\E[!p\E[?3;4l\E[4l\E>, sc=\E7,
+	setab=\E[%?%p1%{8}%<%t4%p1%d%e%p1%{16}%<%t10%p1%{8}%-%d%e48;5;%p1%d%;m,
+	setaf=\E[%?%p1%{8}%<%t3%p1%d%e%p1%{16}%<%t9%p1%{8}%-%d%e38;5;%p1%d%;m,
+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m,
+	sgr0=\E(B\E[m, smacs=\E(0, smam=\E[?7h,
+	smcup=\E[?1049h, smir=\E[4h, smkx=\E[?1h\E=,
+	smso=\E[7m, smul=\E[4m, tbc=\E[3g,
+	u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?%[;0123456789]c,
+	u9=\E[c, vpa=\E[%i%p1%dd,

@@ -120,7 +120,7 @@ public final class ShellSession {
       ProcessBuilder pb = new ProcessBuilder(cmd);
       pb.redirectErrorStream(true);
       java.util.Map<String, String> env = pb.environment();
-      env.put("TERM", "xterm");
+      env.put("TERM", "xterm-256color");
       env.put("COLUMNS", Integer.toString(cols));
       env.put("LINES", Integer.toString(rows));
       env.putAll(envVars);
@@ -129,17 +129,7 @@ public final class ShellSession {
       }
       this.process = pb.start();
       trace("ShellSession " + sessionId + ": started process with charset "
-         + charset.name() + " TERM=xterm COLUMNS=" + cols + " LINES=" + rows);
-
-      // Send stty to set PTY dimensions
-      try {
-         OutputStreamWriter sttyWriter = new OutputStreamWriter(
-            process.getOutputStream(), charset);
-         sttyWriter.write("stty rows " + rows + " cols " + cols + "\n");
-         sttyWriter.flush();
-      } catch (IOException e) {
-         trace("ShellSession " + sessionId + ": failed to send stty: " + e);
-      }
+         + charset.name() + " TERM=xterm-256color COLUMNS=" + cols + " LINES=" + rows);
 
       // Create VT100 terminal
       this.vt100 = new Vt100(
@@ -149,6 +139,19 @@ public final class ShellSession {
             null),
          charset
       );
+
+      // Set initial PTY size in a daemon thread — the PTY created by
+      // script(1) starts with 0x0 dimensions because javi has no
+      // controlling terminal to inherit from.  We need to wait briefly
+      // for the child shell process to appear before we can discover
+      // its TTY device and call stty.
+      final int initRows = rows;
+      final int initCols = cols;
+      Thread ptyInit = new Thread(() -> {
+         initializePtySize(initRows, initCols);
+      }, "pty-init-" + sessionId);
+      ptyInit.setDaemon(true);
+      ptyInit.start();
    }
 
    /**
@@ -386,15 +389,313 @@ public final class ShellSession {
    /**
     * Notifies this session that the display has been resized.
     *
-    * <p>Propagates the new dimensions to the VT100 terminal, which
-    * updates the PTY via stty.</p>
+    * <p>Updates the terminal's internal state first via the event
+    * queue, then notifies child processes of the new dimensions.
+    * This ordering is critical: the terminal must process the
+    * resize (updating rows, scroll region, cursor bounds) before
+    * child apps receive SIGWINCH and start redrawing for the new
+    * size. Otherwise, the child's new-size escape sequences are
+    * processed against stale state, causing garbled output.</p>
     *
     * @param rows the new number of rows
     * @param cols the new number of columns
     */
    void notifyResize(int rows, int cols) {
-      if (isAlive())
-         vt100.notifyResize(rows, cols);
+      if (isAlive()) {
+         vt100.notifyResize(rows, cols, () -> {
+            // Run PTY update in a daemon thread to avoid
+            // blocking the event-processing thread with
+            // process spawns (findChildTty, stty, kill).
+            Thread t = new Thread(
+               () -> updatePtySize(rows, cols),
+               "pty-resize-" + id);
+            t.setDaemon(true);
+            t.start();
+         });
+      }
+   }
+
+   /**
+    * Updates the PTY window size by finding the child shell's TTY
+    * device and calling stty on it directly. This ensures the PTY
+    * reports the correct dimensions even when a fullscreen app
+    * (htop, vim) is running.
+    */
+   /** Returns the stty flag for specifying a device: -f on macOS, -F on Linux. */
+   private static String sttyDeviceFlag() {
+      String os = System.getProperty("os.name", "").toLowerCase();
+      return (os.contains("mac") || os.contains("darwin"))
+         ? "-f" : "-F";
+   }
+
+   private void updatePtySize(int rows, int cols) {
+      if (null == process || !process.isAlive())
+         return;
+      try {
+         // On Linux, use /proc/<pid>/fd/0 to access the child's
+         // actual PTY fd.  This bypasses devpts namespace issues
+         // where "ps -o tty=" returns "pts/0" but the parent's
+         // /dev/pts/0 is a different device than the child's.
+         // TIOCSWINSZ via stty on the correct fd also triggers
+         // SIGWINCH in the kernel, so sendSigwinch is a fallback.
+         if (tryProcFdResize(rows, cols)) {
+            sendSigwinch();
+            return;
+         }
+         // Fallback: find TTY device name via ps and use stty.
+         // This is the primary path on macOS where /proc doesn't
+         // exist and devpts namespaces are not an issue.
+         String tty = findChildTty();
+         if (null == tty) {
+            trace("ShellSession " + id
+               + ": updatePtySize: no TTY found for process tree"
+               + " — sending SIGWINCH anyway");
+            sendSigwinch();
+            return;
+         }
+         String dev = tty.startsWith("/dev/") ? tty : "/dev/" + tty;
+         String flag = sttyDeviceFlag();
+         Process stty = new ProcessBuilder("stty", flag, dev,
+            "rows", Integer.toString(rows),
+            "cols", Integer.toString(cols))
+            .redirectErrorStream(true).start();
+         String sttyOut = new String(
+            stty.getInputStream().readAllBytes()).trim();
+         int rc = stty.waitFor();
+         if (rc != 0) {
+            trace("ShellSession " + id
+               + ": stty failed (rc=" + rc + "): " + sttyOut);
+         } else {
+            trace("ShellSession " + id
+               + ": stty " + flag + " " + dev + " rows "
+               + rows + " cols " + cols);
+         }
+         sendSigwinch();
+      } catch (Exception e) {
+         trace("ShellSession " + id
+            + ": updatePtySize failed: " + e);
+         // Even if something failed, try to send SIGWINCH so
+         // child apps at least know a resize occurred.
+         try {
+            sendSigwinch();
+         } catch (Exception e2) {
+            trace("ShellSession " + id
+               + ": sendSigwinch fallback failed: " + e2);
+         }
+      }
+   }
+
+   /**
+    * Tries to resize the child's PTY via /proc/&lt;pid&gt;/fd/0.
+    *
+    * <p>On Linux, {@code /proc/<pid>/fd/0} is a symlink to the
+    * process's actual stdin device (the PTY slave). Using this path
+    * avoids issues where {@code ps -o tty=} returns a device name
+    * that doesn't map to the same physical device in the parent's
+    * devpts namespace.</p>
+    *
+    * @return true if the resize succeeded
+    */
+   private boolean tryProcFdResize(int rows, int cols) {
+      try {
+         for (ProcessHandle child : (Iterable<ProcessHandle>)
+               process.toHandle().descendants()::iterator) {
+            String procFd = "/proc/" + child.pid() + "/fd/0";
+            java.io.File f = new java.io.File(procFd);
+            if (!f.exists())
+               continue;
+            Process stty = new ProcessBuilder("stty", "-F", procFd,
+               "rows", Integer.toString(rows),
+               "cols", Integer.toString(cols))
+               .redirectErrorStream(true).start();
+            String out = new String(
+               stty.getInputStream().readAllBytes()).trim();
+            int rc = stty.waitFor();
+            if (rc == 0) {
+               trace("ShellSession " + id
+                  + ": stty via " + procFd
+                  + " rows " + rows + " cols " + cols);
+               return true;
+            }
+            trace("ShellSession " + id
+               + ": stty " + procFd + " failed (rc="
+               + rc + "): " + out);
+         }
+      } catch (Exception e) {
+         trace("ShellSession " + id
+            + ": tryProcFdResize: " + e);
+      }
+      return false;
+   }
+
+   /**
+    * Finds the TTY device for a descendant shell process.
+    *
+    * <p>Scans all descendant processes looking for one with a real
+    * TTY device (not "?"). Falls back to the main process PID if
+    * no descendants exist.</p>
+    *
+    * @return the TTY device name (e.g., "ttys007"), or null if none
+    */
+   private String findChildTty() throws Exception {
+      // Try each descendant until we find one with a real TTY
+      for (ProcessHandle child : (Iterable<ProcessHandle>)
+            process.toHandle().descendants()::iterator) {
+         String tty = getTtyForPid(child.pid());
+         if (null != tty)
+            return tty;
+      }
+      // Fallback: check the main process itself
+      return getTtyForPid(process.pid());
+   }
+
+   /**
+    * Gets the TTY device name for a given PID via ps.
+    *
+    * @param pid the process ID to query
+    * @return the TTY name, or null if the process has no TTY
+    */
+   private String getTtyForPid(long pid) throws Exception {
+      Process ps = new ProcessBuilder("ps", "-o", "tty=",
+         "-p", Long.toString(pid))
+         .redirectErrorStream(true).start();
+      String tty = new String(
+         ps.getInputStream().readAllBytes()).trim();
+      ps.waitFor();
+      if (!tty.isEmpty() && !"?".equals(tty))
+         return tty;
+      return null;
+   }
+
+   /**
+    * Sets the initial PTY size after process startup.
+    *
+    * <p>Retries up to 10 times with 100ms delays to allow the child
+    * shell process to start and acquire a TTY device. Called from a
+    * daemon thread started in the constructor.</p>
+    *
+    * @param rows initial row count
+    * @param cols initial column count
+    */
+   private void initializePtySize(int rows, int cols) {
+      try {
+         for (int attempt = 0; attempt < 10; attempt++) {
+            Thread.sleep(100);
+            if (null == process || !process.isAlive())
+               return;
+            // Try /proc/<pid>/fd/0 first (Linux, namespace-safe)
+            if (tryProcFdResize(rows, cols)) {
+               trace("ShellSession " + id
+                  + ": initial PTY size via proc fd"
+                  + " rows " + rows + " cols " + cols);
+               sendSigwinch();
+               return;
+            }
+            // Fallback: stty with device name from ps
+            String tty = findChildTty();
+            if (null != tty) {
+               String dev = tty.startsWith("/dev/")
+                  ? tty : "/dev/" + tty;
+               String flag = sttyDeviceFlag();
+               Process stty = new ProcessBuilder("stty", flag, dev,
+                  "rows", Integer.toString(rows),
+                  "cols", Integer.toString(cols)).start();
+               stty.waitFor();
+               trace("ShellSession " + id
+                  + ": initial stty " + flag + " " + dev
+                  + " rows " + rows + " cols " + cols);
+               sendSigwinch();
+               return;
+            }
+         }
+         trace("ShellSession " + id
+            + ": initializePtySize: gave up after 10 attempts");
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      } catch (Exception e) {
+         trace("ShellSession " + id
+            + ": initializePtySize failed: " + e);
+      }
+   }
+
+   /**
+    * Sends SIGWINCH to the shell process and all of its descendants.
+    * This notifies running terminal applications that the window
+    * size has changed so they can re-query terminal dimensions.
+    *
+    * <p>Sends to each descendant individually, then to the direct
+    * process. Also looks up the foreground process group of each
+    * descendant's TTY and signals that group, ensuring foreground
+    * apps (like htop) receive the signal even when they are not
+    * direct descendants visible via ProcessHandle.</p>
+    */
+   private void sendSigwinch() {
+      if (null == process || !process.isAlive())
+         return;
+      try {
+         long pid = process.pid();
+         java.util.Set<Long> sent = new java.util.HashSet<>();
+         java.util.Set<Long> signaledGroups = new java.util.HashSet<>();
+         process.toHandle().descendants().forEach(child -> {
+            long cpid = child.pid();
+            sent.add(cpid);
+            try {
+               new ProcessBuilder("kill", "-WINCH",
+                  Long.toString(cpid)).start().waitFor();
+            } catch (Exception e) {
+               trace("ShellSession " + id
+                  + ": SIGWINCH to " + cpid + " failed");
+            }
+            // Signal the process group via negative PID.
+            // Use signal number to avoid option parsing issues.
+            try {
+               long pgid = getProcessGroup(cpid);
+               if (pgid > 0 && signaledGroups.add(pgid)) {
+                  new ProcessBuilder("kill", "-28",
+                     Long.toString(-pgid)).start().waitFor();
+               }
+            } catch (Exception e) {
+               // Ignore — not every PID has an accessible PGID
+            }
+         });
+         // Also send to the direct process (script)
+         if (!sent.contains(pid)) {
+            try {
+               new ProcessBuilder("kill", "-WINCH",
+                  Long.toString(pid)).start().waitFor();
+            } catch (Exception e) {
+               trace("ShellSession " + id
+                  + ": SIGWINCH to " + pid + " failed");
+            }
+         }
+         trace("ShellSession " + id
+            + ": sent SIGWINCH to " + (sent.size() + 1)
+            + " processes");
+      } catch (Exception e) {
+         trace("ShellSession " + id + ": sendSigwinch failed: " + e);
+      }
+   }
+
+   /**
+    * Returns the process group ID for a given PID via ps.
+    *
+    * @param pid the process ID to query
+    * @return the PGID, or -1 if it could not be determined
+    */
+   private long getProcessGroup(long pid) {
+      try {
+         Process ps = new ProcessBuilder("ps", "-o", "pgid=",
+            "-p", Long.toString(pid))
+            .redirectErrorStream(true).start();
+         String pgid = new String(
+            ps.getInputStream().readAllBytes()).trim();
+         ps.waitFor();
+         if (!pgid.isEmpty())
+            return Long.parseLong(pgid);
+      } catch (Exception e) {
+         // Ignore
+      }
+      return -1;
    }
 
    /**

@@ -216,6 +216,28 @@ final class AtView implements
       new Color(255, 255, 255), // 7: bright white
    };
 
+   /** Cached 256-color palette (indices 16-255). */
+   private static final Color[] PALETTE_256 = buildPalette256();
+
+   private static Color[] buildPalette256() {
+      Color[] pal = new Color[240]; // indices 16..255
+      // 6x6x6 color cube (indices 16-231)
+      for (int i = 0; i < 216; i++) {
+         int ri = i / 36;
+         int gi = (i % 36) / 6;
+         int bi = i % 6;
+         pal[i] = new Color(ri > 0 ? 55 + ri * 40 : 0,
+            gi > 0 ? 55 + gi * 40 : 0,
+            bi > 0 ? 55 + bi * 40 : 0);
+      }
+      // Grayscale ramp (indices 232-255)
+      for (int i = 0; i < 24; i++) {
+         int gray = 8 + i * 10;
+         pal[216 + i] = new Color(gray, gray, gray);
+      }
+      return pal;
+   }
+
    AtView(Font font) {
       this(font, foreground, background);
    }
@@ -468,19 +490,9 @@ final class AtView implements
             : ANSI_COLORS[color];
       if (color < 16)
          return ANSI_BRIGHT[color - 8];
-      if (color < 232) {
-         // 6x6x6 color cube (indices 16-231)
-         int idx = color - 16;
-         int ri = idx / 36;
-         int gi = (idx % 36) / 6;
-         int bi = idx % 6;
-         return new Color(ri > 0 ? 55 + ri * 40 : 0,
-            gi > 0 ? 55 + gi * 40 : 0,
-            bi > 0 ? 55 + bi * 40 : 0);
-      }
-      // Grayscale ramp (indices 232-255)
-      int gray = 8 + (color - 232) * 10;
-      return new Color(gray, gray, gray);
+      if (color < 256)
+         return PALETTE_256[color - 16];
+      return isFg ? foreground : background;
    }
 
    /**
