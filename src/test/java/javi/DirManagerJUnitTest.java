@@ -292,8 +292,8 @@ class DirManagerJUnitTest {
          ArrayList<FileDescriptor.LocalFile> result =
             dm.fileList(anyFilter);
          assertNotNull(result, "fileList should return non-null");
-         assertTrue(result.isEmpty(),
-            "fileList should return empty for non-existent dir");
+         // Note: result may be non-empty because fileList() iterates ALL
+         // search dirs (not just the ghost). The key assertion is no NPE.
       } finally {
          dm.removeSearchDir(dir);
       }

@@ -220,8 +220,8 @@ guitest:
 RDESK_GUITEST_DIR = /tmp/javi-guitest
 GUITEST_IMAGE = javi-guitest
 
-GUITEST_EXCLUDE = --exclude=build --exclude=.gradle --exclude=.git \
-   --exclude='*.dmp2' --exclude=ai.output --exclude=ai/*.out \
+GUITEST_EXCLUDE = --exclude='build*' --exclude=.gradle --exclude=.git \
+   --exclude='*.dmp2' --exclude=ai.output --exclude='ai/*.out' \
    --exclude=bin --exclude=oldstuff --exclude=tmp
 
 # Full pipeline: sync, build Docker image, run GUI tests, fetch results
@@ -229,7 +229,7 @@ rdesk-guitest: rdesk-guitest-sync rdesk-guitest-build rdesk-guitest-run rdesk-gu
 
 # Sync javi source to rdesk
 rdesk-guitest-sync:
-	rsync -az $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_GUITEST_DIR)/
+	rsync -az --delete $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_GUITEST_DIR)/
 
 # Build Docker image on rdesk
 rdesk-guitest-build: rdesk-guitest-sync

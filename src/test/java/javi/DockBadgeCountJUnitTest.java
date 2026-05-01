@@ -1,6 +1,8 @@
 package javi;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,16 @@ class DockBadgeCountJUnitTest {
    @BeforeAll
    static void initOnce() throws Exception {
       TestInit.init();
+   }
+
+   @BeforeEach
+   void lock() {
+      EventQueue.biglock2.lock();
+   }
+
+   @AfterEach
+   void unlock() {
+      EventQueue.biglock2.unlock();
    }
 
    @Test

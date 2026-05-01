@@ -357,7 +357,12 @@ class Vt100GuiJUnitTest {
          "setGraphicRendition", int[].class, StringBuilder.class);
       sgrMethod.setAccessible(true);
       StringBuilder sb = new StringBuilder();
-      sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      EventQueue.biglock2.lock();
+      try {
+         sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
       // After reset, currentAttr should be DEFAULT
       Field caField = ecscreen.getClass().getDeclaredField("currentAttr");
       caField.setAccessible(true);
@@ -371,15 +376,25 @@ class Vt100GuiJUnitTest {
          "setGraphicRendition", int[].class, StringBuilder.class);
       sgrMethod.setAccessible(true);
       StringBuilder sb = new StringBuilder();
-      // Set bold (SGR 1)
-      sgrMethod.invoke(ecscreen, new int[]{1}, sb);
+      EventQueue.biglock2.lock();
+      try {
+         // Set bold (SGR 1)
+         sgrMethod.invoke(ecscreen, new int[]{1}, sb);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
       Field caField = ecscreen.getClass().getDeclaredField("currentAttr");
       caField.setAccessible(true);
       int attr = caField.getInt(ecscreen);
       assertTrue(CellAttr.isBold(attr),
          "After SGR 1, attribute should be bold");
       // Reset
-      sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      EventQueue.biglock2.lock();
+      try {
+         sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
@@ -388,14 +403,24 @@ class Vt100GuiJUnitTest {
          "setGraphicRendition", int[].class, StringBuilder.class);
       sgrMethod.setAccessible(true);
       StringBuilder sb = new StringBuilder();
-      // Set red foreground (SGR 31)
-      sgrMethod.invoke(ecscreen, new int[]{31}, sb);
+      EventQueue.biglock2.lock();
+      try {
+         // Set red foreground (SGR 31)
+         sgrMethod.invoke(ecscreen, new int[]{31}, sb);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
       Field fgField = ecscreen.getClass().getDeclaredField("attrFgColor");
       fgField.setAccessible(true);
       assertEquals(1, fgField.getInt(ecscreen),
          "After SGR 31, fg should be 1 (red)");
       // Reset
-      sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      EventQueue.biglock2.lock();
+      try {
+         sgrMethod.invoke(ecscreen, new int[]{0}, sb);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
