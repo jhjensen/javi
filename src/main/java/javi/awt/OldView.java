@@ -46,7 +46,8 @@ import javi.View;
 import javi.ChangeOpt;
 import javi.ScrollEvent;
 
-//import java.awt.RenderingHints;
+import java.awt.RenderingHints;
+import java.util.Map;
 
 /**
  * Primary text rendering view using AWT Canvas for the Javi editor.
@@ -215,6 +216,13 @@ final class OldView extends AwtView {
             pixelWidth * 2, charheight);
          canvas.imageg =
             (Graphics2D) canvas.dbuf.getGraphics();
+         Map<?, ?> desktopHints = (Map<?, ?>) java.awt.Toolkit.getDefaultToolkit()
+            .getDesktopProperty("awt.font.desktophints");
+         if (desktopHints != null)
+            canvas.imageg.addRenderingHints(desktopHints);
+         else
+            canvas.imageg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+               RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
       }
    }
 
@@ -1341,21 +1349,13 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
-            // RenderingHints qualityHints = new RenderingHints(
-            // RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            // qualityHints.put(RenderingHints.KEY_ANTIALIASING,
-            // RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-            // RenderingHints.VALUE_ANTIALIAS_OFF);
-            // qualityHints.put(RenderingHints.KEY_TEXT_ANTIALIASING,
-            // RenderingHints.VALUE__TEXT_ANTIALIAS_DEFAULT);
-            // RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-            // qualityHints.put(RenderingHints.KEY_ANTIALIASING,
-            // RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-            // qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
-            // RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-            // qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
-            // RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-            // imageg.setRenderingHints(qualityHints);
+            Map<?, ?> desktopHints = (Map<?, ?>) java.awt.Toolkit.getDefaultToolkit()
+               .getDesktopProperty("awt.font.desktophints");
+            if (desktopHints != null)
+               imageg.addRenderingHints(desktopHints);
+            else
+               imageg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                  RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
             // trace("imageg " + imageg);
             if (null == imageg)
