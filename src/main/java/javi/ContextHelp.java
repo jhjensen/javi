@@ -468,9 +468,28 @@ public final class ContextHelp {
    }
 
    private static void appendCommandprocHelp() {
-      append("EX (COLON) COMMANDS");
-      append("===================");
-      append("");
+      FvContext<?> fvc = FvContext.getCurrFvc();
+      String bufName = (fvc != null && fvc.edvec != null)
+         ? fvc.edvec.fdes().getShortName() : "";
+      boolean isGitContext = bufName.startsWith("*git-");
+
+      if (isGitContext) {
+         append("EX (COLON) COMMANDS — Git Context");
+         append("==================================");
+         append("");
+         appendExCommandList();
+         append("");
+         appendGenericExHelp();
+      } else {
+         append("EX (COLON) COMMANDS");
+         append("===================");
+         append("");
+         appendGenericExHelp();
+         appendExCommandList();
+      }
+   }
+
+   private static void appendGenericExHelp() {
       append("FILE COMMANDS");
       append("-------------");
       append("  :w               Write current file");
@@ -515,7 +534,6 @@ public final class ContextHelp {
       append("  :mk              Run make");
       append("  :!<cmd>          Run shell command");
       append("");
-      appendExCommandList();
    }
 
    private static void appendExModeHelp() {

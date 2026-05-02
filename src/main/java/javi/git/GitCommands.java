@@ -556,7 +556,8 @@ public final class GitCommands extends Rgroup implements Plugin {
     * @return the repo root as a File, or null if not determinable
     */
    private static java.io.File getRepoRootDir() {
-      String root = GitProcess.getRepoRoot(null);
+      java.io.File dir = resolveGitDir(null);
+      String root = GitProcess.getRepoRoot(dir);
       if (root != null)
          return new java.io.File(root);
       return null;
@@ -1103,6 +1104,8 @@ public final class GitCommands extends Rgroup implements Plugin {
       } else if ("*git-patch*".equals(bufName)) {
          // Re-run the patch for the same file
          gitPatch(null, fvc);
+      } else if ("*git-diff*".equals(bufName)) {
+         gitDiff(null, fvc);
       } else {
          // Preserve cursor position across status refresh
          int savedLine = fvc.inserty();

@@ -436,7 +436,9 @@ final class KeyMap {
          return get("gitlog");
       if ("*git-status*".equals(name))
          return get("gitstatus");
-      if ("*git-patch*".equals(name))
+      if ("*git-patch*".equals(name)
+            || "*git-diff*".equals(name)
+            || "*git-show*".equals(name))
          return get("gitpatch");
       if ("*git-commit-msg*".equals(name))
          return get("gitcommitmsg");
