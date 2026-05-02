@@ -331,6 +331,8 @@ public abstract class InsertBuffer extends View.Inserter {
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
                      MapEvent.hevent(ke, fvc);
+                     if (FvContext.getCurrFvc() != fvc)
+                        break;
                   } else if (verbatim && (key >= '0' && key <= '9')) {
                      verbatimCount++;
                      verbatimAcc = verbatimAcc * 10 + (key - '0');
