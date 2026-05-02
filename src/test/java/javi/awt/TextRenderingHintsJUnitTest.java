@@ -93,4 +93,54 @@ class TextRenderingHintsJUnitTest {
          g.dispose();
       }
    }
+
+   @Test
+   @DisplayName("antialiasEnabled=false sets TEXT_ANTIALIAS_OFF")
+   void disabledSetsOff() {
+      BufferedImage img = new BufferedImage(
+         100, 30, BufferedImage.TYPE_INT_RGB);
+      Graphics2D g = img.createGraphics();
+      boolean saved = OldView.antialiasEnabled;
+      try {
+         OldView.antialiasEnabled = false;
+         OldView.applyTextRenderingHints(g);
+         Object hint = g.getRenderingHint(
+            RenderingHints.KEY_TEXT_ANTIALIASING);
+         assertTrue(
+            hint == RenderingHints.VALUE_TEXT_ANTIALIAS_OFF,
+            "when disabled, hint should be OFF, got: " + hint);
+      } finally {
+         OldView.antialiasEnabled = saved;
+         g.dispose();
+      }
+   }
+
+   @Test
+   @DisplayName("toggling antialiasEnabled changes hint applied")
+   void toggleChangesHint() {
+      BufferedImage img = new BufferedImage(
+         100, 30, BufferedImage.TYPE_INT_RGB);
+      Graphics2D g = img.createGraphics();
+      boolean saved = OldView.antialiasEnabled;
+      try {
+         OldView.antialiasEnabled = true;
+         OldView.applyTextRenderingHints(g);
+         Object onHint = g.getRenderingHint(
+            RenderingHints.KEY_TEXT_ANTIALIASING);
+
+         OldView.antialiasEnabled = false;
+         OldView.applyTextRenderingHints(g);
+         Object offHint = g.getRenderingHint(
+            RenderingHints.KEY_TEXT_ANTIALIASING);
+
+         assertTrue(onHint != offHint,
+            "on and off should produce different hints");
+         assertTrue(
+            offHint == RenderingHints.VALUE_TEXT_ANTIALIAS_OFF,
+            "off hint should be OFF");
+      } finally {
+         OldView.antialiasEnabled = saved;
+         g.dispose();
+      }
+   }
 }

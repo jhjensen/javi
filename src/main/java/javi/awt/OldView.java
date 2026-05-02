@@ -100,6 +100,9 @@ import java.util.Map;
 final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
+   /** Controls whether text antialiasing hints are applied. */
+   static volatile boolean antialiasEnabled = true;
+
    private int screenSize = 24;
    private int minColumns;
    private int pixelWidth;
@@ -126,8 +129,15 @@ final class OldView extends AwtView {
    /**
     * Apply the platform's preferred text rendering hints to a Graphics2D.
     * Uses desktop hints when available, falls back to basic text antialiasing.
+    * Respects the {@link #antialiasEnabled} flag — when disabled, explicitly
+    * sets text antialiasing to OFF.
     */
    static void applyTextRenderingHints(Graphics2D g) {
+      if (!antialiasEnabled) {
+         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+         return;
+      }
       Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit()
          .getDesktopProperty("awt.font.desktophints");
       if (desktopHints != null)
@@ -135,6 +145,14 @@ final class OldView extends AwtView {
       else
          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
             RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+   }
+
+   /**
+    * Invalidate the offscreen graphics for this view so that the next
+    * paint cycle re-creates it with current rendering hints.
+    */
+   void resetTextRenderingHints() {
+      canvas.imageg = null;
    }
 
    Canvas getComponent() {
@@ -1358,13 +1376,9 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
-            applyTextRenderingHints(imageg);
-
-            // trace("imageg " + imageg);
-            if (null == imageg)
-               throw new RuntimeException("imageg null!!");
             oldgr = gr;
          }
+         applyTextRenderingHints(imageg);
 
          if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
             // trace("repaint because failed lock " + gettext() + " or lock");
