@@ -47,6 +47,7 @@ import javi.ChangeOpt;
 import javi.ScrollEvent;
 
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.util.Map;
 
 /**
@@ -121,6 +122,20 @@ final class OldView extends AwtView {
    private int tabStop;
    private Font activeFont;
    private final MyCanvas canvas = new MyCanvas();
+
+   /**
+    * Apply the platform's preferred text rendering hints to a Graphics2D.
+    * Uses desktop hints when available, falls back to basic text antialiasing.
+    */
+   static void applyTextRenderingHints(Graphics2D g) {
+      Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit()
+         .getDesktopProperty("awt.font.desktophints");
+      if (desktopHints != null)
+         g.addRenderingHints(desktopHints);
+      else
+         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+   }
 
    Canvas getComponent() {
       return canvas;
@@ -216,13 +231,7 @@ final class OldView extends AwtView {
             pixelWidth * 2, charheight);
          canvas.imageg =
             (Graphics2D) canvas.dbuf.getGraphics();
-         Map<?, ?> desktopHints = (Map<?, ?>) java.awt.Toolkit.getDefaultToolkit()
-            .getDesktopProperty("awt.font.desktophints");
-         if (desktopHints != null)
-            canvas.imageg.addRenderingHints(desktopHints);
-         else
-            canvas.imageg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-               RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+         applyTextRenderingHints(canvas.imageg);
       }
    }
 
@@ -1349,13 +1358,7 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
-            Map<?, ?> desktopHints = (Map<?, ?>) java.awt.Toolkit.getDefaultToolkit()
-               .getDesktopProperty("awt.font.desktophints");
-            if (desktopHints != null)
-               imageg.addRenderingHints(desktopHints);
-            else
-               imageg.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                  RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            applyTextRenderingHints(imageg);
 
             // trace("imageg " + imageg);
             if (null == imageg)
