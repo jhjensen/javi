@@ -1016,8 +1016,8 @@ public final class GitCommands extends Rgroup implements Plugin {
    /**
     * Stage the file on the current cursor line in the status buffer.
     * Uses {@code git add} for all files including modified, new
-    * (untracked), and deleted files.  {@code git add} handles
-    * deletions correctly by staging the removal in the index.
+    * (untracked), and deleted files.  For deleted files, falls back
+    * to {@code git rm --cached} if {@code git add} fails.
     */
    private static void gitStageLine(FvContext fvc) throws
          IOException, InputException {
@@ -1026,7 +1026,18 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException("No file on current line");
       }
       java.io.File repoRoot = getRepoRootDir();
-      GitProcess.execute(repoRoot, "add", "--", filename);
+      GitProcess.Result res = GitProcess.executeWithResult(
+         repoRoot, "add", "--", filename);
+      if (0 != res.exitCode) {
+         // Fallback for deleted files: try git rm --cached
+         res = GitProcess.executeWithResult(
+            repoRoot, "rm", "--cached", "--", filename);
+         if (0 != res.exitCode) {
+            String err = res.output.isEmpty()
+               ? "unknown error" : res.output.get(0);
+            throw new InputException("Stage failed: " + err);
+         }
+      }
       UI.reportMessage("Staged: " + filename);
       gitStatus(fvc);
    }
@@ -1052,21 +1063,12 @@ public final class GitCommands extends Rgroup implements Plugin {
     */
    private static void gitToggle(FvContext fvc) throws
          IOException, InputException {
-      String filename = extractFilenameAtCursor(fvc);
-      if (null == filename) {
-         throw new InputException("No file on current line");
-      }
-      java.io.File repoRoot = getRepoRootDir();
       String section = findSection(fvc);
       if ("Staged".equals(section)) {
-         GitProcess.execute(repoRoot, "restore", "--staged",
-            filename);
-         UI.reportMessage("Unstaged: " + filename);
+         gitUnstageLine(fvc);
       } else {
-         GitProcess.execute(repoRoot, "add", "--", filename);
-         UI.reportMessage("Staged: " + filename);
+         gitStageLine(fvc);
       }
-      gitStatus(fvc);
    }
 
    /**

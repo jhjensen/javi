@@ -146,6 +146,43 @@ public final class GitProcess {
    }
 
    /**
+    * Execute a git command in a specific directory and return both
+    * exit code and output.
+    *
+    * @param dir working directory (may be null for default)
+    * @param args git subcommand and arguments
+    * @return Result with exit code and output lines
+    * @throws IOException if the process cannot be started
+    */
+   public static Result executeWithResult(java.io.File dir, String... args)
+         throws IOException {
+      String[] cmd = new String[args.length + 1];
+      cmd[0] = "git";
+      System.arraycopy(args, 0, cmd, 1, args.length);
+
+      ProcessBuilder pb = new ProcessBuilder(cmd);
+      pb.redirectErrorStream(true);
+      if (dir != null)
+         pb.directory(dir);
+      Process proc = pb.start();
+
+      ArrayList<String> output = new ArrayList<>();
+      try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(proc.getInputStream(),
+               StandardCharsets.UTF_8))) {
+         for (String line; null != (line = reader.readLine());) {
+            output.add(line);
+         }
+         int rc = proc.waitFor();
+         return new Result(rc, output);
+      } catch (InterruptedException e) {
+         trace("interrupted executing git " + String.join(" ", args));
+         Thread.currentThread().interrupt();
+         return new Result(-1, output);
+      }
+   }
+
+   /**
     * Get the list of local branch names.
     *
     * @return list of branch names (without leading markers)
