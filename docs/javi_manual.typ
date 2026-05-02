@@ -13,7 +13,7 @@
 #title-page(
   title: "Javi User Manual",
   subtitle: "A Vi-Like Editor Written in Java",
-  date: "April 2026",
+  date: "May 2026",
 )
 
 #outline(indent: auto, depth: 3)
@@ -260,14 +260,17 @@ Javi supports ctags-based navigation for jumping to definitions, and
 mkid (GNU ID Utils) for finding references:
 
 #cmd-table(
-  ([#key("Ctrl-]")], [Jump to tag definition under cursor (ctags)]),
+  ([#key("Ctrl-]")], [Jump to definition (LSP first, then ctags)]),
   ([#key("Ctrl-T")], [Pop tag stack (return to previous location)]),
-  ([#cmd("ta _tag_")], [Jump to named tag]),
+  ([#cmd("ta _tag_")], [Jump to named tag (LSP first, then ctags)]),
 )
 
-When looking up a tag with #key("Ctrl-]") or #cmd("ta"), Javi also
-automatically searches the `mkid` ID database (built with GNU ID Utils)
-to find references. Both ctag definitions and `lid` cross-references
+When the LSP plugin is loaded, #key("Ctrl-]") and #cmd("ta") try LSP
+go-to-definition first. If no LSP server is running or it returns no
+result, the lookup falls through to ctags. When looking up via ctags,
+Javi also automatically searches the `mkid` ID database (built with
+GNU ID Utils) to find references. Both ctag definitions and `lid`
+cross-references
 are combined in the tag results buffer.
 
 #warning-box[
@@ -614,10 +617,21 @@ shell has been created.
 = AI Integration (Copilot)
 
 Javi integrates with GitHub Copilot for AI-assisted coding: interactive
-chat, code explanation, code review, documentation generation, and code
-completion.
+chat, code explanation, code review, documentation generation, inline
+code completion with ghost text, and tool-augmented responses.
 
 == Setup
+
+=== Loading the AI Plugin
+
+The AI plugin is a separate module loaded via `.javini`:
+
+```
+loadclass javi.ai.AICommands
+```
+
+The AI source set is compiled as part of the standard Gradle build
+and included in the fat JAR (`javi-all.jar`).
 
 === Authentication
 
@@ -640,7 +654,6 @@ AI settings use the #lit("ai.") prefix with the #cmd("set") command:
   ([#lit("ai.model")], [Model identifier (provider-specific default if unset)]),
   ([#lit("ai.apikey")], [API key (or set `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` env var)]),
   ([#lit("ai.maxTokens")], [Maximum response token length (default: 2048)]),
-  ([#lit("ai.prompt")], [Custom system prompt (uses built-in default if unset)]),
 )
 
 Example:
@@ -660,15 +673,70 @@ All AI commands use the #cmd("ai") prefix:
   ([#cmd("ai explain")], [Explain code in the current buffer]),
   ([#cmd("ai review")], [Review current buffer for bugs and issues]),
   ([#cmd("ai doc")], [Generate Javadoc for current buffer code]),
-  ([#cmd("ai complete")], [Request code completion at cursor]),
+  ([#cmd("ai complete")], [Request inline code completion (ghost text)]),
+  ([#cmd("ai accept")], [Accept ghost text completion]),
+  ([#cmd("ai dismiss")], [Dismiss ghost text completion]),
   ([#cmd("ai cancel")], [Cancel an in-flight AI request]),
-  ([#cmd("ai refactor")], [Refactor code with instructions]),
+  ([#cmd("ai refactor _instruction_")], [Refactor code with instructions]),
   ([#cmd("ai config")], [Display current AI configuration]),
   ([#cmd("ai clear")], [Clear conversation history and chat buffer]),
   ([#cmd("ai test")], [Test provider connectivity]),
   ([#cmd("ai auth")], [Authenticate with Copilot (device flow)]),
-  ([#cmd("ai models")], [List available models]),
+  ([#cmd("ai models")], [List available Copilot models]),
+  ([#cmd("ai status")], [Show request tracking and history]),
+  ([#cmd("ai tools")], [List registered AI tools]),
+  ([#cmd("ai help")], [Show AI command help in chat buffer]),
 )
+
+== Normal Mode Key Bindings (ga prefix)
+
+In normal mode, the `g` key followed by `a` enters an AI sub-mode.
+The third key selects the command:
+
+#cmd-table(
+  ([#key("g")#key("a")#key("r")], [Review current code]),
+  ([#key("g")#key("a")#key("e")], [Explain current code]),
+  ([#key("g")#key("a")#key("d")], [Generate documentation]),
+  ([#key("g")#key("a")#key("f")], [Refactor (prompts for instruction)]),
+  ([#key("g")#key("a")#key("c")], [Open AI chat]),
+  ([#key("g")#key("a")#key("s")], [Show AI status]),
+  ([#key("g")#key("a")#key("t")], [Test AI connection]),
+  ([#key("g")#key("a")#key("m")], [List available models]),
+  ([#key("g")#key("a")#key("x")], [Cancel AI request]),
+  ([#key("g")#key("a")#key("?")], [Show AI help]),
+)
+
+The `gg` sequence (go to first line) continues to work as expected.
+
+== Insert Mode Completion
+
+While in insert mode, AI-powered code completion is available:
+
+#cmd-table(
+  ([#key("Tab")], [Trigger AI completion (if text before cursor)]),
+  ([#key("Tab") (ghost visible)], [Accept ghost text completion]),
+  ([#key("Escape")], [Dismiss ghost text / exit insert mode]),
+)
+
+When a completion arrives, it appears as "ghost text" --- dimmed text
+after the cursor showing the suggested insertion. Press #key("Tab") to
+accept the ghost text, or #key("Escape") to dismiss it and return to
+command mode.
+
+== AI Tools
+
+The AI system includes tool-use support, allowing the model to read
+files and buffers during conversations:
+
+- *BufferInfoTool* --- provides current buffer metadata
+- *BufferReadTool* --- reads lines from the current buffer
+- *BufferWriteTool* --- inserts or replaces text in the buffer
+- *FileListTool* --- lists files in the project
+- *FileReadTool* --- reads file contents from disk
+- *GrepTool* --- searches files by pattern
+
+Tools are invoked automatically by the AI model during chat interactions
+when it needs additional context to answer your question.
 
 == Chat Buffer
 
@@ -691,6 +759,7 @@ remains responsive while waiting for a response.
 :ai explain                       " explain current file
 :ai review                        " review current file for issues
 :ai doc                           " generate javadoc
+:ai status                        " see request history
 :ai clear                         " reset conversation
 ```
 
@@ -852,6 +921,18 @@ Javi includes a Language Server Protocol client for modern IDE features:
 go-to-definition, find references, hover information, diagnostics, and
 code completion. LSP support works with any standard language server.
 
+== Setup
+
+The LSP plugin is loaded via `.javini`:
+
+```
+loadclass javi.lsp.LspCommands
+```
+
+Once loaded, LSP commands and keybindings are immediately available.
+Javi starts the appropriate language server automatically when you
+open a file whose extension matches a configured server.
+
 == Commands
 
 #cmd-table(
@@ -863,6 +944,7 @@ code completion. LSP support works with any standard language server.
   ([#cmd("lspstatus")], [Show LSP server status]),
   ([#cmd("lsprestart")], [Restart the LSP server for the current file type]),
   ([#cmd("lsptoggle")], [Enable/disable LSP for the current session]),
+  ([#cmd("lspconfig")], [Show or set language server configuration]),
 )
 
 == Default Key Bindings
@@ -872,11 +954,23 @@ code completion. LSP support works with any standard language server.
   ([#key("Shift-F12")], [Find references (#cmd("lspref"))]),
   ([#key("Ctrl-K")], [Hover information (#cmd("lsphover"))]),
   ([#key("F9")], [Code completion (#cmd("lspcomp"))]),
-  ([#key("Ctrl-]")], [Go to definition (falls back to ctags if no LSP)]),
+  ([#key("Ctrl-]")], [Go to definition (LSP first, ctags fallback)]),
 )
 
-When LSP is available for the current file type, #key("Ctrl-]") uses LSP
-go-to-definition. If no LSP server is running, it falls back to ctags.
+== Integration with `:ta` and `Ctrl-]`
+
+When the LSP plugin is loaded, it registers as a `TagLookupProvider`.
+This means #cmd("ta") and #key("Ctrl-]") automatically route through
+LSP first:
+
++ If an LSP server is running for the current file type, the request
+  goes to LSP (`textDocument/definition`).
++ If LSP finds a definition, navigation happens immediately.
++ If LSP has no result (or no server is running), the lookup falls
+  through to the standard ctags system.
+
+This integration is transparent --- you use the same keys and commands
+you always have, and get LSP precision when available.
 
 == How LSP Works
 
@@ -1332,9 +1426,13 @@ modifier-key variants.
   stroke: 0.5pt + gray.lighten(70%),
   fill: (_, row) => if row == 0 { gray.lighten(85%) } else { none },
   [*Key*], [*Action*],
-  [#key("Ctrl-]")], [Jump to tag under cursor (ctags)],
+  [#key("Ctrl-]")], [Jump to definition (LSP first, then ctags)],
   [#key("Ctrl-T")], [Pop tag stack (return to previous location)],
   [#key("Ctrl-^")], [Switch to next file in file list],
+  [#key("F12")], [Go to definition (LSP)],
+  [#key("Shift-F12")], [Find references (LSP)],
+  [#key("Ctrl-K")], [Hover information (LSP)],
+  [#key("F9")], [Code completion (LSP)],
 )
 
 == Insert Mode Keys
@@ -1347,8 +1445,8 @@ While in insert mode, these special keys are active:
   stroke: 0.5pt + gray.lighten(70%),
   fill: (_, row) => if row == 0 { gray.lighten(85%) } else { none },
   [*Key*], [*Action*],
-  [#key("Escape") / #key("Ctrl-]")], [Complete and exit insert mode],
-  [#key("Tab")], [Insert tab],
+  [#key("Escape") / #key("Ctrl-]")], [Complete and exit insert mode (dismisses ghost text)],
+  [#key("Tab")], [Trigger AI completion or accept ghost text (falls back to insert tab)],
   [#key("Backspace")], [Delete character before cursor],
   [#key("Delete")], [Delete character under cursor],
   [#key("Insert")], [Toggle insert/overwrite mode],
@@ -1484,7 +1582,7 @@ These commands accept line number ranges (e.g., #cmd("3,7d")):
 === Tags and Navigation
 
 #cmd-table(
-  ([#cmd("ta _tag_")], [Jump to tag]),
+  ([#cmd("ta _tag_")], [Jump to tag (LSP first, then ctags)]),
   ([#cmd("gototag")], [Jump to tag under cursor]),
   ([#cmd("poptag")], [Pop tag stack]),
   ([#cmd("cn")], [Go to next position in position list]),
@@ -1495,6 +1593,43 @@ These commands accept line number ranges (e.g., #cmd("3,7d")):
   *Not yet implemented:* #cmd("tagsauto"), #cmd("tagfiles"), and
   #cmd("tagadd") are planned but not yet available.
 ]
+
+=== LSP Commands
+
+#cmd-table(
+  ([#cmd("lspdef")], [Go to definition]),
+  ([#cmd("lspref")], [Find all references]),
+  ([#cmd("lsphover")], [Show hover information]),
+  ([#cmd("lspcomp")], [Trigger code completion]),
+  ([#cmd("lspdiag")], [Show diagnostics]),
+  ([#cmd("lspstatus")], [Show server status]),
+  ([#cmd("lsprestart")], [Restart LSP server]),
+  ([#cmd("lsptoggle")], [Enable/disable LSP]),
+  ([#cmd("lspconfig")], [Show/set server configuration]),
+)
+
+=== AI Commands
+
+#cmd-table(
+  ([#cmd("ai _message_")], [Send chat message]),
+  ([#cmd("ai chat")], [Interactive chat prompt]),
+  ([#cmd("ai explain")], [Explain current code]),
+  ([#cmd("ai review")], [Review code for issues]),
+  ([#cmd("ai doc")], [Generate documentation]),
+  ([#cmd("ai complete")], [Request inline completion]),
+  ([#cmd("ai accept")], [Accept ghost text]),
+  ([#cmd("ai dismiss")], [Dismiss ghost text]),
+  ([#cmd("ai cancel")], [Cancel in-flight request]),
+  ([#cmd("ai refactor _instruction_")], [Refactor with instruction]),
+  ([#cmd("ai config")], [Show configuration]),
+  ([#cmd("ai clear")], [Clear chat history]),
+  ([#cmd("ai test")], [Test connection]),
+  ([#cmd("ai auth")], [Copilot device flow auth]),
+  ([#cmd("ai models")], [List available models]),
+  ([#cmd("ai status")], [Show request tracking]),
+  ([#cmd("ai tools")], [List registered tools]),
+  ([#cmd("ai help")], [Show AI help]),
+)
 
 === Directory Editor Commands
 
@@ -1618,6 +1753,7 @@ Available topics: `index`, `movement`, `editing`, `search`, `files`,
   ([#cmd("rep")], [Report / repeat]),
   ([#cmd("te")], [Toggle editor state]),
   ([#cmd("loadgroup")], [Load command group]),
+  ([#cmd("loadclass _classname_")], [Load a plugin class by name]),
   ([#cmd("persistfile _name_")], [Set persistent file name]),
   ([#cmd("tabfix")], [Fix tab/space indentation]),
   ([#cmd("fullscreen")], [Toggle fullscreen mode]),
@@ -1716,6 +1852,8 @@ fontweight 1.0
 lines 60
 setwidth 120
 tabstop 4
+loadclass javi.lsp.LspCommands
+loadclass javi.ai.AICommands
 loadclass javi.git.GitCommands
 loadmapkeys
 ```
@@ -1733,18 +1871,8 @@ loadmapkeys
 = Appendix C: Accuracy Notes
 
 The following features described in this manual are planned but *not yet
-implemented* in the codebase as of April 2026. The corresponding
+implemented* in the codebase as of May 2026. The corresponding
 sections describe the intended design:
-
-- *AI Integration* (Section 6) --- The `:ai` commands, Copilot
-  authentication, and chat buffer are not yet implemented. No
-  `AiCommands` class or related command registrations exist in the
-  source code.
-
-- *LSP Integration* (Section 8) --- The `:lspdef`, `:lspref`,
-  `:lsphover`, and related commands are not yet implemented. No LSP
-  client, F12/Shift-F12/F9/Ctrl-K bindings for LSP, or language
-  server configuration system exist in the source code.
 
 - *Tag management commands* --- The commands `:tagsauto` (auto-regenerate
   ctags), `:tagfiles` (list tag files), `:tagadd` (add tag file), and
@@ -1758,6 +1886,21 @@ sections describe the intended design:
   `:shells`, `:shellnext`, etc.) work as documented.
 
 The following features are *fully implemented* and documented accurately:
+
+- *AI Integration* (Section 6) --- All `:ai` commands are implemented
+  on `feature/F8-ai-integration`: chat, explain, review, doc, complete,
+  accept, dismiss, cancel, refactor, auth, models, status, tools, help.
+  Normal-mode `ga` prefix bindings and insert-mode Tab completion with
+  ghost text are functional. Multi-provider support (Copilot, OpenAI,
+  Anthropic) with tool-use (BufferRead, FileRead, Grep, etc.).
+  Loaded via `loadclass javi.ai.AICommands` or the AI plugin JAR.
+
+- *LSP Integration* (Section 8) --- All LSP commands are implemented
+  on `feature/F7-lsp-integration`: lspdef, lspref, lsphover, lspcomp,
+  lspdiag, lspstatus, lsprestart, lsptoggle, lspconfig. Key bindings
+  (F12, Shift-F12, Ctrl-K, F9) are registered by the plugin.
+  TagLookupProvider integration routes `:ta` and `Ctrl-]` through LSP
+  before ctags. Loaded via `loadclass javi.lsp.LspCommands`.
 
 - *Context-Sensitive Help* (Section 1) --- The `Shift-F1` help side
   panel, `:contexthelp`, and help panel scrolling commands are
