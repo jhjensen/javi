@@ -46,7 +46,9 @@ import javi.View;
 import javi.ChangeOpt;
 import javi.ScrollEvent;
 
-//import java.awt.RenderingHints;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.util.Map;
 
 /**
  * Primary text rendering view using AWT Canvas for the Javi editor.
@@ -98,6 +100,9 @@ import javi.ScrollEvent;
 final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
+   /** Controls whether text antialiasing hints are applied. */
+   static volatile boolean antialiasEnabled = true;
+
    private int screenSize = 24;
    private int minColumns;
    private int pixelWidth;
@@ -120,6 +125,35 @@ final class OldView extends AwtView {
    private int tabStop;
    private Font activeFont;
    private final MyCanvas canvas = new MyCanvas();
+
+   /**
+    * Apply the platform's preferred text rendering hints to a Graphics2D.
+    * Uses desktop hints when available, falls back to basic text antialiasing.
+    * Respects the {@link #antialiasEnabled} flag — when disabled, explicitly
+    * sets text antialiasing to OFF.
+    */
+   static void applyTextRenderingHints(Graphics2D g) {
+      if (!antialiasEnabled) {
+         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+         return;
+      }
+      Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit()
+         .getDesktopProperty("awt.font.desktophints");
+      if (desktopHints != null)
+         g.addRenderingHints(desktopHints);
+      else
+         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+            RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+   }
+
+   /**
+    * Invalidate the offscreen graphics for this view so that the next
+    * paint cycle re-creates it with current rendering hints.
+    */
+   void resetTextRenderingHints() {
+      canvas.imageg = null;
+   }
 
    Canvas getComponent() {
       return canvas;
@@ -215,6 +249,7 @@ final class OldView extends AwtView {
             pixelWidth * 2, charheight);
          canvas.imageg =
             (Graphics2D) canvas.dbuf.getGraphics();
+         applyTextRenderingHints(canvas.imageg);
       }
    }
 
@@ -1341,27 +1376,9 @@ final class OldView extends AwtView {
          if ((imageg == null) || (gr != oldgr)) {
             dbuf = canvas.createImage(pixelWidth * 2, charheight);
             imageg = (Graphics2D) dbuf.getGraphics();
-            // RenderingHints qualityHints = new RenderingHints(
-            // RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            // qualityHints.put(RenderingHints.KEY_ANTIALIASING,
-            // RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-            // RenderingHints.VALUE_ANTIALIAS_OFF);
-            // qualityHints.put(RenderingHints.KEY_TEXT_ANTIALIASING,
-            // RenderingHints.VALUE__TEXT_ANTIALIAS_DEFAULT);
-            // RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-            // qualityHints.put(RenderingHints.KEY_ANTIALIASING,
-            // RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-            // qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
-            // RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-            // qualityHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
-            // RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-            // imageg.setRenderingHints(qualityHints);
-
-            // trace("imageg " + imageg);
-            if (null == imageg)
-               throw new RuntimeException("imageg null!!");
             oldgr = gr;
          }
+         applyTextRenderingHints(imageg);
 
          if (!EventQueue.biglock2.tryLock(1, TimeUnit.MILLISECONDS)) {
             // trace("repaint because failed lock " + gettext() + " or lock");

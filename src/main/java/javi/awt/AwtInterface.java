@@ -246,6 +246,27 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       };
       Commands() {
          register(rnames);
+         registerArgCommand("antialias",
+            "set text antialias on/off", "display",
+            (arg, count, rcount, fvc, dot) -> {
+               String val = arg instanceof String ? (String) arg : "";
+               switch (val) {
+                  case "on": case "true": case "1":
+                     OldView.antialiasEnabled = true;
+                     break;
+                  case "off": case "false": case "0":
+                     OldView.antialiasEnabled = false;
+                     break;
+                  default:
+                     throw new InputException(
+                        "antialias: use on or off (current: "
+                        + (OldView.antialiasEnabled ? "on" : "off") + ")");
+               }
+               irepaint();
+               UI.reportMessage("antialias "
+                  + (OldView.antialiasEnabled ? "on" : "off"));
+               return null;
+            });
       }
 
       public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -918,6 +939,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       trace("!!! setting frm visible ");
       frm.setSize(frm.getPreferredSize());
       frm.setVisible(true);
+      java.awt.geom.AffineTransform tx =
+         frm.getGraphicsConfiguration().getDefaultTransform();
+      trace("HiDPI scale: " + tx.getScaleX() + "x" + tx.getScaleY());
       //trace("!!! done set frm visible insets " + frm.getInsets());
    }
 
