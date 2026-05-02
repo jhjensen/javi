@@ -42,6 +42,52 @@ java -jar javi-all.jar [file ...]
 Open one or more files by name. If no files are given, Javi starts with an
 empty buffer.
 
+== Building from Source
+
+Javi uses Gradle (wrapper included) and requires Java 22 or later.
+A `makefile` provides convenient targets for common operations.
+
+=== Quick Build and Run
+
+```bash
+make compile                          # compile Java sources
+make fatjar                           # build fat JAR (all dependencies bundled)
+java -jar build/libs/javi-all.jar     # run your local build
+```
+
+The fat JAR at `build/libs/javi-all.jar` is self-contained and behaves
+identically to a released binary.
+
+=== Installing Locally
+
+To install a development build so that `javi` is available on your PATH:
+
+```bash
+make install                          # installs to ~/.local (default)
+make install PREFIX=/opt/javi         # or choose a different prefix
+```
+
+This creates:
+- `PREFIX/share/javi/lib/` --- application JARs
+- `PREFIX/share/javi/bin/javi` --- launcher script (sets classpath)
+- `PREFIX/bin/javi` --- symlink to the launcher
+
+Ensure `~/.local/bin` (or your chosen `PREFIX/bin`) is on your PATH.
+After installing, simply run `javi [file ...]` from anywhere.
+
+=== Development Cycle
+
+A typical edit-compile-test cycle:
+
+```bash
+make compile          # recompile after edits
+make junit            # run JUnit 5 tests (primary test suite)
+make test             # run legacy tests
+make fatjar           # rebuild fat JAR when ready to test interactively
+```
+
+Re-run `make install` after `make fatjar` to update the installed copy.
+
 == Modal Editing
 
 Like vi, Javi is a _modal_ editor with two primary modes:
