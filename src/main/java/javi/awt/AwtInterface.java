@@ -247,24 +247,47 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       Commands() {
          register(rnames);
          registerArgCommand("antialias",
-            "set text antialias on/off", "display",
+            "set text antialias mode: on/off/lcd/grayscale", "display",
             (arg, count, rcount, fvc, dot) -> {
                String val = arg instanceof String ? (String) arg : "";
                switch (val) {
                   case "on": case "true": case "1":
-                     OldView.antialiasEnabled = true;
+                     OldView.antialiasMode = "on";
                      break;
                   case "off": case "false": case "0":
-                     OldView.antialiasEnabled = false;
+                     OldView.antialiasMode = "off";
+                     break;
+                  case "lcd":
+                     OldView.antialiasMode = "lcd";
+                     break;
+                  case "grayscale": case "grey": case "gray":
+                     OldView.antialiasMode = "grayscale";
                      break;
                   default:
                      throw new InputException(
-                        "antialias: use on or off (current: "
-                        + (OldView.antialiasEnabled ? "on" : "off") + ")");
+                        "antialias: use on/off/lcd/grayscale (current: "
+                        + OldView.antialiasMode + ")");
                }
                irepaint();
-               UI.reportMessage("antialias "
-                  + (OldView.antialiasEnabled ? "on" : "off"));
+               UI.reportMessage("antialias " + OldView.antialiasMode);
+               return null;
+            });
+         registerArgCommand("lcdcontrast",
+            "set LCD text contrast 100-250 (lower=lighter)", "display",
+            (arg, count, rcount, fvc, dot) -> {
+               String val = arg instanceof String ? (String) arg : "";
+               try {
+                  int v = Integer.parseInt(val.trim());
+                  if (v < 100 || v > 250)
+                     throw new NumberFormatException("out of range");
+                  OldView.lcdContrast = v;
+                  irepaint();
+                  UI.reportMessage("lcdcontrast " + v);
+               } catch (NumberFormatException e) {
+                  throw new InputException(
+                     "lcdcontrast: integer 100-250 (current: "
+                     + OldView.lcdContrast + ")");
+               }
                return null;
             });
       }

@@ -100,8 +100,18 @@ import java.util.Map;
 final class OldView extends AwtView {
    private static final long serialVersionUID = 1;
 
-   /** Controls whether text antialiasing hints are applied. */
-   static volatile boolean antialiasEnabled = true;
+   /**
+    * Text antialiasing mode. Values: "on" (desktop hints), "off",
+    * "lcd" (force LCD subpixel), "grayscale" (force grayscale AA).
+    */
+   static volatile String antialiasMode = "on";
+
+   /**
+    * LCD text contrast (100-250). Higher values produce heavier/darker text.
+    * Only applies when antialiasing is active. Default 140 matches typical
+    * desktop settings; lower values (100-130) give lighter appearance.
+    */
+   static volatile int lcdContrast = 140;
 
    private int screenSize = 24;
    private int minColumns;
@@ -127,24 +137,38 @@ final class OldView extends AwtView {
    private final MyCanvas canvas = new MyCanvas();
 
    /**
-    * Apply the platform's preferred text rendering hints to a Graphics2D.
-    * Uses desktop hints when available, falls back to basic text antialiasing.
-    * Respects the {@link #antialiasEnabled} flag — when disabled, explicitly
-    * sets text antialiasing to OFF.
+    * Apply text rendering hints to a Graphics2D based on current mode.
+    * Modes: "off" disables AA, "on" uses desktop hints, "lcd" forces
+    * LCD subpixel rendering, "grayscale" forces grayscale AA.
+    * LCD contrast is applied whenever antialiasing is active.
     */
    static void applyTextRenderingHints(Graphics2D g) {
-      if (!antialiasEnabled) {
+      String mode = antialiasMode;
+      if ("off".equals(mode)) {
          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
             RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
          return;
       }
-      Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit()
-         .getDesktopProperty("awt.font.desktophints");
-      if (desktopHints != null)
-         g.addRenderingHints(desktopHints);
-      else
-         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-            RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      switch (mode) {
+         case "lcd":
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+               RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+            break;
+         case "grayscale":
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+               RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            break;
+         default: // "on" — use desktop hints
+            Map<?, ?> desktopHints = (Map<?, ?>) Toolkit.getDefaultToolkit()
+               .getDesktopProperty("awt.font.desktophints");
+            if (desktopHints != null)
+               g.addRenderingHints(desktopHints);
+            else
+               g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                  RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            break;
+      }
+      g.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdContrast);
    }
 
    /**
