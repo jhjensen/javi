@@ -1,0 +1,53 @@
+# Dockerfile.verify — Run interactive bug verification against javi in Docker
+#
+# Same base as esctest2 but with vi/htop for interactive testing.
+# Runs verify-bugs.py inside javi's terminal to test the 5 open bugs.
+
+FROM eclipse-temurin:24-jdk-noble
+
+# X11 + tools needed for verification
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libfreetype6 \
+    fontconfig \
+    fonts-dejavu-core \
+    python3 \
+    vim \
+    htop \
+    procps \
+    ncurses-bin \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Gradle wrapper for layer caching
+COPY gradlew build.gradle ./
+COPY gradle/ gradle/
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
+
+ARG SRC_HASH=0
+
+# Copy source
+COPY src/ src/
+COPY ai/verify-bugs.py ai/verify-bugs.py
+COPY ai/docker-verify-bugs.sh /docker-verify-bugs.sh
+COPY terminfo/ terminfo/
+
+# Create git repo for version detection
+RUN git init && git config user.email "x@x" && git config user.name "x" && \
+    git add -A && git commit -qm "docker" 2>/dev/null || true
+
+# Build fat jar
+RUN ./gradlew shadowJar 2>&1 | tail -5
+
+RUN chmod +x /docker-verify-bugs.sh
+RUN mkdir -p /results
+
+ENTRYPOINT ["/docker-verify-bugs.sh"]

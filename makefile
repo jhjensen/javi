@@ -328,6 +328,50 @@ rdesk-esctest2-clean:
 	ssh -n -T rdesk 'docker rmi $(ESCTEST_IMAGE) 2>/dev/null; \
 	   rm -rf $(RDESK_ESCTEST_DIR)'
 
+#==============================================================================
+# F22: Remote Docker bug verification (interactive bug tests via Xvfb)
+#==============================================================================
+
+VERIFY_IMAGE = javi-verify
+RDESK_VERIFY_DIR = /tmp/javi-verify
+
+# Full pipeline: sync, build, run, fetch
+rdesk-verify-bugs: rdesk-verify-sync rdesk-verify-build rdesk-verify-run rdesk-verify-fetch
+
+# Sync source to rdesk
+rdesk-verify-sync:
+	rsync -az --include='build.gradle' --include='build.xml' \
+	   $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_VERIFY_DIR)/
+
+# Build verify Docker image on rdesk
+rdesk-verify-build: rdesk-verify-sync
+	ssh -n -T rdesk 'cd $(RDESK_VERIFY_DIR) && \
+	   docker build --build-arg SRC_HASH=$$(find src -type f -newer Dockerfile.verify -print | wc -l) \
+	      -f Dockerfile.verify -t $(VERIFY_IMAGE) .'
+
+# Run verification on rdesk
+rdesk-verify-run: rdesk-verify-build
+	ssh -n -T rdesk 'cd $(RDESK_VERIFY_DIR) && \
+	   rm -rf results && mkdir -p results && \
+	   docker run --rm \
+	      -v $$(pwd)/results:/results \
+	      $(VERIFY_IMAGE)'
+
+# Fetch results from rdesk
+rdesk-verify-fetch:
+	@mkdir -p ai/verify-results
+	rsync -az rdesk:$(RDESK_VERIFY_DIR)/results/ \
+	   ai/verify-results/ 2>/dev/null || true
+	@echo "=== Results fetched to ai/verify-results/ ==="
+	@if [ -f ai/verify-results/verify-bugs.txt ]; then \
+	   cat ai/verify-results/verify-bugs.txt; \
+	fi
+
+# Clean remote verify Docker image and files
+rdesk-verify-clean:
+	ssh -n -T rdesk 'docker rmi $(VERIFY_IMAGE) 2>/dev/null; \
+	   rm -rf $(RDESK_VERIFY_DIR)'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage
