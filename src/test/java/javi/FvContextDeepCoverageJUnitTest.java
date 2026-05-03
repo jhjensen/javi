@@ -90,7 +90,6 @@ class FvContextDeepCoverageJUnitTest {
       assertNotNull(fvc, "should create a context");
       assertEquals(te, fvc.edvec);
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -105,7 +104,6 @@ class FvContextDeepCoverageJUnitTest {
       FvContext fvc2 = FvContext.connectFv(te, view);
       assertEquals(fvc1, fvc2, "same buffer+view should reuse context");
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -122,7 +120,6 @@ class FvContextDeepCoverageJUnitTest {
       FvContext fvc2 = FvContext.connectFv(te2, view);
       assertFalse(fvc1 == fvc2, "different buffers should get different contexts");
 
-      FvContext.dispose(view);
       cleanup(te1, fname1);
       cleanup(te2, fname2);
    }
@@ -142,7 +139,6 @@ class FvContextDeepCoverageJUnitTest {
       assertEquals(2, pos.y, "y should be 2");
       assertEquals(3, pos.x, "x should be 3");
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -159,7 +155,6 @@ class FvContextDeepCoverageJUnitTest {
       Position pos = fvc.getPosition("");
       assertTrue(pos.y >= 2, "y should be >= 2 after moving down");
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -175,7 +170,6 @@ class FvContextDeepCoverageJUnitTest {
       Position pos = fvc.getPosition("");
       assertEquals(3, pos.y, "y should be 3");
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -193,7 +187,6 @@ class FvContextDeepCoverageJUnitTest {
       assertTrue(pos.y <= te.readIn(),
          "y should be clamped to buffer size");
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -212,7 +205,6 @@ class FvContextDeepCoverageJUnitTest {
       assertNotNull(pos.filename);
       assertEquals("test comment", pos.comment);
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -229,7 +221,6 @@ class FvContextDeepCoverageJUnitTest {
       fvc.cursoryabs(2);
       assertEquals(2, fvc.inserty());
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -246,7 +237,6 @@ class FvContextDeepCoverageJUnitTest {
       assertNotNull(elem);
       assertEquals("beta", elem.toString());
 
-      FvContext.dispose(view);
       cleanup(te, fname);
    }
 
@@ -262,7 +252,6 @@ class FvContextDeepCoverageJUnitTest {
 
       assertNotNull(FvContext.getCurrFvc());
 
-      FvContext.dispose(view);
       te.disposeFvc();
    }
 
@@ -283,8 +272,6 @@ class FvContextDeepCoverageJUnitTest {
       fvc2.setCurrView();
       assertEquals(fvc2, FvContext.getCurrFvc());
 
-      FvContext.dispose(v1);
-      FvContext.dispose(v2);
       te1.disposeFvc();
       te2.disposeFvc();
    }
@@ -302,7 +289,6 @@ class FvContextDeepCoverageJUnitTest {
       assertTrue(FvContext.viewCount() >= initial + 1,
          "viewCount should increase");
 
-      FvContext.dispose(v);
       te.disposeFvc();
    }
 
@@ -317,7 +303,6 @@ class FvContextDeepCoverageJUnitTest {
 
       assertFalse(view.isInInsertMode());
 
-      FvContext.dispose(view);
       te.disposeFvc();
    }
 
@@ -333,7 +318,6 @@ class FvContextDeepCoverageJUnitTest {
       assertNotNull(fvc, "getcontext should create context");
       assertEquals(te, fvc.edvec);
 
-      FvContext.dispose(view);
       te.disposeFvc();
    }
 
@@ -356,7 +340,6 @@ class FvContextDeepCoverageJUnitTest {
       FvContext switched = fvc.switchContext(parent, 1);
       assertNotNull(switched);
 
-      FvContext.dispose(view);
       parent.disposeFvc();
    }
 
@@ -373,7 +356,6 @@ class FvContextDeepCoverageJUnitTest {
       assertNotNull(s);
       assertFalse(s.isEmpty());
 
-      FvContext.dispose(view);
       te.disposeFvc();
    }
 }
