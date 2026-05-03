@@ -40,13 +40,56 @@ final class TabComplete {
          return null;
       String cmdText = full.substring(1);
       int spaceIdx = cmdText.indexOf(' ');
-      if (spaceIdx < 0)
-         return null;
+      if (spaceIdx < 0) {
+         // No space yet — complete the command name itself
+         return completeCommandName(cmdText);
+      }
       String cmd = cmdText.substring(0, spaceIdx);
       if (!BRANCH_COMMANDS.contains(cmd))
          return null;
       String partial = cmdText.substring(spaceIdx + 1);
       return completeBranch(partial);
+   }
+
+   /**
+    * Complete a command name from the registered commands.
+    * In a git context, git commands are prioritized.
+    *
+    * @param partial the partial command name typed so far
+    * @return the completion suffix, or null if no match
+    */
+   private static String completeCommandName(String partial) {
+      Set<String> cmds = Rgroup.getRegisteredCommands();
+      if (cmds.isEmpty())
+         return null;
+      boolean isGit = false;
+      try {
+         FvContext<?> fvc = FvContext.getCurrFvc();
+         String bufName = (fvc != null && fvc.edvec != null)
+            ? fvc.edvec.fdes().getShortName() : "";
+         isGit = bufName.startsWith("*git-");
+      } catch (Throwable t) {
+         // FvContext may not be initialized in test environments
+      }
+
+      String match = null;
+      if (isGit) {
+         for (String c : cmds) {
+            if (c.startsWith("git") && c.startsWith(partial)) {
+               match = (null == match) ? c : commonPrefix(match, c);
+            }
+         }
+      }
+      if (null == match) {
+         for (String c : cmds) {
+            if (!c.isEmpty() && c.startsWith(partial)) {
+               match = (null == match) ? c : commonPrefix(match, c);
+            }
+         }
+      }
+      if (null == match || match.length() <= partial.length())
+         return null;
+      return match.substring(partial.length());
    }
 
    /**

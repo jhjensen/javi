@@ -397,6 +397,8 @@ final class KeyMap {
       KeyMap gitcommitmsgMap = createOverlay("gitcommitmsg", normalMap);
       gitcommitmsgMap.bindEditKey('Z', "git_commit_finalize", null);
       gitcommitmsgMap.bindEditKey('q', "git_commit_quit", null);
+      gitcommitmsgMap.bindEditKey(
+         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
       register(gitcommitmsgMap);
    }
 

@@ -402,6 +402,8 @@ public final class GitCommands extends Rgroup implements Plugin {
       java.io.File dir = getFileDir(fvc);
       commitRepoRoot = GitProcess.getRepoRoot(dir);
       commitAmendMode = amend;
+      java.io.File repoDir = commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : null;
 
       // Build message buffer
       List<String> msgLines = new ArrayList<>();
@@ -426,9 +428,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          "*git-commit-msg*", msgLines);
       registerCommitSessionInPosListList();
 
-      // Build staging buffer
+      // Build staging buffer (pass repo root for correct paths)
       List<String> stagingLines =
-         GitCommitView.buildStagingView();
+         GitCommitView.buildStagingView(repoDir);
       commitViewHunks =
          GitCommitView.parseStagingViewHunks(stagingLines);
       commitStagingBuffer = createBuffer(
@@ -858,9 +860,11 @@ public final class GitCommands extends Rgroup implements Plugin {
          GitCommitView.saveMessage(commitRepoRoot, msgLines);
       }
 
-      // Rebuild the staging buffer
+      // Rebuild the staging buffer (pass repo root for correct paths)
+      java.io.File repoDir = commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
       List<String> stagingLines =
-         GitCommitView.buildStagingView();
+         GitCommitView.buildStagingView(repoDir);
       commitViewHunks =
          GitCommitView.parseStagingViewHunks(stagingLines);
       commitStagingBuffer = createBuffer(

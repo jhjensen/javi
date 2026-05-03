@@ -66,11 +66,24 @@ public final class GitCommitView {
     * @throws IOException if git commands fail
     */
    static List<String> buildStagingView() throws IOException {
+      return buildStagingView(null);
+   }
+
+   /**
+    * Build the staging-only view using the specified repo root
+    * as the working directory for git commands.
+    *
+    * @param repoRoot the git repository root, or null for default
+    * @return the staging view buffer lines
+    * @throws IOException if git commands fail
+    */
+   static List<String> buildStagingView(java.io.File repoRoot)
+         throws IOException {
       List<String> lines = new ArrayList<>();
 
       // Staged section
       List<String> staged = GitProcess.execute(
-         "diff", "--cached", "--stat");
+         repoRoot, "diff", "--cached", "--stat");
       lines.add(STAGED_SEPARATOR);
       if (staged.isEmpty()) {
          lines.add("#   (no staged changes)");
@@ -83,7 +96,7 @@ public final class GitCommitView {
 
       // Unstaged section with full diff
       lines.add(UNSTAGED_SEPARATOR);
-      List<String> diff = GitProcess.execute("diff");
+      List<String> diff = GitProcess.execute(repoRoot, "diff");
       if (diff.isEmpty()) {
          lines.add("#   (no unstaged changes)");
       } else {
@@ -93,7 +106,7 @@ public final class GitCommitView {
 
       // Untracked files section
       List<String> untracked = GitProcess.execute(
-         "ls-files", "--others", "--exclude-standard");
+         repoRoot, "ls-files", "--others", "--exclude-standard");
       lines.add(UNTRACKED_SEPARATOR);
       if (untracked.isEmpty()) {
          lines.add("#   (no untracked files)");
