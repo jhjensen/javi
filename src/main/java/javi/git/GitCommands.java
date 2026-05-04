@@ -316,7 +316,15 @@ public final class GitCommands extends Rgroup implements Plugin {
    private static void gitStatus(FvContext fvc) throws
          IOException, InputException {
       ensureListenerRegistered();
-      List<String> lines = GitStatusBuffer.getStatusLines();
+      // Save git dir before switching to internal buffer so ^] works
+      resolveGitDir(getFileDir(fvc));
+      java.io.File repoRoot = getRepoRootDir();
+      List<String> lines;
+      if (repoRoot != null) {
+         lines = GitStatusBuffer.getStatusLines(repoRoot);
+      } else {
+         lines = GitStatusBuffer.getStatusLines();
+      }
       statusBuffer = createBuffer("*git-status*", lines);
       FvContext.connectFv(statusBuffer, fvc.vi);
    }
@@ -351,11 +359,15 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException("git_stage requires a filename argument");
       }
       String filename = arg.toString().trim();
-      List<String> output = GitProcess.execute("add", filename);
-      if (output.isEmpty()) {
+      java.io.File repoRoot = getRepoRootDir();
+      GitProcess.Result res = GitProcess.executeWithResult(
+         repoRoot, "add", "--", filename);
+      if (0 == res.exitCode) {
          UI.reportMessage("Staged: " + filename);
       } else {
-         UI.reportMessage(String.join(" ", output));
+         String err = res.output.isEmpty()
+            ? "unknown error" : res.output.get(0);
+         UI.reportMessage("Stage failed: " + err);
       }
       // Refresh status if visible
       if (null != statusBuffer) {
@@ -372,12 +384,15 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException("git_unstage requires a filename argument");
       }
       String filename = arg.toString().trim();
-      List<String> output = GitProcess.execute(
-         "restore", "--staged", filename);
-      if (output.isEmpty()) {
+      java.io.File repoRoot = getRepoRootDir();
+      GitProcess.Result res = GitProcess.executeWithResult(
+         repoRoot, "restore", "--staged", "--", filename);
+      if (0 == res.exitCode) {
          UI.reportMessage("Unstaged: " + filename);
       } else {
-         UI.reportMessage(String.join(" ", output));
+         String err = res.output.isEmpty()
+            ? "unknown error" : res.output.get(0);
+         UI.reportMessage("Unstage failed: " + err);
       }
       // Refresh status if visible
       if (null != statusBuffer) {
@@ -402,6 +417,8 @@ public final class GitCommands extends Rgroup implements Plugin {
       java.io.File dir = getFileDir(fvc);
       commitRepoRoot = GitProcess.getRepoRoot(dir);
       commitAmendMode = amend;
+      java.io.File repoDir = commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : null;
 
       // Build message buffer
       List<String> msgLines = new ArrayList<>();
@@ -426,9 +443,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          "*git-commit-msg*", msgLines);
       registerCommitSessionInPosListList();
 
-      // Build staging buffer
+      // Build staging buffer (pass repo root for correct paths)
       List<String> stagingLines =
-         GitCommitView.buildStagingView();
+         GitCommitView.buildStagingView(repoDir);
       commitViewHunks =
          GitCommitView.parseStagingViewHunks(stagingLines);
       commitStagingBuffer = createBuffer(
@@ -717,8 +734,10 @@ public final class GitCommands extends Rgroup implements Plugin {
          } else {
             // Refresh status if visible
             if (null != statusBuffer) {
-               List<String> lines =
-                  GitStatusBuffer.getStatusLines();
+               java.io.File rr = getRepoRootDir();
+               List<String> lines = rr != null
+                  ? GitStatusBuffer.getStatusLines(rr)
+                  : GitStatusBuffer.getStatusLines();
                statusBuffer =
                   createBuffer("*git-status*", lines);
             }
@@ -801,8 +820,10 @@ public final class GitCommands extends Rgroup implements Plugin {
             refreshCommitView(fvc);
          } else {
             if (null != statusBuffer) {
-               List<String> lines =
-                  GitStatusBuffer.getStatusLines();
+               java.io.File rr = getRepoRootDir();
+               List<String> lines = rr != null
+                  ? GitStatusBuffer.getStatusLines(rr)
+                  : GitStatusBuffer.getStatusLines();
                statusBuffer =
                   createBuffer("*git-status*", lines);
             }
@@ -858,9 +879,11 @@ public final class GitCommands extends Rgroup implements Plugin {
          GitCommitView.saveMessage(commitRepoRoot, msgLines);
       }
 
-      // Rebuild the staging buffer
+      // Rebuild the staging buffer (pass repo root for correct paths)
+      java.io.File repoDir = commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
       List<String> stagingLines =
-         GitCommitView.buildStagingView();
+         GitCommitView.buildStagingView(repoDir);
       commitViewHunks =
          GitCommitView.parseStagingViewHunks(stagingLines);
       commitStagingBuffer = createBuffer(
@@ -881,7 +904,10 @@ public final class GitCommands extends Rgroup implements Plugin {
 
       // Also refresh status buffer if visible
       if (null != statusBuffer) {
-         List<String> lines = GitStatusBuffer.getStatusLines();
+         java.io.File rr = getRepoRootDir();
+         List<String> lines = rr != null
+            ? GitStatusBuffer.getStatusLines(rr)
+            : GitStatusBuffer.getStatusLines();
          statusBuffer = createBuffer("*git-status*", lines);
       }
    }
@@ -1578,7 +1604,13 @@ public final class GitCommands extends Rgroup implements Plugin {
       public void fileWritten(EditContainer ev) {
          if (null != statusBuffer) {
             try {
-               List<String> lines = GitStatusBuffer.getStatusLines();
+               java.io.File repoRoot = getRepoRootDir();
+               List<String> lines;
+               if (repoRoot != null) {
+                  lines = GitStatusBuffer.getStatusLines(repoRoot);
+               } else {
+                  lines = GitStatusBuffer.getStatusLines();
+               }
                statusBuffer = createBuffer("*git-status*", lines);
             } catch (IOException e) {
                // silently ignore refresh failures
@@ -1877,7 +1909,12 @@ public final class GitCommands extends Rgroup implements Plugin {
          List<String> lines) {
       String content = String.join("\n", lines);
       StringIoc sio = new StringIoc(name, content);
-      return new TextEdit<>(sio, sio.prop);
+      TextEdit<String> buf = new TextEdit<>(sio, sio.prop);
+      // Mark display-only buffers as read-only to prevent edits
+      if (!"*git-commit-msg*".equals(name)) {
+         buf.setReadOnly(true);
+      }
+      return buf;
    }
 
    /**
@@ -1934,8 +1971,10 @@ public final class GitCommands extends Rgroup implements Plugin {
          if (isCommitView) {
             refreshCommitView(fvc);
          } else if (statusBuffer != null) {
-            List<String> lines =
-               GitStatusBuffer.getStatusLines();
+            java.io.File rr = getRepoRootDir();
+            List<String> lines = rr != null
+               ? GitStatusBuffer.getStatusLines(rr)
+               : GitStatusBuffer.getStatusLines();
             statusBuffer =
                createBuffer("*git-status*", lines);
          }

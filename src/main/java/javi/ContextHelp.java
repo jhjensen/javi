@@ -362,15 +362,8 @@ public final class ContextHelp {
       append("-------------");
 
       if (active.getParent() != null) {
-         List<String[]> overlayEntries =
-            active.getMoveKeys().getBindingEntries();
-         if (!overlayEntries.isEmpty()) {
-            append("  [" + active.getName() + " overrides]");
-            appendDescribedEntries(overlayEntries);
-            append("");
-         }
-         append("  [inherited from "
-            + active.getParent().getName() + "]");
+         // Overlay keys shown in the override section above;
+         // show only inherited keys here.
          appendDescribedEntries(
             active.getParent().getMoveKeys()
                .getBindingEntries());
@@ -386,15 +379,8 @@ public final class ContextHelp {
       append("-----------------");
 
       if (active.getParent() != null) {
-         List<String[]> overlayEntries =
-            active.getEditKeys().getBindingEntries();
-         if (!overlayEntries.isEmpty()) {
-            append("  [" + active.getName() + " overrides]");
-            appendDescribedEntries(overlayEntries);
-            append("");
-         }
-         append("  [inherited from "
-            + active.getParent().getName() + "]");
+         // Overlay keys shown in the override section above;
+         // show only inherited keys here.
          appendDescribedEntries(
             active.getParent().getEditKeys()
                .getBindingEntries());

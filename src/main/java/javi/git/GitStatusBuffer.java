@@ -29,6 +29,20 @@ public final class GitStatusBuffer {
    }
 
    /**
+    * Generate formatted git status lines running from a specific directory.
+    *
+    * @param dir working directory for git status command
+    * @return list of formatted lines
+    * @throws IOException if git command fails
+    */
+   public static List<String> getStatusLines(java.io.File dir)
+         throws IOException {
+      List<String> raw = GitProcess.execute(
+         dir, "status", "--porcelain=v2", "--branch");
+      return formatStatus(raw);
+   }
+
+   /**
     * Parse porcelain v2 output into formatted display lines.
     *
     * @param raw raw porcelain v2 output lines

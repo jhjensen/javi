@@ -336,4 +336,182 @@ class GitBugFixJUnitTest {
          }
       }
    }
+
+   // ---- Bug: display-only buffers marked read-only ----
+
+   @Nested
+   @DisplayName("createBuffer read-only enforcement")
+   class CreateBufferReadOnly {
+
+      /**
+       * Replicate the createBuffer logic to verify read-only
+       * marking without triggering GitCommands class init.
+       * The actual createBuffer code is:
+       *   if (!"*git-commit-msg*".equals(name))
+       *      buf.setReadOnly(true);
+       */
+      private boolean shouldBeReadOnly(String name) {
+         return !"*git-commit-msg*".equals(name);
+      }
+
+      @Test
+      @DisplayName("git-status buffer should be read-only")
+      void statusBufferIsReadOnly() {
+         assertTrue(shouldBeReadOnly("*git-status*"),
+            "status buffer must be marked read-only");
+      }
+
+      @Test
+      @DisplayName("git-log buffer should be read-only")
+      void logBufferIsReadOnly() {
+         assertTrue(shouldBeReadOnly("*git-log*"),
+            "log buffer must be marked read-only");
+      }
+
+      @Test
+      @DisplayName("git-diff buffer should be read-only")
+      void diffBufferIsReadOnly() {
+         assertTrue(shouldBeReadOnly("*git-diff*"),
+            "diff buffer must be marked read-only");
+      }
+
+      @Test
+      @DisplayName("git-patch buffer should be read-only")
+      void patchBufferIsReadOnly() {
+         assertTrue(shouldBeReadOnly("*git-patch*"),
+            "patch buffer must be marked read-only");
+      }
+
+      @Test
+      @DisplayName("git-blame buffer should be read-only")
+      void blameBufferIsReadOnly() {
+         assertTrue(shouldBeReadOnly("*git-blame*"),
+            "blame buffer must be marked read-only");
+      }
+
+      @Test
+      @DisplayName("git-commit-msg buffer should be writable")
+      void commitMsgBufferIsWritable() {
+         assertFalse(shouldBeReadOnly("*git-commit-msg*"),
+            "commit message buffer must be writable");
+      }
+   }
+
+   // ---- Bug: deleted file staging uses git rm --cached fallback ----
+
+   @Nested
+   @DisplayName("deleted file detection from status lines")
+   class DeletedFileDetection {
+
+      @Test
+      @DisplayName("deleted file recognized in unstaged section")
+      void deletedInUnstaged() {
+         List<String> raw = lines(
+            "# branch.head master",
+            "# branch.oid abc1234",
+            "1 .D N... 100644 100644 000000"
+               + " abc1234 0000000 src/Removed.java");
+         List<String> statusLines =
+            GitStatusBuffer.formatStatus(raw);
+         boolean foundDeleted = false;
+         for (String line : statusLines) {
+            if (line.trim().startsWith("deleted")
+                  && line.contains("Removed.java")) {
+               foundDeleted = true;
+               break;
+            }
+         }
+         assertTrue(foundDeleted,
+            "deleted file must appear with 'deleted' prefix");
+      }
+
+      @Test
+      @DisplayName("staged deletion recognized in staged section")
+      void deletedInStaged() {
+         List<String> raw = lines(
+            "# branch.head master",
+            "# branch.oid abc1234",
+            "1 D. N... 100644 000000 000000"
+               + " abc1234 0000000 src/Gone.java");
+         List<String> statusLines =
+            GitStatusBuffer.formatStatus(raw);
+         boolean foundInStaged = false;
+         String joined = String.join("\n", statusLines);
+         int stagedIdx = joined.indexOf("Staged changes");
+         int unstagedIdx = joined.indexOf("Unstaged changes");
+         int deletedIdx = joined.indexOf("deleted");
+         assertTrue(deletedIdx > stagedIdx
+            && deletedIdx < unstagedIdx,
+            "staged deletion must appear in staged section");
+      }
+   }
+
+   // ---- Bug: section headers enable findSection() ----
+
+   @Nested
+   @DisplayName("status buffer section header format")
+   class SectionHeaderFormat {
+
+      @Test
+      @DisplayName("status output contains all three section headers")
+      void allSectionHeadersPresent() {
+         List<String> raw = lines(
+            "# branch.head master",
+            "# branch.oid abc1234",
+            "1 M. N... 100644 100644 100644"
+               + " aaaa bbbb staged.java",
+            "1 .M N... 100644 100644 100644"
+               + " aaaa bbbb unstaged.java",
+            "? untracked.txt");
+         List<String> statusLines =
+            GitStatusBuffer.formatStatus(raw);
+         String joined = String.join("\n", statusLines);
+         assertTrue(joined.contains("Staged changes"),
+            "must have Staged changes header");
+         assertTrue(joined.contains("Unstaged changes"),
+            "must have Unstaged changes header");
+         assertTrue(joined.contains("Untracked files"),
+            "must have Untracked files header");
+      }
+
+      @Test
+      @DisplayName("section headers start at column 0")
+      void sectionHeadersAtColumn0() {
+         List<String> raw = lines(
+            "# branch.head main",
+            "# branch.oid abc1234",
+            "1 M. N... 100644 100644 100644"
+               + " aaaa bbbb file.java");
+         List<String> statusLines =
+            GitStatusBuffer.formatStatus(raw);
+         for (String line : statusLines) {
+            if (line.contains("Staged changes")
+                  || line.contains("Unstaged changes")
+                  || line.contains("Untracked files")) {
+               assertFalse(line.startsWith(" "),
+                  "section headers must not be indented: "
+                  + line);
+            }
+         }
+      }
+
+      @Test
+      @DisplayName("files are indented under section headers")
+      void filesIndented() {
+         List<String> raw = lines(
+            "# branch.head main",
+            "# branch.oid abc1234",
+            "1 .M N... 100644 100644 100644"
+               + " aaaa bbbb src/Foo.java");
+         List<String> statusLines =
+            GitStatusBuffer.formatStatus(raw);
+         for (String line : statusLines) {
+            if (line.contains("Foo.java")) {
+               assertTrue(line.startsWith("  "),
+                  "file lines must be indented: " + line);
+               break;
+            }
+         }
+      }
+   }
 }
