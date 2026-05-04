@@ -2,6 +2,7 @@ fontname Verdana
 fontsize 15.5
 fontweight 1.0
 lines 70
+lcdcontrast 100
 loadplugin javi-hello.jar
 loadclass javi.git.GitCommands
 e src
