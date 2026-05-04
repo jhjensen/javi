@@ -220,7 +220,7 @@ guitest:
 RDESK_GUITEST_DIR = /tmp/javi-guitest
 GUITEST_IMAGE = javi-guitest
 
-GUITEST_EXCLUDE = --exclude='build*' --exclude=.gradle --exclude=.git \
+GUITEST_EXCLUDE = --exclude='build/' --exclude=.gradle --exclude=.git \
    --exclude='*.dmp2' --exclude=ai.output --exclude='ai/*.out' \
    --exclude=bin --exclude=oldstuff --exclude=tmp
 
