@@ -2026,4 +2026,45 @@ class FoldModelJUnitTest {
       // nextVisible(5) should skip fold to 16
       assertEquals(16, model.nextVisible(5));
    }
+
+   // --- openAllEnclosing for cursor2abs fold fix (F41) ---
+
+   @Test
+   void openAllEnclosingRevealsLineInsideFold() {
+      model.addFold(10, 50);
+      model.closeAll();
+      assertTrue(model.isFolded(30));
+      model.openAllEnclosing(30);
+      assertFalse(model.isFolded(30));
+   }
+
+   @Test
+   void openAllEnclosingHandlesNestedFolds() {
+      model.addFold(5, 60);
+      model.addFold(10, 40);
+      model.closeAll();
+      assertTrue(model.isFolded(25));
+      model.openAllEnclosing(25);
+      assertFalse(model.isFolded(25));
+      // Both enclosing folds should be open
+      assertFalse(model.getFolds().get(0).collapsed);
+      assertFalse(model.getFolds().get(1).collapsed);
+   }
+
+   @Test
+   void isFoldedReturnsFalseForFoldStartLine() {
+      model.addFold(10, 50);
+      model.closeAll();
+      // Start line is always visible (shows summary)
+      assertFalse(model.isFolded(10));
+      assertTrue(model.isFolded(11));
+   }
+
+   @Test
+   void openAllEnclosingNoOpWhenNotFolded() {
+      model.addFold(10, 50);
+      // Not collapsed — openAllEnclosing should not crash
+      assertFalse(model.isFolded(30));
+      assertFalse(model.openAllEnclosing(30));
+   }
 }

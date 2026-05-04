@@ -926,6 +926,12 @@ public final class FvContext<OType> implements Serializable {
       if (newy < 1)
          return;
       fileposy = inrange(newy, 1, edvec.readIn() - 1);
+      // If the target line is hidden inside a collapsed fold,
+      // open enclosing folds so the line becomes visible and
+      // the display stays synchronized with the cursor position.
+      if (foldModel != null && !foldModel.isEmpty()
+            && foldModel.isFolded(fileposy))
+         foldModel.openAllEnclosing(fileposy);
       String line = edvec.at(fileposy).toString();
       fileposx = inrange(newx, 0, line.length());
       // Snap to grapheme cluster boundary so cursor never lands
