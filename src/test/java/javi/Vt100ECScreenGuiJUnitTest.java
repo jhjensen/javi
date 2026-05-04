@@ -103,16 +103,24 @@ class Vt100ECScreenGuiJUnitTest {
       return f.getInt(ecscreen);
    }
 
-   private int getFgColor() throws Exception {
-      Field f = ecscreen.getClass().getDeclaredField("attrFgColor");
+   private Object getSgrState() throws Exception {
+      Field f = ecscreen.getClass().getDeclaredField("sgrState");
       f.setAccessible(true);
-      return f.getInt(ecscreen);
+      return f.get(ecscreen);
+   }
+
+   private int getFgColor() throws Exception {
+      Object sgr = getSgrState();
+      Field f = sgr.getClass().getDeclaredField("attrFgColor");
+      f.setAccessible(true);
+      return f.getInt(sgr);
    }
 
    private int getBgColor() throws Exception {
-      Field f = ecscreen.getClass().getDeclaredField("attrBgColor");
+      Object sgr = getSgrState();
+      Field f = sgr.getClass().getDeclaredField("attrBgColor");
       f.setAccessible(true);
-      return f.getInt(ecscreen);
+      return f.getInt(sgr);
    }
 
    private void resetSgr() throws Exception {
