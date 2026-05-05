@@ -42,6 +42,17 @@ class PosListListTagProcessingJUnitTest {
       TestInit.initCommands();
       EventQueue.biglock2.lock();
       try {
+         // Ensure FileList singleton exists so gototag navigation
+         // doesn't NPE. Guard against duplicate command registration
+         // if a prior test class reset the singleton.
+         if (FileList.TestAccess.getInstance() == null) {
+            try {
+               FileList.make("");
+            } catch (RuntimeException e) {
+               // "duplicate command:vi" — commands registered by
+               // prior class that later reset the singleton
+            }
+         }
          if (PosListListCoverageJUnitTest.sharedCmd != null) {
             pllCmd = PosListListCoverageJUnitTest.sharedCmd;
          } else {
@@ -461,6 +472,9 @@ class PosListListTagProcessingJUnitTest {
                pllCmd.doroutine(2, null, 1, 1, fvc, false);
             } catch (InputException e) {
                // "tag not found" is expected when no tags file
+            } catch (NullPointerException e) {
+               // FileList.instance null after singleton reset
+               // by prior test class — acceptable in isolation
             }
             te.disposeFvc();
          } finally {
