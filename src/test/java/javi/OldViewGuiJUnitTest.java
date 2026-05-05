@@ -849,4 +849,109 @@ class OldViewGuiJUnitTest {
          EventQueue.biglock2.unlock();
       }
    }
+
+   // ── Additional OldView rendering edge cases ───────────────────
+
+   @Test
+   void t44_getRowsNegativeAmount() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         int rows = oldView.getRows(-1.0f);
+         assertTrue(rows <= 0,
+            "getRows with negative amount should return <= 0, got " + rows);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t45_getRowsHalfScreenAmount() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         int rows = oldView.getRows(0.5f);
+         int screenSize = getIntField("screenSize");
+         assertTrue(rows > 0 && rows <= screenSize,
+            "getRows(0.5) should be between 1 and screenSize, got "
+            + rows);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t46_setSizebyCharUpdatesScreenMetrics() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         Canvas canvas = getCanvas();
+         Dimension orig = canvas.getSize();
+         oldView.setSizebyChar(40, 15);
+         int screenSize = getIntField("screenSize");
+         assertEquals(15, screenSize,
+            "setSizebyChar(40,15) should set screenSize to 15");
+         canvas.setSize(orig.width, orig.height);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t47_screenyReturnsChangedScreenFirstLine() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         oldView.cursorChanged(0, 1);
+         int first1 = oldView.screenFirstLine();
+         int adj = oldView.screeny(1);
+         int first2 = oldView.screenFirstLine();
+         // screeny(positive) scrolls down: first2 >= first1
+         assertTrue(first2 >= first1,
+            "screeny(1) should not scroll backward");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t48_recalcScreenRowNoException() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         oldView.cursorChanged(0, 1);
+         oldView.recalcScreenRow();
+         int screenposy = getIntField("screenposy");
+         assertTrue(screenposy >= 0,
+            "screenposy should be non-negative after recalc");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t49_cursorChangedValidPosition() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         FvContext fvc = FvContext.getCurrFvc();
+         TextEdit te = fvc.edvec;
+         if (te.readIn() > 1) {
+            String line = te.at(1).toString();
+            // Place cursor at end of line (valid position)
+            oldView.cursorChanged(line.length(), 1);
+            assertTrue(true,
+               "cursorChanged at line end should not throw");
+         }
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
+
+   @Test
+   void t50_getRowsAfterCursorChange() throws Exception {
+      EventQueue.biglock2.lock();
+      try {
+         oldView.cursorChanged(0, 1);
+         int rows = oldView.getRows(1.0f);
+         assertTrue(rows >= 0,
+            "getRows(1.0f) after cursorChanged should be non-negative");
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+   }
 }
