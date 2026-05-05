@@ -134,6 +134,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          "git_commit_menu",
          "git_commit_quit",
          "git_commit_finalize",
+         "git_revert_hunk",
       };
       final String[] descs = {
          "",
@@ -176,6 +177,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          "Commit sub-menu (c=commit a=amend)",
          "Quit commit view with save prompt",
          "ZZ to finalize commit",
+         "Revert (discard) diff hunk at cursor",
       };
       register(rnames, descs);
    }
@@ -304,6 +306,9 @@ public final class GitCommands extends Rgroup implements Plugin {
             return null;
          case 39:
             gitCommitFinalize(fvc);
+            return null;
+         case 40:
+            gitRevertHunk(fvc);
             return null;
          default:
             throw new RuntimeException("GitCommands:default " + rnum);
@@ -830,6 +835,57 @@ public final class GitCommands extends Rgroup implements Plugin {
          }
       } else {
          UI.reportMessage("Unstage failed: " + err);
+      }
+   }
+
+   /**
+    * Revert (discard) the unstaged diff hunk at the cursor position.
+    * Applies the reverse patch to the working tree, removing the change.
+    */
+   @SuppressWarnings("unchecked")
+   private static void gitRevertHunk(FvContext fvc) throws
+         IOException, InputException {
+      TextEdit<String> buf = fvc.edvec;
+      String bufName = buf.fdes().getShortName();
+      boolean isCommitView = bufName.startsWith("*git-commit");
+
+      List<GitHunkStaging.Hunk> hunks = isCommitView
+         ? commitViewHunks : patchHunks;
+      if (hunks == null || hunks.isEmpty()) {
+         throw new InputException(
+            "No hunks — open a patch with :git_patch first");
+      }
+
+      int bufferLine;
+      if (isCommitView) {
+         bufferLine = fvc.inserty();
+      } else {
+         bufferLine = fvc.inserty() - 2;
+      }
+      GitHunkStaging.Hunk hunk =
+         GitHunkStaging.findHunkAtLine(hunks, bufferLine);
+      if (null == hunk) {
+         throw new InputException(
+            "Cursor is not within a diff hunk");
+      }
+      String err = GitHunkStaging.revertHunk(hunk);
+      if (null == err) {
+         UI.reportMessage("Reverted hunk " + (hunk.index + 1));
+         if (isCommitView) {
+            refreshCommitView(fvc);
+         } else {
+            if (null != statusBuffer) {
+               java.io.File rr = getRepoRootDir();
+               List<String> lines = rr != null
+                  ? GitStatusBuffer.getStatusLines(rr)
+                  : GitStatusBuffer.getStatusLines();
+               statusBuffer =
+                  createBuffer("*git-status*", lines);
+            }
+            advanceToNextHunk(fvc, hunk);
+         }
+      } else {
+         UI.reportMessage("Revert failed: " + err);
       }
    }
 

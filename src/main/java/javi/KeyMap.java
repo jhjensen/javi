@@ -364,6 +364,7 @@ final class KeyMap {
       KeyMap gitpatchMap = createOverlay("gitpatch", normalMap);
       gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
       gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitpatchMap.bindEditKey('X', "git_revert_hunk", null);
       gitpatchMap.bindEditKey('q', "nextfile", null);
       gitpatchMap.bindEditKey(':', "commandproc", null);
       gitpatchMap.bindEditKey(
@@ -381,6 +382,7 @@ final class KeyMap {
       KeyMap gitcommitMap = createOverlay("gitcommit", normalMap);
       gitcommitMap.bindEditKey('s', "git_stage_hunk", null);
       gitcommitMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitcommitMap.bindEditKey('X', "git_revert_hunk", null);
       gitcommitMap.bindEditKey('q', "git_commit_quit", null);
       gitcommitMap.bindEditKey(':', "commandproc", null);
       gitcommitMap.bindEditKey(

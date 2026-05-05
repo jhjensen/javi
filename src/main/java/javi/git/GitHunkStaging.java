@@ -196,6 +196,26 @@ public final class GitHunkStaging {
    }
 
    /**
+    * Revert (discard) a single unstaged hunk by applying its
+    * reverse patch to the working tree.
+    *
+    * @param hunk the hunk to revert
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String revertHunk(Hunk hunk) throws IOException {
+      String patch = hunk.toPatch();
+      GitProcess.Result res = GitProcess.executeWithStdin(
+         patch, "apply", "--reverse");
+      if (0 == res.exitCode) {
+         return null;
+      }
+      return res.output.isEmpty()
+         ? "Failed to revert hunk"
+         : String.join(" ", res.output);
+   }
+
+   /**
     * Get the diff for a single file (unstaged changes).
     *
     * @param filepath the file path relative to repo root
@@ -230,7 +250,7 @@ public final class GitHunkStaging {
    static List<String> formatAnnotatedDiff(
          List<String> diffLines, List<Hunk> hunks) {
       List<String> result = new ArrayList<>();
-      result.add("Diff (s=stage hunk  u=unstage hunk  q=quit)");
+      result.add("Diff (s=stage  u=unstage  X=revert  q=quit)");
       result.add("");
       result.addAll(diffLines);
       return result;
