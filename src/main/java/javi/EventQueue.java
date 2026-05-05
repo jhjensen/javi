@@ -115,6 +115,7 @@ public final class EventQueue {
    private static LinkedList<Object> queue = new LinkedList<>();
 
    private static int timeout = 500;
+   private static volatile boolean focused = true;
 
    public abstract static class IEvent {
       public abstract void execute() throws InputException;
@@ -196,9 +197,11 @@ public final class EventQueue {
                }
             }
             //trace("about to blink cursor on " +vi);
-            biglock2.lock();
-            vi.blinkcursor(); // flip cursor
-            biglock2.unlock();
+            if (focused) {
+               biglock2.lock();
+               vi.blinkcursor(); // flip cursor
+               biglock2.unlock();
+            }
          }
 
          vi.setCursorOff();
@@ -218,6 +221,7 @@ public final class EventQueue {
       synchronized (EventQueue.class) {
          EventQueue.class.notifyAll(); // make sure cursor starts blinking
          timeout = 500;
+         focused = true;
       }
    }
 
@@ -225,7 +229,13 @@ public final class EventQueue {
       synchronized (EventQueue.class) {
          // redo cursor every once in a while, and do gc
          timeout = 1000 * 60 * 60;
+         focused = false;
       }
+   }
+
+   /** Returns true when the application window has focus. */
+   public static boolean isFocused() {
+      return focused;
    }
 
    static JeyEvent nextEvent(CursorControl vi) throws InputException {

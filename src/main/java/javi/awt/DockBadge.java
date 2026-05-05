@@ -19,6 +19,7 @@ final class DockBadge {
    }
 
    private static boolean supported;
+   private static String lastBadge = "";
 
    /**
     * Initializes dock badge support. Call once during startup.
@@ -36,7 +37,8 @@ final class DockBadge {
    /**
     * Recomputes and sets the dock badge. Shows the combined count of
     * modified files and active shell sessions, or clears the badge
-    * if the count is zero.
+    * if the count is zero. Skips the native call when the value is
+    * unchanged to avoid unnecessary CPU work.
     */
    static void updateBadge() {
       if (!supported)
@@ -46,6 +48,9 @@ final class DockBadge {
          + ShellManager.getInstance().getSessionCount();
 
       String badge = count > 0 ? Integer.toString(count) : "";
+      if (badge.equals(lastBadge))
+         return;
+      lastBadge = badge;
       try {
          Taskbar.getTaskbar().setIconBadge(badge);
       } catch (UnsupportedOperationException e) {
