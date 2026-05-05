@@ -410,9 +410,12 @@ class Vt100GuiJUnitTest {
       } finally {
          EventQueue.biglock2.unlock();
       }
-      Field fgField = ecscreen.getClass().getDeclaredField("attrFgColor");
+      Field sgrField1 = ecscreen.getClass().getDeclaredField("sgrState");
+      sgrField1.setAccessible(true);
+      Object sgrState1 = sgrField1.get(ecscreen);
+      Field fgField = sgrState1.getClass().getDeclaredField("attrFgColor");
       fgField.setAccessible(true);
-      assertEquals(1, fgField.getInt(ecscreen),
+      assertEquals(1, fgField.getInt(sgrState1),
          "After SGR 31, fg should be 1 (red)");
       // Reset
       EventQueue.biglock2.lock();
@@ -431,9 +434,12 @@ class Vt100GuiJUnitTest {
       StringBuilder sb = new StringBuilder();
       // Set blue background (SGR 44)
       sgrMethod.invoke(ecscreen, new int[]{44}, sb);
-      Field bgField = ecscreen.getClass().getDeclaredField("attrBgColor");
+      Field sgrField2 = ecscreen.getClass().getDeclaredField("sgrState");
+      sgrField2.setAccessible(true);
+      Object sgrState2 = sgrField2.get(ecscreen);
+      Field bgField = sgrState2.getClass().getDeclaredField("attrBgColor");
       bgField.setAccessible(true);
-      assertEquals(4, bgField.getInt(ecscreen),
+      assertEquals(4, bgField.getInt(sgrState2),
          "After SGR 44, bg should be 4 (blue)");
       // Reset
       sgrMethod.invoke(ecscreen, new int[]{0}, sb);
@@ -481,9 +487,12 @@ class Vt100GuiJUnitTest {
       StringBuilder sb = new StringBuilder();
       // Set bright red fg (SGR 91)
       sgrMethod.invoke(ecscreen, new int[]{91}, sb);
-      Field fgField = ecscreen.getClass().getDeclaredField("attrFgColor");
+      Field sgrField3 = ecscreen.getClass().getDeclaredField("sgrState");
+      sgrField3.setAccessible(true);
+      Object sgrState3 = sgrField3.get(ecscreen);
+      Field fgField = sgrState3.getClass().getDeclaredField("attrFgColor");
       fgField.setAccessible(true);
-      assertEquals(9, fgField.getInt(ecscreen),
+      assertEquals(9, fgField.getInt(sgrState3),
          "After SGR 91, fg should be 9 (bright red = 91-90+8)");
       // Reset
       sgrMethod.invoke(ecscreen, new int[]{0}, sb);
@@ -497,9 +506,12 @@ class Vt100GuiJUnitTest {
       StringBuilder sb = new StringBuilder();
       sgrMethod.invoke(ecscreen, new int[]{31}, sb); // set red
       sgrMethod.invoke(ecscreen, new int[]{39}, sb); // reset fg
-      Field fgField = ecscreen.getClass().getDeclaredField("attrFgColor");
+      Field sgrField4 = ecscreen.getClass().getDeclaredField("sgrState");
+      sgrField4.setAccessible(true);
+      Object sgrState4 = sgrField4.get(ecscreen);
+      Field fgField = sgrState4.getClass().getDeclaredField("attrFgColor");
       fgField.setAccessible(true);
-      assertEquals(-1, fgField.getInt(ecscreen),
+      assertEquals(-1, fgField.getInt(sgrState4),
          "After SGR 39, fg should be -1 (default)");
       // Final reset
       sgrMethod.invoke(ecscreen, new int[]{0}, sb);
@@ -518,9 +530,12 @@ class Vt100GuiJUnitTest {
       int attr = caField.getInt(ecscreen);
       assertTrue(CellAttr.isBold(attr), "Should be bold");
       assertTrue(CellAttr.isUnderline(attr), "Should be underline");
-      Field fgField = ecscreen.getClass().getDeclaredField("attrFgColor");
+      Field sgrField5 = ecscreen.getClass().getDeclaredField("sgrState");
+      sgrField5.setAccessible(true);
+      Object sgrState5 = sgrField5.get(ecscreen);
+      Field fgField = sgrState5.getClass().getDeclaredField("attrFgColor");
       fgField.setAccessible(true);
-      assertEquals(2, fgField.getInt(ecscreen),
+      assertEquals(2, fgField.getInt(sgrState5),
          "fg should be 2 (green)");
       // Reset
       sgrMethod.invoke(ecscreen, new int[]{0}, sb);
