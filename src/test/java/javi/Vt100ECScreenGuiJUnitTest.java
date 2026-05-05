@@ -131,140 +131,200 @@ class Vt100ECScreenGuiJUnitTest {
 
    @Test
    void t01_256ColorFg() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // SGR 38;5;196 → 256-color fg = 196
-      sgr.invoke(ecscreen, new int[]{38, 5, 196}, sb);
-      assertEquals(196, getFgColor(),
-         "256-color FG should be 196");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // SGR 38;5;196 → 256-color fg = 196
+         sgr.invoke(ecscreen, new int[]{38, 5, 196}, sb);
+         assertEquals(196, getFgColor(),
+            "256-color FG should be 196");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t02_256ColorBg() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // SGR 48;5;52 → 256-color bg = 52
-      sgr.invoke(ecscreen, new int[]{48, 5, 52}, sb);
-      assertEquals(52, getBgColor(),
-         "256-color BG should be 52");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // SGR 48;5;52 → 256-color bg = 52
+         sgr.invoke(ecscreen, new int[]{48, 5, 52}, sb);
+         assertEquals(52, getBgColor(),
+            "256-color BG should be 52");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t03_trueColorFg() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // SGR 38;2;255;0;0 → true color red, approximated to 256-color
-      sgr.invoke(ecscreen, new int[]{38, 2, 255, 0, 0}, sb);
-      int fg = getFgColor();
-      assertTrue(fg >= 0 && fg <= 254,
-         "True-color FG should map to 0-254, got " + fg);
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // SGR 38;2;255;0;0 → true color red, approximated to 256-color
+         sgr.invoke(ecscreen, new int[]{38, 2, 255, 0, 0}, sb);
+         int fg = getFgColor();
+         assertTrue(fg >= 0 && fg <= 254,
+            "True-color FG should map to 0-254, got " + fg);
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t04_trueColorBg() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // SGR 48;2;0;255;0 → true color green
-      sgr.invoke(ecscreen, new int[]{48, 2, 0, 255, 0}, sb);
-      int bg = getBgColor();
-      assertTrue(bg >= 0 && bg <= 254,
-         "True-color BG should map to 0-254, got " + bg);
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // SGR 48;2;0;255;0 → true color green
+         sgr.invoke(ecscreen, new int[]{48, 2, 0, 255, 0}, sb);
+         int bg = getBgColor();
+         assertTrue(bg >= 0 && bg <= 254,
+            "True-color BG should map to 0-254, got " + bg);
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t05_trueColorApproxBlack() throws Exception {
-      // Verify approxTrueColor for black (0,0,0)
-      int result = CellAttr.approxTrueColor(0, 0, 0);
-      // Black should map to grayscale ramp entry 232 or color cube 16
-      assertTrue(result >= 16 && result <= 254,
-         "Black should map to palette 16-254, got " + result);
+      EventQueue.biglock2.lock();
+      try {
+         // Verify approxTrueColor for black (0,0,0)
+         int result = CellAttr.approxTrueColor(0, 0, 0);
+         // Black should map to grayscale ramp entry 232 or color cube 16
+         assertTrue(result >= 16 && result <= 254,
+            "Black should map to palette 16-254, got " + result);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t06_trueColorApproxWhite() throws Exception {
-      int result = CellAttr.approxTrueColor(255, 255, 255);
-      assertTrue(result >= 16 && result <= 254,
-         "White should map to palette 16-254, got " + result);
+      EventQueue.biglock2.lock();
+      try {
+         int result = CellAttr.approxTrueColor(255, 255, 255);
+         assertTrue(result >= 16 && result <= 254,
+            "White should map to palette 16-254, got " + result);
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t07_brightBgColor() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // SGR 104 → bright bg blue = 100-100+8 = 12
-      sgr.invoke(ecscreen, new int[]{104}, sb);
-      assertEquals(12, getBgColor(),
-         "After SGR 104, bg should be 12 (bright blue)");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // SGR 104 → bright bg blue = 100-100+8 = 12
+         sgr.invoke(ecscreen, new int[]{104}, sb);
+         assertEquals(12, getBgColor(),
+            "After SGR 104, bg should be 12 (bright blue)");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t08_defaultBgReset() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      sgr.invoke(ecscreen, new int[]{42}, sb); // set green bg
-      assertEquals(2, getBgColor());
-      sgr.invoke(ecscreen, new int[]{49}, sb); // reset bg to default
-      assertEquals(-1, getBgColor(),
-         "After SGR 49, bg should be -1 (default)");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         sgr.invoke(ecscreen, new int[]{42}, sb); // set green bg
+         assertEquals(2, getBgColor());
+         sgr.invoke(ecscreen, new int[]{49}, sb); // reset bg to default
+         assertEquals(-1, getBgColor(),
+            "After SGR 49, bg should be -1 (default)");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    // ── SGR disable/cancel tests ─────────────────────────────────
 
    @Test
    void t09_cancelBold() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      sgr.invoke(ecscreen, new int[]{1}, sb); // bold on
-      assertTrue(CellAttr.isBold(getCurrentAttr()));
-      sgr.invoke(ecscreen, new int[]{22}, sb); // bold off
-      assertFalse(CellAttr.isBold(getCurrentAttr()),
-         "SGR 22 should cancel bold");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         sgr.invoke(ecscreen, new int[]{1}, sb); // bold on
+         assertTrue(CellAttr.isBold(getCurrentAttr()));
+         sgr.invoke(ecscreen, new int[]{22}, sb); // bold off
+         assertFalse(CellAttr.isBold(getCurrentAttr()),
+            "SGR 22 should cancel bold");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t10_cancelUnderline() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      sgr.invoke(ecscreen, new int[]{4}, sb); // underline on
-      assertTrue(CellAttr.isUnderline(getCurrentAttr()));
-      sgr.invoke(ecscreen, new int[]{24}, sb); // underline off
-      assertFalse(CellAttr.isUnderline(getCurrentAttr()),
-         "SGR 24 should cancel underline");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         sgr.invoke(ecscreen, new int[]{4}, sb); // underline on
+         assertTrue(CellAttr.isUnderline(getCurrentAttr()));
+         sgr.invoke(ecscreen, new int[]{24}, sb); // underline off
+         assertFalse(CellAttr.isUnderline(getCurrentAttr()),
+            "SGR 24 should cancel underline");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t11_cancelReverse() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      sgr.invoke(ecscreen, new int[]{7}, sb); // reverse on
-      assertTrue(CellAttr.isReverse(getCurrentAttr()));
-      sgr.invoke(ecscreen, new int[]{27}, sb); // reverse off
-      assertFalse(CellAttr.isReverse(getCurrentAttr()),
-         "SGR 27 should cancel reverse");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         sgr.invoke(ecscreen, new int[]{7}, sb); // reverse on
+         assertTrue(CellAttr.isReverse(getCurrentAttr()));
+         sgr.invoke(ecscreen, new int[]{27}, sb); // reverse off
+         assertFalse(CellAttr.isReverse(getCurrentAttr()),
+            "SGR 27 should cancel reverse");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    @Test
    void t12_combinedAttributes() throws Exception {
-      Method sgr = getSgrMethod();
-      StringBuilder sb = new StringBuilder();
-      // Bold + underline + reverse + cyan fg + magenta bg
-      sgr.invoke(ecscreen, new int[]{1, 4, 7, 36, 45}, sb);
-      int attr = getCurrentAttr();
-      assertTrue(CellAttr.isBold(attr), "Should be bold");
-      assertTrue(CellAttr.isUnderline(attr), "Should be underline");
-      assertTrue(CellAttr.isReverse(attr), "Should be reverse");
-      assertEquals(6, getFgColor(), "FG should be 6 (cyan)");
-      assertEquals(5, getBgColor(), "BG should be 5 (magenta)");
-      resetSgr();
+      EventQueue.biglock2.lock();
+      try {
+         Method sgr = getSgrMethod();
+         StringBuilder sb = new StringBuilder();
+         // Bold + underline + reverse + cyan fg + magenta bg
+         sgr.invoke(ecscreen, new int[]{1, 4, 7, 36, 45}, sb);
+         int attr = getCurrentAttr();
+         assertTrue(CellAttr.isBold(attr), "Should be bold");
+         assertTrue(CellAttr.isUnderline(attr), "Should be underline");
+         assertTrue(CellAttr.isReverse(attr), "Should be reverse");
+         assertEquals(6, getFgColor(), "FG should be 6 (cyan)");
+         assertEquals(5, getBgColor(), "BG should be 5 (magenta)");
+         resetSgr();
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
    }
 
    // ── Cursor save/restore ──────────────────────────────────────

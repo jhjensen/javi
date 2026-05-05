@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
@@ -87,6 +88,12 @@ class OldViewRenderPipelineGuiJUnitTest {
       return f.get(oldView);
    }
 
+   private static Object getStaticField(String name) throws Exception {
+      Field f = oldViewClass.getDeclaredField(name);
+      f.setAccessible(true);
+      return f.get(null);
+   }
+
    private static void setStaticField(String name, Object value)
          throws Exception {
       Field f = oldViewClass.getDeclaredField(name);
@@ -112,6 +119,28 @@ class OldViewRenderPipelineGuiJUnitTest {
       return img.createGraphics();
    }
 
+   /**
+    * Ensure the canvas inner imageg field is initialized so rendering
+    * methods that use it do not throw NullPointerException.
+    */
+   private static void ensureImageg() throws Exception {
+      Canvas canvas = getCanvas();
+      Field imagegField = canvas.getClass().getDeclaredField("imageg");
+      imagegField.setAccessible(true);
+      if (imagegField.get(canvas) == null) {
+         int pw = getIntField("pixelWidth");
+         int ch = getIntField("charheight");
+         if (pw <= 0) pw = 800;
+         if (ch <= 0) ch = 16;
+         BufferedImage dbuf = new BufferedImage(
+            pw * 2, ch, BufferedImage.TYPE_INT_RGB);
+         imagegField.set(canvas, dbuf.createGraphics());
+         Field dbufField = canvas.getClass().getDeclaredField("dbuf");
+         dbufField.setAccessible(true);
+         dbufField.set(canvas, dbuf);
+      }
+   }
+
    // ── Antialiasing mode switching ──────────────────────────────
 
    @Test
@@ -125,8 +154,7 @@ class OldViewRenderPipelineGuiJUnitTest {
 
    @Test
    void t02_applyTextRenderingHintsOffMode() throws Exception {
-      String origMode = (String) oldViewClass
-         .getDeclaredField("antialiasMode").get(null);
+      String origMode = (String) getStaticField("antialiasMode");
       Graphics2D g = createTestGraphics();
       try {
          setStaticField("antialiasMode", "off");
@@ -146,8 +174,7 @@ class OldViewRenderPipelineGuiJUnitTest {
 
    @Test
    void t03_applyTextRenderingHintsLcdMode() throws Exception {
-      String origMode = (String) oldViewClass
-         .getDeclaredField("antialiasMode").get(null);
+      String origMode = (String) getStaticField("antialiasMode");
       Graphics2D g = createTestGraphics();
       try {
          setStaticField("antialiasMode", "lcd");
@@ -168,8 +195,7 @@ class OldViewRenderPipelineGuiJUnitTest {
 
    @Test
    void t04_applyTextRenderingHintsGrayscaleMode() throws Exception {
-      String origMode = (String) oldViewClass
-         .getDeclaredField("antialiasMode").get(null);
+      String origMode = (String) getStaticField("antialiasMode");
       Graphics2D g = createTestGraphics();
       try {
          setStaticField("antialiasMode", "grayscale");
@@ -189,8 +215,7 @@ class OldViewRenderPipelineGuiJUnitTest {
 
    @Test
    void t05_applyTextRenderingHintsOnMode() throws Exception {
-      String origMode = (String) oldViewClass
-         .getDeclaredField("antialiasMode").get(null);
+      String origMode = (String) getStaticField("antialiasMode");
       Graphics2D g = createTestGraphics();
       try {
          setStaticField("antialiasMode", "on");
@@ -220,8 +245,7 @@ class OldViewRenderPipelineGuiJUnitTest {
 
    @Test
    void t07_lcdContrastAppliedToGraphics() throws Exception {
-      String origMode = (String) oldViewClass
-         .getDeclaredField("antialiasMode").get(null);
+      String origMode = (String) getStaticField("antialiasMode");
       Graphics2D g = createTestGraphics();
       try {
          setStaticField("antialiasMode", "lcd");
@@ -296,6 +320,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int screenSize = getIntField("screenSize");
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
@@ -369,6 +394,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
          try {
@@ -392,6 +418,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
          try {
@@ -441,6 +468,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
          try {
@@ -464,6 +492,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int screenSize = getIntField("screenSize");
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
@@ -490,6 +519,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          Graphics2D g = createTestGraphics();
          try {
             Method refresh = oldViewClass.getDeclaredMethod(
@@ -513,6 +543,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int screenSize = getIntField("screenSize");
          Graphics2D g = createTestGraphics();
          try {
@@ -536,6 +567,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int screenSize = getIntField("screenSize");
          Graphics2D g = createTestGraphics();
          try {
@@ -706,8 +738,7 @@ class OldViewRenderPipelineGuiJUnitTest {
          bgField.setAccessible(true);
          Color defaultBg = (Color) bgField.get(null);
          canvas.setBackground(defaultBg);
-         Font af = (Font) oldViewClass.getDeclaredField("activeFont")
-            .get(oldView);
+         Font af = (Font) getField("activeFont");
          Method ssf = oldViewClass.getDeclaredMethod("ssetFont", Font.class);
          ssf.setAccessible(true);
          ssf.invoke(oldView, af);
@@ -747,8 +778,7 @@ class OldViewRenderPipelineGuiJUnitTest {
          Field bgField2 = atViewClass2.getDeclaredField("background");
          bgField2.setAccessible(true);
          canvas.setBackground((Color) bgField2.get(null));
-         Font af = (Font) oldViewClass.getDeclaredField("activeFont")
-            .get(oldView);
+         Font af = (Font) getField("activeFont");
          Method ssf = oldViewClass.getDeclaredMethod("ssetFont", Font.class);
          ssf.setAccessible(true);
          ssf.invoke(oldView, af);
@@ -763,8 +793,7 @@ class OldViewRenderPipelineGuiJUnitTest {
    void t29_modeSwitchCycleDoesNotCorruptState() throws Exception {
       EventQueue.biglock2.lock();
       try {
-         String origMode = (String) oldViewClass
-            .getDeclaredField("antialiasMode").get(null);
+         String origMode = (String) getStaticField("antialiasMode");
          Method resetM = oldViewClass.getDeclaredMethod(
             "resetTextRenderingHints");
          resetM.setAccessible(true);
