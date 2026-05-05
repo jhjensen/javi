@@ -240,7 +240,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                if (rec == -1)  {
                   //trace("recevied EOF exiting input loop");
                   //return;
-                  Thread.sleep(200);
+                  Thread.sleep(5000);
                } else {
                   //trace("rec " + rec);
                   recbyte = (char) rec;

@@ -1015,6 +1015,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void idle() {
+      if (!EventQueue.isFocused())
+         return;
       new IdleEvent();
    }
 

@@ -407,6 +407,8 @@ public final class FvContext<OType> implements Serializable {
 
    private static final class Idler implements EventQueue.Idler {
       public void idle() {
+         if (!EventQueue.isFocused())
+            return;
          for (View vi : fvmap.viewCollection())
             vi.repaint();
       }
