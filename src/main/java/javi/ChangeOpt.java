@@ -9,6 +9,8 @@ public abstract class ChangeOpt {
    protected abstract int getSaveAmount();
    protected abstract int getSaveStart();
    protected abstract Opcode resetOp();
+   /** True if a paint operation is pending. */
+   abstract boolean isPending();
    abstract void redraw();
    abstract void blink();
    abstract boolean insert(int start, int amount);

@@ -410,7 +410,8 @@ public final class FvContext<OType> implements Serializable {
          if (!EventQueue.isFocused())
             return;
          for (View vi : fvmap.viewCollection())
-            vi.repaint();
+            if (vi.needsRepaint())
+               vi.repaint();
       }
    }
 

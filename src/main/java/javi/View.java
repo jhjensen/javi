@@ -155,6 +155,11 @@ public abstract class View  extends
          return retval;
       }
 
+      /** Check if a repaint is pending (currop != NOOP). */
+      final boolean isPending() {
+         return currop != NOOP;
+      }
+
       public final void redraw() {
          //trace("redraw");
          currop = REDRAW;
@@ -281,6 +286,11 @@ public abstract class View  extends
 
    public final void redraw() {
       op.redraw();
+   }
+
+   /** True if a change is pending that requires repainting. */
+   final boolean needsRepaint() {
+      return op.isPending();
    }
 
    final void blinkcursor() {
