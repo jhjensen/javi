@@ -987,12 +987,14 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    public void ishowCommand() {
       Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(true);
+      frm.validate();
       cmdComp.repaint();
    }
 
    public void ihideCommand() {
       Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(false);
+      frm.validate();
       statusBar.clearlines();
       //trace("comline:"+ tfc.at().toString());
    }
@@ -1833,8 +1835,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
-         frm.setCompSize(startSize.width, startSize.height);
-
+         // Compute preferred size BEFORE setCompSize truncates view
+         // dimensions via integer division (screenSize = height/charheight).
+         // This prevents cumulative height loss when toggling status bar.
          if (programmaticResize && normalFrame == frm
                && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                == Frame.MAXIMIZED_BOTH)) {
@@ -1846,6 +1849,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             }
          }
          programmaticResize = false;
+
+         frm.setCompSize(startSize.width, startSize.height);
 
          int ccount = frm.getComponentCount();
          //trace("frame size at start of layout " + startSize + " insets " + inset);
