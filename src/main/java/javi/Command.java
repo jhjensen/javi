@@ -113,6 +113,7 @@ public final class Command extends Rgroup {
    }
 
    private static final ArrayList<String> cmdlist = new ArrayList<>();
+   private static final ArrayList<String> awtCmdList = new ArrayList<>();
 
    // Matches ${NAME} or $NAME (NAME starts with letter/_, then letters/digits/_).
    private static final Pattern VAR_REF = Pattern.compile(
@@ -170,7 +171,11 @@ public final class Command extends Rgroup {
             vars.put(lm.group(1), expandVars(lm.group(2), vars));
             continue;
          }
-         out.add(expandVars(line, vars));
+         String expanded = expandVars(line, vars);
+         if (expanded.stripLeading().startsWith("awt."))
+            awtCmdList.add(expanded);
+         else
+            out.add(expanded);
       }
    }
 
@@ -200,6 +205,17 @@ public final class Command extends Rgroup {
             // leave in list for later execution
          }
       }
+   }
+
+   /**
+    * Returns and clears the list of {@code awt.*} commands separated
+    * during .javini preprocessing. AwtInterface calls this to apply
+    * AWT-specific rendering commands directly.
+    */
+   public static List<String> takeAwtCommands() {
+      List<String> result = new ArrayList<>(awtCmdList);
+      awtCmdList.clear();
+      return result;
    }
 
    static void doneInit() {

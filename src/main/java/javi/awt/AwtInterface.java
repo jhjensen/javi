@@ -161,11 +161,11 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //fr.setUndecorated(true);
       //FontList.updateFont(); //??? avoid calling this?
 
+      common(); // register commands before execCmdList runs
       AwtFontList.init();
       frm = initfrm("normal");
 
       normalFrame = frm;
-      common();
        // do we really need to wait???
       if (null == new Initer().postWait().getResult())
          throw new ExitException();
@@ -246,7 +246,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       };
       Commands() {
          register(rnames);
-         registerArgCommand("antialias",
+         registerArgCommand("awt.antialias",
             "set text antialias mode: on/off/lcd/grayscale", "display",
             (arg, count, rcount, fvc, dot) -> {
                String val = arg instanceof String ? (String) arg : "";
@@ -265,14 +265,14 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      break;
                   default:
                      throw new InputException(
-                        "antialias: use on/off/lcd/grayscale (current: "
+                        "awt.antialias: use on/off/lcd/grayscale (current: "
                         + OldView.antialiasMode + ")");
                }
                irepaint();
-               UI.reportMessage("antialias " + OldView.antialiasMode);
+               UI.reportMessage("awt.antialias " + OldView.antialiasMode);
                return null;
             });
-         registerArgCommand("lcdcontrast",
+         registerArgCommand("awt.lcdcontrast",
             "set LCD text contrast 100-250 (lower=lighter)", "display",
             (arg, count, rcount, fvc, dot) -> {
                String val = arg instanceof String ? (String) arg : "";
@@ -282,10 +282,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      throw new NumberFormatException("out of range");
                   OldView.lcdContrast = v;
                   irepaint();
-                  UI.reportMessage("lcdcontrast " + v);
+                  UI.reportMessage("awt.lcdcontrast " + v);
                } catch (NumberFormatException e) {
                   throw new InputException(
-                     "lcdcontrast: integer 100-250 (current: "
+                     "awt.lcdcontrast: integer 100-250 (current: "
                      + OldView.lcdContrast + ")");
                }
                return null;
@@ -949,6 +949,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    public void isetStream(Reader inreader) { /* unimplemented */ }
 
    public void irepaint() {
+      if (frm == null)
+         return; // during init, nothing to repaint yet
       int ccount = frm.getComponentCount();
       for (int ii = 0; ii < ccount; ii++) {
          Component cp = frm.getComponent(ii);
@@ -977,7 +979,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void idispose() {
-      frm.dispose();
+      if (frm != null)
+         frm.dispose();
    }
 
    public void itransferFocus() {

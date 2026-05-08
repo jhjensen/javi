@@ -70,6 +70,9 @@ public final class Javi {
       //   ? new javi.awt.AwtInterface()
        //  : new StreamInterface();
       new javi.awt.AwtInterface();
+      Command.execCmdList(); // run .javini commands after frm exists
+      for (String cmd : Command.takeAwtCommands())
+         Command.command(cmd, null, null);
 
       //trace("");
    }

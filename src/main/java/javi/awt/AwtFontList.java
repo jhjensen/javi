@@ -134,7 +134,6 @@ public final class AwtFontList extends TextEdit<FontEntry> {
 
    public static void init() {
       inst = new AwtFontList(new FontParser());
-      Command.execCmdList(); // pickup font commands
       FvContext.setOverrideFontProvider(te -> {
          if (te instanceof DirEdit)
             return getMonoFont(null);
