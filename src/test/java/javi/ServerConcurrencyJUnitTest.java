@@ -44,14 +44,22 @@ class ServerConcurrencyJUnitTest {
 
    @BeforeEach
    void setUp() throws Exception {
-      try (ServerSocket ss = new ServerSocket(0)) {
-         port = ss.getLocalPort();
-      }
-      EventQueue.biglock2.lock();
-      try {
-         server = new Server(port);
-      } finally {
-         EventQueue.biglock2.unlock();
+      // Retry port allocation — previous test's socket may still be in TIME_WAIT
+      for (int attempt = 0; attempt < 5; attempt++) {
+         try (ServerSocket ss = new ServerSocket(0)) {
+            port = ss.getLocalPort();
+         }
+         EventQueue.biglock2.lock();
+         try {
+            server = new Server(port);
+            return;
+         } catch (java.net.BindException e) {
+            if (attempt == 4)
+               throw e;
+            Thread.sleep(100);
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
       }
    }
 
@@ -63,7 +71,7 @@ class ServerConcurrencyJUnitTest {
       java.net.ServerSocket ss = (java.net.ServerSocket) f.get(server);
       if (ss != null)
          ss.close();
-      Thread.sleep(100); // let the server thread exit
+      Thread.sleep(200); // let the server thread exit
    }
 
    // ── Burst connections ────────────────────────────────────────
