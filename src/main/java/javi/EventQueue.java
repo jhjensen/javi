@@ -190,7 +190,10 @@ public final class EventQueue {
                   continue;
                } else {
                   try {
-                     EventQueue.class.wait(timeout);
+                     if (focused)
+                        EventQueue.class.wait(timeout);
+                     else
+                        EventQueue.class.wait(); // infinite until focusGained
                   } catch (InterruptedException e) {
                      UI.popError("unexpected interrupt ", e);
                   }
@@ -223,6 +226,7 @@ public final class EventQueue {
          timeout = 500;
          focused = true;
       }
+      Vt100Parser.wakeAll(); // wake sleeping parser threads
    }
 
    public static void focusLost() {

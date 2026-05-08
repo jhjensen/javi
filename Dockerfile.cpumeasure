@@ -1,0 +1,73 @@
+# Dockerfile.cpumeasure — CPU usage measurement for Javi editor
+#
+# Measures CPU ticks (utime+stime from /proc/PID/stat) for focused-idle
+# and unfocused/minimized states using Xvfb + openbox + xdotool.
+#
+# Build:  docker build -f Dockerfile.cpumeasure -t javi-cpumeasure .
+# Run:    docker run --rm javi-cpumeasure
+
+FROM eclipse-temurin:24-jdk-noble
+
+# Xvfb + X11 libs + openbox (window manager) + xdotool (window control)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    openbox \
+    xdotool \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libfreetype6 \
+    fontconfig \
+    fonts-dejavu-core \
+    git \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Gradle wrapper first for layer caching
+COPY gradlew build.gradle ./
+COPY gradle/ gradle/
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
+
+# Copy source
+COPY src/ src/
+
+# build.gradle needs git describe
+RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
+    git add -A && git commit -q -m "docker build"
+
+# Build the fat jar
+RUN ./gradlew --no-daemon shadowJar
+
+# Measurement script: launch javi, measure focused+unfocused CPU ticks
+ENTRYPOINT ["sh", "-c", "\
+    export DISPLAY=:99 && \
+    Xvfb :99 -screen 0 1024x768x24 -nolisten tcp &>/dev/null & \
+    sleep 1 && \
+    openbox &>/dev/null & \
+    sleep 1 && \
+    java -jar build/libs/*-all.jar /dev/null & \
+    JPID=$! && \
+    sleep 5 && \
+    echo '=== Focused idle 30s ===' && \
+    T1=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
+    sleep 30 && \
+    T2=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
+    echo \"Focused ticks: $((T2-T1))\" && \
+    echo '=== Unfocused 30s ===' && \
+    WID=$(xdotool getactivewindow 2>/dev/null) && \
+    if [ -n \"$WID\" ]; then xdotool windowminimize $WID; fi && \
+    sleep 2 && \
+    T3=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
+    sleep 30 && \
+    T4=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
+    echo \"Unfocused ticks: $((T4-T3))\" && \
+    echo '=== Summary ===' && \
+    echo \"Focused:   $((T2-T1)) ticks in 30s\" && \
+    echo \"Unfocused: $((T4-T3)) ticks in 30s\" && \
+    kill $JPID 2>/dev/null \
+"]

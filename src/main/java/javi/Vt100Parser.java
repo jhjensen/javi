@@ -2,6 +2,8 @@ package javi;
 import java.io.BufferedInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import history.Tools;
 import static history.Tools.trace;
 
@@ -48,6 +50,10 @@ import static history.Tools.trace;
  * @see Vt100
  */
 final class Vt100Parser extends EventQueue.IEvent implements Runnable {
+
+   /** Active parser instances, for waking on focus gain. */
+   private static final Set<Vt100Parser> instances =
+      ConcurrentHashMap.newKeySet();
 
    /** Current parser state. */
    private int state = NORM;
@@ -217,6 +223,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
       input = ins;
       reader = new InputStreamReader(ins, charset);
       window = win;
+      instances.add(this);
       rthread.start();
    }
 
@@ -224,7 +231,20 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
     * Stops the parser thread.
     */
    void stop() {
+      instances.remove(this);
       rthread.interrupt();
+   }
+
+   /**
+    * Wakes all parser threads that may be sleeping while unfocused.
+    * Called from {@link EventQueue#focusGained()}.
+    */
+   static void wakeAll() {
+      for (Vt100Parser p : instances) {
+         synchronized (p) {
+            p.notify();
+         }
+      }
    }
 
    /**
@@ -240,7 +260,7 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
                if (rec == -1)  {
                   //trace("recevied EOF exiting input loop");
                   //return;
-                  Thread.sleep(5000);
+                  this.wait(EventQueue.isFocused() ? 5000 : 0);
                } else {
                   //trace("rec " + rec);
                   recbyte = (char) rec;
