@@ -43,31 +43,8 @@ RUN git init && git config user.email "docker@build" && git config user.name "do
 # Build the fat jar
 RUN ./gradlew --no-daemon shadowJar
 
-# Measurement script: launch javi, measure focused+unfocused CPU ticks
-ENTRYPOINT ["sh", "-c", "\
-    export DISPLAY=:99 && \
-    Xvfb :99 -screen 0 1024x768x24 -nolisten tcp &>/dev/null & \
-    sleep 1 && \
-    openbox &>/dev/null & \
-    sleep 1 && \
-    java -jar build/libs/*-all.jar /dev/null & \
-    JPID=$! && \
-    sleep 5 && \
-    echo '=== Focused idle 30s ===' && \
-    T1=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
-    sleep 30 && \
-    T2=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
-    echo \"Focused ticks: $((T2-T1))\" && \
-    echo '=== Unfocused 30s ===' && \
-    WID=$(xdotool getactivewindow 2>/dev/null) && \
-    if [ -n \"$WID\" ]; then xdotool windowminimize $WID; fi && \
-    sleep 2 && \
-    T3=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
-    sleep 30 && \
-    T4=$(awk '{print $14+$15}' /proc/$JPID/stat) && \
-    echo \"Unfocused ticks: $((T4-T3))\" && \
-    echo '=== Summary ===' && \
-    echo \"Focused:   $((T2-T1)) ticks in 30s\" && \
-    echo \"Unfocused: $((T4-T3)) ticks in 30s\" && \
-    kill $JPID 2>/dev/null \
-"]
+# Copy measurement script
+COPY ai/cpu-measure.sh /app/cpu-measure.sh
+RUN chmod +x /app/cpu-measure.sh
+
+ENTRYPOINT ["/app/cpu-measure.sh"]

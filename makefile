@@ -372,6 +372,46 @@ rdesk-verify-clean:
 	ssh -n -T rdesk 'docker rmi $(VERIFY_IMAGE) 2>/dev/null; \
 	   rm -rf $(RDESK_VERIFY_DIR)'
 
+#==============================================================================
+# F43: CPU measurement (Dockerfile.cpumeasure on rdesk)
+#==============================================================================
+
+CPUMEASURE_IMAGE = javi-cpumeasure
+RDESK_CPUMEASURE_DIR = /tmp/javi-cpumeasure
+
+# Full pipeline: sync, build Docker image, run measurement, fetch results
+rdesk-cpu-measure: rdesk-cpu-sync rdesk-cpu-build rdesk-cpu-run rdesk-cpu-fetch
+
+# Sync javi source to rdesk
+rdesk-cpu-sync:
+	rsync -az --delete $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_CPUMEASURE_DIR)/
+
+# Build CPU measurement Docker image on rdesk
+rdesk-cpu-build: rdesk-cpu-sync
+	ssh -n -T rdesk 'cd $(RDESK_CPUMEASURE_DIR) && \
+	   docker build -f Dockerfile.cpumeasure -t $(CPUMEASURE_IMAGE) .'
+
+# Run CPU measurement on rdesk
+rdesk-cpu-run: rdesk-cpu-build
+	ssh -n -T rdesk 'cd $(RDESK_CPUMEASURE_DIR) && \
+	   mkdir -p results && \
+	   docker run --rm $(CPUMEASURE_IMAGE) | tee results/cpu-measure.txt'
+
+# Fetch CPU measurement results from rdesk
+rdesk-cpu-fetch:
+	@mkdir -p ai/cpu-results
+	rsync -az rdesk:$(RDESK_CPUMEASURE_DIR)/results/ \
+	   ai/cpu-results/ 2>/dev/null || true
+	@echo "=== CPU Measurement Results ==="
+	@if [ -f ai/cpu-results/cpu-measure.txt ]; then \
+	   cat ai/cpu-results/cpu-measure.txt; \
+	fi
+
+# Clean CPU measurement Docker image and files
+rdesk-cpu-clean:
+	ssh -n -T rdesk 'docker rmi $(CPUMEASURE_IMAGE) 2>/dev/null; \
+	   rm -rf $(RDESK_CPUMEASURE_DIR)'
+
 # Run PSTest with coverage and generate report
 pstest-coverage:
 	./gradlew pstestCoverage

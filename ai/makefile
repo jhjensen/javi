@@ -100,3 +100,7 @@ ai/rdesk-coverage.out: FORCE
 # F22: Remote esctest2 VT100 compliance tests
 ai/rdesk-esctest2.out: FORCE
 	$(MAKE) rdesk-esctest2 > $@ 2>&1; echo "exit: $$?" >> $@
+
+# F43: Remote CPU measurement (Dockerfile.cpumeasure)
+ai/rdesk-cpu-measure.out: FORCE
+	$(MAKE) rdesk-cpu-measure > $@ 2>&1; echo "exit: $$?" >> $@
