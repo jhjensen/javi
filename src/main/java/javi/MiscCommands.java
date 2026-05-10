@@ -208,7 +208,8 @@ public final class MiscCommands extends Rgroup {
       registerCommand(new CommandEntry("check_external",
          "check if file changed on disk", "file",
          (count, rcount, fvc, dot) -> {
-            FileList.checkCurrentFileExternal(fvc); return null;
+            FileList.checkCurrentFileExternal(fvc);
+            return null;
          }));
    }
 
@@ -1282,7 +1283,7 @@ public final class MiscCommands extends Rgroup {
       return new JeyEvent(mods, keyCode, JeyEvent.CHAR_UNDEFINED);
    }
 
-   static void redraw(boolean flushFlag) throws IOException {
+   public static void redraw(boolean flushFlag) throws IOException {
 
       // trace("redraw flushFlag " + flushFlag + " currFvc " +
       // FvContext.getCurrFvc());
@@ -1295,6 +1296,8 @@ public final class MiscCommands extends Rgroup {
             trace("start flush elapsed" + elapsed);
             DirManager.getInstance().flushCache();
             PosListList.Cmd.flush();
+            DirEdit.DirSizeCalculator.clearCache();
+            CharsetDetector.clearCache();
             EventQueue.biglock2.unlock();
             try {
                UI.flush();

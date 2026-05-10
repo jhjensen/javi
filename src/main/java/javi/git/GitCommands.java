@@ -14,6 +14,7 @@ import javi.EventQueue;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
+import javi.MiscCommands;
 import javi.Plugin;
 import javi.PosListList;
 import javi.Rgroup;
@@ -1204,6 +1205,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             newFvc.cursoryabs(savedLine);
       }
       UI.reportMessage("Refreshed");
+      MiscCommands.redraw(true);
    }
 
    /**
