@@ -114,8 +114,9 @@ public final class EventQueue {
 
    private static LinkedList<Object> queue = new LinkedList<>();
 
-   private static int timeout = 500;
    private static volatile boolean focused = true;
+   /** Blink cursor for this many cycles then hold steady. */
+   private static final int MAX_BLINKS = 20; // ~10s at 500ms
 
    public abstract static class IEvent {
       public abstract void execute() throws InputException;
@@ -176,34 +177,34 @@ public final class EventQueue {
             }
 
          vi.setCursorOn();
-         int gccount = 60 * 1000 / timeout; // gc after about a minute of idle
+         int blinkCount = 0;
+         int gccount = 120; // gc after ~60s of blinking
 
          while (null == ev) {
             synchronized (EventQueue.class) {
                if (0 != queue.size()) {
                   ev = queue.removeFirst();
                   break;
-               } else if (0 == gccount--)  { // after idle awhile gc once
-                  // after 5 hours do another gc
-                  gccount = 5 * 60 * 60 * 1000 / timeout;
+               } else if (0 == gccount--) {
+                  gccount = 600; // then every ~5 min
                   Tools.doGC();
                   continue;
                } else {
                   try {
-                     if (focused)
-                        EventQueue.class.wait(timeout);
+                     if (focused && blinkCount < MAX_BLINKS)
+                        EventQueue.class.wait(500);
                      else
-                        EventQueue.class.wait(); // infinite until focusGained
+                        EventQueue.class.wait(); // infinite — no more blinking
                   } catch (InterruptedException e) {
                      UI.popError("unexpected interrupt ", e);
                   }
                }
             }
-            //trace("about to blink cursor on " +vi);
-            if (focused) {
+            if (focused && blinkCount < MAX_BLINKS) {
                biglock2.lock();
-               vi.blinkcursor(); // flip cursor
+               vi.blinkcursor();
                biglock2.unlock();
+               blinkCount++;
             }
          }
 
@@ -222,8 +223,7 @@ public final class EventQueue {
 
    public static void focusGained() {
       synchronized (EventQueue.class) {
-         EventQueue.class.notifyAll(); // make sure cursor starts blinking
-         timeout = 500;
+         EventQueue.class.notifyAll();
          focused = true;
       }
       Vt100Parser.wakeAll(); // wake sleeping parser threads
@@ -231,8 +231,6 @@ public final class EventQueue {
 
    public static void focusLost() {
       synchronized (EventQueue.class) {
-         // redo cursor every once in a while, and do gc
-         timeout = 1000 * 60 * 60;
          focused = false;
       }
    }
