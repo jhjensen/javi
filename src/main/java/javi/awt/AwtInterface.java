@@ -1023,13 +1023,22 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    final class Validate extends RunAwt {
+      private final boolean resize;
 
+      /** Validate and resize the frame to preferred size. */
       Validate() {
+         this(true);
+      }
+
+      /** Validate layout; if resize is false, keep current window size. */
+      Validate(boolean resize) {
+         this.resize = resize;
          post();
       }
 
       public void run() {
-         programmaticResize = true;
+         if (resize)
+            programmaticResize = true;
          frm.validate();
       }
    }
@@ -1038,7 +1047,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("toggle status " + statusBar);
       statusBar.setVisible(!statusBar.isVisible());
 
-      new Validate();
+      // Don't resize — text area absorbs the status bar height change
+      new Validate(false);
    }
 
    public void iclearStatus()  {
@@ -1089,12 +1099,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void isizeChange() {
-      //trace("width " + width + " height " + height + " view = " + vi);
-      if (normalFrame == frm
-            && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
-            == Frame.MAXIMIZED_BOTH))
-         frm.setSize(frm.getPreferredSize());
-
+      // Resize frame to match new canvas preferred size.
+      // Defer setSize to the EDT via Validate to avoid Windows
+      // race where setSize from a non-EDT thread takes effect
+      // after the layout has already run.
       new Validate();
    }
 
