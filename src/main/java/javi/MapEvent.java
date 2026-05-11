@@ -255,7 +255,7 @@ public final class MapEvent {
    private static void bindEditKeys(KeyMap km) {
       // UI / mode switching
       km.bindEditKey('z', "zprocess", null);
-      km.bindEditKey((char) 12, "check_external", null, CTRL_MASK);
+      km.bindEditKey((char) 12, "redraw", null, CTRL_MASK);
       km.bindEditKey((char) 7, "togglestatus", null, CTRL_MASK);
       km.bindEditKey(':', "commandproc", null);
       km.bindEditKey('Z', "Zprocess", null);

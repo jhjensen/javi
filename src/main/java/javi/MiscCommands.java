@@ -1285,8 +1285,8 @@ public final class MiscCommands extends Rgroup {
 
    public static void redraw(boolean flushFlag) throws IOException {
 
-      // trace("redraw flushFlag " + flushFlag + " currFvc " +
-      // FvContext.getCurrFvc());
+      trace("redraw flushFlag " + flushFlag + " currFvc " +
+          FvContext.getCurrFvc());
       UI.repaint();
       if (flushFlag) {
          Date nDate = new Date();
