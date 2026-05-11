@@ -3,7 +3,7 @@ plugins {
     id 'java'
     id 'application'
     id 'jacoco'  // Code coverage
-    id 'com.github.johnrengelman.shadow' version '8.1.1' // Add Shadow Plugin
+    id 'com.gradleup.shadow' version '9.4.1' // Fat JAR (successor to johnrengelman.shadow)
     id 'com.github.spotbugs' version '6.0.7' // B9: Static analysis
 }
 
@@ -16,9 +16,14 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
-// Strict cross-compilation: prevent accidental use of JDK 22+ APIs
+// Cross-compilation: compile Java 21 bytecode.
+// Uses -source/-target (not --release) to allow building on any JDK >= 21.
+// Note: --release provides stronger API checking but requires JDK 21 installed
+// or a toolchain resolver configured. If you have JDK 21 available, uncomment
+// the toolchain block in settings.gradle for strictest validation.
 tasks.withType(JavaCompile).configureEach {
-    options.release = 21
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
 }
 
 jacoco {

@@ -990,12 +990,14 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    public void ishowCommand() {
       Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(true);
+      frm.validate();
       cmdComp.repaint();
    }
 
    public void ihideCommand() {
       Component cmdComp = ((OldView) tfc.vi).getComponent();
       cmdComp.setVisible(false);
+      frm.validate();
       statusBar.clearlines();
       //trace("comline:"+ tfc.at().toString());
    }
@@ -1024,13 +1026,26 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    final class Validate extends RunAwt {
+      private final boolean resize;
 
+      /** Validate and resize the frame to preferred size. */
       Validate() {
+         this(true);
+      }
+
+      /** Validate layout; if resize is false, keep current window size. */
+      Validate(boolean resize) {
+         this.resize = resize;
          post();
       }
 
       public void run() {
-         programmaticResize = true;
+         if (resize)
+            programmaticResize = true;
+         // On Windows, a non-EDT canvas.setSize() (from setSizebyChar)
+         // may trigger a native WM_SIZE that validates the frame before
+         // this event runs.  Invalidate to guarantee layoutContainer fires.
+         frm.invalidate();
          frm.validate();
       }
    }
@@ -1039,7 +1054,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("toggle status " + statusBar);
       statusBar.setVisible(!statusBar.isVisible());
 
-      new Validate();
+      // Don't resize — text area absorbs the status bar height change
+      new Validate(false);
    }
 
    public void iclearStatus()  {
@@ -1090,12 +1106,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void isizeChange() {
-      //trace("width " + width + " height " + height + " view = " + vi);
-      if (normalFrame == frm
-            && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
-            == Frame.MAXIMIZED_BOTH))
-         frm.setSize(frm.getPreferredSize());
-
+      // Resize frame to match new canvas preferred size.
+      // Defer setSize to the EDT via Validate to avoid Windows
+      // race where setSize from a non-EDT thread takes effect
+      // after the layout has already run.
       new Validate();
    }
 
@@ -1836,8 +1850,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          //trace("entered layoutContainer insets = " + frm.getInsets()); //Thread.dumpStack(); for(Component comp:frm.getComponents()) trace("   component " + comp);
 
-         frm.setCompSize(startSize.width, startSize.height);
-
+         // Compute preferred size BEFORE setCompSize truncates view
+         // dimensions via integer division (screenSize = height/charheight).
+         // This prevents cumulative height loss when toggling status bar.
          if (programmaticResize && normalFrame == frm
                && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
                == Frame.MAXIMIZED_BOTH)) {
@@ -1849,6 +1864,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             }
          }
          programmaticResize = false;
+
+         frm.setCompSize(startSize.width, startSize.height);
 
          int ccount = frm.getComponentCount();
          //trace("frame size at start of layout " + startSize + " insets " + inset);
@@ -1876,7 +1893,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      //trace("!!! setting new location " + newloc);
                      cp.setLocation(newloc);
                   }
-                  left += cp.getSize().width;
+                  int w = cp.getSize().width;
+                  // On Windows, helpPanelWrapper may report width 0
+                  // during programmatic resize; fall back to preferred.
+                  if (cp == helpPanelWrapper && w <= 0)
+                     w = cp.getPreferredSize().width;
+                  left += w;
                }
             }
          }
