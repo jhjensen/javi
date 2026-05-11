@@ -1039,6 +1039,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       public void run() {
          if (resize)
             programmaticResize = true;
+         // On Windows, a non-EDT canvas.setSize() (from setSizebyChar)
+         // may trigger a native WM_SIZE that validates the frame before
+         // this event runs.  Invalidate to guarantee layoutContainer fires.
+         frm.invalidate();
          frm.validate();
       }
    }
@@ -1886,7 +1890,12 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      //trace("!!! setting new location " + newloc);
                      cp.setLocation(newloc);
                   }
-                  left += cp.getSize().width;
+                  int w = cp.getSize().width;
+                  // On Windows, helpPanelWrapper may report width 0
+                  // during programmatic resize; fall back to preferred.
+                  if (cp == helpPanelWrapper && w <= 0)
+                     w = cp.getPreferredSize().width;
+                  left += w;
                }
             }
          }
