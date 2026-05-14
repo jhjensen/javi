@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -399,5 +400,135 @@ class FilePropertiesJUnitTest {
          "copy constructor should not inherit read-only (transient)");
 
       deleteTestFiles(fname1, fname2);
+   }
+
+   // ============================================================
+   // F47: Charset detection and round-trip tests
+   // ============================================================
+
+   @Test
+   void initFileSetsCharsetFromContent() throws IOException {
+      String fname = "ju_fp_cs1";
+      deleteTestFiles(fname);
+
+      // Write a file with non-ASCII content in UTF-8
+      try (FileOutputStream fos = new FileOutputStream(testPath(fname))) {
+         // "café résumé naïve" — accented chars that need charset detection
+         fos.write("caf\u00e9 r\u00e9sum\u00e9 na\u00efve\n"
+            .getBytes(StandardCharsets.UTF_8));
+      }
+
+      FileProperties<String> fp = makeFP(fname);
+      fp.initFile();
+
+      // charSet should be detected (UTF-8 on this content)
+      assertNotNull(fp.getCharSet(),
+         "initFile should set charSet from content");
+
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void charsetRoundTripPreservesNonAscii() throws IOException {
+      String fname = "ju_fp_cs2";
+      deleteTestFiles(fname);
+
+      // Write file with accented characters, em-dash, smart quotes
+      String original = "caf\u00e9 \u2014 \u201csmart\u201d na\u00efve";
+      try (FileOutputStream fos = new FileOutputStream(testPath(fname))) {
+         fos.write((original + "\n").getBytes(StandardCharsets.UTF_8));
+      }
+
+      // Read via initFile (legacy path) — should detect charset
+      FileProperties<String> fp = makeFP(fname);
+      fp.initFile();
+
+      // Write back via writeAll
+      List<String> lines = Arrays.asList(original);
+      fp.writeAll(lines.iterator());
+
+      // Re-read raw bytes and verify content is unchanged
+      byte[] written;
+      try (FileInputStream fis = new FileInputStream(testPath(fname))) {
+         written = fis.readAllBytes();
+      }
+      String result = new String(written, StandardCharsets.UTF_8);
+      assertTrue(result.contains(original),
+         "round-trip through initFile+writeAll should preserve non-ASCII: "
+         + "expected [" + original + "] in [" + result + "]");
+      assertFalse(result.contains("?"),
+         "round-trip should not introduce '?' replacements");
+
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void charsetRoundTripViaStreamingReader() throws IOException {
+      String fname = "ju_fp_cs3";
+      deleteTestFiles(fname);
+
+      // Write file with non-ASCII
+      String original = "\u00fc\u00f6\u00e4 \u00df \u20ac";  // üöä ß €
+      try (FileOutputStream fos = new FileOutputStream(testPath(fname))) {
+         fos.write((original + "\n").getBytes(StandardCharsets.UTF_8));
+      }
+
+      // Read via openStreamingReader — should detect charset
+      FileProperties<String> fp = makeFP(fname);
+      java.io.BufferedReader reader = fp.openStreamingReader();
+      assertNotNull(reader, "openStreamingReader should succeed for local file");
+      String line = reader.readLine();
+      reader.close();
+
+      assertEquals(original, line,
+         "streaming reader should decode non-ASCII correctly");
+
+      // Write back and verify no corruption
+      fp.writeAll(Arrays.asList(original).iterator());
+
+      byte[] written;
+      try (FileInputStream fis = new FileInputStream(testPath(fname))) {
+         written = fis.readAllBytes();
+      }
+      String result = new String(written, StandardCharsets.UTF_8);
+      assertTrue(result.contains(original),
+         "streaming round-trip should preserve non-ASCII");
+
+      deleteTestFiles(fname);
+   }
+
+   @Test
+   void charsetSurvivesDeserialization() throws Exception {
+      String fname = "ju_fp_cs4";
+      deleteTestFiles(fname);
+
+      String content = "caf\u00e9\n";
+      try (FileOutputStream fos = new FileOutputStream(testPath(fname))) {
+         fos.write(content.getBytes(StandardCharsets.UTF_8));
+      }
+
+      // Create and initialize FileProperties
+      FileProperties<String> fp = makeFP(fname);
+      fp.initFile();
+      assertNotNull(fp.getCharSet(), "charSet should be set after initFile");
+
+      // Serialize and deserialize
+      java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+      try (java.io.ObjectOutputStream oos =
+            new java.io.ObjectOutputStream(baos)) {
+         oos.writeObject(fp);
+      }
+
+      FileProperties<?> restored;
+      try (java.io.ObjectInputStream ois = new java.io.ObjectInputStream(
+            new java.io.ByteArrayInputStream(baos.toByteArray()))) {
+         restored = (FileProperties<?>) ois.readObject();
+      }
+
+      // charSet should be non-null after deserialization (readObject fix)
+      assertNotNull(restored.getCharSet(),
+         "charSet must not be null after deserialization");
+
+      deleteTestFiles(fname);
    }
 }

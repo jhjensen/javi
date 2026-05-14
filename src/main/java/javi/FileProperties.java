@@ -189,6 +189,23 @@ public final class FileProperties<OType> implements Serializable {
       }
    }
 
+   /**
+    * Restore transient fields after Java deserialization.
+    *
+    * <p>{@code charSet} is transient (not persisted) so it must be
+    * re-initialized here. Without this, {@code charSet} would be
+    * {@code null} after deserialization, causing {@link #writeAll}
+    * to throw {@code NullPointerException} or, if somehow bypassed,
+    * to use the wrong encoding and replace unencodable characters
+    * with '?'.</p>
+    */
+   private void readObject(java.io.ObjectInputStream is)
+         throws IOException, ClassNotFoundException {
+      is.defaultReadObject();
+      charSet = Charset.defaultCharset();
+      lastModifiedTime = -1;
+   }
+
    public FileProperties(FileDescriptor fd, ClassConverter<OType> convi) {
       fdes = fd;
       conv = convi;
@@ -259,6 +276,27 @@ public final class FileProperties<OType> implements Serializable {
    }
 
    public String initFile() throws IOException {
+      // Detect charset from raw bytes before decoding, matching the
+      // detection logic in openStreamingReader().  Without this, charSet
+      // stays at its constructor default and writeAll() may silently
+      // replace characters the default charset cannot encode with '?'.
+      try (java.io.InputStream rawStream = fdes.openInputStream()) {
+         byte[] sample = rawStream.readNBytes(8192);
+         if (sample.length > 0) {
+            UniversalDetector detector = new UniversalDetector(null);
+            detector.handleData(sample, 0, sample.length);
+            detector.dataEnd();
+            String encoding = detector.getDetectedCharset();
+            detector.reset();
+            charSet = encoding != null
+               ? Charset.forName(encoding)
+               : Charset.defaultCharset();
+         }
+      } catch (IOException ignore) {
+         // openInputStream() not supported (e.g. InternalFd) — keep
+         // the current charSet (constructor default or deserialized).
+      }
+
       String fileString = fdes.getString();
       //trace("fileString:" + fileString);
       int npos = fileString.indexOf('\n');
@@ -274,5 +312,14 @@ public final class FileProperties<OType> implements Serializable {
       updateModifiedTime();
 
       return fileString;
+   }
+
+   /**
+    * Return the charset detected for this file.
+    *
+    * @return the charset (never null after construction or deserialization)
+    */
+   Charset getCharSet() {
+      return charSet;
    }
 }
