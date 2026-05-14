@@ -198,10 +198,12 @@ public final class Command extends Rgroup {
    public static void execCmdList() {
       Iterator<String> cit = cmdlist.iterator();
       while (cit.hasNext()) {
+         String cmd = cit.next();
          try {
-            command(cit.next(), null, null);
+            command(cmd, null, null);
             cit.remove();
          } catch (DeferCommandException e) {
+            trace("execCmdList deferred: " + cmd);
             // leave in list for later execution
          }
       }

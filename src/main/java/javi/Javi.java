@@ -69,10 +69,11 @@ public final class Javi {
       //UI instance = isAwt
       //   ? new javi.awt.AwtInterface()
        //  : new StreamInterface();
-      new javi.awt.AwtInterface();
+      javi.awt.AwtInterface awt = new javi.awt.AwtInterface();
       Command.execCmdList(); // run .javini commands after frm exists
       for (String cmd : Command.takeAwtCommands())
          Command.command(cmd, null, null);
+      awt.showWithCurrentFont(); // show frame sized for .javini font
 
       //trace("");
    }

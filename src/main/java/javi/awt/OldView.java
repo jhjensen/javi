@@ -215,14 +215,12 @@ final class OldView extends AwtView {
          + "#4$5%6^7&8*9(0)-_=+[{]}\\|;:'\".?/>,<";
 
    void ssetFont(Font font) {
-      // trace("entered " + this + font);
       activeFont = font;
       fontm = canvas.getFontMetrics(font);
-      charwidth = (teststr.length() - 1 + fontm.stringWidth(teststr))
-            / teststr.length();
-      // trace("charwidth = " + charwidth + this);
+      int strWidth = fontm.stringWidth(teststr);
+      int strLen = teststr.length();
+      charwidth = (strLen - 1 + strWidth) / strLen;
       charheight = fontm.getHeight();
-      // trace("charheight = " + charheight);
       boldflag = font.isBold();
       if (overrideFg != null)
          atIt = new AtView(font, overrideFg, overrideBg);
@@ -892,16 +890,13 @@ final class OldView extends AwtView {
    }
 
    public void setSizebyChar(int xchar, int ychar) {
-      // trace("setSizebyChar xchar = " + xchar + " ychar = " + ychar);
       if (xchar < 0)
          xchar = minColumns;
       if (ychar < 0)
          ychar = screenSize;
-      canvas.setSize(xchar * charwidth + 2 * inset, ychar * charheight);
-      // UI.resize();
-      // invalidate();//???
-      // trace("pixelwidth = " + pixelWidth + " charwidth = " + charwidth + "
-      // screenSize " + screenSize);
+      int canvasW = xchar * charwidth + 2 * inset;
+      int canvasH = ychar * charheight;
+      canvas.setSize(canvasW, canvasH);
    }
 
    protected void startInsertion(javi.View.Inserter ins) {
@@ -972,11 +967,6 @@ final class OldView extends AwtView {
       }
 
       public void setSize(int newx, int newy) {
-         // trace("setSize entered (" + newx + "," + newy + ")" + this);
-         // if (y == 0){
-         // Thread.dumpStack();
-         // return;
-         // }
 
          screenSize = newy / charheight;
 

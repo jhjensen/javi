@@ -383,7 +383,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
       public Dimension getPreferredSize() {
 
-         //trace ("preferredSize getGraphicsConfiguration()  "+ getGraphicsConfiguration());
          Toolkit kit = Toolkit.getDefaultToolkit();
          Insets inset = getInsets();
          if (0 == inset.top)
@@ -402,7 +401,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          int ccount = getComponentCount();
          for (int ii = 0; ii < ccount; ii++) {
             Component cp = getComponent(ii);
-            //trace("component " + cp);
             if (cp == helpPanelWrapper) {
                Dimension cpsize = cp.getPreferredSize();
                fsize.width += cpsize.width;
@@ -411,17 +409,14 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             } else if ((cp instanceof OldView.MyCanvas)
                   && (cp != cmdComp)) {
                Dimension cpsize = cp.getPreferredSize();
-               //trace("component prefsize " + cpsize);
                fsize.width += cpsize.width;
                if (cpsize.height > viewheight)
                   viewheight = cpsize.height;
-                  //trace("viewheight " + viewheight);
             }
          }
 
          fsize.height += viewheight;
 
-         //trace("returning " +fsize);
          return fsize;
       }
 
@@ -824,8 +819,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             statusBar = new StatusBar();
             statusBar.setVisible(false);
             frm.add(statusBar, 0);
-            trace("setting frame visible");
-            ishow();
+            // ishow() moved to showWithCurrentFont() -- called from
+            // initToUi() after .javini font/size commands execute
             new InHandler();
          } catch (Throwable ex) {
             trace("failure in awt Initer ");
@@ -849,7 +844,6 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    private View mkview(boolean newview) {
       //view ta = newview ? (view) new TabbedTextLayout() : new oldview();
-      //trace("mkview");
       OldView ta = new OldView(true);
       Component cmdComp = ta.getComponent();
       viewCount++;
@@ -961,13 +955,55 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    }
 
    public void ishow() {
-      trace("!!! setting frm visible ");
-      frm.setSize(frm.getPreferredSize());
+      Dimension prefSize = frm.getPreferredSize();
+      trace("ishow: preferredSize=" + prefSize
+         + " insets=" + frm.getInsets());
+      frm.setSize(prefSize);
       frm.setVisible(true);
-      java.awt.geom.AffineTransform tx =
-         frm.getGraphicsConfiguration().getDefaultTransform();
-      trace("HiDPI scale: " + tx.getScaleX() + "x" + tx.getScaleY());
-      //trace("!!! done set frm visible insets " + frm.getInsets());
+   }
+
+   /**
+    * Apply the current font (possibly updated by .javini commands) to
+    * all views, recalculate character dimensions, and show the frame.
+    * Called from initToUi() after Command.execCmdList() so that font/size
+    * commands from .javini take effect before the initial frame sizing.
+    */
+   public void showWithCurrentFont() {
+      new ShowFrame().postWait();
+   }
+
+   private final class ShowFrame extends SyncAwt<Object> {
+      public Object doAwt() {
+         Font font = AwtFontList.getCurr(null);
+         OldView cmdView = (OldView) tfc.vi;
+         Component cmdCanvas = cmdView.getComponent();
+         trace("ShowFrame: font=" + font.getFamily()
+            + " size=" + font.getSize2D()
+            + " width=" + MiscCommands.getWidth()
+            + " height=" + MiscCommands.getHeight());
+
+         // Always apply font and recalculate sizes. The initial
+         // sizing in Initer used the default font metrics; by now
+         // .javini commands may have changed the font (and thus
+         // charwidth), so we must resize with the current metrics.
+         frm.setFont(font);
+         cmdCanvas.setFont(font);
+         cmdView.setSizebyChar(MiscCommands.getWidth(), 1);
+
+         FvContext<?> curr = FvContext.getCurrFvc();
+         if (curr != null && curr.vi != cmdView
+               && curr.vi instanceof OldView) {
+            OldView mainView = (OldView) curr.vi;
+            mainView.getComponent().setFont(font);
+            mainView.setSizebyChar(
+               MiscCommands.getWidth(), MiscCommands.getHeight());
+         } else {
+            trace("ShowFrame: no main view found"
+               + " curr=" + curr);
+         }
+         ishow();
+         return null;
+      }
    }
 
    public boolean iisVisible() {
@@ -1054,7 +1090,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       //trace("toggle status " + statusBar);
       statusBar.setVisible(!statusBar.isVisible());
 
-      // Don't resize — text area absorbs the status bar height change
+      // Don't resize -- text area absorbs the status bar height change
       new Validate(false);
    }
 
