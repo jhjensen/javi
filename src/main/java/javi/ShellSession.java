@@ -420,6 +420,30 @@ public final class ShellSession {
    }
 
    /**
+    * Syncs the PTY dimensions to the view's actual size.
+    *
+    * <p>Called after {@code startHandle} sets the Vt100's internal
+    * row count from the view. This ensures the PTY matches the
+    * view even if the canvas was resized between shell creation
+    * and view connection (e.g., when chrome like line numbers is
+    * hidden for terminal buffers). Prevents the initial-size bug
+    * where htop gets a stale row count.</p>
+    *
+    * @param viewRows the view's actual row count
+    * @param viewCols the view's actual column count
+    */
+   void syncPtyToView(int viewRows, int viewCols) {
+      if (!isAlive() || viewRows <= 0 || viewCols <= 0)
+         return;
+      ptySizedByResize = true;
+      Thread t = new Thread(
+         () -> updatePtySize(viewRows, viewCols),
+         "pty-sync-" + id);
+      t.setDaemon(true);
+      t.start();
+   }
+
+   /**
     * Updates the PTY window size by finding the child shell's TTY
     * device and calling stty on it directly. This ensures the PTY
     * reports the correct dimensions even when a fullscreen app
