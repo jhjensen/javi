@@ -33,6 +33,11 @@ public final class PosListList extends TextList<Position> {
          //trace("PLL got addedLines fd " + fd + " count " + count + " index " + index );
          // fix up the line numbers
          EditContainer<Position> errlist = at(1);
+         // F49: skip position updates if errlist is still loading.
+         // changeElementAt -> mkback -> finish -> expand can release
+         // biglock2 while holding the TextEdit monitor, causing deadlock.
+         if (!errlist.isFullyRead())
+            return;
          for (int i = 1; i < errlist.readIn(); i++) {
             Position pos = errlist.at(i);
             if (pos.filename.equals(fd) && pos.y > index) {
