@@ -476,6 +476,11 @@ public final class MiscCommands extends Rgroup {
 
       FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
       session.getVt100().startHandle(newFvc);
+      // Sync PTY size to the view's actual dimensions after
+      // startHandle has set the Vt100's rows from the view.
+      // This prevents the initial-size bug where the PTY has
+      // stale dimensions from before the view was connected.
+      session.syncPtyToView(newFvc.vi.getRows(1.0f), getWidth());
       ((Vt100) session.getBuffer()).handleKeys(newFvc);
       refreshShellPositionList(mgr);
    }
@@ -628,6 +633,7 @@ public final class MiscCommands extends Rgroup {
       FvContext newFvc = FvContext.connectFv(session.getBuffer(), fvc.vi);
       // Initialize the Vt100's currfvc so screen updates and scrolling work
       session.getVt100().startHandle(newFvc);
+      session.syncPtyToView(newFvc.vi.getRows(1.0f), getWidth());
       UI.reportMessage("Created shell " + session.getId()
          + " (" + session.getName() + ")");
       ((Vt100) session.getBuffer()).handleKeys(newFvc);

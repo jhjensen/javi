@@ -61,6 +61,10 @@ public final class ShellSession {
    /** Per-session environment variables. */
    private final Map<String, String> envVars = new LinkedHashMap<>();
 
+   /** Set true when a real resize event has updated the PTY size,
+    *  preventing initializePtySize from overwriting with stale values. */
+   private volatile boolean ptySizedByResize;
+
    /** Minimum interval between label updates in milliseconds. */
    static final long LABEL_UPDATE_INTERVAL_MS = 3000;
 
@@ -416,6 +420,30 @@ public final class ShellSession {
    }
 
    /**
+    * Syncs the PTY dimensions to the view's actual size.
+    *
+    * <p>Called after {@code startHandle} sets the Vt100's internal
+    * row count from the view. This ensures the PTY matches the
+    * view even if the canvas was resized between shell creation
+    * and view connection (e.g., when chrome like line numbers is
+    * hidden for terminal buffers). Prevents the initial-size bug
+    * where htop gets a stale row count.</p>
+    *
+    * @param viewRows the view's actual row count
+    * @param viewCols the view's actual column count
+    */
+   void syncPtyToView(int viewRows, int viewCols) {
+      if (!isAlive() || viewRows <= 0 || viewCols <= 0)
+         return;
+      ptySizedByResize = true;
+      Thread t = new Thread(
+         () -> updatePtySize(viewRows, viewCols),
+         "pty-sync-" + id);
+      t.setDaemon(true);
+      t.start();
+   }
+
+   /**
     * Updates the PTY window size by finding the child shell's TTY
     * device and calling stty on it directly. This ensures the PTY
     * reports the correct dimensions even when a fullscreen app
@@ -431,6 +459,7 @@ public final class ShellSession {
    private void updatePtySize(int rows, int cols) {
       if (null == process || !process.isAlive())
          return;
+      ptySizedByResize = true;
       try {
          // On Linux, use /proc/<pid>/fd/0 to access the child's
          // actual PTY fd.  This bypasses devpts namespace issues
@@ -486,18 +515,27 @@ public final class ShellSession {
    }
 
    /**
-    * Tries to resize the child's PTY via /proc/&lt;pid&gt;/fd/0.
+    * Tries to resize the PTY via /proc file descriptors.
     *
-    * <p>On Linux, {@code /proc/<pid>/fd/0} is a symlink to the
-    * process's actual stdin device (the PTY slave). Using this path
-    * avoids issues where {@code ps -o tty=} returns a device name
-    * that doesn't map to the same physical device in the parent's
-    * devpts namespace.</p>
+    * <p>First attempts to find and resize via the PTY <b>master</b> fd
+    * (held by the {@code script} process). Setting TIOCSWINSZ on the
+    * master triggers the kernel's {@code pty_resize()} handler which
+    * reliably delivers SIGWINCH to the slave's foreground process
+    * group — matching xterm's behavior.</p>
+    *
+    * <p>Falls back to resizing via the slave's fd/0 if the master
+    * cannot be found.</p>
     *
     * @return true if the resize succeeded
     */
    private boolean tryProcFdResize(int rows, int cols) {
       try {
+         // First: try resizing via the PTY master fd (in script's fds).
+         // This matches xterm's approach and reliably triggers SIGWINCH.
+         if (tryMasterFdResize(rows, cols))
+            return true;
+
+         // Fallback: resize via slave fd/0 on descendant processes.
          for (ProcessHandle child : (Iterable<ProcessHandle>)
                process.toHandle().descendants()::iterator) {
             String procFd = "/proc/" + child.pid() + "/fd/0";
@@ -513,7 +551,7 @@ public final class ShellSession {
             int rc = stty.waitFor();
             if (rc == 0) {
                trace("ShellSession " + id
-                  + ": stty via " + procFd
+                  + ": stty via slave " + procFd
                   + " rows " + rows + " cols " + cols);
                return true;
             }
@@ -524,6 +562,64 @@ public final class ShellSession {
       } catch (Exception e) {
          trace("ShellSession " + id
             + ": tryProcFdResize: " + e);
+      }
+      return false;
+   }
+
+   /**
+    * Attempts to resize the PTY by finding and writing to the master
+    * fd held by the script process.
+    *
+    * <p>Scans {@code /proc/<script_pid>/fd/} for a file descriptor
+    * that links to {@code /dev/ptmx} (the PTY master device). Setting
+    * TIOCSWINSZ on the master is the canonical way terminal emulators
+    * (xterm, etc.) trigger resize — the kernel's PTY master resize
+    * handler sends SIGWINCH to the slave's foreground process group.</p>
+    *
+    * @return true if a master fd was found and stty succeeded
+    */
+   private boolean tryMasterFdResize(int rows, int cols) {
+      try {
+         long scriptPid = process.pid();
+         java.io.File fdDir = new java.io.File(
+            "/proc/" + scriptPid + "/fd");
+         if (!fdDir.isDirectory())
+            return false;
+         String[] fds = fdDir.list();
+         if (null == fds)
+            return false;
+         for (String fdNum : fds) {
+            String fdPath = "/proc/" + scriptPid + "/fd/" + fdNum;
+            try {
+               java.nio.file.Path link = java.nio.file.Files.readSymbolicLink(
+                  java.nio.file.Path.of(fdPath));
+               String target = link.toString();
+               // PTY master shows as /dev/ptmx or /dev/pts/ptmx
+               if (!target.contains("ptmx"))
+                  continue;
+            } catch (Exception e) {
+               continue; // fd disappeared or unreadable
+            }
+            Process stty = new ProcessBuilder("stty", "-F", fdPath,
+               "rows", Integer.toString(rows),
+               "cols", Integer.toString(cols))
+               .redirectErrorStream(true).start();
+            String out = new String(
+               stty.getInputStream().readAllBytes()).trim();
+            int rc = stty.waitFor();
+            if (rc == 0) {
+               trace("ShellSession " + id
+                  + ": stty via master " + fdPath
+                  + " rows " + rows + " cols " + cols);
+               return true;
+            }
+            trace("ShellSession " + id
+               + ": stty master " + fdPath + " failed (rc="
+               + rc + "): " + out);
+         }
+      } catch (Exception e) {
+         trace("ShellSession " + id
+            + ": tryMasterFdResize: " + e);
       }
       return false;
    }
@@ -583,11 +679,22 @@ public final class ShellSession {
             Thread.sleep(100);
             if (null == process || !process.isAlive())
                return;
+            // If a real resize event has already set the PTY size,
+            // bail out — our captured values may be stale.
+            if (ptySizedByResize) {
+               trace("ShellSession " + id
+                  + ": initializePtySize: skipping — resize already applied");
+               return;
+            }
+            // Use current dimensions (may have been updated by
+            // OldView.setSize since shell creation).
+            int curRows = MiscCommands.getHeight();
+            int curCols = MiscCommands.getWidth();
             // Try /proc/<pid>/fd/0 first (Linux, namespace-safe)
-            if (tryProcFdResize(rows, cols)) {
+            if (tryProcFdResize(curRows, curCols)) {
                trace("ShellSession " + id
                   + ": initial PTY size via proc fd"
-                  + " rows " + rows + " cols " + cols);
+                  + " rows " + curRows + " cols " + curCols);
                sendSigwinch();
                return;
             }
@@ -598,12 +705,12 @@ public final class ShellSession {
                   ? tty : "/dev/" + tty;
                String flag = sttyDeviceFlag();
                Process stty = new ProcessBuilder("stty", flag, dev,
-                  "rows", Integer.toString(rows),
-                  "cols", Integer.toString(cols)).start();
+                  "rows", Integer.toString(curRows),
+                  "cols", Integer.toString(curCols)).start();
                stty.waitFor();
                trace("ShellSession " + id
                   + ": initial stty " + flag + " " + dev
-                  + " rows " + rows + " cols " + cols);
+                  + " rows " + curRows + " cols " + curCols);
                sendSigwinch();
                return;
             }

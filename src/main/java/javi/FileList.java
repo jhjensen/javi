@@ -641,7 +641,24 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       }
    }
 
+   @SuppressWarnings("unchecked")
    private void nextfile(FvContext<?> fvc) throws InputException {
+      // If current buffer is a shell, cycle through shells instead
+      // of the file list. This lets Ctrl-^ navigate between shells
+      // without getting stranded in the file list.
+      if (fvc.edvec instanceof Vt100) {
+         ShellManager mgr = ShellManager.getInstance();
+         if (mgr.getSessionCount() > 1) {
+            mgr.nextShell();
+         }
+         ShellSession active = mgr.getActive();
+         if (null != active) {
+            FvContext newFvc =
+               FvContext.connectFv(active.getBuffer(), fvc.vi);
+            ((Vt100) active.getBuffer()).handleKeys(newFvc);
+            return;
+         }
+      }
       FvContext<?> fileListFvc = fvc.switchContext(this, 1);
       if (fvc.edvec != this)
          FvContext.connectFv((TextEdit) fileListFvc.at(), fvc.vi);
