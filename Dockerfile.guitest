@@ -31,6 +31,9 @@ WORKDIR /app
 # Copy Gradle wrapper first for layer caching
 COPY gradlew build.gradle ./
 COPY gradle/ gradle/
+# Set Gradle home inside /app so deps are cached in image and
+# accessible when running as non-root user with --user flag
+ENV GRADLE_USER_HOME=/app/.gradle
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 
 # Copy source and test files
@@ -39,7 +42,15 @@ COPY src/ src/
 # build.gradle calls `git describe --always --dirty` during evaluation;
 # .git is excluded from rsync, so create a minimal repo
 RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
-    git add -A && git commit -q -m "docker build"
+    git add -A && git commit -q -m "docker build" && \
+    git config --system --add safe.directory /app
+
+# Make directories writable for --user (non-root) execution
+# Remove daemon dir so it gets created (and owned by) the runtime user,
+# allowing Gradle to chmod it. Wrapper/deps cache remains intact.
+RUN rm -rf /app/.gradle/daemon && \
+    mkdir -p /app/build && chmod -R 777 /app /app/.gradle
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # Start Xvfb, run GUI tests, stop Xvfb, exit with test status.
 # The 'timeout' wrapper sends TERM after 900s, KILL after 30s grace.

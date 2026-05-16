@@ -239,7 +239,9 @@ rdesk-guitest-build: rdesk-guitest-sync
 # Run GUI tests on rdesk via Docker
 rdesk-guitest-run: rdesk-guitest-build
 	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   mkdir -p build && \
 	   docker run --rm \
+	      --user $$(id -u):$$(id -g) \
 	      -v $$(pwd)/build:/app/build \
 	      $(GUITEST_IMAGE)'
 
@@ -277,7 +279,9 @@ rdesk-alltest-build: rdesk-guitest-sync
 # Run ALL tests on rdesk via Docker
 rdesk-alltest-run: rdesk-alltest-build
 	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   mkdir -p build && \
 	   docker run --rm \
+	      --user $$(id -u):$$(id -g) \
 	      -v $$(pwd)/build:/app/build \
 	      $(ALLTEST_IMAGE)'
 
