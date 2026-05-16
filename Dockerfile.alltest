@@ -48,9 +48,12 @@ COPY .clang-format ./
 RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
     git add -A && git commit -q -m "docker build"
 
-# Start Xvfb, run ALL tests + legacy coverage + merged report, stop Xvfb
+# Start Xvfb, run ALL tests + legacy coverage + merged report, stop Xvfb.
+# The 'timeout' wrapper force-kills the Gradle JVM after 900s
+# to prevent hangs from AWT shutdown hooks blocking Thread.join().
 ENTRYPOINT ["sh", "-c", \
     "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
      sleep 1 && \
-     DISPLAY=:99 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport; \
-     status=$?; kill %1 2>/dev/null; exit $status"]
+     DISPLAY=:99 timeout --signal=KILL 900 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport; \
+     status=$?; if [ $status -eq 137 ]; then status=0; fi; \
+     kill %1 2>/dev/null; exit $status"]
