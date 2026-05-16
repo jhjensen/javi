@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -584,5 +585,74 @@ class ContextHelpJUnitTest {
          "should show line addressing section");
       assertTrue(text.contains("RANGE COMMANDS"),
          "should show range commands");
+   }
+
+   // --- F50: Prefix filtering tests ---
+
+   @Test
+   @DisplayName("stripRangePrefix removes leading digits")
+   void stripRangePrefixDigits() {
+      assertEquals("d", ContextHelp.stripRangePrefix("5,10d"));
+      assertEquals("d", ContextHelp.stripRangePrefix("123d"));
+   }
+
+   @Test
+   @DisplayName("stripRangePrefix removes . $ % markers")
+   void stripRangePrefixMarkers() {
+      assertEquals("d", ContextHelp.stripRangePrefix(".$d"));
+      assertEquals("s/foo/bar/",
+         ContextHelp.stripRangePrefix("%s/foo/bar/"));
+      assertEquals("d", ContextHelp.stripRangePrefix(".,$d"));
+   }
+
+   @Test
+   @DisplayName("stripRangePrefix removes mark references")
+   void stripRangePrefixMarks() {
+      assertEquals("d",
+         ContextHelp.stripRangePrefix("'a,'bd"));
+   }
+
+   @Test
+   @DisplayName("stripRangePrefix leaves commands intact")
+   void stripRangePrefixNoRange() {
+      assertEquals("lsp.def",
+         ContextHelp.stripRangePrefix("lsp.def"));
+      assertEquals("set tabstop=4",
+         ContextHelp.stripRangePrefix("set tabstop=4"));
+      assertEquals("help",
+         ContextHelp.stripRangePrefix("help"));
+   }
+
+   @Test
+   @DisplayName("stripRangePrefix handles empty string")
+   void stripRangePrefixEmpty() {
+      assertEquals("", ContextHelp.stripRangePrefix(""));
+   }
+
+   @Test
+   @DisplayName("stripRangePrefix handles + and - offsets")
+   void stripRangePrefixOffsets() {
+      assertEquals("d",
+         ContextHelp.stripRangePrefix(".+5d"));
+      assertEquals("d",
+         ContextHelp.stripRangePrefix(".-3,$d"));
+   }
+
+   @Test
+   @DisplayName("extractCommandPrefix extracts name portion")
+   void extractCommandPrefixBasic() {
+      assertEquals("lsp.def",
+         ContextHelp.extractCommandPrefix("lsp.def"));
+      assertEquals("set",
+         ContextHelp.extractCommandPrefix("set tabstop=4"));
+      assertEquals("s",
+         ContextHelp.extractCommandPrefix("s/foo/bar/g"));
+   }
+
+   @Test
+   @DisplayName("extractCommandPrefix handles empty string")
+   void extractCommandPrefixEmpty() {
+      assertEquals("",
+         ContextHelp.extractCommandPrefix(""));
    }
 }

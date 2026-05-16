@@ -293,6 +293,19 @@ public abstract class InsertBuffer extends View.Inserter {
       insertReset();
    }
 
+   /**
+    * Notify ContextHelp of command line text changes so the
+    * help panel can filter displayed commands by prefix.
+    */
+   private void notifyCommandLineHelp(FvContext fvc) {
+      String committed = fvc.at().toString();
+      String fullLine = committed.substring(0, fvc.insertx())
+         + buffer.toString();
+      if (fullLine.length() > 0 && fullLine.charAt(0) == ':')
+         ContextHelp.onCommandLineChanged(
+            fullLine.substring(1));
+   }
+
    final void insertmode(boolean dotmode, int count, FvContext fvc,
          boolean overwritei, boolean singlelinei) throws
          IOException, InputException {
@@ -326,6 +339,8 @@ public abstract class InsertBuffer extends View.Inserter {
                if (!verbatim && null != binding) {
                   if (null != binding.dobind(count, 0, fvc, false))
                      break;
+                  if (singleline)
+                     notifyCommandLineHelp(fvc);
                } else {
                   char key = ke.getKeyChar();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
@@ -352,6 +367,8 @@ public abstract class InsertBuffer extends View.Inserter {
                      verbatimCount = 0;
                      buffer.append((char) key);
                      viewer.lineChanged(fvc.inserty());
+                     if (singleline)
+                        notifyCommandLineHelp(fvc);
                   }
                }
             }

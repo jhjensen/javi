@@ -242,6 +242,118 @@ public final class ContextHelp {
    }
 
    /**
+    * Called when the command line text changes during : mode.
+    * Filters the ex command help to show only commands whose
+    * names start with the typed prefix. When the prefix is
+    * empty (or purely a range address), the full help is shown.
+    *
+    * @param typedText the text after the ":" prompt
+    */
+   static void onCommandLineChanged(String typedText) {
+      if (helpPanelView == null)
+         return;
+
+      String prefix = stripRangePrefix(typedText);
+      String cmdPrefix = extractCommandPrefix(prefix);
+
+      helpBuf.ensure();
+      helpBuf.clear();
+
+      if (cmdPrefix.isEmpty()) {
+         appendCommandprocHelp();
+      } else {
+         appendFilteredCommandprocHelp(cmdPrefix);
+      }
+
+      if (helpFvc != null)
+         helpFvc.cursorabs(0, 1);
+      helpPanelView.repaint();
+      updateScrollbar();
+   }
+
+   /**
+    * Strip leading vi range/address prefix from command text.
+    * Range characters include digits, period, dollar, percent,
+    * mark references ('x), comma, semicolon, plus, and minus.
+    *
+    * @param text text after the ":" prompt
+    * @return text with leading range prefix removed
+    */
+   static String stripRangePrefix(String text) {
+      int i = 0;
+      int len = text.length();
+      while (i < len) {
+         char c = text.charAt(i);
+         if (c >= '0' && c <= '9') {
+            i++;
+         } else if (c == '.' || c == '$' || c == '%') {
+            i++;
+         } else if (c == ',' || c == ';') {
+            i++;
+         } else if (c == '+' || c == '-') {
+            i++;
+         } else if (c == '\'' && i + 1 < len) {
+            i += 2;
+         } else {
+            break;
+         }
+      }
+      return text.substring(i);
+   }
+
+   /**
+    * Extract the command name prefix from text that may include
+    * arguments. Command names consist of letters, digits, dots,
+    * and underscores.
+    *
+    * @param text text after range prefix removal
+    * @return the leading command name portion
+    */
+   static String extractCommandPrefix(String text) {
+      int i = 0;
+      int len = text.length();
+      while (i < len) {
+         char c = text.charAt(i);
+         if (Character.isLetterOrDigit(c)
+               || c == '.' || c == '_')
+            i++;
+         else
+            break;
+      }
+      return text.substring(0, i);
+   }
+
+   /**
+    * Append filtered ex command help showing only commands
+    * whose names start with the given prefix.
+    *
+    * @param cmdPrefix the command name prefix to filter by
+    */
+   private static void appendFilteredCommandprocHelp(
+         String cmdPrefix) {
+      append("EX COMMANDS matching: " + cmdPrefix);
+      append("=".repeat(22 + cmdPrefix.length()));
+      append("");
+
+      Set<String> cmds = Rgroup.getRegisteredCommands();
+      TreeSet<String> sorted = new TreeSet<>(cmds);
+
+      int matchCount = 0;
+      for (String cmd : sorted) {
+         if (!cmd.isEmpty() && !cmd.startsWith("xxx")
+               && cmd.startsWith(cmdPrefix)) {
+            appendExCommandEntry(cmd);
+            matchCount++;
+         }
+      }
+
+      if (matchCount == 0) {
+         append("  (no matching commands)");
+      }
+      append("");
+   }
+
+   /**
     * Generate context-sensitive help for the current mode.
     *
     * @param fvc the current file-view context
