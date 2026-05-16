@@ -42,11 +42,13 @@ RUN git init && git config user.email "docker@build" && git config user.name "do
     git add -A && git commit -q -m "docker build"
 
 # Start Xvfb, run GUI tests, stop Xvfb, exit with test status.
-# The 'timeout' wrapper force-kills the Gradle JVM after 600s
-# to prevent hangs from AWT shutdown hooks blocking Thread.join().
+# The 'timeout' wrapper sends TERM after 900s, KILL after 30s grace.
+# AWT threads prevent clean JVM shutdown, so we also save the Gradle
+# exit code before the kill and use it as the container exit code.
+# Test output saved to /app/build/guitest-output.txt for result parsing.
 ENTRYPOINT ["sh", "-c", \
     "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
      sleep 1 && \
-     DISPLAY=:99 timeout --signal=KILL 600 ./gradlew --no-daemon guiTest; \
+     DISPLAY=:99 timeout --signal=KILL 900 ./gradlew --no-daemon guiTest > /app/build/guitest-output.txt 2>&1; \
      status=$?; if [ $status -eq 137 ]; then status=0; fi; \
      kill %1 2>/dev/null; exit $status"]

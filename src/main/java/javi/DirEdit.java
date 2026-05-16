@@ -138,6 +138,16 @@ public final class DirEdit extends TextEdit<String> {
    }
 
    @Override
+   public void disposeFvc() throws java.io.IOException {
+      openInstances.remove(this);
+      if (null != watchedPath) {
+         DirSizeCalculator.unwatchDirectory(watchedPath, this);
+         watchedPath = null;
+      }
+      super.disposeFvc();
+   }
+
+   @Override
    boolean handleKey(JeyEvent jEv, FvContext fvc) throws
          InputException, InterruptedException, IOException {
       char ch = jEv.getKeyChar();
@@ -1783,7 +1793,8 @@ public final class DirEdit extends TextEdit<String> {
                EventQueue.insert(new EventQueue.IEvent() {
                   @Override
                   public void execute() {
-                     if (openInstances.contains(requester)) {
+                     if (openInstances.contains(requester)
+                           && requester.isValid()) {
                         requester.populateDirectory();
                      }
                   }
@@ -1997,7 +2008,8 @@ public final class DirEdit extends TextEdit<String> {
                      EventQueue.insert(new EventQueue.IEvent() {
                         @Override
                         public void execute() {
-                           if (openInstances.contains(de)) {
+                           if (openInstances.contains(de)
+                                 && de.isValid()) {
                               de.populateDirectory();
                            }
                         }
