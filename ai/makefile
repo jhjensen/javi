@@ -77,6 +77,14 @@ ai/validate.out: FORCE
 ai/rdesk-guitest.out: FORCE
 	$(MAKE) rdesk-guitest > $@ 2>&1; echo "exit: $$?" >> $@
 
+# Quick GUI test iteration (base image + volume mount)
+ai/rdesk-guitest-quick.out: FORCE
+	$(MAKE) rdesk-guitest-quick > $@ 2>&1; echo "exit: $$?" >> $@
+
+# Build base image (run once)
+ai/rdesk-guitest-base.out: FORCE
+	$(MAKE) rdesk-guitest-base > $@ 2>&1; echo "exit: $$?" >> $@
+
 # Remote ALL tests (headless JUnit + GUI via Docker + Xvfb)
 ai/rdesk-alltest.out: FORCE
 	$(MAKE) rdesk-alltest > $@ 2>&1; echo "exit: $$?" >> $@

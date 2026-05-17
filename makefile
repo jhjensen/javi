@@ -261,6 +261,55 @@ rdesk-guitest-clean:
 	   rm -rf $(RDESK_GUITEST_DIR)'
 
 #==============================================================================
+# T1: Quick GUI test iteration (base image + volume mount)
+#==============================================================================
+#
+# Workflow for fast iteration:
+#   1. make rdesk-guitest-base    (once — builds base image with JDK/Xvfb/deps)
+#   2. make rdesk-guitest-quick   (sync + run — no docker build, incremental)
+#   3. fix tests
+#   4. make rdesk-guitest-quick   (repeat — Gradle does incremental compile)
+#
+# For a clean rebuild: make rdesk-guitest-quick-clean
+# For headless + GUI:  make rdesk-guitest-quick GUITEST_TASKS="test guiTest"
+# For clean + GUI:     make rdesk-guitest-quick GUITEST_TASKS="clean guiTest"
+
+GUITEST_BASE_IMAGE = javi-guitest-base
+GUITEST_TASKS ?= guiTest
+
+# Build base image (JDK + Xvfb + Gradle deps cached). Run once.
+rdesk-guitest-base: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker build -f Dockerfile.guitest-base -t $(GUITEST_BASE_IMAGE) .'
+
+# Quick test run: sync source, mount as volume, run tests incrementally.
+# No docker build needed — source is mounted, not COPY'd.
+# The fixup container cleans root-owned .gradle/.git and stale lock files.
+rdesk-guitest-quick: rdesk-guitest-sync
+	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
+	   docker run --rm -v $$(pwd):/w alpine \
+	      sh -c "rm -rf /w/.git; find /w/.gradle -name \"*.lock\" -delete 2>/dev/null; mkdir -p /w/.gradle /w/build; chown $$(id -u):$$(id -g) /w/.gradle /w/build" && \
+	   docker run --rm \
+	      --user $$(id -u):$$(id -g) \
+	      -v $$(pwd):/app \
+	      -v $$(pwd)/build:/app/build \
+	      $(GUITEST_BASE_IMAGE) $(GUITEST_TASKS)'
+	$(MAKE) rdesk-guitest-fetch
+	@rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/guitest-output.txt build/ 2>/dev/null || true
+	@rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/guitest-summary.txt build/ 2>/dev/null || true
+	@echo ""
+	@if [ -f build/guitest-summary.txt ]; then cat build/guitest-summary.txt; \
+	elif [ -f build/guitest-output.txt ]; then sh ai/parse-guitest.sh build/guitest-output.txt; fi
+
+# Clean: remote build artifacts but keep base image
+rdesk-guitest-quick-clean:
+	ssh -n -T rdesk 'rm -rf $(RDESK_GUITEST_DIR)/build $(RDESK_GUITEST_DIR)/.gradle'
+
+# Parse results from last run (no remote access needed)
+rdesk-guitest-report:
+	@sh ai/parse-guitest.sh build/guitest-output.txt
+
+#==============================================================================
 # T1: Remote Docker all-tests (headless JUnit + GUI tests via Xvfb)
 #==============================================================================
 

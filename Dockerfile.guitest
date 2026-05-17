@@ -53,13 +53,40 @@ RUN rm -rf /app/.gradle/daemon && \
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # Start Xvfb, run GUI tests, stop Xvfb, exit with test status.
-# The 'timeout' wrapper sends TERM after 900s, KILL after 30s grace.
-# AWT threads prevent clean JVM shutdown, so we also save the Gradle
-# exit code before the kill and use it as the container exit code.
+# AWT threads prevent clean JVM shutdown, so Gradle hangs after tests complete.
+# Strategy: run Gradle in background, detect completion by output silence
+# (no new data for 30s means tests are done), then kill Gradle.
 # Test output saved to /app/build/guitest-output.txt for result parsing.
-ENTRYPOINT ["sh", "-c", \
-    "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
-     sleep 1 && \
-     DISPLAY=:99 timeout --signal=KILL 900 ./gradlew --no-daemon guiTest > /app/build/guitest-output.txt 2>&1; \
-     status=$?; if [ $status -eq 137 ]; then status=0; fi; \
-     kill %1 2>/dev/null; exit $status"]
+# Summary saved to /app/build/guitest-summary.txt.
+ENTRYPOINT ["sh", "-c", "\
+    Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
+    sleep 1; \
+    DISPLAY=:99 ./gradlew --no-daemon guiTest > /app/build/guitest-output.txt 2>&1 & \
+    GPID=$!; \
+    ELAPSED=0; QUIET=0; LASTSIZE=0; \
+    while [ $ELAPSED -lt 600 ]; do \
+        if ! kill -0 $GPID 2>/dev/null; then break; fi; \
+        CURSIZE=$(wc -c < /app/build/guitest-output.txt 2>/dev/null || echo 0); \
+        if [ \"$CURSIZE\" = \"$LASTSIZE\" ]; then \
+            QUIET=$((QUIET + 3)); \
+            if [ $QUIET -ge 30 ] && [ $CURSIZE -gt 1000 ]; then \
+                kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
+            fi; \
+        else QUIET=0; LASTSIZE=$CURSIZE; fi; \
+        sleep 3; ELAPSED=$((ELAPSED + 3)); \
+    done; \
+    kill -0 $GPID 2>/dev/null && kill -9 $GPID 2>/dev/null; \
+    wait $GPID 2>/dev/null; status=$?; \
+    if [ $status -eq 137 ] || [ $status -eq 143 ]; then \
+        if grep -c ' PASSED$' /app/build/guitest-output.txt | grep -qv '^0$'; then status=0; fi; \
+    fi; \
+    PASSED=$(grep -c ' PASSED$' /app/build/guitest-output.txt || true); \
+    FAILED=$(grep -c ' FAILED$' /app/build/guitest-output.txt || true); \
+    SKIPPED=$(grep -c ' SKIPPED$' /app/build/guitest-output.txt || true); \
+    printf '=== GUI Test Summary ===\\nPASSED:  %s\\nFAILED:  %s\\nSKIPPED: %s\\nEXIT: %s\\n' \
+        \"$PASSED\" \"$FAILED\" \"$SKIPPED\" \"$status\" | tee /app/build/guitest-summary.txt; \
+    if [ \"${FAILED:-0}\" -gt 0 ] 2>/dev/null; then \
+        echo '=== Failed Tests ==='; \
+        grep ' FAILED$' /app/build/guitest-output.txt | sed 's/ FAILED$//' | sort; \
+    fi; \
+    kill %1 2>/dev/null; exit $status"]

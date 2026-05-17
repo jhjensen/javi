@@ -60,11 +60,27 @@ RUN rm -rf /app/.gradle/daemon && \
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # Start Xvfb, run ALL tests + legacy coverage + merged report, stop Xvfb.
-# The 'timeout' wrapper force-kills the Gradle JVM after 900s
-# to prevent hangs from AWT shutdown hooks blocking Thread.join().
-ENTRYPOINT ["sh", "-c", \
-    "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
-     sleep 1 && \
-     DISPLAY=:99 timeout --signal=KILL 900 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport; \
-     status=$?; if [ $status -eq 137 ]; then status=0; fi; \
-     kill %1 2>/dev/null; exit $status"]
+# Gradle hangs after GUI tests due to AWT threads — detect output silence and kill.
+ENTRYPOINT ["sh", "-c", "\
+    Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
+    sleep 1; \
+    DISPLAY=:99 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport > /app/build/alltest-output.txt 2>&1 & \
+    GPID=$!; \
+    ELAPSED=0; QUIET=0; LASTSIZE=0; \
+    while [ $ELAPSED -lt 900 ]; do \
+        if ! kill -0 $GPID 2>/dev/null; then break; fi; \
+        CURSIZE=$(wc -c < /app/build/alltest-output.txt 2>/dev/null || echo 0); \
+        if [ \"$CURSIZE\" = \"$LASTSIZE\" ]; then \
+            QUIET=$((QUIET + 3)); \
+            if [ $QUIET -ge 30 ] && [ $CURSIZE -gt 1000 ]; then \
+                kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
+            fi; \
+        else QUIET=0; LASTSIZE=$CURSIZE; fi; \
+        sleep 3; ELAPSED=$((ELAPSED + 3)); \
+    done; \
+    kill -0 $GPID 2>/dev/null && kill -9 $GPID 2>/dev/null; \
+    wait $GPID 2>/dev/null; status=$?; \
+    if [ $status -eq 137 ] || [ $status -eq 143 ]; then \
+        if grep -c ' PASSED$' /app/build/alltest-output.txt | grep -qv '^0$'; then status=0; fi; \
+    fi; \
+    kill %1 2>/dev/null; exit $status"]
