@@ -48,21 +48,31 @@ set +e
 DISPLAY=:99 ./gradlew --no-daemon $TASKS >> "$OUTPUT" 2>&1 &
 GRADLE_PID=$!
 
-# Poll for completion: detect output silence
+# Poll for completion: detect Gradle's BUILD line or output silence.
+# Gradle prints "BUILD SUCCESSFUL" or "BUILD FAILED" when done, then
+# AWT non-daemon threads prevent JVM exit. We detect the BUILD line
+# and kill the hung process. Silence detection is a fallback.
 ELAPSED=0
 QUIET=0
 LASTSIZE=0
-while [ $ELAPSED -lt 600 ]; do
+while [ $ELAPSED -lt 900 ]; do
     # Check if Gradle exited on its own
     if ! kill -0 $GRADLE_PID 2>/dev/null; then
         break
     fi
-    # Check output file size for silence
+    # Check for Gradle completion marker (BUILD SUCCESSFUL / BUILD FAILED)
+    if grep -q '^BUILD ' "$OUTPUT" 2>/dev/null; then
+        sleep 3  # let Gradle flush final output
+        kill $GRADLE_PID 2>/dev/null
+        sleep 2
+        kill -9 $GRADLE_PID 2>/dev/null
+        break
+    fi
+    # Fallback: silence detection (180s with no output after >1KB written)
     CURSIZE=$(wc -c < "$OUTPUT" 2>/dev/null || echo 0)
     if [ "$CURSIZE" = "$LASTSIZE" ]; then
         QUIET=$((QUIET + 3))
-        # 30s of silence after substantial output means tests are done
-        if [ $QUIET -ge 30 ] && [ "$CURSIZE" -gt 1000 ] 2>/dev/null; then
+        if [ $QUIET -ge 180 ] && [ "$CURSIZE" -gt 1000 ] 2>/dev/null; then
             kill $GRADLE_PID 2>/dev/null
             sleep 2
             kill -9 $GRADLE_PID 2>/dev/null

@@ -282,18 +282,20 @@ rdesk-guitest-base: rdesk-guitest-sync
 	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
 	   docker build -f Dockerfile.guitest-base -t $(GUITEST_BASE_IMAGE) .'
 
-# Quick test run: sync source, mount as volume, run tests incrementally.
-# No docker build needed — source is mounted, not COPY'd.
-# The fixup container cleans root-owned .gradle/.git and stale lock files.
+# Quick test run: sync source, copy into container filesystem, run tests.
+# Source is copied from bind-mount to image fs because Gradle's JUnit test
+# worker exits prematurely when running directly from a bind mount.
+# Build output goes to host via -v build:/app/build.
 rdesk-guitest-quick: rdesk-guitest-sync
 	ssh -n -T rdesk 'cd $(RDESK_GUITEST_DIR) && \
 	   docker run --rm -v $$(pwd):/w alpine \
 	      sh -c "rm -rf /w/.git; find /w/.gradle -name \"*.lock\" -delete 2>/dev/null; mkdir -p /w/.gradle /w/build; chown $$(id -u):$$(id -g) /w/.gradle /w/build" && \
 	   docker run --rm \
-	      --user $$(id -u):$$(id -g) \
-	      -v $$(pwd):/app \
+	      -v $$(pwd):/src \
 	      -v $$(pwd)/build:/app/build \
-	      $(GUITEST_BASE_IMAGE) $(GUITEST_TASKS)'
+	      --entrypoint "" \
+	      $(GUITEST_BASE_IMAGE) \
+	      sh -c "cp -r /src/src /app/src && cp /src/build.gradle /app/ && /usr/local/bin/docker-entrypoint.sh $(GUITEST_TASKS)"'
 	$(MAKE) rdesk-guitest-fetch
 	@rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/guitest-output.txt build/ 2>/dev/null || true
 	@rsync -az rdesk:$(RDESK_GUITEST_DIR)/build/guitest-summary.txt build/ 2>/dev/null || true

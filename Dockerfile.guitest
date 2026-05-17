@@ -64,12 +64,15 @@ ENTRYPOINT ["sh", "-c", "\
     DISPLAY=:99 ./gradlew --no-daemon guiTest > /app/build/guitest-output.txt 2>&1 & \
     GPID=$!; \
     ELAPSED=0; QUIET=0; LASTSIZE=0; \
-    while [ $ELAPSED -lt 600 ]; do \
+    while [ $ELAPSED -lt 900 ]; do \
         if ! kill -0 $GPID 2>/dev/null; then break; fi; \
+        if grep -q '^BUILD ' /app/build/guitest-output.txt 2>/dev/null; then \
+            sleep 3; kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
+        fi; \
         CURSIZE=$(wc -c < /app/build/guitest-output.txt 2>/dev/null || echo 0); \
         if [ \"$CURSIZE\" = \"$LASTSIZE\" ]; then \
             QUIET=$((QUIET + 3)); \
-            if [ $QUIET -ge 30 ] && [ $CURSIZE -gt 1000 ]; then \
+            if [ $QUIET -ge 180 ] && [ $CURSIZE -gt 1000 ]; then \
                 kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
             fi; \
         else QUIET=0; LASTSIZE=$CURSIZE; fi; \
