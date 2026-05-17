@@ -628,21 +628,24 @@ public final class ShellSession {
     * Finds the TTY device for a descendant shell process.
     *
     * <p>Scans all descendant processes looking for one with a real
-    * TTY device (not "?"). Falls back to the main process PID if
-    * no descendants exist.</p>
+    * TTY device (not "?"). Returns null if no descendant has a TTY
+    * rather than falling back to the wrapper process (e.g., script),
+    * because that process's TTY is the parent terminal that launched
+    * javi — setting TIOCSWINSZ on it would resize the parent terminal
+    * instead of the PTY.</p>
     *
     * @return the TTY device name (e.g., "ttys007"), or null if none
     */
    private String findChildTty() throws Exception {
-      // Try each descendant until we find one with a real TTY
+      // Only check descendant processes — never the wrapper process
+      // (script/ssh) itself, whose TTY is the parent terminal.
       for (ProcessHandle child : (Iterable<ProcessHandle>)
             process.toHandle().descendants()::iterator) {
          String tty = getTtyForPid(child.pid());
          if (null != tty)
             return tty;
       }
-      // Fallback: check the main process itself
-      return getTtyForPid(process.pid());
+      return null;
    }
 
    /**
@@ -726,26 +729,32 @@ public final class ShellSession {
    }
 
    /**
-    * Sends SIGWINCH to the shell process and all of its descendants.
-    * This notifies running terminal applications that the window
-    * size has changed so they can re-query terminal dimensions.
+    * Sends SIGWINCH to descendant shell processes.
     *
-    * <p>Sends to each descendant individually, then to the direct
-    * process. Also looks up the foreground process group of each
-    * descendant's TTY and signals that group, ensuring foreground
-    * apps (like htop) receive the signal even when they are not
-    * direct descendants visible via ProcessHandle.</p>
+    * <p>Sends to each descendant individually and also to the
+    * foreground process group of each descendant's TTY, ensuring
+    * foreground apps (like htop) receive the signal even when they
+    * are not direct descendants visible via ProcessHandle.</p>
+    *
+    * <p>Does NOT signal the wrapper process (script/ssh) itself.
+    * On macOS, script's SIGWINCH handler reads the window size
+    * from its controlling terminal (the parent terminal that
+    * launched javi) and would overwrite the correct PTY dimensions
+    * with the parent terminal's dimensions. Since TIOCSWINSZ on
+    * the PTY slave already triggers kernel-delivered SIGWINCH to
+    * the slave's foreground process group, signaling script is
+    * both unnecessary and harmful.</p>
     */
    private void sendSigwinch() {
       if (null == process || !process.isAlive())
          return;
       try {
-         long pid = process.pid();
-         java.util.Set<Long> sent = new java.util.HashSet<>();
          java.util.Set<Long> signaledGroups = new java.util.HashSet<>();
-         process.toHandle().descendants().forEach(child -> {
+         int count = 0;
+         for (ProcessHandle child : (Iterable<ProcessHandle>)
+               process.toHandle().descendants()::iterator) {
             long cpid = child.pid();
-            sent.add(cpid);
+            count++;
             try {
                new ProcessBuilder("kill", "-WINCH",
                   Long.toString(cpid)).start().waitFor();
@@ -764,20 +773,9 @@ public final class ShellSession {
             } catch (Exception e) {
                // Ignore — not every PID has an accessible PGID
             }
-         });
-         // Also send to the direct process (script)
-         if (!sent.contains(pid)) {
-            try {
-               new ProcessBuilder("kill", "-WINCH",
-                  Long.toString(pid)).start().waitFor();
-            } catch (Exception e) {
-               trace("ShellSession " + id
-                  + ": SIGWINCH to " + pid + " failed");
-            }
          }
          trace("ShellSession " + id
-            + ": sent SIGWINCH to " + (sent.size() + 1)
-            + " processes");
+            + ": sent SIGWINCH to " + count + " descendants");
       } catch (Exception e) {
          trace("ShellSession " + id + ": sendSigwinch failed: " + e);
       }
