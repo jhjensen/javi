@@ -2,35 +2,65 @@
 """Javi remote test runner — rsync, Docker, parse, report.
 
 Runs javi's JUnit and/or GUI tests on rdesk inside Docker with Xvfb.
-Returns structured JSON results for easy agent consumption.
+Returns structured results (JSON or human-readable) for agent consumption.
 
-Usage examples:
-    # Run all tests (headless + GUI)
-    python3 ai/test_runner.py --all
+ALL remote test operations should go through this tool.
+Do NOT use SSH directly for anything this tool can do.
+If you need a capability that doesn't exist, add it here.
 
-    # Run only GUI tests
-    python3 ai/test_runner.py --gui
+== COMMANDS ==
 
-    # Run only headless JUnit tests
-    python3 ai/test_runner.py --headless
+  Run tests:
+    python3 ai/test_runner.py --all               All tests (headless + GUI)
+    python3 ai/test_runner.py --gui               GUI tests only
+    python3 ai/test_runner.py --headless          Headless JUnit tests only
+    python3 ai/test_runner.py --coverage          Full coverage run
+    python3 ai/test_runner.py --clean --all       Clean build + all tests
+    python3 ai/test_runner.py --quick --gui       Quick (reuse base image)
+    python3 ai/test_runner.py --test-class Foo    Single test class
 
-    # Run a specific test class
-    python3 ai/test_runner.py --test-class Vt100ECScreenGuiJUnitTest
+  Fetch / inspect:
+    python3 ai/test_runner.py --fetch-logs        Download all test output from rdesk
+    python3 ai/test_runner.py --sync-only         Sync source to rdesk only
 
-    # Clean build + all tests
-    python3 ai/test_runner.py --clean --all
+  Cleanup:
+    python3 ai/test_runner.py --clean-remote      Remove Docker images + files on rdesk
+    python3 ai/test_runner.py --kill               Kill running Docker test containers
 
-    # Quick mode (reuse base image, skip docker build)
-    python3 ai/test_runner.py --quick --gui
+  Options:
+    --json          JSON output (includes failure details: class, method, message)
+    --no-sync       Skip rsync (source already on rdesk)
+    -v / --verbose  Progress messages to stderr
 
-    # Skip sync (source already on rdesk)
-    python3 ai/test_runner.py --no-sync --gui
+== OUTPUT FILES (after any run or --fetch-logs) ==
 
-    # Just sync source, don't run tests
-    python3 ai/test_runner.py --sync-only
+  build/guitest-output.txt   — full Gradle output (GUI runs)
+  build/alltest-output.txt   — full Gradle output (all-test / coverage runs)
+  build/guitest-summary.txt  — parsed summary
+  build/reports-rdesk/       — HTML test reports
+  build/test-results-rdesk/  — JUnit XML results
+  build/jacoco/              — JaCoCo coverage data
 
-    # Coverage report
-    python3 ai/test_runner.py --coverage
+== JSON OUTPUT ==
+
+  When --json is used, the output includes:
+    success (bool), phase, error,
+    headless/gui: {passed, failed, skipped, failures, build_status, gradle_exit},
+    sync_secs, build_secs, test_secs, total_secs,
+    coverage_pct (dict), output_file (local path to full Gradle log)
+
+  The "failures" list contains dicts with keys:
+    test  — full test name (e.g. "ClassName > methodName()")
+    message — failure message / first lines of stack trace
+
+  Read the local output_file for complete Gradle output including full stack traces.
+
+== AGENT WORKFLOW ==
+
+  1. Run --help at the start of every iteration to check capabilities.
+  2. Use this tool for ALL remote operations — never SSH manually.
+  3. After a run, read the local output file (build/*-output.txt) for details.
+  4. If a needed capability is missing, add it to this script.
 """
 
 import argparse
@@ -60,6 +90,12 @@ RSYNC_EXCLUDE = [
 
 
 # --- Data classes ------------------------------------------------------------
+
+@dataclass
+class FailureDetail:
+    test: str = ""
+    message: str = ""
+
 
 @dataclass
 class TestResult:
@@ -193,20 +229,93 @@ def phase_docker_run(image_name, gradle_tasks, *, quick=False, test_filter=None)
 
 @timed
 def phase_fetch_results(local_build_dir):
-    """Fetch test results and output files from rdesk."""
+    """Fetch ALL test results and output files from rdesk."""
     local_build_dir.mkdir(parents=True, exist_ok=True)
 
+    # Sync everything useful from the remote build directory.
+    # Use --delete on subdirs to remove stale local results.
     cmds = [
-        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/guitest-output.txt {local_build_dir}/ 2>/dev/null || true",
-        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/guitest-summary.txt {local_build_dir}/ 2>/dev/null || true",
-        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/alltest-output.txt {local_build_dir}/ 2>/dev/null || true",
-        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/reports/ {local_build_dir}/reports-rdesk/ 2>/dev/null || true",
-        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/test-results/ {local_build_dir}/test-results-rdesk/ 2>/dev/null || true",
+        # Full Gradle output logs (most important — agents read these)
+        f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/*.txt {local_build_dir}/ 2>/dev/null || true",
+        # HTML test reports (delete stale local files)
+        f"rsync -az --delete {RDESK_HOST}:{RDESK_DIR}/build/reports/ {local_build_dir}/reports-rdesk/ 2>/dev/null || true",
+        # JUnit XML results (delete stale local files)
+        f"rsync -az --delete {RDESK_HOST}:{RDESK_DIR}/build/test-results/ {local_build_dir}/test-results-rdesk/ 2>/dev/null || true",
+        # JaCoCo coverage data
         f"rsync -az {RDESK_HOST}:{RDESK_DIR}/build/jacoco/ {local_build_dir}/jacoco/ 2>/dev/null || true",
     ]
     for c in cmds:
         run_local(c, timeout=60)
     return None
+
+
+def do_clean_remote():
+    """Remove Docker images, containers, and files on rdesk."""
+    steps = [
+        # Kill any running test containers
+        (
+            "docker ps -q --filter ancestor=javi-guitest "
+            "--filter ancestor=javi-guitest-base "
+            "--filter ancestor=javi-alltest "
+            "| xargs -r docker kill 2>/dev/null; "
+            "docker ps -q --filter ancestor=javi-guitest "
+            "--filter ancestor=javi-guitest-base "
+            "--filter ancestor=javi-alltest "
+            "| xargs -r docker rm 2>/dev/null; true"
+        ),
+        # Remove images
+        (
+            "docker rmi javi-guitest javi-guitest-base javi-alltest "
+            "2>/dev/null; true"
+        ),
+        # Remove remote files
+        f"rm -rf {RDESK_DIR}",
+    ]
+    for cmd in steps:
+        rc, out, err = ssh_cmd(cmd, timeout=60)
+    print("Remote cleanup complete.", file=sys.stderr)
+
+
+def do_kill():
+    """Kill any running Docker test containers on rdesk."""
+    cmd = (
+        "docker ps --filter ancestor=javi-guitest "
+        "--filter ancestor=javi-guitest-base "
+        "--filter ancestor=javi-alltest "
+        "--format '{{.ID}} {{.Image}} {{.Status}}'"
+    )
+    rc, out, err = ssh_cmd(cmd, timeout=30)
+    if rc != 0:
+        print(f"Failed to list containers: {err}", file=sys.stderr)
+        return False
+
+    if not out.strip():
+        print("No running test containers found.", file=sys.stderr)
+        return True
+
+    print(f"Running containers:\n{out.strip()}", file=sys.stderr)
+    kill_cmd = (
+        "docker ps -q --filter ancestor=javi-guitest "
+        "--filter ancestor=javi-guitest-base "
+        "--filter ancestor=javi-alltest "
+        "| xargs -r docker kill 2>/dev/null; true"
+    )
+    rc, out, err = ssh_cmd(kill_cmd, timeout=30)
+    print("Containers killed.", file=sys.stderr)
+    return True
+
+
+def do_fetch_logs(source_dir):
+    """Download all test output from rdesk without running tests."""
+    build_dir = Path(source_dir).resolve() / "build"
+    _, elapsed = phase_fetch_results(build_dir)
+    print(f"Fetched logs to {build_dir}/ ({elapsed:.1f}s)", file=sys.stderr)
+
+    # List what was downloaded
+    for f in sorted(build_dir.glob("*.txt")):
+        size = f.stat().st_size
+        print(f"  {f.name} ({size:,} bytes)", file=sys.stderr)
+    return True
 
 
 # --- Result parsing ----------------------------------------------------------
@@ -220,9 +329,39 @@ def parse_gradle_output(text):
     r.failed = len(re.findall(r' FAILED$', text, re.MULTILINE))
     r.skipped = len(re.findall(r' SKIPPED$', text, re.MULTILINE))
 
-    # Collect failure details
-    for m in re.finditer(r'^(.+) FAILED$', text, re.MULTILINE):
-        r.failures.append(m.group(1).strip())
+    # Collect failure details with context (class, method, message).
+    # Gradle output pattern:
+    #   ClassName > methodName() FAILED
+    #       org.opentest4j.AssertionFailedError: expected: ...
+    #           at org.junit...
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if not line.rstrip().endswith(' FAILED'):
+            continue
+        test_name = line.rstrip()[:-len(' FAILED')].strip()
+        # Gather indented lines after the FAILED line as the failure message.
+        # Stop at the next test result line or non-indented line.
+        msg_lines = []
+        for j in range(i + 1, min(i + 30, len(lines))):
+            subsequent = lines[j]
+            # Stop if we hit another test result or blank-then-result
+            if re.search(r' (PASSED|FAILED|SKIPPED|STARTED)$', subsequent):
+                break
+            if subsequent.strip() == '':
+                # Blank line might separate — peek ahead
+                if j + 1 < len(lines) and re.search(
+                    r' (PASSED|FAILED|SKIPPED|STARTED)$', lines[j + 1]
+                ):
+                    break
+                if subsequent.strip() == '' and msg_lines:
+                    break
+                continue
+            msg_lines.append(subsequent.rstrip())
+            # Cap message to first 5 meaningful lines
+            if len(msg_lines) >= 5:
+                break
+        message = "\n".join(msg_lines).strip()
+        r.failures.append(asdict(FailureDetail(test=test_name, message=message)))
 
     # Build status
     if "BUILD SUCCESSFUL" in text:
@@ -230,10 +369,8 @@ def parse_gradle_output(text):
     elif "BUILD FAILED" in text:
         r.build_status = "FAILED"
     elif r.passed > 0 and r.failed == 0:
-        # Tests ran and passed — infer success even if BUILD line was truncated
         r.build_status = "SUCCESSFUL"
     elif r.passed > 0:
-        # Tests ran but some failed
         r.build_status = "FAILED"
 
     # Gradle exit code
@@ -441,9 +578,53 @@ def run_tests(args):
 
 def build_parser():
     p = argparse.ArgumentParser(
-        description="Javi remote test runner — rsync + Docker + result parsing",
+        prog="python3 ai/test_runner.py",
+        description="Javi remote test runner — rsync + Docker + result parsing.\n\n"
+            "This tool handles ALL remote test operations: syncing source,\n"
+            "building Docker images, running tests, fetching results, and\n"
+            "cleaning up. Agents should NEVER use SSH directly for anything\n"
+            "this tool can do. If a capability is missing, add it here.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__,
+        epilog="""\
+EXAMPLES:
+  %(prog)s --all --json           Run all tests, JSON output with failure details
+  %(prog)s --clean --all --json   Clean build + all tests
+  %(prog)s --quick --gui          Quick rebuild, GUI tests only
+  %(prog)s --test-class FooTest   Run a single test class
+  %(prog)s --fetch-logs           Download output files without re-running
+  %(prog)s --clean-remote         Remove all Docker artifacts on rdesk
+  %(prog)s --kill                 Kill running test containers on rdesk
+
+AGENT WORKFLOW:
+  1. Run '%(prog)s --help' at the start of every iteration.
+  2. Use this tool for ALL remote operations — never SSH manually.
+  3. After a run, read the local output file for complete Gradle log.
+  4. JSON --failures[] include {test, message} for each failure.
+  5. If a needed capability is missing, modify this script.
+
+OUTPUT FILES (synced locally after every run or --fetch-logs):
+  build/guitest-output.txt    Full Gradle output (GUI test runs)
+  build/alltest-output.txt    Full Gradle output (--all / --coverage runs)
+  build/guitest-summary.txt   Parsed test summary
+  build/reports-rdesk/        HTML test reports
+  build/test-results-rdesk/   JUnit XML results
+  build/jacoco/               JaCoCo coverage data
+
+JSON OUTPUT STRUCTURE:
+  success: bool               Overall pass/fail
+  phase: str                  Last completed phase
+  error: str                  Error message if failed
+  output_file: str            Local path to full Gradle log
+  headless/gui:
+    passed: int               Number of passed tests
+    failed: int               Number of failed tests
+    skipped: int              Number of skipped tests
+    failures: [{test, message}]  Failed test details
+    build_status: str         SUCCESSFUL / FAILED / UNKNOWN
+    gradle_exit: int          Gradle process exit code
+  sync_secs, build_secs, test_secs, total_secs: float
+  coverage_pct: {pkg: int}    Per-package line coverage percent
+""",
     )
 
     # Test selection
@@ -458,6 +639,12 @@ def build_parser():
                    help="Full coverage run (test + guiTest + legacy + merged report)")
     g.add_argument("--sync-only", action="store_true",
                    help="Just sync source to rdesk, don't run tests")
+    g.add_argument("--fetch-logs", action="store_true",
+                   help="Download all test output from rdesk without re-running tests")
+    g.add_argument("--clean-remote", action="store_true",
+                   help="Remove Docker images, containers, and files on rdesk")
+    g.add_argument("--kill", action="store_true",
+                   help="Kill any running Docker test containers on rdesk")
 
     # Filtering
     p.add_argument("--test-class", metavar="CLASS",
@@ -514,15 +701,26 @@ def format_human(result):
                 f"{tr.skipped} skipped [{status}]"
             )
             if tr.failures:
-                lines.append(f"  Failures:")
+                lines.append("  Failures:")
                 for f in tr.failures:
-                    lines.append(f"    - {f}")
+                    if isinstance(f, dict):
+                        lines.append(f"    - {f.get('test', '?')}")
+                        msg = f.get('message', '')
+                        if msg:
+                            for mline in msg.splitlines()[:3]:
+                                lines.append(f"        {mline}")
+                    else:
+                        lines.append(f"    - {f}")
 
     # Coverage
     if result.coverage_pct:
         lines.append("Coverage:")
         for pkg, pct in sorted(result.coverage_pct.items()):
             lines.append(f"  {pkg}: {pct}%")
+
+    # Output file location
+    if result.output_file:
+        lines.append(f"Full log: {result.output_file}")
 
     # Overall
     lines.append(f"Result: {'SUCCESS' if result.success else 'FAILURE'}")
@@ -533,6 +731,19 @@ def format_human(result):
 def main():
     parser = build_parser()
     args = parser.parse_args()
+
+    # Handle standalone commands that don't run tests
+    if args.clean_remote:
+        do_clean_remote()
+        sys.exit(0)
+
+    if args.kill:
+        ok = do_kill()
+        sys.exit(0 if ok else 1)
+
+    if args.fetch_logs:
+        ok = do_fetch_logs(args.source_dir)
+        sys.exit(0 if ok else 1)
 
     result = run_tests(args)
 
