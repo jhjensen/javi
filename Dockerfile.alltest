@@ -64,7 +64,7 @@ RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 ENTRYPOINT ["sh", "-c", "\
     Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
     sleep 1; \
-    DISPLAY=:99 ./gradlew --no-daemon test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport > /app/build/alltest-output.txt 2>&1 & \
+    DISPLAY=:99 ./gradlew --no-daemon --continue test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport > /app/build/alltest-output.txt 2>&1 & \
     GPID=$!; \
     ELAPSED=0; QUIET=0; LASTSIZE=0; \
     while [ $ELAPSED -lt 900 ]; do \

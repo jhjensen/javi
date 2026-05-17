@@ -384,16 +384,22 @@ class DirManagerJUnitTest {
 
    @Test
    void compressPathsNonHomePaths() {
-      List<String> paths = List.of(
-         "/opt/tools/a",
-         "/opt/tools/b",
-         "/var/log");
-      List<String> result = DirManager.compressPaths(paths);
-      assertEquals(4, result.size());
-      assertEquals("/opt/tools/", result.get(0));
-      assertEquals("  a/", result.get(1));
-      assertEquals("  b/", result.get(2));
-      assertEquals("/var/log", result.get(3));
+      String savedHome = System.getProperty("user.home");
+      try {
+         System.setProperty("user.home", "/NOHOME");
+         List<String> paths = List.of(
+            "/opt/tools/a",
+            "/opt/tools/b",
+            "/var/log");
+         List<String> result = DirManager.compressPaths(paths);
+         assertEquals(4, result.size());
+         assertEquals("/opt/tools/", result.get(0));
+         assertEquals("  a/", result.get(1));
+         assertEquals("  b/", result.get(2));
+         assertEquals("/var/log", result.get(3));
+      } finally {
+         System.setProperty("user.home", savedHome);
+      }
    }
 
    @Test
