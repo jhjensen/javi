@@ -63,6 +63,13 @@ final class LspServerConfig {
    boolean enabled = true;
 
    /**
+    * Whether this server is an overlay that receives notifications
+    * for all file types, not just its own extensions. Overlay servers
+    * (e.g., spell checkers) run alongside language-specific servers.
+    */
+   final boolean overlay;
+
+   /**
     * Creates a new language server configuration.
     *
     * @param languageId the LSP language identifier
@@ -72,10 +79,26 @@ final class LspServerConfig {
     */
    LspServerConfig(String languageId, String[] command,
          String[] fileExtensions, String rootPattern) {
+      this(languageId, command, fileExtensions, rootPattern, false);
+   }
+
+   /**
+    * Creates a new language server configuration with overlay flag.
+    *
+    * @param languageId the LSP language identifier
+    * @param command the command to start the server
+    * @param fileExtensions file extensions that auto-start this server
+    * @param rootPattern file/dir name for project root detection
+    * @param overlay if true, receives notifications for all file types
+    */
+   LspServerConfig(String languageId, String[] command,
+         String[] fileExtensions, String rootPattern,
+         boolean overlay) {
       this.languageId = languageId;
       this.command = command;
       this.fileExtensions = fileExtensions;
       this.rootPattern = rootPattern;
+      this.overlay = overlay;
    }
 
    /**
@@ -133,6 +156,20 @@ final class LspServerConfig {
          new String[]{"rust-analyzer"},
          new String[]{".rs"},
          "Cargo.toml"));
+
+      // Harper spell/grammar checker (overlay — checks all file types)
+      // Handles markdown and typst natively; extracts comments from
+      // Java, C, C++, Python, Rust, Go, etc. via tree-sitter.
+      // Install: brew install harper  OR  cargo install harper-ls
+      String harperCmd = findExecutable("harper-ls",
+         "/opt/homebrew/bin/harper-ls",
+         "/usr/local/bin/harper-ls",
+         System.getProperty("user.home") + "/.cargo/bin/harper-ls");
+      configs.put("harper", new LspServerConfig("harper",
+         new String[]{harperCmd, "--stdio"},
+         new String[]{".md", ".typ"},
+         null,
+         true));
 
       return configs;
    }

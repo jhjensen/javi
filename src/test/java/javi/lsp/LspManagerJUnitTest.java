@@ -112,4 +112,38 @@ class LspManagerJUnitTest {
       assertNotNull(retrieved);
       assertEquals("test-lang", retrieved.languageId);
    }
+
+   @Test
+   @DisplayName("getOverlayConfigs returns harper")
+   void getOverlayConfigsIncludesHarper() {
+      LspManager mgr = LspManager.getInstance();
+      java.util.List<LspServerConfig> overlays =
+         mgr.getOverlayConfigs();
+      boolean foundHarper = false;
+      for (LspServerConfig cfg : overlays) {
+         if ("harper".equals(cfg.languageId)) {
+            foundHarper = true;
+            assertTrue(cfg.overlay);
+         }
+      }
+      assertTrue(foundHarper, "harper should be in overlay configs");
+   }
+
+   @Test
+   @DisplayName("isOverlayRunning returns false when not started")
+   void isOverlayRunningFalseWhenNotStarted() {
+      LspManager mgr = LspManager.getInstance();
+      assertTrue(!mgr.isOverlayRunning("harper"),
+         "harper should not be running initially");
+   }
+
+   @Test
+   @DisplayName("getConfig returns harper configuration")
+   void getConfigHarper() {
+      LspManager mgr = LspManager.getInstance();
+      LspServerConfig harper = mgr.getConfig("harper");
+      assertNotNull(harper, "harper config should exist");
+      assertTrue(harper.overlay, "harper should be an overlay");
+      assertEquals("harper", harper.languageId);
+   }
 }

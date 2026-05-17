@@ -320,42 +320,74 @@ public final class LspManager {
     *
     * <p>Auto-starts the server if not running. Extracts the full
     * file content and sends {@code textDocument/didOpen}.</p>
+    * <p>Also notifies any running overlay servers (e.g., spell
+    * checkers) so they can check comments and strings.</p>
     *
     * @param filePath the absolute file path
     * @param content the file content
     */
    public void notifyDidOpen(String filePath, String content) {
       LspClient client = getClientForFile(filePath);
-      if (null == client)
-         return;
-
       String ext = LspServerConfig.getExtension(filePath);
       LspServerConfig config = LspServerConfig.forExtension(configs, ext);
-      if (null == config)
+      String langId = (null != config) ? config.languageId : null;
+
+      if (null != client && null != langId) {
+         try {
+            client.didOpen(filePath, langId, content);
+         } catch (IOException e) {
+            trace("LSP: didOpen error: " + e);
+         }
+      }
+
+      // Notify overlay servers (spell checkers, etc.)
+      notifyOverlayDidOpen(filePath, content, langId);
+   }
+
+   /**
+    * Sends didOpen to all running overlay servers for the file.
+    * The languageId tells the overlay server what type of file it
+    * is so it can parse comments vs. prose appropriately.
+    */
+   private void notifyOverlayDidOpen(String filePath, String content,
+         String primaryLangId) {
+      String overlayLangId = resolveOverlayLanguageId(filePath,
+         primaryLangId);
+      if (null == overlayLangId)
          return;
 
-      try {
-         client.didOpen(filePath, config.languageId, content);
-      } catch (IOException e) {
-         trace("LSP: didOpen error: " + e);
+      for (LspClient overlay : getRunningOverlayClients(filePath)) {
+         try {
+            overlay.didOpen(filePath, overlayLangId, content);
+         } catch (IOException e) {
+            trace("LSP: overlay didOpen error: " + e);
+         }
       }
    }
 
    /**
     * Notifies the server that a file's content changed (full sync).
+    * Also notifies running overlay servers.
     *
     * @param filePath the absolute file path
     * @param content the new full content
     */
    public void notifyDidChange(String filePath, String content) {
       LspClient client = getClientForFile(filePath);
-      if (null == client)
-         return;
+      if (null != client) {
+         try {
+            client.didChange(filePath, content);
+         } catch (IOException e) {
+            trace("LSP: didChange error: " + e);
+         }
+      }
 
-      try {
-         client.didChange(filePath, content);
-      } catch (IOException e) {
-         trace("LSP: didChange error: " + e);
+      for (LspClient overlay : getRunningOverlayClients(filePath)) {
+         try {
+            overlay.didChange(filePath, content);
+         } catch (IOException e) {
+            trace("LSP: overlay didChange error: " + e);
+         }
       }
    }
 
@@ -397,35 +429,51 @@ public final class LspManager {
 
    /**
     * Notifies the server that a file was closed.
+    * Also notifies running overlay servers.
     *
     * @param filePath the absolute file path
     */
    public void notifyDidClose(String filePath) {
       LspClient client = getClientForFile(filePath);
-      if (null == client)
-         return;
+      if (null != client) {
+         try {
+            client.didClose(filePath);
+         } catch (IOException e) {
+            trace("LSP: didClose error: " + e);
+         }
+      }
 
-      try {
-         client.didClose(filePath);
-      } catch (IOException e) {
-         trace("LSP: didClose error: " + e);
+      for (LspClient overlay : getRunningOverlayClients(filePath)) {
+         try {
+            overlay.didClose(filePath);
+         } catch (IOException e) {
+            trace("LSP: overlay didClose error: " + e);
+         }
       }
    }
 
    /**
     * Notifies the server that a file was saved.
+    * Also notifies running overlay servers.
     *
     * @param filePath the absolute file path
     */
    public void notifyDidSave(String filePath) {
       LspClient client = getClientForFile(filePath);
-      if (null == client)
-         return;
+      if (null != client) {
+         try {
+            client.didSave(filePath);
+         } catch (IOException e) {
+            trace("LSP: didSave error: " + e);
+         }
+      }
 
-      try {
-         client.didSave(filePath);
-      } catch (IOException e) {
-         trace("LSP: didSave error: " + e);
+      for (LspClient overlay : getRunningOverlayClients(filePath)) {
+         try {
+            overlay.didSave(filePath);
+         } catch (IOException e) {
+            trace("LSP: overlay didSave error: " + e);
+         }
       }
    }
 
@@ -838,5 +886,128 @@ public final class LspManager {
          trace("LSP: error starting " + languageId + " server: " + e);
       }
       return false;
+   }
+
+   // ---------------------------------------------------------------
+   // Overlay server support (spell checkers, etc.)
+   // ---------------------------------------------------------------
+
+   /**
+    * Mapping from file extension to the LSP languageId that
+    * harper-ls expects for comment extraction. harper-ls uses
+    * standard LSP language identifiers.
+    */
+   private static final Map<String, String> EXT_TO_LANG_ID;
+
+   static {
+      Map<String, String> m = new HashMap<>();
+      m.put(".java", "java");
+      m.put(".c", "c");
+      m.put(".h", "c");
+      m.put(".cpp", "cpp");
+      m.put(".hpp", "cpp");
+      m.put(".cc", "cpp");
+      m.put(".cxx", "cpp");
+      m.put(".py", "python");
+      m.put(".rs", "rust");
+      m.put(".go", "go");
+      m.put(".js", "javascript");
+      m.put(".ts", "typescript");
+      m.put(".tsx", "typescriptreact");
+      m.put(".jsx", "javascriptreact");
+      m.put(".rb", "ruby");
+      m.put(".sh", "shellscript");
+      m.put(".bash", "shellscript");
+      m.put(".lua", "lua");
+      m.put(".kt", "kotlin");
+      m.put(".swift", "swift");
+      m.put(".zig", "zig");
+      m.put(".md", "markdown");
+      m.put(".typ", "typst");
+      m.put(".tex", "latex");
+      m.put(".toml", "toml");
+      m.put(".pl", "perl");
+      m.put(".pm", "perl");
+      EXT_TO_LANG_ID = java.util.Collections.unmodifiableMap(m);
+   }
+
+   /**
+    * Resolves the LSP language ID for overlay servers given a file
+    * path and the primary language config's ID (if any).
+    *
+    * @param filePath the file path
+    * @param primaryLangId the language ID from the primary config
+    * @return the language ID for overlay notification, or null
+    */
+   private static String resolveOverlayLanguageId(String filePath,
+         String primaryLangId) {
+      // Try extension-based lookup first (more specific)
+      String ext = LspServerConfig.getExtension(filePath);
+      String langId = EXT_TO_LANG_ID.get(ext);
+      if (null != langId)
+         return langId;
+
+      // Fall back to primary language config ID
+      if (null != primaryLangId)
+         return primaryLangId;
+
+      // Unknown file type — send as plaintext
+      return "plaintext";
+   }
+
+   /**
+    * Returns running overlay clients that should be notified for
+    * the given file. Only returns clients that are already running
+    * and initialized.
+    *
+    * @param filePath the file being operated on
+    * @return list of running overlay clients (may be empty)
+    */
+   private List<LspClient> getRunningOverlayClients(String filePath) {
+      if (!enabled)
+         return java.util.Collections.emptyList();
+
+      List<LspClient> result = new ArrayList<>();
+      synchronized (activeClients) {
+         for (Map.Entry<String, LspServerConfig> entry
+               : configs.entrySet()) {
+            LspServerConfig config = entry.getValue();
+            if (!config.overlay || !config.enabled)
+               continue;
+            if (disabledLanguages.contains(config.languageId))
+               continue;
+            LspClient client = activeClients.get(config.languageId);
+            if (null != client && client.isInitialized())
+               result.add(client);
+         }
+      }
+      return result;
+   }
+
+   /**
+    * Returns all configured overlay server configs.
+    *
+    * @return list of overlay configs
+    */
+   List<LspServerConfig> getOverlayConfigs() {
+      List<LspServerConfig> result = new ArrayList<>();
+      for (LspServerConfig config : configs.values()) {
+         if (config.overlay)
+            result.add(config);
+      }
+      return result;
+   }
+
+   /**
+    * Checks whether an overlay server is running.
+    *
+    * @param languageId the overlay server's language ID
+    * @return true if running and initialized
+    */
+   public boolean isOverlayRunning(String languageId) {
+      synchronized (activeClients) {
+         LspClient client = activeClients.get(languageId);
+         return null != client && client.isInitialized();
+      }
    }
 }

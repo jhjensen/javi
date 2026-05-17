@@ -192,6 +192,49 @@ public final class LspCommands extends Rgroup
             return null;
          });
 
+      // Spell checker (overlay LSP) control
+      registerArgCommand("lsp.spell",
+         "spell checker control: on|off|status|restart", "lsp",
+         (arg, count, rcount, fvc, dot) -> {
+            String subcmd = arg instanceof String
+               ? ((String) arg).trim().toLowerCase() : "";
+            LspManager mgr = LspManager.getInstance();
+            if (subcmd.equals("off")) {
+               mgr.disableLanguage("harper");
+               mgr.restartServer("harper");
+               UI.reportMessage("Spell checker disabled");
+            } else if (subcmd.equals("on")) {
+               mgr.enableLanguage("harper");
+               mgr.startServerForLanguage("harper");
+               UI.reportMessage("Spell checker enabled");
+            } else if (subcmd.equals("restart")) {
+               mgr.restartServer("harper");
+               mgr.startServerForLanguage("harper");
+               UI.reportMessage("Spell checker restarted");
+            } else {
+               // Default: show status
+               boolean running = mgr.isOverlayRunning("harper");
+               boolean disabled =
+                  mgr.isLanguageDisabled("harper");
+               LspServerConfig cfg = mgr.getConfig("harper");
+               boolean available = (null != cfg && cfg.isAvailable());
+               StringBuilder sb = new StringBuilder("Spell checker: ");
+               if (disabled) {
+                  sb.append("disabled");
+               } else if (running) {
+                  sb.append("running (harper-ls)");
+               } else if (!available) {
+                  sb.append("not installed"
+                     + " (install: brew install harper)");
+               } else {
+                  sb.append("not running"
+                     + " (use :lsp.spell on)");
+               }
+               UI.reportMessage(sb.toString());
+            }
+            return null;
+         });
+
       // Wire up diagnostics collection
       diagnosticDisplay = new DiagnosticDisplay();
       LspManager.getInstance().setDiagnosticHandler(diagnosticDisplay);
@@ -253,6 +296,25 @@ public final class LspCommands extends Rgroup
       javi.HelpSystem.appendLine(
          "  :lsp.config lang=cmd"
          + "  Set server command for a language");
+      javi.HelpSystem.appendLine("");
+      javi.HelpSystem.appendLine("SPELL CHECKER");
+      javi.HelpSystem.appendLine("-------------");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell          Show spell checker status");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell on       Enable spell checker");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell off      Disable spell checker");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell restart  Restart spell checker");
+      javi.HelpSystem.appendLine(
+         "  Uses harper-ls: grammar + spell checking.");
+      javi.HelpSystem.appendLine(
+         "  Checks comments/strings in source code,");
+      javi.HelpSystem.appendLine(
+         "  and full text in markdown/typst files.");
+      javi.HelpSystem.appendLine(
+         "  Install: brew install harper");
       javi.HelpSystem.appendLine("");
       javi.HelpSystem.appendLine(":ta INTEGRATION");
       javi.HelpSystem.appendLine("---------------");
