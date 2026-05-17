@@ -315,6 +315,12 @@ final class KeyMap {
       dirMap.bindEditKey('D', "diredit_delete", null);
       dirMap.bindEditKey('o', "diredit_create", null);
       dirMap.bindEditKey('O', "diredit_create", null);
+      dirMap.bindEditKey('x', "diredit_external", null);
+      dirMap.bindEditKey('!', "diredit_shell", null);
+      dirMap.bindEditKey('r', "diredit_rename", null);
+      dirMap.bindEditKey('c', "diredit_copy", null);
+      dirMap.bindEditKey('p', "diredit_permission", null);
+      dirMap.bindEditKey('Y', "diredit_yankpath", null);
       register(dirMap);
 
       // Shell overlay: shell-specific bindings when viewing a Vt100 buffer

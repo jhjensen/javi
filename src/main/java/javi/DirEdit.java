@@ -125,10 +125,10 @@ public final class DirEdit extends TextEdit<String> {
    @SuppressWarnings({"unchecked", "rawtypes"})
    DirEdit(FileDescriptor.LocalDir dir) {
       super(new IoConverter(new FileProperties(
-         FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
+         FileDescriptor.InternalFd.make(dir.fh.getAbsolutePath()),
          StringIoc.converter), true),
          new FileProperties(
-            FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
+            FileDescriptor.InternalFd.make(dir.fh.getAbsolutePath()),
             StringIoc.converter));
       this.currentDir = dir;
       populateDirectoryImpl();
@@ -344,8 +344,14 @@ public final class DirEdit extends TextEdit<String> {
 
       ArrayList<String> lines = new ArrayList<>();
 
-      // Add header
-      lines.add("  Directory: " + currentDir.shortName);
+      // Add header — use absolute path for clarity
+      String absPath;
+      try {
+         absPath = currentDir.fh.getCanonicalPath();
+      } catch (IOException e) {
+         absPath = currentDir.fh.getAbsolutePath();
+      }
+      lines.add("  " + absPath);
       lines.add("");
 
       // Get directory contents
@@ -412,18 +418,11 @@ public final class DirEdit extends TextEdit<String> {
             dirFile.getAbsolutePath(), this);
       }
 
-      // Add help footer
-      lines.add("");
-      String sortInfo = "  [Enter] edit  [-] parent  [.] hidden"
-         + "  [s] sort:" + sortMode.name().toLowerCase()
-         + "  [R] refresh  [q] quit";
-      if (null != filterPattern)
-         sortInfo += "  filter:" + filterPattern;
-      lines.add(sortInfo);
-      lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
-         + "  [S] search path  [!] shell");
-      lines.add("  [r] rename  [c] copy  [p] permissions"
-         + "  [yy] yank name  [Y] yank path");
+      // Status info at end — filter and sort mode only
+      if (null != filterPattern) {
+         lines.add("");
+         lines.add("  filter:" + filterPattern);
+      }
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -1524,12 +1523,57 @@ public final class DirEdit extends TextEdit<String> {
          "dirfilter",        // 18 - filter directory listing
       };
 
+      /** Human-readable descriptions for each command. */
+      private static final String[] DESCS = {
+         null,
+         "open directory editor",
+         "open file/directory under cursor",
+         "go to parent directory",
+         "toggle hidden files",
+         "cycle sort mode (name/size/date/type)",
+         "refresh directory listing",
+         "quit directory editor",
+         "delete file under cursor",
+         "rename file under cursor",
+         "create new subdirectory",
+         "create new empty file",
+         "copy file under cursor",
+         "toggle delete mark",
+         "execute marked operations",
+         "toggle search path",
+         "open shell in current directory",
+         "create new file or directory",
+         "filter directory listing",
+      };
+
       /**
        * Creates the commands and registers them.
        */
       Commands() {
-         register(RNAMES);
+         register(RNAMES, DESCS);
+         registerOverlayDescriptions();
          instance = this;
+      }
+
+      /**
+       * Register descriptions for keys bound in the directory
+       * overlay that are handled directly by handleKey() rather
+       * than through the command dispatch system.
+       */
+      private void registerOverlayDescriptions() {
+         Rgroup.registerDescriptions(
+            new String[]{
+               null,
+               "diredit_external",
+               "diredit_permission",
+               "diredit_yankpath",
+            },
+            new String[]{
+               null,
+               "open file with OS default application",
+               "toggle file permission",
+               "yank full path to clipboard",
+            });
       }
 
       /**
