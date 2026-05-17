@@ -345,6 +345,8 @@ public abstract class InsertBuffer extends View.Inserter {
                   char key = ke.getKeyChar();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
+                     if (!singleline)
+                        fvc.edvec.checkpoint();
                      MapEvent.hevent(ke, fvc);
                      if (!singleline && FvContext.getCurrFvc() != fvc)
                         break;
