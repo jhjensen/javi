@@ -911,11 +911,15 @@ public final class FvContext<OType> implements Serializable {
       fileposy = newy;
       if (vis) {
          int newx = vi.yCursorChanged(newy);
-         fileposx = inrange(newx,
-            0, edvec.at(fileposy).toString().length());
-         if (fileposx != newx)
-            UI.popError("cursor wrong permission fileposx "
-                  + fileposx + " newx " + newx, null);
+         if (edvec.containsNow(fileposy)) {
+            fileposx = inrange(newx,
+               0, edvec.at(fileposy).toString().length());
+            if (fileposx != newx)
+               UI.popError("cursor wrong permission fileposx "
+                     + fileposx + " newx " + newx, null);
+         } else {
+            fileposx = 0;
+         }
       }
    }
 
@@ -932,6 +936,8 @@ public final class FvContext<OType> implements Serializable {
       if (foldModel != null && !foldModel.isEmpty()
             && foldModel.isFolded(fileposy))
          foldModel.openAllEnclosing(fileposy);
+      if (!edvec.containsNow(fileposy))
+         return;
       String line = edvec.at(fileposy).toString();
       fileposx = inrange(newx, 0, line.length());
       // Snap to grapheme cluster boundary so cursor never lands

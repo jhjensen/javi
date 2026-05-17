@@ -402,6 +402,15 @@ final class OldView extends AwtView {
          }
       }
 
+      // Guard against buffer truncation by another thread (e.g.
+      // shell process death shrinks the buffer after cursor was
+      // clamped in FvContext.cursory).
+      if (!gettext().containsNow(newY)) {
+         setFilePos(0, newY);
+         fixcursor(-getfileX(), visYChange, 0);
+         return 0;
+      }
+
       String oline = gettext().at(newY).toString();
       String nline = oline;
 
@@ -466,7 +475,7 @@ final class OldView extends AwtView {
          }
       }
 
-      if (0 != newX) {
+      if (0 != newX && gettext().containsNow(newY)) {
          int charoff = newX;
          String oline = gettext().at(newY).toString();
          String nline = oline;
