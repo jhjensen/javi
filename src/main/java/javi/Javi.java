@@ -94,12 +94,6 @@ public final class Javi {
       }
       MapEvent.bindCommands();
       KeyBindingPersistence.load();
-      try {
-         //trace("preserver");
-         new Server(6001);
-      } catch (Exception e) {
-         trace("error starting Server" + e);
-      }
 
       //new v8();
       //new msvc();
