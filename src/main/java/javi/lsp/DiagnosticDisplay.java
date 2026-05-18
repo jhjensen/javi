@@ -1,10 +1,14 @@
 package javi.lsp;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javi.PosListList;
 
 import static history.Tools.trace;
 
@@ -59,6 +63,77 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
       } else {
          store.put(uri, new ArrayList<>(diagnostics));
       }
+      updatePoslist();
+   }
+
+   /**
+    * Rebuilds the "lsp-diag" poslist from all stored diagnostics.
+    * Dispatches to the AWT event thread since PosListList operations
+    * must happen on that thread.
+    */
+   private void updatePoslist() {
+      List<String> posLines = buildPositionLines();
+      if (posLines.isEmpty()) {
+         java.awt.EventQueue.invokeLater(() ->
+            PosListList.Cmd.removePositionIoc("lsp-diag"));
+         return;
+      }
+      String joined = String.join("\n", posLines) + "\n";
+      java.awt.EventQueue.invokeLater(() -> {
+         BufferedReader reader = new BufferedReader(
+            new StringReader(joined));
+         PosListList.Cmd.replaceFromReader("lsp-diag", reader);
+      });
+   }
+
+   /**
+    * Builds position-format lines from all stored diagnostics.
+    * Format: {@code filepath(col,line)-[Severity] message}
+    *
+    * @return list of position-formatted strings
+    */
+   @SuppressWarnings("unchecked")
+   private List<String> buildPositionLines() {
+      List<String> lines = new ArrayList<>();
+      for (Map.Entry<String, List<Map<String, Object>>> entry
+            : store.entrySet()) {
+         String filePath = LspClient.uriToPath(entry.getKey());
+         for (Map<String, Object> diag : entry.getValue()) {
+            int line = 1;
+            int col = 0;
+            Object rangeObj = diag.get("range");
+            if (rangeObj instanceof Map) {
+               Map<String, Object> range = (Map<String, Object>) rangeObj;
+               Object startObj = range.get("start");
+               if (startObj instanceof Map) {
+                  Map<String, Object> start =
+                     (Map<String, Object>) startObj;
+                  Object l = start.get("line");
+                  if (l instanceof Number)
+                     line = ((Number) l).intValue() + 1;
+                  Object c = start.get("character");
+                  if (c instanceof Number)
+                     col = ((Number) c).intValue() + 1;
+               }
+            }
+            int sev = severityOf(diag);
+            String sevName = (sev >= 1 && sev < SEVERITY.length)
+               ? SEVERITY[sev] : SEVERITY[0];
+            String message = "";
+            Object msgObj = diag.get("message");
+            if (null != msgObj)
+               message = msgObj.toString();
+            // Position format: filename(col,line)-comment
+            if (col > 0) {
+               lines.add(filePath + "(" + col + "," + line
+                  + ")-[" + sevName + "] " + message);
+            } else {
+               lines.add(filePath + "(" + line
+                  + ")-[" + sevName + "] " + message);
+            }
+         }
+      }
+      return lines;
    }
 
    /**

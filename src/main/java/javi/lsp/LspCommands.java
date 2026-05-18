@@ -206,10 +206,14 @@ public final class LspCommands extends Rgroup
             } else if (subcmd.equals("on")) {
                mgr.enableLanguage("harper");
                mgr.startServerForLanguage("harper");
+               // Send current file to harper so it produces
+               // diagnostics immediately
+               sendCurrentFileToOverlay(fvc, mgr, "harper");
                UI.reportMessage("Spell checker enabled");
             } else if (subcmd.equals("restart")) {
                mgr.restartServer("harper");
                mgr.startServerForLanguage("harper");
+               sendCurrentFileToOverlay(fvc, mgr, "harper");
                UI.reportMessage("Spell checker restarted");
             } else {
                // Default: show status
@@ -1312,6 +1316,23 @@ public final class LspCommands extends Rgroup
    private static boolean isServerActive(LspManager mgr, String langId) {
       String status = mgr.getStatus();
       return status.contains(langId + "(ok)");
+   }
+
+   /**
+    * Sends the current file to an overlay server so it produces
+    * diagnostics immediately after starting.
+    */
+   private static void sendCurrentFileToOverlay(FvContext fvc,
+         LspManager mgr, String languageId) {
+      String filePath = getFilePathStatic(fvc);
+      if (null == filePath)
+         return;
+      if (null == fvc.edvec || !fvc.edvec.fdes().isLocalFile())
+         return;
+      String content = fvc.edvec.getDocumentText();
+      if (null == content)
+         return;
+      mgr.notifyDidOpen(filePath, content);
    }
 
    /**
