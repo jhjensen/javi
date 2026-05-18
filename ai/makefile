@@ -77,6 +77,14 @@ ai/validate.out: FORCE
 ai/rdesk-guitest.out: FORCE
 	$(MAKE) rdesk-guitest > $@ 2>&1; echo "exit: $$?" >> $@
 
+# Quick GUI test iteration (base image + volume mount)
+ai/rdesk-guitest-quick.out: FORCE
+	$(MAKE) rdesk-guitest-quick > $@ 2>&1; echo "exit: $$?" >> $@
+
+# Build base image (run once)
+ai/rdesk-guitest-base.out: FORCE
+	$(MAKE) rdesk-guitest-base > $@ 2>&1; echo "exit: $$?" >> $@
+
 # Remote ALL tests (headless JUnit + GUI via Docker + Xvfb)
 ai/rdesk-alltest.out: FORCE
 	$(MAKE) rdesk-alltest > $@ 2>&1; echo "exit: $$?" >> $@
@@ -101,6 +109,19 @@ ai/rdesk-coverage.out: FORCE
 ai/rdesk-esctest2.out: FORCE
 	$(MAKE) rdesk-esctest2 > $@ 2>&1; echo "exit: $$?" >> $@
 
-# F43: Remote CPU measurement (Dockerfile.cpumeasure)
-ai/rdesk-cpu-measure.out: FORCE
+# T1: Python test runner — GUI tests
+ai/rdesk-guitest-py.out: FORCE
+        python3 ai/test_runner.py --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T1: Python test runner — all tests
+ai/rdesk-alltest-py.out: FORCE
+        python3 ai/test_runner.py --all --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T1: Python test runner — coverage
+ai/rdesk-coverage-py.out: FORCE
+        python3 ai/test_runner.py --coverage --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+
+# T1: Python test runner — quick GUI
+ai/rdesk-guitest-quick-py.out: FORCE
+        python3 ai/test_runner.py --quick --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
 	$(MAKE) rdesk-cpu-measure > $@ 2>&1; echo "exit: $$?" >> $@

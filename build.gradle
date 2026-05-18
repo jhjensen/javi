@@ -184,10 +184,17 @@ tasks.register('guiTest', Test) {
     useJUnitPlatform {
         includeTags 'gui'
     }
+    // Explicitly wire test source set outputs — needed for tasks.register
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
     jacoco.enabled = true
     group = 'verification'
     description = 'Run AssertJ Swing GUI tests (requires graphical display)'
     systemProperty 'junit.jupiter.execution.timeout.default', '60s'
+    // JDK 24: AssertJ Swing 3.17.1 needs reflective access to java.util internals
+    // (ProtectingTimerTask accesses TimerTask.state via reflection)
+    jvmArgs '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
     testLogging {
         events 'started', 'passed', 'failed', 'skipped'
         showStandardStreams = true

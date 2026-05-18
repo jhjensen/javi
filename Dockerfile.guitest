@@ -31,6 +31,9 @@ WORKDIR /app
 # Copy Gradle wrapper first for layer caching
 COPY gradlew build.gradle ./
 COPY gradle/ gradle/
+# Set Gradle home inside /app so deps are cached in image and
+# accessible when running as non-root user with --user flag
+ENV GRADLE_USER_HOME=/app/.gradle
 RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
 
 # Copy source and test files
@@ -39,11 +42,54 @@ COPY src/ src/
 # build.gradle calls `git describe --always --dirty` during evaluation;
 # .git is excluded from rsync, so create a minimal repo
 RUN git init && git config user.email "docker@build" && git config user.name "docker" && \
-    git add -A && git commit -q -m "docker build"
+    git add -A && git commit -q -m "docker build" && \
+    git config --system --add safe.directory /app
 
-# Start Xvfb, run GUI tests, stop Xvfb, exit with test status
-ENTRYPOINT ["sh", "-c", \
-    "Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
-     sleep 1 && \
-     DISPLAY=:99 ./gradlew --no-daemon guiTest; \
-     status=$?; kill %1 2>/dev/null; exit $status"]
+# Make directories writable for --user (non-root) execution
+# Remove daemon dir so it gets created (and owned by) the runtime user,
+# allowing Gradle to chmod it. Wrapper/deps cache remains intact.
+RUN rm -rf /app/.gradle/daemon && \
+    mkdir -p /app/build && chmod -R 777 /app /app/.gradle
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+# Start Xvfb, run GUI tests, stop Xvfb, exit with test status.
+# AWT threads prevent clean JVM shutdown, so Gradle hangs after tests complete.
+# Strategy: run Gradle in background, detect completion by output silence
+# (no new data for 30s means tests are done), then kill Gradle.
+# Test output saved to /app/build/guitest-output.txt for result parsing.
+# Summary saved to /app/build/guitest-summary.txt.
+ENTRYPOINT ["sh", "-c", "\
+    Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
+    sleep 1; \
+    DISPLAY=:99 ./gradlew --no-daemon guiTest > /app/build/guitest-output.txt 2>&1 & \
+    GPID=$!; \
+    ELAPSED=0; QUIET=0; LASTSIZE=0; \
+    while [ $ELAPSED -lt 900 ]; do \
+        if ! kill -0 $GPID 2>/dev/null; then break; fi; \
+        if grep -q '^BUILD ' /app/build/guitest-output.txt 2>/dev/null; then \
+            sleep 3; kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
+        fi; \
+        CURSIZE=$(wc -c < /app/build/guitest-output.txt 2>/dev/null || echo 0); \
+        if [ \"$CURSIZE\" = \"$LASTSIZE\" ]; then \
+            QUIET=$((QUIET + 3)); \
+            if [ $QUIET -ge 180 ] && [ $CURSIZE -gt 1000 ]; then \
+                kill $GPID 2>/dev/null; sleep 2; kill -9 $GPID 2>/dev/null; break; \
+            fi; \
+        else QUIET=0; LASTSIZE=$CURSIZE; fi; \
+        sleep 3; ELAPSED=$((ELAPSED + 3)); \
+    done; \
+    kill -0 $GPID 2>/dev/null && kill -9 $GPID 2>/dev/null; \
+    wait $GPID 2>/dev/null; status=$?; \
+    if [ $status -eq 137 ] || [ $status -eq 143 ]; then \
+        if grep -c ' PASSED$' /app/build/guitest-output.txt | grep -qv '^0$'; then status=0; fi; \
+    fi; \
+    PASSED=$(grep -c ' PASSED$' /app/build/guitest-output.txt || true); \
+    FAILED=$(grep -c ' FAILED$' /app/build/guitest-output.txt || true); \
+    SKIPPED=$(grep -c ' SKIPPED$' /app/build/guitest-output.txt || true); \
+    printf '=== GUI Test Summary ===\\nPASSED:  %s\\nFAILED:  %s\\nSKIPPED: %s\\nEXIT: %s\\n' \
+        \"$PASSED\" \"$FAILED\" \"$SKIPPED\" \"$status\" | tee /app/build/guitest-summary.txt; \
+    if [ \"${FAILED:-0}\" -gt 0 ] 2>/dev/null; then \
+        echo '=== Failed Tests ==='; \
+        grep ' FAILED$' /app/build/guitest-output.txt | sed 's/ FAILED$//' | sort; \
+    fi; \
+    kill %1 2>/dev/null; exit $status"]

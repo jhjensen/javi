@@ -1,0 +1,60 @@
+# Dockerfile.guitest-base — Base image for headless GUI testing
+#
+# Contains JDK 24, Xvfb, X11 libs, fonts, and cached Gradle dependencies.
+# Built ONCE and reused across test iterations. Source code is mounted
+# at runtime via volume, not COPY'd into the image.
+#
+# Build:  docker build -f Dockerfile.guitest-base -t javi-guitest-base .
+# Use:    docker run --rm --user $(id -u):$(id -g) \
+#           -v $(pwd):/app -v $(pwd)/build:/app/build \
+#           javi-guitest-base  [clean] [guiTest|test|guiTest test]
+
+FROM eclipse-temurin:24-jdk-noble
+
+# Xvfb + X11 libraries for headless AWT rendering
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxtst6 \
+    libxi6 \
+    libxrandr2 \
+    libfreetype6 \
+    fontconfig \
+    fonts-dejavu-core \
+    git \
+    clang-format \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /usr/bin/clang-format /usr/local/bin/clang-format-mp-20
+
+# Gradle dependency cache — lives outside /app so volume mount doesn't hide it
+ENV GRADLE_USER_HOME=/opt/gradle-cache
+RUN mkdir -p /opt/gradle-cache && chmod 777 /opt/gradle-cache
+
+WORKDIR /app
+
+# Copy just enough to download and cache Gradle + dependencies
+COPY gradlew build.gradle ./
+COPY gradle/ gradle/
+RUN chmod +x gradlew && ./gradlew --no-daemon dependencies || true
+# Remove daemon dir so it gets created (and owned by) the runtime user,
+# allowing Gradle to chmod it. Wrapper/deps cache remains intact.
+RUN rm -rf /opt/gradle-cache/daemon && chmod -R 777 /opt/gradle-cache
+
+# X11 socket dir
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+# Entrypoint: start Xvfb, init git (for git describe), run Gradle tasks.
+# Arguments: [clean] [guiTest|test|guiTest test]
+# Default (no args): guiTest only.
+# Examples:
+#   docker run ... javi-guitest-base                    # guiTest (dirty)
+#   docker run ... javi-guitest-base clean guiTest      # clean + guiTest
+#   docker run ... javi-guitest-base test guiTest       # headless + GUI
+#   docker run ... javi-guitest-base clean test guiTest  # clean + all tests
+COPY ai/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["guiTest"]
