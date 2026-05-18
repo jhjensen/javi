@@ -699,11 +699,17 @@ public class EditContainer<OType> implements
    }
 
    public final String toString() {
+      // F49: non-synchronized modified check avoids lock ordering deadlock.
+      // isModified() is synchronized on this instance; calling it from
+      // toString() while biglock2 is held deadlocks when an IO thread
+      // holds this monitor and waits for biglock2.
+      UndoHistory<?> b = backup;
+      boolean modified = finishedread && b != null && !b.isWritten();
       return (ioError
               ? "!!! IOError reading in file "
               : "")
              + prop.fdes.shortName
-             + (isModified()
+             + (modified
                 ? " MODIFIED "
                 : " ")
              + (null == ecache
@@ -903,6 +909,11 @@ public class EditContainer<OType> implements
               ?  false
               : (!backup.isWritten())
               : false; // currently finish reading before we allow modification.
+   }
+
+   /** Returns true if the file has been completely read in. Non-blocking. */
+   final boolean isFullyRead() {
+      return finishedread;
    }
 
    final synchronized void forceWritten() {
