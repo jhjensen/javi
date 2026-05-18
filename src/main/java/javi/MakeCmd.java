@@ -11,6 +11,13 @@ import static history.Tools.trace;
 
 final class MakeCmd extends Rgroup {
 
+   /** Default make command: {perl, make.pl, <file>, <args>}. */
+   private static final String[] DEFAULT_MAKE_CMD =
+      {"/opt/local/bin/perl", "../bin/make.pl"};
+
+   /** User-configurable make command set via .javini "makecommand". */
+   private static String[] makeCmd = DEFAULT_MAKE_CMD;
+
    MakeCmd() {
       final String[] rnames = {
          "",
@@ -19,6 +26,26 @@ final class MakeCmd extends Rgroup {
          //  "asm",             //
       };
       register(rnames);
+      registerArgCommand("makecommand",
+         "set make command (e.g. makecommand /usr/bin/perl make.pl)",
+         "build",
+         (arg, count, rcount, fvc, dot) -> {
+            if (arg instanceof String) {
+               String val = ((String) arg).trim();
+               if (val.isEmpty()) {
+                  makeCmd = DEFAULT_MAKE_CMD;
+                  UI.reportMessage("makecommand reset to default: "
+                     + String.join(" ", DEFAULT_MAKE_CMD));
+               } else {
+                  makeCmd = val.split("\\s+");
+                  UI.reportMessage("makecommand set to: " + val);
+               }
+            } else {
+               UI.reportMessage("makecommand: "
+                  + String.join(" ", makeCmd));
+            }
+            return null;
+         });
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -95,12 +122,6 @@ final class MakeCmd extends Rgroup {
    static void mkcommand(FvContext fvc, Object arg)  throws IOException {
       FileList.writeModifiedFiles(".*");
       String file = fvc.edvec.getName().replace('\\', '/');
-      //String[]  cmd = {"ssh", "jjensen@nowind3",
-//                 " . .profile ; cd sidewinder/I6/src ;perl make.pl " + files};
-//                 " . .profile ; cd sidewinder/src ;perl make.pl " + files};
-//               String cmd =System.getProperties().getProperty("java.javi.makecmd",perl make.pl"
-//                   "C:\\Progra~1\\SourceGear\\DiffMerge\\DiffMerge.exe ");
-//      String[] cmd = {"c:\\cygwin\\bin\\perl", "make.pl" , file};
       if (arg == null)
          if (lastarg == null)
             arg = "";
@@ -108,7 +129,10 @@ final class MakeCmd extends Rgroup {
             arg = lastarg;
       else
          lastarg = arg.toString();
-      String[] cmd = {"/opt/local/bin/perl", "../bin/make.pl", file, arg.toString()};
+      String[] cmd = new String[makeCmd.length + 2];
+      System.arraycopy(makeCmd, 0, cmd, 0, makeCmd.length);
+      cmd[makeCmd.length] = file;
+      cmd[makeCmd.length + 1] = arg.toString();
 
       trace("cmd ", cmd);
       PosListList.Cmd.setErrors(PositionCmd.make("mk " + file, cmd));

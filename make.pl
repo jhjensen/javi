@@ -2,16 +2,15 @@
 # takes
 # must be run from the build root, ie e:/build/embedded
 # puts a log file into the directory where the make file is run from.
-# prints only error messeges to stdout. in the format
-# filename(line#): error messege.
+# prints only error messages to stdout. in the format
+# filename(line#): error message.
 # if filename is not known points to line in log file.
 # prints done at the end.
 #system("rm d:\\plog");
 
 use strict;
 use integer;
-use ops;
-#use warnings;
+use warnings;
 
 sub getline() {
     my $line = (<MAKE>);
@@ -34,14 +33,7 @@ my %stor;
 
 #targets are the same as bldemb targets.
 
-my $leakx=0;
-my $bld_type="PRODUCT";
-$bld_type="DEBUG";
 my $logfile;
-my $gnuVer=
-#      "gnu3.79.1";
-#      "gnunew";
-      "3.81";
 
 sub parsemake  {
    #  force line buffering        
@@ -98,7 +90,7 @@ sub parsemake  {
 
               my $l2 = getline() || die "unexpected EOF";
               chop $l2;
-              mkerror ($file,$lineno,$charno,"asdf $l2");
+              mkerror ($file,$lineno,$charno,"$l2");
           }
 #  File "testscript", line 13, in doit
 #    client = pcom.newclient("1.1.1.1","2.2.2.2")
@@ -189,20 +181,11 @@ sub parsemake  {
       } elsif (/^FAILED: copy/) {    # sea.pl error message
              mkerror("",$.,0,$_);
       } elsif (/(.*) stopped at (\S+) line ([0-9]+)(.*)/) {  #perl
-         print "1\n";
          mkerror($2,$3,0,"$1$4");
       } elsif (/syntax error at (\S+) line ([0-9]+)(.*)/) {  #perl
-         print "_:$_\n";
-         print "2 3 :$3: \n";
-         print "2 4 :$4: \n";
-         print "2 5 :$5: \n";
          mkerror($1,$2,0,"syntax error $3");
       } elsif (/(.*) at (\S+) line ([0-9]+)(.*)/) {  #perl
-         print "3\n";
          mkerror($2,$3,0,"$1$4");
-      } elsif (/(.*) at (\S+) line ([0-9]+)(.*)/) {  #perl
-         print "4\n";
-         mkerror($3,$4,0,"$1$2$5");
 
       } elsif (/at ([a-z]+\.pl) line ([0-9]+), near \"(.*)\"/) {    # perl syntax error message
              mkerror($1,$2,0,$_);
@@ -218,7 +201,7 @@ sub parsemake  {
           mkerror ($logfile,$.,0,"$l1 $l2");
    
       } elsif (/is not recognized as an internal or external command/) {
-             mkerror($logfile,$.,$_);
+             mkerror($logfile,$.,0,$_);
       } elsif (/System error [0-9]+ has occurred/) {
              mkerror($logfile,$.,0,$_);
    
@@ -291,9 +274,9 @@ sub parsemake  {
              mkerror ($fname,$lnum,0,$msg);
           }
       }
-      if ($warningcount) {
-         mkerror($logfile,$.,0,"$warningcount warnings not shown");
-      }
+   }
+   if ($warningcount) {
+      mkerror($logfile,$.,0,"$warningcount warnings not shown");
    }
 }
 
@@ -364,7 +347,7 @@ print "%origenv\n";
 exit(0);  # redundant exit
 
 sub mkerror {
-    my($filename,$linenumber,$charnumber,$messege) = @_;
+    my($filename,$linenumber,$charnumber,$message) = @_;
     print "mkerr filename = $filename\n";
     $_=$filename;
     #my @cal = caller();
@@ -394,8 +377,8 @@ sub mkerror {
        }
           
     }
-    print "$filename($charnumber,$linenumber)-$messege\n";
-    mylog ("$filename($linenumber)-$messege\n");
+    print "$filename($charnumber,$linenumber)-$message\n";
+    mylog ("$filename($linenumber)-$message\n");
 }
 
 # given a partial path look for a file in the source tree

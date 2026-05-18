@@ -5,6 +5,7 @@ lines 110
 awt.lcdcontrast 100
 loadplugin typingtutor
 loadplugin Server
+loadplugin tutorial
 loadclass javi.git.GitCommands
 loadclass javi.lsp.LspCommands
 lsp.restart java

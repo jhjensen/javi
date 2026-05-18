@@ -577,6 +577,11 @@ tasks.register('plugins') {
     }
 }
 
+// F45: Ensure plugin JARs are built as part of the standard build
+tasks.named('build') {
+    dependsOn 'plugins'
+}
+
 // F29: Enhanced dist — copies main JAR and all plugin JARs
 tasks.register('distAll', Copy) {
     dependsOn jar, 'plugins'

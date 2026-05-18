@@ -172,6 +172,9 @@ public final class HelpSystem {
          case "vcs":
             appendGitHelp();
             break;
+         case "tutorial":
+            appendTutorialHelp();
+            break;
          default:
             // Check dynamically registered topics
             boolean found = false;
@@ -195,7 +198,7 @@ public final class HelpSystem {
    private static final String[] BUILT_IN_TOPICS = {
       "index", "movement", "editing", "search", "files", "ex",
       "visual", "undo", "window", "shell", "diredit", "filelist",
-      "directory", "keybindings", "folding"
+      "directory", "keybindings", "folding", "tutorial"
    };
 
    /**
@@ -482,6 +485,7 @@ public final class HelpSystem {
       append("  :help keybindings - Key binding architecture");
       append("  :help folding    - Code folding commands");
       append("  :help git        - Git integration commands");
+      append("  :help tutorial   - Tutorial commands");
       for (RegisteredTopic rt : registeredTopics)
          append("  :help " + rt.name
             + " ".repeat(Math.max(1, 11 - rt.name.length()))
@@ -506,7 +510,7 @@ public final class HelpSystem {
       append("  F3               Directory list");
       append("  F4               Font list");
       append("  F5               Position list");
-      append("  F6               Plugin list");
+      append("  F6               Position list list (buffer hub)");
       append("  F7               Make (build)");
       append("  F8               Terminal (vt100)");
       append("  F11              Toggle fullscreen");
@@ -799,6 +803,14 @@ public final class HelpSystem {
       append("  :help            Show help");
       append("  :mk              Run make");
       append("  :!<cmd>          Run shell command");
+      append("");
+      append("TUTORIAL (see :help tutorial for full list)");
+      append("---------");
+      append("  :tutorial        Show current lesson");
+      append("  :tutorial next   Advance to next lesson");
+      append("  :tutorial prev   Go to previous lesson");
+      append("  :tutorial reset  Restart from first lesson");
+      append("  :tutorial list   Show all lessons");
       append("");
       append("Type :help for index.");
    }
@@ -1267,6 +1279,7 @@ public final class HelpSystem {
       append("  folding    - Code folding");
       append("  git        - Git integration");
       append("  lsp        - Language Server Protocol");
+      append("  tutorial   - Tutorial commands");
       append("");
       append("Type :help for index.");
    }
@@ -1331,5 +1344,47 @@ public final class HelpSystem {
     */
    public static void appendLine(String line) {
       append(line);
+   }
+
+   /**
+    * Append tutorial command help.
+    */
+   private static void appendTutorialHelp() {
+      append("TUTORIAL COMMANDS");
+      append("=================");
+      append("");
+      append("The tutorial plugin provides interactive lessons");
+      append("for javi-specific features.");
+      append("");
+      append("Load the plugin first:  :loadplugin tutorial");
+      append("");
+      append("COMMANDS");
+      append("--------");
+      append("  :tutorial           Show the current lesson");
+      append("                      (first lesson if none active)");
+      append("  :tutorial next      Advance to the next lesson");
+      append("  :tutorial prev      Go back to the previous lesson");
+      append("  :tutorial reset     Restart from the first lesson");
+      append("  :tutorial list      Show all lessons with status");
+      append("  :tutorial <name>    Jump to a lesson by name");
+      append("");
+      append("LESSON TOPICS");
+      append("-------------");
+      append("  start     - Getting started with the tutorial");
+      append("  shell1    - Shell management");
+      append("  shell2    - Shell navigation");
+      append("  window1   - Window management (views)");
+      append("  buffer1   - Buffer / file navigation");
+      append("  dirman1   - Directory manager");
+      append("  build1    - Build integration (:mk)");
+      append("  motion1   - Javi-specific motions");
+      append("");
+      append("NOTES");
+      append("-----");
+      append("  - The tutorial tracks which commands you have used.");
+      append("  - Lessons for mastered commands are auto-skipped.");
+      append("  - Type :tutorial to return to a lesson at any time.");
+      append("");
+      append("Type :help for index.");
    }
 }

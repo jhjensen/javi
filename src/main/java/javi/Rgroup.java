@@ -163,6 +163,8 @@ public abstract class Rgroup {
       new HashMap<>(200);
    private static HashMap<String, String> descHash =
       new HashMap<>(200);
+   private static HashMap<String, Integer> commandCounts =
+      new HashMap<>(200);
    private HashMap<String, Object> glist = new HashMap<>(100);
 
    static final KeyBinding bindingLookup(String name) {
@@ -179,6 +181,15 @@ public abstract class Rgroup {
       return java.util.Collections.unmodifiableSet(cmhash.keySet());
    }
 
+   /**
+    * Get execution counts for all commands invoked so far.
+    *
+    * @return unmodifiable map of command name to execution count
+    */
+   public static Map<String, Integer> getCommandCounts() {
+      return java.util.Collections.unmodifiableMap(commandCounts);
+   }
+
    protected abstract Object doroutine(int rnum, Object arg, int count,
       int rcount, FvContext fvc, boolean dotmode) throws
       IOException, InterruptedException, InputException;
@@ -189,6 +200,8 @@ public abstract class Rgroup {
       KeyBinding cm = cmhash.get(command);
       if (null == cm)
          throw new InputException("unkown command:" + command);
+
+      commandCounts.merge(command, 1, Integer::sum);
 
       if (null == arg)
          arg = cm.arg;

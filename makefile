@@ -37,6 +37,10 @@ jar:
 fatjar:
 	./gradlew shadowJar
 
+# Build all plugin JARs
+plugins:
+	./gradlew plugins
+
 #==============================================================================
 # I3: Release Distribution Targets
 #==============================================================================
@@ -164,7 +168,7 @@ uninstall:
 
 # Full build (compile + jar + plugin JARs)
 build: compile jar
-	./gradlew typingTutorJar
+	./gradlew plugins
 
 #==============================================================================
 # Test targets
