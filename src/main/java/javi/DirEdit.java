@@ -125,10 +125,10 @@ public final class DirEdit extends TextEdit<String> {
    @SuppressWarnings({"unchecked", "rawtypes"})
    DirEdit(FileDescriptor.LocalDir dir) {
       super(new IoConverter(new FileProperties(
-         FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
+         FileDescriptor.InternalFd.make(dir.fh.getAbsolutePath()),
          StringIoc.converter), true),
          new FileProperties(
-            FileDescriptor.InternalFd.make("diredit:" + dir.shortName),
+            FileDescriptor.InternalFd.make(dir.fh.getAbsolutePath()),
             StringIoc.converter));
       this.currentDir = dir;
       populateDirectoryImpl();
@@ -354,8 +354,14 @@ public final class DirEdit extends TextEdit<String> {
 
       ArrayList<String> lines = new ArrayList<>();
 
-      // Add header
-      lines.add("  Directory: " + currentDir.shortName);
+      // Add header — use absolute path for clarity
+      String absPath;
+      try {
+         absPath = currentDir.fh.getCanonicalPath();
+      } catch (IOException e) {
+         absPath = currentDir.fh.getAbsolutePath();
+      }
+      lines.add("  " + absPath);
       lines.add("");
 
       // Get directory contents
@@ -422,18 +428,11 @@ public final class DirEdit extends TextEdit<String> {
             dirFile.getAbsolutePath(), this);
       }
 
-      // Add help footer
-      lines.add("");
-      String sortInfo = "  [Enter] edit  [-] parent  [.] hidden"
-         + "  [s] sort:" + sortMode.name().toLowerCase()
-         + "  [R] refresh  [q] quit";
-      if (null != filterPattern)
-         sortInfo += "  filter:" + filterPattern;
-      lines.add(sortInfo);
-      lines.add("  [dd] delete/trash  [o] new file/dir  [x] open"
-         + "  [S] search path  [!] shell");
-      lines.add("  [r] rename  [c] copy  [p] permissions"
-         + "  [yy] yank name  [Y] yank path");
+      // Status info at end — filter and sort mode only
+      if (null != filterPattern) {
+         lines.add("");
+         lines.add("  filter:" + filterPattern);
+      }
 
       // Insert all lines
       insertStrings(lines, 1);
@@ -1532,13 +1531,42 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_shell",    // 16 - open shell in current directory
          "diredit_create",   // 17 - inline create (prompts file or dir)
          "dirfilter",        // 18 - filter directory listing
+         "diredit_external", // 19 - open file with OS default application
+         "diredit_permission", // 20 - toggle file permission
+         "diredit_yankpath", // 21 - yank full path to clipboard
+      };
+
+      /** Human-readable descriptions for each command. */
+      private static final String[] DESCS = {
+         null,
+         "open directory editor",
+         "open file/directory under cursor",
+         "go to parent directory",
+         "toggle hidden files",
+         "cycle sort mode (name/size/date/type)",
+         "refresh directory listing",
+         "quit directory editor",
+         "delete file under cursor",
+         "rename file under cursor",
+         "create new subdirectory",
+         "create new empty file",
+         "copy file under cursor",
+         "toggle delete mark",
+         "execute marked operations",
+         "toggle search path",
+         "open shell in current directory",
+         "create new file or directory",
+         "filter directory listing",
+         "open file with OS default application",
+         "toggle file permission",
+         "yank full path to clipboard",
       };
 
       /**
        * Creates the commands and registers them.
        */
       Commands() {
-         register(RNAMES);
+         register(RNAMES, DESCS);
          instance = this;
       }
 
@@ -1656,7 +1684,12 @@ public final class DirEdit extends TextEdit<String> {
                   ShellSession session =
                      ShellManager.getInstance().newShell(
                         null, dir.getName(), dir);
-                  FvContext.connectFv(session.getBuffer(), fvc.vi);
+                  FvContext newFvc =
+                     FvContext.connectFv(session.getBuffer(), fvc.vi);
+                  session.getVt100().startHandle(newFvc);
+                  session.syncPtyToView(newFvc.vi.getRows(1.0f),
+                     MiscCommands.getWidth());
+                  ((Vt100) session.getBuffer()).handleKeys(newFvc);
                }
                return null;
 
@@ -1671,6 +1704,24 @@ public final class DirEdit extends TextEdit<String> {
                   String pat = (null != arg)
                      ? arg.toString() : null;
                   ((DirEdit) fvc.edvec).setFilter(pat);
+               }
+               return null;
+
+            case 19: // diredit_external
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).openExternal(fvc);
+               }
+               return null;
+
+            case 20: // diredit_permission
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).togglePermission(fvc);
+               }
+               return null;
+
+            case 21: // diredit_yankpath
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).yankPath(fvc);
                }
                return null;
 

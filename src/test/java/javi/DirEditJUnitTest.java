@@ -84,7 +84,7 @@ class DirEditJUnitTest {
    void getFilenameReturnsNullForHeaderLine() throws IOException {
       createTestFile(tempDir, "afile.txt");
       dirEdit = makeDirEdit(tempDir);
-      // Line 1 is "  Directory: ..."
+      // Line 1 is "  /absolute/path/to/dir"
       assertNull(dirEdit.getFilename(1),
          "Header line should return null");
    }
@@ -404,28 +404,6 @@ class DirEditJUnitTest {
          "Unmarked file should show space prefix in display");
    }
 
-   // --- Help footer tests ---
-
-   @Test
-   void helpFooterIncludesFileOperations() throws Exception {
-      File subDir = new File(tempDir, "footer_test");
-      subDir.mkdir();
-      createTestFile(subDir, "any.txt");
-      dirEdit = makeDirEdit(subDir);
-
-      boolean foundOps = false;
-      for (int i = 1; i < dirEdit.readIn(); i++) {
-         String line = dirEdit.at(i).toString();
-         if (line.contains("[r] rename")
-               && line.contains("[c] copy")) {
-            foundOps = true;
-            break;
-         }
-      }
-      assertTrue(foundOps,
-         "Help footer should include file operation commands");
-   }
-
    // --- Edge cases ---
 
    @Test
@@ -599,25 +577,6 @@ class DirEditJUnitTest {
       // Lines: 1=header, 2=blank, 3=../, 4=zzz_dir/, 5=aaa.txt
       assertEquals("zzz_dir/", dirEdit.getFilename(4));
       assertEquals("aaa.txt", dirEdit.getFilename(5));
-   }
-
-   @Test
-   void helpFooterShowsSortMode() throws IOException {
-      File subDir = new File(tempDir, "footer_sort_test");
-      subDir.mkdir();
-      createTestFile(subDir, "any.txt");
-      dirEdit = makeDirEdit(subDir);
-
-      boolean foundSort = false;
-      for (int i = 1; i < dirEdit.readIn(); i++) {
-         String line = dirEdit.at(i).toString();
-         if (line.contains("sort:name")) {
-            foundSort = true;
-            break;
-         }
-      }
-      assertTrue(foundSort,
-         "Help footer should show current sort mode");
    }
 
    // --- DirSizeCalculator tests ---
@@ -831,50 +790,7 @@ class DirEditJUnitTest {
          "Yank of directory name should strip trailing slash");
    }
 
-   @Test
-   void helpFooterIncludesYankInfo() throws IOException {
-      File subDir = new File(tempDir, "yank_footer_test");
-      subDir.mkdir();
-      createTestFile(subDir, "any.txt");
-      dirEdit = makeDirEdit(subDir);
-
-      boolean foundYank = false;
-      for (int i = 1; i < dirEdit.readIn(); i++) {
-         String line = dirEdit.at(i).toString();
-         if (line.contains("[yy] yank") && line.contains("[Y] yank")) {
-            foundYank = true;
-            break;
-         }
-      }
-      assertTrue(foundYank,
-         "Help footer should include yank key bindings");
-   }
-
    // --- macOS open command tests ---
-
-   @Test
-   void helpFooterShowsEditForEnterAndOpenForX() throws Exception {
-      File subDir = new File(tempDir, "help_edit_open_test");
-      subDir.mkdir();
-      createTestFile(subDir, "demo.txt");
-      dirEdit = makeDirEdit(subDir);
-
-      boolean foundEdit = false;
-      boolean foundOpen = false;
-      for (int i = 1; i < dirEdit.readIn(); i++) {
-         String line = dirEdit.at(i).toString();
-         if (line.contains("[Enter] edit")) {
-            foundEdit = true;
-         }
-         if (line.contains("[x] open")) {
-            foundOpen = true;
-         }
-      }
-      assertTrue(foundEdit,
-         "Help footer should show [Enter] edit");
-      assertTrue(foundOpen,
-         "Help footer should show [x] open");
-   }
 
    @Test
    void helpFooterDoesNotShowEnterOpen() throws Exception {
