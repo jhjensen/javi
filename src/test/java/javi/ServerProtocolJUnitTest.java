@@ -53,12 +53,8 @@ class ServerProtocolJUnitTest {
 
    @AfterEach
    void tearDown() throws Exception {
-      // Close the server socket to unblock the accept() thread
-      java.lang.reflect.Field f = Server.class.getDeclaredField("lsock");
-      f.setAccessible(true);
-      java.net.ServerSocket ss = (java.net.ServerSocket) f.get(server);
-      if (ss != null)
-         ss.close();
+      if (server != null)
+         server.close();
       Thread.sleep(100); // let the server thread exit
    }
 

@@ -46,7 +46,8 @@ class ServerExtendedJUnitTest {
 
    @AfterEach
    void tearDown() {
-      // Server thread exits when ServerSocket is collected
+      if (server != null)
+         server.close();
    }
 
    @Test
