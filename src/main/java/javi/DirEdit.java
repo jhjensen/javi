@@ -1521,6 +1521,9 @@ public final class DirEdit extends TextEdit<String> {
          "diredit_shell",    // 16 - open shell in current directory
          "diredit_create",   // 17 - inline create (prompts file or dir)
          "dirfilter",        // 18 - filter directory listing
+         "diredit_external", // 19 - open file with OS default application
+         "diredit_permission", // 20 - toggle file permission
+         "diredit_yankpath", // 21 - yank full path to clipboard
       };
 
       /** Human-readable descriptions for each command. */
@@ -1544,6 +1547,9 @@ public final class DirEdit extends TextEdit<String> {
          "open shell in current directory",
          "create new file or directory",
          "filter directory listing",
+         "open file with OS default application",
+         "toggle file permission",
+         "yank full path to clipboard",
       };
 
       /**
@@ -1551,29 +1557,7 @@ public final class DirEdit extends TextEdit<String> {
        */
       Commands() {
          register(RNAMES, DESCS);
-         registerOverlayDescriptions();
          instance = this;
-      }
-
-      /**
-       * Register descriptions for keys bound in the directory
-       * overlay that are handled directly by handleKey() rather
-       * than through the command dispatch system.
-       */
-      private void registerOverlayDescriptions() {
-         Rgroup.registerDescriptions(
-            new String[]{
-               null,
-               "diredit_external",
-               "diredit_permission",
-               "diredit_yankpath",
-            },
-            new String[]{
-               null,
-               "open file with OS default application",
-               "toggle file permission",
-               "yank full path to clipboard",
-            });
       }
 
       /**
@@ -1690,7 +1674,12 @@ public final class DirEdit extends TextEdit<String> {
                   ShellSession session =
                      ShellManager.getInstance().newShell(
                         null, dir.getName(), dir);
-                  FvContext.connectFv(session.getBuffer(), fvc.vi);
+                  FvContext newFvc =
+                     FvContext.connectFv(session.getBuffer(), fvc.vi);
+                  session.getVt100().startHandle(newFvc);
+                  session.syncPtyToView(newFvc.vi.getRows(1.0f),
+                     MiscCommands.getWidth());
+                  ((Vt100) session.getBuffer()).handleKeys(newFvc);
                }
                return null;
 
@@ -1705,6 +1694,24 @@ public final class DirEdit extends TextEdit<String> {
                   String pat = (null != arg)
                      ? arg.toString() : null;
                   ((DirEdit) fvc.edvec).setFilter(pat);
+               }
+               return null;
+
+            case 19: // diredit_external
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).openExternal(fvc);
+               }
+               return null;
+
+            case 20: // diredit_permission
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).togglePermission(fvc);
+               }
+               return null;
+
+            case 21: // diredit_yankpath
+               if (fvc.edvec instanceof DirEdit) {
+                  ((DirEdit) fvc.edvec).yankPath(fvc);
                }
                return null;
 
