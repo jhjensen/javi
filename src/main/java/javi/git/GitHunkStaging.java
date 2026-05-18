@@ -164,9 +164,23 @@ public final class GitHunkStaging {
     * @throws IOException if git command fails
     */
    static String stageHunk(Hunk hunk) throws IOException {
+      return stageHunk(hunk, null);
+   }
+
+   /**
+    * Stage a single hunk by piping its patch to
+    * {@code git apply --cached} in the given directory.
+    *
+    * @param hunk the hunk to stage
+    * @param dir working directory (repo root), or null for default
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String stageHunk(Hunk hunk, java.io.File dir)
+         throws IOException {
       String patch = hunk.toPatch();
       GitProcess.Result res = GitProcess.executeWithStdin(
-         patch, "apply", "--cached");
+         dir, patch, "apply", "--cached");
       if (0 == res.exitCode) {
          return null;
       }
@@ -184,9 +198,23 @@ public final class GitHunkStaging {
     * @throws IOException if git command fails
     */
    static String unstageHunk(Hunk hunk) throws IOException {
+      return unstageHunk(hunk, null);
+   }
+
+   /**
+    * Unstage a single hunk by piping its reverse patch to
+    * {@code git apply --cached --reverse} in the given directory.
+    *
+    * @param hunk the hunk to unstage
+    * @param dir working directory (repo root), or null for default
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String unstageHunk(Hunk hunk, java.io.File dir)
+         throws IOException {
       String patch = hunk.toPatch();
       GitProcess.Result res = GitProcess.executeWithStdin(
-         patch, "apply", "--cached", "--reverse");
+         dir, patch, "apply", "--cached", "--reverse");
       if (0 == res.exitCode) {
          return null;
       }
@@ -204,9 +232,23 @@ public final class GitHunkStaging {
     * @throws IOException if git command fails
     */
    static String revertHunk(Hunk hunk) throws IOException {
+      return revertHunk(hunk, null);
+   }
+
+   /**
+    * Revert (discard) a single unstaged hunk by applying its
+    * reverse patch to the working tree in the given directory.
+    *
+    * @param hunk the hunk to revert
+    * @param dir working directory (repo root), or null for default
+    * @return null on success, or an error message
+    * @throws IOException if git command fails
+    */
+   static String revertHunk(Hunk hunk, java.io.File dir)
+         throws IOException {
       String patch = hunk.toPatch();
       GitProcess.Result res = GitProcess.executeWithStdin(
-         patch, "apply", "--reverse");
+         dir, patch, "apply", "--reverse");
       if (0 == res.exitCode) {
          return null;
       }
@@ -224,7 +266,21 @@ public final class GitHunkStaging {
     */
    static List<String> getFileDiff(String filepath)
          throws IOException {
-      return GitProcess.execute("diff", filepath);
+      return getFileDiff(filepath, null);
+   }
+
+   /**
+    * Get the diff for a single file (unstaged changes) in the
+    * given directory.
+    *
+    * @param filepath the file path relative to repo root
+    * @param dir working directory (repo root), or null for default
+    * @return diff output lines
+    * @throws IOException if git command fails
+    */
+   static List<String> getFileDiff(String filepath, java.io.File dir)
+         throws IOException {
+      return GitProcess.execute(dir, "diff", filepath);
    }
 
    /**
@@ -236,7 +292,20 @@ public final class GitHunkStaging {
     */
    static List<String> getStagedFileDiff(String filepath)
          throws IOException {
-      return GitProcess.execute("diff", "--cached", filepath);
+      return getStagedFileDiff(filepath, null);
+   }
+
+   /**
+    * Get the staged diff for a single file in the given directory.
+    *
+    * @param filepath the file path relative to repo root
+    * @param dir working directory (repo root), or null for default
+    * @return diff output lines
+    * @throws IOException if git command fails
+    */
+   static List<String> getStagedFileDiff(String filepath,
+         java.io.File dir) throws IOException {
+      return GitProcess.execute(dir, "diff", "--cached", filepath);
    }
 
    /**

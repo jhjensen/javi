@@ -308,12 +308,29 @@ public final class GitProcess {
     */
    public static Result executeWithStdin(String stdinContent,
          String... args) throws IOException {
+      return executeWithStdin(null, stdinContent, args);
+   }
+
+   /**
+    * Execute a git command in a specific directory, writing the
+    * given string to its stdin.
+    *
+    * @param dir working directory (may be null for default)
+    * @param stdinContent content to write to the process stdin
+    * @param args git subcommand and arguments
+    * @return Result with exit code and output lines
+    * @throws IOException if the process cannot be started
+    */
+   public static Result executeWithStdin(java.io.File dir,
+         String stdinContent, String... args) throws IOException {
       String[] cmd = new String[args.length + 1];
       cmd[0] = "git";
       System.arraycopy(args, 0, cmd, 1, args.length);
 
       ProcessBuilder pb = new ProcessBuilder(cmd);
       pb.redirectErrorStream(true);
+      if (dir != null)
+         pb.directory(dir);
       Process proc = pb.start();
 
       // Write stdin content

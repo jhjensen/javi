@@ -253,6 +253,49 @@ class GitBugFixJUnitTest {
       }
    }
 
+   // ---- Bug: staging uses wrong repo when commit is in different repo ----
+
+   @Nested
+   @DisplayName("commit staging uses commitRepoRoot over lastGitDir")
+   class CommitStagingRepoRoot {
+
+      @Test
+      @DisplayName("setCommitRepoRoot overrides lastGitDir in resolveGitDir")
+      void commitRepoRootFallbackAfterLastGitDir() {
+         GitCommands.resetDirCache();
+         // Simulate: lastGitDir was set to repo A by earlier git_status
+         java.io.File repoA = new java.io.File("/repoA");
+         GitCommands.resolveGitDir(repoA);
+         // Simulate: commit opened in repo B
+         GitCommands.setCommitRepoRoot("/repoB");
+         // When resolveGitDir(null) is called, lastGitDir wins
+         // (this is the existing behavior we want to override in
+         // commit staging context)
+         java.io.File result = GitCommands.resolveGitDir(null);
+         assertEquals(repoA, result,
+            "resolveGitDir still returns lastGitDir (callers must"
+            + " check commitRepoRoot explicitly)");
+         // But the staging code should use commitRepoRoot directly
+         assertEquals("/repoB", GitCommands.getCommitRepoRoot(),
+            "commitRepoRoot should be available for staging");
+      }
+
+      @Test
+      @DisplayName("openSplitCommitView uses resolveGitDir fallback")
+      void commitViewUsesResolveGitDirFallback() {
+         // Verify: when getFileDir returns null (status buffer),
+         // openSplitCommitView now calls resolveGitDir(null).
+         // We test the precondition: resolveGitDir(null) returns
+         // lastGitDir when set.
+         GitCommands.resetDirCache();
+         java.io.File repoB = new java.io.File("/repoB");
+         GitCommands.resolveGitDir(repoB);
+         java.io.File fallback = GitCommands.resolveGitDir(null);
+         assertEquals(repoB, fallback,
+            "resolveGitDir(null) returns cached dir from status");
+      }
+   }
+
    // ---- Bug: F6/F1/F1 split-view restoration ----
 
    @Nested

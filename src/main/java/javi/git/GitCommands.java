@@ -186,6 +186,8 @@ public final class GitCommands extends Rgroup implements Plugin {
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
       java.io.File dir = getFileDir(fvc);
+      if (dir == null)
+         dir = resolveGitDir(null);
       if (!GitProcess.isGitRepo(dir)) {
          UI.reportMessage("Not a git repository");
          return null;
@@ -421,6 +423,10 @@ public final class GitCommands extends Rgroup implements Plugin {
          boolean amend) throws IOException, InputException {
       ensureListenerRegistered();
       java.io.File dir = getFileDir(fvc);
+      if (dir == null)
+         dir = resolveGitDir(null);
+      else
+         resolveGitDir(dir); // update lastGitDir for later operations
       commitRepoRoot = GitProcess.getRepoRoot(dir);
       commitAmendMode = amend;
       java.io.File repoDir = commitRepoRoot != null
@@ -433,7 +439,9 @@ public final class GitCommands extends Rgroup implements Plugin {
       if (savedMsg != null && !savedMsg.isEmpty()) {
          msgLines.addAll(savedMsg);
       } else if (amend) {
-         List<String> lastMsg = GitProcess.execute(
+         java.io.File amendDir = commitRepoRoot != null
+            ? new java.io.File(commitRepoRoot) : null;
+         List<String> lastMsg = GitProcess.execute(amendDir,
             "log", "-1", "--pretty=%B");
          for (String m : lastMsg) {
             if (!m.isEmpty() || !msgLines.isEmpty())
@@ -500,12 +508,13 @@ public final class GitCommands extends Rgroup implements Plugin {
     */
    private static void gitDiff(Object arg, FvContext fvc) throws
          IOException, InputException {
+      java.io.File repoRoot = getRepoRootDir();
       List<String> output;
       if (null != arg) {
          String filename = arg.toString().trim();
-         output = GitProcess.execute("diff", filename);
+         output = GitProcess.execute(repoRoot, "diff", filename);
       } else {
-         output = GitProcess.execute("diff");
+         output = GitProcess.execute(repoRoot, "diff");
       }
       if (output.isEmpty()) {
          UI.reportMessage("No differences");
@@ -703,7 +712,9 @@ public final class GitCommands extends Rgroup implements Plugin {
                && !curText.startsWith("  (")) {
             String filename = curText.trim();
             if (!filename.isEmpty()) {
-               java.io.File repoRoot = getRepoRootDir();
+               java.io.File repoRoot = commitRepoRoot != null
+                  ? new java.io.File(commitRepoRoot)
+                  : getRepoRootDir();
                GitProcess.execute(repoRoot, "add", "--", filename);
                UI.reportMessage("Staged: " + filename);
                refreshCommitView(fvc);
@@ -732,7 +743,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException(
             "Cursor is not within a diff hunk");
       }
-      String err = GitHunkStaging.stageHunk(hunk);
+      String err = GitHunkStaging.stageHunk(hunk,
+         isCommitView && commitRepoRoot != null
+            ? new java.io.File(commitRepoRoot) : null);
       if (null == err) {
          UI.reportMessage("Staged hunk " + (hunk.index + 1));
          if (isCommitView) {
@@ -794,7 +807,9 @@ public final class GitCommands extends Rgroup implements Plugin {
                int pipe = stat.indexOf('|');
                if (pipe > 0)
                   stat = stat.substring(0, pipe).trim();
-               GitProcess.execute("restore", "--staged", stat);
+               GitProcess.execute(commitRepoRoot != null
+                  ? new java.io.File(commitRepoRoot)
+                  : getRepoRootDir(), "restore", "--staged", stat);
                UI.reportMessage("Unstaged: " + stat);
                refreshCommitView(fvc);
                return;
@@ -819,7 +834,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException(
             "Cursor is not within a diff hunk");
       }
-      String err = GitHunkStaging.unstageHunk(hunk);
+      String err = GitHunkStaging.unstageHunk(hunk,
+         isCommitView && commitRepoRoot != null
+            ? new java.io.File(commitRepoRoot) : null);
       if (null == err) {
          UI.reportMessage("Unstaged hunk " + (hunk.index + 1));
          if (isCommitView) {
@@ -869,7 +886,9 @@ public final class GitCommands extends Rgroup implements Plugin {
          throw new InputException(
             "Cursor is not within a diff hunk");
       }
-      String err = GitHunkStaging.revertHunk(hunk);
+      String err = GitHunkStaging.revertHunk(hunk,
+         isCommitView && commitRepoRoot != null
+            ? new java.io.File(commitRepoRoot) : null);
       if (null == err) {
          UI.reportMessage("Reverted hunk " + (hunk.index + 1));
          if (isCommitView) {
@@ -1026,13 +1045,15 @@ public final class GitCommands extends Rgroup implements Plugin {
          UI.reportMessage("Aborting: empty commit message");
          return;
       }
+      java.io.File repoDir = commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
       GitProcess.Result result;
       if (amend) {
          result = GitProcess.executeWithResult(
-            "commit", "--amend", "-m", message);
+            repoDir, "commit", "--amend", "-m", message);
       } else {
          result = GitProcess.executeWithResult(
-            "commit", "-m", message);
+            repoDir, "commit", "-m", message);
       }
       if (0 == result.exitCode) {
          String verb = amend ? "Amended" : "Committed";
@@ -1108,7 +1129,11 @@ public final class GitCommands extends Rgroup implements Plugin {
       if (null == filename) {
          throw new InputException("No file on current line");
       }
-      java.io.File repoRoot = getRepoRootDir();
+      boolean inCommitView = commitStagingBuffer != null
+         && fvc.edvec == commitStagingBuffer;
+      java.io.File repoRoot = inCommitView && commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
+      trace("gitStageLine: file=" + filename + " repoRoot=" + repoRoot);
       GitProcess.Result res = GitProcess.executeWithResult(
          repoRoot, "add", "--", filename);
       if (0 != res.exitCode) {
@@ -1122,7 +1147,11 @@ public final class GitCommands extends Rgroup implements Plugin {
          }
       }
       UI.reportMessage("Staged: " + filename);
-      gitStatus(fvc);
+      if (inCommitView) {
+         refreshCommitView(fvc);
+      } else {
+         gitStatus(fvc);
+      }
    }
 
    /**
@@ -1134,10 +1163,18 @@ public final class GitCommands extends Rgroup implements Plugin {
       if (null == filename) {
          throw new InputException("No file on current line");
       }
-      java.io.File repoRoot = getRepoRootDir();
+      boolean inCommitView = commitStagingBuffer != null
+         && fvc.edvec == commitStagingBuffer;
+      java.io.File repoRoot = inCommitView && commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
+      trace("gitUnstageLine: file=" + filename + " repoRoot=" + repoRoot);
       GitProcess.execute(repoRoot, "restore", "--staged", filename);
       UI.reportMessage("Unstaged: " + filename);
-      gitStatus(fvc);
+      if (inCommitView) {
+         refreshCommitView(fvc);
+      } else {
+         gitStatus(fvc);
+      }
    }
 
    /**
@@ -1170,10 +1207,18 @@ public final class GitCommands extends Rgroup implements Plugin {
       if ("Untracked".equals(section)) {
          throw new InputException("Cannot discard untracked file");
       }
-      java.io.File repoRoot = getRepoRootDir();
+      boolean inCommitView = commitStagingBuffer != null
+         && fvc.edvec == commitStagingBuffer;
+      java.io.File repoRoot = inCommitView && commitRepoRoot != null
+         ? new java.io.File(commitRepoRoot) : getRepoRootDir();
+      trace("gitDiscard: file=" + filename + " repoRoot=" + repoRoot);
       GitProcess.execute(repoRoot, "checkout", "--", filename);
       UI.reportMessage("Discarded changes: " + filename);
-      gitStatus(fvc);
+      if (inCommitView) {
+         refreshCommitView(fvc);
+      } else {
+         gitStatus(fvc);
+      }
    }
 
    /**
@@ -2157,5 +2202,15 @@ public final class GitCommands extends Rgroup implements Plugin {
    static void resetDirCache() {
       lastGitDir = null;
       commitRepoRoot = null;
+   }
+
+   /** Set commitRepoRoot for testing. */
+   static void setCommitRepoRoot(String root) {
+      commitRepoRoot = root;
+   }
+
+   /** Get commitRepoRoot for testing. */
+   static String getCommitRepoRoot() {
+      return commitRepoRoot;
    }
 }
