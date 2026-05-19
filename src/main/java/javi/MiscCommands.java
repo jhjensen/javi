@@ -1139,23 +1139,42 @@ public final class MiscCommands extends Rgroup {
          throw new InputException("loadplugin requires a plugin name"
             + " or JAR path");
 
-      java.io.File jarFile;
+      // Direct JAR path or absolute path
       if (arg.contains("/") || arg.endsWith(".jar")) {
-         jarFile = new java.io.File(arg);
-      } else {
-         // Search standard locations for javi-<name>.jar
-         jarFile = findPluginJar(arg);
+         java.io.File jarFile = new java.io.File(arg);
+         if (!jarFile.exists())
+            throw new InputException("Plugin JAR not found: " + jarFile);
+         try {
+            Plugin.Loader.load(jarFile.getPath());
+            UI.reportMessage("Loaded plugin: " + jarFile.getName());
+         } catch (Throwable e) {
+            throw new InputException("Failed to load plugin "
+               + jarFile + ": " + e.getMessage());
+         }
+         return;
       }
 
-      if (!jarFile.exists())
-         throw new InputException("Plugin JAR not found: " + jarFile);
+      // Try JAR in standard locations first
+      java.io.File jarFile = findPluginJar(arg);
+      if (jarFile.exists()) {
+         try {
+            Plugin.Loader.load(jarFile.getPath());
+            UI.reportMessage("Loaded plugin: " + jarFile.getName());
+         } catch (Throwable e) {
+            throw new InputException("Failed to load plugin "
+               + jarFile + ": " + e.getMessage());
+         }
+         return;
+      }
 
+      // Fall back to in-tree class (e.g. "Server" -> "javi.Server")
+      String className = arg.contains(".") ? arg : "javi." + arg;
       try {
-         Plugin.Loader.load(jarFile.getPath());
-         UI.reportMessage("Loaded plugin: " + jarFile.getName());
-      } catch (Throwable e) {
-         throw new InputException("Failed to load plugin "
-            + jarFile + ": " + e.getMessage());
+         Class.forName(className);
+         UI.reportMessage("Loaded plugin: " + arg);
+      } catch (ClassNotFoundException e) {
+         throw new InputException("Plugin not found: no JAR at "
+            + jarFile + " and no class " + className);
       }
    }
 

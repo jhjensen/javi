@@ -16,7 +16,7 @@ import static history.Tools.trace;
  *
  * <p>Allows other processes to request Javi to open files via socket connection.
  * Used primarily for integrating Javi as an external editor with other tools.
- * This is an optional plugin &mdash; load it with {@code :loadclass javi.Server}.</p>
+ * This is an optional plugin &mdash; load it with {@code :loadplugin Server}.</p>
  *
  * <p>The server port defaults to 6001 and can be configured via the system
  * property {@code javi.server.port}. Once loaded, use the {@code :server}
