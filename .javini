@@ -10,9 +10,8 @@ lsp.sourcepath .
 e todo.txt
 e src
 e main
-e history
-e java
-e javi
-e history
 e plugin
+e java
+e java/javi
+e history
 e awt
