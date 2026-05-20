@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javi.EventQueue;
 import javi.PosListList;
 
 import static history.Tools.trace;
@@ -74,15 +75,26 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
    private void updatePoslist() {
       List<String> posLines = buildPositionLines();
       if (posLines.isEmpty()) {
-         java.awt.EventQueue.invokeLater(() ->
-            PosListList.Cmd.removePositionIoc("lsp-diag"));
+         java.awt.EventQueue.invokeLater(() -> {
+            EventQueue.biglock2.lock();
+            try {
+               PosListList.Cmd.removePositionIoc("lsp-diag");
+            } finally {
+               EventQueue.biglock2.unlock();
+            }
+         });
          return;
       }
       String joined = String.join("\n", posLines) + "\n";
       java.awt.EventQueue.invokeLater(() -> {
-         BufferedReader reader = new BufferedReader(
-            new StringReader(joined));
-         PosListList.Cmd.replaceFromReader("lsp-diag", reader);
+         EventQueue.biglock2.lock();
+         try {
+            BufferedReader reader = new BufferedReader(
+               new StringReader(joined));
+            PosListList.Cmd.replaceFromReader("lsp-diag", reader);
+         } finally {
+            EventQueue.biglock2.unlock();
+         }
       });
    }
 
