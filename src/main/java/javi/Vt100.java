@@ -199,7 +199,7 @@ public class Vt100 extends TextEdit<String> {
 //        oldsize =  FontList.setFontSize(new Float(15.0) ,fvc.vi);
          //trace("oldfont = " + oldfont);
          rows = fvc.vi.getRows(1.0f);
-         int neededRows = rows - readIn() + 1;
+         int neededRows = rows - readIn();
          //trace("rows " + rows + " readIn " + ev.readIn() + " neededRows " + neededRows);
          while (--neededRows > -1)  {
             //trace("setfvc inserting line at "  + ev.readIn());
@@ -286,7 +286,7 @@ public class Vt100 extends TextEdit<String> {
    void applyResize(int newRows, int newCols) {
       int oldRows = rows;
       rows = newRows;
-      int neededRows = rows - readIn() + 1;
+      int neededRows = rows - readIn();
       while (--neededRows > -1)
          insertOne("", readIn());
       // Clamp cursor to valid range after resize
