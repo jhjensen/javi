@@ -1,4 +1,4 @@
-# javi
+# Javi
 
 A vi-like text editor written in Java/AWT with terminal emulation, git integration, and plugin support.
 
@@ -11,7 +11,6 @@ A vi-like text editor written in Java/AWT with terminal emulation, git integrati
 ```bash
 ./gradlew build
 ```
-
 ## Install
 
 ```bash
@@ -43,7 +42,7 @@ These tools enhance javi but are not required:
 |------|---------|
 | `git` | Git integration (status, diff, commit, log) |
 | `clang-format` | Code formatting |
-| `lid` (idutils) | Cross-reference lookup |
+| `lid` (id-utils) | Cross-reference lookup |
 
 ## License
 

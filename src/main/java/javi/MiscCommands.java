@@ -10,7 +10,6 @@ import history.Tools;
 import static history.Tools.trace;
 
 public final class MiscCommands extends Rgroup {
-
    enum Cmd {
       UNUSED,      // 0
       XXX_UNUSED,  // 1: free slot

@@ -345,9 +345,9 @@ public final class LspManager {
    }
 
    /**
-    * Sends didOpen to all running overlay servers for the file.
-    * The languageId tells the overlay server what type of file it
-    * is so it can parse comments vs. prose appropriately.
+    * Sends didOpen to all overlay servers for the file, auto-starting
+    * them if needed. The languageId tells the overlay server what type
+    * of file it is so it can parse comments vs. prose appropriately.
     */
    private void notifyOverlayDidOpen(String filePath, String content,
          String primaryLangId) {
@@ -356,7 +356,7 @@ public final class LspManager {
       if (null == overlayLangId)
          return;
 
-      for (LspClient overlay : getRunningOverlayClients(filePath)) {
+      for (LspClient overlay : getOrStartOverlayClients(filePath)) {
          try {
             overlay.didOpen(filePath, overlayLangId, content);
          } catch (IOException e) {
@@ -980,6 +980,34 @@ public final class LspManager {
             if (null != client && client.isInitialized())
                result.add(client);
          }
+      }
+      return result;
+   }
+
+   /**
+    * Returns overlay clients for the given file, auto-starting any
+    * that are enabled and available but not yet running. Used by
+    * didOpen to ensure overlay servers start on first file open.
+    *
+    * @param filePath the file being opened (used for root detection)
+    * @return list of running/started overlay clients (may be empty)
+    */
+   private List<LspClient> getOrStartOverlayClients(String filePath) {
+      if (!enabled)
+         return java.util.Collections.emptyList();
+
+      List<LspClient> result = new ArrayList<>();
+      for (Map.Entry<String, LspServerConfig> entry
+            : configs.entrySet()) {
+         LspServerConfig config = entry.getValue();
+         if (!config.overlay || !config.enabled)
+            continue;
+         if (disabledLanguages.contains(config.languageId))
+            continue;
+
+         LspClient client = getOrStartClient(config, filePath);
+         if (null != client)
+            result.add(client);
       }
       return result;
    }

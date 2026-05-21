@@ -55,9 +55,9 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
     * @param diagnostics list of diagnostic maps from the server
     */
    @Override
-   public synchronized void onDiagnostics(String uri,
+   public synchronized void onDiagnostics(String source, String uri,
          List<Map<String, Object>> diagnostics) {
-      trace("DiagnosticDisplay: " + uri + " => "
+      trace("DiagnosticDisplay: [" + source + "] " + uri + " => "
          + diagnostics.size() + " diagnostics");
       if (diagnostics.isEmpty()) {
          store.remove(uri);
