@@ -29,7 +29,7 @@ import static history.Tools.trace;
  *
  * @see EditContainer.FileStatusListener
  */
-final class Server implements Runnable, EditContainer.FileStatusListener, Plugin {
+final class Server implements Plugin, Runnable, EditContainer.FileStatusListener {
 
    /** Plugin descriptor for the plugin loader. */
    public static final String pluginInfo = "external file-open server";
@@ -89,6 +89,7 @@ final class Server implements Runnable, EditContainer.FileStatusListener, Plugin
       t.setDaemon(true);
       t.start();
       EditContainer.registerListener(this);
+      trace("Server plugin listening on port " + port);
    }
 
    void close() {
