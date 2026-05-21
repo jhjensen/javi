@@ -249,22 +249,22 @@ final class Vt100Parser extends EventQueue.IEvent implements Runnable {
 
    /**
     * Main parser loop - reads bytes and dispatches to event queue.
+    *
+    * <p>reader.read() is called OUTSIDE the synchronized block to avoid
+    * blocking the AWT thread: wakeAll() needs synchronized(this) to notify
+    * the parser, but if the parser holds its own monitor during a blocking
+    * read, the AWT thread deadlocks in wakeAll() and can no longer dispatch
+    * keyboard/focus events.</p>
     */
    public void run() {
       try {
          while (true) {
+            int rec = reader.read();
             synchronized (this) {
-               int rec = reader.read();
-               //trace("rec = " + (int)rec);
-
                if (rec == -1)  {
-                  //trace("recevied EOF exiting input loop");
-                  //return;
                   this.wait(EventQueue.isFocused() ? 5000 : 0);
                } else {
-                  //trace("rec " + rec);
                   recbyte = (char) rec;
-                  //trace("insert wakeup recbyte " + (int)recbyte);
                   EventQueue.insert(this);
                   wait(10000);
                }
