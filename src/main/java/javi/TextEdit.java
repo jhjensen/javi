@@ -1168,7 +1168,8 @@ final class EditTester1 {
       //   Original targetmem 1100000 was for JRE 1.6; bumped to 2600000 later
       //   but still failed intermittently due to GC non-determinism on modern
       //   JVMs.  Switched to delta-based measurement to be GC-tolerant.
-      long targetMemDelta = 2000000;
+      //   Bumped to 3000000 for overlay executor thread overhead (F7-d).
+      long targetMemDelta = 3000000;
 
       // this is fairly wierd, but It seems like the gc doesn't really collect
       //   all the memory even though I call it three times.  It makes memory

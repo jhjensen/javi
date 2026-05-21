@@ -133,8 +133,10 @@ class LspManagerJUnitTest {
    @DisplayName("isOverlayRunning returns false when not started")
    void isOverlayRunningFalseWhenNotStarted() {
       LspManager mgr = LspManager.getInstance();
+      mgr.setEnabled(false);
       assertTrue(!mgr.isOverlayRunning("harper"),
          "harper should not be running initially");
+      mgr.setEnabled(true);
    }
 
    @Test

@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static history.Tools.trace;
 
@@ -63,6 +65,12 @@ public final class LspManager {
    private final Set<String> disabledLanguages = new HashSet<>();
    private final Map<String, String> rootDirOverrides = new HashMap<>();
    private final Map<String, List<String>> sourcePaths = new HashMap<>();
+   private final ExecutorService overlayExecutor =
+      Executors.newSingleThreadExecutor(r -> {
+         Thread t = new Thread(r, "lsp-overlay-writer");
+         t.setDaemon(true);
+         return t;
+      });
    private boolean enabled = true;
    private int requestTimeoutSeconds = 3;
    private LspClient.DiagnosticHandler diagnosticHandler;
@@ -348,6 +356,8 @@ public final class LspManager {
     * Sends didOpen to all overlay servers for the file, auto-starting
     * them if needed. The languageId tells the overlay server what type
     * of file it is so it can parse comments vs. prose appropriately.
+    * Runs asynchronously to avoid blocking the caller if the overlay
+    * server's stdin pipe is full.
     */
    private void notifyOverlayDidOpen(String filePath, String content,
          String primaryLangId) {
@@ -356,13 +366,19 @@ public final class LspManager {
       if (null == overlayLangId)
          return;
 
-      for (LspClient overlay : getOrStartOverlayClients(filePath)) {
-         try {
-            overlay.didOpen(filePath, overlayLangId, content);
-         } catch (IOException e) {
-            trace("LSP: overlay didOpen error: " + e);
+      List<LspClient> overlays = getOrStartOverlayClients(filePath);
+      if (overlays.isEmpty())
+         return;
+
+      overlayExecutor.submit(() -> {
+         for (LspClient overlay : overlays) {
+            try {
+               overlay.didOpen(filePath, overlayLangId, content);
+            } catch (IOException e) {
+               trace("LSP: overlay didOpen error: " + e);
+            }
          }
-      }
+      });
    }
 
    /**
@@ -383,11 +399,13 @@ public final class LspManager {
       }
 
       for (LspClient overlay : getRunningOverlayClients(filePath)) {
-         try {
-            overlay.didChange(filePath, content);
-         } catch (IOException e) {
-            trace("LSP: overlay didChange error: " + e);
-         }
+         overlayExecutor.submit(() -> {
+            try {
+               overlay.didChange(filePath, content);
+            } catch (IOException e) {
+               trace("LSP: overlay didChange error: " + e);
+            }
+         });
       }
    }
 
@@ -444,11 +462,13 @@ public final class LspManager {
       }
 
       for (LspClient overlay : getRunningOverlayClients(filePath)) {
-         try {
-            overlay.didClose(filePath);
-         } catch (IOException e) {
-            trace("LSP: overlay didClose error: " + e);
-         }
+         overlayExecutor.submit(() -> {
+            try {
+               overlay.didClose(filePath);
+            } catch (IOException e) {
+               trace("LSP: overlay didClose error: " + e);
+            }
+         });
       }
    }
 
@@ -640,7 +660,11 @@ public final class LspManager {
       synchronized (activeClients) {
          for (LspClient client : activeClients.values()) {
             try {
-               client.shutdown();
+               if (client.getConfig().overlay) {
+                  client.stop();
+               } else {
+                  client.shutdown();
+               }
             } catch (Exception e) {
                trace("LSP: error shutting down: " + e);
             }

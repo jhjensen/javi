@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javi.EventQueue;
 import javi.PosListList;
 
 import static history.Tools.trace;
@@ -43,14 +42,15 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
       "???", "Error", "Warn", "Info", "Hint"
    };
 
-   /** Diagnostics keyed by file URI. */
+   /** Diagnostics keyed by source + "|" + uri to prevent overwriting. */
    private final Map<String, List<Map<String, Object>>> store =
       new HashMap<>();
 
    /**
     * Called when the server publishes diagnostics for a file.
-    * Replaces any previous diagnostics for that URI.
+    * Replaces any previous diagnostics for that source+URI pair.
     *
+    * @param source the language server identifier
     * @param uri the file URI
     * @param diagnostics list of diagnostic maps from the server
     */
@@ -59,10 +59,11 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
          List<Map<String, Object>> diagnostics) {
       trace("DiagnosticDisplay: [" + source + "] " + uri + " => "
          + diagnostics.size() + " diagnostics");
+      String key = source + "|" + uri;
       if (diagnostics.isEmpty()) {
-         store.remove(uri);
+         store.remove(key);
       } else {
-         store.put(uri, new ArrayList<>(diagnostics));
+         store.put(key, new ArrayList<>(diagnostics));
       }
       updatePoslist();
    }
@@ -76,25 +77,15 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
       List<String> posLines = buildPositionLines();
       if (posLines.isEmpty()) {
          java.awt.EventQueue.invokeLater(() -> {
-            EventQueue.biglock2.lock();
-            try {
-               PosListList.Cmd.removePositionIoc("lsp-diag");
-            } finally {
-               EventQueue.biglock2.unlock();
-            }
+            PosListList.Cmd.removePositionIoc("lsp-diag");
          });
          return;
       }
       String joined = String.join("\n", posLines) + "\n";
       java.awt.EventQueue.invokeLater(() -> {
-         EventQueue.biglock2.lock();
-         try {
-            BufferedReader reader = new BufferedReader(
-               new StringReader(joined));
-            PosListList.Cmd.replaceFromReader("lsp-diag", reader);
-         } finally {
-            EventQueue.biglock2.unlock();
-         }
+         BufferedReader reader = new BufferedReader(
+            new StringReader(joined));
+         PosListList.Cmd.replaceFromReader("lsp-diag", reader);
       });
    }
 
@@ -109,7 +100,9 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
       List<String> lines = new ArrayList<>();
       for (Map.Entry<String, List<Map<String, Object>>> entry
             : store.entrySet()) {
-         String filePath = LspClient.uriToPath(entry.getKey());
+         String key = entry.getKey();
+         String uri = key.substring(key.indexOf('|') + 1);
+         String filePath = LspClient.uriToPath(uri);
          for (Map<String, Object> diag : entry.getValue()) {
             int line = 1;
             int col = 0;
@@ -157,10 +150,16 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
    public synchronized List<Map<String, Object>> getDiagnostics(
          String filePath) {
       String uri = LspClient.pathToUri(filePath);
-      List<Map<String, Object>> diags = store.get(uri);
-      return (null == diags)
+      List<Map<String, Object>> merged = new ArrayList<>();
+      for (Map.Entry<String, List<Map<String, Object>>> entry
+            : store.entrySet()) {
+         String key = entry.getKey();
+         if (key.substring(key.indexOf('|') + 1).equals(uri))
+            merged.addAll(entry.getValue());
+      }
+      return merged.isEmpty()
          ? Collections.emptyList()
-         : Collections.unmodifiableList(diags);
+         : Collections.unmodifiableList(merged);
    }
 
    /**
