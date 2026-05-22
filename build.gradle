@@ -154,10 +154,14 @@ tasks.named('compileJava') {
 }
 
 tasks.named('test') {
+    dependsOn 'plugins'
     useJUnitPlatform {
         // T3: Exclude GUI tests — they need AwtInterface (conflicts with
         // StreamInterface singleton used by headless tests). Run via guiTest.
         excludeTags 'gui'
+        // T1: Exclude live LSP integration tests — require external tools
+        // (jdtls, clangd) not available in all environments.
+        excludeTags 'lsp-live'
     }
     jacoco.enabled = true
     // T1: per-test timeout to prevent hangs during CI
@@ -417,17 +421,21 @@ def buildPluginJar(String pName, File srcDir) {
     classesDir.mkdirs()
 
     // Compile plugin sources against javi main classes
-    project.exec {
-        executable = 'javac'
-        args = ['-d', classesDir.path,
+    def javacArgs = ['-d', classesDir.path,
                 '-cp', (sourceSets.main.output.classesDirs.asPath
                         + File.pathSeparator
                         + sourceSets.main.compileClasspath.asPath),
                 '--release', '22',
                 '-encoding', 'UTF-8']
-        args += project.fileTree(srcDir) {
-            include '**/*.java'
-        }.files.collect { it.path }
+    javacArgs += project.fileTree(srcDir) {
+        include '**/*.java'
+    }.files.collect { it.path }
+    def proc = ['javac'] + javacArgs
+    def result = proc.execute()
+    result.waitFor()
+    if (result.exitValue() != 0) {
+        throw new GradleException(
+            "javac failed for plugin $pName:\n${result.errorStream.text}")
     }
 
     // Discover Plugin-Class from source

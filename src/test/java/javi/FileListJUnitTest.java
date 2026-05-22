@@ -48,16 +48,9 @@ class FileListJUnitTest {
 
    @AfterAll
    static void tearDown() throws Exception {
-      EventQueue.biglock2.lock();
-      try {
-         FileList inst = FileList.TestAccess.getInstance();
-         if (inst != null) {
-            inst.disposeFvc();
-            FileList.TestAccess.reset();
-         }
-      } finally {
-         EventQueue.biglock2.unlock();
-      }
+      // Do NOT call FileList.TestAccess.reset() — that nulls the
+      // singleton while commands remain in Rgroup.cmhash, causing
+      // "duplicate command" errors when other test classes run later.
       // Clean up test files
       testFile1.delete();
       testFile2.delete();

@@ -2,6 +2,7 @@ package javi;
 
 import java.lang.reflect.Method;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,6 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
  * branch-command matching, and edge cases.
  */
 class TabCompleteExtendedJUnitTest {
+
+   @BeforeAll
+   static void initOnce() throws Exception {
+      TestInit.initAllCommands();
+   }
 
    // ── commonPrefix via reflection ──────────────────────────────
 

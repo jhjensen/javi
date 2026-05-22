@@ -19,7 +19,7 @@ class KeyMapJUnitTest {
 
    @BeforeAll
    static void initEditor() throws Exception {
-      TestInit.initCommands();
+      TestInit.initAllCommands();
    }
 
    @BeforeEach

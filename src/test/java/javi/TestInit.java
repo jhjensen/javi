@@ -17,6 +17,7 @@ public final class TestInit {
 
    private static volatile boolean initialized;
    private static volatile boolean commandsInitialized;
+   private static volatile boolean allCommandsInitialized;
 
    private TestInit() {
    }
@@ -88,5 +89,53 @@ public final class TestInit {
          EventQueue.biglock2.unlock();
       }
       commandsInitialized = true;
+   }
+
+   /**
+    * Idempotent initialization of ALL command groups needed for
+    * full keymap binding ({@code MapEvent.bindCommands()}).
+    * Registers FileList, DirEdit, PosListList, Git commands, and
+    * stubs for AWT-only commands unavailable in headless tests.
+    */
+   public static synchronized void initAllCommands() throws Exception {
+      initCommands(); // ensure core commands first
+      if (allCommandsInitialized)
+         return;
+      EventQueue.biglock2.lock();
+      try {
+         // FileList singleton (registers vi, e, nextfile, Zprocess, etc.)
+         if (FileList.TestAccess.getInstance() == null)
+            FileList.make("");
+         // DirEdit commands (diredit_open, diredit_sort, etc.)
+         DirEdit.Commands.getInstance();
+         // PosListList.Cmd (nextpos, cn, cp, gotodirlist, etc.)
+         if (Rgroup.bindingLookup("nextpos") == null)
+            new PosListList.Cmd();
+         // Git commands (git_expand, git_log_diff, etc.) — plugin
+         Class.forName("javi.git.GitCommands");
+         // MakeCmd (mk, cc) — needed by MapEvent.bindCommands F7 binding
+         if (Rgroup.bindingLookup("mk") == null)
+            new MakeCmd();
+         // AWT-only stubs: commands bound by MapEvent.bindCommands()
+         // that are normally provided by AwtInterface.Commands or
+         // heavyweight classes (JS.JSR, etc.)
+         String[] awtStubs = {"togglestatus", "fullscreen", "gotofontlist",
+               "jsevalfile", "jseval", "jsclear"};
+         for (String cmd : awtStubs) {
+            if (Rgroup.bindingLookup(cmd) == null) {
+               new Rgroup() {
+                  { register(new String[]{"", cmd}); }
+                  public Object doroutine(int rnum, Object arg,
+                        int count, int rcount, FvContext fvc,
+                        boolean dotmode) {
+                     return null;
+                  }
+               };
+            }
+         }
+      } finally {
+         EventQueue.biglock2.unlock();
+      }
+      allCommandsInitialized = true;
    }
 }

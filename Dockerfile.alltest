@@ -45,6 +45,7 @@ ARG SRC_HASH=0
 # Copy source, test files, and clang-format config
 COPY src/ src/
 COPY .clang-format ./
+COPY plugins/ plugins/
 
 # build.gradle calls `git describe --always --dirty` during evaluation;
 # .git is excluded from rsync, so create a minimal repo
@@ -64,7 +65,7 @@ RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 ENTRYPOINT ["sh", "-c", "\
     Xvfb :99 -screen 0 1280x1024x24 -nolisten tcp & \
     sleep 1; \
-    DISPLAY=:99 ./gradlew --no-daemon --continue test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport > /app/build/alltest-output.txt 2>&1 & \
+    DISPLAY=:99 ./gradlew --no-daemon --continue plugins test guiTest pstestCoverage intArrayTestCoverage mergedCoverageReport > /app/build/alltest-output.txt 2>&1 & \
     GPID=$!; \
     ELAPSED=0; QUIET=0; LASTSIZE=0; \
     while [ $ELAPSED -lt 900 ]; do \

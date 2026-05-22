@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>jdtls is slower to initialize than clangd — it needs to build
  * a workspace index. The timeout is set higher to accommodate this.</p>
  */
+@Tag("lsp-live")
 @Timeout(120)
 @DisplayName("LSP Live Integration (jdtls)")
 class LspLiveJdtlsJUnitTest {

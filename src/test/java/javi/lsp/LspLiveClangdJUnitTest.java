@@ -11,6 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>These tests require clangd to be installed on the system.
  * If clangd is not found, tests are skipped via assumptions.</p>
  */
+@Tag("lsp-live")
 @Timeout(90) // Each test gets max 90 seconds (clangd startup + RPC timeouts)
 @DisplayName("LSP Live Integration (clangd)")
 class LspLiveClangdJUnitTest {

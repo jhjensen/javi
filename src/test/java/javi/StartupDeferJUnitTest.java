@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests that startup commands from .javini that require fvc
@@ -68,8 +67,8 @@ class StartupDeferJUnitTest {
 
    @Test
    void execCmdListDoesNotCrashWithDeferredCommands() {
-      assumeTrue(FileList.TestAccess.getInstance() != null,
-         "FileList not initialized (test ordering)");
+      assertNotNull(FileList.TestAccess.getInstance(),
+         "FileList not initialized — initOnce() should have called FileList.make");
       Command.addToCmdList("e nonexistent_file_xyz_for_test");
       assertDoesNotThrow(() -> Command.execCmdList());
       // Clean up remaining commands

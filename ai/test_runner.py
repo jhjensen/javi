@@ -212,9 +212,13 @@ def phase_docker_run(image_name, gradle_tasks, *, quick=False, test_filter=None)
             f"/usr/local/bin/docker-entrypoint.sh {tasks_str}\""
         )
     else:
-        # Full mode: source is COPY'd into image
+        # Full mode: source is COPY'd into image.
+        # Always clean stale build dir via root Docker container — previous
+        # runs may leave root-owned files that --user can't overwrite.
         cmd = (
             f"cd {RDESK_DIR} && "
+            f"docker run --rm -v $(pwd)/build:/b alpine "
+            f"sh -c 'rm -rf /b/* /b/.* 2>/dev/null; true' && "
             f"mkdir -p build && "
             f"docker run --rm "
             f"--user $(id -u):$(id -g) "
