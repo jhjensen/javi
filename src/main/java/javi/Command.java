@@ -16,6 +16,27 @@ import static history.Tools.trace;
 
 public final class Command extends Rgroup {
 
+   /**
+    * Observer interface for command execution tracking.
+    * Plugins can register an observer to be notified when
+    * ex-commands are executed.
+    */
+   public interface CommandObserver {
+      void onCommand(String commandName);
+   }
+
+   private static volatile CommandObserver commandObserver;
+
+   /**
+    * Register a command execution observer. Only one observer
+    * is supported; setting a new one replaces the previous.
+    *
+    * @param obs the observer, or null to clear
+    */
+   public static void setCommandObserver(CommandObserver obs) {
+      commandObserver = obs;
+   }
+
    enum Cmd {
       UNUSED,        // 0: noop
       READ_FILE,     // 1: read file (r)
@@ -105,6 +126,8 @@ public final class Command extends Rgroup {
       } catch (IOException e)  {
          UI.reportMessage("command caught IOException: " + e.getMessage());
          trace("command caught IOException", e);
+      } catch (ExitException e) {
+         EventQueue.insert(new ExitEvent());
       } catch (InputException e) {
          trace("command caught InputException", e);
          UI.reportMessage(e.toString());
@@ -378,6 +401,9 @@ public final class Command extends Rgroup {
          KeyBinding kb = bindingLookup(command);
          //trace("command kb = " + kb);
          if (kb != null) {
+            CommandObserver obs = commandObserver;
+            if (obs != null)
+               obs.onCommand(command);
             kb.dobind(args, 0, 0, fvc, false);
          } else if (fvc != null) {
             int newpos = fvc.edvec.processCommand(line, fvc.inserty());
@@ -388,6 +414,8 @@ public final class Command extends Rgroup {
          } else {
             throw new InputException("Unknown Command:" + line);
          }
+      } catch (ExitException e) {
+         EventQueue.insert(new ExitEvent());
       } catch (InputException e) {
          UI.reportMessage(e.toString());
       } catch (IOException e) {

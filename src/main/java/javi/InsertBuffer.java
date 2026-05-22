@@ -40,8 +40,8 @@ public abstract class InsertBuffer extends View.Inserter {
       return overwrite;
    }
 
-   static final void insertMode(boolean dotmode, int count, FvContext fvc,
-         boolean overwritei, boolean singlelinei) throws
+   public static final void insertMode(boolean dotmode, int count,
+         FvContext fvc, boolean overwritei, boolean singlelinei) throws
          IOException, InputException {
       instance.insertmode(dotmode, count, fvc, overwritei, singlelinei);
    }
@@ -57,6 +57,10 @@ public abstract class InsertBuffer extends View.Inserter {
          commFvc.cursorabs(prompt.length(), ev.finish() - 1);
          insertMode(false, 1, commFvc, false, true);
 
+      } catch (ExitException e) {
+         FvContext.endComLine();
+         EventQueue.insert(new ExitEvent());
+         return prompt;
       } catch (InputException e) {
          UI.reportMessage(e.toString());
       } catch (Throwable e) {
@@ -322,6 +326,7 @@ public abstract class InsertBuffer extends View.Inserter {
          try {
             View viewer = fvc.vi;
             viewer.setInsert(this);
+            buffer.setLength(0); // clear stale content from any outer itext() call
             verbatim = false;
             overwrite = overwritei;
             currline = fvc.inserty();

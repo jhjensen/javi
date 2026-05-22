@@ -175,7 +175,7 @@ public abstract class Rgroup {
     *
     * @return unmodifiable set of command names
     */
-   static java.util.Set<String> getRegisteredCommands() {
+   public static java.util.Set<String> getRegisteredCommands() {
       return java.util.Collections.unmodifiableSet(cmhash.keySet());
    }
 

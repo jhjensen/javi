@@ -162,8 +162,9 @@ uninstall:
 	rm -rf $(PREFIX)/share/javi
 	@echo "✓ Uninstalled javi from $(PREFIX)"
 
-# Full build (compile + jar)
+# Full build (compile + jar + plugin JARs)
 build: compile jar
+	./gradlew typingTutorJar
 
 #==============================================================================
 # Test targets

@@ -94,9 +94,19 @@ sourceSets {
     rxtxPlugin {
         java {
             srcDirs = ['src/plugin/java']
+            include 'javi/rxtx/**'
+            include 'javi/plugin/**'
         }
         compileClasspath = sourceSets.main.output + configurations.rxtxLib
         runtimeClasspath = output + sourceSets.main.output + configurations.rxtxLib
+    }
+    typingTutorPlugin {
+        java {
+            srcDirs = ['src/plugin/java']
+            include 'javi/typingtutor/**'
+        }
+        compileClasspath = sourceSets.main.output
+        runtimeClasspath = output + sourceSets.main.output
     }
 }
 
@@ -122,6 +132,18 @@ tasks.register('rxtxJar', Jar) {
     }
     destinationDirectory = file("${layout.buildDirectory.get()}/libs")
     dependsOn 'compileRxtxPluginJava'
+}
+
+// F46: Typing tutor plugin JAR
+tasks.register('typingTutorJar', Jar) {
+    archiveBaseName = 'javi-typingtutor'
+    archiveVersion = ''
+    from sourceSets.typingTutorPlugin.output
+    manifest {
+        attributes 'Plugin-Class': 'javi.typingtutor.TypingTutorPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/libs")
+    dependsOn 'compileTypingTutorPluginJava'
 }
 
 sourceSets {
@@ -424,22 +446,22 @@ def buildPluginJar(String pName, File srcDir) {
     classesDir.mkdirs()
 
     // Compile plugin sources against javi main classes
-    def javacArgs = ['-d', classesDir.path,
-                '-cp', (sourceSets.main.output.classesDirs.asPath
-                        + File.pathSeparator
-                        + sourceSets.main.compileClasspath.asPath),
-                '--release', '22',
-                '-encoding', 'UTF-8']
-    javacArgs += project.fileTree(srcDir) {
+    def javacCmd = ['javac', '-d', classesDir.path,
+                    '-cp', (sourceSets.main.output.classesDirs.asPath
+                            + File.pathSeparator
+                            + sourceSets.main.compileClasspath.asPath),
+                    '--release', '22',
+                    '-encoding', 'UTF-8']
+    javacCmd += project.fileTree(srcDir) {
         include '**/*.java'
     }.files.collect { it.path }
-    def proc = ['javac'] + javacArgs
-    def result = proc.execute()
-    result.waitFor()
-    if (result.exitValue() != 0) {
-        throw new GradleException(
-            "javac failed for plugin $pName:\n${result.errorStream.text}")
-    }
+    def javacProc = new ProcessBuilder(javacCmd)
+        .redirectErrorStream(true).start()
+    def javacOutput = javacProc.inputStream.text
+    def javacExit = javacProc.waitFor()
+    if (javacExit != 0)
+        throw new GradleException("javac failed for plugin '$pName':\n$javacOutput")
+    if (javacOutput) logger.lifecycle(javacOutput)
 
     // Discover Plugin-Class from source
     def pluginClass = ''
@@ -512,7 +534,7 @@ tasks.register('pluginJar') {
 
 // Build all plugin JARs
 tasks.register('plugins') {
-    dependsOn compileJava
+    dependsOn compileJava, 'typingTutorJar'
     group = 'build'
     description = 'Build all plugin JARs'
 

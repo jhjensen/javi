@@ -784,7 +784,7 @@ public final class FvContext<OType> implements Serializable {
       cursor2abs(pos.x, pos.y);
    }
 
-   void cursorabs(int x, int y) {
+   public void cursorabs(int x, int y) {
       // trace("cursorx " + x);
       // cursor(x-fileposx,y-fileposy);
       cursor2abs(x, y);

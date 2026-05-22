@@ -282,4 +282,19 @@ public final class EventQueue {
       EventQueue.class.notifyAll();
    }
 
+   /**
+    * Removes any pending Enter/newline JeyEvents from the queue.
+    * Used to drain stale key-repeat events after a context switch
+    * (e.g. lesson continuation) so they don't fire on the new state.
+    */
+   public static synchronized void drainEnterEvents() {
+      queue.removeIf(ev -> {
+         if (ev instanceof JeyEvent) {
+            char c = ((JeyEvent) ev).getKeyChar();
+            return c == '\r' || c == '\n';
+         }
+         return false;
+      });
+   }
+
 }

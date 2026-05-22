@@ -104,7 +104,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
       return null;
    }
 
-   final Position inserttext(String iStr, int xstart, int ystart) {
+   protected Position inserttext(String iStr, int xstart, int ystart) {
       //trace("adding text:"+iStr);
       //trace("xstart = " + xstart + " ystart = " +ystart);
 
