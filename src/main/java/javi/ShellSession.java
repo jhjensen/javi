@@ -704,6 +704,15 @@ public final class ShellSession {
     */
    private void initializePtySize(int rows, int cols) {
       try {
+         // Wait for AWT layout to provide real dimensions (up to 3s).
+         // Without this, defwidth/defheight are the 80x80 defaults.
+         for (int wait = 0; wait < 30 && !MiscCommands.isLayoutComplete(); wait++) {
+            Thread.sleep(100);
+            if (null == process || !process.isAlive())
+               return;
+            if (ptySizedByResize)
+               return;
+         }
          for (int attempt = 0; attempt < 10; attempt++) {
             Thread.sleep(100);
             if (null == process || !process.isAlive())
