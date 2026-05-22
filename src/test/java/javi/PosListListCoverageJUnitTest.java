@@ -37,7 +37,7 @@ class PosListListCoverageJUnitTest {
 
    @BeforeAll
    static void initOnce() throws Exception {
-      TestInit.initCommands();
+      TestInit.initAllCommands();
       EventQueue.biglock2.lock();
       try {
          try {

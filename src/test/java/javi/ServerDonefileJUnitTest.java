@@ -96,13 +96,9 @@ class ServerDonefileJUnitTest {
 
    @AfterEach
    void tearDown() throws Exception {
-      // Close the server socket
-      Field f = Server.class.getDeclaredField("lsock");
-      f.setAccessible(true);
-      java.net.ServerSocket ss = (java.net.ServerSocket) f.get(server);
-      if (ss != null)
-         ss.close();
-      Thread.sleep(200);
+      if (server != null)
+         server.close();
+      Thread.sleep(100);
    }
 
    /**

@@ -111,17 +111,17 @@ ai/rdesk-esctest2.out: FORCE
 
 # T1: Python test runner — GUI tests
 ai/rdesk-guitest-py.out: FORCE
-        python3 ai/test_runner.py --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+	python3 ai/test_runner.py --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
 
 # T1: Python test runner — all tests
 ai/rdesk-alltest-py.out: FORCE
-        python3 ai/test_runner.py --all --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+	python3 ai/test_runner.py --all --json -v > $@ 2>&1; echo "exit: $$?" >> $@
 
 # T1: Python test runner — coverage
 ai/rdesk-coverage-py.out: FORCE
-        python3 ai/test_runner.py --coverage --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+	python3 ai/test_runner.py --coverage --json -v > $@ 2>&1; echo "exit: $$?" >> $@
 
 # T1: Python test runner — quick GUI
 ai/rdesk-guitest-quick-py.out: FORCE
-        python3 ai/test_runner.py --quick --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
+	python3 ai/test_runner.py --quick --gui --json -v > $@ 2>&1; echo "exit: $$?" >> $@
 	$(MAKE) rdesk-cpu-measure > $@ 2>&1; echo "exit: $$?" >> $@

@@ -28,7 +28,7 @@ class PosListListJUnitTest {
 
    @BeforeAll
    static void initOnce() throws Exception {
-      TestInit.initCommands();
+      TestInit.initAllCommands();
       // Force PosListList.Cmd class loading and construction under
       // biglock2, since its static initializer and constructor
       // create TextEdit instances and register commands.

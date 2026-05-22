@@ -14,31 +14,18 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Extended coverage for {@link MapEvent} — getAllBindings,
  * getKeyGroup, getActiveKeyMap, domovement, hevent.
- * Tests requiring full keybindings are skipped if
- * bindCommands fails in headless environment.
  */
 class MapEventExtendedJUnitTest {
 
-   private static boolean bindingsAvailable;
-
    @BeforeAll
    static void initOnce() throws Exception {
-      TestInit.initCommands();
-      if (MapEvent.getNormalKeyMap() == null) {
-         try {
-            MapEvent.bindCommands();
-            bindingsAvailable = true;
-         } catch (Exception e) {
-            bindingsAvailable = false;
-         }
-      } else {
-         bindingsAvailable = true;
-      }
+      TestInit.initAllCommands();
+      if (MapEvent.getNormalKeyMap() == null)
+         MapEvent.bindCommands();
    }
 
    @BeforeEach
@@ -82,7 +69,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void getAllBindingsWhenInitialized() {
-      assumeTrue(bindingsAvailable);
       List<String> bindings = MapEvent.getAllBindings();
       assertNotNull(bindings);
       assertFalse(bindings.isEmpty());
@@ -96,7 +82,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void getNormalKeyMapNotNull() {
-      assumeTrue(bindingsAvailable);
       KeyMap km = MapEvent.getNormalKeyMap();
       assertNotNull(km);
       assertEquals("normal", km.getName());
@@ -106,37 +91,31 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void getKeyGroupMoveReturnsNonNull() {
-      assumeTrue(bindingsAvailable);
       assertNotNull(MapEvent.getKeyGroup("move"));
    }
 
    @Test
    void getKeyGroupEditReturnsNonNull() {
-      assumeTrue(bindingsAvailable);
       assertNotNull(MapEvent.getKeyGroup("edit"));
    }
 
    @Test
    void getKeyGroupUnknownReturnsNull() {
-      assumeTrue(bindingsAvailable);
       assertNull(MapEvent.getKeyGroup("nonexistent"));
    }
 
    @Test
    void getKeyGroupDotSyntaxNormalMove() {
-      assumeTrue(bindingsAvailable);
       assertNotNull(MapEvent.getKeyGroup("normal.move"));
    }
 
    @Test
    void getKeyGroupDotSyntaxInvalidGroup() {
-      assumeTrue(bindingsAvailable);
       assertNull(MapEvent.getKeyGroup("normal.badgroup"));
    }
 
    @Test
    void getKeyGroupDotSyntaxInvalidKeymap() {
-      assumeTrue(bindingsAvailable);
       assertNull(MapEvent.getKeyGroup("fakemap.move"));
    }
 
@@ -144,7 +123,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void getActiveKeyMapForRegularBuffer() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_active1";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);
@@ -165,7 +143,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void getActiveKeyMapWithNull() {
-      assumeTrue(bindingsAvailable);
       KeyMap result = MapEvent.getActiveKeyMap(null);
       assertEquals(MapEvent.getNormalKeyMap(), result);
    }
@@ -174,7 +151,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void domovementUnboundKeyReturnsFalse() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_domove";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);
@@ -199,7 +175,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void domovementBoundKeyReturnsTrue() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_domove2";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);
@@ -223,7 +198,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void heventDigitAccumulatesCount() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_count";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);
@@ -246,7 +220,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void heventJMovesDown() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_jmove";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);
@@ -269,7 +242,6 @@ class MapEventExtendedJUnitTest {
 
    @Test
    void heventCountWithMovement() throws Exception {
-      assumeTrue(bindingsAvailable);
       String fname = "ju_mae_3j";
       UI.setStream(new StringReader(""));
       deleteTestFiles(fname);

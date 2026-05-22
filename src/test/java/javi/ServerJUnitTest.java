@@ -48,9 +48,8 @@ class ServerJUnitTest {
 
    @AfterEach
    void tearDown() {
-      // Server thread is a daemon-like thread; it will exit
-      // when the ServerSocket is closed (via garbage collection
-      // or program exit). No explicit stop method exists.
+      if (server != null)
+         server.close();
    }
 
    @Test

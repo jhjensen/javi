@@ -30,11 +30,21 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
       new HashMap<>(10);
 
    private ServerSocket lsock;
+   private volatile boolean closed;
 
    Server(int port) throws IOException {
       lsock = new ServerSocket(port);
       new Thread(this, "VI Server Thread").start();
       EditContainer.registerListener(this);
+   }
+
+   void close() {
+      closed = true;
+      try {
+         lsock.close();
+      } catch (IOException e) {
+         // ignore
+      }
    }
 
    /**
@@ -48,7 +58,7 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
     * written or disposed.</p>
     */
    public void run() {
-      while (true) {
+      while (!closed) {
          Socket sock = null;
          BufferedReader instream = null;
          try {
@@ -69,6 +79,8 @@ final class Server implements Runnable, EditContainer.FileStatusListener {
                UI.toFront();
             }
          } catch (Throwable e) {
+            if (closed)
+               break;
             trace("server.run caught exception", e);
             if (!(e instanceof IOException))
                e.printStackTrace(); // Full trace for unexpected exceptions
