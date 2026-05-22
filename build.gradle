@@ -172,6 +172,9 @@ tasks.named('test') {
         showStandardStreams = false
         exceptionFormat = 'short'
     }
+    // T1: Don't embed per-test stdout/stderr in XML results.
+    // LSP tests generate GBs of JSON-RPC traffic that inflates XML files.
+    reports.junitXml.outputPerTestCase = false
 }
 
 // T3: Separate test task for AssertJ Swing GUI tests (own JVM, needs display)
