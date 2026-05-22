@@ -967,8 +967,8 @@ public class Vt100 extends TextEdit<String> {
          // Clear screen
          int end = readIn();
          int start = end - rows;
-         if (start < 1)
-            start = 1;
+         if (start < 0)
+            start = 0;
          for (int ii = start; ii < end; ii++)
             changeElementAt("", ii);
          screenAttrs.eraseScreen(start, end);
@@ -1152,8 +1152,8 @@ public class Vt100 extends TextEdit<String> {
             // Alt screen: clear in place (no scrollback)
             int end = readIn();
             int start = end - rows;
-            if (start < 1)
-               start = 1;
+            if (start < 0)
+               start = 0;
             for (int ii = start; ii < end; ii++) {
                changeElementAt("", ii);
                autowrappedLines.remove(ii);
@@ -1259,7 +1259,7 @@ public class Vt100 extends TextEdit<String> {
          updateScreen(sb);
          int bgAttr = CellAttr.bgOnly(currentAttr);
          int start = readIn() - rows;
-         if (start < 1) start = 1;
+         if (start < 0) start = 0;
          // Erase all lines above cursor
          int fillCols = getColumns();
          for (int ii = start; ii < vtcursor.y; ii++) {
@@ -1417,7 +1417,7 @@ public class Vt100 extends TextEdit<String> {
       void insertLines(int count, StringBuilder sb) {
          insertString(sb);
          int bottomAbs = termRowToAbs(effectiveBottom());
-         if (bottomAbs < 1 || bottomAbs >= readIn())
+         if (bottomAbs < 0 || bottomAbs >= readIn())
             return;
          int actual = Math.min(count,
             bottomAbs - vtcursor.y + 1);
@@ -1565,8 +1565,8 @@ public class Vt100 extends TextEdit<String> {
             // Save main screen content and attributes
             int end = readIn();
             int start = end - rows;
-            if (start < 1)
-               start = 1;
+            if (start < 0)
+               start = 0;
             savedScreen = new ArrayList<>(rows);
             for (int ii = start; ii < end; ii++)
                savedScreen.add(at(ii).toString());
@@ -1598,8 +1598,8 @@ public class Vt100 extends TextEdit<String> {
             // Restore main screen content and attributes
             int end = readIn();
             int start = end - rows;
-            if (start < 1)
-               start = 1;
+            if (start < 0)
+               start = 0;
             // Clear all viewport lines first — the buffer may have
             // grown during the alt screen session, so lines beyond
             // savedScreen.size() would otherwise retain alt content.
@@ -2327,8 +2327,8 @@ public class Vt100 extends TextEdit<String> {
             eline.append('E');
          String estr = eline.toString();
          int start = readIn() - rows;
-         if (start < 1)
-            start = 1;
+         if (start < 0)
+            start = 0;
          for (int ii = start; ii < readIn(); ii++)
             changeElementAt(estr, ii);
          // DECALN resets margins and moves cursor home
@@ -2385,7 +2385,7 @@ public class Vt100 extends TextEdit<String> {
       void deleteLines(int count, StringBuilder sb) {
          insertString(sb);
          int bottomAbs = termRowToAbs(effectiveBottom());
-         if (bottomAbs < 1 || bottomAbs >= readIn())
+         if (bottomAbs < 0 || bottomAbs >= readIn())
             return;
          int actual = Math.min(count, bottomAbs - vtcursor.y + 1);
          if (actual <= 0)
@@ -2422,7 +2422,7 @@ public class Vt100 extends TextEdit<String> {
       private void scrollRegionUp(int count) {
          int topAbs = termRowToAbs(scrollTop);
          int bottomAbs = termRowToAbs(effectiveBottom());
-         if (topAbs < 1 || bottomAbs < topAbs || bottomAbs >= readIn())
+         if (topAbs < 0 || bottomAbs < topAbs || bottomAbs >= readIn())
             return;
          for (int i = 0; i < count; i++) {
             if (topAbs < readIn()) {
@@ -2444,7 +2444,7 @@ public class Vt100 extends TextEdit<String> {
       private void scrollRegionDown(int count) {
          int topAbs = termRowToAbs(scrollTop);
          int bottomAbs = termRowToAbs(effectiveBottom());
-         if (topAbs < 1 || bottomAbs < topAbs || bottomAbs >= readIn())
+         if (topAbs < 0 || bottomAbs < topAbs || bottomAbs >= readIn())
             return;
          for (int i = 0; i < count; i++) {
             if (bottomAbs < readIn()) {

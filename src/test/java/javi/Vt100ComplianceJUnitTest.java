@@ -67,7 +67,7 @@ class Vt100ComplianceJUnitTest {
       rowsField.setInt(vt100, 24);
 
       // Pre-populate the buffer with 24 blank lines
-      while (vt100.readIn() < 25)
+      while (vt100.readIn() < 24)
          vt100.insertOne("", vt100.readIn());
    }
 
@@ -130,7 +130,7 @@ class Vt100ComplianceJUnitTest {
       rowsField.setAccessible(true);
       int rows = rowsField.getInt(vt100);
       int absLine = vt100.readIn() - 1 - rows + termRow;
-      if (absLine < 1 || absLine >= vt100.readIn())
+      if (absLine < 0 || absLine >= vt100.readIn())
          return "";
       return vt100.at(absLine);
    }
@@ -1682,8 +1682,8 @@ class Vt100ComplianceJUnitTest {
 
          assertTrue(vt100.readIn() >= readInBefore,
             "readIn should not decrease when terminal grows");
-         // The buffer should have at least 40+1 lines
-         assertTrue(vt100.readIn() > 40,
+         // The buffer should have at least 40 lines (readIn = rows)
+         assertTrue(vt100.readIn() >= 40,
             "buffer should have enough lines for 40-row terminal");
       }
 
