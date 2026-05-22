@@ -432,4 +432,80 @@ class LspServerConfigJUnitTest {
          }
       }
    }
+
+   @Nested
+   @DisplayName("overlay/spell checker")
+   class OverlayTests {
+
+      @Test
+      @DisplayName("harper config is present in defaults")
+      void harperInDefaults() {
+         Map<String, LspServerConfig> defaults =
+            LspServerConfig.getDefaults();
+         LspServerConfig harper = defaults.get("harper");
+         assertNotNull(harper, "should have harper config");
+         assertEquals("harper", harper.languageId);
+         assertTrue(harper.overlay, "harper should be an overlay");
+      }
+
+      @Test
+      @DisplayName("harper handles markdown extension")
+      void harperHandlesMarkdown() {
+         Map<String, LspServerConfig> defaults =
+            LspServerConfig.getDefaults();
+         LspServerConfig harper = defaults.get("harper");
+         assertNotNull(harper);
+         boolean hasMd = false;
+         for (String ext : harper.fileExtensions) {
+            if (".md".equals(ext))
+               hasMd = true;
+         }
+         assertTrue(hasMd, "harper should handle .md files");
+      }
+
+      @Test
+      @DisplayName("harper handles typst extension")
+      void harperHandlesTypst() {
+         Map<String, LspServerConfig> defaults =
+            LspServerConfig.getDefaults();
+         LspServerConfig harper = defaults.get("harper");
+         assertNotNull(harper);
+         boolean hasTyp = false;
+         for (String ext : harper.fileExtensions) {
+            if (".typ".equals(ext))
+               hasTyp = true;
+         }
+         assertTrue(hasTyp, "harper should handle .typ files");
+      }
+
+      @Test
+      @DisplayName("non-overlay configs have overlay=false by default")
+      void nonOverlayDefault() {
+         LspServerConfig config = new LspServerConfig(
+            "java", new String[]{"jdtls"}, new String[]{".java"},
+            "build.gradle");
+         assertFalse(config.overlay);
+      }
+
+      @Test
+      @DisplayName("overlay constructor sets flag correctly")
+      void overlayConstructor() {
+         LspServerConfig config = new LspServerConfig(
+            "spell", new String[]{"spell-ls"}, new String[]{".md"},
+            null, true);
+         assertTrue(config.overlay);
+         assertTrue(config.enabled);
+      }
+
+      @Test
+      @DisplayName("harper command uses --stdio flag")
+      void harperUsesStdio() {
+         Map<String, LspServerConfig> defaults =
+            LspServerConfig.getDefaults();
+         LspServerConfig harper = defaults.get("harper");
+         assertNotNull(harper);
+         assertTrue(harper.command.length >= 2);
+         assertEquals("--stdio", harper.command[1]);
+      }
+   }
 }

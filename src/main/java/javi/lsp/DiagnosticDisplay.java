@@ -1,10 +1,16 @@
 package javi.lsp;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javi.PosListList;
 
 import static history.Tools.trace;
 
@@ -38,27 +44,241 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
       "???", "Error", "Warn", "Info", "Hint"
    };
 
-   /** Diagnostics keyed by file URI. */
+   /** Diagnostics keyed by source + "|" + uri to prevent overwriting. */
    private final Map<String, List<Map<String, Object>>> store =
       new HashMap<>();
 
+   /** Latch for one-shot spell check waiting. */
+   private volatile CountDownLatch spellLatch;
+
+   /** Source+URI key we're waiting for in the spell latch. */
+   private volatile String spellAwaitKey;
+
    /**
     * Called when the server publishes diagnostics for a file.
-    * Replaces any previous diagnostics for that URI.
+    * Replaces any previous diagnostics for that source+URI pair.
     *
+    * @param source the language server identifier
     * @param uri the file URI
     * @param diagnostics list of diagnostic maps from the server
     */
    @Override
-   public synchronized void onDiagnostics(String uri,
+   public synchronized void onDiagnostics(String source, String uri,
          List<Map<String, Object>> diagnostics) {
-      trace("DiagnosticDisplay: " + uri + " => "
+      trace("DiagnosticDisplay: [" + source + "] " + uri + " => "
          + diagnostics.size() + " diagnostics");
+      String key = source + "|" + uri;
       if (diagnostics.isEmpty()) {
-         store.remove(uri);
+         store.remove(key);
       } else {
-         store.put(uri, new ArrayList<>(diagnostics));
+         store.put(key, new ArrayList<>(diagnostics));
       }
+
+      // Signal spell latch if this is what we're waiting for
+      CountDownLatch latch = spellLatch;
+      String awaitKey = spellAwaitKey;
+      if (null != latch && null != awaitKey && key.equals(awaitKey)) {
+         latch.countDown();
+      }
+
+      updatePoslist();
+   }
+
+   /**
+    * Rebuilds the "lsp-diag" poslist from all stored diagnostics.
+    * Dispatches to the AWT event thread since PosListList operations
+    * must happen on that thread.
+    */
+   private void updatePoslist() {
+      List<String> posLines = buildPositionLines();
+      if (posLines.isEmpty()) {
+         java.awt.EventQueue.invokeLater(() -> {
+            PosListList.Cmd.removePositionIoc("lsp-diag");
+         });
+         return;
+      }
+      String joined = String.join("\n", posLines) + "\n";
+      java.awt.EventQueue.invokeLater(() -> {
+         BufferedReader reader = new BufferedReader(
+            new StringReader(joined));
+         PosListList.Cmd.replaceFromReader("lsp-diag", reader);
+      });
+   }
+
+   /**
+    * Builds position-format lines from all stored diagnostics.
+    * Format: {@code filepath(col,line)-[Severity] message}
+    *
+    * @return list of position-formatted strings
+    */
+   @SuppressWarnings("unchecked")
+   private List<String> buildPositionLines() {
+      List<String> lines = new ArrayList<>();
+      for (Map.Entry<String, List<Map<String, Object>>> entry
+            : store.entrySet()) {
+         String key = entry.getKey();
+         String uri = key.substring(key.indexOf('|') + 1);
+         String filePath = LspClient.uriToPath(uri);
+         for (Map<String, Object> diag : entry.getValue()) {
+            int line = 1;
+            int col = 0;
+            Object rangeObj = diag.get("range");
+            if (rangeObj instanceof Map) {
+               Map<String, Object> range = (Map<String, Object>) rangeObj;
+               Object startObj = range.get("start");
+               if (startObj instanceof Map) {
+                  Map<String, Object> start =
+                     (Map<String, Object>) startObj;
+                  Object l = start.get("line");
+                  if (l instanceof Number)
+                     line = ((Number) l).intValue() + 1;
+                  Object c = start.get("character");
+                  if (c instanceof Number)
+                     col = ((Number) c).intValue() + 1;
+               }
+            }
+            int sev = severityOf(diag);
+            String sevName = (sev >= 1 && sev < SEVERITY.length)
+               ? SEVERITY[sev] : SEVERITY[0];
+            String message = "";
+            Object msgObj = diag.get("message");
+            if (null != msgObj)
+               message = msgObj.toString();
+            // Position format: filename(col,line)-comment
+            if (col > 0) {
+               lines.add(filePath + "(" + col + "," + line
+                  + ")-[" + sevName + "] " + message);
+            } else {
+               lines.add(filePath + "(" + line
+                  + ")-[" + sevName + "] " + message);
+            }
+         }
+      }
+      return lines;
+   }
+
+   /**
+    * Waits for diagnostics from a specific source and URI.
+    * Sets up a latch before the caller sends the file, so no
+    * race condition exists.
+    *
+    * @param source the language server ID (e.g. "harper")
+    * @param uri the file URI to wait for
+    * @param timeoutMs maximum wait time in milliseconds
+    * @return true if diagnostics arrived within timeout
+    */
+   public boolean awaitDiagnosticsFrom(String source, String uri,
+         long timeoutMs) {
+      String key = source + "|" + uri;
+
+      // Check if diagnostics already exist
+      synchronized (this) {
+         if (store.containsKey(key))
+            return true;
+      }
+
+      // Set up latch before the file is sent
+      CountDownLatch latch = new CountDownLatch(1);
+      spellAwaitKey = key;
+      spellLatch = latch;
+      try {
+         return latch.await(timeoutMs, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      } finally {
+         spellLatch = null;
+         spellAwaitKey = null;
+      }
+   }
+
+   /**
+    * Prepares the latch for awaiting diagnostics. Call this BEFORE
+    * sending the file to the server, then call
+    * {@link #awaitSpellLatch(long)} after sending.
+    *
+    * @param source the language server ID (e.g. "harper")
+    * @param uri the file URI to wait for
+    */
+   public void prepareSpellLatch(String source, String uri) {
+      String key = source + "|" + uri;
+      spellAwaitKey = key;
+      spellLatch = new CountDownLatch(1);
+   }
+
+   /**
+    * Waits on the previously prepared spell latch.
+    *
+    * @param timeoutMs maximum wait time in milliseconds
+    * @return true if diagnostics arrived within timeout
+    */
+   public boolean awaitSpellLatch(long timeoutMs) {
+      CountDownLatch latch = spellLatch;
+      if (null == latch)
+         return false;
+      try {
+         return latch.await(timeoutMs, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return false;
+      } finally {
+         spellLatch = null;
+         spellAwaitKey = null;
+      }
+   }
+
+   /**
+    * Builds position-format lines from harper (spell) diagnostics
+    * for the given file. Used by the {@code lsp.spell} command to
+    * create a one-shot spell position list.
+    *
+    * @param filePath absolute file path
+    * @return list of position-formatted strings, empty if no issues
+    */
+   @SuppressWarnings("unchecked")
+   public synchronized List<String> buildSpellPositionLines(
+         String filePath) {
+      String uri = LspClient.pathToUri(filePath);
+      String key = "harper|" + uri;
+      List<Map<String, Object>> diags = store.get(key);
+      if (null == diags || diags.isEmpty())
+         return Collections.emptyList();
+
+      List<String> lines = new ArrayList<>();
+      for (Map<String, Object> diag : diags) {
+         int line = 1;
+         int col = 0;
+         Object rangeObj = diag.get("range");
+         if (rangeObj instanceof Map) {
+            Map<String, Object> range = (Map<String, Object>) rangeObj;
+            Object startObj = range.get("start");
+            if (startObj instanceof Map) {
+               Map<String, Object> start =
+                  (Map<String, Object>) startObj;
+               Object l = start.get("line");
+               if (l instanceof Number)
+                  line = ((Number) l).intValue() + 1;
+               Object c = start.get("character");
+               if (c instanceof Number)
+                  col = ((Number) c).intValue() + 1;
+            }
+         }
+         int sev = severityOf(diag);
+         String sevName = (sev >= 1 && sev < SEVERITY.length)
+            ? SEVERITY[sev] : SEVERITY[0];
+         String message = "";
+         Object msgObj = diag.get("message");
+         if (null != msgObj)
+            message = msgObj.toString();
+         if (col > 0) {
+            lines.add(filePath + "(" + col + "," + line
+               + ")-[" + sevName + "] " + message);
+         } else {
+            lines.add(filePath + "(" + line
+               + ")-[" + sevName + "] " + message);
+         }
+      }
+      return lines;
    }
 
    /**
@@ -70,10 +290,16 @@ public final class DiagnosticDisplay implements LspClient.DiagnosticHandler {
    public synchronized List<Map<String, Object>> getDiagnostics(
          String filePath) {
       String uri = LspClient.pathToUri(filePath);
-      List<Map<String, Object>> diags = store.get(uri);
-      return (null == diags)
+      List<Map<String, Object>> merged = new ArrayList<>();
+      for (Map.Entry<String, List<Map<String, Object>>> entry
+            : store.entrySet()) {
+         String key = entry.getKey();
+         if (key.substring(key.indexOf('|') + 1).equals(uri))
+            merged.addAll(entry.getValue());
+      }
+      return merged.isEmpty()
          ? Collections.emptyList()
-         : Collections.unmodifiableList(diags);
+         : Collections.unmodifiableList(merged);
    }
 
    /**

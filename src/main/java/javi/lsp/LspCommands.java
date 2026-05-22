@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javi.FvContext;
 import javi.InputException;
+import javi.PosListList;
 import javi.Plugin;
 import javi.Position;
 import javi.Rgroup;
@@ -192,6 +193,55 @@ public final class LspCommands extends Rgroup
             return null;
          });
 
+      // Spell checker (overlay LSP) control
+      registerArgCommand("lsp.spell",
+         "run spell check: creates poslist, goes to first entry."
+         + " Subcommands: on|off|status|restart", "lsp",
+         (arg, count, rcount, fvc, dot) -> {
+            String subcmd = arg instanceof String
+               ? ((String) arg).trim().toLowerCase() : "";
+            LspManager mgr = LspManager.getInstance();
+            if (subcmd.equals("off")) {
+               mgr.disableLanguage("harper");
+               mgr.restartServer("harper");
+               UI.reportMessage("Spell checker disabled");
+            } else if (subcmd.equals("on")) {
+               mgr.enableLanguage("harper");
+               mgr.startServerForLanguage("harper");
+               sendCurrentFileToOverlay(fvc, mgr, "harper");
+               UI.reportMessage("Spell checker enabled");
+            } else if (subcmd.equals("restart")) {
+               mgr.restartServer("harper");
+               mgr.startServerForLanguage("harper");
+               sendCurrentFileToOverlay(fvc, mgr, "harper");
+               UI.reportMessage("Spell checker restarted");
+            } else if (subcmd.equals("status")) {
+               boolean running = mgr.isOverlayRunning("harper");
+               boolean disabled =
+                  mgr.isLanguageDisabled("harper");
+               LspServerConfig cfg = mgr.getConfig("harper");
+               boolean available = (null != cfg && cfg.isAvailable());
+               StringBuilder sb = new StringBuilder("Spell checker: ");
+               if (disabled) {
+                  sb.append("disabled");
+               } else if (running) {
+                  sb.append("running (harper-ls)");
+               } else if (!available) {
+                  sb.append("not installed"
+                     + " (install: brew install harper)");
+               } else {
+                  sb.append("not running"
+                     + " (use :lsp.spell on)");
+               }
+               UI.reportMessage(sb.toString());
+            } else {
+               // Default: run spell check once, create poslist,
+               // go to first entry
+               runSpellCheck(fvc, mgr);
+            }
+            return null;
+         });
+
       // Wire up diagnostics collection
       diagnosticDisplay = new DiagnosticDisplay();
       LspManager.getInstance().setDiagnosticHandler(diagnosticDisplay);
@@ -253,6 +303,31 @@ public final class LspCommands extends Rgroup
       javi.HelpSystem.appendLine(
          "  :lsp.config lang=cmd"
          + "  Set server command for a language");
+      javi.HelpSystem.appendLine("");
+      javi.HelpSystem.appendLine("SPELL CHECKER");
+      javi.HelpSystem.appendLine("-------------");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell          Run spell check on current file");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell status   Show spell checker status");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell on       Enable spell checker");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell off      Disable spell checker");
+      javi.HelpSystem.appendLine(
+         "  :lsp.spell restart  Restart spell checker");
+      javi.HelpSystem.appendLine(
+         "  Runs harper-ls once, builds a position list (F5/cn/cp),");
+      javi.HelpSystem.appendLine(
+         "  and jumps to first issue.");
+      javi.HelpSystem.appendLine(
+         "  Uses harper-ls: grammar + spell checking.");
+      javi.HelpSystem.appendLine(
+         "  Checks comments/strings in source code,");
+      javi.HelpSystem.appendLine(
+         "  and full text in markdown/typst files.");
+      javi.HelpSystem.appendLine(
+         "  Install: brew install harper");
       javi.HelpSystem.appendLine("");
       javi.HelpSystem.appendLine(":ta INTEGRATION");
       javi.HelpSystem.appendLine("---------------");
@@ -1250,6 +1325,110 @@ public final class LspCommands extends Rgroup
    private static boolean isServerActive(LspManager mgr, String langId) {
       String status = mgr.getStatus();
       return status.contains(langId + "(ok)");
+   }
+
+   /**
+    * Sends the current file to an overlay server so it produces
+    * diagnostics immediately after starting.
+    */
+   private static void sendCurrentFileToOverlay(FvContext fvc,
+         LspManager mgr, String languageId) {
+      String filePath = getFilePathStatic(fvc);
+      if (null == filePath)
+         return;
+      if (null == fvc.edvec || !fvc.edvec.fdes().isLocalFile())
+         return;
+      String content = fvc.edvec.getDocumentText();
+      if (null == content)
+         return;
+      mgr.notifyDidOpen(filePath, content);
+   }
+
+   /**
+    * Runs a one-shot spell check on the current file.
+    * Starts harper-ls if needed, sends the file, waits for
+    * diagnostics, creates a "spell" position list, and navigates
+    * to the first entry.
+    *
+    * @param fvc the current file-view context
+    * @param mgr the LSP manager
+    * @throws InputException if navigation fails
+    */
+   private void runSpellCheck(FvContext fvc, LspManager mgr)
+         throws InputException {
+      String filePath = getFilePathStatic(fvc);
+      if (null == filePath) {
+         UI.reportMessage("lsp.spell: no file path available");
+         return;
+      }
+      if (null == fvc.edvec || !fvc.edvec.fdes().isLocalFile()) {
+         UI.reportMessage("lsp.spell: not a local file");
+         return;
+      }
+
+      LspServerConfig cfg = mgr.getConfig("harper");
+      if (null == cfg || !cfg.isAvailable()) {
+         UI.reportMessage(
+            "lsp.spell: harper-ls not installed"
+            + " (install: brew install harper)");
+         return;
+      }
+      if (mgr.isLanguageDisabled("harper")) {
+         UI.reportMessage(
+            "lsp.spell: spell checker disabled"
+            + " (use :lsp.spell on)");
+         return;
+      }
+
+      // Prepare the latch before sending so we don't miss the response
+      String uri = LspClient.pathToUri(filePath);
+      diagnosticDisplay.prepareSpellLatch("harper", uri);
+
+      // Ensure harper is running
+      if (!mgr.isOverlayRunning("harper")) {
+         mgr.enableLanguage("harper");
+         mgr.startServerForLanguage("harper");
+      }
+
+      // Send file content to harper
+      String content = fvc.edvec.getDocumentText();
+      if (null == content) {
+         UI.reportMessage("lsp.spell: cannot read file content");
+         return;
+      }
+      mgr.notifyDidOpen(filePath, content);
+
+      // Release biglock2 while waiting for diagnostics
+      javi.EventQueue.biglock2.unlock();
+      boolean received;
+      try {
+         received = diagnosticDisplay.awaitSpellLatch(5000);
+      } finally {
+         javi.EventQueue.biglock2.lock();
+      }
+
+      // Build spell poslist from harper diagnostics
+      java.util.List<String> posLines =
+         diagnosticDisplay.buildSpellPositionLines(filePath);
+      if (posLines.isEmpty()) {
+         if (received) {
+            UI.reportMessage("No spelling issues found");
+         } else {
+            UI.reportMessage(
+               "lsp.spell: timed out waiting for harper-ls");
+         }
+         return;
+      }
+
+      // Create the "spell" position list and navigate to first entry
+      String joined = String.join("\n", posLines) + "\n";
+      java.io.BufferedReader reader = new java.io.BufferedReader(
+         new java.io.StringReader(joined));
+      javi.TextEdit<Position> poslist =
+         PosListList.Cmd.replaceFromReader("spell", reader);
+      PosListList.Cmd.gotoList(fvc, poslist);
+      UI.reportMessage(posLines.size() + " spelling issue"
+         + (posLines.size() > 1 ? "s" : "") + " found");
    }
 
    /**

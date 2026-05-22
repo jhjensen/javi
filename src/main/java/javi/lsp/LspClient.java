@@ -74,10 +74,12 @@ public final class LspClient implements JsonRpc.MessageHandler {
       /**
        * Called when the server publishes diagnostics for a file.
        *
+       * @param source the language server identifier (e.g. "java", "harper")
        * @param uri the file URI
        * @param diagnostics list of diagnostic maps from the server
        */
-      void onDiagnostics(String uri, List<Map<String, Object>> diagnostics);
+      void onDiagnostics(String source, String uri,
+         List<Map<String, Object>> diagnostics);
    }
 
    /**
@@ -975,7 +977,7 @@ public final class LspClient implements JsonRpc.MessageHandler {
       if (null != diagnosticHandler && diagsObj instanceof List) {
          List<Map<String, Object>> diags =
             (List<Map<String, Object>>) diagsObj;
-         diagnosticHandler.onDiagnostics(uri, diags);
+         diagnosticHandler.onDiagnostics(config.languageId, uri, diags);
       }
    }
 
