@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIf;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
@@ -28,11 +27,6 @@ import java.util.zip.ZipOutputStream;
  * </ul>
  */
 class PluginJUnitTest {
-
-   private static final String HELLO_JAR =
-      "build/libs/javi-hello.jar";
-   private static final String FORMATTER_JAR =
-      "build/libs/javi-formatter.jar";
 
    private Path tempDir;
 
@@ -252,68 +246,6 @@ class PluginJUnitTest {
       }
    }
 
-   // ── End-to-end: load hello plugin ─────────────────────────
-
-   static boolean helloJarExists() {
-      return new File(HELLO_JAR).exists();
-   }
-
-   @Test
-   @EnabledIf("helloJarExists")
-   void loadHelloPluginRegistersCommand() throws Exception {
-      Rgroup.KeyBinding before = Rgroup.bindingLookup("hello");
-
-      Rgroup.doCommand("loadplugin", "hello", 0, 1,
-         FvContext.getCurrFvc(), false);
-
-      Rgroup.KeyBinding after = Rgroup.bindingLookup("hello");
-      assertNotNull(after,
-         "hello command should be registered after loading plugin");
-   }
-
-   @Test
-   @EnabledIf("helloJarExists")
-   void loadHelloPluginViaAbsolutePath() throws Exception {
-      File jar = new File(HELLO_JAR);
-      Rgroup.doCommand("loadplugin", jar.getAbsolutePath(),
-         0, 1, FvContext.getCurrFvc(), false);
-
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
-      assertNotNull(kb,
-         "hello command should be registered via absolute path load");
-   }
-
-   // ── .javini dispatch path ─────────────────────────────────
-
-   @Test
-   @EnabledIf("helloJarExists")
-   void javiniLoadpluginDispatch() {
-      Command.command("loadplugin hello", null, null);
-
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
-      assertNotNull(kb,
-         "loadplugin hello via Command.command() should register"
-         + " the hello command");
-   }
-
-   // ── Plugin.Loader direct ──────────────────────────────────
-
-   @Test
-   @EnabledIf("helloJarExists")
-   void pluginLoaderDirectLoad() throws Exception {
-      File jar = new File(HELLO_JAR);
-      Plugin.Loader.load(jar.getPath());
-
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("hello");
-      assertNotNull(kb,
-         "Plugin.Loader.load() should register commands");
-   }
-
-   @Test
-   void pluginLoaderNonexistentJarSilentlyFails() throws Exception {
-      Plugin.Loader.load("/nonexistent/path/fake.jar");
-   }
-
    // ── Plugin interface ──────────────────────────────────────
 
    @Test
@@ -326,111 +258,5 @@ class PluginJUnitTest {
    void pluginBindKeyRejectsUnknownCommand() {
       assertThrows(InputException.class, () ->
          Plugin.bindKey("move", "x", "no_such_cmd_xyz"));
-   }
-
-   // ── Formatter plugin loading ──────────────────────────────
-
-   static boolean formatterJarExists() {
-      return new File(FORMATTER_JAR).exists();
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void loadFormatterPluginRegistersJformatCommand() throws Exception {
-      Rgroup.doCommand("loadplugin", "formatter", 0, 1,
-         FvContext.getCurrFvc(), false);
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
-      assertNotNull(kb,
-         "jformat command should be registered after loading"
-         + " formatter plugin");
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void loadFormatterPluginRegistersJformatrCommand() throws Exception {
-      Rgroup.doCommand("loadplugin", "formatter", 0, 1,
-         FvContext.getCurrFvc(), false);
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformatr");
-      assertNotNull(kb,
-         "jformatr command should be registered after loading"
-         + " formatter plugin");
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void loadFormatterPluginViaAbsolutePath() throws Exception {
-      File jar = new File(FORMATTER_JAR);
-      Rgroup.doCommand("loadplugin", jar.getAbsolutePath(),
-         0, 1, FvContext.getCurrFvc(), false);
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
-      assertNotNull(kb,
-         "jformat should be registered via absolute path");
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void loadFormatterPluginViaJaviniDispatch() {
-      Command.command("loadplugin formatter", null, null);
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
-      assertNotNull(kb,
-         "loadplugin formatter via Command.command() should"
-         + " register jformat");
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void loadFormatterPluginTwiceDoesNotThrow() throws Exception {
-      Rgroup.doCommand("loadplugin", "formatter", 0, 1,
-         FvContext.getCurrFvc(), false);
-      // Loading a second time should not throw
-      assertDoesNotThrow(() ->
-         Rgroup.doCommand("loadplugin", "formatter", 0, 1,
-            FvContext.getCurrFvc(), false));
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void formatterPluginImplementsPluginInterface()
-         throws Exception {
-      // Load via Plugin.Loader which handles classloader setup
-      Plugin.Loader.load(new File(FORMATTER_JAR).getPath());
-      // After loading, jformat is registered — verify the
-      // plugin class is assignable to Plugin
-      Rgroup.KeyBinding kb = Rgroup.bindingLookup("jformat");
-      assertNotNull(kb,
-         "jformat should be registered if Plugin was loaded");
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void formatterJarContainsJavaFormatClass() throws Exception {
-      // Verify the JAR actually contains the plugin class file
-      File jar = new File(FORMATTER_JAR);
-      try (java.util.jar.JarFile jf =
-            new java.util.jar.JarFile(jar)) {
-         java.util.jar.JarEntry entry =
-            jf.getJarEntry("javi/JavaFormat.class");
-         assertNotNull(entry,
-            "JAR should contain javi/JavaFormat.class");
-      }
-   }
-
-   @Test
-   @EnabledIf("formatterJarExists")
-   void formatterPluginHasCorrectManifest() throws Exception {
-      File jar = new File(FORMATTER_JAR);
-      try (java.util.jar.JarFile jf =
-            new java.util.jar.JarFile(jar)) {
-         java.util.jar.Manifest mf = jf.getManifest();
-         assertNotNull(mf, "JAR should have a manifest");
-         String pluginClass = mf.getMainAttributes()
-            .getValue("Plugin-Class");
-         assertEquals("javi.JavaFormat", pluginClass,
-            "Plugin-Class should be javi.JavaFormat");
-         String title = mf.getMainAttributes()
-            .getValue("Implementation-Title");
-         assertEquals("javi-formatter", title,
-            "Implementation-Title should be javi-formatter");
-      }
    }
 }

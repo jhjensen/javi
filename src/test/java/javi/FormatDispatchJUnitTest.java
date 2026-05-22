@@ -80,7 +80,9 @@ class FormatDispatchJUnitTest {
    /** Check whether clang-format-mp-20 (or symlink) is on PATH. */
    private static boolean clangFormatAvailable() {
       try {
-         Process p = new ProcessBuilder("clang-format-mp-20", "--version")
+         String cmd = new java.io.File("/opt/local/bin/clang-format-mp-20").exists()
+            ? "/opt/local/bin/clang-format-mp-20" : "clang-format-mp-20";
+         Process p = new ProcessBuilder(cmd, "--version")
             .redirectErrorStream(true).start();
          p.getInputStream().readAllBytes();
          return p.waitFor() == 0;
