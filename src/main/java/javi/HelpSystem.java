@@ -203,7 +203,7 @@ public final class HelpSystem {
    private static final String[] BUILT_IN_TOPICS = {
       "index", "movement", "editing", "search", "files", "ex",
       "visual", "undo", "window", "shell", "diredit", "filelist",
-      "directory", "keybindings", "folding", "tutorial"
+      "directory", "keybindings", "folding", "git", "tutorial", "ai"
    };
 
    /**
@@ -232,7 +232,7 @@ public final class HelpSystem {
       helpBuf.ensure();
       helpBuf.clear();
       append("KEY BINDINGS");
-      append("============");
+      append(" =====");
       append("");
 
       // Delegate to MapEvent for the actual binding list
@@ -260,7 +260,7 @@ public final class HelpSystem {
 
       KeyMap active = MapEvent.getActiveKeyMap(fvc);
       append("ACTIVE KEY BINDINGS");
-      append("===================");
+      append(" ============");
       append("");
 
       // Show keymap chain
@@ -469,7 +469,7 @@ public final class HelpSystem {
     */
    private static void appendIndex() {
       append("JAVI EDITOR HELP");
-      append("================");
+      append(" =========");
       append("");
       append("Javi is a vi-like text editor written in Java.");
       append("");
@@ -491,6 +491,7 @@ public final class HelpSystem {
       append("  :help folding    - Code folding commands");
       append("  :help git        - Git integration commands");
       append("  :help tutorial   - Tutorial commands");
+      append("  :help ai         - AI and Copilot commands");
       for (RegisteredTopic rt : registeredTopics)
          append("  :help " + rt.name
             + " ".repeat(Math.max(1, 11 - rt.name.length()))
@@ -529,7 +530,7 @@ public final class HelpSystem {
     */
    private static void appendMovementHelp() {
       append("MOVEMENT COMMANDS");
-      append("=================");
+      append(" ==========");
       append("");
       append("BASIC MOVEMENT");
       append("--------------");
@@ -600,7 +601,7 @@ public final class HelpSystem {
     */
    private static void appendEditingHelp() {
       append("EDITING COMMANDS");
-      append("================");
+      append(" =========");
       append("");
       append("ENTERING INSERT MODE");
       append("--------------------");
@@ -667,7 +668,7 @@ public final class HelpSystem {
     */
    private static void appendSearchHelp() {
       append("SEARCH COMMANDS");
-      append("===============");
+      append(" ========");
       append("");
       append("BASIC SEARCH");
       append("------------");
@@ -711,7 +712,7 @@ public final class HelpSystem {
     */
    private static void appendFileHelp() {
       append("FILE AND BUFFER COMMANDS");
-      append("========================");
+      append(" =================");
       append("");
       append("FILE OPERATIONS");
       append("---------------");
@@ -748,7 +749,7 @@ public final class HelpSystem {
     */
    private static void appendExHelp() {
       append("EX (COLON) COMMANDS");
-      append("===================");
+      append(" ============");
       append("");
       append("Colon commands are entered after pressing ':' in command mode.");
       append("");
@@ -825,7 +826,7 @@ public final class HelpSystem {
     */
    private static void appendVisualHelp() {
       append("VISUAL (SELECTION) MODE");
-      append("=======================");
+      append(" ================");
       append("");
       append("ENTERING VISUAL MODE");
       append("--------------------");
@@ -852,7 +853,7 @@ public final class HelpSystem {
     */
    private static void appendUndoHelp() {
       append("UNDO AND REDO");
-      append("=============");
+      append(" ======");
       append("");
       append("COMMANDS");
       append("--------");
@@ -877,7 +878,7 @@ public final class HelpSystem {
     */
    private static void appendWindowHelp() {
       append("WINDOW AND SCROLLING");
-      append("====================");
+      append(" =============");
       append("");
       append("SCROLLING");
       append("---------");
@@ -919,7 +920,7 @@ public final class HelpSystem {
     */
    private static void appendShellHelp() {
       append("SHELL / TERMINAL COMMANDS");
-      append("=========================");
+      append(" ==================");
       append("");
       append("Javi includes an integrated VT100 terminal emulator.");
       append("You can run shell commands inside the editor without");
@@ -975,7 +976,7 @@ public final class HelpSystem {
     */
    private static void appendDirEditHelp() {
       append("DIRECTORY EDITOR (DirEdit)");
-      append("=========================");
+      append(" ==================");
       append("");
       append("The directory editor provides netrw-like filesystem browsing.");
       append("Open a directory with :e <dir> or :diredit <dir>");
@@ -1024,7 +1025,7 @@ public final class HelpSystem {
     */
    private static void appendFileListHelp() {
       append("FILE LIST BUFFER");
-      append("================");
+      append(" =========");
       append("");
       append("The file list (F2) shows all open files/buffers.");
       append("It uses a dedicated keymap overlay ('filelist') where");
@@ -1064,7 +1065,7 @@ public final class HelpSystem {
     */
    private static void appendDirectoryHelp() {
       append("DIRECTORY LIST BUFFER");
-      append("=====================");
+      append(" ==============");
       append("");
       append("The directory list (F3) shows configured directories.");
       append("Use it to browse and search files across directories.");
@@ -1093,7 +1094,7 @@ public final class HelpSystem {
     */
    private static void appendKeybindingsHelp() {
       append("KEY BINDING ARCHITECTURE");
-      append("========================");
+      append(" =================");
       append("");
       append("Javi uses layered keymaps for context-sensitive key bindings.");
       append("");
@@ -1165,7 +1166,7 @@ public final class HelpSystem {
     */
    private static void appendGitHelp() {
       append("GIT INTEGRATION");
-      append("===============");
+      append(" ========");
       append("");
       append("Javi provides Magit-inspired Git commands accessible via");
       append("colon commands. Requires git on PATH and a git repository.");
@@ -1295,7 +1296,7 @@ public final class HelpSystem {
     */
    private static void appendFoldingHelp() {
       append("FOLDING COMMANDS");
-      append("================");
+      append(" =========");
       append("");
       append("Javi supports code folding to collapse sections of text.");
       append("Folds can be created from brace matching, indentation,");
@@ -1357,7 +1358,7 @@ public final class HelpSystem {
     */
    private static void appendTutorialHelp() {
       append("TUTORIAL COMMANDS");
-      append("=================");
+      append(" ==========");
       append("");
       append("The tutorial plugin provides interactive lessons");
       append("for javi-specific features.");
@@ -1399,7 +1400,7 @@ public final class HelpSystem {
     */
    private static void appendAiHelp() {
       append("AI ASSISTANT COMMANDS");
-      append("=====================");
+      append(" ==============");
       append("");
       append("Javi includes an AI assistant for code explanation,");
       append("review, documentation, and interactive chat.");
