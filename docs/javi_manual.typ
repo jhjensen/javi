@@ -786,9 +786,9 @@ when it needs additional context to answer your question.
 
 == Chat Buffer
 
-AI responses appear in a dedicated `*ai-chat*` buffer. The buffer is
-created on first use and reused across interactions. Conversation history
-persists across #cmd("ai chat") calls until #cmd("ai clear") is invoked.
+AI responses appear in a dedicated `*ai-chat*` buffer.
+The buffer is created on first use and reused across interactions.
+Conversation history persists across #cmd("ai chat") calls until #cmd("ai clear") is invoked.
 
 One-shot commands (#cmd("ai explain"), #cmd("ai review"), #cmd("ai doc"))
 do not modify the conversation history.
@@ -897,8 +897,21 @@ buffers:
 #cmd-table(
   ([#cmd("git_stage_hunk")], [Stage the hunk at the cursor]),
   ([#cmd("git_unstage_hunk")], [Unstage the hunk at the cursor]),
+  ([#cmd("git_revert_hunk")], [Discard the unstaged hunk at the cursor]),
   ([#cmd("git_patch")], [Open patch view for the file at cursor]),
   ([#cmd("git_goto_file")], [Jump to the source file from a diff or status line]),
+)
+
+=== Diff Buffer Key Bindings
+
+When viewing a diff or patch buffer, overlay key bindings provide quick
+access to hunk operations:
+
+#cmd-table(
+  ([#key("s")], [Stage hunk at cursor]),
+  ([#key("u")], [Unstage hunk at cursor]),
+  ([#key("X")], [Revert (discard) unstaged hunk at cursor]),
+  ([#key("q")], [Quit diff view]),
 )
 
 == Status Buffer
@@ -1115,6 +1128,110 @@ project root sent to the language server in the `initialize` request.
 
 If no root pattern file is found, the directory containing the current
 file is used as the project root.
+
+== Spell Checker (Harper)
+
+Javi includes integrated spell checking via the Harper language server.
+The spell checker runs as an overlay LSP instance alongside any primary
+language server, providing spelling diagnostics without interfering with
+code intelligence.
+
+=== Commands
+
+#cmd-table(
+  ([#cmd("lsp.spell")], [Run spell check on current file (creates position list)]),
+  ([#cmd("lsp.spell on")], [Enable persistent spell checking]),
+  ([#cmd("lsp.spell off")], [Disable spell checking]),
+  ([#cmd("lsp.spell status")], [Show spell checker status]),
+  ([#cmd("lsp.spell restart")], [Restart the spell checker]),
+)
+
+=== Workflow
+
+Running #cmd("lsp.spell") performs a one-shot check: it starts Harper
+(if not already running), collects diagnostics, populates a position
+list with spelling errors, and navigates to the first entry. Use
+#key("F1") to cycle through subsequent spelling issues.
+
+With #cmd("lsp.spell on"), Harper runs continuously and reports
+diagnostics as you type. Use #cmd("lspdiag") to view all current
+issues.
+
+=== Installation
+
+Harper must be installed on your system:
+
+```bash
+# macOS (Homebrew)
+brew install harper
+
+# or via cargo
+cargo install harper-ls
+```
+
+// ============================================================================
+// 9. TYPING PRACTICE
+// ============================================================================
+
+= Typing Practice
+<sec-typing>
+
+Javi includes a typing practice plugin with adaptive difficulty and
+spaced repetition. It tracks per-key accuracy and speed, progressively
+unlocking new letters as you demonstrate mastery, and focuses lessons
+on your weakest keys.
+
+== Setup
+
+Load the typing tutor plugin via `.javini`:
+
+```
+loadclass javi.typingtutor.TypingTutorPlugin
+```
+
+Or load it interactively with #cmd("loadclass javi.typingtutor.TypingTutorPlugin").
+
+== Commands
+
+#cmd-table(
+  ([#cmd("typingpractice")], [Start a typing lesson (default: adaptive mode)]),
+  ([#cmd("typingpractice homerow")], [Home row progressive lesson]),
+  ([#cmd("typingpractice code")], [Code-focused lesson (punctuation, symbols)]),
+  ([#cmd("typingpractice editor")], [Editor command patterns]),
+  ([#cmd("typingstats")], [Show typing performance statistics]),
+  ([#cmd("typingcheck")], [Check current lesson progress]),
+  ([#cmd("typingprogress")], [Show progressive letter unlock status]),
+  ([#cmd("typingtarget _n_")], [Set target speed in CPM (e.g., 200)]),
+  ([#cmd("typinglines _n_")], [Set lesson line count]),
+  ([#cmd("typingreset")], [Reset all typing statistics]),
+)
+
+== Lesson Modes
+
+- *Adaptive* (default) --- Generates lessons focused on your weakest
+  keys using spaced repetition. Difficulty increases as you improve.
+- *Home row* --- Progressive lessons starting with `f` and `j`, unlocking
+  new letters as you demonstrate accuracy and speed on existing ones.
+- *Code* --- Lessons emphasizing punctuation and symbols common in
+  programming (braces, semicolons, operators).
+- *Editor* --- Patterns that mirror common editor command sequences.
+
+== How It Works
+
++ Run #cmd("typingpractice") to start a lesson.
++ A practice buffer appears with target text lines.
++ Type below each target line. Press Enter to advance to the next line.
++ After the last line, results are displayed: CPM, accuracy, errors.
++ The plugin records per-key timing and accuracy, updating the spaced
+  repetition model for future lessons.
+
+== Progressive Unlock (Home Row)
+
+In home row mode, you start with just two keys (`f` and `j`). As you
+demonstrate proficiency (accuracy ≥ 90% and speed near your target),
+new keys unlock in the standard touch-typing order. Use
+#cmd("typingprogress") to see which keys are unlocked and which is
+currently focused.
 
 // ============================================================================
 // APPENDIX A: COMPREHENSIVE KEY BINDING REFERENCE
