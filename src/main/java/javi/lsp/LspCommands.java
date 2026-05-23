@@ -1373,12 +1373,9 @@ public final class LspCommands extends Rgroup
             + " (install: brew install harper)");
          return;
       }
-      if (mgr.isLanguageDisabled("harper")) {
-         UI.reportMessage(
-            "lsp.spell: spell checker disabled"
-            + " (use :lsp.spell on)");
-         return;
-      }
+
+      // Explicit :lsp.spell always runs regardless of enabled state.
+      // The enabled/disabled state only controls auto-check on modification.
 
       // Prepare the latch before sending so we don't miss the response
       String uri = LspClient.pathToUri(filePath);
