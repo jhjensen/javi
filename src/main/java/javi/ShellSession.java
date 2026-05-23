@@ -121,6 +121,9 @@ public final class ShellSession {
       // Start process with terminal environment variables
       int cols = MiscCommands.getWidth();
       int rows = MiscCommands.getHeight();
+      // Guard against pre-layout 0 values — use sensible defaults
+      if (rows <= 0) rows = 24;
+      if (cols <= 0) cols = 80;
       ProcessBuilder pb = new ProcessBuilder(cmd);
       pb.redirectErrorStream(true);
       java.util.Map<String, String> env = pb.environment();
@@ -645,6 +648,29 @@ public final class ShellSession {
          if (null != tty)
             return tty;
       }
+      // Fallback: ProcessHandle.descendants() can be unreliable on
+      // macOS (no /proc, polling-based).  Use pgrep -P to find
+      // direct children of the script process.
+      Process pgrep = new ProcessBuilder("pgrep", "-P",
+         Long.toString(process.pid()))
+         .redirectErrorStream(true).start();
+      String pgrepOut = new String(
+         pgrep.getInputStream().readAllBytes()).trim();
+      pgrep.waitFor();
+      if (!pgrepOut.isEmpty()) {
+         for (String pidStr : pgrepOut.split("\\n")) {
+            String trimmed = pidStr.trim();
+            if (!trimmed.isEmpty()) {
+               try {
+                  String tty = getTtyForPid(Long.parseLong(trimmed));
+                  if (null != tty)
+                     return tty;
+               } catch (NumberFormatException ignore) {
+                  // skip non-numeric pgrep output
+               }
+            }
+         }
+      }
       return null;
    }
 
@@ -678,6 +704,15 @@ public final class ShellSession {
     */
    private void initializePtySize(int rows, int cols) {
       try {
+         // Wait for AWT layout to provide real dimensions (up to 3s).
+         // Without this, defwidth/defheight are the 80x80 defaults.
+         for (int wait = 0; wait < 30 && !MiscCommands.isLayoutComplete(); wait++) {
+            Thread.sleep(100);
+            if (null == process || !process.isAlive())
+               return;
+            if (ptySizedByResize)
+               return;
+         }
          for (int attempt = 0; attempt < 10; attempt++) {
             Thread.sleep(100);
             if (null == process || !process.isAlive())
@@ -693,6 +728,10 @@ public final class ShellSession {
             // OldView.setSize since shell creation).
             int curRows = MiscCommands.getHeight();
             int curCols = MiscCommands.getWidth();
+            // If still pre-layout, fall back to the initial values
+            // passed to constructor (which are already guarded > 0).
+            if (curRows <= 0) curRows = rows;
+            if (curCols <= 0) curCols = cols;
             // Try /proc/<pid>/fd/0 first (Linux, namespace-safe)
             if (tryProcFdResize(curRows, curCols)) {
                trace("ShellSession " + id

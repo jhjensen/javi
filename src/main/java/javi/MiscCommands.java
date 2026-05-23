@@ -322,6 +322,8 @@ public final class MiscCommands extends Rgroup {
    private static TextEdit cmdfile;
    private static volatile int defwidth = 80;
    private static volatile int defheight = 80;
+   /** Set to true after the first real OldView layout provides actual dimensions. */
+   private static volatile boolean layoutComplete;
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
@@ -365,6 +367,12 @@ public final class MiscCommands extends Rgroup {
          defheight = rows;
       if (cols > 0)
          defwidth = cols;
+      layoutComplete = true;
+   }
+
+   /** Returns true once updateScreenDimensions has been called with real values. */
+   public static boolean isLayoutComplete() {
+      return layoutComplete;
    }
 
    private static final class MyFl implements EditContainer.FileStatusListener {
