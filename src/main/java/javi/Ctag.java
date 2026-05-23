@@ -1,15 +1,13 @@
 package javi;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
-
-/*
-   this could be improved by allowing other excmds.  It currently only
-   allows line numbers
-*/
 
 final class Ctag {
    private static final class TagEntry {
@@ -71,9 +69,47 @@ final class Ctag {
          String file = new String(spl[1].toCharArray());
          line = spl[2];
          int pos = line.indexOf(';');
-         int y = Integer.parseInt(line.substring(0, pos));
-         comment += '\t' + line.substring(pos + 4, line.length());
+         String excmd = pos >= 0 ? line.substring(0, pos) : line;
+         int y;
+         if (excmd.length() > 0 && excmd.charAt(0) == '/') {
+            // Pattern excmd: /^pattern$/
+            String pat = excmd.substring(1);
+            if (pat.endsWith("/"))
+               pat = pat.substring(0, pat.length() - 1);
+            y = resolvePattern(file, pat);
+         } else if (excmd.length() > 0 && excmd.charAt(0) == '?') {
+            // Backward pattern: ?pattern?
+            String pat = excmd.substring(1);
+            if (pat.endsWith("?"))
+               pat = pat.substring(0, pat.length() - 1);
+            y = resolvePattern(file, pat);
+         } else {
+            y = Integer.parseInt(excmd);
+         }
+         if (pos >= 0 && pos + 4 < line.length())
+            comment += '\t' + line.substring(pos + 4);
          return new Position(0, y, file, comment);
+      }
+
+      private static int resolvePattern(String filename, String pattern) {
+         String literal = pattern;
+         if (literal.startsWith("^"))
+            literal = literal.substring(1);
+         if (literal.endsWith("$"))
+            literal = literal.substring(0, literal.length() - 1);
+         try (BufferedReader br = new BufferedReader(
+               new FileReader(filename, StandardCharsets.UTF_8))) {
+            int lineNum = 0;
+            String ln;
+            while ((ln = br.readLine()) != null) {
+               lineNum++;
+               if (ln.contains(literal))
+                  return lineNum;
+            }
+         } catch (IOException e) {
+            trace("Ctag.resolvePattern: " + filename + " " + e.getMessage());
+         }
+         return 1;
       }
    }
 
@@ -262,6 +298,46 @@ final class Ctag {
              ? null
              : new TagEntry(curtag.substring(
                 0, curtag.length() - 1), backmark, endmark);
+   }
+
+   void invalidateCache() {
+      carray.clear();
+      try (RandomAccessFile ctfile = new RandomAccessFile(ctfilename, "r")) {
+         carray.add(new TagEntry(String.valueOf(Character.MIN_VALUE), 0, 0));
+         carray.add(new TagEntry(String.valueOf(Character.MAX_VALUE),
+            ctfile.length(), ctfile.length()));
+      } catch (IOException e) {
+         trace("Ctag.invalidateCache: " + e.getMessage());
+      }
+   }
+
+   static java.io.File findTagsFile(java.io.File startDir) {
+      java.io.File dir = startDir;
+      while (dir != null) {
+         java.io.File tags = new java.io.File(dir, "tags");
+         if (tags.isFile())
+            return tags;
+         dir = dir.getParentFile();
+      }
+      return null;
+   }
+
+   static void regenerateTags(String tagsFilePath, String sourceFilePath) {
+      try {
+         ProcessBuilder pb = new ProcessBuilder(
+            "ctags", "--append", "-f", tagsFilePath, sourceFilePath);
+         pb.redirectErrorStream(true);
+         Process proc = pb.start();
+         try (var reader = new BufferedReader(
+               new java.io.InputStreamReader(proc.getInputStream()))) {
+            while (reader.readLine() != null) { /* drain */ }
+         }
+         int exitCode = proc.waitFor();
+         if (exitCode != 0)
+            trace("Ctag.regenerateTags: ctags exited with " + exitCode);
+      } catch (IOException | InterruptedException e) {
+         trace("Ctag.regenerateTags: " + e.getMessage());
+      }
    }
 
    public static void main(String[] args) {

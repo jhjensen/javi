@@ -316,6 +316,24 @@ public final class MiscCommands extends Rgroup {
                arg instanceof String ? (String) arg : null);
             return null;
          });
+      registerArgCommand("gid",
+         "search ID database for exact identifier", "navigation",
+         (arg, count, rcount, fvc, dot) -> {
+            String pattern = arg instanceof String ? (String) arg : null;
+            if (pattern == null || pattern.isEmpty())
+               throw new InputException("gid requires a pattern argument");
+            MkidSearch.gidSearch(pattern);
+            return null;
+         });
+      registerArgCommand("lid",
+         "search ID database for identifier pattern", "navigation",
+         (arg, count, rcount, fvc, dot) -> {
+            String pattern = arg instanceof String ? (String) arg : null;
+            if (pattern == null || pattern.isEmpty())
+               throw new InputException("lid requires a pattern argument");
+            MkidSearch.lidSearch(pattern);
+            return null;
+         });
    }
 
    private static TextEdit debugfile;
