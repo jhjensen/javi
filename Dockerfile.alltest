@@ -46,6 +46,8 @@ ARG SRC_HASH=0
 COPY src/ src/
 COPY .clang-format ./
 COPY plugins/ plugins/
+# plugins/ may be empty (plugins tracked on feature branches);
+# .gitkeep ensures COPY succeeds even with no plugin source.
 
 # build.gradle calls `git describe --always --dirty` during evaluation;
 # .git is excluded from rsync, so create a minimal repo

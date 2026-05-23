@@ -239,6 +239,7 @@ rdesk-guitest: rdesk-guitest-sync rdesk-guitest-build rdesk-guitest-run rdesk-gu
 
 # Sync javi source to rdesk
 rdesk-guitest-sync:
+	@mkdir -p plugins
 	rsync -az --delete $(GUITEST_EXCLUDE) ./ rdesk:$(RDESK_GUITEST_DIR)/
 
 # Build Docker image on rdesk
