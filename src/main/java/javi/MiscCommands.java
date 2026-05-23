@@ -1168,8 +1168,44 @@ public final class MiscCommands extends Rgroup {
       f = new java.io.File("dist/" + jarName);
       if (f.exists())
          return f;
+      // Check the lib/ directory next to the running JAR (installed location)
+      java.io.File installLib = getInstallLibDir();
+      if (installLib != null) {
+         f = new java.io.File(installLib, jarName);
+         if (f.exists())
+            return f;
+      }
+      // Check standard install location (~/.local/share/javi/lib/)
+      String home = System.getProperty("user.home");
+      if (home != null) {
+         f = new java.io.File(home + "/.local/share/javi/lib/" + jarName);
+         if (f.exists())
+            return f;
+      }
       // Return build/libs path for the error message
       return new java.io.File("build/libs/" + jarName);
+   }
+
+   /** Returns the lib/ directory of the javi installation, or null if
+     * not running from an installed JAR.
+     */
+   private static java.io.File getInstallLibDir() {
+      try {
+         var source = MiscCommands.class.getProtectionDomain()
+            .getCodeSource();
+         if (source == null)
+            return null;
+         var location = source.getLocation();
+         if (location == null)
+            return null;
+         java.io.File jarFile = new java.io.File(location.toURI());
+         if (jarFile.isFile())
+            return jarFile.getParentFile();
+         // Running from a classes directory (development)
+         return null;
+      } catch (Exception e) {
+         return null;
+      }
    }
 
    private static void doHeapDump(FvContext fvc) {
