@@ -113,7 +113,7 @@ sourceSets {
 // F36: Resolve rxtx dependency via Maven Central with Spring repo fallback
 repositories {
     maven {
-        url 'https://repo.spring.io/plugins-release/'
+        url = uri('https://repo.spring.io/plugins-release/')
         content {
             includeGroup 'org.rxtx'
         }
@@ -308,7 +308,7 @@ tasks.named('jar') {
     }
     archiveBaseName.set('javi')
     archiveVersion.set(projectVersion)
-    destinationDirectory.set(file("$buildDir/libs"))
+    destinationDirectory.set(layout.buildDirectory.dir("libs"))
 }
 
 // I3: Copy JAR to dist directory with optional versioning
