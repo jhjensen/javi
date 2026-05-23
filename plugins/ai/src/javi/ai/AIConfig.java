@@ -87,6 +87,7 @@ public final class AIConfig {
    private volatile int timeoutSeconds = 30;
    private volatile String systemPrompt = DEFAULT_SYSTEM_PROMPT;
    private volatile int completionDelayMs = 800;
+   private volatile String authFile = null; // null means default copilot path
 
    /** Default system prompt for code assistance. */
    static final String DEFAULT_SYSTEM_PROMPT =
@@ -282,6 +283,52 @@ public final class AIConfig {
    }
 
    /**
+    * Get the configured auth file path.
+    *
+    * <p>Special values: {@code "copilot"} resolves to the default
+    * GitHub Copilot token path, {@code "claude"} resolves to the
+    * Anthropic auth path. Any other value is treated as a literal
+    * file path. Null means use the default copilot path.</p>
+    *
+    * @return the auth file setting, or null for default
+    */
+   public String getAuthFile() {
+      return authFile;
+   }
+
+   /**
+    * Set the auth file path for OAuth token storage.
+    *
+    * @param path file path, "copilot", or "claude"
+    */
+   public void setAuthFile(String path) {
+      this.authFile = path;
+   }
+
+   /**
+    * Resolve the auth file path to an absolute Path.
+    *
+    * @return resolved path to the OAuth token file
+    */
+   public java.nio.file.Path resolveAuthFile() {
+      String home = System.getProperty("user.home");
+      if (null == authFile || "copilot".equalsIgnoreCase(authFile)) {
+         return java.nio.file.Path.of(home,
+            ".config", "github-copilot", "apps.json");
+      }
+      if ("claude".equalsIgnoreCase(authFile)) {
+         return java.nio.file.Path.of(home,
+            ".config", "anthropic", "auth.json");
+      }
+      // Treat as literal path (expand ~ if present)
+      if (authFile.startsWith("~/")) {
+         return java.nio.file.Path.of(home,
+            authFile.substring(2));
+      }
+      return java.nio.file.Path.of(authFile);
+   }
+
+   /**
     * Check if the AI system is configured with an API key.
     *
     * @return true if an API key is available
@@ -329,6 +376,10 @@ public final class AIConfig {
          case "delay":
             setCompletionDelayMs(Integer.parseInt(value));
             return true;
+         case "authfile":
+         case "authFile":
+            setAuthFile(value);
+            return true;
          default:
             return false;
       }
@@ -348,6 +399,8 @@ public final class AIConfig {
          + " maxTokens=" + maxTokens
          + " timeout=" + timeoutSeconds + "s"
          + " delay=" + completionDelayMs + "ms"
-         + " apiKey=" + keyStatus;
+         + " apiKey=" + keyStatus
+         + " authFile=" + (null == authFile ? "copilot (default)"
+            : authFile);
    }
 }
