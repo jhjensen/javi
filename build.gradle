@@ -156,6 +156,12 @@ sourceSets {
             srcDirs = ['src/main/resources']
         }
     }
+    test {
+        java {
+            // Include plugin sources so Server tests can compile
+            srcDirs += ['plugins/Server/src']
+        }
+    }
 }
 
 tasks.named('compileJava') {
