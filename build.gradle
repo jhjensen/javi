@@ -231,6 +231,26 @@ tasks.register('guiTest', Test) {
     }
 }
 
+// T1: Separate test task for lsp-live integration tests (need external tools)
+//
+// These tests require jdtls and/or clangd to be installed and on PATH.
+// Run via: ./gradlew lspLiveTest
+tasks.register('lspLiveTest', Test) {
+    useJUnitPlatform {
+        includeTags 'lsp-live'
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    group = 'verification'
+    description = 'Run live LSP integration tests (requires jdtls/clangd)'
+    systemProperty 'junit.jupiter.execution.timeout.default', '60s'
+    testLogging {
+        events 'started', 'passed', 'failed', 'skipped'
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+}
+
 // T1/T3: JaCoCo coverage report — merges JUnit + legacy test exec data
 tasks.named('jacocoTestReport') {
     dependsOn test

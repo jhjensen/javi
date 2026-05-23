@@ -92,17 +92,20 @@ class FormatDispatchJUnitTest {
    }
 
    @Test
-   @DisplayName("clang-format reformats Java code with 3-space indent")
+   @DisplayName("clang-format reformats Java code with project indent")
    void clangFormatReformatsJava() throws Exception {
       assumeTrue(clangFormatAvailable(),
          "clang-format-mp-20 not available — skipping");
 
       // Create a buffer with zero-indent Java code
+      // Use multiple statements so clang-format won't collapse to one line
       String content = String.join("\n",
          "package test;",
          "public class Foo {",
          "public void bar() {",
          "int x = 1;",
+         "int y = 2;",
+         "int z = x + y;",
          "}",
          "}");
       StringIoc sio = new StringIoc("Test.java", content);
@@ -117,7 +120,7 @@ class FormatDispatchJUnitTest {
       // Format the entire buffer via FormatDispatch
       FormatDispatch.formatAll(ex);
 
-      // Verify clang-format applied 3-space indentation
+      // Verify clang-format applied 3-space indentation (Google Java base style)
       assertEquals("   public void bar() {",
          ex.at(3).toString().replaceAll("\\s+$", ""),
          "class member should be indented 3 spaces");

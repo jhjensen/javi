@@ -206,6 +206,11 @@ test: ai.output/test.out
 # Run JUnit 5 tests via Gradle and capture output
 junit: ai.output/junit.out
 
+# Run tests that are excluded from 'make junit' (lsp-live integration tests)
+# These require external tools (jdtls, clangd) installed on PATH.
+junit-skipped:
+	./gradlew lspLiveTest --console=plain
+
 # Compile test sources
 compile-test:
 	./gradlew compileTestJava

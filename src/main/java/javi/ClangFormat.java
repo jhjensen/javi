@@ -91,7 +91,7 @@ public class ClangFormat {
 
    private static NodeList doCheck(String doc, int startLine, int endLine,
       String fileName) throws IOException, org.xml.sax.SAXException {
-      InputStream xml = executeIn(doc, "clang-format-mp-20",
+      InputStream xml = executeIn(doc, "/opt/local/bin/clang-format-mp-20",
          "-lines=" + startLine + ":" + endLine, "-style=file",
          "-assume-filename=" + fileName, "-output-replacements-xml");
       Document xdoc = builder.parse(xml);
