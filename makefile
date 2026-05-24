@@ -149,10 +149,13 @@ install:
 	rm -rf $(PREFIX)/share/javi/bin $(PREFIX)/share/javi/lib
 	cp -R build/install/javi/bin $(PREFIX)/share/javi/
 	cp -R build/install/javi/lib $(PREFIX)/share/javi/
+	cp javi-cl $(PREFIX)/bin/javi-cl
+	chmod +x $(PREFIX)/bin/javi-cl
 	ln -sf ../share/javi/bin/javi $(PREFIX)/bin/javi
 	@echo ""
 	@echo "✓ Installed to $(PREFIX)/share/javi/"
 	@echo "✓ Launcher:   $(PREFIX)/bin/javi"
+	@echo "✓ Client:     $(PREFIX)/bin/javi-cl"
 	@echo ""
 	@if ! echo "$$PATH" | tr ':' '\n' | grep -qx '$(PREFIX)/bin'; then \
 		echo "Add $(PREFIX)/bin to your PATH:"; \
@@ -162,7 +165,7 @@ install:
 
 # Remove javi from PREFIX
 uninstall:
-	rm -f $(PREFIX)/bin/javi
+	rm -f $(PREFIX)/bin/javi $(PREFIX)/bin/javi-cl
 	rm -rf $(PREFIX)/share/javi
 	@echo "✓ Uninstalled javi from $(PREFIX)"
 

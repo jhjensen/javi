@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
-# vi.pl — Open files in a running Javi instance via its Server plugin socket.
+# javi-cl — Open files in a running Javi instance via its Server plugin socket.
 #
-# Usage: vi.pl [options] file1 [file2 ...]
+# Usage: javi-cl [options] file1 [file2 ...]
 #
 # Protocol:
 #   1. Connect to Javi's Server plugin on localhost:6001 (TCP).
