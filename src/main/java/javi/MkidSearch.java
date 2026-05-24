@@ -44,7 +44,7 @@ final class MkidSearch extends PositionIoc {
       checkIdFile();
       String[] cmd = {"gid", pattern};
       MkidSearch search = new MkidSearch("gid " + pattern, cmd);
-      return new TextEdit<Position>(search, search.prop);
+      return PosListList.Cmd.replacePositionIoc("gid", search);
    }
 
    static TextEdit<Position> lidSearch(String pattern) throws
@@ -52,7 +52,7 @@ final class MkidSearch extends PositionIoc {
       checkIdFile();
       String[] cmd = {"lid", "--result=grep", pattern};
       MkidSearch search = new MkidSearch("lid " + pattern, cmd);
-      return new TextEdit<Position>(search, search.prop);
+      return PosListList.Cmd.replacePositionIoc("lid", search);
    }
 
    private static void checkIdFile() throws InputException {
