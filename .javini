@@ -7,3 +7,5 @@ e build.txt src main history java javi git history plugin awt
 makecommand /Users/jjensen/bin/make.pl
 loadplugin ai
 ai.authFile=./.ai_auth
+set ai.provider=copilot
+set ai.authFile=/Users/jjensen/javi/.ai_auth
