@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -153,6 +154,66 @@ class FileListDispatchJUnitTest {
 
       testFile.delete();
       new File(testDir, fname + ".dmp2").delete();
+   }
+
+   @Test
+   @DisplayName("moveBufferUp keeps modified buffer connected")
+   void moveBufferUpKeepsModifiedBufferConnected()
+         throws Exception {
+      String fnameA = "ju_fld_moveup_a";
+      String fnameB = "ju_fld_moveup_b";
+      File testDir = history.Testutil.testDir;
+      File testFileA = new File(testDir, fnameA);
+      File testFileB = new File(testDir, fnameB);
+
+      try (OutputStreamWriter w = new OutputStreamWriter(
+            new FileOutputStream(testFileA),
+            StandardCharsets.UTF_8)) {
+         w.write("alpha\n");
+      }
+      try (OutputStreamWriter w = new OutputStreamWriter(
+            new FileOutputStream(testFileB),
+            StandardCharsets.UTF_8)) {
+         w.write("beta\n");
+      }
+
+      UI.setStream(new StringReader(""));
+      TestView view = new TestView(true);
+      FileList.openFileName(testFileA.getPath(), view);
+      @SuppressWarnings("unchecked")
+      TextEdit<String> moved = (TextEdit<String>)
+         FileList.openFileName(testFileB.getPath(), view).edvec;
+
+      moved.inserttext("X", 0, 1);
+      moved.checkpoint();
+      int linesBefore = moved.readIn();
+      assertTrue(moved.isModified(),
+         "test setup should mark buffer modified");
+
+      FileList fl = FileList.TestAccess.getInstance();
+      int oldIndex = fl.indexOf(moved);
+      assertTrue(oldIndex > 1,
+         "modified buffer must be movable upward in file list");
+
+      FvContext<?> fileListFvc = FileList.getContext(view);
+      fileListFvc.cursoryabs(oldIndex);
+      FileList.moveBufferUp(fileListFvc);
+
+      assertSame(moved, fl.at(oldIndex - 1),
+         "moveBufferUp should preserve buffer identity");
+      assertTrue(moved.isValid(),
+         "moved buffer must remain valid after reordering");
+      assertEquals(linesBefore, moved.readIn(),
+         "moved buffer content should be preserved");
+      assertTrue(moved.isModified(),
+         "modified flag should be preserved after move");
+      assertDoesNotThrow(moved::undo,
+         "undo should work after moving a modified buffer");
+
+      testFileA.delete();
+      testFileB.delete();
+      new File(testDir, fnameA + ".dmp2").delete();
+      new File(testDir, fnameB + ".dmp2").delete();
    }
 
    // ── gotofilelist ──────────────────────────────────────────

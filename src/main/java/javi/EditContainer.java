@@ -851,6 +851,23 @@ public class EditContainer<OType> implements
       }
    }
 
+   /**
+    * Swap two existing lines in-place without delete/insert side effects.
+    *
+    * <p>This is needed for containers that hold live {@link ReAnimator}
+    * objects (for example the file list), where delete/insert would call
+    * {@link ReAnimator#disposeFvc()} and invalidate the moved object.</p>
+    */
+   final synchronized void swapLine(int first, int second) {
+      if (first == second)
+         return;
+      OType firstObj = at(first);
+      OType secondObj = at(second);
+      mkback(Math.max(first, second));
+      modRecord(secondObj, first);
+      modRecord(firstObj, second);
+   }
+
    final synchronized void copyLine(int from, int to) {
       //trace("copyLine from " + from + " to " + to);
       OType[] arr = ecache.getArr(from, 1);

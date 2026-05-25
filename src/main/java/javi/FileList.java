@@ -682,6 +682,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             return;
          }
       }
+      FvContext<?> fileListFvc = fvc.switchContext(instance, 1);
+      if (fvc.edvec != instance)
+         FvContext.connectFv((TextEdit) fileListFvc.at(), fvc.vi);
    }
 
    /**
@@ -694,8 +697,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          return;
       instance.beginInternalModify();
       try {
-         // Move the next element up to idx, pushing current element down
-         instance.moveLine(idx + 1, idx);
+         instance.swapLine(idx, idx + 1);
          instance.checkpoint();
       } finally {
          instance.endInternalModify();
@@ -713,7 +715,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          return;
       instance.beginInternalModify();
       try {
-         instance.moveLine(idx, idx - 1);
+         instance.swapLine(idx, idx - 1);
          instance.checkpoint();
       } finally {
          instance.endInternalModify();
