@@ -36,7 +36,7 @@ import static history.Tools.trace;
  *    new String[]{"jdtls"}, new String[]{".java"}, "build.gradle");
  * </pre>
  *
- * @see LspManager
+ * @see LspRegistry
  */
 final class LspServerConfig {
 

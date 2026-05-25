@@ -546,7 +546,7 @@ public final class FvContext<OType> implements Serializable {
             locked = EventQueue.biglock2.tryLock(2, TimeUnit.SECONDS);
             if (!locked)
                trace("failed to acquire big lock, try and exit anyway");
-            //javi.lsp.LspManager.getInstance().shutdownAll();
+            javi.lsp.LspRegistry.shutdownAll();
             disposeAll(true);
          } catch (Exception e) {
             trace("exit threw exception during shutdown", e);
