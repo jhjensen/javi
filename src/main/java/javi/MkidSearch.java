@@ -55,9 +55,44 @@ final class MkidSearch extends PositionIoc {
       return PosListList.Cmd.replacePositionIoc("lid", search);
    }
 
+   /**
+    * Search the ID database for file names matching a pattern.
+    * Each match produces a position pointing to line 1 of the file.
+    */
+   static TextEdit<Position> fnidSearch(String pattern) throws
+         IOException, InputException {
+      checkIdFile();
+      String[] cmd = {"fnid", pattern};
+      FnidSearch search = new FnidSearch("fnid " + pattern, cmd);
+      return PosListList.Cmd.replacePositionIoc("fnid", search);
+   }
+
    private static void checkIdFile() throws InputException {
       if (!new File("ID").isFile())
          throw new InputException(
             "no ID database found — run mkid to create one");
+   }
+}
+
+/**
+ * Parses fnid output (one filename per line) into Position objects at line 1.
+ */
+final class FnidSearch extends PositionIoc {
+
+   private static final long serialVersionUID = 1;
+
+   FnidSearch(String label, String[] cmd) throws IOException {
+      super(label, Tools.runcmd(cmd), pconverter);
+   }
+
+   @Override
+   void dorun() {
+      for (String line; null != (line = getLine());) {
+         line = line.trim();
+         if (!line.isEmpty()) {
+            addElement(new Position(0, 1, line, "fnid:" + line));
+            resultCount++;
+         }
+      }
    }
 }
