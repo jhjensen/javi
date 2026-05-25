@@ -1075,7 +1075,7 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("  :set ai.provider=openai|anthropic|copilot");
       appendToChatBuffer("  :set ai.model=<model-name>");
       appendToChatBuffer("  :set ai.apikey=<key>");
-      appendToChatBuffer("  :set ai.authfile=<path>");
+      appendToChatBuffer("  :set ai.authfile=<path>  (absolute path or ~/...)");
       appendToChatBuffer("  :set ai.maxTokens=<number>");
       appendToChatBuffer("  :set ai.delay=<ms>   (completion delay, 0=disable)");
       appendToChatBuffer("  :set ai.timeout=<seconds>");
@@ -1438,7 +1438,8 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("---");
       appendToChatBuffer("");
       try {
-         FvContext.connectFv(chatBuffer, vi);
+         FvContext<?> fvc = FvContext.connectFv(chatBuffer, vi);
+         fvc.cursoryabs(chatBuffer.finish() - 1);
       } catch (InputException e) {
          UI.reportMessage(
             "Input Error: " + e.getMessage());
