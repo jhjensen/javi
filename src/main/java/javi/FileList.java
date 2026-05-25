@@ -141,11 +141,14 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             case 2:
                //trace("fopen command arg" + arg);
                //trace("instance " + instance);
-               // Type safety: arg should be String from key mapping
-               return openFileName(
-                  arg instanceof String
-                     ? (String) arg : arg.toString(),
-                  fvc.vi);
+               String argStr = arg instanceof String
+                     ? (String) arg : arg.toString();
+               if (Command.isDuringInit()) {
+                  for (String fn : splitFileArgs(argStr))
+                     addFileDeferred(fn);
+                  return null;
+               }
+               return openFileName(argStr, fvc.vi);
             case 3:
                processZ(fvc);
                return null;
@@ -249,6 +252,56 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             UI.popError("error opening command line file ", e);
          }
       }
+   }
+
+   /**
+    * Remove the dummy placeholder file if .javini opened real files.
+    * Called after .javini processing when no CLI files were specified.
+    */
+   static void removeDummyIfNotNeeded() {
+      if (instance == null)
+         return;
+
+      // Only remove dummy placeholders when there is at least one real
+      // non-dummy local file open (e.g. from .javini "e ...").
+      boolean hasRealLocalFile = false;
+      ArrayList<TextEdit<?>> dummies = new ArrayList<>();
+      ArrayList<Integer> dummyIndexes = new ArrayList<>();
+      for (int ii = 1; ii < instance.finish(); ii++) {
+         TextEdit<?> te = (TextEdit<?>) instance.at(ii);
+         FileDescriptor fd = te.fdes();
+         String shortName = fd.shortName;
+         if (fd instanceof FileDescriptor.LocalFile
+               && shortName.startsWith("dummy")) {
+            dummies.add(te);
+            dummyIndexes.add(ii);
+         } else if (fd instanceof FileDescriptor.LocalFile) {
+            hasRealLocalFile = true;
+         }
+      }
+
+      trace("removeDummyIfNotNeeded: finish=" + instance.finish()
+         + " dummies=" + dummies.size()
+         + " hasRealLocalFile=" + hasRealLocalFile);
+
+      if (!hasRealLocalFile || dummies.isEmpty())
+         return;
+
+      instance.beginInternalModify();
+      try {
+         // Remove in reverse index order to avoid index shifting.
+         for (int ii = dummyIndexes.size() - 1; ii >= 0; ii--)
+            instance.remove(dummyIndexes.get(ii), dummyIndexes.get(ii));
+         instance.checkpoint();
+      } finally {
+         instance.endInternalModify();
+      }
+      for (TextEdit<?> dummy : dummies)
+         try {
+            dummy.disposeFvc();
+         } catch (IOException e) {
+            trace("removeDummyIfNotNeeded disposeFvc: " + e);
+         }
    }
 
    @SuppressWarnings({"unchecked", "rawtypes"})
@@ -421,6 +474,58 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          fv2.cursorabs(pos);
       }
       return null != ec;
+   }
+
+   /**
+    * Split a filename argument on unescaped spaces.
+    * Backslash-space sequences are treated as literal spaces in the filename.
+    */
+   static List<String> splitFileArgs(String args) {
+      List<String> result = new ArrayList<>();
+      StringBuilder cur = new StringBuilder();
+      for (int i = 0; i < args.length(); i++) {
+         char c = args.charAt(i);
+         if (c == '\\' && i + 1 < args.length() && args.charAt(i + 1) == ' ') {
+            cur.append(' ');
+            i++;
+         } else if (c == ' ') {
+            if (cur.length() > 0) {
+               result.add(cur.toString());
+               cur.setLength(0);
+            }
+         } else {
+            cur.append(c);
+         }
+      }
+      if (cur.length() > 0)
+         result.add(cur.toString());
+      return result;
+   }
+
+   /**
+    * Add a file to the file list without switching to it.
+    * The file content is not read until the user navigates to it.
+    */
+   @SuppressWarnings("unchecked")
+   private void addFileDeferred(String fname) throws IOException, InputException {
+      FileDescriptor fd = FileDescriptor.make(fname);
+      if (fd instanceof FileDescriptor.LocalDir) {
+         DirManager.getInstance().addSearchDir((FileDescriptor.LocalDir) fd);
+         return;
+      }
+      TextEdit<String> text = findOpenWithDirlist(fname);
+      if (null == text)
+         text = (TextEdit<String>) EditContainer.grepfile(fname);
+      if (null == text) {
+         beginInternalModify();
+         try {
+            text = insertStream(
+               new BufferedReader(new StringReader(fname)), finish());
+            checkpoint();
+         } finally {
+            endInternalModify();
+         }
+      }
    }
 
    public static FvContext openFileName(String fname, View vi) throws

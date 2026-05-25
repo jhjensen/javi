@@ -24,9 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * {@link Rgroup#doCommand}: vi (file open), e, nextfile,
  * gotofilelist, and file write paths.
  *
- * <p>These commands are in FileList.Commands.doroutine which
+ * <p>
+ * These commands are in FileList.Commands.doroutine which
  * has very low coverage because tests rarely exercise the
- * Rgroup dispatch path for file operations.</p>
+ * Rgroup dispatch path for file operations.
+ * </p>
  */
 class FileListDispatchJUnitTest {
 
@@ -77,13 +79,13 @@ class FileListDispatchJUnitTest {
       FvContext<?> fvc = getFileListFvc();
 
       Rgroup.doCommand("vi", testFile.getPath(),
-         1, 0, fvc, false);
+            1, 0, fvc, false);
 
       // The file should now be in the file list
       FileList fl = FileList.TestAccess.getInstance();
       assertNotNull(fl);
       assertTrue(fl.finish() >= 2,
-         "FileList should have at least 2 entries after open");
+            "FileList should have at least 2 entries after open");
 
       testFile.delete();
       new File(testDir, fname + ".dmp2").delete();
@@ -106,7 +108,7 @@ class FileListDispatchJUnitTest {
       FvContext<?> fvc = getFileListFvc();
 
       Rgroup.doCommand("e", testFile.getPath(),
-         1, 0, fvc, false);
+            1, 0, fvc, false);
 
       testFile.delete();
       new File(testDir, fname + ".dmp2").delete();
@@ -121,8 +123,7 @@ class FileListDispatchJUnitTest {
       FvContext<?> fvc = getFileListFvc();
 
       // Passing a directory should add it to DirManager search
-      assertDoesNotThrow(() ->
-         Rgroup.doCommand("vi", testDir.getPath(),
+      assertDoesNotThrow(() -> Rgroup.doCommand("vi", testDir.getPath(),
             1, 0, fvc, false));
    }
 
@@ -145,11 +146,10 @@ class FileListDispatchJUnitTest {
       UI.setStream(new StringReader(""));
       FvContext<?> fvc = getFileListFvc();
       Rgroup.doCommand("vi", testFile.getPath(),
-         1, 0, fvc, false);
+            1, 0, fvc, false);
 
       // Now nextfile should work (switches to next in list)
-      assertDoesNotThrow(() ->
-         Rgroup.doCommand("nextfile", null, 1, 0,
+      assertDoesNotThrow(() -> Rgroup.doCommand("nextfile", null, 1, 0,
             fvc, false));
 
       testFile.delete();
@@ -224,8 +224,7 @@ class FileListDispatchJUnitTest {
       UI.setStream(new StringReader(""));
       FvContext<?> fvc = getFileListFvc();
 
-      assertDoesNotThrow(() ->
-         Rgroup.doCommand("gotofilelist", null, 1, 0,
+      assertDoesNotThrow(() -> Rgroup.doCommand("gotofilelist", null, 1, 0,
             fvc, false));
    }
 
@@ -246,7 +245,7 @@ class FileListDispatchJUnitTest {
       // command dispatches without hanging.
       try {
          Rgroup.doCommand("Zprocess", null, 1, 0,
-            fvc, false);
+               fvc, false);
       } catch (ExitException | NullPointerException
             | IndexOutOfBoundsException e) {
          // Expected — quit path entered or empty list edge case
@@ -260,7 +259,7 @@ class FileListDispatchJUnitTest {
    void countModifiedReflectsState() throws Exception {
       int count = FileList.countModified();
       assertTrue(count >= 0,
-         "countModified should return non-negative: " + count);
+            "countModified should return non-negative: " + count);
    }
 
    // ── writeModifiedFiles ────────────────────────────────────
@@ -269,10 +268,10 @@ class FileListDispatchJUnitTest {
    @DisplayName("writeModifiedFiles with non-matching spec returns empty")
    void writeModifiedFilesNoMatch() throws Exception {
       var result = FileList.writeModifiedFiles(
-         "ZZZNOMATCH_PATTERN_XYZ");
+            "ZZZNOMATCH_PATTERN_XYZ");
       assertNotNull(result);
       assertEquals(0, result.size(),
-         "No files should match impossible pattern");
+            "No files should match impossible pattern");
    }
 
    // ── openFileName ──────────────────────────────────────────
@@ -294,9 +293,9 @@ class FileListDispatchJUnitTest {
       TestView view = new TestView(true);
 
       FvContext<?> result = FileList.openFileName(
-         testFile.getPath(), view);
+            testFile.getPath(), view);
       assertNotNull(result,
-         "openFileName should return FvContext for real file");
+            "openFileName should return FvContext for real file");
 
       testFile.delete();
       new File(testDir, fname + ".dmp2").delete();
@@ -320,12 +319,12 @@ class FileListDispatchJUnitTest {
 
       // Open once
       FvContext<?> first = FileList.openFileName(
-         testFile.getPath(), view);
+            testFile.getPath(), view);
       assertNotNull(first);
 
       // Open again — should find existing
       FvContext<?> second = FileList.openFileName(
-         testFile.getPath(), view);
+            testFile.getPath(), view);
       assertNotNull(second);
 
       testFile.delete();

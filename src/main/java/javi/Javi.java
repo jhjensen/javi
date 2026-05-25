@@ -248,9 +248,14 @@ public final class Javi {
          }
          DirManager.getInstance(); // force initialization of directory manager
          FileList.make(sb.toString());
+         boolean noCLIFiles = sb.length() == 0;
          try {
             if (normalInit) {
                initToUi();
+            }
+            if (noCLIFiles) {
+               trace("main: removing dummy before initPostUi");
+               FileList.removeDummyIfNotNeeded();
             }
 
             initPostUi();
@@ -259,6 +264,10 @@ public final class Javi {
                Command.command(command, null, null);
             }
             Command.doneInit();
+            if (noCLIFiles) {
+               trace("main: removing dummy after doneInit");
+               FileList.removeDummyIfNotNeeded();
+            }
             MapEvent.run();
          } catch (ExitException e) {
          } catch (Throwable e) {

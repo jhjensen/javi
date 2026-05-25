@@ -218,17 +218,29 @@ public final class Command extends Rgroup {
       return sb.toString();
    }
 
+   private static volatile boolean duringInit;
+
+   /** Returns true when commands are being dispatched from .javini. */
+   public static boolean isDuringInit() {
+      return duringInit;
+   }
+
    public static void execCmdList() {
-      Iterator<String> cit = cmdlist.iterator();
-      while (cit.hasNext()) {
-         String cmd = cit.next();
-         try {
-            command(cmd, null, null);
-            cit.remove();
-         } catch (DeferCommandException e) {
-            trace("execCmdList deferred: " + cmd);
-            // leave in list for later execution
+      duringInit = true;
+      try {
+         Iterator<String> cit = cmdlist.iterator();
+         while (cit.hasNext()) {
+            String cmd = cit.next();
+            try {
+               command(cmd, null, null);
+               cit.remove();
+            } catch (DeferCommandException e) {
+               trace("execCmdList deferred: " + cmd);
+               // leave in list for later execution
+            }
          }
+      } finally {
+         duringInit = false;
       }
    }
 
