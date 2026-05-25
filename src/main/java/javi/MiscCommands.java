@@ -1367,6 +1367,10 @@ public final class MiscCommands extends Rgroup {
             PosListList.Cmd.flush();
             DirEdit.DirSizeCalculator.clearCache();
             CharsetDetector.clearCache();
+            ContextHelp.closePanel();
+            int disposed = EditContainer.disposeByName("typing-practice");
+            if (disposed > 0)
+               trace("disposed " + disposed + " typing-practice buffers");
             EventQueue.biglock2.unlock();
             try {
                UI.flush();

@@ -70,6 +70,21 @@ public final class ContextHelp {
    }
 
    /**
+    * Close the help panel and release buffer content.
+    * Called during memory reclamation (double-redraw).
+    */
+   static void closePanel() {
+      if (helpPanelView != null) {
+         UI.removeHelpPanel(helpPanelView);
+         helpPanelView = null;
+         helpFvc = null;
+         inSubMode = false;
+      }
+      if (helpBuf.getBuffer() != null)
+         helpBuf.clear();
+   }
+
+   /**
     * Check if the help side panel is currently visible.
     */
    static boolean isShowingHelp(FvContext fvc) {
