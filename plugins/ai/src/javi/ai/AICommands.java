@@ -82,6 +82,14 @@ public final class AICommands extends Rgroup implements Plugin {
    private static final int CMD_STATUS   = 16;
    private static final int CMD_TOOLS    = 17;
    private static final int CMD_GPROCESS = 18;
+   private static final int CMD_SET_PROVIDER  = 19;
+   private static final int CMD_SET_MODEL     = 20;
+   private static final int CMD_SET_MAXTOKENS = 21;
+   private static final int CMD_SET_APIKEY    = 22;
+   private static final int CMD_SET_AUTHFILE  = 23;
+   private static final int CMD_SET_DELAY     = 24;
+   private static final int CMD_SET_TIMEOUT   = 25;
+   private static final int CMD_SET_PROMPT    = 26;
 
    /** The chat output buffer. */
    private static TextEdit<String> chatBuffer;
@@ -126,6 +134,14 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.status",     // 16 - request history/tracking
          "ai.tools",      // 17 - list registered tools
          "ai.gprocess",   // 18 - g prefix key handler
+         "ai.provider",   // 19 - set provider (for :set dispatch)
+         "ai.model",      // 20 - set model
+         "ai.maxTokens",  // 21 - set max tokens
+         "ai.apikey",     // 22 - set API key
+         "ai.authfile",   // 23 - set auth file path
+         "ai.delay",      // 24 - set completion delay
+         "ai.timeout",    // 25 - set request timeout
+         "ai.prompt",     // 26 - set system prompt
       };
       register(rnames);
       AIToolRegistry.registerBuiltins();
@@ -172,9 +188,47 @@ public final class AICommands extends Rgroup implements Plugin {
             return doTools(fvc);
          case CMD_GPROCESS:
             return doGProcess(count, rcount, fvc);
+         case CMD_SET_PROVIDER:
+            return doSetSetting("provider", arg);
+         case CMD_SET_MODEL:
+            return doSetSetting("model", arg);
+         case CMD_SET_MAXTOKENS:
+            return doSetSetting("maxTokens", arg);
+         case CMD_SET_APIKEY:
+            return doSetSetting("apikey", arg);
+         case CMD_SET_AUTHFILE:
+            return doSetSetting("authfile", arg);
+         case CMD_SET_DELAY:
+            return doSetSetting("delay", arg);
+         case CMD_SET_TIMEOUT:
+            return doSetSetting("timeout", arg);
+         case CMD_SET_PROMPT:
+            return doSetSetting("prompt", arg);
          default:
             throw new RuntimeException("AICommands: unknown command " + rnum);
       }
+   }
+
+   /**
+    * Handle a :set dispatch for an AI configuration setting.
+    *
+    * @param key the setting key (without "ai." prefix)
+    * @param arg the value to set
+    * @return null
+    * @throws InputException if the value is invalid
+    */
+   private Object doSetSetting(String key, Object arg) throws InputException {
+      String value = arg != null ? arg.toString() : "";
+      try {
+         if (!AIConfig.getInstance().setSetting(key, value)) {
+            throw new InputException("unknown AI setting: " + key);
+         }
+         UI.reportMessage("ai." + key + "=" + value);
+      } catch (IllegalArgumentException e) {
+         throw new InputException("invalid value for ai." + key
+            + ": " + e.getMessage());
+      }
+      return null;
    }
 
    /**

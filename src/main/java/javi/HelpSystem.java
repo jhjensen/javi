@@ -172,6 +172,11 @@ public final class HelpSystem {
          case "vcs":
             appendGitHelp();
             break;
+         case "lsp":
+         case "languageserver":
+         case "language-server":
+            appendLspHelp();
+            break;
          case "tutorial":
             appendTutorialHelp();
             break;
@@ -490,6 +495,7 @@ public final class HelpSystem {
       append("  :help keybindings - Key binding architecture");
       append("  :help folding    - Code folding commands");
       append("  :help git        - Git integration commands");
+      append("  :help lsp        - Language Server Protocol");
       append("  :help tutorial   - Tutorial commands");
       append("  :help ai         - AI and Copilot commands");
       for (RegisteredTopic rt : registeredTopics)
@@ -1391,6 +1397,48 @@ public final class HelpSystem {
       append("  - The tutorial tracks which commands you have used.");
       append("  - Lessons for mastered commands are auto-skipped.");
       append("  - Type :tutorial to return to a lesson at any time.");
+      append("");
+      append("Type :help for index.");
+   }
+
+   /**
+    * Append Language Server Protocol help.
+    */
+   private static void appendLspHelp() {
+      append("LANGUAGE SERVER PROTOCOL (LSP) COMMANDS");
+      append(" ==========================");
+      append("");
+      append("Javi integrates with Language Server Protocol servers for");
+      append("code intelligence features like diagnostics, navigation,");
+      append("hover info, and completion.");
+      append("");
+      append("DIAGNOSTICS");
+      append("-----------");
+      append("  :lsp.diag          Show diagnostics for current file");
+      append("  :lsp.spell         Toggle spell checking (harper-ls)");
+      append("  :lsp.fix           Apply code action at cursor");
+      append("");
+      append("NAVIGATION");
+      append("----------");
+      append("  :lsp.def           Go to definition");
+      append("  :lsp.ref           Find references");
+      append("  :lsp.hover         Show hover information");
+      append("  :lsp.comp          Trigger completion");
+      append("");
+      append("SERVER MANAGEMENT");
+      append("-----------------");
+      append("  :lsp.status        Show LSP server status");
+      append("  :lsp.config        Show LSP configuration");
+      append("  :lsp.toggle        Toggle LSP on/off");
+      append("  :lsp.restart       Restart LSP server");
+      append("");
+      append("CONFIGURATION");
+      append("-------------");
+      append("  Servers are configured per file type via");
+      append("  LspServerConfig.java. Supported servers:");
+      append("  - jdtls (Java)");
+      append("  - clangd (C/C++)");
+      append("  - harper-ls (spelling/grammar)");
       append("");
       append("Type :help for index.");
    }
