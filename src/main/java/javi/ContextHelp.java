@@ -72,6 +72,8 @@ public final class ContextHelp {
    /**
     * Close the help panel and release buffer content.
     * Called during memory reclamation (double-redraw).
+    * Releases the buffer reference so disposeByName can fully
+    * remove it from filehash.
     */
    static void closePanel() {
       if (helpPanelView != null) {
@@ -80,8 +82,7 @@ public final class ContextHelp {
          helpFvc = null;
          inSubMode = false;
       }
-      if (helpBuf.getBuffer() != null)
-         helpBuf.clear();
+      helpBuf.dispose();
    }
 
    /**

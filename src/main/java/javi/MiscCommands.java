@@ -1369,8 +1369,10 @@ public final class MiscCommands extends Rgroup {
             CharsetDetector.clearCache();
             ContextHelp.closePanel();
             int disposed = EditContainer.disposeByName("typing-practice");
+            disposed += EditContainer.disposeByName("context-help");
             if (disposed > 0)
-               trace("disposed " + disposed + " typing-practice buffers");
+               trace("disposed " + disposed + " regenerable buffers");
+            JS.clearOutput();
             EventQueue.biglock2.unlock();
             try {
                UI.flush();
