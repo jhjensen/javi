@@ -142,8 +142,14 @@ PREFIX ?= $(HOME)/.local
 # Usage:
 #   make install                 # installs to ~/.local
 #   make install PREFIX=/opt/javi
-install:
+install: plugins
 	./gradlew installDist
+	@# Copy plugin JARs into the installDist tree so they're found
+	@# when running from build/install/javi/bin/javi directly
+	@for jar in build/libs/javi-*.jar; do \
+		case "$$jar" in build/libs/javi-dev*.jar|build/libs/javi-all*.jar) continue;; esac; \
+		cp "$$jar" build/install/javi/lib/; \
+	done
 	@echo "Installing to $(PREFIX)..."
 	@mkdir -p $(PREFIX)/bin $(PREFIX)/share/javi
 	rm -rf $(PREFIX)/share/javi/bin $(PREFIX)/share/javi/lib
