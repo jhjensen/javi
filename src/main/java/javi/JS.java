@@ -53,6 +53,16 @@ public final class JS {
       scope.put("jsobj", scope, new JSObj());
    }
 
+   /**
+    * Clear the jsoutput buffer content. Called during memory
+    * reclamation (double-redraw) to free accumulated output.
+    */
+   static void clearOutput() {
+      int finish = JSR.jsoutput.finish();
+      if (finish > 2)
+         JSR.jsoutput.remove(1, finish - 2);
+   }
+
    static {
       jsClear();
    }

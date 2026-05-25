@@ -57,6 +57,15 @@ final class HelpBuffer {
    }
 
    /**
+    * Release the buffer reference so the TextEdit can be
+    * garbage collected after removal from filehash.
+    * Next call to {@link #ensure()} will create a fresh buffer.
+    */
+   void dispose() {
+      buffer = null;
+   }
+
+   /**
     * Get the underlying TextEdit buffer.
     *
     * @return the buffer, or null if {@link #ensure()} has

@@ -283,6 +283,35 @@ public class EditContainer<OType> implements
          }
    }
 
+   /**
+    * Dispose all internal buffers whose short name contains the given
+    * substring. Used by redraw to free regenerable buffers like
+    * typing-practice and context-help.
+    *
+    * @param nameSubstring substring to match against FileDescriptor.shortName
+    * @return number of buffers disposed
+    */
+   static int disposeByName(String nameSubstring) {
+      EventQueue.biglock2.assertOwned();
+      int count = 0;
+      Iterator<Map.Entry<FileDescriptor, EditContainer>> it =
+         filehash.entrySet().iterator();
+      while (it.hasNext()) {
+         Map.Entry<FileDescriptor, EditContainer> me = it.next();
+         if (me.getKey().shortName.contains(nameSubstring)) {
+            EditContainer ec = me.getValue();
+            it.remove();
+            try {
+               ec.disposeFvc();
+            } catch (IOException e) {
+               trace("disposeByName caught " + e);
+            }
+            count++;
+         }
+      }
+      return count;
+   }
+
    private void common(OType[] inarr) {
       //trace("common " + this);
       if (null != backup)
