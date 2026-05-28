@@ -292,6 +292,8 @@ public class TextEdit<OType> extends EditContainer<OType> {
          String args) throws IOException, InputException {
 
       //trace("com = " + command + " args:" + args + ":");
+      if (linestart > finish() - 1)
+         throw new InputException("invalid address");
       switch (command) {
          case 'd':
             var delvec = new ArrayList<String>(100);
