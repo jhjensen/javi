@@ -3,13 +3,6 @@ fontsize 13.8
 fontweight 1.0
 lines 110
 awt.lcdcontrast 100
-loadplugin typingtutor
-#loadplugin Server
-loadplugin tutorial
-loadclass javi.git.GitCommands
-loadclass javi.lsp.LspCommands
-lsp.restart java
-lsp.sourcepath .
 e todo.txt
 e src
 e main
