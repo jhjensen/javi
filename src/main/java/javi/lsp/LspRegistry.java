@@ -250,6 +250,23 @@ public final class LspRegistry {
       return result;
    }
 
+   /**
+    * Returns one formatted row per currently active LSP session.
+    * Each row contains the language id, session state, and project
+    * root, separated by tab characters.
+    *
+    * @return list of rows (empty if no sessions are active)
+    */
+   public List<String> getActiveSessionStatus() {
+      List<String> result = new ArrayList<>();
+      for (LspSession session : sessions.values()) {
+         result.add(session.getLanguageId()
+            + "\tstate=" + session.getState()
+            + "\troot=" + session.getProjectRoot());
+      }
+      return result;
+   }
+
    // ---------------------------------------------------------------
    // Internal
    // ---------------------------------------------------------------

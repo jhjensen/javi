@@ -223,14 +223,15 @@ public final class Javi {
                   UI.reportMessage("error reading ini file" + e);
                   e.printStackTrace();
                }
+
+
                new Jcmds();
                new MiscCommands();
                new PosListList.Cmd();
                javi.awt.AwtInterface awt = new javi.awt.AwtInterface();
                Command.execCmdList(); // run .javini commands after frm exists
                awt.showWithCurrentFont(); // show frame sized for .javini font
-
-
+               new LspCommands();
             }
             if (noCLIFiles) {
                trace("main: removing dummy before initPostUi");

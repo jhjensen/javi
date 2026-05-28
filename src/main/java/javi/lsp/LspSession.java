@@ -192,6 +192,11 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
       return config.languageId;
    }
 
+   /** Returns the project root directory for this session. */
+   public String getProjectRoot() {
+      return projectRoot;
+   }
+
    /** Returns the server capabilities received during initialization. */
    public Map<String, Object> getCapabilities() {
       return serverCapabilities;

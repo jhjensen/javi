@@ -87,4 +87,21 @@ class LspRegistryJUnitTest {
 
       assertNull(registry.sessionFor(".sh"));
    }
+
+   @Test
+   @DisplayName("getActiveSessionStatus is empty when no sessions started")
+   void activeSessionStatusEmptyInitially() {
+      LspServerConfig cfg = new LspServerConfig(
+         "fake", new String[]{"/not/a/real/server"},
+         new String[]{".fake"}, null);
+      LspRegistry registry = makeRegistryWithConfig(cfg);
+
+      assertTrue(registry.getActiveSessionStatus().isEmpty());
+      assertTrue(registry.activeSessions().isEmpty());
+
+      // sessionFor on an unavailable server must not start a session
+      registry.setProjectRoot("/tmp");
+      assertNull(registry.sessionFor(".fake"));
+      assertTrue(registry.getActiveSessionStatus().isEmpty());
+   }
 }
