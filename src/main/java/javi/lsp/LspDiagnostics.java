@@ -1,6 +1,7 @@
 package javi.lsp;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,16 @@ import static history.Tools.trace;
  * </ul></p>
  */
 public final class LspDiagnostics {
+
+   private static final Comparator<Entry> ENTRY_ORDER =
+      Comparator.comparing((Entry e) -> e.uri)
+      .thenComparingInt(e -> e.startLine)
+      .thenComparingInt(e -> e.startChar)
+      .thenComparingInt(e -> e.endLine)
+      .thenComparingInt(e -> e.endChar)
+      .thenComparingInt(e -> e.severity)
+      .thenComparing(e -> e.source)
+      .thenComparing(e -> e.message);
 
    /** A single diagnostic entry with typed fields. */
    public static final class Entry {
@@ -130,6 +141,7 @@ public final class LspDiagnostics {
             result.addAll(entry.getValue());
          }
       }
+      result.sort(ENTRY_ORDER);
       return result;
    }
 
@@ -146,6 +158,7 @@ public final class LspDiagnostics {
             result.addAll(entry.getValue());
          }
       }
+      result.sort(ENTRY_ORDER);
       return result;
    }
 
@@ -169,6 +182,7 @@ public final class LspDiagnostics {
             result.add(e);
          }
       }
+      result.sort(ENTRY_ORDER);
       return result;
    }
 

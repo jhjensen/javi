@@ -72,9 +72,21 @@ public final class LspRegistry {
     * @param sink callback for diagnostics and state changes
     */
    public LspRegistry(LspSession.NotificationSink sink) {
-      this.configs = LspServerConfig.getDefaults();
-      this.notificationSink = sink;
+      this(LspServerConfig.getDefaults(), sink);
       LspServerConfig.loadUserConfigs(configs);
+   }
+
+   /**
+    * Creates a registry with explicit configs.
+    * Intended for tests to avoid user-home config coupling.
+    *
+    * @param initialConfigs map of language id to config
+    * @param sink callback for diagnostics and state changes
+    */
+   LspRegistry(Map<String, LspServerConfig> initialConfigs,
+         LspSession.NotificationSink sink) {
+      this.configs = new HashMap<>(initialConfigs);
+      this.notificationSink = sink;
    }
 
    /**
