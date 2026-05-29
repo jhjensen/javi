@@ -122,6 +122,15 @@ public final class CopilotRestClient {
    /** Session token expiration (epoch seconds). */
    private volatile long tokenExpiresAt;
 
+   /** Rate limit: remaining requests (from response headers). */
+   private volatile int rateLimitRemaining = -1;
+
+   /** Rate limit: total limit (from response headers). */
+   private volatile int rateLimitTotal = -1;
+
+   /** Rate limit: reset time as epoch seconds (from response headers). */
+   private volatile long rateLimitResetEpoch;
+
    /**
     * Create a CopilotRestClient.
     *
@@ -1175,13 +1184,60 @@ public final class CopilotRestClient {
          .build();
 
       try {
-         return httpClient.send(
+         HttpResponse<String> resp = httpClient.send(
             request, HttpResponse.BodyHandlers.ofString());
+         extractRateLimitHeaders(resp);
+         return resp;
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new IOException(
             "Copilot request interrupted", e);
       }
+   }
+
+   /**
+    * Extract rate limit headers from an API response.
+    */
+   private void extractRateLimitHeaders(HttpResponse<?> resp) {
+      resp.headers().firstValue("x-ratelimit-remaining")
+         .ifPresent(v -> {
+            try {
+               rateLimitRemaining = Integer.parseInt(v);
+            } catch (NumberFormatException ignored) { }
+         });
+      resp.headers().firstValue("x-ratelimit-limit")
+         .ifPresent(v -> {
+            try {
+               rateLimitTotal = Integer.parseInt(v);
+            } catch (NumberFormatException ignored) { }
+         });
+      resp.headers().firstValue("x-ratelimit-reset")
+         .ifPresent(v -> {
+            try {
+               rateLimitResetEpoch = Long.parseLong(v);
+            } catch (NumberFormatException ignored) { }
+         });
+   }
+
+   /**
+    * Get the remaining rate limit credits (-1 if unknown).
+    */
+   public int getRateLimitRemaining() {
+      return rateLimitRemaining;
+   }
+
+   /**
+    * Get the total rate limit (-1 if unknown).
+    */
+   public int getRateLimitTotal() {
+      return rateLimitTotal;
+   }
+
+   /**
+    * Get the rate limit reset time as epoch seconds (0 if unknown).
+    */
+   public long getRateLimitResetEpoch() {
+      return rateLimitResetEpoch;
    }
 
    // ── Token I/O ────────────────────────────────────────────────

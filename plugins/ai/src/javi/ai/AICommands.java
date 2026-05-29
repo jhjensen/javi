@@ -1522,6 +1522,32 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("History size: "
          + AIClient.getInstance().getHistorySize()
          + " messages");
+      try {
+         AIProvider provider =
+            AIClient.getInstance().getProvider();
+         if (provider instanceof CopilotProvider cp) {
+            CopilotRestClient rc = cp.getRestClient();
+            int remaining = rc.getRateLimitRemaining();
+            int total = rc.getRateLimitTotal();
+            long resetEpoch = rc.getRateLimitResetEpoch();
+            if (remaining >= 0) {
+               appendToChatBuffer("Credits remaining: "
+                  + remaining
+                  + (total > 0 ? " / " + total : ""));
+            }
+            if (resetEpoch > 0) {
+               long now = System.currentTimeMillis() / 1000;
+               long secsLeft = resetEpoch - now;
+               if (secsLeft > 0) {
+                  appendToChatBuffer("Reset in: "
+                     + (secsLeft / 60) + "m "
+                     + (secsLeft % 60) + "s");
+               } else {
+                  appendToChatBuffer("Reset: now (limit refreshed)");
+               }
+            }
+         }
+      } catch (AIException ignored) { }
       appendToChatBuffer("");
       int logSize = RequestLog.size();
       if (logSize > 0) {
