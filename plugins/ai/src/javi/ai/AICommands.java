@@ -1406,7 +1406,7 @@ public final class AICommands extends Rgroup implements Plugin {
          char c = token.charAt(i);
          if ('\n' == c) {
             // Finalize current line, start a new one
-            int lastLine = chatBuffer.finish();
+            int lastLine = chatBuffer.finish() - 1;
             Object existing = chatBuffer.at(lastLine);
             String line = (null != existing
                ? existing.toString() : "")
@@ -1422,7 +1422,7 @@ public final class AICommands extends Rgroup implements Plugin {
       }
       // Update the current (last) line with accumulated text
       if (streamLineAccum.length() > 0) {
-         int lastLine = chatBuffer.finish();
+         int lastLine = chatBuffer.finish() - 1;
          Object existing = chatBuffer.at(lastLine);
          String base = null != existing
             ? existing.toString() : "";
