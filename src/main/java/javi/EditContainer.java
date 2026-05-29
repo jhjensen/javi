@@ -1070,6 +1070,10 @@ public class EditContainer<OType> implements
 
    final void addState(StringBuilder sb) {
       //trace("\"" + prop.fdes.shortName +  "\" class = " + prop.conv.getClass() );
+      if (ecache == null) {
+         sb.append(" initializing");
+         return;
+      }
       if (!donereading())
          sb.append(" still reading file");
 
