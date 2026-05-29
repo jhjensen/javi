@@ -649,6 +649,8 @@ JSON OUTPUT STRUCTURE:
                    help="Remove Docker images, containers, and files on rdesk")
     g.add_argument("--kill", action="store_true",
                    help="Kill any running Docker test containers on rdesk")
+    g.add_argument("--report", action="store_true",
+                   help="Parse and report existing results without re-running")
 
     # Filtering
     p.add_argument("--test-class", metavar="CLASS",
@@ -665,6 +667,10 @@ JSON OUTPUT STRUCTURE:
     # Output
     p.add_argument("--json", action="store_true",
                    help="Output results as JSON (default: human-readable)")
+    p.add_argument("--failures-only", action="store_true",
+                   help="Show only failures (suppresses passed/skipped counts)")
+    p.add_argument("--worst-coverage", type=int, metavar="N", default=0,
+                   help="Show only N packages with worst coverage")
     p.add_argument("--verbose", "-v", action="store_true",
                    help="Print progress to stderr")
 
@@ -732,6 +738,52 @@ def format_human(result):
     return "\n".join(lines)
 
 
+def filter_result(result, args):
+    """Apply --failures-only and --worst-coverage filters to result dict."""
+    d = asdict(result)
+    if args.failures_only:
+        # Keep only failure info, drop passed/skipped counts
+        for section in ('headless', 'gui'):
+            if section in d:
+                d[section] = {
+                    'failed': d[section]['failed'],
+                    'failures': d[section]['failures'],
+                }
+        d.pop('coverage_pct', None)
+    if args.worst_coverage and d.get('coverage_pct'):
+        # Sort by coverage ascending, keep only N worst
+        cov = d['coverage_pct']
+        cov.pop('overall', None)
+        worst = dict(sorted(cov.items(), key=lambda x: x[1])[:args.worst_coverage])
+        d['coverage_pct'] = worst
+    return d
+
+
+def report_existing(args):
+    """Parse existing test results and coverage without re-running tests."""
+    source_dir = Path(args.source_dir).resolve()
+    build_dir = source_dir / "build"
+    result = RunResult()
+    result.phase = "report"
+
+    # Parse test output
+    alltest_file = build_dir / "alltest-output.txt"
+    gui_file = build_dir / "guitest-output.txt"
+    output_file = alltest_file if alltest_file.exists() else gui_file
+
+    if output_file.exists():
+        result.output_file = str(output_file)
+        tr = parse_output_file(output_file)
+        result.gui = tr
+        result.success = (tr.failed == 0 and tr.build_status != "FAILED")
+    else:
+        result.error = "No output file found — run tests first"
+
+    # Parse coverage
+    result.coverage_pct = parse_coverage_report(build_dir)
+    return result
+
+
 def main():
     parser = build_parser()
     args = parser.parse_args()
@@ -749,12 +801,43 @@ def main():
         ok = do_fetch_logs(args.source_dir)
         sys.exit(0 if ok else 1)
 
-    result = run_tests(args)
+    if args.report:
+        result = report_existing(args)
+    else:
+        result = run_tests(args)
 
     if args.json:
-        print(json.dumps(asdict(result), indent=2))
+        d = filter_result(result, args)
+        print(json.dumps(d, indent=2))
     else:
-        print(format_human(result))
+        if args.failures_only:
+            # Compact human output: only failures
+            lines = []
+            for label, tr in [("Headless", result.headless), ("GUI", result.gui)]:
+                if tr.failed > 0:
+                    lines.append(f"{label}: {tr.failed} failures")
+                    for f in tr.failures:
+                        if isinstance(f, dict):
+                            lines.append(f"  - {f.get('test', '?')}")
+                            msg = f.get('message', '')
+                            if msg:
+                                for mline in msg.splitlines()[:3]:
+                                    lines.append(f"      {mline}")
+                        else:
+                            lines.append(f"  - {f}")
+            if not lines:
+                lines.append("No failures.")
+            print("\n".join(lines))
+        elif args.worst_coverage:
+            cov = dict(result.coverage_pct)
+            cov.pop('overall', None)
+            worst = sorted(cov.items(), key=lambda x: x[1])[:args.worst_coverage]
+            lines = [f"Worst {len(worst)} packages by coverage:"]
+            for pkg, pct in worst:
+                lines.append(f"  {pkg}: {pct}%")
+            print("\n".join(lines))
+        else:
+            print(format_human(result))
 
     sys.exit(0 if result.success else 1)
 
