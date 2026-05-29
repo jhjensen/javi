@@ -405,7 +405,9 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("");
       logRequest("explain", name, code);
       try {
-         FvContext.connectFv(chatBuffer, fvc.vi);
+         FvContext<?> ctx =
+            FvContext.connectFv(chatBuffer, fvc.vi);
+         ctx.cursoryabs(chatBuffer.finish() - 1);
       } catch (InputException e) {
          UI.reportMessage(
             "Input Error: " + e.getMessage());
@@ -455,7 +457,9 @@ public final class AICommands extends Rgroup implements Plugin {
       appendToChatBuffer("");
       logRequest("review", name, code);
       try {
-         FvContext.connectFv(chatBuffer, fvc.vi);
+         FvContext<?> ctx =
+            FvContext.connectFv(chatBuffer, fvc.vi);
+         ctx.cursoryabs(chatBuffer.finish() - 1);
       } catch (InputException e) {
          UI.reportMessage(
             "Input Error: " + e.getMessage());
