@@ -444,6 +444,153 @@ class LspSessionJUnitTest {
       goodSink.stoppedLatch.await(5, TimeUnit.SECONDS);
    }
 
+   @Test
+   @DisplayName("T3: crash in one server does not affect the other")
+   void crashDoesNotAffectOtherServer() throws Exception {
+      String crashScript = createCrashingServerScript();
+      String goodScript = createMockServerScript();
+
+      LspServerConfig crashConfig = new LspServerConfig("crasher",
+         new String[]{"/bin/bash", crashScript},
+         new String[]{".crash"}, null);
+      LspServerConfig goodConfig = new LspServerConfig("stable",
+         new String[]{"/bin/bash", goodScript},
+         new String[]{".good"}, null);
+
+      TestSink crashSink = new TestSink();
+      TestSink goodSink = new TestSink();
+
+      LspSession crashSession = new LspSession(
+         crashConfig, "/tmp", crashSink);
+      LspSession goodSession = new LspSession(
+         goodConfig, "/tmp", goodSink);
+
+      crashSession.start();
+      goodSession.start();
+
+      assertTrue(goodSink.readyLatch.await(10, TimeUnit.SECONDS),
+         "Good server should reach READY");
+
+      // Wait for the crasher to exhaust its restart attempts
+      assertTrue(crashSink.stoppedLatch.await(30, TimeUnit.SECONDS),
+         "Crashing server should eventually stop");
+
+      // The good server must still be healthy
+      assertEquals(LspSession.State.READY, goodSession.getState(),
+         "Good server should remain READY after other crashes");
+
+      // Good server should still respond to requests
+      Map<String, Object> params = new HashMap<>();
+      params.put("textDocument",
+         Map.of("uri", "file:///tmp/Test.good"));
+      params.put("position", Map.of("line", 0, "character", 0));
+
+      CompletableFuture<Map<String, Object>> future =
+         goodSession.submit("textDocument/definition", params);
+      Map<String, Object> result = future.get(5, TimeUnit.SECONDS);
+      assertNotNull(result,
+         "Good server should still respond after crasher dies");
+
+      // Verify the crasher saw CRASHED state
+      assertTrue(crashSink.stateChanges.contains(
+         LspSession.State.CRASHED),
+         "Crasher should have entered CRASHED: "
+            + crashSink.stateChanges);
+
+      goodSession.stop();
+      goodSink.stoppedLatch.await(5, TimeUnit.SECONDS);
+   }
+
+   @Test
+   @DisplayName("T3: diagnostics from multiple servers are isolated")
+   void diagnosticsFromMultipleServersIsolated() throws Exception {
+      // Create two diagnostic-sending servers with different URIs
+      String script1 = createDiagServerForUri(
+         "file:///tmp/Main.java", "jdtls-error");
+      String script2 = createDiagServerForUri(
+         "file:///tmp/readme.md", "harper-warning");
+
+      LspServerConfig config1 = new LspServerConfig("jdtls",
+         new String[]{"/bin/bash", script1},
+         new String[]{".java"}, null);
+      LspServerConfig config2 = new LspServerConfig("harper",
+         new String[]{"/bin/bash", script2},
+         new String[]{".md"}, null);
+
+      TestSink sink1 = new TestSink();
+      TestSink sink2 = new TestSink();
+
+      LspSession session1 = new LspSession(config1, "/tmp", sink1);
+      LspSession session2 = new LspSession(config2, "/tmp", sink2);
+
+      session1.start();
+      session2.start();
+
+      assertTrue(sink1.readyLatch.await(10, TimeUnit.SECONDS));
+      assertTrue(sink2.readyLatch.await(10, TimeUnit.SECONDS));
+
+      // Wait for diagnostics from both servers
+      int attempts = 0;
+      while ((sink1.diagnosticUris.isEmpty()
+            || sink2.diagnosticUris.isEmpty()) && attempts < 50) {
+         Thread.sleep(100);
+         attempts++;
+      }
+
+      assertFalse(sink1.diagnosticUris.isEmpty(),
+         "Server 1 should have sent diagnostics");
+      assertFalse(sink2.diagnosticUris.isEmpty(),
+         "Server 2 should have sent diagnostics");
+
+      // Verify different URIs
+      assertEquals("file:///tmp/Main.java", sink1.diagnosticUris.get(0),
+         "Server 1 diagnostics should be for Main.java");
+      assertEquals("file:///tmp/readme.md", sink2.diagnosticUris.get(0),
+         "Server 2 diagnostics should be for readme.md");
+
+      session1.stop();
+      session2.stop();
+      sink1.stoppedLatch.await(5, TimeUnit.SECONDS);
+      sink2.stoppedLatch.await(5, TimeUnit.SECONDS);
+   }
+
+   /**
+    * Helper: creates a diagnostic server that sends a publishDiagnostics
+    * notification for a specific URI with a custom message.
+    */
+   private static String createDiagServerForUri(String uri, String message)
+         throws IOException {
+      java.io.File script = java.io.File.createTempFile(
+         "diaguri-lsp-", ".sh");
+      script.deleteOnExit();
+      script.setExecutable(true);
+
+      String content = "#!/bin/bash\n"
+         + "while IFS= read -r line; do\n"
+         + "  if [[ \"$line\" == Content-Length:* ]]; then\n"
+         + "    len=${line#Content-Length: }\n"
+         + "    len=${len%%$'\\r'}\n"
+         + "    read -r blank\n"
+         + "    body=$(dd bs=1 count=$len 2>/dev/null)\n"
+         + "    if echo \"$body\" | grep -q '\"method\":\"initialize\"'; then\n"
+         + "      id=$(echo \"$body\" | sed -n 's/.*\"id\":\\([0-9]*\\).*/\\1/p')\n"
+         + "      resp='{\"jsonrpc\":\"2.0\",\"id\":'$id',\"result\":{\"capabilities\":{}}}'\n"
+         + "      printf 'Content-Length: %d\\r\\n\\r\\n%s' ${#resp} \"$resp\"\n"
+         + "    elif echo \"$body\" | grep -q '\"method\":\"initialized\"'; then\n"
+         + "      diag='{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\",\"params\":{\"uri\":\"" + uri + "\",\"diagnostics\":[{\"range\":{\"start\":{\"line\":0,\"character\":0},\"end\":{\"line\":0,\"character\":5}},\"severity\":1,\"message\":\"" + message + "\"}]}}'\n"
+         + "      printf 'Content-Length: %d\\r\\n\\r\\n%s' ${#diag} \"$diag\"\n"
+         + "    elif echo \"$body\" | grep -q '\"method\":\"shutdown\"'; then\n"
+         + "      id=$(echo \"$body\" | sed -n 's/.*\"id\":\\([0-9]*\\).*/\\1/p')\n"
+         + "      resp='{\"jsonrpc\":\"2.0\",\"id\":'$id',\"result\":null}'\n"
+         + "      printf 'Content-Length: %d\\r\\n\\r\\n%s' ${#resp} \"$resp\"\n"
+         + "      exit 0\n"
+         + "    fi\n"
+         + "  fi\n"
+         + "done\n";
+      java.nio.file.Files.writeString(script.toPath(), content);
+      return script.getAbsolutePath();
+   }
+
    // ---------------------------------------------------------------
    // Additional lifecycle tests
    // ---------------------------------------------------------------
