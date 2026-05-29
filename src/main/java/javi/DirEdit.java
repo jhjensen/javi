@@ -361,7 +361,7 @@ public final class DirEdit extends TextEdit<String> {
       } catch (IOException e) {
          absPath = currentDir.fh.getAbsolutePath();
       }
-      lines.add("  " + absPath);
+      lines.add("  Directory: " + absPath);
       lines.add("");
 
       // Get directory contents
@@ -428,11 +428,16 @@ public final class DirEdit extends TextEdit<String> {
             dirFile.getAbsolutePath(), this);
       }
 
-      // Status info at end — filter and sort mode only
+      // Footer: status and help
+      lines.add("");
+      StringBuilder status = new StringBuilder("  sort:");
+      status.append(sortMode.name().toLowerCase());
       if (null != filterPattern) {
-         lines.add("");
-         lines.add("  filter:" + filterPattern);
+         status.append("  filter:").append(filterPattern);
       }
+      lines.add(status.toString());
+      lines.add("  [Enter] edit  [dd] delete  [r] rename"
+         + "  [s] sort  [.] hidden  [/] filter");
 
       // Insert all lines
       insertStrings(lines, 1);

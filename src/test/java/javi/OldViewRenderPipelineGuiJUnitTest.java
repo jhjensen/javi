@@ -296,6 +296,7 @@ class OldViewRenderPipelineGuiJUnitTest {
       EventQueue.biglock2.lock();
       try {
          oldView.cursorChanged(0, 1);
+         ensureImageg();
          int screenSize = getIntField("screenSize");
          int firstLine = oldView.screenFirstLine();
          Graphics2D g = createTestGraphics();
