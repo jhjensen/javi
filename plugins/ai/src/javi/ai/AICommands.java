@@ -317,13 +317,19 @@ public final class AICommands extends Rgroup implements Plugin {
    private Object doChat(String message, FvContext fvc)
          throws IOException, InputException {
       if (null == message || message.isEmpty()) {
-         String line = InsertBuffer.getcomline("ai> ");
-         if (line.length() <= 4) {
-            return null; // empty input
-         }
-         message = line.substring(4).trim();
-         if (message.isEmpty()) {
-            return null;
+         // Use visual selection as multiline prompt if active
+         String sel = getSelectedText(fvc);
+         if (null != sel && !sel.isEmpty()) {
+            message = sel;
+         } else {
+            String line = InsertBuffer.getcomline("ai> ");
+            if (line.length() <= 4) {
+               return null; // empty input
+            }
+            message = line.substring(4).trim();
+            if (message.isEmpty()) {
+               return null;
+            }
          }
       }
 
@@ -1545,6 +1551,13 @@ public final class AICommands extends Rgroup implements Plugin {
                } else {
                   appendToChatBuffer("Reset: now (limit refreshed)");
                }
+            }
+            String rateHdrs = rc.getLastRateHeaders();
+            if (!rateHdrs.isEmpty()) {
+               appendToChatBuffer("Rate headers: " + rateHdrs);
+            } else if (remaining < 0 && resetEpoch == 0) {
+               appendToChatBuffer(
+                  "Budget: unknown (no rate-limit headers from API)");
             }
          }
       } catch (AIException ignored) { }

@@ -131,6 +131,9 @@ public final class CopilotRestClient {
    /** Rate limit: reset time as epoch seconds (from response headers). */
    private volatile long rateLimitResetEpoch;
 
+   /** Last response header names matching rate/limit/quota for debugging. */
+   private volatile String lastRateHeaders = "";
+
    /**
     * Create a CopilotRestClient.
     *
@@ -1200,19 +1203,33 @@ public final class CopilotRestClient {
     * Extract rate limit headers from an API response.
     */
    private void extractRateLimitHeaders(HttpResponse<?> resp) {
+      StringBuilder rateHdrs = new StringBuilder();
+      resp.headers().map().forEach((name, values) -> {
+         if (name.contains("limit") || name.contains("quota")
+               || name.contains("rate") || name.contains("budget")) {
+            rateHdrs.append(name).append("=")
+               .append(values.get(0)).append(" ");
+         }
+      });
+      if (rateHdrs.length() > 0)
+         lastRateHeaders = rateHdrs.toString().trim();
+
       resp.headers().firstValue("x-ratelimit-remaining")
+         .or(() -> resp.headers().firstValue("x-copilot-quota-remaining"))
          .ifPresent(v -> {
             try {
                rateLimitRemaining = Integer.parseInt(v);
             } catch (NumberFormatException ignored) { }
          });
       resp.headers().firstValue("x-ratelimit-limit")
+         .or(() -> resp.headers().firstValue("x-copilot-quota-limit"))
          .ifPresent(v -> {
             try {
                rateLimitTotal = Integer.parseInt(v);
             } catch (NumberFormatException ignored) { }
          });
       resp.headers().firstValue("x-ratelimit-reset")
+         .or(() -> resp.headers().firstValue("x-copilot-quota-reset"))
          .ifPresent(v -> {
             try {
                rateLimitResetEpoch = Long.parseLong(v);
@@ -1239,6 +1256,10 @@ public final class CopilotRestClient {
     */
    public long getRateLimitResetEpoch() {
       return rateLimitResetEpoch;
+   }
+
+   public String getLastRateHeaders() {
+      return lastRateHeaders;
    }
 
    // ── Token I/O ────────────────────────────────────────────────
