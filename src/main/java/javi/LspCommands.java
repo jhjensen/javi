@@ -62,6 +62,8 @@ public final class LspCommands extends Rgroup {
          return;
       diagnostics = new LspDiagnostics();
       registry = LspRegistry.getInstance(new SinkImpl());
+      PosListList.Cmd.registerTagProvider(new LspTagLookupProvider());
+      PosListList.Cmd.registerTagProvider(new LspReferencesProvider());
    }
 
    /** Returns the shared diagnostics store. */
