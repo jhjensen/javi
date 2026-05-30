@@ -1,6 +1,7 @@
 package javi;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -152,6 +153,24 @@ public final class LspCommands extends Rgroup {
             setRootDir(asString(arg));
             return null;
          });
+      registerCommand(new CommandEntry("lsp.def",
+         "goto definition at cursor", "lsp",
+         (count, rcount, fvc, dot) -> {
+            gotoDefinition(fvc);
+            return null;
+         }));
+      registerCommand(new CommandEntry("lsp.ref",
+         "find references at cursor", "lsp",
+         (count, rcount, fvc, dot) -> {
+            findReferences(fvc);
+            return null;
+         }));
+      registerCommand(new CommandEntry("lsp.hover",
+         "show hover info at cursor", "lsp",
+         (count, rcount, fvc, dot) -> {
+            showHover(fvc);
+            return null;
+         }));
    }
 
    private static String asString(Object arg) {
@@ -231,6 +250,161 @@ public final class LspCommands extends Rgroup {
          throws InputException {
       if (null == lang || lang.isEmpty())
          throw new InputException(cmd + " requires a language id");
+   }
+
+   private static String getFileUri(FvContext fvc) {
+      FileDescriptor fd = fvc.edvec.fdes();
+      if (fd instanceof FileDescriptor.LocalFile lf)
+         return "file://" + lf.canonName;
+      return null;
+   }
+
+   private static String getExtension(FvContext fvc) {
+      FileDescriptor fd = fvc.edvec.fdes();
+      String name = fd.canonName;
+      int dot = name.lastIndexOf('.');
+      return dot >= 0 ? name.substring(dot) : "";
+   }
+
+   private static Map<String, Object> textDocPosition(FvContext fvc) {
+      Map<String, Object> pos = new HashMap<>();
+      pos.put("line", fvc.inserty() - 1); // LSP is 0-indexed
+      pos.put("character", fvc.insertx());
+      Map<String, Object> textDoc = new HashMap<>();
+      textDoc.put("uri", getFileUri(fvc));
+      Map<String, Object> params = new HashMap<>();
+      params.put("textDocument", textDoc);
+      params.put("position", pos);
+      return params;
+   }
+
+   private static LspSession sessionForFvc(FvContext fvc)
+         throws InputException {
+      String ext = getExtension(fvc);
+      LspSession s = getRegistry().sessionFor(ext);
+      if (null == s)
+         throw new InputException(
+            "LSP: no server for extension " + ext);
+      return s;
+   }
+
+   private static void gotoDefinition(FvContext fvc)
+         throws InputException {
+      sessionForFvc(fvc); // validate
+      String ext = getExtension(fvc);
+      LspSession session = getRegistry().sessionFor(ext);
+      Map<String, Object> params = textDocPosition(fvc);
+      Map<String, Object> result = requestSync(session,
+         "textDocument/definition", params);
+      if (null == result) {
+         UI.reportMessage("LSP: no definition found");
+         return;
+      }
+      navigateToLocation(result, fvc);
+   }
+
+   private static void findReferences(FvContext fvc)
+         throws InputException {
+      sessionForFvc(fvc); // validate
+      String ext = getExtension(fvc);
+      LspSession session = getRegistry().sessionFor(ext);
+      Map<String, Object> params = textDocPosition(fvc);
+      Map<String, Object> context = new HashMap<>();
+      context.put("includeDeclaration", Boolean.TRUE);
+      params.put("context", context);
+      Map<String, Object> result = requestSync(session,
+         "textDocument/references", params);
+      if (null == result) {
+         UI.reportMessage("LSP: no references found");
+         return;
+      }
+      navigateToLocation(result, fvc);
+   }
+
+   private static void showHover(FvContext fvc) throws InputException {
+      sessionForFvc(fvc); // validate
+      String ext = getExtension(fvc);
+      LspSession session = getRegistry().sessionFor(ext);
+      Map<String, Object> params = textDocPosition(fvc);
+      Map<String, Object> result = requestSync(session,
+         "textDocument/hover", params);
+      if (null == result) {
+         UI.reportMessage("LSP: no hover info");
+         return;
+      }
+      Object contents = result.get("contents");
+      if (contents instanceof Map) {
+         @SuppressWarnings("unchecked")
+         Map<String, Object> mc = (Map<String, Object>) contents;
+         Object val = mc.get("value");
+         if (val != null)
+            UI.reportMessage(val.toString());
+      } else if (contents instanceof String) {
+         UI.reportMessage((String) contents);
+      } else {
+         UI.reportMessage("LSP hover: " + result);
+      }
+   }
+
+   private static Map<String, Object> requestSync(LspSession session,
+         String method, Map<String, Object> params) {
+      try {
+         return session.submit(method, params)
+            .get(DEFAULT_REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      } catch (TimeoutException e) {
+         trace("LSP request timeout: " + method);
+         return null;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         return null;
+      } catch (ExecutionException e) {
+         trace("LSP request failed: " + method + " " + e.getCause());
+         return null;
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private static void navigateToLocation(Map<String, Object> result,
+         FvContext fvc) {
+      // Result can be a Location or an array of Locations
+      String uri = (String) result.get("uri");
+      Map<String, Object> range = (Map<String, Object>) result.get("range");
+      if (null == uri && null == range) {
+         // Might be wrapped in a "result" key or be an array
+         Object inner = result.get("result");
+         if (inner instanceof List<?> list && !list.isEmpty()) {
+            Map<String, Object> first = (Map<String, Object>) list.get(0);
+            uri = (String) first.get("uri");
+            range = (Map<String, Object>) first.get("range");
+         } else if (inner instanceof Map) {
+            Map<String, Object> loc = (Map<String, Object>) inner;
+            uri = (String) loc.get("uri");
+            range = (Map<String, Object>) loc.get("range");
+         }
+      }
+      if (null == uri) {
+         UI.reportMessage("LSP: location has no uri");
+         return;
+      }
+      String path = uri.startsWith("file://")
+         ? uri.substring(7) : uri;
+      int line = 1;
+      if (null != range) {
+         Map<String, Object> start =
+            (Map<String, Object>) range.get("start");
+         if (null != start) {
+            Object lnum = start.get("line");
+            if (lnum instanceof Number)
+               line = ((Number) lnum).intValue() + 1; // LSP->javi
+         }
+      }
+      try {
+         FvContext target = FileList.openFileName(path, fvc.vi);
+         target.cursoryabs(line);
+         UI.reportMessage("LSP: " + path + ":" + line);
+      } catch (Exception e) {
+         UI.reportMessage("LSP navigate: " + e.getMessage());
+      }
    }
 
    /** Stops all sessions; used during shutdown. */
