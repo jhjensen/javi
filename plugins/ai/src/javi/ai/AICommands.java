@@ -16,6 +16,7 @@ import javi.InsertBuffer;
 import javi.JeyEvent;
 import javi.MovePos;
 import javi.Plugin;
+import javi.PosListList;
 import javi.Rgroup;
 import javi.StringIoc;
 import javi.TextEdit;
@@ -314,6 +315,9 @@ public final class AICommands extends Rgroup implements Plugin {
     * @throws IOException if an I/O error occurs
     * @throws InputException if input fails
     */
+   private static final String PROMPT_SEPARATOR =
+      "________________________________ (Esc to send)";
+
    private Object doChat(String message, FvContext fvc)
          throws IOException, InputException {
       if (null == message || message.isEmpty()) {
@@ -322,12 +326,8 @@ public final class AICommands extends Rgroup implements Plugin {
          if (null != sel && !sel.isEmpty()) {
             message = sel;
          } else {
-            String line = InsertBuffer.getcomline("ai> ");
-            if (line.length() <= 4) {
-               return null; // empty input
-            }
-            message = line.substring(4).trim();
-            if (message.isEmpty()) {
+            message = readMultilinePrompt(fvc);
+            if (null == message || message.isEmpty()) {
                return null;
             }
          }
@@ -385,6 +385,55 @@ public final class AICommands extends Rgroup implements Plugin {
          error -> handleAsyncError(error, vi)
       );
       return null;
+   }
+
+   /**
+    * Show a separator line in the chat buffer and enter multiline
+    * insert mode.
+    * The user types their prompt below the separator and presses
+    * Esc to send.
+    * Returns the collected prompt text, or null if empty/cancelled.
+    */
+   private String readMultilinePrompt(FvContext fvc)
+         throws IOException, InputException {
+      // Capture source context before switching buffers
+      if (!"*ai-chat*".equals(fvc.edvec.getName())) {
+         lastSourceBuffer = fvc.edvec;
+         lastSourceName = fvc.edvec.getName();
+         updateBufferInfoContext(fvc);
+      }
+
+      ensureChatBuffer();
+      appendToChatBuffer(PROMPT_SEPARATOR);
+      int separatorLine = chatBuffer.finish() - 1;
+
+      // Switch to chat buffer and position cursor after separator
+      FvContext ctx = FvContext.connectFv(chatBuffer, fvc.vi);
+      ctx.cursoryabs(separatorLine);
+      ctx.cursorabs(0, separatorLine);
+
+      // Enter multiline insert mode — user types prompt, Esc to finish
+      chatBuffer.insertOne("", chatBuffer.finish());
+      ctx.cursoryabs(chatBuffer.finish() - 1);
+      ctx.cursorabs(0, chatBuffer.finish() - 1);
+      InsertBuffer.insertMode(false, 1, ctx, false, false);
+
+      // Collect text between separator and end of buffer
+      int endLine = chatBuffer.finish() - 1;
+      StringBuilder prompt = new StringBuilder();
+      for (int i = separatorLine + 1; i <= endLine; i++) {
+         String line = chatBuffer.at(i).toString();
+         if (prompt.length() > 0)
+            prompt.append('\n');
+         prompt.append(line);
+      }
+
+      // Remove the separator and prompt lines from buffer
+      if (endLine >= separatorLine) {
+         chatBuffer.remove(separatorLine, endLine - separatorLine + 1);
+      }
+
+      return prompt.toString().trim();
    }
 
    /**
@@ -1454,7 +1503,20 @@ public final class AICommands extends Rgroup implements Plugin {
          UI.reportMessage(
             "Input Error: " + e.getMessage());
       }
+      registerChatPositionList();
       vi.repaint();
+   }
+
+   private static void registerChatPositionList() {
+      try {
+         int responseLine = Math.max(1, chatBuffer.finish() - 3);
+         String entry = "*ai-chat*(" + responseLine + ")- AI response";
+         java.io.BufferedReader reader = new java.io.BufferedReader(
+            new java.io.StringReader(entry));
+         PosListList.Cmd.replaceFromReader("ai-chat", reader);
+      } catch (Exception e) {
+         trace("registerChatPositionList: " + e);
+      }
    }
 
    /**
@@ -1557,7 +1619,7 @@ public final class AICommands extends Rgroup implements Plugin {
                appendToChatBuffer("Rate headers: " + rateHdrs);
             } else if (remaining < 0 && resetEpoch == 0) {
                appendToChatBuffer(
-                  "Budget: unknown (no rate-limit headers from API)");
+                  "Budget: Copilot API does not expose usage headers");
             }
          }
       } catch (AIException ignored) { }
