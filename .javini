@@ -14,3 +14,6 @@ e build.txt plugins typingtutor ai ai src test main history java javi git plugin
 loadplugin server
 loadplugin ai copilot /Users/jjensen/javi/.ai_auth
 ai.status
+loadclass javi.lsp.LspCommands
+lsp.restart java
+lsp.rootdir .

@@ -1448,6 +1448,7 @@ final class OldView extends AwtView {
                   trace("repaint because still loading");
                   repaint(200);
                } else {
+                  trace("repaint because of invalid or empty");
                   gr.setColor(getBackground());
                   gr.fillRect(0, 0, getWidth(), getHeight());
                }
