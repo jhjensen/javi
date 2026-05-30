@@ -175,6 +175,8 @@ public final class MapEvent {
          normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
             null, CTRL_MASK);
          normalKeyMap.bindEditKey('g', "ai.gprocess", null);
+         // Shift+Enter in normal mode → send chat prompt
+         normalKeyMap.bindEditKey((char) 13, "ai.chat", null, SHIFT_MASK);
       }
 
       // Create buffer-type overlay keymaps (filelist, shell, etc.)

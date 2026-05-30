@@ -316,7 +316,7 @@ public final class AICommands extends Rgroup implements Plugin {
     * @throws InputException if input fails
     */
    private static final String PROMPT_SEPARATOR =
-      "________________________________ (Esc to send)";
+      "\u001b[33m________________________________\u001b[0m";
 
    private Object doChat(String message, FvContext fvc)
          throws IOException, InputException {
@@ -326,8 +326,17 @@ public final class AICommands extends Rgroup implements Plugin {
          if (null != sel && !sel.isEmpty()) {
             message = sel;
          } else {
-            message = readMultilinePrompt(fvc);
-            if (null == message || message.isEmpty()) {
+            // If already in chat buffer with a pending separator, send it
+            if ("*ai-chat*".equals(fvc.edvec.getName())) {
+               message = collectPromptFromSeparator();
+               if (null == message || message.isEmpty()) {
+                  // No text below separator — add new separator
+                  appendPromptSeparator(fvc);
+                  return null;
+               }
+            } else {
+               // Not in chat buffer — switch there and add separator
+               appendPromptSeparator(fvc);
                return null;
             }
          }
@@ -388,37 +397,46 @@ public final class AICommands extends Rgroup implements Plugin {
    }
 
    /**
-    * Show a separator line in the chat buffer and enter multiline
-    * insert mode.
-    * The user types their prompt below the separator and presses
-    * Esc to send.
-    * Returns the collected prompt text, or null if empty/cancelled.
+    * Append the yellow prompt separator line to the chat buffer and
+    * switch to it.  The user types below the separator and invokes
+    * ai.chat again (or Shift-Enter) to send.
     */
-   private String readMultilinePrompt(FvContext fvc)
-         throws IOException, InputException {
-      // Capture source context before switching buffers
+   private void appendPromptSeparator(FvContext fvc)
+         throws InputException {
       if (!"*ai-chat*".equals(fvc.edvec.getName())) {
          lastSourceBuffer = fvc.edvec;
          lastSourceName = fvc.edvec.getName();
          updateBufferInfoContext(fvc);
       }
-
       ensureChatBuffer();
       appendToChatBuffer(PROMPT_SEPARATOR);
-      int separatorLine = chatBuffer.finish() - 1;
-
-      // Switch to chat buffer and position cursor after separator
-      FvContext ctx = FvContext.connectFv(chatBuffer, fvc.vi);
-      ctx.cursoryabs(separatorLine);
-      ctx.cursorabs(0, separatorLine);
-
-      // Enter multiline insert mode — user types prompt, Esc to finish
       chatBuffer.insertOne("", chatBuffer.finish());
+      FvContext ctx = FvContext.connectFv(chatBuffer, fvc.vi);
       ctx.cursoryabs(chatBuffer.finish() - 1);
       ctx.cursorabs(0, chatBuffer.finish() - 1);
-      InsertBuffer.insertMode(false, 1, ctx, false, false);
+      UI.reportMessage("Type prompt below line, then :ai.chat or Shift-Enter to send");
+   }
 
-      // Collect text between separator and end of buffer
+   /**
+    * Collect text from below the last prompt separator in the chat buffer.
+    * Removes the separator and prompt lines from the buffer.
+    * Returns null if no separator found or no text below it.
+    */
+   private String collectPromptFromSeparator() {
+      if (null == chatBuffer)
+         return null;
+      // Find the last separator line
+      int separatorLine = -1;
+      for (int i = chatBuffer.finish() - 1; i >= 1; i--) {
+         if (PROMPT_SEPARATOR.equals(chatBuffer.at(i).toString())) {
+            separatorLine = i;
+            break;
+         }
+      }
+      if (separatorLine < 0)
+         return null;
+
+      // Collect lines below separator
       int endLine = chatBuffer.finish() - 1;
       StringBuilder prompt = new StringBuilder();
       for (int i = separatorLine + 1; i <= endLine; i++) {
@@ -428,7 +446,7 @@ public final class AICommands extends Rgroup implements Plugin {
          prompt.append(line);
       }
 
-      // Remove the separator and prompt lines from buffer
+      // Remove separator and prompt lines
       if (endLine >= separatorLine) {
          chatBuffer.remove(separatorLine, endLine - separatorLine + 1);
       }
