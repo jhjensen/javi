@@ -384,6 +384,7 @@ public final class CopilotRestClient {
                status);
          }
 
+         extractRateLimitHeaders(response);
          return readSSEStream(response.body(), onToken);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
