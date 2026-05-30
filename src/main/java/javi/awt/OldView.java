@@ -1444,6 +1444,9 @@ final class OldView extends AwtView {
                   applyOverrideFont();
                   applyChanges();
                   copt.rpaint(gr);
+               } else if (!gettext().donereading()) {
+                  trace("repaint because still loading");
+                  repaint(200);
                } else {
                   gr.setColor(getBackground());
                   gr.fillRect(0, 0, getWidth(), getHeight());

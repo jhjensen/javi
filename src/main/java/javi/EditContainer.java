@@ -673,6 +673,8 @@ public class EditContainer<OType> implements
    public final int readIn() {
       if (!finishedread)
          myexpand(0);
+      if (null == ecache)
+         return 0;
       return ecache.size();
    }
 
@@ -685,6 +687,8 @@ public class EditContainer<OType> implements
       if (!finishedread)
          myexpand(desired + 1);
       //trace(this + "!contain desired = " + desired );
+      if (null == ecache)
+         return false;
       return desired < ecache.size();
    }
 
