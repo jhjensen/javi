@@ -15,6 +15,7 @@ public final class JeyEvent {
          switch (keyChar) { // for shifted characters the code is shifted, and
          case ' ': // we don't want to distinguish with the
          case 8: // modifers except for a few special cases
+         case 13:
          case 26:
             break;
          default:

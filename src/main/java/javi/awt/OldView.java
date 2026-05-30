@@ -1534,6 +1534,12 @@ final class OldView extends AwtView {
                else if (c0 == '@')
                   atIt.setLineForeground(AtView.foldSummaryColor);
             }
+         } else if ("*ai-chat*".equals(bufShortName)) {
+            String lt = atIt.getText();
+            if (lt.contains("\u001b[33m")) {
+               atIt.setLineForeground(Color.yellow);
+               atIt.setText(lt.replaceAll("\u001b\\[[0-9;]*m", ""));
+            }
          }
 
          // Ghost text preview on the ghost line

@@ -446,9 +446,9 @@ public final class AICommands extends Rgroup implements Plugin {
          prompt.append(line);
       }
 
-      // Remove separator and prompt lines
-      if (endLine >= separatorLine) {
-         chatBuffer.remove(separatorLine, endLine - separatorLine + 1);
+      // Remove prompt lines below separator (keep separator itself)
+      if (endLine > separatorLine) {
+         chatBuffer.remove(separatorLine + 1, endLine - separatorLine);
       }
 
       return prompt.toString().trim();
