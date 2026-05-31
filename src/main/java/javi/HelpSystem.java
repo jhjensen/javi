@@ -1508,6 +1508,7 @@ public final class HelpSystem {
       append("    gam              List available models");
       append("    gax              Cancel AI request");
       append("    ga?              Show AI help");
+      append("    Shift+Enter      Open AI chat");
       append("");
       append("  Insert mode:");
       append("    Tab              Trigger AI completion");

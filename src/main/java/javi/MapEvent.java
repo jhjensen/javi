@@ -161,26 +161,46 @@ public final class MapEvent {
     * Extracted from bindCommands to stay within method-length limit.
     */
    private static void bindAiAndBufferKeys() {
-      // AI commands — only bind if the AI plugin loaded successfully
-      if (Rgroup.bindingLookup("ai") != null) {
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
-            null, SHIFT_MASK);
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
-            null, CTRL_MASK);
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
-            null, 0);
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
-            null, SHIFT_MASK);
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
-            null, CTRL_MASK);
-         normalKeyMap.bindEditKey('g', "ai.gprocess", null);
-         // Shift+Enter in normal mode → send chat prompt
-         normalKeyMap.bindEditKey((char) 13, "ai.chat", null, SHIFT_MASK);
-      }
+      bindAiKeysIfAvailable();
 
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
+   }
+
+   /**
+    * Re-bind AI keys after late plugin loads.
+    * Safe to call multiple times.
+    */
+   static void rebindAiKeys() {
+      if (normalKeyMap != null) {
+         bindAiKeysIfAvailable();
+      }
+   }
+
+   private static void bindAiKeysIfAvailable() {
+      if (Rgroup.bindingLookup("ai.chat") == null)
+         return;
+
+      if (Rgroup.bindingLookup("ai") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
+      if (Rgroup.bindingLookup("ai.explain") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
+            null, SHIFT_MASK);
+      if (Rgroup.bindingLookup("ai.review") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
+            null, CTRL_MASK);
+      if (Rgroup.bindingLookup("ai.complete") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
+            null, 0);
+      if (Rgroup.bindingLookup("ai.doc") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
+            null, SHIFT_MASK);
+      if (Rgroup.bindingLookup("ai.cancel") != null)
+         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
+            null, CTRL_MASK);
+      if (Rgroup.bindingLookup("ai.gprocess") != null)
+         normalKeyMap.bindEditKey('g', "ai.gprocess", null);
+      normalKeyMap.bindEditKey((char) 13, "ai.chat", null, SHIFT_MASK);
    }
 
    private static void bindMovementKeys(KeyMap km, Matcher sentenceRegex,

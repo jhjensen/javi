@@ -103,6 +103,8 @@ public final class Javi {
 
       //new v8();
       //new msvc();
+      // Re-check AI command bindings in case the plugin was loaded late.
+      MapEvent.rebindAiKeys();
       //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
