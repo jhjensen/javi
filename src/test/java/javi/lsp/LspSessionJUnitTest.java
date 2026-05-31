@@ -807,4 +807,54 @@ class LspSessionJUnitTest {
       session.stop();
       sink.stoppedLatch.await(5, TimeUnit.SECONDS);
    }
+
+   // ---------------------------------------------------------------
+   // T7: isIndexed() reflects jdtls language/status notifications
+   //     (F7: long-running indexing should be observable so callers
+   //     can apply longer request timeouts).
+   // ---------------------------------------------------------------
+
+   @Test
+   @DisplayName("T7: isIndexed flips true on language/status ServiceReady")
+   void indexedFlipsOnLanguageStatus() throws Exception {
+      String script = createHangingServerScript();
+      LspServerConfig config = mockServerConfig(script);
+      TestSink sink = new TestSink();
+      LspSession session = new LspSession(config, "/tmp", sink);
+      try {
+         assertFalse(session.isIndexed(),
+            "fresh session must not be indexed");
+
+         Map<String, Object> p = new HashMap<>();
+         p.put("type", "Started");
+         p.put("message", "Ready");
+         session.onNotification("language/status", p);
+         assertTrue(session.isIndexed(),
+            "language/status Started should mark indexed");
+      } finally {
+         session.stop();
+      }
+   }
+
+   @Test
+   @DisplayName("T7: isIndexed stays false for unrelated notifications")
+   void indexedStaysFalseForUnrelated() throws Exception {
+      String script = createHangingServerScript();
+      LspServerConfig config = mockServerConfig(script);
+      TestSink sink = new TestSink();
+      LspSession session = new LspSession(config, "/tmp", sink);
+      try {
+         session.onNotification("window/logMessage",
+            Map.of("type", 3, "message", "hi"));
+         assertFalse(session.isIndexed());
+
+         Map<String, Object> p = new HashMap<>();
+         p.put("type", "Starting");
+         session.onNotification("language/status", p);
+         assertFalse(session.isIndexed(),
+            "Starting (not ServiceReady/Started) keeps indexed false");
+      } finally {
+         session.stop();
+      }
+   }
 }

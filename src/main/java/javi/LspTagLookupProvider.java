@@ -44,11 +44,14 @@ final class LspTagLookupProvider implements TagLookupProvider {
 
       Map<String, Object> params = textDocPosition(fvc);
       Map<String, Object> result;
+      int timeout = session.isIndexed()
+         ? LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS
+         : LspCommands.INDEXING_REQUEST_TIMEOUT_SECONDS;
       try {
          var future = session.submit("textDocument/definition", params);
          EventQueue.biglock2.unlock();
          try {
-            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+            result = future.get(timeout,
                java.util.concurrent.TimeUnit.SECONDS);
          } finally {
             EventQueue.biglock2.lock();
@@ -77,11 +80,14 @@ final class LspTagLookupProvider implements TagLookupProvider {
 
       Map<String, Object> params = textDocPosition(fvc);
       Map<String, Object> result;
+      int timeout = session.isIndexed()
+         ? LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS
+         : LspCommands.INDEXING_REQUEST_TIMEOUT_SECONDS;
       try {
          var future = session.submit("textDocument/hover", params);
          EventQueue.biglock2.unlock();
          try {
-            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+            result = future.get(timeout,
                java.util.concurrent.TimeUnit.SECONDS);
          } finally {
             EventQueue.biglock2.lock();

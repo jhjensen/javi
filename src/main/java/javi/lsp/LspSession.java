@@ -63,6 +63,7 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
 
    private volatile State state = State.STOPPED;
    private volatile int restartCount;
+   private volatile boolean indexed;
 
    // Owned by session thread only — no synchronization needed
    private Process serverProcess;
@@ -196,6 +197,16 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
    /** Returns true if the server is initialized and ready for requests. */
    public boolean isReady() {
       return State.READY == state;
+   }
+
+   /**
+    * Returns true if the language server has finished its initial
+    * project indexing (jdtls "ServiceReady" / "Started" status).
+    * For servers that do not emit such a status this stays false;
+    * callers may treat !isIndexed() as "use a longer timeout".
+    */
+   public boolean isIndexed() {
+      return indexed;
    }
 
    /** Returns the server configuration. */
@@ -460,6 +471,27 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
             if (null != notificationSink) {
                notificationSink.onDiagnostics(this, uri, diagnostics);
             }
+         }
+      } else if ("language/status".equals(method) && null != params) {
+         Object type = params.get("type");
+         Object msg = params.get("message");
+         trace("LSP language/status [" + config.languageId + "] type="
+            + type + " msg=" + msg);
+         if ("ServiceReady".equals(type) || "Started".equals(type)
+               || "ProjectStatus".equals(type)) {
+            if (!indexed) {
+               indexed = true;
+               trace("LSP server indexed: " + config.languageId);
+            }
+         }
+      } else if ("$/progress".equals(method) && null != params) {
+         Object value = params.get("value");
+         if (value instanceof Map) {
+            Map<String, Object> v = (Map<String, Object>) value;
+            Object kind = v.get("kind");
+            Object title = v.get("title");
+            trace("LSP $/progress [" + config.languageId
+               + "] kind=" + kind + " title=" + title);
          }
       } else {
          trace("LSP notification [" + config.languageId + "]: " + method);

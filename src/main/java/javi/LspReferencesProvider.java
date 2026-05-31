@@ -46,11 +46,14 @@ final class LspReferencesProvider implements TagLookupProvider {
       params.put("context", context);
 
       Map<String, Object> result;
+      int timeout = session.isIndexed()
+         ? LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS
+         : LspCommands.INDEXING_REQUEST_TIMEOUT_SECONDS;
       try {
          var future = session.submit("textDocument/references", params);
          EventQueue.biglock2.unlock();
          try {
-            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+            result = future.get(timeout,
                java.util.concurrent.TimeUnit.SECONDS);
          } finally {
             EventQueue.biglock2.lock();

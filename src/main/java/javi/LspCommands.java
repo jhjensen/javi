@@ -45,6 +45,13 @@ public final class LspCommands extends Rgroup {
    /** Default timeout for synchronous LSP requests in seconds. */
    static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 5;
 
+   /**
+    * Longer timeout to use while the LSP is still indexing (jdtls
+    * can take a minute or two on a fresh project before
+    * textDocument/definition returns useful results).
+    */
+   static final int INDEXING_REQUEST_TIMEOUT_SECONDS = 60;
+
    /** Creates and registers the LSP command set. */
    public LspCommands() {
       register(new String[]{""});
