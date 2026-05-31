@@ -1,6 +1,7 @@
 package javi.ai;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static history.Tools.trace;
 
@@ -895,8 +896,10 @@ public final class AICommands extends Rgroup implements Plugin {
                CopilotRestClient client =
                   new CopilotRestClient();
                if (client.hasToken()) {
+                  Path authPath = AIConfig.getInstance()
+                     .resolveAuthFile();
                   return "Already authenticated. "
-                     + "Token loaded from apps.json.";
+                     + "Token loaded from " + authPath + ".";
                }
                CopilotRestClient.DeviceFlowInfo info =
                   client.startDeviceFlow();
