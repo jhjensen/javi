@@ -1,10 +1,14 @@
 package javi.lsp;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,6 +67,7 @@ final class JsonRpc {
    private volatile boolean running;
    private Thread readerThread;
    private MessageHandler notificationHandler;
+   private volatile PrintWriter trafficLog;
 
    /**
     * Callback interface for handling incoming notifications and requests
@@ -110,6 +115,24 @@ final class JsonRpc {
    }
 
    /**
+    * Enable JSON-RPC traffic logging to a file for LSP debugging.
+    * Each line is prefixed with SEND/RECV and flushed immediately.
+    */
+   void setTrafficLog(File logFile) {
+      try {
+         File parent = logFile.getParentFile();
+         if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            trace("LSP traffic log: cannot create directory " + parent);
+            return;
+         }
+         trafficLog = new PrintWriter(new BufferedWriter(
+            new FileWriter(logFile, true)), true);
+      } catch (IOException e) {
+         trace("LSP traffic log setup failed: " + e);
+      }
+   }
+
+   /**
     * Starts the reader thread that processes incoming messages.
     * Must be called after construction and before sending requests.
     */
@@ -134,6 +157,11 @@ final class JsonRpc {
          future.cancel(true);
       }
       pendingRequests.clear();
+      PrintWriter log = trafficLog;
+      trafficLog = null;
+      if (null != log) {
+         log.close();
+      }
    }
 
    /**
@@ -237,6 +265,9 @@ final class JsonRpc {
          outputStream.flush();
       }
       trace("LSP sent: " + json);
+      PrintWriter log = trafficLog;
+      if (null != log)
+         log.println("SEND " + json);
    }
 
    /**
@@ -278,6 +309,9 @@ final class JsonRpc {
 
             String json = new String(buf);
             trace("LSP recv: " + json);
+            PrintWriter log = trafficLog;
+            if (null != log)
+               log.println("RECV " + json);
 
             Map<String, Object> msg = SimpleJson.decodeObject(json);
             if (null == msg) {

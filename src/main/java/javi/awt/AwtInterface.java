@@ -1283,6 +1283,9 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    public boolean ipopstring(String str) {
 
+      trace("ipopstring request thread=" + Thread.currentThread().getName()
+         + " text=" + str);
+
       try {
 
          throw new Exception("");
@@ -1290,12 +1293,20 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
          StackTraceElement[] tr = ex.getStackTrace();
          for (StackTraceElement elem : tr)  {
-            if  (elem.getMethodName().indexOf("paint") != -1)
+            if  (elem.getMethodName().indexOf("paint") != -1) {
+               trace("ipopstring called from paint path, showing directly");
                return dopop(str);
+            }
          }
       }
       trace("str " + str);
-      return new Popper(str).postWait().getResult();
+      try {
+         return new Popper(str).postWait().getResult();
+      } catch (RuntimeException e) {
+         trace("ipopstring failed: " + e);
+         UI.popError("ipopstring failed", e);
+         return false;
+      }
    }
 
    static class NDialog extends Dialog implements ActionListener {

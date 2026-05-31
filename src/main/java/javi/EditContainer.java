@@ -542,6 +542,11 @@ public class EditContainer<OType> implements
       //trace(this + " backupMade = " + backupMade);
       if (finishedread)
          return;
+      if (null == ecache) {
+         trace("finishedRead on disposed container " + this);
+         finishedread = true;
+         return;
+      }
       //trace(this + " backupMade = " + backupMade);
       //for (int i=0;i<ecache.size();i++)
       //   trace("obj[i] = " +at(i));
@@ -629,6 +634,12 @@ public class EditContainer<OType> implements
 
    private void myexpand(int desired) {
       //trace("desired " + desired  + " this " + this);
+      if (null == ecache) {
+         trace("myexpand on disposed container desired=" + desired
+            + " container=" + this);
+         finishedread = true;
+         return;
+      }
       try {
          boolean finished = ioc.expand(/*ecache,*/desired);
          if (finished) {
@@ -652,6 +663,8 @@ public class EditContainer<OType> implements
 
    public final int finish() {
       //trace("finish finishedread " + finishedread + " " + getName());
+      if (null == ecache)
+         return 0;
       if (!finishedread)
          myexpand(Integer.MAX_VALUE);
       //trace(this + " ecache.size = " + ecache.size() + " " +  curr);
@@ -672,6 +685,8 @@ public class EditContainer<OType> implements
    wait for the input stream to finish reading.
    */
    public final int readIn() {
+      if (null == ecache)
+         return 0;
       if (!finishedread)
          myexpand(0);
       if (null == ecache)

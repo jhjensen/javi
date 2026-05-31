@@ -1,5 +1,6 @@
 package javi.lsp;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -241,6 +242,8 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
       transport = new JsonRpc(
          serverProcess.getInputStream(),
          serverProcess.getOutputStream());
+      transport.setTrafficLog(new File(projectRoot,
+         "ai.output/lsp-" + config.languageId + ".stdout.log"));
       transport.setMessageHandler(this);
 
       // Send initialize request
