@@ -211,6 +211,23 @@ public abstract class UI {
       int current, int max, int visible);
 
    /**
+    * Update the help panel horizontal scrollbar position and range.
+    *
+    * @param current current left column
+    * @param max maximum content columns
+    * @param visible visible columns
+    */
+   public abstract void iupdateHelpHScrollbar(
+      int current, int max, int visible);
+
+   /**
+    * Set horizontal scroll position for the help panel.
+    *
+    * @param column zero-based left column
+    */
+   public abstract void isetHelpHScroll(int column);
+
+   /**
     * Ask user whether to save a modified file before closing.
     *
     * @param filename the name of the modified file
@@ -519,5 +536,17 @@ public abstract class UI {
       if (null != instance)
          instance.iupdateHelpScrollbar(
             current, max, visible);
+   }
+
+   static void updateHelpHScrollbar(
+         int current, int max, int visible) {
+      if (null != instance)
+         instance.iupdateHelpHScrollbar(
+            current, max, visible);
+   }
+
+   static void setHelpHScroll(int column) {
+      if (null != instance)
+         instance.isetHelpHScroll(column);
    }
 }

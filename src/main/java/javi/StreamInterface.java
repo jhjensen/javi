@@ -253,4 +253,11 @@ public final class StreamInterface extends UI {
    public void iupdateHelpScrollbar(
          int current, int max, int visible) {
    }
+
+      public void iupdateHelpHScrollbar(
+         int current, int max, int visible) {
+      }
+
+      public void isetHelpHScroll(int column) {
+      }
 }

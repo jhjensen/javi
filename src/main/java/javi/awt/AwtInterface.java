@@ -332,6 +332,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
    private Panel helpPanelWrapper;
    /** Vertical scrollbar for the help panel. */
    private Scrollbar helpScrollbar;
+   /** Horizontal scrollbar for the help panel. */
+   private Scrollbar helpHScrollbar;
    private transient GraphicsDevice currdev;
    private transient FileDialog fdialog;
    private transient PopupMenu popmenu; // the menubar
@@ -898,9 +900,14 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       helpScrollbar.setFocusable(false);
       helpScrollbar.addAdjustmentListener(e ->
          javi.ContextHelp.scrollHelpToLine(e.getValue()));
+      helpHScrollbar = new Scrollbar(Scrollbar.HORIZONTAL);
+      helpHScrollbar.setFocusable(false);
+      helpHScrollbar.addAdjustmentListener(e ->
+         javi.ContextHelp.scrollHelpToColumn(e.getValue()));
       helpPanelWrapper = new Panel(new BorderLayout());
       helpPanelWrapper.add(cmdComp, BorderLayout.CENTER);
       helpPanelWrapper.add(helpScrollbar, BorderLayout.EAST);
+      helpPanelWrapper.add(helpHScrollbar, BorderLayout.SOUTH);
       frm.add(helpPanelWrapper, -1);
       helpPanelWrapper.setVisible(true);
       if (normalFrame == frm
@@ -922,6 +929,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       helpPanel = null;
       helpPanelWrapper = null;
       helpScrollbar = null;
+      helpHScrollbar = null;
       FvContext.dispose(helpView);
       if (normalFrame == frm
             && !((frm.getExtendedState() & Frame.MAXIMIZED_BOTH)
@@ -938,6 +946,18 @@ public final class AwtInterface extends UI implements java.io.Serializable,
       if (helpScrollbar != null)
          helpScrollbar.setValues(
             current, visible, 1, max);
+   }
+
+   public void iupdateHelpHScrollbar(
+         int current, int max, int visible) {
+      if (helpHScrollbar != null)
+         helpHScrollbar.setValues(
+            current, visible, 0, Math.max(visible, max));
+   }
+
+   public void isetHelpHScroll(int column) {
+      if (helpPanel != null)
+         helpPanel.setHorizontalScrollColumns(column);
    }
 
    public void isetStream(Reader inreader) { /* unimplemented */ }

@@ -145,10 +145,9 @@ class ContextHelpExtendedJUnitTest {
          "qmode help should show register yank syntax: " + text);
       assertTrue(text.contains("* (clipboard)"),
          "qmode help should show clipboard register: " + text);
-      String[] lines = text.split("\\n");
-      for (String line : lines)
-         assertTrue(line.length() <= 43,
-            "help line exceeds panel width: " + line);
+      assertTrue(text.contains("\"<r>v{visual-op}"),
+         "qmode help should keep full visual-op syntax on one line: "
+         + text);
    }
 
    // --- Description lookups ---

@@ -37,6 +37,9 @@ public final class ContextHelp {
    /** Width of the help panel in characters. */
    private static final int HELP_PANEL_WIDTH = 45;
 
+   /** Current left column for help panel horizontal scrolling. */
+   private static int helpLeftColumn;
+
    private ContextHelp() {
    }
 
@@ -56,6 +59,7 @@ public final class ContextHelp {
          helpPanelView = null;
          helpFvc = null;
          inSubMode = false;
+         helpLeftColumn = 0;
          return true;
       }
       TextEdit<String> buf = getContextHelp(fvc);
@@ -81,6 +85,7 @@ public final class ContextHelp {
          helpPanelView = null;
          helpFvc = null;
          inSubMode = false;
+         helpLeftColumn = 0;
       }
       helpBuf.dispose();
    }
@@ -226,6 +231,29 @@ public final class ContextHelp {
    }
 
    /**
+    * Scroll help panel horizontally to an absolute column.
+    *
+    * @param column zero-based left column
+    */
+   public static void scrollHelpToColumn(int column) {
+      if (helpFvc == null || helpPanelView == null)
+         return;
+      int visCols = HELP_PANEL_WIDTH;
+      if (visCols <= 1)
+         visCols = 45;
+      int maxLeft = Math.max(0, maxHelpLineColumns() - visCols);
+      int newCol = column;
+      if (newCol < 0)
+         newCol = 0;
+      if (newCol > maxLeft)
+         newCol = maxLeft;
+      helpLeftColumn = newCol;
+      UI.setHelpHScroll(newCol);
+      helpPanelView.repaint();
+      updateScrollbar();
+   }
+
+   /**
     * Update the help scrollbar to reflect current position.
     */
    static void updateScrollbar() {
@@ -237,6 +265,30 @@ public final class ContextHelp {
          visRows = 20;
       int curTop = helpPanelView.screenFirstLine();
       UI.updateHelpScrollbar(curTop, maxY, visRows);
+
+      int visCols = HELP_PANEL_WIDTH;
+      if (visCols <= 1)
+         visCols = 45;
+      int maxCols = maxHelpLineColumns();
+      int maxLeft = Math.max(0, maxCols - visCols);
+      if (helpLeftColumn > maxLeft)
+         helpLeftColumn = maxLeft;
+      UI.updateHelpHScrollbar(helpLeftColumn, maxCols + 1, visCols);
+   }
+
+   private static int maxHelpLineColumns() {
+      if (helpFvc == null)
+         return 0;
+      int max = 0;
+      int last = helpFvc.edvec.finish() - 1;
+      for (int ii = 1; ii <= last; ii++) {
+         if (!helpFvc.edvec.containsNow(ii))
+            continue;
+         int len = helpFvc.edvec.at(ii).toString().length();
+         if (len > max)
+            max = len;
+      }
+      return max;
    }
 
    /**
@@ -843,7 +895,7 @@ public final class ContextHelp {
          helpBuf.append("");
          return;
       }
-      appendWrapped(line, Math.max(20, HELP_PANEL_WIDTH - 2));
+      helpBuf.append(line);
    }
 
    private static void appendWrapped(String line, int width) {

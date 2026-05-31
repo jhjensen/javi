@@ -113,6 +113,8 @@ public final class TestInit {
             new PosListList.Cmd();
          // Git commands (git_expand, git_log_diff, etc.) — plugin
          Class.forName("javi.git.GitCommands");
+         // LSP commands (lsp.def, lsp.ref, etc.) — plugin
+         Class.forName("javi.lsp.LspCommands");
          // MakeCmd (mk, cc) — needed by MapEvent.bindCommands F7 binding
          if (Rgroup.bindingLookup("mk") == null)
             new MakeCmd();

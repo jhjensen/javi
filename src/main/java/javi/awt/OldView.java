@@ -908,6 +908,17 @@ final class OldView extends AwtView {
       canvas.setSize(canvasW, canvasH);
    }
 
+   int getVisibleColumns() {
+      return minColumns;
+   }
+
+   void setHorizontalScrollColumns(int columns) {
+      if (columns < 0)
+         columns = 0;
+      xoffset = inset - columns * charwidth;
+      redraw();
+   }
+
    protected void startInsertion(javi.View.Inserter ins) {
       canvas.addInputMethodListener((InHandler) ins);
       canvas.enableInputMethods(true);
