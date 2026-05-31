@@ -200,7 +200,10 @@ public final class MapEvent {
             null, CTRL_MASK);
       if (Rgroup.bindingLookup("ai.gprocess") != null)
          bindAiEditCharIfAbsent('g', "ai.gprocess", null, 0);
+      // Some platforms surface Shift+Enter as CR while others use LF;
+      // bind both char variants.
       bindAiEditCharIfAbsent((char) 13, "ai.chat", null, SHIFT_MASK);
+      bindAiEditCharIfAbsent('\n', "ai.chat", null, SHIFT_MASK);
    }
 
    /**
