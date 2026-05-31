@@ -3,6 +3,7 @@ package javi;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 //import static javi.Tools.trace;
 
 public final class Buffers {
@@ -275,6 +276,15 @@ public final class Buffers {
          return null;
       if (id == '*' || id == '+')
          return delbuffer.readClipboard();
+      if (id == '%') {
+         FvContext<?> fvc = FvContext.getCurrFvc();
+         return fvc != null ? fvc.edvec.getName() : null;
+      }
+      if (id == '/') {
+         Matcher m = GState.getRegex();
+         String pat = m.pattern().pattern();
+         return pat.isEmpty() ? null : pat;
+      }
       if (id >= 'A' && id <= 'Z')
          id = (char) (id + ('a' - 'A'));
 
@@ -315,7 +325,6 @@ public final class Buffers {
          if (++index >= buf.length)
             index = 0;
          buf[index] = ob;
-         setclip();
          //trace("add buffer " + index + " = " + buf[index]);
       }
 
@@ -324,7 +333,6 @@ public final class Buffers {
             index = 0;
          //trace("add buffer " + index + " = " + ob);
          buf[index] = ob;
-         setclip();
       }
 
       public final Object get(int i) {
@@ -406,6 +414,14 @@ public final class Buffers {
       String clip = delbuffer.readClipboard();
       if (clip != null && !clip.isEmpty())
          appendRegLine(sb, '*', clip, false);
+      // Special read-only registers
+      FvContext<?> fvc = FvContext.getCurrFvc();
+      if (fvc != null)
+         appendRegLine(sb, '%', fvc.edvec.getName(), false);
+      Matcher m = GState.getRegex();
+      String pat = m.pattern().pattern();
+      if (!pat.isEmpty())
+         appendRegLine(sb, '/', pat, false);
       return sb.toString();
    }
 

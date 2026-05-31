@@ -1091,8 +1091,7 @@ final class OldView extends AwtView {
                break;
 
             case MouseEvent.BUTTON3:
-               Point pt = getLocation();
-               UI.showmenu(event.getX() + pt.x, event.getY() + pt.y);
+               // Right-click popup removed — no longer needed.
                break;
 
             default:
