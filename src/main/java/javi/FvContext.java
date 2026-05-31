@@ -209,6 +209,7 @@ public final class FvContext<OType> implements Serializable {
 
    private static FvContext<?> defaultFvc;
    private static FvContext<?> currfvc; // the main text display area
+   private static String alternateFileName; // vim '#' register
    private static final TextEdit<String> defaultText;
    private static Consumer<FvContext<?>> postContextHook;
 
@@ -313,6 +314,11 @@ public final class FvContext<OType> implements Serializable {
     */
    public static void setPostContextHook(Consumer<FvContext<?>> hook) {
       postContextHook = hook;
+   }
+
+   /** Return the alternate file name (vim '#' register). */
+   public static String getAlternateFileName() {
+      return alternateFileName;
    }
 
    private void readObject(
@@ -422,6 +428,9 @@ public final class FvContext<OType> implements Serializable {
    }
 
    public void setCurrView() {
+      if (null != currfvc && currfvc.edvec != edvec) {
+         alternateFileName = currfvc.edvec.getName();
+      }
       activate();
       currfvc = this;
       ContextHelp.onContextChanged(this);

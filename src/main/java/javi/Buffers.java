@@ -291,6 +291,9 @@ public final class Buffers {
       if (id == ':') {
          return Command.getLastColonCommand();
       }
+      if (id == '#') {
+         return FvContext.getAlternateFileName();
+      }
       if (id >= 'A' && id <= 'Z')
          id = (char) (id + ('a' - 'A'));
 
