@@ -1613,6 +1613,9 @@ public final class AICommands extends Rgroup implements Plugin {
             AIClient.getInstance().getProvider();
          if (provider instanceof CopilotProvider cp) {
             CopilotRestClient rc = cp.getRestClient();
+            String login = rc.getGitHubLogin();
+            if (null != login && !login.isEmpty())
+               appendToChatBuffer("GitHub user: " + login);
             int remaining = rc.getRateLimitRemaining();
             int total = rc.getRateLimitTotal();
             long resetEpoch = rc.getRateLimitResetEpoch();

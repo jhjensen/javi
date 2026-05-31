@@ -88,6 +88,9 @@ public final class GhostTextState {
          ec.insertOne(lines[i], curLine + i);
       }
 
+      // Mark all AI-inserted lines yellow
+      View.markAiInserted(curLine, lines.length);
+
       int newCol = (lines.length == 1)
          ? completionCol + lines[0].length()
          : lines[lines.length - 1].length();

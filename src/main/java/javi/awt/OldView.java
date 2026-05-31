@@ -1542,6 +1542,10 @@ final class OldView extends AwtView {
             }
          }
 
+         // AI-inserted lines get yellow foreground
+         if (View.isAiInserted(tindex))
+            atIt.setLineForeground(Color.yellow);
+
          // Ghost text preview on the ghost line
          String ghost = getGhostText();
          if (null != ghost && tindex == getGhostLine()) {

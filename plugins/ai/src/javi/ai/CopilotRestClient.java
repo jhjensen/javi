@@ -106,6 +106,9 @@ public final class CopilotRestClient {
    /** Cached Copilot session token (from exchange). */
    private volatile String sessionToken;
 
+   /** Cached GitHub login (fetched once from /user API). */
+   private volatile String githubLogin;
+
    /**
     * Get the current request timeout from configuration.
     *
@@ -1130,6 +1133,36 @@ public final class CopilotRestClient {
          throw new IOException(
             "Token exchange interrupted", e);
       }
+   }
+
+   /**
+    * Get the GitHub login name for the authenticated user.
+    *
+    * @return the login name, or null if unavailable
+    */
+   String getGitHubLogin() {
+      if (null != githubLogin)
+         return githubLogin;
+      if (null == oauthToken || oauthToken.isEmpty())
+         return null;
+      try {
+         HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.github.com/user"))
+            .header("Authorization", "token " + oauthToken)
+            .header("Accept", "application/json")
+            .header("User-Agent", "Javi/1.0")
+            .timeout(Duration.ofSeconds(5))
+            .GET()
+            .build();
+         HttpResponse<String> response = httpClient.send(
+            request, HttpResponse.BodyHandlers.ofString());
+         if (response.statusCode() == 200) {
+            githubLogin = extractJsonField(
+               response.body(), "login");
+         }
+      } catch (Exception ignored) {
+      }
+      return githubLogin;
    }
 
    /**

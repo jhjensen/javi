@@ -1,5 +1,7 @@
 package javi;
 
+import java.util.BitSet;
+
 import static history.Tools.trace;
 import static javi.ChangeOpt.Opcode.BLINKCURSOR;
 import static javi.ChangeOpt.Opcode.CHANGE;
@@ -156,6 +158,26 @@ public abstract class View  extends
 
    protected static int getGhostCol() {
       return ghostCol;
+   }
+
+   // AI-inserted line tracking for yellow highlighting
+   private static final BitSet aiInsertedLines = new BitSet();
+
+   public static void markAiInserted(int startLine, int count) {
+      for (int i = 0; i < count; i++)
+         aiInsertedLines.set(startLine + i);
+   }
+
+   public static void clearAiMark(int line) {
+      aiInsertedLines.clear(line);
+   }
+
+   public static void clearAllAiMarks() {
+      aiInsertedLines.clear();
+   }
+
+   public static boolean isAiInserted(int line) {
+      return aiInsertedLines.get(line);
    }
 
    public final boolean isTraverseable() {
