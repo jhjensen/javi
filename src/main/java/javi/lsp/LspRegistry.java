@@ -123,6 +123,25 @@ public final class LspRegistry {
    }
 
    /**
+    * Returns a currently running session for the given extension,
+    * without starting a new server.
+    *
+    * @param extension the file extension including dot (e.g. ".java")
+    * @return running session, or null if not running / not configured
+    */
+   public LspSession runningSessionFor(String extension) {
+      if (!enabled)
+         return null;
+
+      LspServerConfig config =
+         LspServerConfig.forExtension(configs, extension);
+      if (null == config)
+         return null;
+
+      return sessions.get(config.languageId);
+   }
+
+   /**
     * Returns the session for a specific language ID.
     *
     * @param languageId the language identifier (e.g. "java", "harper")

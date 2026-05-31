@@ -104,4 +104,17 @@ class LspRegistryJUnitTest {
       assertNull(registry.sessionFor(".fake"));
       assertTrue(registry.getActiveSessionStatus().isEmpty());
    }
+
+   @Test
+   @DisplayName("runningSessionFor does not start server")
+   void runningSessionForDoesNotStartServer() {
+      LspServerConfig cfg = new LspServerConfig(
+         "shell", new String[]{"/bin/sh"},
+         new String[]{".sh"}, null);
+      LspRegistry registry = makeRegistryWithConfig(cfg);
+      registry.setProjectRoot("/tmp");
+
+      assertNull(registry.runningSessionFor(".sh"));
+      assertTrue(registry.activeSessions().isEmpty());
+   }
 }

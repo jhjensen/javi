@@ -38,7 +38,7 @@ final class LspTagLookupProvider implements TagLookupProvider {
          return Collections.emptyList();
 
       String ext = getExtension(fvc);
-      LspSession session = reg.sessionFor(ext);
+      LspSession session = reg.runningSessionFor(ext);
       if (null == session || !session.isReady())
          return Collections.emptyList();
 
@@ -66,7 +66,7 @@ final class LspTagLookupProvider implements TagLookupProvider {
          return null;
 
       String ext = getExtension(fvc);
-      LspSession session = reg.sessionFor(ext);
+      LspSession session = reg.runningSessionFor(ext);
       if (null == session || !session.isReady())
          return null;
 
