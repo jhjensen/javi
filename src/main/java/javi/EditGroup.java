@@ -231,7 +231,7 @@ final class EditGroup extends Rgroup {
                }
                ArrayList<String> bufs = fvc.getElementsAt(count);
                //trace("yank " + count + " lines ");
-               Buffers.deleted('0', bufs);
+               Buffers.recordYank('0', bufs);
                break;
             case DO_OVER:
                if (Cmd.UNUSED != dotcommand) {
@@ -426,9 +426,16 @@ final class EditGroup extends Rgroup {
                      deletetext(bufid, fvc, true, startx, starty, donex, doney);
                      break out;
                   case 'Y':
-                     Buffers.deleted(bufid,
+                     Buffers.recordYank(bufid,
                         fvc.edvec.getElementsAt(starty, markamount));
                      break out;
+                  case '"':
+                     if (dotmode)
+                        continue;
+                     if (handleVisualRegisterOp(fvc, startx, starty,
+                           donex, doney, markamount))
+                        break out;
+                     continue;
                   case 'v': case 'V': case 27: // esc
                      break out;
                   case 'D':
@@ -440,7 +447,7 @@ final class EditGroup extends Rgroup {
                      fvc.edvec.finish();
                      if (!fvc.edvec.containsNow(starty + markamount - 1))
                         markamount = fvc.edvec.finish() - 1;
-                     Buffers.deleted(bufid,
+                     Buffers.recordDelete(bufid,
                         fvc.edvec.remove(starty, markamount));
                      fvc.edvec.checkpoint();
                      fvc.fixCursor();
@@ -516,6 +523,8 @@ final class EditGroup extends Rgroup {
       JeyEvent event;
       char bufid;
 
+      ContextHelp.onSubModeEntered("qmode");
+
       if (!dotmode) {
          bufid = (EventQueue.nextKeye(fvc.vi).getKeyChar());
          event = EventQueue.nextKeye(fvc.vi);
@@ -575,7 +584,7 @@ final class EditGroup extends Rgroup {
             dotevent2 = event;
             break;
          case 'Y' :
-            Buffers.deleted(bufid, fvc.getElementsAt(count));
+            Buffers.recordYank(bufid, fvc.getElementsAt(count));
             dotbufid = bufid;
             dotevent2 = event;
             break;
@@ -592,6 +601,55 @@ final class EditGroup extends Rgroup {
          case 27: //escape
          default:
             break;
+      }
+   }
+
+      @SuppressWarnings("unchecked")
+      private boolean handleVisualRegisterOp(FvContext fvc, int startx,
+         int starty, int donex, int doney, int markamount)
+         throws InterruptedException, IOException, InputException {
+      char reg = EventQueue.nextKeye(fvc.vi).getKeyChar();
+      JeyEvent opEvent = EventQueue.nextKeye(fvc.vi);
+      char op = opEvent.getKeyChar();
+
+      switch (op) {
+         case 'y':
+            deletetext(reg, fvc, true, startx, starty, donex, doney);
+            dotbufid = reg;
+            dotevent3 = opEvent;
+            return true;
+         case 'd':
+            if (fvc.edvec instanceof DirEdit) {
+               ((DirEdit) fvc.edvec).deleteRange(starty, doney, fvc);
+            } else {
+               deletetext(reg, fvc, false, startx, starty, donex, doney);
+            }
+            dotbufid = reg;
+            dotevent3 = opEvent;
+            return true;
+         case 'Y':
+            Buffers.recordYank(reg, (ArrayList<String>)
+               fvc.edvec.getElementsAt(starty, markamount));
+            dotbufid = reg;
+            dotevent3 = opEvent;
+            return true;
+         case 'D':
+            if (fvc.edvec instanceof DirEdit) {
+               ((DirEdit) fvc.edvec).deleteRange(starty, doney, fvc);
+            } else {
+               fvc.edvec.finish();
+               if (!fvc.edvec.containsNow(starty + markamount - 1))
+                  markamount = fvc.edvec.finish() - 1;
+               Buffers.recordDelete(reg, (ArrayList<String>)
+                  fvc.edvec.remove(starty, markamount));
+               fvc.edvec.checkpoint();
+               fvc.fixCursor();
+            }
+            dotbufid = reg;
+            dotevent3 = opEvent;
+            return true;
+         default:
+            return false;
       }
    }
 
@@ -659,8 +717,12 @@ final class EditGroup extends Rgroup {
    private static void deletetext(char bufid, FvContext fvc,
          boolean preserve, int xstart, int ystart, int xend, int yend) {
       //trace("deletetext id " + bufid);
-      Buffers.deleted(bufid,
-         fvc.edvec.deletetext(preserve, xstart, ystart, xend, yend));
+      String text = fvc.edvec.deletetext(
+         preserve, xstart, ystart, xend, yend);
+      if (preserve)
+         Buffers.recordYank(bufid, text);
+      else
+         Buffers.recordDelete(bufid, text);
    }
 
    @SuppressWarnings("unchecked") // raw FvContext type
@@ -709,7 +771,7 @@ final class EditGroup extends Rgroup {
             }
             if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
                count = fvc.edvec.finish() - 1;
-            Buffers.deleted(bufid, fvc.edvec.remove(fvc.inserty(), count));
+            Buffers.recordDelete(bufid, fvc.edvec.remove(fvc.inserty(), count));
             fvc.edvec.checkpoint();
             fvc.fixCursor();
             return;
@@ -756,7 +818,7 @@ final class EditGroup extends Rgroup {
          }
          if (!fvc.edvec.containsNow(fvc.inserty() + count - 1))
             count = fvc.edvec.finish() - 1;
-         Buffers.deleted(bufid, fvc.getElementsAt(count));
+         Buffers.recordYank(bufid, fvc.getElementsAt(count));
          trace("yanking a buffer");
          return;
       }

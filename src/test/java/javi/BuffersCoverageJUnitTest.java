@@ -23,7 +23,7 @@ class BuffersCoverageJUnitTest {
 
    @BeforeAll
    static void initEditor() throws Exception {
-      TestInit.init();
+      TestInit.initCommands();
    }
 
    @BeforeEach
@@ -46,6 +46,33 @@ class BuffersCoverageJUnitTest {
 
    private void initBuffers() {
       Buffers.init(new TestCircBuffer());
+   }
+
+   // ── Register state model ────────────────────────────────
+
+   @Test
+   @DisplayName("RegisterState stores named register and fold span")
+   void registerStateStoresNamedAndFoldSpan() {
+      Buffers.RegisterState state = new Buffers.RegisterState();
+      state.putNamed('a', "alpha");
+      state.setFoldSpan(7);
+
+      assertEquals("alpha", state.getNamed('a'));
+      assertEquals(1, state.namedCount());
+      assertEquals(7, state.getFoldSpan());
+   }
+
+   @Test
+   @DisplayName("init clears named registers")
+   void initClearsNamedRegisters() {
+      initBuffers();
+      Buffers.deleted('a', "value");
+      assertEquals(1, Buffers.namedRegisterCount());
+
+      initBuffers();
+
+      assertEquals(0, Buffers.namedRegisterCount());
+      assertNull(Buffers.getbuf('a'));
    }
 
    // ── Fold span tracking ────────────────────────────────────
@@ -335,5 +362,339 @@ class BuffersCoverageJUnitTest {
       cb.flush();
       // After flush, get(0) should return null
       assertNull(cb.get(0));
+   }
+
+   // ── Unnamed register ("") and linewise tracking ──────────
+
+   @Test
+   @DisplayName("recordYank(String) updates unnamed register charwise")
+   void recordYankStringUpdatesUnnamed() {
+      initBuffers();
+      Buffers.recordYank('0', "hello");
+      assertEquals("hello", Buffers.getbuf('"'));
+      assertFalse(Buffers.isUnnamedLinewise());
+   }
+
+   @Test
+   @DisplayName("recordYank(ArrayList) updates unnamed register linewise")
+   void recordYankArrayListUpdatesUnnamedLinewise() {
+      initBuffers();
+      ArrayList<String> lines = new ArrayList<>();
+      lines.add("a");
+      lines.add("b");
+      Buffers.recordYank('0', lines);
+      Object unnamed = Buffers.getbuf('"');
+      assertTrue(unnamed instanceof ArrayList);
+      assertTrue(Buffers.isUnnamedLinewise());
+   }
+
+   @Test
+   @DisplayName("recordDelete(String) populates small-delete register")
+   void recordDeleteStringPopulatesSmallDelete() {
+      initBuffers();
+      Buffers.recordDelete('0', "x");
+      assertEquals("x", Buffers.getbuf('-'));
+      assertEquals("x", Buffers.getbuf('"'));
+      assertFalse(Buffers.isUnnamedLinewise());
+   }
+
+   @Test
+   @DisplayName("recordDelete(ArrayList) does not touch small-delete")
+   void recordDeleteLinewiseLeavesSmallDelete() {
+      initBuffers();
+      Buffers.recordDelete('0', "tiny");
+      ArrayList<String> lines = new ArrayList<>();
+      lines.add("big line");
+      Buffers.recordDelete('0', lines);
+      // small-delete still holds prior charwise delete
+      assertEquals("tiny", Buffers.getbuf('-'));
+      // unnamed reflects the most recent op (linewise)
+      assertTrue(Buffers.isUnnamedLinewise());
+   }
+
+   @Test
+   @DisplayName("recordYank does not populate small-delete register")
+   void recordYankDoesNotPopulateSmallDelete() {
+      initBuffers();
+      Buffers.recordYank('0', "yanked");
+      assertNull(Buffers.getbuf('-'));
+   }
+
+   @Test
+   @DisplayName("unnamed register reflects most recent op (yank then delete)")
+   void unnamedRegisterReflectsMostRecent() {
+      initBuffers();
+      Buffers.recordYank('0', "first");
+      Buffers.recordDelete('0', "second");
+      assertEquals("second", Buffers.getbuf('"'));
+   }
+
+   @Test
+   @DisplayName("recordYank/recordDelete with null inputs are no-ops")
+   void recordWithNullInputsAreNoOps() {
+      initBuffers();
+      Buffers.recordYank('0', "stay");
+      Buffers.recordYank('0', (String) null);
+      Buffers.recordYank('0', (ArrayList<String>) null);
+      Buffers.recordDelete('0', (String) null);
+      Buffers.recordDelete('0', (ArrayList<String>) null);
+      assertEquals("stay", Buffers.getbuf('"'));
+   }
+
+   @Test
+   @DisplayName("init clears unnamed and small-delete registers")
+   void initClearsUnnamedAndSmallDelete() {
+      initBuffers();
+      Buffers.recordDelete('0', "scratch");
+      assertNotNull(Buffers.getbuf('"'));
+      assertNotNull(Buffers.getbuf('-'));
+
+      initBuffers();
+      assertNull(Buffers.getbuf('"'));
+      assertNull(Buffers.getbuf('-'));
+      assertFalse(Buffers.isUnnamedLinewise());
+   }
+
+   // ── Numbered delete history ring rotation ─────────────────
+
+   @Test
+   @DisplayName("recordDelete rotates numbered registers \"1-\"9")
+   void recordDeleteRotatesNumberedRegisters() {
+      initBuffers();
+      for (int i = 1; i <= 5; i++)
+         Buffers.recordDelete('0', "d" + i);
+      assertEquals("d5", Buffers.getbuf('0'));
+      assertEquals("d4", Buffers.getbuf('1'));
+      assertEquals("d3", Buffers.getbuf('2'));
+      assertEquals("d2", Buffers.getbuf('3'));
+      assertEquals("d1", Buffers.getbuf('4'));
+   }
+
+   @Test
+   @DisplayName("recordYank also rotates numbered ring (javi semantics)")
+   void recordYankRotatesNumberedRing() {
+      initBuffers();
+      Buffers.recordDelete('0', "del1");
+      Buffers.recordYank('0', "yank1");
+      // Most recent op (yank) is at slot 0; prior delete at slot 1
+      assertEquals("yank1", Buffers.getbuf('0'));
+      assertEquals("del1", Buffers.getbuf('1'));
+   }
+
+   @Test
+   @DisplayName("ring wraps after 10 recordDelete calls")
+   void ringWrapsAfterTen() {
+      initBuffers();
+      for (int i = 0; i < 12; i++)
+         Buffers.recordDelete('0', "v" + i);
+      // After 12 inserts in a size-10 ring the oldest slot holds the
+      // most recent value too (wrap covered slot 0 twice already).
+      assertEquals("v11", Buffers.getbuf('0'));
+      assertEquals("v10", Buffers.getbuf('1'));
+      assertEquals("v9", Buffers.getbuf('2'));
+   }
+
+   @Test
+   @DisplayName("recordDelete with named register also writes ring")
+   void recordDeleteNamedAlsoWritesUnnamed() {
+      initBuffers();
+      Buffers.recordDelete('a', "named");
+      assertEquals("named", Buffers.getbuf('a'));
+      assertEquals("named", Buffers.getbuf('"'));
+   }
+
+   // ── :registers command entry ──────────────────────────────
+
+   @Test
+   @DisplayName(":registers command is registered in command table")
+   void registersCommandIsRegistered() {
+      Rgroup.CommandEntry entry = Rgroup.getCommandEntry("registers");
+      assertNotNull(entry, ":registers should be a registered command");
+      assertEquals("registers", entry.name());
+      assertEquals("edit", entry.category());
+      assertNotNull(entry.description());
+   }
+
+   // ── getRegisterSummary output format ──────────────────────
+
+   @Test
+   @DisplayName("getRegisterSummary includes header line")
+   void registerSummaryHeader() {
+      initBuffers();
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.startsWith("--- Registers ---\n"),
+         "summary should start with header");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows unnamed register")
+   void registerSummaryShowsUnnamed() {
+      initBuffers();
+      Buffers.recordYank('0', "hello");
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.contains("\"\""), "should contain unnamed reg");
+      assertTrue(summary.contains("hello"), "should show yank content");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows named registers a-z")
+   void registerSummaryShowsNamed() {
+      initBuffers();
+      Buffers.deleted('m', "myvalue");
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.contains("\"m"), "should show register m");
+      assertTrue(summary.contains("myvalue"), "should show m content");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows small-delete register")
+   void registerSummaryShowsSmallDelete() {
+      initBuffers();
+      Buffers.recordDelete('0', "partial");
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.contains("\"-"), "should show small-delete reg");
+      assertTrue(summary.contains("partial"), "should show delete content");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows linewise indicator")
+   void registerSummaryLinewiseIndicator() {
+      initBuffers();
+      ArrayList<String> lines = new ArrayList<>();
+      lines.add("line1");
+      lines.add("line2");
+      Buffers.recordYank('0', lines);
+      String summary = Buffers.getRegisterSummary();
+      // Unnamed register should show 'l' for linewise
+      assertTrue(summary.contains("\"\"  l"),
+         "unnamed should show 'l' for linewise");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows charwise indicator")
+   void registerSummaryCharwiseIndicator() {
+      initBuffers();
+      Buffers.recordYank('0', "chartext");
+      String summary = Buffers.getRegisterSummary();
+      // Unnamed register should show 'c' for charwise
+      assertTrue(summary.contains("\"\"  c"),
+         "unnamed should show 'c' for charwise");
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary truncates long values")
+   void registerSummaryTruncatesLong() {
+      initBuffers();
+      String longText = "x".repeat(80);
+      Buffers.recordYank('0', longText);
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.contains("..."), "long values should be truncated");
+      // Should not contain the full 80-char text as-is
+      assertFalse(summary.contains(longText),
+         "full long text should not appear");
+   }
+
+   // ── Black-hole register ───────────────────────────────────
+
+   @Test
+   @DisplayName("black-hole register discards yank")
+   void blackHoleDiscardsYank() {
+      initBuffers();
+      Buffers.recordYank('_', "discarded");
+      assertNull(Buffers.getbuf('_'), "_ always returns null");
+      assertNull(Buffers.getbuf('"'),
+         "unnamed should not be set by black-hole yank");
+   }
+
+   @Test
+   @DisplayName("black-hole register discards delete")
+   void blackHoleDiscardsDelete() {
+      initBuffers();
+      Buffers.recordDelete('_', "gone");
+      assertNull(Buffers.getbuf('_'), "_ always returns null");
+      assertNull(Buffers.getbuf('"'),
+         "unnamed should not be set by black-hole delete");
+   }
+
+   // ── Clipboard register (* and +) via TestCircBuffer ───────
+
+   /** CircBuffer that stores clipboard text for testing. */
+   private static final class ClipCircBuffer extends Buffers.CircBuffer {
+      String clipboard = null;
+
+      @Override
+      public void setclip() {
+         // no-op
+      }
+
+      @Override
+      public String readClipboard() {
+         return clipboard;
+      }
+
+      @Override
+      public void writeClipboard(String text) {
+         clipboard = text;
+      }
+   }
+
+   @Test
+   @DisplayName("recordYank to * writes system clipboard")
+   void yankToStarWritesClipboard() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      Buffers.recordYank('*', "clipboard text");
+      assertEquals("clipboard text", clip.clipboard);
+      // Also sets unnamed register
+      assertEquals("clipboard text", Buffers.getbuf('"'));
+   }
+
+   @Test
+   @DisplayName("recordYank to + writes system clipboard")
+   void yankToPlusWritesClipboard() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      Buffers.recordYank('+', "plus text");
+      assertEquals("plus text", clip.clipboard);
+   }
+
+   @Test
+   @DisplayName("getbuf(*) reads from system clipboard")
+   void getbufStarReadsClipboard() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      clip.clipboard = "from system";
+      assertEquals("from system", Buffers.getbuf('*'));
+   }
+
+   @Test
+   @DisplayName("getbuf(+) reads from system clipboard")
+   void getbufPlusReadsClipboard() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      clip.clipboard = "plus system";
+      assertEquals("plus system", Buffers.getbuf('+'));
+   }
+
+   @Test
+   @DisplayName("recordDelete to * writes clipboard and small-delete")
+   void deleteToStarWritesClipboardAndSmall() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      Buffers.recordDelete('*', "del clip");
+      assertEquals("del clip", clip.clipboard);
+      assertEquals("del clip", Buffers.getbuf('"'));
+   }
+
+   @Test
+   @DisplayName("getRegisterSummary shows clipboard register")
+   void registerSummaryShowsClipboard() {
+      ClipCircBuffer clip = new ClipCircBuffer();
+      Buffers.init(clip);
+      clip.clipboard = "sys clip content";
+      String summary = Buffers.getRegisterSummary();
+      assertTrue(summary.contains("\"*"), "should show * register");
+      assertTrue(summary.contains("sys clip content"),
+         "should show clipboard content");
    }
 }

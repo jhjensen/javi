@@ -1068,7 +1068,7 @@ public final class FvContext<OType> implements Serializable {
                + line.substring(insertx(), line.length());
          cursor2abs(start, fileposy);
       }
-      Buffers.deleted(bufid, deleted);
+      Buffers.recordDelete(bufid, deleted);
       changeElementStr(line);
       // trace("count = " + count + " llen = " + line.length());
       return;

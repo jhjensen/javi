@@ -1435,8 +1435,8 @@ final class OldView extends AwtView {
                   applyChanges();
                   copt.rpaint(gr);
                } else {
-                  trace("repaint because of invalid or empty");
-                  repaint(200);
+                  gr.setColor(getBackground());
+                  gr.fillRect(0, 0, getWidth(), getHeight());
                }
             } catch (Throwable e) {
                // Log error but don't pop dialog - this is called frequently during paint

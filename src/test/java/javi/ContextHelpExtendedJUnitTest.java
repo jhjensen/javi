@@ -133,6 +133,24 @@ class ContextHelpExtendedJUnitTest {
          "searchcommand should show SEARCH: " + text);
    }
 
+   @Test
+   @DisplayName("qmode sub-mode shows register operations")
+   void qmodeSubModeShowsRegisterHelp() {
+      TextEdit<String> buf = ContextHelp.getSubModeHelp("qmode");
+      assertNotNull(buf);
+      String text = bufferText(buf);
+      assertTrue(text.contains("register"),
+         "qmode help should mention registers: " + text);
+      assertTrue(text.contains("\"<r>y") || text.contains("yank"),
+         "qmode help should show register yank syntax: " + text);
+      assertTrue(text.contains("* (clipboard)"),
+         "qmode help should show clipboard register: " + text);
+      String[] lines = text.split("\\n");
+      for (String line : lines)
+         assertTrue(line.length() <= 43,
+            "help line exceeds panel width: " + line);
+   }
+
    // --- Description lookups ---
 
    @Test

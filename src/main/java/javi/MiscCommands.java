@@ -210,6 +210,11 @@ public final class MiscCommands extends Rgroup {
             FileList.checkCurrentFileExternal(fvc);
             return null;
          }));
+      registerCommand(new CommandEntry("registers",
+         "display register contents", "edit",
+         (count, rcount, fvc, dot) -> {
+            showRegisters(fvc); return null;
+         }));
    }
 
    /** Phase 2b-3: arg-dependent commands with closure handlers. */
@@ -1433,5 +1438,24 @@ public final class MiscCommands extends Rgroup {
       } catch (ClassNotFoundException e) {
          UI.reportError("loadclass: class not found: " + className);
       }
+   }
+
+   /** Singleton buffer for :registers display. */
+   private static final HelpBuffer registersBuf =
+      new HelpBuffer("*registers*");
+
+   /**
+    * Display register contents in a buffer.
+    * Populates a buffer named *registers* with the output of
+    * {@link Buffers#getRegisterSummary()} and connects it to the
+    * current view.
+    */
+   private static void showRegisters(FvContext fvc) throws InputException {
+      registersBuf.ensure();
+      registersBuf.clear();
+      String summary = Buffers.getRegisterSummary();
+      for (String line : summary.split("\n"))
+         registersBuf.append(line);
+      FvContext.connectFv(registersBuf.getBuffer(), fvc.vi);
    }
 }

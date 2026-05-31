@@ -133,4 +133,31 @@ public final class AwtCircBuffer extends CircBuffer implements
          trace("Failed to get clipboard contents: " + e.getMessage());
       }
    }
+
+   @Override
+   public String readClipboard() {
+      if (null == systemclip)
+         return null;
+      try {
+         Transferable tr = systemclip.getContents(this);
+         if (tr != null && tr.isDataFlavorSupported(DataFlavor.stringFlavor))
+            return tr.getTransferData(DataFlavor.stringFlavor).toString();
+      } catch (Throwable e) {
+         trace("Failed to read clipboard: " + e.getMessage());
+      }
+      return null;
+   }
+
+   @Override
+   public void writeClipboard(String text) {
+      if (null == systemclip || null == text)
+         return;
+      try {
+         java.awt.datatransfer.StringSelection sel =
+            new java.awt.datatransfer.StringSelection(text);
+         systemclip.setContents(sel, this);
+      } catch (Throwable e) {
+         trace("Failed to write clipboard: " + e.getMessage());
+      }
+   }
 }

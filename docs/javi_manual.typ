@@ -262,6 +262,27 @@ operator:
   ([#key("Escape")], [Exit visual mode]),
 )
 
+== Registers and System Clipboard
+
+Javi supports named registers for yank and put operations, similar to vim.
+The `"` prefix selects a register for the next yank or put command.
+
+#cmd-table(
+  ([#key("\"a") #key("y")], [Yank into register `a`]),
+  ([#key("\"a") #key("p")], [Put from register `a`]),
+  ([#key("\"*") #key("y")], [Yank into system clipboard]),
+  ([#key("\"*") #key("p")], [Put from system clipboard]),
+  ([#key("\"\"") #key("p")], [Put from default (unnamed) register]),
+)
+
+Register names `a`--`z` are user registers. The `*` register is the
+system clipboard — yanking to `"*` copies to the OS clipboard, and
+putting from `"*` pastes from it. This works on macOS, Linux (X11),
+and Windows via AWT's `Toolkit.getSystemClipboard()`.
+
+Uppercase register names (`A`--`Z`) append to the register instead of
+replacing its contents.
+
 == Directory Editor (DirEdit)
 
 Vi has no built-in directory browsing. Javi provides a netrw-like

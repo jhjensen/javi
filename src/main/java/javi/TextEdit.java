@@ -303,7 +303,7 @@ public class TextEdit<OType> extends EditContainer<OType> {
                } else
                   ii++;
             }
-            Buffers.deleted('0', delvec);
+            Buffers.recordDelete('0', delvec);
             checkpoint();
             return linestart;
          case 'w':

@@ -839,7 +839,33 @@ public final class ContextHelp {
    }
 
    private static void append(String line) {
-      helpBuf.append(line);
+      if (line == null) {
+         helpBuf.append("");
+         return;
+      }
+      appendWrapped(line, Math.max(20, HELP_PANEL_WIDTH - 2));
+   }
+
+   private static void appendWrapped(String line, int width) {
+      if (line.length() <= width) {
+         helpBuf.append(line);
+         return;
+      }
+      int indentLen = 0;
+      while (indentLen < line.length() && line.charAt(indentLen) == ' ')
+         indentLen++;
+      String indent = line.substring(0, indentLen);
+      String remaining = line;
+      while (remaining.length() > width) {
+         int breakAt = remaining.lastIndexOf(' ', width);
+         if (breakAt <= indentLen)
+            breakAt = width;
+         helpBuf.append(remaining.substring(0, breakAt));
+         remaining = remaining.substring(breakAt).trim();
+         if (!remaining.isEmpty() && indentLen > 0)
+            remaining = indent + remaining;
+      }
+      helpBuf.append(remaining);
    }
 
    /**
@@ -907,6 +933,9 @@ public final class ContextHelp {
             break;
          case "zprocess":
             appendZprocessSubMode();
+            break;
+         case "qmode":
+            appendQmodeSubMode();
             break;
          case "replacechar":
             append("Type a replacement character.");
@@ -1055,6 +1084,27 @@ public final class ContextHelp {
       append("  y/pat  yank to search match");
       append("  yG     yank to end of file");
       append("  y'<m>  yank to mark <m>");
+      append("  \"<r>y{motion}  yank to register <r>");
+   }
+
+   private static void appendQmodeSubMode() {
+      append("Type a register, then an operator:");
+      append("");
+      append("  \"<r>y{motion}  yank to register <r>");
+      append("  \"<r>d{motion}  delete to register <r>");
+      append("  \"<r>p / \"<r>P  put from register <r>");
+      append("  \"<r>v{visual-op} register op in visual mode");
+      append("");
+      append("Valid registers: a-z, 0-9, \" (unnamed),");
+      append("- (small delete), * (clipboard)");
+      append("");
+      append("REGISTER PREVIEW");
+      append("----------------");
+      String summary = Buffers.getRegisterSummary();
+      for (String line : summary.split("\\n")) {
+         if (!line.isEmpty())
+            append("  " + line);
+      }
    }
 
    private static void appendVisualSubMode() {
@@ -1065,6 +1115,8 @@ public final class ContextHelp {
       append("");
       append("  d        delete selection");
       append("  y        yank (copy) selection");
+      append("  \"<r>y   yank selection to register <r>");
+      append("  \"<r>d   delete selection to register <r>");
       append("  Y        yank lines");
       append("  D        delete lines");
       append("  ~        toggle case");
