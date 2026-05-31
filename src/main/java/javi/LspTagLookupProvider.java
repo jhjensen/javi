@@ -45,9 +45,14 @@ final class LspTagLookupProvider implements TagLookupProvider {
       Map<String, Object> params = textDocPosition(fvc);
       Map<String, Object> result;
       try {
-         result = session.submit("textDocument/definition", params)
-            .get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+         var future = session.submit("textDocument/definition", params);
+         EventQueue.biglock2.unlock();
+         try {
+            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                java.util.concurrent.TimeUnit.SECONDS);
+         } finally {
+            EventQueue.biglock2.lock();
+         }
       } catch (Exception e) {
          trace("LspTagLookup: definition failed: " + e);
          return Collections.emptyList();
@@ -73,9 +78,14 @@ final class LspTagLookupProvider implements TagLookupProvider {
       Map<String, Object> params = textDocPosition(fvc);
       Map<String, Object> result;
       try {
-         result = session.submit("textDocument/hover", params)
-            .get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+         var future = session.submit("textDocument/hover", params);
+         EventQueue.biglock2.unlock();
+         try {
+            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                java.util.concurrent.TimeUnit.SECONDS);
+         } finally {
+            EventQueue.biglock2.lock();
+         }
       } catch (Exception e) {
          return null;
       }

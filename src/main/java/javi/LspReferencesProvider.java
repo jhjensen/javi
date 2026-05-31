@@ -47,9 +47,14 @@ final class LspReferencesProvider implements TagLookupProvider {
 
       Map<String, Object> result;
       try {
-         result = session.submit("textDocument/references", params)
-            .get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
+         var future = session.submit("textDocument/references", params);
+         EventQueue.biglock2.unlock();
+         try {
+            result = future.get(LspCommands.DEFAULT_REQUEST_TIMEOUT_SECONDS,
                java.util.concurrent.TimeUnit.SECONDS);
+         } finally {
+            EventQueue.biglock2.lock();
+         }
       } catch (Exception e) {
          trace("LspReferencesProvider: failed: " + e);
          return Collections.emptyList();
