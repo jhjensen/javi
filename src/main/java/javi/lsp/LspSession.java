@@ -542,7 +542,7 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
       clientInfo.put("version", "1.0");
       params.put("clientInfo", clientInfo);
 
-      params.put("rootUri", "file://" + projectRoot);
+      params.put("rootUri", new java.io.File(projectRoot).getAbsoluteFile().toURI().toString());
 
       Map<String, Object> capabilities = new HashMap<>();
       Map<String, Object> textDoc = new HashMap<>();
