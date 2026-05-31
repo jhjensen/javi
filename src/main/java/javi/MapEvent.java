@@ -182,25 +182,45 @@ public final class MapEvent {
          return;
 
       if (Rgroup.bindingLookup("ai") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai", null, 0);
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai", null, 0);
       if (Rgroup.bindingLookup("ai.explain") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.explain",
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai.explain",
             null, SHIFT_MASK);
       if (Rgroup.bindingLookup("ai.review") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F9, "ai.review",
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai.review",
             null, CTRL_MASK);
       if (Rgroup.bindingLookup("ai.complete") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.complete",
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.complete",
             null, 0);
       if (Rgroup.bindingLookup("ai.doc") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.doc",
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.doc",
             null, SHIFT_MASK);
       if (Rgroup.bindingLookup("ai.cancel") != null)
-         normalKeyMap.bindEditAction(JeyEvent.VK_F12, "ai.cancel",
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.cancel",
             null, CTRL_MASK);
       if (Rgroup.bindingLookup("ai.gprocess") != null)
-         normalKeyMap.bindEditKey('g', "ai.gprocess", null);
-      normalKeyMap.bindEditKey((char) 13, "ai.chat", null, SHIFT_MASK);
+         bindAiEditCharIfAbsent('g', "ai.gprocess", null, 0);
+      bindAiEditCharIfAbsent((char) 13, "ai.chat", null, SHIFT_MASK);
+   }
+
+   /**
+    * Idempotent key binding used by late AI rebind calls.
+    * If a key is already bound, we keep the existing mapping to avoid
+    * duplicate-keymap runtime exceptions during startup.
+    */
+   private static void bindAiEditActionIfAbsent(int keyCode, String command,
+         Object arg, int modifiers) {
+      JeyEvent binding = new JeyEvent(modifiers, keyCode,
+         JeyEvent.CHAR_UNDEFINED);
+      if (normalKeyMap.getEditKeys().getCommandName(binding) == null)
+         normalKeyMap.bindEditAction(keyCode, command, arg, modifiers);
+   }
+
+   private static void bindAiEditCharIfAbsent(char keyChar, String command,
+         Object arg, int modifiers) {
+      JeyEvent binding = new JeyEvent(modifiers, 0, keyChar);
+      if (normalKeyMap.getEditKeys().getCommandName(binding) == null)
+         normalKeyMap.bindEditKey(keyChar, command, arg, modifiers);
    }
 
    private static void bindMovementKeys(KeyMap km, Matcher sentenceRegex,
