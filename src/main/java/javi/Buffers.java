@@ -285,6 +285,12 @@ public final class Buffers {
          String pat = m.pattern().pattern();
          return pat.isEmpty() ? null : pat;
       }
+      if (id == '.') {
+         return InsertBuffer.getLastInserted();
+      }
+      if (id == ':') {
+         return Command.getLastColonCommand();
+      }
       if (id >= 'A' && id <= 'Z')
          id = (char) (id + ('a' - 'A'));
 

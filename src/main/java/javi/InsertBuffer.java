@@ -32,6 +32,11 @@ public abstract class InsertBuffer extends View.Inserter {
       instance = this;
    }
 
+   /** Returns the text from the last insert mode session (vim "." register). */
+   public static String getLastInserted() {
+      return instance != null ? instance.dotbuffer : null;
+   }
+
    final String getString() {
       return buffer.toString();
    }

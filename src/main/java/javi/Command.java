@@ -26,6 +26,12 @@ public final class Command extends Rgroup {
    }
 
    private static volatile CommandObserver commandObserver;
+   private static String lastColonCommand;
+
+   /** Returns the last colon command string (vim ":" register). */
+   public static String getLastColonCommand() {
+      return lastColonCommand;
+   }
 
    /**
     * Register a command execution observer. Only one observer
@@ -351,6 +357,7 @@ public final class Command extends Rgroup {
       ContextHelp.onSubModeEntered("commandproc");
       String line = InsertBuffer.getcomline(":");
       line = line.substring(1, line.length());
+      lastColonCommand = line;
       command(line, fvc, null);
    }
 
