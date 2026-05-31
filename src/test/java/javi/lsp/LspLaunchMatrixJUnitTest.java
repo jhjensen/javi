@@ -133,4 +133,44 @@ class LspLaunchMatrixJUnitTest {
          }
       }
    }
+
+   @Test
+   @DisplayName("dead session is replaced on next sessionFor call")
+   void deadSessionRecovery() throws Exception {
+      String script = createMatrixMockServerScript();
+      Map<String, LspServerConfig> configs = new HashMap<>();
+      LspServerConfig cfg = new LspServerConfig("testlang",
+         new String[]{"/bin/bash", script},
+         new String[]{".test"}, null);
+      configs.put("testlang", cfg);
+
+      TestSink sink = new TestSink();
+      LspRegistry registry = new LspRegistry(configs, sink);
+      registry.setProjectRoot(System.getProperty("user.dir"));
+
+      // Start session, verify READY
+      LspSession s1 = registry.sessionFor(".test");
+      assertNotNull(s1, "First session should be created");
+      assertTrue(sink.readyLatch.await(10, TimeUnit.SECONDS),
+         "First session should reach READY");
+      assertEquals(LspSession.State.READY, s1.getState());
+
+      // Stop the session — simulates it ending up STOPPED
+      s1.stop();
+      Thread.sleep(200);
+
+      // sessionFor should now get a new session, not the dead one
+      LspSession s2 = registry.sessionFor(".test");
+      assertNotNull(s2, "Second session should be created after dead removal");
+      // Wait for the new session to reach READY
+      int waited = 0;
+      while (LspSession.State.READY != s2.getState() && waited < 50) {
+         Thread.sleep(200);
+         waited++;
+      }
+      assertEquals(LspSession.State.READY, s2.getState(),
+         "Replacement session should reach READY");
+
+      s2.stop();
+   }
 }

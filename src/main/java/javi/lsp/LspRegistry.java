@@ -293,7 +293,15 @@ public final class LspRegistry {
    private LspSession getOrStartSession(LspServerConfig config) {
       LspSession session = sessions.get(config.languageId);
       if (null != session) {
-         return session;
+         LspSession.State st = session.getState();
+         if (LspSession.State.STOPPED != st
+               && LspSession.State.CRASHED != st) {
+            return session;
+         }
+         // Dead session — remove and create a fresh one below.
+         sessions.remove(config.languageId);
+         trace("LSP: removing dead session: " + config.languageId
+            + " state=" + st);
       }
 
       if (null == projectRoot) {
