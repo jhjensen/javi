@@ -153,6 +153,14 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
    public CompletableFuture<Map<String, Object>> submit(String method,
          Map<String, Object> params) {
       LspRequest req = LspRequest.request(method, params);
+      if (State.STOPPED == state
+            || State.STOPPING == state
+            || State.CRASHED == state) {
+         req.future.completeExceptionally(new IOException(
+            "LSP session not running for " + config.languageId
+            + " state=" + state));
+         return req.future;
+      }
       if (!commandQueue.offer(req)) {
          req.future.completeExceptionally(
             new IOException("LSP queue full for " + config.languageId));
@@ -167,6 +175,13 @@ public final class LspSession implements Runnable, JsonRpc.MessageHandler {
     * @param params the notification parameters
     */
    public void notify_(String method, Map<String, Object> params) {
+      if (State.STOPPED == state
+            || State.STOPPING == state
+            || State.CRASHED == state) {
+         trace("LSP dropping notification while not running: "
+            + method + " state=" + state);
+         return;
+      }
       LspRequest req = LspRequest.notification(method, params);
       if (!commandQueue.offer(req)) {
          trace("LSP queue full, dropping notification: " + method);
