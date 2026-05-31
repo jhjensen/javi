@@ -302,7 +302,11 @@ public final class AIConfig {
     * @param path file path, "copilot", or "claude"
     */
    public void setAuthFile(String path) {
-      this.authFile = path;
+      if (null == path || path.isBlank()) {
+         this.authFile = null;
+      } else {
+         this.authFile = path;
+      }
    }
 
    /**

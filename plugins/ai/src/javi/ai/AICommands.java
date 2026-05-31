@@ -225,6 +225,11 @@ public final class AICommands extends Rgroup implements Plugin {
          if (!AIConfig.getInstance().setSetting(key, value)) {
             throw new InputException("unknown AI setting: " + key);
          }
+         // Reset cached provider when auth or provider settings change
+         if ("authFile".equals(key) || "authfile".equals(key)
+               || "provider".equals(key)) {
+            AIClient.getInstance().resetProvider();
+         }
          UI.reportMessage("ai." + key + "=" + value);
       } catch (IllegalArgumentException e) {
          throw new InputException("invalid value for ai." + key

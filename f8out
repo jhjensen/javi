@@ -1,0 +1,84 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/Users/jjensen/.gradle/wrapper/dists/gradle-9.5.0-bin/bvnork1r7n8i6kp5cnkibsc9q/gradle-9.5.0/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :compileJava UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :startScripts
+> Task :installDist
+> Task :compileTypingTutorPluginJava UP-TO-DATE
+> Task :processTypingTutorPluginResources NO-SOURCE
+> Task :typingTutorPluginClasses UP-TO-DATE
+> Task :typingTutorJar UP-TO-DATE
+
+> Task :plugins
+Built plugin: /Users/jjensen/gtools/myai/ai/javi-wt-F8/build/libs/javi-tutorial.jar
+Built plugin: /Users/jjensen/gtools/myai/ai/javi-wt-F8/build/libs/javi-Server.jar
+Built plugin: /Users/jjensen/gtools/myai/ai/javi-wt-F8/build/libs/javi-ai.jar
+
+> Task :distAll
+
+BUILD SUCCESSFUL in 1s
+8 actionable tasks: 5 executed, 3 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.5.0/userguide/configuration_cache_enabling.html
+Javi.java:157 enter Javi Main
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: file_read
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: file_list
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: grep
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: buffer_info
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: buffer_read
+Plugin.java:177 >> Not in parent classloader.
+Plugin.java:198 >> Returning newly loaded class.
+AIToolRegistry.java:58 AI tool registered: buffer_write
+Plugin.java:294 loaded plugin: javi.ai.AICommands
+DirManager.java:159 DirManager: added search dir src/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/
+DirManager.java:159 DirManager: added search dir src/main/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/main/
+DirManager.java:159 DirManager: added search dir src/history/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/history/
+DirManager.java:159 DirManager: added search dir src/main/java/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/main/java/
+DirManager.java:159 DirManager: added search dir src/history/java/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/history/java/
+DirManager.java:159 DirManager: added search dir src/main/java/javi/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/main/java/javi/
+DirManager.java:159 DirManager: added search dir src/history/java/history/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/history/java/history/
+DirManager.java:159 DirManager: added search dir src/plugin/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/plugin/
+DirManager.java:159 DirManager: added search dir src/main/java/javi/plugin/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/main/java/javi/plugin/
+DirManager.java:159 DirManager: added search dir src/main/java/javi/awt/ /Users/jjensen/gtools/myai/ai/javi-wt-F8/src/main/java/javi/awt/
+AwtInterface.java:980 ShowFrame: font=Verdana size=13.8 width=71 height=79
+AwtInterface.java:959 ishow: preferredSize=java.awt.Dimension[width=643,height=1422] insets=java.awt.Insets[top=28,left=0,bottom=0,right=0]
+Javi.java:265 main: removing dummy before initPostUi
+FileList.java:297 removeDummyIfNotNeeded: finish=5 dummies=1 hasRealLocalFile=true
+Javi.java:99 AI plugin not available: javi.ai.AICommands
+KeyBindingPersistence.java:168 loaded 2 user keybindings from /Users/jjensen/.javi/keybindings
+Plugin.java:299 no plugins to load java.nio.file.NoSuchFileException: plugin/plugin.jar
+Javi.java:276 main: removing dummy after doneInit
+FileList.java:297 removeDummyIfNotNeeded: finish=4 dummies=0 hasRealLocalFile=true
+MapEvent.java:585 hevent key=JeyEvent mod 0 code 58 char=58 code=58 mod=0 insert=false
+MapEvent.java:585 hevent key=JeyEvent mod 0 code 97 char=97 code=97 mod=0 insert=false
+MapEvent.java:561 MapEvent.run caught ExitException
+Javi.java:298 calling System.exit
+LspServerConfig.java:192 LSP: found jdtls at /Users/jjensen/.local/share/jdtls/bin/jdtls
+LspServerConfig.java:192 LSP: found clangd at /usr/bin/clangd
+LspServerConfig.java:192 LSP: found harper-ls at /Users/jjensen/.cargo/bin/harper-ls
+LspServerConfig.java:358 LSP config: loaded java = /Users/jjensen/Downloads/jdt-language-server-1.9.0-202203031534/bin/jdtls
+LspServerConfig.java:358 LSP config: loaded test-lang = test-server
