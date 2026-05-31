@@ -582,7 +582,9 @@ public final class MapEvent {
 
    static void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException, IOException {
-      //trace("hevent" + jEv);
+      trace("hevent key=" + jEv + " char=" + (int) jEv.getKeyChar()
+         + " code=" + jEv.getKeyCode() + " mod=" + jEv.getModifiers()
+         + " insert=" + (fvc.vi != null && fvc.vi.isInInsertMode()));
 
       char ch = jEv.getKeyChar();
       if ((('0' != ch) || (0 != aiterate))
