@@ -4,3 +4,4 @@ fontweight 1.0
 lines 110
 awt.lcdcontrast 100
 e todo.txt xxx src main history java javi history plugin awt
+makecommand /Users/jjensen/bin/make.pl
