@@ -15,7 +15,8 @@ all: ctag
 
 # Classpath for running Java
 R := $(shell pwd)
-export CLASSPATH=$R/build/classes/java/main:$R/lib/juniversalchardet-1.0.3.jar:$R/lib/rhino-1.7.14.jar
+S := $R/build/install/javi/lib
+export CLASSPATH=$R/build/classes/java/main:$S/juniversalchardet-2.4.0.jar:$S/rhino-1.7.14.jar
 
 #==============================================================================
 # Build targets
@@ -36,10 +37,6 @@ jar:
 # Build fat JAR with all dependencies
 fatjar:
 	./gradlew shadowJar
-
-# Build all plugin JARs
-plugins:
-	./gradlew plugins
 
 #==============================================================================
 # I3: Release Distribution Targets
@@ -641,7 +638,7 @@ runner: jar
 	java -cp $(CLASSPATH) -jar build/libs/javi-1.0.jar
 
 runclass:
-	echo $$CLASSPATH
+	echo CLASSPATH $$CLASSPATH
 	java  -cp $(CLASSPATH) javi.Javi src history main java javi awt history
 
 FORCE:

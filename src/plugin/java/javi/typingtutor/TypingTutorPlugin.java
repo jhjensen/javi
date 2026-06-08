@@ -37,10 +37,6 @@ public final class TypingTutorPlugin extends Rgroup implements Plugin {
    private static SessionHistory sessionHistory;
    private static TypingSession activeSession;
 
-   static {
-      new TypingTutorPlugin();
-   }
-
    public TypingTutorPlugin() {
       stats = TypingStats.load();
       keyStats = KeyStats.load();

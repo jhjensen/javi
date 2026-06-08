@@ -689,7 +689,7 @@ public class EditContainer<OType> implements
    }
 
    public final boolean containsNow(int desired) {
-      //trace("requested = " + desired + " editvec = " + this);
+      //trace("containsNow requested = " + desired + " editvec = " + this);
       if (!finishedread)
          myexpand(0);
       //trace(this + "!contain desired = " + desired);

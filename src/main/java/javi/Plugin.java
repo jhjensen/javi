@@ -286,7 +286,7 @@ public interface Plugin {
 
             Class c = jarLoader.loadClass(pluginClassName, true);
             if (Plugin.class.isAssignableFrom(c)) {
-               // Instantiate the plugin — constructor registers
+               // Instantiate the plugin - constructor registers
                // commands and keybindings
                @SuppressWarnings("unchecked")
                var ctor = c.getDeclaredConstructor();
@@ -296,7 +296,7 @@ public interface Plugin {
                trace("unable to run class " + c);
             }
          } catch (Throwable e) {
-            trace("no plugins to load " + e);
+            trace("plugin failed to load " + jarFile +  " "  + e);
          }
       }
 

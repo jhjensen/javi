@@ -97,11 +97,6 @@ public final class Javi {
 
       //new v8();
       //new msvc();
-      try {
-         Plugin.Loader.load("plugin/plugin.jar"); //new FindBugs();
-      } catch (Throwable e) {
-         UI.reportError("error trying to load plugins " + e);
-      }
       //new FindBugs();
       new JavaCompiler();
       new CheckStyle();
@@ -255,7 +250,11 @@ public final class Javi {
             }
             if (noCLIFiles) {
                trace("main: removing dummy before initPostUi");
-               FileList.removeDummyIfNotNeeded();
+               var newFirst = FileList.removeDummyIfNotNeeded();
+               if (newFirst != null) {
+                   var fvc = FvContext.getCurrFvc();
+                   fvc.connectFv(newFirst, fvc.vi);
+               }
             }
 
             initPostUi();

@@ -156,7 +156,7 @@ public final class DirManager extends TextEdit<String> {
          return false;
       searchPath.add(dir);
       saveSearchPath();
-      trace("DirManager: added search dir " + dir);
+      //trace("DirManager: added search dir " + dir);
       showSearchPath();
       DirEdit.notifySearchPathChanged();
       return true;

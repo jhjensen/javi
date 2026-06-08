@@ -131,11 +131,10 @@ final class JavaCompiler extends Rgroup {
             fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
                   Arrays.asList(
                   new File("./build/classes/java/main"),
-                  new File("./build/compa-classes"),
-                  new File("lib/rhino-1.7.14.jar"),
-                  new File("lib/rxtx-2.1.7.jar"),
-                  new File("lib/junit3.8.2/junit.jar"),
-                  new File("lib/juniversalchardet-1.0.3.jar"),
+                  new File("./build/install/javi/lib/rhino-1.7.14.jar"),
+                  new File("./build/install/javi/lib/rxtx-2.1.7.jar"),
+                  new File("./build/install/javi/lib/junit3.8.2/junit.jar"),
+                  new File("./build/install/javi/lib/juniversalchardet-2.4.0.jar"),
                   new File("c:/Progra~1/Java/"
                         + System.getenv("JDK") + "/lib/tools.jar")
                ));
@@ -143,10 +142,9 @@ final class JavaCompiler extends Rgroup {
                FileDescriptor.getFileObjs(fileManager, flist);
 
             //String [] options = {"-Xlint:all"};
+            //String [] options = {};
 
-            String[] options = {"-d", "build/compa-classes"};
-            //String [] options = {"-d", "gbuild/java/build", "-cp",
-             //  "gbuild/java/build","-Xlint"};
+            String[] options = {"-d", "build/classes/java/main"};
 
             boolean success = compiler.getTask(null, fileManager,
                this, Arrays.asList(options), null, clist).call();

@@ -272,9 +272,9 @@ public final class FileList extends TextEdit<TextEdit<String>> {
     * Remove the dummy placeholder file if .javini opened real files.
     * Called after .javini processing when no CLI files were specified.
     */
-   static void removeDummyIfNotNeeded() {
+   static TextEdit<?> removeDummyIfNotNeeded() {
       if (instance == null)
-         return;
+         return null;
 
       // Only remove dummy placeholders when there is at least one real
       // non-dummy local file open (e.g. from .javini "e ...").
@@ -299,7 +299,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
             + " hasRealLocalFile=" + hasRealLocalFile);
 
       if (!hasRealLocalFile || dummies.isEmpty())
-         return;
+         return null;
 
       instance.beginInternalModify();
       try {
@@ -316,6 +316,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
          } catch (IOException e) {
             trace("removeDummyIfNotNeeded disposeFvc: " + e);
          }
+     return instance.at(1);
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
