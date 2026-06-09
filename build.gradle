@@ -86,28 +86,8 @@ dependencies {
     jacocoCli 'org.jacoco:org.jacoco.cli:0.8.13'
 
     // F36: RXTX serial library — plugin only, not on main classpath
-    rxtxLib 'org.rxtx:rxtx:2.1.7'
-}
-
-// F36: RXTX plugin source set — compiled separately, not part of main build
-sourceSets {
-    rxtxPlugin {
-        java {
-            srcDirs = ['src/plugin/java']
-            include 'javi/rxtx/**'
-            include 'javi/plugin/**'
-        }
-        compileClasspath = sourceSets.main.output + configurations.rxtxLib
-        runtimeClasspath = output + sourceSets.main.output + configurations.rxtxLib
-    }
-    typingTutorPlugin {
-        java {
-            srcDirs = ['src/plugin/java']
-            include 'javi/typingtutor/**'
-        }
-        compileClasspath = sourceSets.main.output
-        runtimeClasspath = output + sourceSets.main.output
-    }
+    //rxtxLib 'org.rxtx:rxtx:2.1.7'
+    implementation 'org.rxtx:rxtx:2.1.7'
 }
 
 // F36: Resolve rxtx dependency via Maven Central with Spring repo fallback
@@ -128,9 +108,9 @@ tasks.register('rxtxJar', Jar) {
         configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
     }
     manifest {
-        attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
+      attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
     }
-    destinationDirectory = file("${layout.buildDirectory.get()}/libs")
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
     dependsOn 'compileRxtxPluginJava'
 }
 
@@ -142,7 +122,7 @@ tasks.register('typingTutorJar', Jar) {
     manifest {
         attributes 'Plugin-Class': 'javi.typingtutor.TypingTutorPlugin'
     }
-    destinationDirectory = file("${layout.buildDirectory.get()}/libs")
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
     dependsOn 'compileTypingTutorPluginJava'
 }
 
@@ -161,6 +141,18 @@ sourceSets {
     ai {
         java {
             srcDirs = ['plugins/ai/src']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
+    rxtxPlugin {
+        java {
+            srcDirs = ['plugins/rxtx/src']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
+   typingTutorPlugin {
+        java {
+            srcDirs = ['plugins/typingtutor/src']
         }
         compileClasspath += main.output + main.compileClasspath
     }
@@ -356,7 +348,7 @@ tasks.named('jar') {
     }
     archiveBaseName.set('javi')
     archiveVersion.set(projectVersion)
-    destinationDirectory.set(layout.buildDirectory.dir("libs"))
+    destinationDirectory.set(layout.buildDirectory.dir("lib"))
 }
 
 // I3: Copy JAR to dist directory with optional versioning
@@ -558,27 +550,27 @@ def buildPluginJar(String pName, File srcDir) {
     }
 
     // Build the JAR
-    def jarPath = new File(bdir, "libs/javi-${pName}.jar")
+    def jarPath = new File(bdir, "plugins/javi-${pName}.jar")
     ant.jar(destfile: jarPath.path, basedir: classesDir,
             manifest: mfFile.path)
     logger.lifecycle("Built plugin: $jarPath")
 }
 
-// Build a single plugin JAR: pluginJar -PpluginName=ai
-tasks.register('pluginJar') {
-    dependsOn compileJava
-    group = 'build'
-    description = 'Build a single plugin JAR (use -PpluginName=NAME)'
-
-    doLast {
-        def pName = project.findProperty('pluginName')
-        if (!pName) throw new GradleException('Set -PpluginName=NAME')
-        def srcDir = file("$pluginsDir/$pName/src")
-        if (!srcDir.exists())
-            throw new GradleException("Plugin source not found: $srcDir")
-        buildPluginJar(pName, srcDir)
-    }
-}
+//// Build a single plugin JAR: pluginJar -PpluginName=ai
+//tasks.register('pluginJar') {
+//    dependsOn compileJava
+//    group = 'build'
+//    description = 'Build a single plugin JAR (use -PpluginName=NAME)'
+//
+//    doLast {
+//        def pName = project.findProperty('pluginName')
+//        if (!pName) throw new GradleException('Set -PpluginName=NAME')
+//        def srcDir = file("$pluginsDir/$pName/src")
+//        if (!srcDir.exists())
+//            throw new GradleException("Plugin source not found: $srcDir")
+//        buildPluginJar(pName, srcDir)
+//    }
+//}
 
 // Build all plugin JARs
 tasks.register('plugins') {
@@ -608,7 +600,7 @@ tasks.named('build') {
 tasks.register('distAll', Copy) {
     dependsOn jar, 'plugins'
     from(jar.archiveFile)
-    from(layout.buildDirectory.dir("libs")) {
+    from(layout.buildDirectory.dir("plugins")) {
         include 'javi-*.jar'
         exclude jar.archiveFileName.get()
     }

@@ -1161,7 +1161,7 @@ public final class MiscCommands extends Rgroup {
    }
 
    /** Load a plugin JAR by name or path.
-     * Bare names resolve to build/libs/javi-NAME.jar or dist/javi-NAME.jar.
+     * Bare names resolve to build/plugins/javi-NAME.jar or dist/javi-NAME.jar.
      * Full paths are used directly.
      */
    private static void loadPlugin(String arg)
@@ -1211,8 +1211,8 @@ public final class MiscCommands extends Rgroup {
 
    private static java.io.File findPluginJar(String name) {
       String jarName = "javi-" + name + ".jar";
-      // Check build/libs/ first (development), then dist/
-      java.io.File f = new java.io.File("build/libs/" + jarName);
+      // Check build/plugins/ first (development), then dist/
+      java.io.File f = new java.io.File("build/plugins/" + jarName);
       if (f.exists())
          return f;
       f = new java.io.File("dist/" + jarName);
@@ -1232,8 +1232,8 @@ public final class MiscCommands extends Rgroup {
          if (f.exists())
             return f;
       }
-      // Return build/libs path for the error message
-      return new java.io.File("build/libs/" + jarName);
+      // Return build/plugins path for the error message
+      return new java.io.File("build/plugins/" + jarName);
    }
 
    /** Returns the lib/ directory of the javi installation, or null if

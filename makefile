@@ -639,7 +639,7 @@ runner: jar
 
 runclass:
 	echo CLASSPATH $$CLASSPATH
-	java  -cp $(CLASSPATH) javi.Javi src history main java javi awt history
+	java  -cp $(CLASSPATH) javi.Javi testfile #src history main java javi awt history
 
 FORCE:
 

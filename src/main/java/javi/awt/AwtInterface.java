@@ -976,8 +976,8 @@ public final class AwtInterface extends UI implements java.io.Serializable,
 
    public void ishow() {
       Dimension prefSize = frm.getPreferredSize();
-      trace("ishow: preferredSize=" + prefSize
-         + " insets=" + frm.getInsets());
+      //trace("ishow: preferredSize=" + prefSize
+      //   + " insets=" + frm.getInsets());
       frm.setSize(prefSize);
       frm.setVisible(true);
    }
@@ -997,10 +997,10 @@ public final class AwtInterface extends UI implements java.io.Serializable,
          Font font = AwtFontList.getCurr(null);
          OldView cmdView = (OldView) tfc.vi;
          Component cmdCanvas = cmdView.getComponent();
-         trace("ShowFrame: font=" + font.getFamily()
-            + " size=" + font.getSize2D()
-            + " width=" + MiscCommands.getWidth()
-            + " height=" + MiscCommands.getHeight());
+         //trace("ShowFrame: font=" + font.getFamily()
+         //   + " size=" + font.getSize2D()
+         //   + " width=" + MiscCommands.getWidth()
+         //   + " height=" + MiscCommands.getHeight());
 
          // Always apply font and recalculate sizes. The initial
          // sizing in Initer used the default font metrics; by now

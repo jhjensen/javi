@@ -174,7 +174,7 @@ abstract class MultiClassLoader extends ClassLoader {
       try {
          return getParent().loadClass(className);
       } catch (ClassNotFoundException e) {
-         trace(">> Not in parent classloader.");
+         //trace(">> Not in parent classloader.");
       }
 
       //----- Try to load it from preferred source
@@ -195,7 +195,7 @@ abstract class MultiClassLoader extends ClassLoader {
 
       // Done
       classes.put(className, result);
-      trace(">> Returning newly loaded class.");
+      //trace(">> Returning newly loaded class.");
       return result;
    }
 //---------- Public Methods ------------------------------

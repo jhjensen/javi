@@ -3,7 +3,7 @@ fontsize 13.8
 fontweight 1.0
 lines 110
 awt.lcdcontrast 100
-e build.txt src main history java javi git history plugin awt
+e build.txt plugins  ai src main history java javi git history plugin awt
 makecommand /Users/jjensen/bin/make.pl
 loadplugin ai
 ai.authFile=./.ai_auth
