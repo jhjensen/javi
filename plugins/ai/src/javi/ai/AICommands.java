@@ -2,6 +2,7 @@ package javi.ai;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import static history.Tools.trace;
 
@@ -115,7 +116,12 @@ public final class AICommands extends Rgroup implements Plugin {
     * <p>Should be called once during editor initialization, typically
     * in {@link javi.Javi#initPostUi()}.</p>
     */
-   public AICommands() {
+
+   public Plugin create(List<String> args) {
+       return new AICommands(args);
+   }
+
+   public AICommands(List<String> args) {
       final String[] rnames = {
          "",
          "ai",             // 1 - dispatch subcommand
@@ -145,6 +151,7 @@ public final class AICommands extends Rgroup implements Plugin {
          "ai.timeout",    // 25 - set request timeout
          "ai.prompt",     // 26 - set system prompt
       };
+      trace("registering ai commands");
       register(rnames);
       AIToolRegistry.registerBuiltins();
    }
@@ -336,12 +343,12 @@ public final class AICommands extends Rgroup implements Plugin {
             if ("*ai-chat*".equals(fvc.edvec.getName())) {
                message = collectPromptFromSeparator();
                if (null == message || message.isEmpty()) {
-                  // No text below separator — add new separator
+                  // No text below separator - add new separator
                   appendPromptSeparator(fvc);
                   return null;
                }
             } else {
-               // Not in chat buffer — switch there and add separator
+               // Not in chat buffer - switch there and add separator
                appendPromptSeparator(fvc);
                return null;
             }
@@ -803,7 +810,7 @@ public final class AICommands extends Rgroup implements Plugin {
 
             String hint = lines.length > 1
                ? "AI: " + lines.length
-                  + " lines — Tab to accept,"
+                  + " lines - Tab to accept,"
                   + " Esc to dismiss"
                : "AI: Tab to accept,"
                   + " Esc to dismiss";
@@ -902,7 +909,7 @@ public final class AICommands extends Rgroup implements Plugin {
                   new CopilotRestClient();
                if (client.hasToken()) {
                   Path authPath = AIConfig.getInstance()
-                     .resolveAuthFile();
+                     .getAuthFile();
                   return "Already authenticated. "
                      + "Token loaded from " + authPath + ".";
                }
@@ -1060,15 +1067,15 @@ public final class AICommands extends Rgroup implements Plugin {
     *
     * <p>Reads the third key to dispatch the AI subcommand:
     * <ul>
-    *   <li>{@code r} — review current code</li>
-    *   <li>{@code e} — explain current code</li>
-    *   <li>{@code d} — generate documentation</li>
-    *   <li>{@code f} — refactor current code</li>
-    *   <li>{@code c} — open AI chat</li>
-    *   <li>{@code s} — show AI status</li>
-    *   <li>{@code t} — test AI connection</li>
-    *   <li>{@code x} — cancel AI request</li>
-    *   <li>{@code ?} — show AI help</li>
+    *   <li>{@code r} - review current code</li>
+    *   <li>{@code e} - explain current code</li>
+    *   <li>{@code d} - generate documentation</li>
+    *   <li>{@code f} - refactor current code</li>
+    *   <li>{@code c} - open AI chat</li>
+    *   <li>{@code s} - show AI status</li>
+    *   <li>{@code t} - test AI connection</li>
+    *   <li>{@code x} - cancel AI request</li>
+    *   <li>{@code ?} - show AI help</li>
     * </ul></p>
     *
     * @param fvc the current file-view context
@@ -1105,7 +1112,7 @@ public final class AICommands extends Rgroup implements Plugin {
          default:
             UI.reportMessage(
                "ga: unknown key '" + ch
-               + "' — use gar/gae/gad/gaf/gac");
+               + "' - use gar/gae/gad/gaf/gac");
             return null;
       }
    }
@@ -1201,7 +1208,7 @@ public final class AICommands extends Rgroup implements Plugin {
 
       String info = "[" + prov + "/" + model
          + (premium ? " PREMIUM" : "") + "] :"
-         + command + " — source: " + source
+         + command + " - source: " + source
          + ", context: " + ctxLines + " lines/"
          + ctxChars + " chars"
          + ", ~" + estTokens + " tokens"
@@ -1247,7 +1254,7 @@ public final class AICommands extends Rgroup implements Plugin {
       String errMsg = "AI Error: " + cause.getMessage();
       if (cause instanceof AIException ae
             && ae.isAuthError()) {
-         errMsg += " — Run :ai auth to authenticate.";
+         errMsg += " - Run :ai auth to authenticate.";
       }
       appendToChatBuffer(errMsg);
       appendToChatBuffer("");

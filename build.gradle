@@ -126,6 +126,18 @@ tasks.register('typingTutorJar', Jar) {
     dependsOn 'compileTypingTutorPluginJava'
 }
 
+// F46: Typing tutor plugin JAR
+tasks.register('aiJar', Jar) {
+    archiveBaseName = 'javi-ai'
+    archiveVersion = ''
+    from sourceSets.aiPlugin.output
+    manifest {
+        attributes 'Plugin-Class': 'javi.ai.AiPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
+    dependsOn 'compileAiPluginJava'
+}
+
 sourceSets {
     // Define the main source set
     main {
@@ -135,9 +147,12 @@ sourceSets {
     }
     // F8: AI plugin sources — compiled separately for plugin JAR,
     // but included in test classpath so AI unit tests can run
-    ai {
+    aiPlugin {
         java {
             srcDirs = ['plugins/ai/src']
+        }
+        resources {
+            srcDirs = ['plugins/ai/src/resources']
         }
         compileClasspath += main.output + main.compileClasspath
     }
@@ -161,8 +176,8 @@ sourceSets {
             // Include plugin sources so Server tests can compile
             srcDirs += ['plugins/Server/src']
         }
-        compileClasspath += ai.output
-        runtimeClasspath += ai.output
+        compileClasspath += aiPlugin.output
+        runtimeClasspath += aiPlugin.output
     }
 }
 
@@ -178,18 +193,6 @@ tasks.named('compileJava') {
         '-Xlint:-this-escape',  // Ignore this-escape in constructors (existing pattern)
         '-Xmaxwarns', '500',    // Limit warning output
         '-Werror'               // Treat warnings as errors
-    ]
-    options.deprecation = true
-    options.encoding = 'UTF-8'
-}
-
-// F8: AI plugin source set uses same compiler settings
-tasks.named('compileAiJava') {
-    options.compilerArgs += [
-        '-Xlint:all', '-Xlint:-serial', '-Xlint:-processing',
-        '-Xlint:-rawtypes', '-Xlint:-static', '-Xlint:-cast',
-        '-Xlint:-dangling-doc-comments', '-Xlint:-this-escape',
-        '-Xmaxwarns', '500', '-Werror'
     ]
     options.deprecation = true
     options.encoding = 'UTF-8'
@@ -480,7 +483,7 @@ tasks.register('mergedCoverageReport', JacocoReport) {
 def pluginsDir = file("$projectDir/plugins")
 
 tasks.register('plugins') {
-    dependsOn compileJava, 'typingTutorJar'
+    dependsOn compileJava, 'typingTutorJar', 'aiJar'
 }
 
 // F45: Ensure plugin JARs are built as part of the standard build
@@ -504,3 +507,13 @@ tasks.register('copyTestDeps', Copy) {
     from configurations.testCompileClasspath
     into "$projectDir/lib/test"
 }
+/*
+debug
+tasks.register('showAiSources') {
+    doLast {
+        sourceSets.aiPlugin.java.files.each {
+            println it
+        }
+    }
+}
+*/

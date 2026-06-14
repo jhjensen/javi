@@ -1,6 +1,7 @@
 package javi.ai;
 
 import static history.Tools.trace;
+import java.nio.file.Path;
 
 /**
  * Configuration manager for AI integration settings.
@@ -78,16 +79,16 @@ public final class AIConfig {
       }
    }
 
-   private static final AIConfig INSTANCE = new AIConfig();
+   private static AIConfig INSTANCE = null;
 
-   private volatile Provider provider = Provider.OPENAI;
+   private volatile Provider provider = null;
    private volatile String model = null; // null means use provider default
    private volatile int maxTokens = 2048;
    private volatile String apiKey = null;
    private volatile int timeoutSeconds = 30;
    private volatile String systemPrompt = DEFAULT_SYSTEM_PROMPT;
    private volatile int completionDelayMs = 800;
-   private volatile String authFile = null; // null means default copilot path
+   private volatile Path authFile = null; 
 
    /** Default system prompt for code assistance. */
    static final String DEFAULT_SYSTEM_PROMPT =
@@ -96,8 +97,10 @@ public final class AIConfig {
       + "When showing code, match the style of the surrounding code. "
       + "Prefer short, actionable answers.";
 
-   /** Private constructor for singleton. */
-   private AIConfig() {
+   protected AIConfig(String provider, String authFile) throws javi.InputException {
+       setProvider(provider);
+       setAuthFile(authFile);
+       INSTANCE = this;
    }
 
    /**
@@ -292,7 +295,7 @@ public final class AIConfig {
     *
     * @return the auth file setting, or null for default
     */
-   public String getAuthFile() {
+   public Path getAuthFile() {
       return authFile;
    }
 
@@ -301,35 +304,22 @@ public final class AIConfig {
     *
     * @param path file path, "copilot", or "claude"
     */
-   public void setAuthFile(String path) {
-      if (null == path || path.isBlank()) {
-         this.authFile = null;
-      } else {
-         this.authFile = path;
-      }
-   }
-
-   /**
-    * Resolve the auth file path to an absolute Path.
-    *
-    * @return resolved path to the OAuth token file
-    */
-   public java.nio.file.Path resolveAuthFile() {
+   public void setAuthFile(String authid) throws javi.InputException {
       String home = System.getProperty("user.home");
-      if (null == authFile || "copilot".equalsIgnoreCase(authFile)) {
-         return java.nio.file.Path.of(home,
-            ".config", "github-copilot", "apps.json");
-      }
-      if ("claude".equalsIgnoreCase(authFile)) {
-         return java.nio.file.Path.of(home,
-            ".config", "anthropic", "auth.json");
-      }
+      var authPath = switch(authid) {
+         case "copilot" -> Path.of(home, ".config", "github-copilot", "apps.json");
+         case "claude" -> Path.of(home, ".config", "anthropic", "auth.json");
+         case "" -> throw new javi.InputException("empty ai auth file");
+         case String s when s.startsWith("~/") -> Path.of(home, authid.substring(2));
+         case String s when s.startsWith("/") -> Path.of(authid);
+         case null -> throw new javi.InputException("null ai auth file");
+         default -> throw new javi.InputException("unexpected authid " + authid);
+      };
+      //if (!java.nio.file.Files.exists(java.nio.file.Path.of(authid))) 
+      //   throw new javi.InputException("non existant auth file " + authid);
+
+      this.authFile =  authPath;
       // Treat as literal path (expand ~ if present)
-      if (authFile.startsWith("~/")) {
-         return java.nio.file.Path.of(home,
-            authFile.substring(2));
-      }
-      return java.nio.file.Path.of(authFile);
    }
 
    /**
@@ -356,7 +346,7 @@ public final class AIConfig {
     * @param value the setting value
     * @return true if the setting was recognized and applied
     */
-   public boolean setSetting(String key, String value) {
+   public boolean setSetting(String key, String value) throws javi.InputException {
       switch (key) {
          case "provider":
             setProvider(value);
@@ -404,7 +394,6 @@ public final class AIConfig {
          + " timeout=" + timeoutSeconds + "s"
          + " delay=" + completionDelayMs + "ms"
          + " apiKey=" + keyStatus
-         + " authFile=" + (null == authFile ? "copilot (default)"
-            : authFile);
+         + " authFile=" + authFile;
    }
 }

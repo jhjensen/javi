@@ -26,7 +26,6 @@ public interface Plugin {
          if (path != null) {
             Path jarf = path.resolve(jarName);
             trace("looking for", jarName, " in ", jarf);
-            trace("looking for", jarName, " in ", jarf);
             if (Files.exists(jarf)) {
                trace("found plugin in ", jarf);
                return jarf.toUri().toURL();
@@ -82,6 +81,7 @@ public interface Plugin {
          return;
       }
 
+      trace("failed to loaded plugin: ", pluginName);
       throw new InputException("failed to create plugin " + pluginName);
    }
 

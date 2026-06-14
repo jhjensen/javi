@@ -1309,7 +1309,7 @@ public final class CopilotRestClient {
          return envToken;
       }
 
-      Path appsJson = AIConfig.getInstance().resolveAuthFile();
+      Path appsJson = AIConfig.getInstance().getAuthFile();
       return readTokenFromAppsJson(appsJson);
    }
 
@@ -1351,7 +1351,7 @@ public final class CopilotRestClient {
     * @param token the OAuth token to save
     */
    public static void saveOAuthToken(String token) {
-      Path appsJson = AIConfig.getInstance().resolveAuthFile();
+      Path appsJson = AIConfig.getInstance().getAuthFile();
       try {
          Files.createDirectories(appsJson.getParent());
          String json =

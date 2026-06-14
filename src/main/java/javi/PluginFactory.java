@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface PluginFactory {
     String name();
-    Plugin create(List<String> args) throws IOException;
+    Plugin create(List<String> args) throws IOException, InputException;
 }
