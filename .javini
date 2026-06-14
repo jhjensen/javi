@@ -4,8 +4,10 @@ fontweight 1.0
 lines 110
 awt.lcdcontrast 100
 e build.txt plugins  ai src main history java javi git history plugin awt
-makecommand /Users/jjensen/bin/make.pl
-loadplugin ai
-ai.authFile=./.ai_auth
-set ai.provider=copilot
-set ai.authFile=/Users/jjensen/javi/.ai_auth
+#makecommand /Users/jjensen/bin/make.pl
+loadplugin typingtutor
+#loadplugin ai copilot /Users/jjensen/javi/.ai_auth
+#loadplugin server
+#loadplugin tutorial
+#loadplugin lsp
+#loadplugin git

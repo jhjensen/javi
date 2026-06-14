@@ -281,6 +281,7 @@ class RegisterCommandsJUnitTest {
       fvc.cursorabs(0, 1);
 
       // Simulate "a yank — recordYank with named register
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       ArrayList<String> yanked = fvc.getElementsAt(1);
       Buffers.recordYank('a', yanked);
 
@@ -300,6 +301,7 @@ class RegisterCommandsJUnitTest {
 
    @Test
    @DisplayName("uppercase register appends to existing content")
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    void uppercaseRegisterAppends() throws Exception {
       String fname = "ju_rc_app";
       UI.setStream(new StringReader(""));
@@ -323,7 +325,6 @@ class RegisterCommandsJUnitTest {
       // Register 'a' should now contain both
       Object regA = Buffers.getbuf('a');
       assertTrue(regA instanceof ArrayList);
-      @SuppressWarnings("unchecked")
       ArrayList<String> lines = (ArrayList<String>) regA;
       assertEquals(2, lines.size());
       assertEquals("first", lines.get(0));
@@ -382,6 +383,7 @@ class RegisterCommandsJUnitTest {
       FvContext fvc = setupFvc(ex);
       fvc.cursorabs(0, 1);
 
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       ArrayList<String> yanked = fvc.getElementsAt(1);
       Buffers.recordYank('*', yanked);
 
@@ -622,6 +624,7 @@ class RegisterCommandsJUnitTest {
 
    @Test
    @DisplayName("getRegisterSummary reflects full editing session")
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    void registerSummaryAfterEditSession() throws Exception {
       String fname = "ju_rc_sum";
       UI.setStream(new StringReader(""));

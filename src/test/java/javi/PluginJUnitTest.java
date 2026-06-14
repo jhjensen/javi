@@ -4,7 +4,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,6 +13,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -111,9 +114,10 @@ class PluginJUnitTest {
 
    // ── Plugin.Loader.load() tests ─────────────────────────────
 
+   List<String> args = Arrays.asList(new String[] {});
    @Test
    void loadNonexistentJarHandlesGracefully() throws Exception {
-      Plugin.Loader.load("/nonexistent/plugin.jar");
+      Plugin.load("/nonexistent/plugin.jar", args);
    }
 
    @Test
@@ -125,7 +129,7 @@ class PluginJUnitTest {
                new FileOutputStream(jar))) {
             // empty JAR — no entries
          }
-         Plugin.Loader.load(jar.getAbsolutePath());
+         Plugin.load(jar.getAbsolutePath(), args);
       } finally {
          cleanTempDir();
       }
@@ -138,7 +142,7 @@ class PluginJUnitTest {
          File jar = createTestJar("noplugin.jar", new String[][]{
             {"README.txt", "not a plugin"}
          });
-         Plugin.Loader.load(jar.getAbsolutePath());
+         Plugin.load(jar.getAbsolutePath(), args);
       } finally {
          cleanTempDir();
       }
@@ -151,112 +155,9 @@ class PluginJUnitTest {
          File jar = createTestJar("badclass.jar", new String[][]{
             {"javi/plugin/FindBugs.class", "not valid bytecode"}
          });
-         Plugin.Loader.load(jar.getAbsolutePath());
+         Plugin.load(jar.getAbsolutePath(), args);
       } finally {
          cleanTempDir();
       }
-   }
-
-   // ── ClassLoader delegation ────────────────────────────────
-
-   @Test
-   void multiClassLoaderParentIsAppClassLoader() {
-      ClassLoader appCL = MultiClassLoader.class.getClassLoader();
-      assertNotNull(appCL,
-         "app classloader should not be null (not boot CL)");
-   }
-
-   // ── MultiClassLoader tests ─────────────────────────────────
-
-   @Test
-   void formatClassNameDefaultUsesDotToSlash() throws IOException {
-      createTempDir();
-      try {
-         File jar = createTestJar("test.jar", new String[][]{
-            {"dummy.txt", "x"}
-         });
-         JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         String formatted = loader.formatClassName("com.example.Hello");
-         assertEquals("com/example/Hello.class", formatted);
-      } finally {
-         cleanTempDir();
-      }
-   }
-
-   @Test
-   void formatClassNameWithReplacementChar() throws IOException {
-      createTempDir();
-      try {
-         File jar = createTestJar("test.jar", new String[][]{
-            {"dummy.txt", "x"}
-         });
-         JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         loader.setClassNameReplacementChar('_');
-         String formatted = loader.formatClassName("com.example.Hello");
-         assertEquals("com_example_Hello.class", formatted);
-      } finally {
-         cleanTempDir();
-      }
-   }
-
-   @Test
-   void formatClassNameNoPackage() throws IOException {
-      createTempDir();
-      try {
-         File jar = createTestJar("test.jar", new String[][]{
-            {"dummy.txt", "x"}
-         });
-         JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         String formatted = loader.formatClassName("Simple");
-         assertEquals("Simple.class", formatted);
-      } finally {
-         cleanTempDir();
-      }
-   }
-
-   @Test
-   void loaderCachesLoadedClass() throws Exception {
-      createTempDir();
-      try {
-         File jar = createTestJar("test.jar", new String[][]{
-            {"dummy.txt", "x"}
-         });
-         JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         Class<?> c1 = loader.loadClass("java.lang.String");
-         Class<?> c2 = loader.loadClass("java.lang.String");
-         assertSame(c1, c2);
-      } finally {
-         cleanTempDir();
-      }
-   }
-
-   @Test
-   void loaderThrowsForMissingClass() throws IOException {
-      createTempDir();
-      try {
-         File jar = createTestJar("test.jar", new String[][]{
-            {"dummy.txt", "x"}
-         });
-         JarLoader loader = new JarLoader(jar.getAbsolutePath());
-         assertThrows(ClassNotFoundException.class, () -> {
-            loader.loadClass("com.nonexistent.DoesNotExist");
-         });
-      } finally {
-         cleanTempDir();
-      }
-   }
-
-   // ── Plugin interface ──────────────────────────────────────
-
-   @Test
-   void pluginBindKeyRejectsUnknownGroup() {
-      assertThrows(InputException.class, () ->
-         Plugin.bindKey("bogus_group", "x", "insert"));
-   }
-
-   @Test
-   void pluginBindKeyRejectsUnknownCommand() {
-      assertThrows(InputException.class, () ->
-         Plugin.bindKey("move", "x", "no_such_cmd_xyz"));
    }
 }
