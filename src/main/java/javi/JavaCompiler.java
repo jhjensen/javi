@@ -130,12 +130,18 @@ final class JavaCompiler extends Rgroup {
             StandardJavaFileManager fileManager =
                compiler.getStandardFileManager(null, null, null);
 
-            Path libDir = Path.of("lib/test");
             ArrayList<File> pathList =
-               Files.list(libDir)
+               Files.list(Path.of("build/plugins"))
                     .filter(p -> p.toString().endsWith(".jar"))
                     .map(Path::toFile)
                     .collect(Collectors.toCollection(ArrayList::new));
+
+            pathList.addAll(
+               Files.list(Path.of("lib/test"))
+                    .filter(p -> p.toString().endsWith(".jar"))
+                    .map(Path::toFile)
+                    .collect(Collectors.toCollection(ArrayList::new))
+            );
             pathList.add(new File("./build/classes/java/main"));
 
             trace("pathList", pathList);
