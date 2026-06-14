@@ -1,15 +1,18 @@
 package javi;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import javax.tools.DiagnosticListener;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
 import javax.tools.StandardJavaFileManager;
-//import static history.Tools.trace;
+import static history.Tools.trace;
 
 final class JavaCompiler extends Rgroup {
 
@@ -24,7 +27,6 @@ final class JavaCompiler extends Rgroup {
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
       FvContext fvc, boolean dotmode) throws IOException, InputException {
-//trace("vigroup doroutine rnum = " + rnum );
       switch (rnum) {
          case 1 -> compcommand(fvc);
          case 2 -> compacommand();
@@ -121,30 +123,34 @@ final class JavaCompiler extends Rgroup {
       protected void preRun() {
          //trace(" array = " + array);
          try {
+
             javax.tools.JavaCompiler compiler =
                ToolProvider.getSystemJavaCompiler();
 
             StandardJavaFileManager fileManager =
                compiler.getStandardFileManager(null, null, null);
 
-            //trace("fileManager.getLocation cp" + fileManager.getLocation(javax.tools.StandardLocation.CLASS_PATH));
-            fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,
-                  Arrays.asList(
-                  new File("./build/classes/java/main"),
-                  new File("./build/install/javi/lib/rhino-1.7.14.jar"),
-                  new File("./build/install/javi/lib/rxtx-2.1.7.jar"),
-                  new File("./build/install/javi/lib/junit3.8.2/junit.jar"),
-                  new File("./build/install/javi/lib/juniversalchardet-2.4.0.jar"),
-                  new File("c:/Progra~1/Java/"
-                        + System.getenv("JDK") + "/lib/tools.jar")
-               ));
+            Path libDir = Path.of("lib/test");
+            ArrayList<File> pathList =
+               Files.list(libDir)
+                    .filter(p -> p.toString().endsWith(".jar"))
+                    .map(Path::toFile)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            pathList.add(new File("./build/classes/java/main"));
+
+            trace("pathList", pathList);
+
+            fileManager.setLocation(javax.tools.StandardLocation.CLASS_PATH,pathList);
+
             Iterable<? extends JavaFileObject> clist =
                FileDescriptor.getFileObjs(fileManager, flist);
 
             //String [] options = {"-Xlint:all"};
             //String [] options = {};
 
-            String[] options = {"-d", "build/classes/java/main"};
+            String [] options = {"-Xlint:unchecked"};
+
+            //String[] options = {"-d", "build/classes/java/main"};
 
             boolean success = compiler.getTask(null, fileManager,
                this, Arrays.asList(options), null, clist).call();
