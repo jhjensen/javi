@@ -100,19 +100,6 @@ repositories {
     }
 }
 
-tasks.register('rxtxJar', Jar) {
-    archiveBaseName = 'javi-rxtx'
-    from sourceSets.rxtxPlugin.output
-    from {
-        configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-    manifest {
-      attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
-    }
-    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
-    dependsOn 'compileRxtxPluginJava'
-}
-
 tasks.register('typingTutorJar', Jar) {
     archiveBaseName = 'javi-typingtutor'
     archiveVersion = ''
@@ -146,6 +133,20 @@ tasks.register('gitJar', Jar) {
     dependsOn 'compileGitPluginJava'
 }
 
+tasks.register('rxtxJar', Jar) {
+    archiveBaseName = 'javi-rxtx'
+    archiveVersion = ''
+    from sourceSets.rxtxPlugin.output
+    //from {
+    //    configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
+    //}
+    manifest {
+      attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
+    dependsOn 'compileRxtxPluginJava'
+}
+
 sourceSets {
     // Define the main source set
     main {
@@ -177,8 +178,11 @@ sourceSets {
         java {
             srcDirs = ['plugins/rxtx/src']
         }
+        resources {
+            srcDirs = ['plugins/rxtx/src/resources']
+        }
         compileClasspath += main.output + main.compileClasspath
-    }
+   }
    typingTutorPlugin {
         java {
             srcDirs = ['plugins/typingtutor/src']
@@ -500,15 +504,13 @@ tasks.register('mergedCoverageReport', JacocoReport) {
 def pluginsDir = file("$projectDir/plugins")
 
 tasks.register('plugins') {
-    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', jar
+    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', 'rxtxJar', jar
 }
 
-// F45: Ensure plugin JARs are built as part of the standard build
 tasks.named('build') {
     dependsOn 'plugins'
 }
 
-// F29: Enhanced dist — copies main JAR and all plugin JARs
 tasks.register('distAll', Copy) {
     dependsOn jar, 'plugins'
     from(jar.archiveFile)

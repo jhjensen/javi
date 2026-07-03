@@ -27,7 +27,7 @@ public interface Plugin {
             Path jarf = path.resolve(jarName);
             trace("looking for", jarName, " in ", jarf);
             if (Files.exists(jarf)) {
-               trace("found plugin in ", jarf);
+               trace("found plugin file", jarf);
                return jarf.toUri().toURL();
             }
          }
@@ -54,7 +54,7 @@ public interface Plugin {
          // Running from a classes directory (development)
          return null;
       } catch (Exception e) {
-         trace("failed to find install lib dir");
+         trace("failed to find install lib dir", e);
          return null;
       }
    }
@@ -67,18 +67,22 @@ public interface Plugin {
          throws IOException, InputException {
       URL[] urls = new URL[] {findPluginJar(pluginName)};
 
-      ClassLoader pluginLoader =
-         new URLClassLoader(
-            urls,
-            PluginFactory.class.getClassLoader());
-
-      ServiceLoader<PluginFactory> loader =
-          ServiceLoader.load(PluginFactory.class, pluginLoader);
-
-      for (PluginFactory factory : loader) {
-         Plugin plugin = factory.create(args);
-         trace("Loaded plugin: " + factory.getClass().getName());
-         return;
+      try {
+         ClassLoader pluginLoader =
+            new URLClassLoader(
+               urls,
+               PluginFactory.class.getClassLoader());
+   
+         ServiceLoader<PluginFactory> loader =
+             ServiceLoader.load(PluginFactory.class, pluginLoader);
+   
+         for (PluginFactory factory : loader) {
+            Plugin plugin = factory.create(args);
+            trace("Loaded plugin: " + factory.getClass().getName());
+            return;
+         }
+      } catch (Exception e) {
+         trace("exception loading plugin ", e);
       }
 
       trace("failed to loaded plugin: ", pluginName);

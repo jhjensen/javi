@@ -2,6 +2,7 @@ package javi.rxtx;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.List;
 
 import gnu.io.CommPortIdentifier;
 import gnu.io.NoSuchPortException;
@@ -18,6 +19,7 @@ import javi.StringIoc;
 import javi.TextEdit;
 import javi.Vt100;
 
+import static history.Tools.trace;
 /**
  * RXTX serial communication plugin for javi.
  *
@@ -35,8 +37,8 @@ public final class RxtxPlugin extends Rgroup implements Plugin {
    private static String portname = "COM1";
    private static int baudrate = 38400;
 
-   static {
-      new RxtxPlugin();
+   public Plugin create(List<String> args) throws IOException {
+       return new RxtxPlugin();
    }
 
    RxtxPlugin() {
@@ -45,6 +47,7 @@ public final class RxtxPlugin extends Rgroup implements Plugin {
       };
       register(rnames);
 
+      trace("registering comm command");
       registerArgCommand("comm",
          "communication (serial port)", "shell",
          (arg, count, rcount, fvc, dot) -> {
