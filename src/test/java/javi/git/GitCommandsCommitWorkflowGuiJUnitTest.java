@@ -96,7 +96,7 @@ class GitCommandsCommitWorkflowGuiJUnitTest {
          outerRef.setAccessible(true);
          gitCmds = (GitCommands) outerRef.get(binding);
       } else {
-         gitCmds = new GitCommands();
+         gitCmds = new GitCommands(null);
       }
    }
 

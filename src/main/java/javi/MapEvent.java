@@ -57,7 +57,7 @@ import static history.Tools.trace;
  */
 public final class MapEvent {
 
-   private static KeyMap normalKeyMap;
+   public static KeyMap normalKeyMap;
 
 //private FvContext fvc=0;
 
@@ -338,7 +338,7 @@ public final class MapEvent {
          null, SHIFT_MASK);
       km.bindEditAction(JeyEvent.VK_F2, "gotofilelist", null, 0);
       km.bindEditAction(JeyEvent.VK_F3, "gotodirlist", null, 0);
-      km.bindEditAction(JeyEvent.VK_F4, "gotofontlist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F4, "awt.gotofontlist", null, 0);
       km.bindEditAction(JeyEvent.VK_F5, "gotopositionlist",
          null, 0);
       km.bindEditAction(JeyEvent.VK_F6, "gotopllist", null, 0);

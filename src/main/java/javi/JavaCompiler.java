@@ -131,13 +131,13 @@ final class JavaCompiler extends Rgroup {
                compiler.getStandardFileManager(null, null, null);
 
             ArrayList<File> pathList =
-               Files.list(Path.of("build/plugins"))
+               Files.list(Path.of("lib/test"))
                     .filter(p -> p.toString().endsWith(".jar"))
                     .map(Path::toFile)
                     .collect(Collectors.toCollection(ArrayList::new));
 
             pathList.addAll(
-               Files.list(Path.of("lib/test"))
+               Files.list(Path.of("build/plugins"))
                     .filter(p -> p.toString().endsWith(".jar"))
                     .map(Path::toFile)
                     .collect(Collectors.toCollection(ArrayList::new))

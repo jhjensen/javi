@@ -86,9 +86,10 @@ public final class Command extends Rgroup {
       "show key bindings",
    };
 
-   static void init()  {
+   static void init()  throws IOException {
       instance = new Command();
       instance.register(rnames, descs);
+      readini();
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -141,8 +142,7 @@ public final class Command extends Rgroup {
       return null;
    }
 
-   private static final ArrayList<String> cmdlist = new ArrayList<>();
-   private static final ArrayList<String> awtCmdList = new ArrayList<>();
+   private static final ArrayList<String> cmdList = new ArrayList<>();
 
    // Matches ${NAME} or $NAME (NAME starts with letter/_, then letters/digits/_).
    private static final Pattern VAR_REF = Pattern.compile(
@@ -175,37 +175,21 @@ public final class Command extends Rgroup {
       if (!ifile.isFile())
          return;
       try (BufferedReader ini = ifile.getBufferedReader()) {
-         preprocess(ini, cmdlist);
-      }
-   }
-
-   /**
-    * Preprocesses .javini-style input, appending command lines to {@code out}.
-    * See {@link #readini()} for the supported syntax.
-    *
-    * @param in source of lines to preprocess
-    * @param out list to append non-comment, non-directive command lines to
-    * @throws IOException if reading from {@code in} fails
-    */
-   static void preprocess(Reader in, List<String> out) throws IOException {
-      BufferedReader br = (in instanceof BufferedReader)
-         ? (BufferedReader) in : new BufferedReader(in);
-      Map<String, String> vars = new HashMap<>();
-      for (String line; null != (line = br.readLine());) {
-         String trimmed = line.stripLeading();
-         if (trimmed.isEmpty() || trimmed.charAt(0) == '#')
-            continue;
-         Matcher lm = LET_DEF.matcher(line);
-         if (lm.matches()) {
-            vars.put(lm.group(1), expandVars(lm.group(2), vars));
-            continue;
+         BufferedReader br = new BufferedReader(ini);
+         Map<String, String> vars = new HashMap<>();
+         for (String line; null != (line = br.readLine());) {
+            String trimmed = line.stripLeading();
+            if (trimmed.isEmpty() || trimmed.charAt(0) == '#')
+               continue;
+            Matcher lm = LET_DEF.matcher(line);
+            if (lm.matches()) {
+               vars.put(lm.group(1), expandVars(lm.group(2), vars)); 
+               continue;
+            }
+            //var exline = expandVars(line, vars) ;trace("readini command: ", exline);
+            cmdList.add(expandVars(line, vars));
          }
-         String expanded = expandVars(line, vars);
-         if (expanded.stripLeading().startsWith("awt."))
-            awtCmdList.add(expanded);
-         else
-            out.add(expanded);
-      }
+   }
    }
 
    private static String expandVars(String s, Map<String, String> vars) {
@@ -234,12 +218,13 @@ public final class Command extends Rgroup {
    public static void execCmdList() {
       duringInit = true;
       try {
-         Iterator<String> cit = cmdlist.iterator();
+         Iterator<String> cit = cmdList.iterator();
          while (cit.hasNext()) {
             String cmd = cit.next();
+            trace("processing command", cmd);
             try {
-               command(cmd, null, null);
-               cit.remove();
+                command(cmd, null, null);
+                cit.remove();
             } catch (DeferCommandException e) {
                trace("execCmdList deferred: " + cmd);
                // leave in list for later execution
@@ -250,23 +235,12 @@ public final class Command extends Rgroup {
       }
    }
 
-   /**
-    * Returns and clears the list of {@code awt.*} commands separated
-    * during .javini preprocessing. AwtInterface calls this to apply
-    * AWT-specific rendering commands directly.
-    */
-   public static List<String> takeAwtCommands() {
-      List<String> result = new ArrayList<>(awtCmdList);
-      awtCmdList.clear();
-      return result;
-   }
-
    static void doneInit() {
       execCmdList(); // retry commands deferred during early init
-      if (cmdlist.size() != 0) {
+      if (cmdList.size() != 0) {
          StringBuilder bf = new StringBuilder(
             "command list has unexecuted commands:\n");
-         Iterator<String> cit = cmdlist.iterator();
+         Iterator<String> cit = cmdList.iterator();
          while (cit.hasNext()) {
             bf.append(cit.next());
             cit.remove();
@@ -277,12 +251,12 @@ public final class Command extends Rgroup {
 
    /** Package-private access to cmdlist size for testing. */
    static int cmdListSize() {
-      return cmdlist.size();
+      return cmdList.size();
    }
 
    /** Package-private: add a command to the pending list for testing. */
    static void addToCmdList(String cmd) {
-      cmdlist.add(cmd);
+      cmdList.add(cmd);
    }
 
    /**

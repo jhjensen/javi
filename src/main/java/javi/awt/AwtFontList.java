@@ -58,12 +58,12 @@ public final class AwtFontList extends TextEdit<FontEntry> {
       Commands() {
          final String[] rnames = {
             "",
-            "fontsize",
-            "fonttype",
-            "fontname",
-            "fontweight",
-            "gotofontlist",
-            "monofontname",
+            "awt.fontsize",
+            "awt.fonttype",
+            "awt.fontname",
+            "awt.fontweight",
+            "awt.gotofontlist",
+            "awt.monofontname",
          };
          register(rnames);
       }

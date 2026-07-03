@@ -414,8 +414,8 @@ public abstract class UI {
       if (null != instance)
          instance.istatusaddline(s);
       else {
-         Thread.dumpStack();
          trace("unhandled Messege:" + s);
+         Thread.dumpStack();
       }
    }
 

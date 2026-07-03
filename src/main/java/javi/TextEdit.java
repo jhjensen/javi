@@ -1163,9 +1163,9 @@ final class EditTester1 {
       // the test from JVM baseline variation.
       //
       // Java String representation history (why old thresholds went stale):
-      //   Java 1.0.2-8: String backed by char[] — always 2 bytes/char.
+      //   Java 1.0.2-8: String backed by char[] - always 2 bytes/char.
       //   Java 9+ (JEP 254 Compact Strings): String backed by byte[] with
-      //     a coder flag — 1 byte/char for Latin-1/ASCII, 2 bytes for others.
+      //     a coder flag - 1 byte/char for Latin-1/ASCII, 2 bytes for others.
       //     Also changed object header sizes (compressed oops, etc.).
       //   Original targetmem 1100000 was for JRE 1.6; bumped to 2600000 later
       //   but still failed intermittently due to GC non-determinism on modern
@@ -1397,7 +1397,7 @@ final class EditTester1 {
          ex.disposeFvc();
          myassert(false, ex);
       } catch (final history.BadBackupFile e) {
-         // B5: Intentionally caught — test15 verifies that deleting a .dmp2
+         // B5: Intentionally caught - test15 verifies that deleting a .dmp2
          // file mid-stream triggers BadBackupFile. The exception causes a
          // PersistentStack to eventually finalize in a funny state. This GC
          // forces the error log to come in the context of this test.

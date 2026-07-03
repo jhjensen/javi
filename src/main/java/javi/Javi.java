@@ -52,52 +52,13 @@ public final class Javi {
       }
    }
 
-   public static void initToUi() throws ExitException {
-      //try {Thread.sleep(1000);} catch (InterruptedException e) {/*Ignore*/}
-
-      new Jcmds();
-      new MiscCommands();
-      try {
-         Command.readini();
-      } catch (Exception e) {
-         trace("error reading ini file" + e);
-         e.printStackTrace();
-         UI.reportMessage("error reading ini file" + e);
-         e.printStackTrace();
-      }
-      //trace("");
-      //UI instance = isAwt
-      //   ? new javi.awt.AwtInterface()
-       //  : new StreamInterface();
-      javi.awt.AwtInterface awt = new javi.awt.AwtInterface();
-      Command.execCmdList(); // run .javini commands after frm exists
-      for (String cmd : Command.takeAwtCommands())
-         Command.command(cmd, null, null);
-      awt.showWithCurrentFont(); // show frame sized for .javini font
-
-      //trace("");
-   }
-
    public static void initPostUi() throws IOException {
       new EditGroup();
-      Command.init();
-      new PosListList.Cmd();
       new DirEdit.Commands();
 
       MoveGroup.init();
       new JS.JSR();
       new MakeCmd();
-      try {
-         Class.forName("javi.git.GitCommands");
-      } catch (ClassNotFoundException e) {
-         UI.reportError("git plugin not found: " + e);
-      }
-      // F8: AI plugin — load via reflection (compiled as separate plugin JAR)
-      try {
-         Class.forName("javi.ai.AICommands").getDeclaredConstructor().newInstance();
-      } catch (Exception e) {
-         trace("AI plugin not available: " + e.getMessage());
-      }
       MapEvent.bindCommands();
       KeyBindingPersistence.load();
 
@@ -254,7 +215,22 @@ public final class Javi {
          boolean noCLIFiles = sb.length() == 0;
          try {
             if (normalInit) {
-               initToUi();
+               try {
+                  Command.init();
+               } catch (Exception e) {
+                  trace("error reading ini file" + e);
+                  e.printStackTrace();
+                  UI.reportMessage("error reading ini file" + e);
+                  e.printStackTrace();
+               }
+               new Jcmds();
+               new MiscCommands();
+               new PosListList.Cmd();
+               javi.awt.AwtInterface awt = new javi.awt.AwtInterface();
+               Command.execCmdList(); // run .javini commands after frm exists
+               awt.showWithCurrentFont(); // show frame sized for .javini font
+
+
             }
             if (noCLIFiles) {
                trace("main: removing dummy before initPostUi");

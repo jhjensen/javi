@@ -282,7 +282,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
                      throw new NumberFormatException("out of range");
                   OldView.lcdContrast = v;
                   irepaint();
-                  UI.reportMessage("awt.lcdcontrast " + v);
+                  //UI.reportMessage("awt.lcdcontrast " + v);
                } catch (NumberFormatException e) {
                   throw new InputException(
                      "awt.lcdcontrast: integer 100-250 (current: "
@@ -825,7 +825,7 @@ public final class AwtInterface extends UI implements java.io.Serializable,
             // initToUi() after .javini font/size commands execute
             new InHandler();
          } catch (Throwable ex) {
-            trace("failure in awt Initer ");
+            trace("failure in awt Initer ", ex);
             ex.printStackTrace();
             return null;
             // if anything goes wrong during init give up

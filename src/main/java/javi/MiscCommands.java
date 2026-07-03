@@ -245,12 +245,12 @@ public final class MiscCommands extends Rgroup {
                fvc);
             return null;
          });
-      registerArgCommand("lines",
+      registerArgCommand("awt.lines",
          "set window height", "display",
          (arg, count, rcount, fvc, dot) -> {
             defheight = oBToInt(arg); return null;
          });
-      registerArgCommand("setwidth",
+      registerArgCommand("awt.setwidth",
          "set window width", "display",
          (arg, count, rcount, fvc, dot) -> {
             defwidth = oBToInt(arg); return null;

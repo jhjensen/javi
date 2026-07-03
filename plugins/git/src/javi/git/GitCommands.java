@@ -14,6 +14,8 @@ import javi.EventQueue;
 import javi.FileList;
 import javi.FvContext;
 import javi.InputException;
+import javi.JeyEvent;
+import javi.KeyMap;
 import javi.MiscCommands;
 import javi.Plugin;
 import javi.PosListList;
@@ -40,11 +42,6 @@ public final class GitCommands extends Rgroup implements Plugin {
 
    /** Plugin descriptor for the plugin loader. */
    public static final String pluginInfo = "git integration commands";
-
-   static {
-      new GitCommands();
-      FvContext.setPostContextHook(GitCommands::onContextChanged);
-   }
 
    /** The git status buffer, reused across invocations. */
    private static TextEdit<String> statusBuffer;
@@ -93,7 +90,7 @@ public final class GitCommands extends Rgroup implements Plugin {
       return GitLogHelper.logBufferDirs.get(bufferName);
    }
 
-   public GitCommands() {
+   public GitCommands(List<String> args) {
       final String[] rnames = {
          "",
          "git_status",
@@ -181,8 +178,90 @@ public final class GitCommands extends Rgroup implements Plugin {
          "Revert (discard) diff hunk at cursor",
       };
       register(rnames, descs);
+      bindKey();
+      FvContext.setPostContextHook(GitCommands::onContextChanged);
    }
 
+   void bindKey() {
+      // Git log overlay: vim-style expand/navigate
+      javi.KeyMap gitlogMap = KeyMap.createOverlay("gitlog", javi.MapEvent.normalKeyMap);
+      gitlogMap.bindEditKey((char) 13, "git_expand", null);
+      gitlogMap.bindEditKey((char) 10, "git_expand", null);
+      gitlogMap.bindEditKey('o', "git_expand", null);
+      gitlogMap.bindEditKey('O', "git_log_diff", null);
+      gitlogMap.bindEditKey('R', "git_expand_all", null);
+      gitlogMap.bindEditKey('q', "nextfile", null);
+      gitlogMap.bindEditKey(':', "commandproc", null);
+      gitlogMap.bindEditKey(
+         (char) 12, "git_refresh", null, javi.JeyEvent.CTRL_MASK); // ^L
+      KeyMap.addNavigationKeys(gitlogMap);
+      gitlogMap.setSuppressParentEdit(true);
+      KeyMap.register(gitlogMap);
+
+      // Git status overlay: vim-style stage/unstage/discard
+      KeyMap gitstatusMap = KeyMap.createOverlay("gitstatus", javi.MapEvent.normalKeyMap);
+      gitstatusMap.bindEditKey('s', "git_stage_line", null);
+      gitstatusMap.bindEditKey('u', "git_unstage_line", null);
+      gitstatusMap.bindEditKey('X', "git_discard", null);
+      gitstatusMap.bindEditKey('c', "git_commit_menu", null);
+      gitstatusMap.bindEditKey('R', "git_refresh", null);
+      gitstatusMap.bindEditKey(
+         (char) 12, "git_refresh", null, JeyEvent.CTRL_MASK); // ^L
+      gitstatusMap.bindEditKey('d', "git_diff", null);
+      gitstatusMap.bindEditKey('q', "nextfile", null);
+      gitstatusMap.bindEditKey(':', "commandproc", null);
+      gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
+      gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
+      gitstatusMap.bindEditKey('p', "git_patch", null);
+      gitstatusMap.bindEditKey(
+         (char) 29, "git_goto_file", null, JeyEvent.CTRL_MASK); // ^]
+      KeyMap.addNavigationKeys(gitstatusMap);
+      gitstatusMap.setSuppressParentEdit(true);
+      KeyMap.register(gitstatusMap);
+
+      // Git patch overlay: hunk staging with fugitive-style keys
+      KeyMap gitpatchMap = KeyMap.createOverlay("gitpatch", javi.MapEvent.normalKeyMap);
+      gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
+      gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitpatchMap.bindEditKey('X', "git_revert_hunk", null);
+      gitpatchMap.bindEditKey('q', "nextfile", null);
+      gitpatchMap.bindEditKey(':', "commandproc", null);
+      gitpatchMap.bindEditKey(
+         (char) 12, "git_refresh", null, JeyEvent.CTRL_MASK); // ^L
+      gitpatchMap.bindEditKey(
+         (char) 29, "git_goto_file", null, JeyEvent.CTRL_MASK); // ^]
+      gitpatchMap.setVisualHandler(
+         javi.git.GitCommands::handleVisualKey);
+      KeyMap.addNavigationKeys(gitpatchMap);
+      gitpatchMap.setSuppressParentEdit(true);
+      KeyMap.register(gitpatchMap);
+
+      // Git commit view overlay: staging buffer (read-only)
+      // suppressParentEdit blocks edit keys like 'o', 'i', etc.
+      KeyMap gitcommitMap = KeyMap.createOverlay("gitcommit", javi.MapEvent.normalKeyMap);
+      gitcommitMap.bindEditKey('s', "git_stage_hunk", null);
+      gitcommitMap.bindEditKey('u', "git_unstage_hunk", null);
+      gitcommitMap.bindEditKey('X', "git_revert_hunk", null);
+      gitcommitMap.bindEditKey('q', "git_commit_quit", null);
+      gitcommitMap.bindEditKey(':', "commandproc", null);
+      gitcommitMap.bindEditKey(
+         (char) 12, "git_refresh", null, JeyEvent.CTRL_MASK); // ^L
+      gitcommitMap.bindEditKey(
+         (char) 29, "git_goto_file", null, JeyEvent.CTRL_MASK); // ^]
+      gitcommitMap.setVisualHandler(
+         javi.git.GitCommands::handleVisualKey);
+      KeyMap.addNavigationKeys(gitcommitMap);
+      gitcommitMap.setSuppressParentEdit(true);
+      KeyMap.register(gitcommitMap);
+
+      // Git commit message overlay: fully editable with ZZ to commit
+      KeyMap gitcommitmsgMap = KeyMap.createOverlay("gitcommitmsg", javi.MapEvent.normalKeyMap);
+      gitcommitmsgMap.bindEditKey('Z', "git_commit_finalize", null);
+      gitcommitmsgMap.bindEditKey('q', "git_commit_quit", null);
+      gitcommitmsgMap.bindEditKey(
+         (char) 12, "git_refresh", null, JeyEvent.CTRL_MASK); // ^L
+      KeyMap.register(gitcommitmsgMap);
+   }
    public Object doroutine(int rnum, Object arg, int count, int rcount,
          FvContext fvc, boolean dotmode) throws IOException, InputException {
       java.io.File dir = getFileDir(fvc);
@@ -478,7 +557,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          // Two views already exist.  Ensure message is in the
          // view that is NOT the staging view (i.e. the left).
          if (fvc.vi == commitStagingView) {
-            // Focus is on the staging (right) view — switch to
+            // Focus is on the staging (right) view - switch to
             // the other (left) view before connecting message.
             Command.command("vn", null, null);
             fvc = FvContext.getCurrFvc();
@@ -487,7 +566,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          // Navigate to the staging view
          Command.command("vn", null, null);
       }
-      // Now the new/next view is current — show staging there
+      // Now the new/next view is current - show staging there
       FvContext<?> stagingFvc = FvContext.getCurrFvc();
       commitStagingView = stagingFvc.vi;
       FvContext.connectFv(commitStagingBuffer, stagingFvc.vi);
@@ -496,7 +575,7 @@ public final class GitCommands extends Rgroup implements Plugin {
       Command.command("vn", null, null);
       if (amend) {
          UI.reportMessage(
-            "Amend — edit message, ZZ to commit, q to cancel");
+            "Amend - edit message, ZZ to commit, q to cancel");
       } else {
          UI.reportMessage(
             "Edit message, ZZ to commit, q to cancel");
@@ -626,7 +705,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          String path = fvc.edvec.fdes().getCanonName();
          if (path == null || path.startsWith("*")) {
             throw new InputException(
-               "No file to blame — use :git_blame <file>");
+               "No file to blame - use :git_blame <file>");
          }
          java.io.File f = new java.io.File(path);
          dir = f.getParentFile();
@@ -663,7 +742,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          filepath = extractFilenameAtCursor(fvc);
          if (null == filepath) {
             throw new InputException(
-               "No file — use :git_patch <file>");
+               "No file - use :git_patch <file>");
          }
       }
       String section = findSection(fvc);
@@ -685,7 +764,7 @@ public final class GitCommands extends Rgroup implements Plugin {
       FvContext.connectFv(outputBuffer, fvc.vi);
       UI.reportMessage(patchHunks.size() + " hunk"
          + (patchHunks.size() == 1 ? "" : "s")
-         + " — s=stage  u=unstage");
+         + " - s=stage  u=unstage");
    }
 
    /**
@@ -727,7 +806,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          ? commitViewHunks : patchHunks;
       if (hunks == null || hunks.isEmpty()) {
          throw new InputException(
-            "No hunks — open a patch with :git_patch first");
+            "No hunks - open a patch with :git_patch first");
       }
 
       int bufferLine;
@@ -819,7 +898,7 @@ public final class GitCommands extends Rgroup implements Plugin {
 
       if (hunks == null || hunks.isEmpty()) {
          throw new InputException(
-            "No hunks — open a patch with :git_patch first");
+            "No hunks - open a patch with :git_patch first");
       }
 
       int bufferLine;
@@ -871,7 +950,7 @@ public final class GitCommands extends Rgroup implements Plugin {
          ? commitViewHunks : patchHunks;
       if (hunks == null || hunks.isEmpty()) {
          throw new InputException(
-            "No hunks — open a patch with :git_patch first");
+            "No hunks - open a patch with :git_patch first");
       }
 
       int bufferLine;
@@ -1452,7 +1531,7 @@ public final class GitCommands extends Rgroup implements Plugin {
             outputBuffer = createBuffer("*git-merge*", lines);
             FvContext.connectFv(outputBuffer, fvc.vi);
          } else {
-            // Non-conflict failure — show raw output
+            // Non-conflict failure - show raw output
             outputBuffer = createBuffer("*git-merge*", res.output);
             FvContext.connectFv(outputBuffer, fvc.vi);
          }
@@ -1550,9 +1629,9 @@ public final class GitCommands extends Rgroup implements Plugin {
 
    /**
     * Rebase the current branch.
-    * Usage: :git_rebase &lt;branch&gt;  — rebase onto branch
-    *        :git_rebase --abort    — abort in-progress rebase
-    *        :git_rebase --continue — continue after conflict resolution
+    * Usage: :git_rebase &lt;branch&gt;  - rebase onto branch
+    *        :git_rebase --abort - abort in-progress rebase
+    *        :git_rebase --continue - continue after conflict resolution
     *
     * <p>On conflict, opens a buffer listing conflicted files so the
     * user can resolve them and then run {@code :git_rebase --continue}.</p>
@@ -1882,9 +1961,9 @@ public final class GitCommands extends Rgroup implements Plugin {
     * Commit sub-menu triggered by 'c' in git status/commit buffers.
     * Reads the next key to decide the action:
     * <ul>
-    *   <li>{@code c} — open fresh commit view</li>
-    *   <li>{@code a} — open amend commit view</li>
-    *   <li>{@code A} — amend without editing (reuse message)</li>
+    *   <li>{@code c} - open fresh commit view</li>
+    *   <li>{@code a} - open amend commit view</li>
+    *   <li>{@code A} - amend without editing (reuse message)</li>
     * </ul>
     * Any other key cancels the sub-menu.
     */

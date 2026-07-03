@@ -100,7 +100,6 @@ repositories {
     }
 }
 
-// F36: Plugin JAR — fat JAR bundling plugin code + RXTX classes
 tasks.register('rxtxJar', Jar) {
     archiveBaseName = 'javi-rxtx'
     from sourceSets.rxtxPlugin.output
@@ -114,7 +113,6 @@ tasks.register('rxtxJar', Jar) {
     dependsOn 'compileRxtxPluginJava'
 }
 
-// F46: Typing tutor plugin JAR
 tasks.register('typingTutorJar', Jar) {
     archiveBaseName = 'javi-typingtutor'
     archiveVersion = ''
@@ -126,7 +124,6 @@ tasks.register('typingTutorJar', Jar) {
     dependsOn 'compileTypingTutorPluginJava'
 }
 
-// F46: Typing tutor plugin JAR
 tasks.register('aiJar', Jar) {
     archiveBaseName = 'javi-ai'
     archiveVersion = ''
@@ -136,6 +133,17 @@ tasks.register('aiJar', Jar) {
     }
     destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
     dependsOn 'compileAiPluginJava'
+}
+
+tasks.register('gitJar', Jar) {
+    archiveBaseName = 'javi-git'
+    archiveVersion = ''
+    from sourceSets.gitPlugin.output
+    manifest {
+        attributes 'Plugin-Class': 'javi.git.AiPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
+    dependsOn 'compileGitPluginJava'
 }
 
 sourceSets {
@@ -153,6 +161,15 @@ sourceSets {
         }
         resources {
             srcDirs = ['plugins/ai/src/resources']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
+    gitPlugin {
+        java {
+            srcDirs = ['plugins/git/src']
+        }
+        resources {
+            srcDirs = ['plugins/git/src/resources']
         }
         compileClasspath += main.output + main.compileClasspath
     }
@@ -483,7 +500,7 @@ tasks.register('mergedCoverageReport', JacocoReport) {
 def pluginsDir = file("$projectDir/plugins")
 
 tasks.register('plugins') {
-    dependsOn compileJava, 'typingTutorJar', 'aiJar'
+    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', jar
 }
 
 // F45: Ensure plugin JARs are built as part of the standard build

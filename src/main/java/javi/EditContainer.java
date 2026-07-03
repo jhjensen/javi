@@ -353,6 +353,7 @@ public class EditContainer<OType> implements
       //if (root == parent)
       //   Thread.dumpStack();
       //trace("at end of common dump "); dump();
+      trace("editvec initialized", this);
 
    }
 
@@ -697,7 +698,8 @@ public class EditContainer<OType> implements
       if (!finishedread)
          myexpand(0);
       //trace(this + "!contain desired = " + desired);
-      return desired < ecache.size();
+      
+      return ecache != null && desired < ecache.size();
    }
 
    /** find an object in this vector.  This is not a fast operation currently
@@ -746,7 +748,7 @@ public class EditContainer<OType> implements
                 ? " MODIFIED "
                 : " ")
              + (null == ecache
-                ? "!!!! disposed"
+                ? "uninitialized"
                 : "")
 
              + prop.fdes.canonName;
