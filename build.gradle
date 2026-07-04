@@ -137,14 +137,25 @@ tasks.register('rxtxJar', Jar) {
     archiveBaseName = 'javi-rxtx'
     archiveVersion = ''
     from sourceSets.rxtxPlugin.output
-    //from {
-    //    configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
-    //}
+    from {
+        configurations.rxtxLib.collect { it.isDirectory() ? it : zipTree(it) }
+    }
     manifest {
       attributes 'Plugin-Class': 'javi.rxtx.RxtxPlugin'
     }
     destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
     dependsOn 'compileRxtxPluginJava'
+}
+
+tasks.register('serverJar', Jar) {
+    archiveBaseName = 'javi-server'
+    archiveVersion = ''
+    from sourceSets.serverPlugin.output
+    manifest {
+      attributes 'Plugin-Class': 'javi.rxtx.ServerPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
+    dependsOn 'compileServerPluginJava'
 }
 
 sourceSets {
@@ -180,6 +191,15 @@ sourceSets {
         }
         resources {
             srcDirs = ['plugins/rxtx/src/resources']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
+    serverPlugin {
+        java {
+            srcDirs = ['plugins/server/src']
+        }
+        resources {
+            srcDirs = ['plugins/server/src/resources']
         }
         compileClasspath += main.output + main.compileClasspath
    }
@@ -504,7 +524,7 @@ tasks.register('mergedCoverageReport', JacocoReport) {
 def pluginsDir = file("$projectDir/plugins")
 
 tasks.register('plugins') {
-    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', 'rxtxJar', jar
+    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', 'rxtxJar', 'serverJar',  jar
 }
 
 tasks.named('build') {

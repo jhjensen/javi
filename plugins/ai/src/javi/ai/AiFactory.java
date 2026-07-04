@@ -4,7 +4,7 @@ import static history.Tools.trace;
 public final class AiFactory implements javi.PluginFactory {
    @Override
    public String name() {
-      return "typingtutor";
+      return "ai";
    }
 
    @Override

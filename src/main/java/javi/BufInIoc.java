@@ -76,7 +76,7 @@ public class BufInIoc<OType>  extends IoConverter<OType>  {
 
    final EditCache<OType> convertStream(BufferedReader inputi) throws
          IOException {
-      //trace("index = " + index + " " + " input = " + inputi);
+      //trace("converstream", inputi);
       input = inputi;
 
       return super.convertStream();

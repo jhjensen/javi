@@ -907,7 +907,7 @@ public class EditContainer<OType> implements
    final synchronized void insertObjs(EditCache<OType> obs, int index) {
       //for (Object ob:obarray) if (ob==null) {Thread.dumpStack() ;trace("inserting null object");}
       //trace("inserting strings at line " + index + " editvec = " + this + " ob.get(0)= " + obarray.get(0).getClass());
-      //trace("editvec = " + this + " ob[1]= " + obarray[0].getClass());
+      //trace("editvec = " + this + " ob[1]= " + obs.get(0).getClass());
       mkback(index - 1);
       insertRecord(obs.iterator(), index, obs.size());
    }

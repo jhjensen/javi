@@ -124,7 +124,7 @@ public class IoConverter<OType> implements Runnable, Serializable {
    */
 
    final EditCache<OType> convertStream() {
-      //trace("index = " + index + " " + fdes + "class " + this.getClass());
+      //trace("convertStream", this.getClass());
 
       EditCache<OType> ret = new EditCache<OType>();
       //trace("ret " + ret);

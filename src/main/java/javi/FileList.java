@@ -565,7 +565,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
       return openFileListp(new BufferedReader(new StringReader(flist)), vi);
    }
 
-   static TextEdit<String> openFileList(BufferedReader flist, View vi) throws IOException, InputException {
+   public static TextEdit<String> openFileList(BufferedReader flist, View vi) throws IOException, InputException {
       return instance.openFileListp(flist, vi);
    }
 
@@ -712,8 +712,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      break;
 
                   case 3:
-                     // trace("stage 3 regexp directory list search:" + searchName + " edv = " +
-                     // edv);
+                     // trace("stage 3 regexp directory list search:" + searchName + " edv = " + edv);
                      dmgr = DirManager.getInstance();
                      FileDescriptor fha;
                      while (null != (fha = dmgr.findNextFileR())) {
@@ -737,8 +736,7 @@ public final class FileList extends TextEdit<TextEdit<String>> {
                      }
                      // intentional fallthrough
                   case 4:
-                     // trace("stage 4 if all else fails create file" + searchName + " edv = " +
-                     // edv);
+                     // trace("stage 4 if all else fails create file" + searchName + " edv = " + edv);
                      // trace("foundf = " + foundf);
                      if (!foundf) {
                         // trace("last chance create file");
