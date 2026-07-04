@@ -6,6 +6,7 @@
 *.o
 .vscode
 .jdtls-data
+.ai_auth
 ID
 cycle.xml
 dummy0

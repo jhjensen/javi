@@ -152,10 +152,21 @@ tasks.register('serverJar', Jar) {
     archiveVersion = ''
     from sourceSets.serverPlugin.output
     manifest {
-      attributes 'Plugin-Class': 'javi.rxtx.ServerPlugin'
+      attributes 'Plugin-Class': 'javi.server.ServerPlugin'
     }
     destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
     dependsOn 'compileServerPluginJava'
+}
+
+tasks.register('findBugsJar', Jar) {
+    archiveBaseName = 'javi-findbugs'
+    archiveVersion = ''
+    from sourceSets.findBugsPlugin.output
+    manifest {
+      attributes 'Plugin-Class': 'javi.findbugs.FindBugsPlugin'
+    }
+    destinationDirectory = file("${layout.buildDirectory.get()}/plugins")
+    dependsOn 'compileFindBugsPluginJava'
 }
 
 sourceSets {
@@ -202,8 +213,17 @@ sourceSets {
             srcDirs = ['plugins/server/src/resources']
         }
         compileClasspath += main.output + main.compileClasspath
-   }
-   typingTutorPlugin {
+    }
+    findBugsPlugin {
+        java {
+            srcDirs = ['plugins/findbugs/src']
+        }
+        resources {
+            srcDirs = ['plugins/findbugs/src/resources']
+        }
+        compileClasspath += main.output + main.compileClasspath
+    }
+    typingTutorPlugin {
         java {
             srcDirs = ['plugins/typingtutor/src']
         }
@@ -211,8 +231,8 @@ sourceSets {
             srcDirs = ['plugins/typingtutor/src/resources']
         }
         compileClasspath += main.output + main.compileClasspath
-    }
-    test {
+     }
+     test {
         java {
             // Include plugin sources so Server tests can compile
             srcDirs += ['plugins/Server/src']
@@ -524,7 +544,7 @@ tasks.register('mergedCoverageReport', JacocoReport) {
 def pluginsDir = file("$projectDir/plugins")
 
 tasks.register('plugins') {
-    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', 'rxtxJar', 'serverJar',  jar
+    dependsOn compileJava, 'typingTutorJar', 'aiJar', 'gitJar', 'rxtxJar', 'serverJar', 'findBugsJar',  jar
 }
 
 tasks.named('build') {

@@ -1,4 +1,4 @@
-package javi.plugin;
+package javi.findbugs;
 
 import static history.Tools.trace;
 
@@ -21,17 +21,14 @@ public final class FindBugs extends Rgroup implements Plugin {
 
    public static final String pluginInfo = "findbug command";
 
-   static {
-      //trace("reached static initializer of findbugs");
-      new FindBugs();
-   }
-
    FindBugs() {
       final String[] rnames = {
          "",
          "findbug",             //
       };
+      trace("regsterning findbug names");
       register(rnames);
+      
    }
 
    public Object doroutine(int rnum, Object arg, int count, int rcount,
@@ -40,6 +37,7 @@ public final class FindBugs extends Rgroup implements Plugin {
       switch (rnum) {
          case 1:
 
+            trace("running findbugs");
             javi.PosListList.Cmd.setErrors(new FindBugRunner("."));
             return null;
          default:
@@ -81,6 +79,7 @@ public final class FindBugs extends Rgroup implements Plugin {
          }
          private static final Position defpos = new Position(0, 0, "", null);
       }
+      // todo fix warnings, convert to spot bugs
       @SuppressWarnings({"unchecked", "rawtypes"}) FindBugRunner(String filename) throws
             FileNotFoundException, java.io.UnsupportedEncodingException {
          //Process proc = Runtime.getRuntime().exec(cstring);
