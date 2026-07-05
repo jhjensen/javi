@@ -4,7 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import history.Tools;
 import static history.Tools.trace;
@@ -241,12 +245,12 @@ public final class MiscCommands extends Rgroup {
                fvc);
             return null;
          });
-      registerArgCommand("lines",
+      registerArgCommand("awt.lines",
          "set window height", "display",
          (arg, count, rcount, fvc, dot) -> {
             defheight = oBToInt(arg); return null;
          });
-      registerArgCommand("setwidth",
+      registerArgCommand("awt.setwidth",
          "set window width", "display",
          (arg, count, rcount, fvc, dot) -> {
             defwidth = oBToInt(arg); return null;
@@ -310,9 +314,17 @@ public final class MiscCommands extends Rgroup {
       registerArgCommand("loadplugin",
          "load a plugin JAR", "misc",
          (arg, count, rcount, fvc, dot) -> {
-            loadPlugin(
-               arg instanceof String ? (String) arg : null);
-            return null;
+
+            return switch (arg) {
+               case String arg1 -> {
+                  List<String> args = new ArrayList<>(List.of(arg1.split(" ")));
+                  var pname = args.remove(0);
+                  Plugin.load(pname, args);
+                  yield null;
+               }
+               case Object ob -> null;
+               case null -> null;
+            };
          });
       registerArgCommand("termlog",
          "toggle terminal I/O logging", "shell",
@@ -1159,105 +1171,6 @@ public final class MiscCommands extends Rgroup {
       else
          UI.reportMessage("Loaded " + count + " keybinding(s)");
    }
-
-   /** Load a plugin JAR by name or path.
-     * Bare names resolve to build/libs/javi-NAME.jar or dist/javi-NAME.jar.
-     * Full paths are used directly.
-     */
-   private static void loadPlugin(String arg)
-         throws InputException {
-      if (arg == null || arg.isEmpty())
-         throw new InputException("loadplugin requires a plugin name"
-            + " or JAR path");
-
-      // Direct JAR path or absolute path
-      if (arg.contains("/") || arg.endsWith(".jar")) {
-         java.io.File jarFile = new java.io.File(arg);
-         if (!jarFile.exists())
-            throw new InputException("Plugin JAR not found: " + jarFile);
-         try {
-            Plugin.Loader.load(jarFile.getPath());
-            UI.reportMessage("Loaded plugin: " + jarFile.getName());
-         } catch (Throwable e) {
-            throw new InputException("Failed to load plugin "
-               + jarFile + ": " + e.getMessage());
-         }
-         return;
-      }
-
-      // Try JAR in standard locations first
-      java.io.File jarFile = findPluginJar(arg);
-      if (jarFile.exists()) {
-         try {
-            Plugin.Loader.load(jarFile.getPath());
-            UI.reportMessage("Loaded plugin: " + jarFile.getName());
-         } catch (Throwable e) {
-            throw new InputException("Failed to load plugin "
-               + jarFile + ": " + e.getMessage());
-         }
-         return;
-      }
-
-      // Fall back to in-tree class (e.g. "Server" -> "javi.Server")
-      String className = arg.contains(".") ? arg : "javi." + arg;
-      try {
-         Class.forName(className);
-         UI.reportMessage("Loaded plugin: " + arg);
-      } catch (ClassNotFoundException e) {
-         throw new InputException("Plugin not found: no JAR at "
-            + jarFile + " and no class " + className);
-      }
-   }
-
-   private static java.io.File findPluginJar(String name) {
-      String jarName = "javi-" + name + ".jar";
-      // Check build/libs/ first (development), then dist/
-      java.io.File f = new java.io.File("build/libs/" + jarName);
-      if (f.exists())
-         return f;
-      f = new java.io.File("dist/" + jarName);
-      if (f.exists())
-         return f;
-      // Check the lib/ directory next to the running JAR (installed location)
-      java.io.File installLib = getInstallLibDir();
-      if (installLib != null) {
-         f = new java.io.File(installLib, jarName);
-         if (f.exists())
-            return f;
-      }
-      // Check standard install location (~/.local/share/javi/lib/)
-      String home = System.getProperty("user.home");
-      if (home != null) {
-         f = new java.io.File(home + "/.local/share/javi/lib/" + jarName);
-         if (f.exists())
-            return f;
-      }
-      // Return build/libs path for the error message
-      return new java.io.File("build/libs/" + jarName);
-   }
-
-   /** Returns the lib/ directory of the javi installation, or null if
-     * not running from an installed JAR.
-     */
-   private static java.io.File getInstallLibDir() {
-      try {
-         var source = MiscCommands.class.getProtectionDomain()
-            .getCodeSource();
-         if (source == null)
-            return null;
-         var location = source.getLocation();
-         if (location == null)
-            return null;
-         java.io.File jarFile = new java.io.File(location.toURI());
-         if (jarFile.isFile())
-            return jarFile.getParentFile();
-         // Running from a classes directory (development)
-         return null;
-      } catch (Exception e) {
-         return null;
-      }
-   }
-
    private static void doHeapDump(FvContext fvc) {
       String path = "/tmp/javi-heap-"
          + System.currentTimeMillis() + ".hprof";
@@ -1377,8 +1290,8 @@ public final class MiscCommands extends Rgroup {
 
    public static void redraw(boolean flushFlag) throws IOException {
 
-      trace("redraw flushFlag " + flushFlag + " currFvc " +
-          FvContext.getCurrFvc());
+      trace("redraw flushFlag " + flushFlag + " currFvc "
+         + FvContext.getCurrFvc());
       UI.repaint();
       if (flushFlag) {
          Date nDate = new Date();

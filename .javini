@@ -1,7 +1,16 @@
-fontname Verdana
-fontsize 13.8
-fontweight 1.0
-lines 110
+awt.fontname Verdana
+awt.fontsize 13.8
+awt.fontweight 1.0
+awt.lines 110
 awt.lcdcontrast 100
-e build.txt src main history java javi git history plugin awt
-makecommand /Users/jjensen/bin/make.pl
+e build.txt plugins typingtutor ai ai src test main history java javi git plugin awt ai tools
+#makecommand /Users/jjensen/bin/make.pl
+#loadplugin typingtutor
+#loadplugin rxtx
+#loadplugin git xx xx
+#loadplugin tutorial
+#loadplugin lsp
+#loadplugin findbugs
+loadplugin server
+loadplugin ai copilot /Users/jjensen/javi/.ai_auth
+ai.status

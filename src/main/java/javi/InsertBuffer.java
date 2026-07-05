@@ -2,6 +2,10 @@ package javi;
 
 import java.io.IOException;
 import java.text.CharacterIterator;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static history.Tools.trace;
 import static javi.JeyEvent.CTRL_MASK;
@@ -23,7 +27,17 @@ public abstract class InsertBuffer extends View.Inserter {
    private int currline;
    private Object original;
    private boolean singleline;
+   private int promptBoundary;
    private FvContext myfvc;
+
+   /** Timer for auto-triggering AI completion after typing pause. */
+   private static final ScheduledExecutorService completionTimer =
+      Executors.newSingleThreadScheduledExecutor(r -> {
+         Thread t = new Thread(r, "ai-completion-timer");
+         t.setDaemon(true);
+         return t;
+      });
+   private volatile ScheduledFuture<?> pendingCompletion;
 
    static final boolean[] ff = {false, false};
 
@@ -52,7 +66,7 @@ public abstract class InsertBuffer extends View.Inserter {
    }
 
    @SuppressWarnings({"unchecked", "rawtypes"})
-   static final String getcomline(String prompt) {
+   public static final String getcomline(String prompt) {
       FvContext<?> commFvc =  FvContext.startComLine();
       EditContainer ev = commFvc.edvec;
       try {
@@ -159,6 +173,7 @@ public abstract class InsertBuffer extends View.Inserter {
       public Object doroutine(int rnum, Object arg, int count, int rcount,
             FvContext fvc, boolean dotmode) throws InputException {
          //trace("rnum = " + rnum);
+         cancelCompletionTimer();
 
          switch (ICMDS[rnum]) {
             case TOGGLE_INSERT:
@@ -176,6 +191,11 @@ public abstract class InsertBuffer extends View.Inserter {
                if (singleline && tryHelpCompletion(fvc)) {
                   break;
                }
+               if (GhostTextState.isVisible()) {
+                  itext(count, fvc);
+                  GhostTextState.accept(fvc);
+                  break;
+               }
                if (singleline) {
                   String comp = TabComplete.complete(
                      fvc.at().toString(), fvc.insertx(),
@@ -185,6 +205,13 @@ public abstract class InsertBuffer extends View.Inserter {
                      fvc.vi.lineChanged(fvc.inserty());
                      break;
                   }
+               }
+               if (!singleline
+                     && hasTextBeforeCursor(fvc)
+                     && isAiAvailable()) {
+                  itext(count, fvc);
+                  triggerAiCompletion(fvc);
+                  break;
                }
                //tabConverter tb = (tabConverter)fvc.edvec.getConverter();
                //int tabStop = (tb == null) ? 0 : tb.getTab();
@@ -196,9 +223,9 @@ public abstract class InsertBuffer extends View.Inserter {
                break;
             case BACKSPACE:
                if (0 == buffer.length()) {
-                  // B10: Prevent deleting the prompt character in command line mode
-                  if (singleline && fvc.insertx() <= 1) {
-                     // At or before prompt position, don't delete
+                  // Prevent deleting the prompt in command line mode
+                  if (singleline
+                        && fvc.insertx() <= promptBoundary) {
                      break;
                   }
                   fvc.cursorx(-1);
@@ -209,9 +236,14 @@ public abstract class InsertBuffer extends View.Inserter {
                }
                break;
             case DELETE:
+               if (singleline
+                     && fvc.insertx() < promptBoundary) {
+                  break;
+               }
                fvc.deleteChars('0', false, true, 1);
                break;
             case COMPLETE:
+               GhostTextState.dismiss();
                itext(count, fvc);
                if (count > 1) {
                   if (overwrite)
@@ -222,10 +254,12 @@ public abstract class InsertBuffer extends View.Inserter {
                }
                return this;
             case INSERT_NEWLINE:
+               GhostTextState.dismiss();
                buffer.append('\n');
                itext(count, fvc);
                break;
             case CANCEL:
+               GhostTextState.dismiss();
                buffer.setLength(0);
                fvc.changeElement(original);
                return this;
@@ -340,6 +374,7 @@ public abstract class InsertBuffer extends View.Inserter {
                dotbuffer = "";
 
             original =  fvc.at();
+            promptBoundary = singleline ? fvc.insertx() : 0;
             KeyGroup activekeys =  singleline ? commandikeys : ikeys;
             while  (true) {
                JeyEvent ke = EventQueue.nextEvent(viewer);
@@ -353,6 +388,8 @@ public abstract class InsertBuffer extends View.Inserter {
                      notifyCommandLineHelp(fvc);
                } else {
                   char key = ke.getKeyChar();
+                  cancelCompletionTimer();
+                  GhostTextState.dismiss();
                   if (key == JeyEvent.CHAR_UNDEFINED) {
                      itext(count, fvc);
                      if (!singleline)
@@ -381,6 +418,7 @@ public abstract class InsertBuffer extends View.Inserter {
                      viewer.lineChanged(fvc.inserty());
                      if (singleline)
                         notifyCommandLineHelp(fvc);
+                     scheduleAutoCompletion(fvc);
                   }
                }
             }
@@ -472,9 +510,114 @@ public abstract class InsertBuffer extends View.Inserter {
 
    final void cleanup(FvContext fvc) {
       //trace("insertcontext.cleanup");
+      cancelCompletionTimer();
+      GhostTextState.dismiss();
       fvc.vi.clearInsert();
       myfvc  = null;
       insertReset();
+   }
+
+   /**
+    * Check if there is non-whitespace text before the cursor
+    * on the current line.
+    */
+   private boolean hasTextBeforeCursor(FvContext fvc) {
+      String line = fvc.at().toString();
+      int pos = fvc.insertx() + buffer.length();
+      for (int i = 0; i < pos && i < line.length(); i++) {
+         if (line.charAt(i) != ' '
+               && line.charAt(i) != '\t') {
+            return true;
+         }
+      }
+      return buffer.toString().trim().length() > 0;
+   }
+
+   /**
+    * Check if the AI completion command is registered.
+    */
+   private static boolean isAiAvailable() {
+      return Rgroup.bindingLookup("ai.complete") != null;
+   }
+
+   /**
+    * Trigger AI inline completion via command dispatch.
+    */
+   private void triggerAiCompletion(FvContext fvc) {
+      GhostTextState.requestStarted();
+      try {
+         Rgroup.doCommand("ai.complete", null, 1, 0,
+            fvc, false);
+      } catch (Exception e) {
+         GhostTextState.reset();
+         UI.reportMessage("AI: " + e.getMessage());
+      }
+   }
+
+   /**
+    * Cancel any pending auto-completion timer.
+    */
+   private void cancelCompletionTimer() {
+      ScheduledFuture<?> f = pendingCompletion;
+      if (null != f) {
+         f.cancel(false);
+         pendingCompletion = null;
+      }
+   }
+
+   /**
+    * Schedule an auto-completion trigger after the configured delay.
+    *
+    * <p>Posts an {@link EventQueue.IEvent} when the timer fires,
+    * which executes on the editor thread with {@code biglock2} held.
+    * The timer is cancelled by any subsequent keypress.</p>
+    *
+    * @param fvc the current file-view context
+    */
+   private void scheduleAutoCompletion(FvContext fvc) {
+      cancelCompletionTimer();
+      if (!isAiAvailable() || singleline) {
+         return;
+      }
+      int delayMs = getCompletionDelay();
+      if (delayMs <= 0) {
+         return;
+      }
+      pendingCompletion = completionTimer.schedule(() -> {
+         EventQueue.insert(new EventQueue.IEvent() {
+            @Override
+            public void execute() {
+               if (null == myfvc
+                     || GhostTextState.isPending()
+                     || GhostTextState.isVisible()) {
+                  return;
+               }
+               if (hasTextBeforeCursor(fvc)) {
+                  itext(1, fvc);
+                  triggerAiCompletion(fvc);
+               }
+            }
+         });
+      }, delayMs, TimeUnit.MILLISECONDS);
+   }
+
+   /**
+    * Get the completion delay from AIConfig via reflection to avoid
+    * compile-time dependency on the plugin JAR.
+    *
+    * @return delay in milliseconds, or 0 if config unavailable
+    */
+   private static int getCompletionDelay() {
+      try {
+         Class<?> configClass = Class.forName(
+            "javi.ai.AIConfig");
+         Object config = configClass.getMethod("getInstance")
+            .invoke(null);
+         return (Integer) configClass.getMethod(
+            "getCompletionDelayMs").invoke(config);
+      } catch (Exception e) {
+         return 0;
+      }
    }
 
    public final void insertChars(CharacterIterator charit, int trunc) {

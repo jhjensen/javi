@@ -1444,6 +1444,9 @@ final class OldView extends AwtView {
                   applyOverrideFont();
                   applyChanges();
                   copt.rpaint(gr);
+               } else if (!gettext().donereading()) {
+                  trace("repaint because still loading");
+                  repaint(200);
                } else {
                   gr.setColor(getBackground());
                   gr.fillRect(0, 0, getWidth(), getHeight());
@@ -1531,6 +1534,22 @@ final class OldView extends AwtView {
                else if (c0 == '@')
                   atIt.setLineForeground(AtView.foldSummaryColor);
             }
+         } else if ("*ai-chat*".equals(bufShortName)) {
+            String lt = atIt.getText();
+            if (lt.contains("\u001b[33m")) {
+               atIt.setLineForeground(Color.yellow);
+               atIt.setText(lt.replaceAll("\u001b\\[[0-9;]*m", ""));
+            }
+         }
+
+         // AI-inserted lines get yellow foreground
+         if (View.isAiInserted(tindex))
+            atIt.setLineForeground(Color.yellow);
+
+         // Ghost text preview on the ghost line
+         String ghost = getGhostText();
+         if (null != ghost && tindex == getGhostLine()) {
+            atIt.addGhostText(ghost, getGhostCol());
          }
 
          if (index == screenposy) {

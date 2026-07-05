@@ -57,7 +57,7 @@ import static history.Tools.trace;
  */
 public final class MapEvent {
 
-   private static KeyMap normalKeyMap;
+   public static KeyMap normalKeyMap;
 
 //private FvContext fvc=0;
 
@@ -152,8 +152,78 @@ public final class MapEvent {
          sectionRegex);
       bindEditKeys(normalKeyMap);
 
+      // AI and buffer keymaps (extracted to keep bindCommands under limit)
+      bindAiAndBufferKeys();
+   }
+
+   /**
+    * Bind AI command keys and initialize buffer-type overlay keymaps.
+    * Extracted from bindCommands to stay within method-length limit.
+    */
+   private static void bindAiAndBufferKeys() {
+      bindAiKeysIfAvailable();
+
       // Create buffer-type overlay keymaps (filelist, shell, etc.)
       KeyMap.initBufferKeyMaps(normalKeyMap);
+   }
+
+   /**
+    * Re-bind AI keys after late plugin loads.
+    * Safe to call multiple times.
+    */
+   static void rebindAiKeys() {
+      if (normalKeyMap != null) {
+         bindAiKeysIfAvailable();
+      }
+   }
+
+   private static void bindAiKeysIfAvailable() {
+      if (Rgroup.bindingLookup("ai.chat") == null)
+         return;
+
+      if (Rgroup.bindingLookup("ai") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai", null, 0);
+      if (Rgroup.bindingLookup("ai.explain") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai.explain",
+            null, SHIFT_MASK);
+      if (Rgroup.bindingLookup("ai.review") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F9, "ai.review",
+            null, CTRL_MASK);
+      if (Rgroup.bindingLookup("ai.complete") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.complete",
+            null, 0);
+      if (Rgroup.bindingLookup("ai.doc") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.doc",
+            null, SHIFT_MASK);
+      if (Rgroup.bindingLookup("ai.cancel") != null)
+         bindAiEditActionIfAbsent(JeyEvent.VK_F12, "ai.cancel",
+            null, CTRL_MASK);
+      if (Rgroup.bindingLookup("ai.gprocess") != null)
+         bindAiEditCharIfAbsent('g', "ai.gprocess", null, 0);
+      // Some platforms surface Shift+Enter as CR while others use LF;
+      // bind both char variants.
+      bindAiEditCharIfAbsent((char) 13, "ai.chat", null, SHIFT_MASK);
+      bindAiEditCharIfAbsent('\n', "ai.chat", null, SHIFT_MASK);
+   }
+
+   /**
+    * Idempotent key binding used by late AI rebind calls.
+    * If a key is already bound, we keep the existing mapping to avoid
+    * duplicate-keymap runtime exceptions during startup.
+    */
+   private static void bindAiEditActionIfAbsent(int keyCode, String command,
+         Object arg, int modifiers) {
+      JeyEvent binding = new JeyEvent(modifiers, keyCode,
+         JeyEvent.CHAR_UNDEFINED);
+      if (normalKeyMap.getEditKeys().getCommandName(binding) == null)
+         normalKeyMap.bindEditAction(keyCode, command, arg, modifiers);
+   }
+
+   private static void bindAiEditCharIfAbsent(char keyChar, String command,
+         Object arg, int modifiers) {
+      JeyEvent binding = new JeyEvent(modifiers, 0, keyChar);
+      if (normalKeyMap.getEditKeys().getCommandName(binding) == null)
+         normalKeyMap.bindEditKey(keyChar, command, arg, modifiers);
    }
 
    private static void bindMovementKeys(KeyMap km, Matcher sentenceRegex,
@@ -268,7 +338,7 @@ public final class MapEvent {
          null, SHIFT_MASK);
       km.bindEditAction(JeyEvent.VK_F2, "gotofilelist", null, 0);
       km.bindEditAction(JeyEvent.VK_F3, "gotodirlist", null, 0);
-      km.bindEditAction(JeyEvent.VK_F4, "gotofontlist", null, 0);
+      km.bindEditAction(JeyEvent.VK_F4, "awt.gotofontlist", null, 0);
       km.bindEditAction(JeyEvent.VK_F5, "gotopositionlist",
          null, 0);
       km.bindEditAction(JeyEvent.VK_F6, "gotopllist", null, 0);
@@ -512,7 +582,9 @@ public final class MapEvent {
 
    static void hevent(JeyEvent jEv, FvContext fvc)  throws InputException,
          InterruptedException, IOException {
-      //trace("hevent" + jEv);
+      //trace("hevent key=" + jEv + " char=" + (int) jEv.getKeyChar()
+      //   + " code=" + jEv.getKeyCode() + " mod=" + jEv.getModifiers()
+      //   + " insert=" + (fvc.vi != null && fvc.vi.isInInsertMode()));
 
       char ch = jEv.getKeyChar();
       if ((('0' != ch) || (0 != aiterate))

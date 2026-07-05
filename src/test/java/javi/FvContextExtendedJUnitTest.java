@@ -463,6 +463,7 @@ class FvContextExtendedJUnitTest {
    // ── insertStrings tests ──────────────────────────────────────
 
    @Test
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    void insertStringsAfterCursor() throws Exception {
       EventQueue.biglock2.lock();
       try {
@@ -490,6 +491,7 @@ class FvContextExtendedJUnitTest {
    }
 
    @Test
+   @SuppressWarnings({ "unchecked", "rawtypes" })
    void insertStringsBeforeCursor() throws Exception {
       EventQueue.biglock2.lock();
       try {
@@ -549,6 +551,7 @@ class FvContextExtendedJUnitTest {
          TestView view = new TestView(true);
          FvContext fvc = FvContext.connectFv(te, view);
 
+         @SuppressWarnings({ "unchecked", "rawtypes" })
          java.util.ArrayList<String> result =
             fvc.getElementsAt(2);
          assertNotNull(result);

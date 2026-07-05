@@ -41,6 +41,9 @@ public final class TutorialPlugin extends Rgroup implements Plugin {
    private TutorialEngine engine;
    private TutorialLesson currentLesson;
 
+   public Plugin create(List<String> args) {
+       return new  TutorialPlugin();
+   }
    public TutorialPlugin() {
       final String[] rnames = {
          "",

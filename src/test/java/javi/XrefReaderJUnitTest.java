@@ -24,6 +24,7 @@ class XrefReaderJUnitTest {
    private Position convert(String line) throws Exception {
       java.lang.reflect.Field f = XrefReader.class.getDeclaredField("xconverter");
       f.setAccessible(true);
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       ClassConverter<Position> conv = (ClassConverter<Position>) f.get(null);
       return conv.fromString(line);
    }

@@ -352,11 +352,11 @@ public abstract class UI {
       instance.ishowmenu(x, y);
    }
 
-   static final void toFront() {
+   public static final void toFront() {
       instance.itoFront();
    }
 
-   static final void hide() {
+   public static final void hide() {
       instance.itransferFocus();
    }
 
@@ -414,8 +414,8 @@ public abstract class UI {
       if (null != instance)
          instance.istatusaddline(s);
       else {
-         Thread.dumpStack();
          trace("unhandled Messege:" + s);
+         Thread.dumpStack();
       }
    }
 

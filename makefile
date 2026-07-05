@@ -15,8 +15,8 @@ all: ctag
 
 # Classpath for running Java
 R := $(shell pwd)
-S := $R/build/install/javi/lib
-export CLASSPATH=$R/build/classes/java/main:$S/juniversalchardet-2.4.0.jar:$S/rhino-1.7.14.jar
+S := $R/lib
+export CLASSPATH=$R/build/classes/java/main:$R/build/resources/main:$S/juniversalchardet-2.4.0.jar:$S/rhino-1.7.14.jar
 
 #==============================================================================
 # Build targets
@@ -171,10 +171,6 @@ uninstall:
 	rm -f $(PREFIX)/bin/javi $(PREFIX)/bin/javi-cl
 	rm -rf $(PREFIX)/share/javi
 	@echo "✓ Uninstalled javi from $(PREFIX)"
-
-# Full build (compile + jar + plugin JARs)
-build: compile jar
-	./gradlew plugins
 
 #==============================================================================
 # Test targets
@@ -615,11 +611,11 @@ javadoc:
 PORCE:
 # Generate tags for code navigation
 tags: FORCE
-	ctags -n -R src
+	ctags -n -R src plugins
 
 # Generate ID database for gid/lid
 ID: FORCE
-	mkid -m ~/cyghome/id-lang.map src
+	mkid -m ~/cyghome/id-lang.map src plugins
 
 # Update both tags and ID
 id: tags ID
@@ -632,14 +628,18 @@ jarf=build/libs/javi-all.jar
 
 gbuild: compile
 
-automake: runclass #runclass
+automake: runclass # runjars 
 
 runner: jar
 	java -cp $(CLASSPATH) -jar build/libs/javi-1.0.jar
 
 runclass:
 	echo CLASSPATH $$CLASSPATH
-	java  -cp $(CLASSPATH) javi.Javi src history main java javi awt history
+	java  -cp $(CLASSPATH) javi.Javi testfile #src history main java javi awt history
+
+runjars:
+	./gradlew installDist distAll
+	./build/install/javi/bin/javi
 
 FORCE:
 

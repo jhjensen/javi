@@ -337,6 +337,7 @@ class FvContextDeepCoverageJUnitTest {
       FvContext fvc = FvContext.connectFv(parent, view);
       fvc.cursoryabs(1);
 
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       FvContext switched = fvc.switchContext(parent, 1);
       assertNotNull(switched);
 

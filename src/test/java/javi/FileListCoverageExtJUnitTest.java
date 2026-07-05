@@ -81,6 +81,7 @@ class FileListCoverageExtJUnitTest {
       String fname = "ju_flce_match";
       deleteTestFiles(fname);
       TextEdit<String> te = openTestFile(fname);
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       FileProperties<String> fp = te.getFileProperties();
       fp.updateModifiedTime();
 
@@ -97,6 +98,7 @@ class FileListCoverageExtJUnitTest {
       String fname = "ju_flce_mod";
       deleteTestFiles(fname);
       TextEdit<String> te = openTestFile(fname);
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       FileProperties<String> fp = te.getFileProperties();
       fp.updateModifiedTime();
 
@@ -158,6 +160,7 @@ class FileListCoverageExtJUnitTest {
       String fname = "ju_flce_size";
       deleteTestFiles(fname);
       TextEdit<String> te = openTestFile(fname);
+      @SuppressWarnings({ "unchecked", "rawtypes" })
       FileProperties<String> fp = te.getFileProperties();
       fp.updateModifiedTime();
 

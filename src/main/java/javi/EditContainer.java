@@ -353,6 +353,7 @@ public class EditContainer<OType> implements
       //if (root == parent)
       //   Thread.dumpStack();
       //trace("at end of common dump "); dump();
+      trace("editvec initialized", this);
 
    }
 
@@ -422,7 +423,7 @@ public class EditContainer<OType> implements
 //static Matcher normalize1 =  Pattern.compile("(\\\\|/)").matcher("");
 //static Matcher normalize2 =  Pattern.compile("\\.").matcher("");
 
-   static final EditContainer grepfile(String spec) {
+   public static final EditContainer grepfile(String spec) {
       // jdk1.5 change to LITERAL
 //   normalize1.reset(spec);
 //   spec = normalize1.replaceAll("(\\\\\\\\|/)");
@@ -673,6 +674,8 @@ public class EditContainer<OType> implements
    public final int readIn() {
       if (!finishedread)
          myexpand(0);
+      if (null == ecache)
+         return 0;
       return ecache.size();
    }
 
@@ -685,6 +688,8 @@ public class EditContainer<OType> implements
       if (!finishedread)
          myexpand(desired + 1);
       //trace(this + "!contain desired = " + desired );
+      if (null == ecache)
+         return false;
       return desired < ecache.size();
    }
 
@@ -693,7 +698,8 @@ public class EditContainer<OType> implements
       if (!finishedread)
          myexpand(0);
       //trace(this + "!contain desired = " + desired);
-      return desired < ecache.size();
+      
+      return ecache != null && desired < ecache.size();
    }
 
    /** find an object in this vector.  This is not a fast operation currently
@@ -742,7 +748,7 @@ public class EditContainer<OType> implements
                 ? " MODIFIED "
                 : " ")
              + (null == ecache
-                ? "!!!! disposed"
+                ? "uninitialized"
                 : "")
 
              + prop.fdes.canonName;
@@ -819,7 +825,7 @@ public class EditContainer<OType> implements
       return ecache.getElementsAt(start, start + number);
    }
 
-   final synchronized ArrayList<String> remove(
+   public final synchronized ArrayList<String> remove(
          int start, int number) {
 
       if (!contains(start + number - 1))
@@ -877,7 +883,7 @@ public class EditContainer<OType> implements
 
    /** cover routine for insert() that takes a single object. */
    @SuppressWarnings("unchecked")
-   final void insertOne(OType ob, int index) {
+   public final void insertOne(OType ob, int index) {
       OType[] obarray = (OType[]) new Object[1];
       obarray[0] = ob;
       mkback(index - 1);
@@ -901,7 +907,7 @@ public class EditContainer<OType> implements
    final synchronized void insertObjs(EditCache<OType> obs, int index) {
       //for (Object ob:obarray) if (ob==null) {Thread.dumpStack() ;trace("inserting null object");}
       //trace("inserting strings at line " + index + " editvec = " + this + " ob.get(0)= " + obarray.get(0).getClass());
-      //trace("editvec = " + this + " ob[1]= " + obarray[0].getClass());
+      //trace("editvec = " + this + " ob[1]= " + obs.get(0).getClass());
       mkback(index - 1);
       insertRecord(obs.iterator(), index, obs.size());
    }

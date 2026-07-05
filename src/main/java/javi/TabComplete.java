@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
-import javi.git.GitProcess;
+import static history.Tools.trace;
+//import javi.git.GitProcess;
 
 /**
  * Tab-completion for the colon command line.
@@ -91,7 +92,6 @@ final class TabComplete {
          return null;
       return match.substring(partial.length());
    }
-
    /**
     * Find the longest common-prefix completion among branches
     * matching the partial name.
@@ -100,6 +100,10 @@ final class TabComplete {
     * @return the suffix to append, or null if no match
     */
    private static String completeBranch(String partial) {
+      // todo: need to have plugin system have a way to register completions, and git register this one
+      trace("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! missing git code");
+      return null;
+/*
       List<String> branches;
       try {
          branches = GitProcess.getBranchNames();
@@ -119,8 +123,8 @@ final class TabComplete {
       if (null == match || match.length() <= partial.length())
          return null;
       return match.substring(partial.length());
+*/
    }
-
    /** Return the longest common prefix of two strings. */
    private static String commonPrefix(String a, String b) {
       int len = Math.min(a.length(), b.length());

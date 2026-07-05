@@ -261,7 +261,7 @@ public final class EventQueue {
    // deadlock (ABBA ordering). Queue access inside inextEvent is already
    // guarded by fine-grained synchronized(EventQueue.class) blocks, so the
    // outer synchronized was redundant and hazardous.
-   static JeyEvent nextKeye(CursorControl vi) throws InputException {
+   public static JeyEvent nextKeye(CursorControl vi) throws InputException {
       return nextEvent(vi);
    }
 

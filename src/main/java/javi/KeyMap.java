@@ -29,7 +29,7 @@ import java.util.Map;
  * @see KeyGroup
  * @see MapEvent
  */
-final class KeyMap {
+public final class KeyMap {
 
    /**
     * Callback for buffer-specific visual mode key handling.
@@ -39,7 +39,7 @@ final class KeyMap {
     * to fall through to the default handling.
     */
    @FunctionalInterface
-   interface VisualHandler {
+   public interface VisualHandler {
       boolean handle(char key, int starty, int doney,
          int startx, int donex, FvContext<?> fvc)
          throws java.io.IOException, InputException;
@@ -78,7 +78,7 @@ final class KeyMap {
     * Set a visual-mode key handler for this keymap.
     * Invoked by {@link EditGroup#markmode} before the default switch.
     */
-   void setVisualHandler(VisualHandler handler) {
+   public void setVisualHandler(VisualHandler handler) {
       this.visualHandler = handler;
    }
 
@@ -125,7 +125,7 @@ final class KeyMap {
     * rather than dispatching through the parent keymap.
     * Use for read-only overlay buffers (git status, patch, log).
     */
-   void setSuppressParentEdit(boolean flag) {
+   public void setSuppressParentEdit(boolean flag) {
       suppressParentEdit = flag;
    }
 
@@ -134,28 +134,28 @@ final class KeyMap {
    /**
     * Add or replace a movement key binding.
     */
-   void addMoveBinding(JeyEvent key, String commandName, Object arg) {
+   protected void addMoveBinding(JeyEvent key, String commandName, Object arg) {
       moveKeys.bind(key, commandName, arg);
    }
 
    /**
     * Add or replace an edit key binding.
     */
-   void addEditBinding(JeyEvent key, String commandName, Object arg) {
+   protected void addEditBinding(JeyEvent key, String commandName, Object arg) {
       editKeys.bind(key, commandName, arg);
    }
 
    /**
     * Remove a movement key binding from this layer only.
     */
-   boolean removeMoveBinding(JeyEvent key) {
+   protected boolean removeMoveBinding(JeyEvent key) {
       return moveKeys.unbind(key);
    }
 
    /**
     * Remove an edit key binding from this layer only.
     */
-   boolean removeEditBinding(JeyEvent key) {
+   protected boolean removeEditBinding(JeyEvent key) {
       return editKeys.unbind(key);
    }
 
@@ -165,21 +165,21 @@ final class KeyMap {
     * Bind a character key as a movement binding.
     * Preferred over calling KeyGroup.keybind() directly.
     */
-   void bindMoveKey(char ch, String command, Object arg) {
+   protected void bindMoveKey(char ch, String command, Object arg) {
       moveKeys.keybind(ch, command, arg);
    }
 
    /**
     * Bind a character key with modifiers as a movement binding.
     */
-   void bindMoveKey(char ch, String command, Object arg, int modifiers) {
+   protected void bindMoveKey(char ch, String command, Object arg, int modifiers) {
       moveKeys.keybind(ch, command, arg, modifiers);
    }
 
    /**
     * Bind an action key (VK_ code) as a movement binding.
     */
-   void bindMoveAction(int keyCode, String command, Object arg, int modifiers) {
+   protected void bindMoveAction(int keyCode, String command, Object arg, int modifiers) {
       moveKeys.keyactionbind(keyCode, command, arg, modifiers);
    }
 
@@ -187,21 +187,21 @@ final class KeyMap {
     * Bind a character key as an edit binding.
     * Preferred over calling KeyGroup.keybind() directly.
     */
-   void bindEditKey(char ch, String command, Object arg) {
+   public void bindEditKey(char ch, String command, Object arg) {
       editKeys.keybind(ch, command, arg);
    }
 
    /**
     * Bind a character key with modifiers as an edit binding.
     */
-   void bindEditKey(char ch, String command, Object arg, int modifiers) {
+   public void bindEditKey(char ch, String command, Object arg, int modifiers) {
       editKeys.keybind(ch, command, arg, modifiers);
    }
 
    /**
     * Bind an action key (VK_ code) as an edit binding.
     */
-   void bindEditAction(int keyCode, String command, Object arg, int modifiers) {
+   protected void bindEditAction(int keyCode, String command, Object arg, int modifiers) {
       editKeys.keyactionbind(keyCode, command, arg, modifiers);
    }
 
@@ -220,7 +220,7 @@ final class KeyMap {
    /**
     * Register a keymap so it can be looked up by name.
     */
-   static void register(KeyMap km) {
+   public static void register(KeyMap km) {
       registry.put(km.name, km);
    }
 
@@ -238,7 +238,7 @@ final class KeyMap {
     * The child starts with empty KeyGroups; only overridden bindings
     * need to be added.
     */
-   static KeyMap createOverlay(String name, KeyMap parentMap) {
+   public static KeyMap createOverlay(String name, KeyMap parentMap) {
       return new KeyMap(name,
          new KeyGroup(name + "-move"),
          new KeyGroup(name + "-edit"),
@@ -331,85 +331,6 @@ final class KeyMap {
       shellMap.bindEditAction(JeyEvent.VK_INSERT,
          "vt", null, 0);                               // Insert key
       register(shellMap);
-
-      // Git log overlay: vim-style expand/navigate
-      KeyMap gitlogMap = createOverlay("gitlog", normalMap);
-      gitlogMap.bindEditKey((char) 13, "git_expand", null);
-      gitlogMap.bindEditKey((char) 10, "git_expand", null);
-      gitlogMap.bindEditKey('o', "git_expand", null);
-      gitlogMap.bindEditKey('O', "git_log_diff", null);
-      gitlogMap.bindEditKey('R', "git_expand_all", null);
-      gitlogMap.bindEditKey('q', "nextfile", null);
-      gitlogMap.bindEditKey(':', "commandproc", null);
-      gitlogMap.bindEditKey(
-         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
-      addNavigationKeys(gitlogMap);
-      gitlogMap.setSuppressParentEdit(true);
-      register(gitlogMap);
-
-      // Git status overlay: vim-style stage/unstage/discard
-      KeyMap gitstatusMap = createOverlay("gitstatus", normalMap);
-      gitstatusMap.bindEditKey('s', "git_stage_line", null);
-      gitstatusMap.bindEditKey('u', "git_unstage_line", null);
-      gitstatusMap.bindEditKey('X', "git_discard", null);
-      gitstatusMap.bindEditKey('c', "git_commit_menu", null);
-      gitstatusMap.bindEditKey('R', "git_refresh", null);
-      gitstatusMap.bindEditKey(
-         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
-      gitstatusMap.bindEditKey('d', "git_diff", null);
-      gitstatusMap.bindEditKey('q', "nextfile", null);
-      gitstatusMap.bindEditKey(':', "commandproc", null);
-      gitstatusMap.bindEditKey((char) 13, "git_toggle", null);
-      gitstatusMap.bindEditKey((char) 10, "git_toggle", null);
-      gitstatusMap.bindEditKey('p', "git_patch", null);
-      gitstatusMap.bindEditKey(
-         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
-      addNavigationKeys(gitstatusMap);
-      gitstatusMap.setSuppressParentEdit(true);
-      register(gitstatusMap);
-
-      // Git patch overlay: hunk staging with fugitive-style keys
-      KeyMap gitpatchMap = createOverlay("gitpatch", normalMap);
-      gitpatchMap.bindEditKey('s', "git_stage_hunk", null);
-      gitpatchMap.bindEditKey('u', "git_unstage_hunk", null);
-      gitpatchMap.bindEditKey('X', "git_revert_hunk", null);
-      gitpatchMap.bindEditKey('q', "nextfile", null);
-      gitpatchMap.bindEditKey(':', "commandproc", null);
-      gitpatchMap.bindEditKey(
-         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
-      gitpatchMap.bindEditKey(
-         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
-      gitpatchMap.setVisualHandler(
-         javi.git.GitCommands::handleVisualKey);
-      addNavigationKeys(gitpatchMap);
-      gitpatchMap.setSuppressParentEdit(true);
-      register(gitpatchMap);
-
-      // Git commit view overlay: staging buffer (read-only)
-      // suppressParentEdit blocks edit keys like 'o', 'i', etc.
-      KeyMap gitcommitMap = createOverlay("gitcommit", normalMap);
-      gitcommitMap.bindEditKey('s', "git_stage_hunk", null);
-      gitcommitMap.bindEditKey('u', "git_unstage_hunk", null);
-      gitcommitMap.bindEditKey('X', "git_revert_hunk", null);
-      gitcommitMap.bindEditKey('q', "git_commit_quit", null);
-      gitcommitMap.bindEditKey(':', "commandproc", null);
-      gitcommitMap.bindEditKey(
-         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
-      gitcommitMap.bindEditKey(
-         (char) 29, "git_goto_file", null, CTRL_MASK); // ^]
-      gitcommitMap.setVisualHandler(
-         javi.git.GitCommands::handleVisualKey);
-      addNavigationKeys(gitcommitMap);
-      gitcommitMap.setSuppressParentEdit(true);
-      register(gitcommitMap);
-
-      // Git commit message overlay: fully editable with ZZ to commit
-      KeyMap gitcommitmsgMap = createOverlay("gitcommitmsg", normalMap);
-      gitcommitmsgMap.bindEditKey('Z', "git_commit_finalize", null);
-      gitcommitmsgMap.bindEditKey('q', "git_commit_quit", null);
-      gitcommitmsgMap.bindEditKey(
-         (char) 12, "git_refresh", null, CTRL_MASK); // ^L
-      register(gitcommitmsgMap);
    }
 
    /**
@@ -417,7 +338,7 @@ final class KeyMap {
     * with suppressParentEdit, since they are edit-group bindings
     * in the normal keymap and would otherwise be suppressed.
     */
-   private static void addNavigationKeys(KeyMap overlay) {
+   public static void addNavigationKeys(KeyMap overlay) {
       overlay.bindEditAction(JeyEvent.VK_F5,
          "gotopositionlist", null, 0);
       overlay.bindEditAction(JeyEvent.VK_F6,

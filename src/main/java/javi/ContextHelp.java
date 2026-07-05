@@ -877,6 +877,19 @@ public final class ContextHelp {
       append("  ^V              Insert literal character");
       append("  ^P              Paste from buffer");
       append("  ^L              Redraw screen");
+
+      // Show dynamically bound edit keys (Shift+Enter, AI, etc.)
+      KeyMap km = MapEvent.getNormalKeyMap();
+      if (km != null) {
+         List<String[]> entries =
+            km.getEditKeys().getBindingEntries();
+         if (!entries.isEmpty()) {
+            append("");
+            append("EXTENDED EDIT BINDINGS");
+            append("---------------------");
+            appendDescribedEntries(entries);
+         }
+      }
    }
 
    /**

@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static history.Tools.trace;
 
-import javi.git.GitCommands;
+//import javi.git.GitCommands;
 
 public final class PosListList extends TextList<Position> {
 
@@ -558,45 +558,49 @@ public final class PosListList extends TextList<Position> {
 
       private static Object openDirectoryForCurrentFile(
             FvContext fvc) throws InputException, IOException {
-         String dirPath = ".";
-         String targetFile = null;
-         if (fvc.edvec instanceof FileList) {
-            Object item = fvc.at();
-            if (item instanceof EditContainer) {
-               FileDescriptor ifd =
-                  ((EditContainer) item).fdes();
-               if (ifd instanceof FileDescriptor.LocalFile) {
-                  File f =
-                     ((FileDescriptor.LocalFile) ifd).fh;
-                  File p = f.getParentFile();
-                  if (null != p && p.isDirectory()) {
-                     dirPath = p.getPath();
+
+         return switch (fvc.edvec) {
+            case FileList flist -> {
+               FileDescriptor ifd = ((TextEdit)fvc.at()).fdes();
+               switch (ifd) {
+                  case FileDescriptor.LocalFile lf -> {
+                     File f = lf.fh;
+                     File p = f.getParentFile();
+                     String dirPath = null != p && p.isDirectory() 
+                         ? dirPath = p.getPath()
+                         : ".";
+                     yield DirEdit.openDirectory( dirPath, fvc.vi, f.getName());
                   }
-                  targetFile = f.getName();
+                  default -> DirEdit.openDirectory( ".", fvc.vi, null);
                }
+               yield DirEdit.openDirectory( ".", fvc.vi, null);
             }
-         } else {
-            FileDescriptor fd = fvc.edvec.fdes();
-            if (fd instanceof FileDescriptor.LocalFile) {
-               File f = ((FileDescriptor.LocalFile) fd).fh;
-               File parentDir = f.getParentFile();
-               if (null != parentDir
-                     && parentDir.isDirectory()) {
-                  dirPath = parentDir.getPath();
-               }
-               targetFile = f.getName();
-            } else {
-               // Check for git log buffer directory
-               File gitDir =
-                  GitCommands.getBufferDir(
-                     fvc.edvec.getName());
-               if (null != gitDir && gitDir.isDirectory()) {
-                  dirPath = gitDir.getPath();
-               }
+
+            case EditContainer ec when ec.fdes() instanceof FileDescriptor.LocalFile -> {
+               var f = ((FileDescriptor.LocalFile)ec.fdes()).fh;
+               File p = f.getParentFile();
+               String dirPath = null != p && p.isDirectory() 
+                  ? dirPath = p.getPath()
+                  : ".";
+               yield DirEdit.openDirectory( dirPath, fvc.vi, f.getName());
             }
-         }
-         return DirEdit.openDirectory(
-            dirPath, fvc.vi, targetFile);
+
+            case EditContainer ec -> {
+                trace("unhandled case for directory edit");
+                yield DirEdit.openDirectory( ".", fvc.vi, null);
+                // todo plugin system needs method for finding parent directory.
+//               File gitDir = GitCommands.getBufferDir(fvc.edvec.getName());
+//               if (gitDir == null) {
+//                  yield DirEdit.openDirectory( ec.parent.fdes().shortName, fvc.vi, ec.fdes().shortName);
+
+//               } else {
+//                  String dirPath = gitDir.isDirectory() 
+//                     ? gitDir.getPath()
+//                     :'.';
+//                  yield DirEdit.openDirectory( dirPath, fvc.vi, null);
+//               }
+            }
+         };
       }
 
       private static ArrayList<Position> findDirectories(String name) {

@@ -268,6 +268,7 @@ public abstract class Rgroup {
     * the doroutine dispatch for this command.
     */
    public final void registerCommand(CommandEntry entry) {
+      //trace("registering command " , entry);
       if (cmhash.containsKey(entry.name()))
          throw new RuntimeException(
             "duplicate command:" + entry.name());
@@ -283,6 +284,7 @@ public abstract class Rgroup {
     */
    public final void registerArgCommand(String name, String desc,
          String category, ArgCommandHandler handler) {
+      //trace("registering command " , name);
       if (cmhash.containsKey(name))
          throw new RuntimeException("duplicate command:" + name);
       cmhash.put(name, new KeyBinding(handler));
