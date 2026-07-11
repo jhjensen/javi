@@ -143,7 +143,7 @@ install: plugins
 	./gradlew installDist
 	@# Copy plugin JARs into the installDist tree so they're found
 	@# when running from build/install/javi/bin/javi directly
-	@for jar in build/libs/javi-*.jar; do \
+	@for jar in build/plugins/javi-*.jar; do \
 		case "$$jar" in build/libs/javi-dev*.jar|build/libs/javi-all*.jar) continue;; esac; \
 		cp "$$jar" build/install/javi/lib/; \
 	done
